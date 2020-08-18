@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/tile.h"
+#include <algorithm>
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Tile::GetMultiples() const { return this->primitive->value.AsTile()->multiples; }
+
+void Tile::SetMultiples(const std::vector<int> &multiples) { this->primitive->value.AsTile()->multiples = multiples; }
+
+#else
+
+std::vector<int> Tile::GetMultiples() const {
+  auto fb_vector = this->primitive->value_as_Tile()->multiples();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void Tile::SetMultiples(const std::vector<int> &multiples) {}
+#endif
+
 int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -28,7 +42,6 @@ int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   MS_ASSERT(output != nullptr);
   auto tile_prim = this->primitive->value_as_Tile();
   MS_ASSERT(tile_prim != nullptr);
-
   std::vector<int> out_shape;
   std::vector<int> multiples;
   std::copy(tile_prim->multiples()->begin(), tile_prim->multiples()->end(), std::back_inserter(multiples));
@@ -36,10 +49,10 @@ int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     int tmp = input->shape()[i] * multiples[i];
     out_shape.push_back(tmp);
   }
-
   output->SetFormat(input->GetFormat());
   output->set_shape(out_shape);
   output->set_data_type(input->data_type());
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

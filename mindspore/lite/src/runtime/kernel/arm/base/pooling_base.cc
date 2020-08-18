@@ -77,8 +77,8 @@ int PoolingBaseCPUKernel::ReSize() {
   pooling_param_->output_h_ = out_tensor->Height();
   pooling_param_->output_w_ = out_tensor->Width();
   if (pooling_param_->global_) {
-      pooling_param_->window_h_ = pooling_param_->input_h_;
-      pooling_param_->window_w_ = pooling_param_->input_w_;
+    pooling_param_->window_h_ = pooling_param_->input_h_;
+    pooling_param_->window_w_ = pooling_param_->input_w_;
   }
   return RET_OK;
 }
@@ -86,7 +86,8 @@ int PoolingBaseCPUKernel::ReSize() {
 kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                const kernel::KernelKey &desc,
+                                                const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
@@ -110,7 +111,8 @@ kernel::LiteKernel *CpuPoolingInt8KernelCreator(const std::vector<lite::tensor::
 kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                 const std::vector<lite::tensor::Tensor *> &outputs,
                                                 OpParameter *opParameter, const Context *ctx,
-                                                const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                const kernel::KernelKey &desc,
+                                                const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;

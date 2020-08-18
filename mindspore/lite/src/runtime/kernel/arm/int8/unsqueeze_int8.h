@@ -29,7 +29,7 @@ class Unsqueezeint8CPUKernel : public LiteKernel {
  public:
   Unsqueezeint8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                          const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                         const lite::Primitive *primitive)
+                         const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     Unsq_para_ = reinterpret_cast<UnSqueezeParameter *>(op_parameter_);
     Unsq_para_->thread_count_ = op_parameter_->thread_num_;

@@ -29,7 +29,7 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
  public:
   ResizeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                      const lite::Primitive *primitive)
+                      const mindspore::lite::PrimitiveC *primitive)
       : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ResizeInt8CPUKernel() {

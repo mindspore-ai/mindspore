@@ -28,8 +28,8 @@ class TransposeCPUKernel : public LiteKernel {
  public:
   explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                               const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                              const lite::Primitive *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+                              const mindspore::lite::PrimitiveC *primitive)
+      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_)  {}
   ~TransposeCPUKernel() override = default;
 
   int Init() override;

@@ -64,7 +64,8 @@ int OptMomentumCPUKernel::Init() { return 0; }
 kernel::LiteKernel *CpuOptMomentumFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                     const std::vector<lite::tensor::Tensor *> &outputs,
                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                    const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                    const kernel::KernelKey &desc,
+                                                    const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_OptMomentum);
   auto *kernel = new (std::nothrow) OptMomentumCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   MS_ASSERT(kernel != nullptr);

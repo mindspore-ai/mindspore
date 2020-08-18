@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/cast.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Cast::GetSrcT() const { return this->primitive->value.AsCast()->srcT; }
+int Cast::GetDstT() const { return this->primitive->value.AsCast()->dstT; }
+
+void Cast::SetSrcT(int src_t) { this->primitive->value.AsCast()->srcT = src_t; }
+void Cast::SetDstT(int dst_t) { this->primitive->value.AsCast()->dstT = dst_t; }
+
+#else
+
+int Cast::GetSrcT() const { return this->primitive->value_as_Cast()->srcT(); }
+int Cast::GetDstT() const { return this->primitive->value_as_Cast()->dstT(); }
+
+void Cast::SetSrcT(int src_t) {}
+void Cast::SetDstT(int dst_t) {}
+#endif
+
 int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -49,4 +63,5 @@ int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   output->set_data_type(TypeId::kNumberTypeFloat32);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

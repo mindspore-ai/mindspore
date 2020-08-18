@@ -49,7 +49,13 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
-
+    MS_LOG(INFO) << "out_tensors";
+    auto tensors = kernel->out_tensors();
+    MS_LOG(INFO) << kernel->name();
+    for (int i = 0; i < tensors.size(); ++i) {
+      auto tensor = tensors[i];
+      MS_LOG(INFO) << tensor->ToString();
+    }
     if (after != nullptr) {
       if (!after(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()),
                  {kernel->name(), kernel->type_str()})) {

@@ -131,7 +131,7 @@ int QuantizedAddCPUKernel::DoExecute(int tId) {
 kernel::LiteKernel *CpuAddInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                             const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                             const lite::Context *ctx, const KernelKey &desc,
-                                            const lite::Primitive *primitive) {
+                                            const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr || ctx == nullptr) {
     MS_LOG(ERROR) << "parameter or ctx is nullptr";
     return nullptr;

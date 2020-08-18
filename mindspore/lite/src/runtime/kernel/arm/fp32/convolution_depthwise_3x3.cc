@@ -144,7 +144,7 @@ int ConvolutionDepthwise3x3CPUKernel::ReSize() {
     MS_LOG(ERROR) << "Depthwise3x3 fp32 initWeightBias error!ret: " << ret;
     return ret;
   }
-    // init threadNum;
+  // init threadNum;
   conv_param_->thread_num_ = MSMIN(thread_count_, UP_DIV(conv_param_->output_channel_, C4NUM));
 
   ret = InitBuffer();

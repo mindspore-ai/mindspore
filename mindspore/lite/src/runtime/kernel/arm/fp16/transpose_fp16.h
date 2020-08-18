@@ -28,7 +28,7 @@ class TransposeFp16CPUKernel : public LiteKernel {
  public:
   explicit TransposeFp16CPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                                  const lite::Primitive *primitive)
+                                  const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
   ~TransposeFp16CPUKernel() = default;
 

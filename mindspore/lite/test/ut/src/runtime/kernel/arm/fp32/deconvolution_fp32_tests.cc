@@ -18,7 +18,6 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/ops/ops.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/deconvolution.h"
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/deconv.h"
 

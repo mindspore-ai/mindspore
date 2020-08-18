@@ -14,31 +14,60 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "src/ops/resize.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Resize::GetFormat() const { return this->primitive->value.AsResize()->format; }
+int Resize::GetMethod() const { return this->primitive->value.AsResize()->method; }
+long Resize::GetNewHeight() const { return this->primitive->value.AsResize()->newHeight; }
+long Resize::GetNewWidth() const { return this->primitive->value.AsResize()->newWidth; }
+bool Resize::GetAlignCorners() const { return this->primitive->value.AsResize()->alignCorners; }
+bool Resize::GetPreserveAspectRatio() const { return this->primitive->value.AsResize()->preserveAspectRatio; }
+
+void Resize::SetFormat(int format) { this->primitive->value.AsResize()->format = (schema::Format)format; }
+void Resize::SetMethod(int method) { this->primitive->value.AsResize()->method = (schema::ResizeMethod)method; }
+void Resize::SetNewHeight(long new_height) { this->primitive->value.AsResize()->newHeight = new_height; }
+void Resize::SetNewWidth(long new_width) { this->primitive->value.AsResize()->newWidth = new_width; }
+void Resize::SetAlignCorners(bool align_corners) { this->primitive->value.AsResize()->alignCorners = align_corners; }
+void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {
+  this->primitive->value.AsResize()->preserveAspectRatio = preserve_aspect_ratio;
+}
+
+#else
+
+int Resize::GetFormat() const { return this->primitive->value_as_Resize()->format(); }
+int Resize::GetMethod() const { return this->primitive->value_as_Resize()->method(); }
+long Resize::GetNewHeight() const { return this->primitive->value_as_Resize()->newHeight(); }
+long Resize::GetNewWidth() const { return this->primitive->value_as_Resize()->newWidth(); }
+bool Resize::GetAlignCorners() const { return this->primitive->value_as_Resize()->alignCorners(); }
+bool Resize::GetPreserveAspectRatio() const { return this->primitive->value_as_Resize()->preserveAspectRatio(); }
+
+void Resize::SetFormat(int format) {}
+void Resize::SetMethod(int method) {}
+void Resize::SetNewHeight(long new_height) {}
+void Resize::SetNewWidth(long new_width) {}
+void Resize::SetAlignCorners(bool align_corners) {}
+void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {}
+#endif
 namespace {
 constexpr int kInputRank = 4;
 }  // namespace
-int Resize::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
   if (input == nullptr) {
-    return RET_NULL_PTR;
+    return 1;
   }
   MS_ASSERT(input->shape().size() == kInputRank);
 
   auto output = outputs_.front();
   if (output == nullptr) {
-    return RET_NULL_PTR;
+    return 1;
   }
-  auto resize = GetAttrbute();
-  auto new_height = resize->newHeight();
-  auto new_width = resize->newWidth();
+  auto new_height = GetNewHeight();
+  auto new_width = GetNewWidth();
 
   std::vector<int> output_shape;
   output_shape.push_back(input->Batch());
@@ -49,6 +78,7 @@ int Resize::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
 
-  return RET_OK;
+  return 0;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

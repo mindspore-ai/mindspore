@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/flatten.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+
 int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -28,12 +27,10 @@ int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     MS_LOG(ERROR) << "Flatten input or output is null!";
     return RET_ERROR;
   }
-
   if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
   }
-
   auto input_shape = input->shape();
   std::vector<int> output_shape(2);
   output_shape[0] = input_shape[0];
@@ -44,7 +41,7 @@ int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   output->set_shape(output_shape);
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

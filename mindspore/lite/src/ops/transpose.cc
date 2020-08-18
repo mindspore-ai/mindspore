@@ -14,12 +14,31 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/transpose.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Transpose::GetPerm() const { return this->primitive->value.AsTranspose()->perm; }
+bool Transpose::GetConjugate() const { return this->primitive->value.AsTranspose()->conjugate; }
+
+void Transpose::SetPerm(const std::vector<int> &perm) { this->primitive->value.AsTranspose()->perm = perm; }
+void Transpose::SetConjugate(bool conjugate) { this->primitive->value.AsTranspose()->conjugate = conjugate; }
+
+#else
+
+std::vector<int> Transpose::GetPerm() const {
+  auto fb_vector = this->primitive->value_as_Transpose()->perm();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+bool Transpose::GetConjugate() const { return this->primitive->value_as_Transpose()->conjugate(); }
+
+void Transpose::SetPerm(const std::vector<int> &perm) {}
+void Transpose::SetConjugate(bool conjugate) {}
+#endif
+
 int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
@@ -41,16 +60,14 @@ int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   }
   std::vector<int> perm;
   perm.insert(perm.begin(), transpore_prim->perm()->begin(), transpore_prim->perm()->end());
-
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
   out_shape.resize(perm.size());
   for (int i = 0; i < perm.size(); ++i) {
     out_shape[i] = in_shape[perm[i]];
   }
-
   output->set_shape(out_shape);
-
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

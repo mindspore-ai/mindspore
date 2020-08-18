@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "schema/model_generated.h"
+#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
@@ -34,7 +35,7 @@ class ModelImpl;
 /// \brief Primitive defined as prototype of operator.
 ///
 /// \note List public class and interface for reference.
-class Primitive;
+class PrimitiveC;
 
 /// \brief Model defined model in MindSpore Lite for managing graph.
 class MS_API Model {
@@ -60,7 +61,7 @@ class MS_API Model {
   /// \param[in] name Define name of primitive to be returned.
   ///
   /// \return the pointer of MindSpore Lite Primitive.
-  lite::Primitive *GetOp(const std::string &name) const;
+  PrimitiveC *GetOp(const std::string &name) const;
 
   /// \brief Get graph defined in flatbuffers.
   ///
@@ -97,7 +98,7 @@ class MS_API ModelBuilder {
   /// \param[in] inputs Define input edge of primitive to be added.
   ///
   /// \return ID of the added primitive.
-  virtual std::string AddOp(const lite::Primitive &op, const std::vector<OutEdge> &inputs) = 0;
+  virtual std::string AddOp(const PrimitiveC &op, const std::vector<OutEdge> &inputs) = 0;
 
   /// \brief Finish constructing the model.
   ///

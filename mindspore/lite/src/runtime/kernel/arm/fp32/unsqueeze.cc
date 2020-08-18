@@ -84,7 +84,8 @@ int UnsqueezeCPUKernel::Run() {
 kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *parameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                  const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);
   auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(parameter, inputs, outputs, ctx, primitive);
@@ -94,8 +95,8 @@ kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::tensor
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
+                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
     delete kernel;
     return nullptr;
   }

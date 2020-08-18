@@ -71,7 +71,7 @@ int TopKCPUKernel::Run() {
 kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
-                                             const lite::Primitive *primitive) {
+                                             const mindspore::lite::PrimitiveC *primitive) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;

@@ -224,7 +224,8 @@ bool CheckIfUseSlideWindow(ConvParameter *conv_param) {
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *op_parameter, const Context *ctx,
-                                             const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                             const kernel::KernelKey &desc,
+                                             const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);

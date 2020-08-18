@@ -14,18 +14,44 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
+#include "src/ops/slice.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 namespace {
 constexpr int kSliceInputNum = 1;
 constexpr int kSliceOutputNum = 1;
 }  // namespace
+#ifdef PRIMITIVE_WRITEABLE
+int SliceOp::GetFormat() const { return this->primitive->value.AsSlice()->format; }
+std::vector<int> SliceOp::GetBegin() const { return this->primitive->value.AsSlice()->begin; }
+std::vector<int> SliceOp::GetSize() const { return this->primitive->value.AsSlice()->size; }
 
-int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+void SliceOp::SetFormat(int format) { this->primitive->value.AsSlice()->format = format; }
+void SliceOp::SetBegin(const std::vector<int> &begin) { this->primitive->value.AsSlice()->begin = begin; }
+void SliceOp::SetSize(const std::vector<int> &size) { this->primitive->value.AsSlice()->size = size; }
+
+#else
+
+int SliceOp::GetFormat() const { return this->primitive->value_as_Slice()->format(); }
+std::vector<int> SliceOp::GetBegin() const {
+  auto fb_vector = this->primitive->value_as_Slice()->begin();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+std::vector<int> SliceOp::GetSize() const {
+  auto fb_vector = this->primitive->value_as_Slice()->size();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void SliceOp::SetFormat(int format) {}
+void SliceOp::SetBegin(const std::vector<int> &begin) {}
+void SliceOp::SetSize(const std::vector<int> &size) {}
+#endif
+
+int SliceOp::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
   if (inputs.size() != kSliceInputNum || outputs.size() != kSliceOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ",output size:" << outputs.size();
@@ -38,9 +64,8 @@ int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     return RET_OK;
   }
   auto input_shape = input->shape();
-  auto slice_prim = this->primitive->value_as_Slice();
-  std::vector<int32_t> slice_begin(slice_prim->begin()->begin(), slice_prim->begin()->end());
-  std::vector<int32_t> slice_size(slice_prim->size()->begin(), slice_prim->size()->end());
+  std::vector<int32_t> slice_begin(GetBegin().begin(), GetBegin().end());
+  std::vector<int32_t> slice_size(GetSize().begin(), GetSize().end());
   std::vector<int32_t> output_shape(input_shape.size());
   for (int i = 0; i < input_shape.size(); ++i) {
     if (slice_size[i] < 0 && slice_size[i] != -1) {
@@ -68,4 +93,5 @@ int Slice::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   outputs[0]->set_shape(output_shape);
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

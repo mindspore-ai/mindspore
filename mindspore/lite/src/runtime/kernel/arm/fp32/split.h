@@ -26,7 +26,7 @@ class SplitCPUKernel : public SplitBaseCPUKernel {
  public:
   SplitCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                 const lite::Primitive *primitive)
+                 const mindspore::lite::PrimitiveC *primitive)
       : SplitBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~SplitCPUKernel() override = default;
 

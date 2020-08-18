@@ -157,7 +157,8 @@ int ArithmeticCPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                    const std::vector<lite::tensor::Tensor *> &outputs,
                                                    OpParameter *parameter, const lite::Context *ctx,
-                                                   const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                   const kernel::KernelKey &desc,
+                                                   const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(parameter != nullptr);
   auto kernel = new (std::nothrow) ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {

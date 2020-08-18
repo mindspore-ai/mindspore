@@ -198,7 +198,8 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                               const kernel::KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
   kernel::LiteKernel *kernel;

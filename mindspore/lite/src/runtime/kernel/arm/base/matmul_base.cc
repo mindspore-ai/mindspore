@@ -29,7 +29,7 @@ namespace mindspore::kernel {
 kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                            const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *opParameter,
                                            const lite::Context *ctx, const kernel::KernelKey &desc,
-                                           const lite::Primitive *primitive) {
+                                           const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
   auto input_tensor = inputs.at(kInputIndex);

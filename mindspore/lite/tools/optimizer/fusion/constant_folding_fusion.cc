@@ -27,10 +27,11 @@
 #include "src/lite_session.h"
 #include "src/ir/primitive_t_value.h"
 #include "src/populate_parameter.h"
+#include "src/ops/primitive_c.h"
 
 using mindspore::lite::KernelRegistry;
-using mindspore::lite::tensor::Tensor;
 using mindspore::lite::PrimitiveTValue;
+using mindspore::lite::tensor::Tensor;
 namespace mindspore::opt {
 namespace {
 const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
@@ -52,7 +53,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
     auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
     // when tensorT as graph input
     if (lite_tensor_size == 0) {
-        return input_tensors;
+      return input_tensors;
     }
     auto tensor_data = new(std::nothrow)char[lite_tensor_size / sizeof(char)];
     if (tensor_data == nullptr) {
@@ -69,8 +70,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
   return input_tensors;
 }
 schema::Primitive *PackPrimitiveT(const CNodePtr &cnode) {
-  auto primitiveT_value =
-      GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
   if (primitiveT_value == nullptr) {
     MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
     return nullptr;
@@ -120,15 +120,14 @@ const ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *ten
   return parameter;
 }
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs,
-                                  lite::Primitive *primitive) {
+                                  mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(nullptr != lite_primitive);
   auto data_type = inputs.front()->data_type();
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, primitive->Type()};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, (schema::PrimitiveType)primitive->Type()};
   lite::Context context;
   auto parameter = kernel::PopulateParameter(primitive);
   if (parameter == nullptr) {
-    MS_LOG(ERROR)
-            << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(primitive->Type());
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << (schema::PrimitiveType)primitive->Type();
     return nullptr;
   }
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -155,13 +154,13 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       auto input_cnode = input_node->cast<CNodePtr>();
       auto input_tensors = GetCNodeInputTensors(input_cnode);
       if (input_tensors.empty() || input_tensors.size() != input_cnode->inputs().size() - 1) {
-          return any_node;
+        return any_node;
       }
       MS_LOG(INFO) << "Begin fold node:" << input_node->fullname_with_scope();
       auto output_nums = GetOutputTensorNum(input_cnode);
       std::vector<Tensor *> output_tensors{output_nums, new Tensor()};
       auto scheam_primitive = PackPrimitiveT(input_cnode);
-      auto lite_primitive = lite::Primitive::CreatePrimitive(scheam_primitive);
+      auto lite_primitive = mindspore::lite::PrimitiveC::CreatePrimitive(scheam_primitive);
       if (lite_primitive == nullptr) {
         MS_LOG(DEBUG) << "constant_folding schedule node lite primitive nullptr";
         return nullptr;

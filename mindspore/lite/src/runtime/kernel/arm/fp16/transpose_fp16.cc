@@ -183,7 +183,8 @@ int TransposeFp16CPUKernel::Run() {
 kernel::LiteKernel *CpuTransposeFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,
                                                   OpParameter *opParameter, const lite::Context *ctx,
-                                                  const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                                  const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Transpose);
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "desc type is not Transpose";

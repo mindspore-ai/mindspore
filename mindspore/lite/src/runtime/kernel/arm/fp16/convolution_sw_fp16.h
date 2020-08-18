@@ -26,7 +26,7 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionSWFP16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                             const lite::Primitive *primitive)
+                             const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionSWFP16CPUKernel() override { FreeTmpBuffer(); }
 

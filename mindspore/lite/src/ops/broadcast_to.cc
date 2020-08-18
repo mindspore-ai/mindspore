@@ -14,22 +14,36 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/broadcast_to.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> BroadcastTo::GetDstShape() const { return this->primitive->value.AsBroadcastTo()->dst_shape; }
+
+void BroadcastTo::SetDstShape(const std::vector<int> &dst_shape) {
+  this->primitive->value.AsBroadcastTo()->dst_shape = dst_shape;
+}
+
+#else
+
+std::vector<int> BroadcastTo::GetDstShape() const {
+  auto fb_vector = this->primitive->value_as_BroadcastTo()->dst_shape();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void BroadcastTo::SetDstShape(const std::vector<int> &dst_shape) {}
+#endif
 namespace {
 constexpr int kBroadcastToInputNum = 1;
 constexpr int kBroadcastToOutputNum = 1;
 }  // namespace
 
-int BroadcastTo::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+int BroadcastTo::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive != nullptr);
   if (inputs.size() != kBroadcastToInputNum || outputs.size() != kBroadcastToOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ", output size:" << outputs.size();
-    return RET_PARAM_INVALID;
+    return 1;
   }
   auto input = inputs.at(0);
   std::vector<int32_t> dst_shape(this->primitive->value_as_BroadcastTo()->dst_shape()->begin(),
@@ -40,19 +54,19 @@ int BroadcastTo::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<te
   if (input_shape.size() > dst_shape.size()) {
     MS_LOG(ERROR) << "input shape size " << input_shape.size() << " should <= broadcast to shape size "
                   << dst_shape.size() << "!";
-    return RET_PARAM_INVALID;
+    return 1;
   }
 
   for (int i = dst_shape.size() - 1; i >= 0; --i) {
     if (dst_shape[i] < 0) {
       MS_LOG(ERROR) << "shape[" << i << "] = " << dst_shape[i] << " ] should be > 0!";
-      return RET_PARAM_INVALID;
+      return 1;
     }
     if (input_shape_index >= 0) {
       auto dim = input_shape[input_shape_index];
       if (dim != dst_shape[i] && dim != 1) {
         MS_LOG(ERROR) << "Invalid broadcast shape!";
-        return RET_PARAM_INVALID;
+        return 1;
       }
     }
     shape[i] = dst_shape[i];
@@ -61,6 +75,7 @@ int BroadcastTo::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<te
   outputs[0]->SetFormat(input->GetFormat());
   outputs[0]->set_shape(shape);
   outputs[0]->set_data_type(input->data_type());
-  return RET_OK;
+  return 0;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

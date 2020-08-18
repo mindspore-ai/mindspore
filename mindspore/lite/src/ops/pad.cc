@@ -14,12 +14,32 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/pad.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+std::vector<int> Pad::GetPaddings() const { return this->primitive->value.AsPad()->paddings; }
+int Pad::GetPaddingMode() const { return this->primitive->value.AsPad()->paddingMode; }
+float Pad::GetConstantValue() const { return this->primitive->value.AsPad()->constantValue; }
+
+void Pad::SetPaddings(const std::vector<int> &paddings) { this->primitive->value.AsPad()->paddings = paddings; }
+void Pad::SetPaddingMode(int padding_mode) { this->primitive->value.AsPad()->paddingMode = padding_mode; }
+void Pad::SetConstantValue(float constant_value) { this->primitive->value.AsPad()->constantValue = constant_value; }
+
+#else
+
+std::vector<int> Pad::GetPaddings() const {
+  auto fb_vector = this->primitive->value_as_Pad()->paddings();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+int Pad::GetPaddingMode() const { return this->primitive->value_as_Pad()->paddingMode(); }
+float Pad::GetConstantValue() const { return this->primitive->value_as_Pad()->constantValue(); }
+
+void Pad::SetPaddings(const std::vector<int> &paddings) {}
+void Pad::SetPaddingMode(int padding_mode) {}
+void Pad::SetConstantValue(float constant_value) {}
+#endif
 namespace {
 const size_t kPaddingsSize = 8;
 const size_t kInputRank = 4;
@@ -37,7 +57,6 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   if (paddings == nullptr) {
     return RET_NULL_PTR;
   }
-
   auto input = inputs.front();
   if (input == nullptr) {
     return RET_NULL_PTR;
@@ -50,7 +69,6 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
     auto shape = input_shape[i] + (*paddings)[2 * paddings_index] + (*paddings)[2 * paddings_index + 1];
     output_shape.push_back(shape);
   }
-
   auto output = outputs.front();
   if (output == nullptr) {
     return RET_NULL_PTR;
@@ -60,4 +78,5 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   output->set_data_type(input->data_type());
   return RET_OK;
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

@@ -30,7 +30,7 @@ class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
  public:
   ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                      const lite::Primitive *primitive)
+                      const mindspore::lite::PrimitiveC *primitive)
       : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConcatInt8CPUKernel() override {
     if (input_data_ != nullptr) {

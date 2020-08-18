@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-#include "src/ops/ops.h"
-#include "include/errorcode.h"
-#include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
+#include "src/ops/addn.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int AddN::GetN() const { return this->primitive->value.AsAddN()->N; }
+
+void AddN::SetN(int n) { this->primitive->value.AsAddN()->N = n; }
+
+#else
+
+int AddN::GetN() const { return this->primitive->value_as_AddN()->N(); }
+
+void AddN::SetN(int n) {}
+#endif
+
 namespace {
 constexpr int kLeastInputNum = 2;
 }
@@ -48,5 +58,5 @@ int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::T
   output->set_data_type(input->data_type());
   return RET_OK;
 }
-}  // namespace mindspore::lite
-
+}  // namespace lite
+}  // namespace mindspore

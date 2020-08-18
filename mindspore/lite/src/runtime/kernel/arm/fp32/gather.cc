@@ -121,21 +121,22 @@ int GatherCPUKernel::Run() {
 
 kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
-                                               OpParameter *parameter, const lite::Context *ctx,
-                                               const kernel::KernelKey &desc, const lite::Primitive *primitive) {
+                                               OpParameter *opParameter, const lite::Context *ctx,
+                                               const kernel::KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Gather);
-  if (parameter == nullptr) {
+  if (opParameter == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) GatherCPUKernel(parameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) GatherCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;
   }
