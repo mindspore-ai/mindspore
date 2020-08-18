@@ -635,7 +635,11 @@ Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, std::unique_p
     const ColDescriptor current_col = data_schema_->column(col);
     const dataengine::Features &example_features = tf_file->features();
     const google::protobuf::Map<std::string, dataengine::Feature> &feature_map = example_features.feature();
-    const dataengine::Feature &column_values_list = feature_map.at(current_col.name());
+    auto iter_column = feature_map.find(current_col.name());
+    if (iter_column == feature_map.end()) {
+      RETURN_STATUS_UNEXPECTED("key not found: " + current_col.name());
+    }
+    const dataengine::Feature &column_values_list = iter_column->second;
     RETURN_IF_NOT_OK(LoadFeature(tensor_table, column_values_list, current_col, row, col));
   }
 
