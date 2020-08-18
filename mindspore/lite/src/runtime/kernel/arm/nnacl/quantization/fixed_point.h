@@ -60,17 +60,27 @@ int SelectUsingMask(int mask, int bound, int val);
 
 int32_t MaskNonZero(int32_t a);
 
-int SaturatingRoundingMultiplyByPOT(int32_t x, int Exponent);
-
 int32_t Rescale(int x, int kIntegerBitsSrc, int kIntegerBitsDst);
 
-static int32_t one_over_one_plus_x_for_x_in_0_1(int32_t a);
+int32_t one_over_one_plus_x_for_x_in_0_1(int32_t a);
 
 int CountLeadingZeroBits(uint32_t x);
 
 int CountLeadingSignBits(int32_t x);
 
 int32_t ComputerReciproal(int32_t x, int x_digits, int *recip_shift);
+
+int exp_on_negative_values(int a, const int tIntegerBits);
+
+int ConstantPOT(int fractional_bits, int exponent);
+
+int32_t MaskIfNonZero(int32_t a);
+
+int32_t MaskIfZero(int32_t a);
+
+int32_t MaskIfLessThan(int32_t a, int32_t b);
+
+int exp_on_interval_between_negative_one_quarter_and_0_excl(int a);
 
 #ifdef __cplusplus
 }

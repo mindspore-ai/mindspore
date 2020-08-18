@@ -80,9 +80,8 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
 
-  std::vector<int8_t> except_result = {-126, -126, -124, -124, -123, -124, -116, -116, 121, 121, 111, 111,
-                                       -127, -127, -127, -127, -59,  -59,  -61,  -59,  57,  57,  59,  57};
-
+  std::vector<int8_t> except_result = {-126, -126, -124, -124, -123, -124, -116, -116, 122, 122, 112, 112,
+                                       -127, -127, -127, -127, -59,  -59,  -61,  -59,  58,  58,  59,  58};
   CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001);
 
   input0_tensor.SetData(nullptr);
