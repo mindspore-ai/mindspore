@@ -1,7 +1,8 @@
 ﻿![MindSpore标志](docs/MindSpore-logo.png "MindSpore logo")
 ============================================================
 
-[View English](./README.md)
+<!-- [View English](./README.md) -->
+[English](./README.md) | 简体中文
 
 - [MindSpore介绍](#mindspore介绍)
     - [自动微分](#自动微分)
