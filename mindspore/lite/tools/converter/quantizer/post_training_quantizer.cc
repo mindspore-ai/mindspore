@@ -510,7 +510,6 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int zeropoint, struct M
   quant_param.narrowRange = false;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
   lite_primitive->AddInputQuantParam(quant_params);
-  // p->AddAttr("quant_input_dataType", MakeValue((int)DataType_DT_FLOAT));
   return RET_OK;
 }
 
@@ -528,51 +527,67 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   quant_param.narrowRange = false;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
   lite_primitive->AddOutputQuantParam(quant_params);
-  // p->AddAttr("quant_output_dataType", MakeValue((int)DataType_DT_FLOAT));
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr node) {
+STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value,
+                                            bool depthwise) {
   // const vector<int> dims = filter->dims;
   // perlayer
-  if (!node->isa<Parameter>()) {
+  if (!weight->isa<Parameter>()) {
     MS_LOG(ERROR) << "not a parameter";
     return RET_PARAM_INVALID;
   }
-  auto parameter = std::dynamic_pointer_cast<Parameter>(node);
+  auto parameter = std::dynamic_pointer_cast<Parameter>(weight);
   ParamValueLitePtr paramValue = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-  auto status = QuantFilter(paramValue, QuantType_PostTraining, quant_max, quant_min, bit_num, per_channel_);
+  auto status = QuantFilter(paramValue, primitiveT_value, QuantType_PostTraining, quant_max, quant_min, bit_num,
+                            per_channel_, depthwise);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
   }
+  // set dtype
+  auto abstractBase = parameter->abstract();
+  if (abstractBase == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << parameter->name();
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << parameter->name();
+    return RET_ERROR;
+  }
+  auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
+  abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt8));
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoBiasQuant(std::shared_ptr<PrimitiveTValue> input, AnfNodePtr weight, AnfNodePtr bias) {
-  if (input == nullptr || weight == nullptr || bias == nullptr) {
+STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveTValue> primitiveT_value) {
+  if (primitiveT_value == nullptr || bias == nullptr) {
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
   }
 
-  ParameterPtr weightParameterPtr = std::dynamic_pointer_cast<Parameter>(weight);
-  auto default_param = weightParameterPtr->default_param();
-  auto weight_param = std::dynamic_pointer_cast<ParamValueLite>(default_param);
-  // std::vector<std::unique_ptr<mindspore::QuantParamT>> weight_quant_params = weight_param->get_quant_params();
-
-  ParameterPtr biasParameterPtr = std::dynamic_pointer_cast<Parameter>(bias);
-  auto bias_default_param = biasParameterPtr->default_param();
+  auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
+  auto bias_default_param = bias_parameter_ptr->default_param();
   auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
+
+  auto active_weight_quant_params = primitiveT_value->GetInputQuantParams();
+  if (active_weight_quant_params.size() != 2) {
+    MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
+    return RET_ERROR;
+  }
+
+  auto active_params = active_weight_quant_params[0];
+  auto weight_params = active_weight_quant_params[1];
 
   vector<double> input_scales;
   vector<double> filter_scales;
   vector<double> bias_scales;
-  auto quant_params = input->GetInputQuantParams();
-  size_t sizeX = quant_params.size();
+  size_t sizeX = active_params.size();
   for (size_t i = 0; i < sizeX; i++) {
-    input_scales.emplace_back(quant_params[i].front().scale);
+    input_scales.emplace_back(active_params[i].scale);
   }
-  size_t sizeY = weight_param->quant_param().size();
+  size_t sizeY = weight_params.size();
   if (sizeX != sizeY) {
     if (sizeX > 1 && sizeY > 1) {
       MS_LOG(ERROR) << "input and filter's scale count cannot match!";
@@ -580,8 +595,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(std::shared_ptr<PrimitiveTValue> input
     }
   }
   for (size_t i = 0; i < sizeY; i++) {
-    auto scale = weight_param->quant_param()[i]->scale;
-    filter_scales.push_back(scale);
+    filter_scales.emplace_back(weight_params[i].scale);
   }
   size_t size = std::max(sizeX, sizeY);
   for (size_t i = 0; i < size; i++) {
@@ -593,20 +607,22 @@ STATUS PostTrainingQuantizer::DoBiasQuant(std::shared_ptr<PrimitiveTValue> input
   size_t shape_size = bias_param->tensor_shape_size();
 
   // set bias quant param
-  bias_param->quant_param().clear();
+  vector<schema::QuantParamT> quant_params;
   for (size_t i = 0; i < bias_scales.size(); i++) {
-    std::unique_ptr<AnfQuantParam> param(new (std::nothrow) AnfQuantParam());
-    param->scale = bias_scales[i];
-    param->zeroPoint = 0;
-    bias_param->quant_param().emplace_back(std::move(param));
+    schema::QuantParamT quant_param;
+    quant_param.scale = bias_scales[i];
+    quant_param.zeroPoint = 0;
+    quant_param.inited = true;
+    quant_params.emplace_back(quant_param);
   }
+  primitiveT_value->AddInputQuantParam(quant_params);
   // quant bias data
   int32_t *quant_datas = new (std::nothrow) int32_t[shape_size];
   if (quant_datas == nullptr) {
     MS_LOG(ERROR) << "null pointer dereferencing.";
     return RET_NULL_PTR;
   }
-  float *raw_datas = reinterpret_cast<float *>(bias_param->tensor_addr());
+  float *raw_datas = static_cast<float *>(bias_param->tensor_addr());
   double bias_scale_tmp;
   for (size_t i = 0; i < shape_size; i++) {
     if (bias_scales.size() == 1) {
@@ -625,37 +641,20 @@ STATUS PostTrainingQuantizer::DoBiasQuant(std::shared_ptr<PrimitiveTValue> input
     return RET_ERROR;
   }
   delete[] quant_datas;
-  bias_param->set_tensor_type(kNumberTypeInt32);
+  // set dtype
+  auto abstractBase = bias_parameter_ptr->abstract();
+  if (abstractBase == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << bias_parameter_ptr->name();
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << bias_parameter_ptr->name();
+    return RET_ERROR;
+  }
+  auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
+  abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
   return RET_OK;
 }
-
-// STATUS PostTrainingQuantizer::reformatConvWeight(GraphDefT *graph) {
-//   for (auto &subGraph : graphDefT->subgraphs) {
-//      for (auto iter = subGraph->nodes.begin(); iter != subGraph->nodes.end(); iter++) {
-//          OpDefT *node = (*iter).get();
-//          bool isConv = false;
-//          kTransFilterType tansType;
-//          if ((*node).attr.type == OpT_Conv2D) {
-//              tansType = kKCHW2HWCK;
-//              isConv = true;
-//          }
-//          else if ((*node).attr.type == OpT_DepthwiseConv2D) {
-//              tansType = kCKHW2HWCK;
-//              isConv = true;
-//          }
-//          if (isConv) {
-//              auto status =  TransFilterFormat<uint8_t>(&(*subGraph.get()->allTensors.at(node->inputIndex[1])),
-//                                                        tansType);
-//              if (status != RET_OK) {
-//                  return status;
-//              }
-//              TensorDefT *weight = subGraph->allTensors.at(node->inputIndex[1]).get();
-//              weight->format = Format_HWCK;
-//              PostBitPack(weight, bitNum);
-//          }
-//      }
-//  }
-//}
 
 STATUS PostTrainingQuantizer::QuantNode() {
   auto input_min_max = this->calibrator_->GetMinMax(this->calibrator_->GetInputDivergInfo());
@@ -682,7 +681,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
       primitiveT_value->SetQuantType(schema::QuantType_QUANT_NONE);
       continue;
     }
-    auto input_vec = cnode->inputs();
+    primitiveT_value->ClearInputOutputQuantParam();
     auto op_name = cnode->fullname_with_scope();
     auto op_type = primitiveT_value->GetPrimitiveT()->value.type;
     MS_LOG(INFO) << "OpName: " << op_name;
@@ -711,11 +710,12 @@ STATUS PostTrainingQuantizer::QuantNode() {
       DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitiveT_value);
       // do weight quant
       auto weight = cnode->input(2);
-      DoWeightQuant(weight);
+      bool depthwise = op_type == PrimitiveType_DeDepthwiseConv2D;
+      DoWeightQuant(weight, primitiveT_value, depthwise);
       // do bias quant
       if (cnode->inputs().size() == 4) {
         auto bias = cnode->input(3);
-        DoBiasQuant(primitiveT_value, weight, bias);
+        DoBiasQuant(bias, primitiveT_value);
       }
     }
     // do output quant

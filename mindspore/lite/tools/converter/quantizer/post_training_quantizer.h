@@ -65,8 +65,8 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoQuantize(FuncGraphPtr funcGraph) override;
 
   size_t bit_num;
-  int quant_max{127};
-  int quant_min{-128};
+  int quant_max{INT8_MAX};
+  int quant_min{INT8_MIN};
 
  private:
   bool per_channel_;
@@ -96,9 +96,9 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveTValue>);
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveTValue>);
 
-  STATUS DoWeightQuant(AnfNodePtr node);
+  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, bool depthwise);
 
-  STATUS DoBiasQuant(std::shared_ptr<PrimitiveTValue> input, AnfNodePtr weight, AnfNodePtr bias);
+  STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveTValue> primitiveT_value);
 };
 
 struct DivergInfo;

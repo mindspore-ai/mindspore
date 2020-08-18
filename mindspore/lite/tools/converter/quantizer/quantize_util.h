@@ -29,6 +29,7 @@
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
 #include "mindspore/lite/tools/converter/quantizer/quantizer.h"
+#include "mindspore/lite/src/ir/primitive_t_value.h"
 
 namespace mindspore {
 namespace lite {
@@ -58,7 +59,7 @@ class QuantStrategy {
   static const std::array<std::string, 4> mMulTypes;
 };
 
-STATUS CalQuantizationParams(std::unique_ptr<AnfQuantParam> &quantParam, double mMin, double mMax,
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
                              bool narrowRange, int quant_max, int quant_min, int num_bits);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
@@ -97,12 +98,12 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
 }
 
 template <typename T>
-T QuantizeData(float originData, const AnfQuantParam *quantParam, int quant_max, int quant_min) {
+T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quant_max, int quant_min) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);
-  const auto scale = quantParam->scale;
-  const int zeroPoint = quantParam->zeroPoint;
-  const auto narrowRange = quantParam->narrowRange;
+  const auto scale = quantParam.scale;
+  const int zeroPoint = quantParam.zeroPoint;
+  const auto narrowRange = quantParam.narrowRange;
   const int maxLimit = quant_max;
   const int minLimit = quant_min;
 
@@ -119,8 +120,9 @@ T QuantizeData(float originData, const AnfQuantParam *quantParam, int quant_max,
 
 void CalFakeNode(const AnfNodePtr &inTensor);
 
-STATUS QuantFilter(ParamValueLitePtr &weightPtr, QuantType quantType, int quant_max, int quant_min,
-                   size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false);
+STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, QuantType quantType,
+                   int quant_max, int quant_min, size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false,
+                   bool depth_wise = false);
 
 STATUS PostBitPack(float *weights, size_t shapeSize, size_t bitNum = UINT8_QUANTIZATION);
 }  // namespace quant

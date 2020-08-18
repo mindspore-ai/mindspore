@@ -31,7 +31,6 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/anf_importer/import_from_protobuf.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
-#include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 
