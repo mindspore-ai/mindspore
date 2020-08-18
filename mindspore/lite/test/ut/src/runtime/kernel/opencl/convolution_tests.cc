@@ -77,33 +77,33 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   auto testcase_path = data_path + "/" + attr_str + "/";
   auto input_file = testcase_path + (input_format == schema::Format_NHWC4 ? "input_NHWC4.bin" : "input_NHWC.bin");
   auto weight_file = testcase_path + "weight_OHWI.bin";
-  auto bias_file = testcase_path + "bias_C4.bin";
+  auto bias_file = testcase_path + "bias_C.bin";
   auto expect_file = testcase_path + (output_format == schema::Format_NHWC4 ? "expect_NHWC4.bin" : "expect_NHWC.bin");
-  std::cout << input_file << std::endl;
-  std::cout << weight_file << std::endl;
-  std::cout << bias_file << std::endl;
-  std::cout << expect_file << std::endl;
+  std::cout << "input_file:" << input_file << std::endl;
+  std::cout << "weight_file:" << weight_file << std::endl;
+  std::cout << "bias_file:" << bias_file << std::endl;
+  std::cout << "expect_file:" << expect_file << std::endl;
 
   std::cout << "initialize OpenCLRuntime";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
-  std::cout << "create inputs/weights/outputs Tensors(framework do)";
+  std::cout << "create Tensors(framework will do!!!)";
   std::vector<int> input_shape = {param->input_batch_, param->input_h_, param->input_w_, param->input_channel_};
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
   auto data_type = kNumberTypeFloat32;
-  auto tensorType = schema::NodeType_ValueNode;
-  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, input_format, tensorType);
-  auto weight_tensor = new lite::tensor::Tensor(data_type, weight_shape, schema::Format_KHWC, tensorType);
-  auto bias_tensor = new lite::tensor::Tensor(data_type, bias_shape, schema::Format_KHWC, tensorType);
-  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, output_format, tensorType);
+  auto tensor_type = schema::NodeType_ValueNode;
+  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, input_format, tensor_type);
+  auto weight_tensor = new lite::tensor::Tensor(data_type, weight_shape, schema::Format_KHWC, tensor_type);
+  auto bias_tensor = new lite::tensor::Tensor(data_type, bias_shape, schema::Format_KHWC, tensor_type);
+  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, output_format, tensor_type);
   std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor, bias_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
-  std::cout << "initialize weight Tensors data(framework do)";
+  std::cout << "allocate and initialize weight/bias memory by hand here(framework will do!!!)";
   std::vector<float> weight_vec(weight_tensor->ElementsNum());
   std::vector<float> bias_vec(weight_tensor->ElementsNum());
   weight_tensor->SetData(weight_vec.data());
@@ -111,25 +111,18 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   LoadData(weight_tensor->Data(), weight_tensor->Size(), weight_file);
   LoadData(bias_tensor->Data(), bias_tensor->Size(), bias_file);
 
-  std::cout << "create OpenCL Kernel";  // weight has been allcated by framework
+  std::cout << "create OpenCL Kernel";  // weight/bias has been allcated by framework
   auto *conv_kernel = new ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   conv_kernel->Init();
-  std::vector<LiteKernel *> kernels{conv_kernel};
-
-  // freamework to do!!! allocate memory by hand
-  inputs[0]->MallocData(allocator);
 
   std::cout << "create SubGraphOpenCLKernel";
-  auto *sub_graph = new SubGraphOpenCLKernel({input_tensor}, outputs, kernels, kernels, kernels);
+  inputs[0]->MallocData(allocator);  // allocate input memory by hand here, framework will do!!!
+  auto *sub_graph = new SubGraphOpenCLKernel({input_tensor}, outputs, {conv_kernel}, {conv_kernel}, {conv_kernel});
   sub_graph->Init();
-
-  std::cout << "initialize input Tensors data";  // inputs has been allcated by sub_graph->Init()
-  LoadData(input_tensor->Data(), input_tensor->Size(), input_file);
+  LoadData(input_tensor->Data(), input_tensor->Size(), input_file);  // initialize input Tensors data
   printf("input[0] =%.3f\n", reinterpret_cast<float *>(input_tensor->Data())[0]);
   printf("weight[0]=%.3f\n", reinterpret_cast<float *>(weight_tensor->Data())[0]);
   printf("bias[0]  =%.3f\n", reinterpret_cast<float *>(bias_tensor->Data())[0]);
-
-  std::cout << "sub_graph->Run()";
   sub_graph->Run();
 
   std::cout << "compare result";
@@ -144,7 +137,7 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   }
   delete conv_kernel;
   delete sub_graph;
-  mindspore::lite::opencl::OpenCLRuntime::DeleteInstance();
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
@@ -161,18 +154,53 @@ TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
 //    "1x1");
 //}
 
-TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80) {
+TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80) {
   TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
             "inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
             "dilationHW_1x1");
 }
-TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x16x256x100_outputNHWC_1x16x256x96) {
+TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x100_outputNHWC_1x16x256x96) {
   TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
             "inputNHWC_1x16x256x100_outputNHWC_1x16x256x96_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
             "dilationHW_1x1");
 }
 
-TEST_F(TestConvolutionOpenCL, winograd_inputNHWC_1x480x480x128_outputNHWC_1x480x480x128) {
+// TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x1_outputNHWC_1x32x512x50) {
+//  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
+//            "inputNHWC_1x32x512x1_outputNHWC_1x32x512x50_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+//            "dilationHW_1x1");
+//}
+
+TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x50_outputNHWC_1x32x512x48) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+            "inputNHWC_1x32x512x50_outputNHWC_1x32x512x48_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x8x128x100_outputNHWC_1x8x128x250) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+            "inputNHWC_1x8x128x100_outputNHWC_1x8x128x250_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x8x128x100_outputNHWC_1x8x128x300) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+            "inputNHWC_1x8x128x100_outputNHWC_1x8x128x300_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x4x64x150_outputNHWC_1x4x64x350) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+            "inputNHWC_1x4x64x150_outputNHWC_1x4x64x350_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x4x64x150_outputNHWC_1x4x64x400) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+            "inputNHWC_1x4x64x150_outputNHWC_1x4x64x400_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_08_origin_inputNHWC_1x480x480x128_outputNHWC_1x480x480x128) {
   TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
             "inputNHWC_1x480x480x128_outputNHWC_1x480x480x128_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_"
             "1x1x1x1_dilationHW_1x1");
