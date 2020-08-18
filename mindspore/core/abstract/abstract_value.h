@@ -285,8 +285,6 @@ class AbstractTensor : public AbstractUndetermined {
   AbstractBasePtr Broaden(uint8_t config = 0) const override;
   AbstractBasePtr BroadenWithShape() const;
   AbstractBasePtr Join(const AbstractBasePtr &other) final;
-  int format() const { return this->format_; }
-  void set_format(int format) { this->format_ = format; }
 
   bool operator==(const AbstractTensor &other) const;
   bool operator==(const AbstractBase &other) const override;
@@ -303,9 +301,6 @@ class AbstractTensor : public AbstractUndetermined {
     }
     return hash_sum;
   }
-
- protected:
-  int format_ = 0;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;

@@ -42,14 +42,14 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
     auto type_id = static_cast<TypeId>(tensor->dataType);
     auto type_ptr = TypeIdToType(type_id);
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
-    abstract_tensor->set_format(tensor->format);
     parameter->set_abstract(abstract_tensor);
-    parameter->set_name("const_" + std::to_string(i));
+    parameter->set_name("const_" + std::to_string(i) + "_parameter");
 
     ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
     MS_ASSERT(param_value != nullptr);
     param_value->set_tensor_shape(shape);
     param_value->set_tensor_type(type_id);
+    param_value->set_format(tensor->format);
     if (!tensor->data.empty()) {
       auto size = tensor->data.size();
       char *tensor_data = new (std::nothrow) char[size];
@@ -138,6 +138,7 @@ void AnfImporterFromMetaGraphT::ConvertAbstract(const std::unique_ptr<schema::CN
       auto get_item_value = NewValueNode(MakeValue<int>(i));
       std::vector<AnfNodePtr> inputs{tuple_get_item_prim, dst_cnode, get_item_value};
       CNodePtr get_item_cnode = func_graph_->NewCNode(inputs);
+      get_item_cnode->set_fullname_with_scope(src_cnode->name + "_getitem_" + std::to_string(i));
       AddNode(out_tensor_id, get_item_cnode);
     }
     dst_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
@@ -170,27 +171,41 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
 int AnfImporterFromMetaGraphT::AddReturnCNode() {
   MS_EXCEPTION_IF_NULL(meta_graph_);
   MS_EXCEPTION_IF_NULL(func_graph_);
-  std::vector<AnfNodePtr> make_tuple_inputs;
-  auto make_tuple_prim = NewValueNode(GetMakeTuplePrim());
-  make_tuple_inputs.emplace_back(make_tuple_prim);
-  for (auto tensor_id : meta_graph_->outputIndex) {
-    auto cNode = GetNode(tensor_id);
-    if (nullptr == cNode) {
+  if (meta_graph_->outputIndex.size() > 1) {
+    std::vector<AnfNodePtr> make_tuple_inputs;
+    auto make_tuple_prim = NewValueNode(GetMakeTuplePrim());
+    make_tuple_inputs.emplace_back(make_tuple_prim);
+    for (auto tensor_id : meta_graph_->outputIndex) {
+      auto cNode = GetNode(tensor_id);
+      if (nullptr == cNode) {
+        MS_LOG(ERROR) << "Can't find input node.";
+        return RET_ERROR;
+      }
+      make_tuple_inputs.emplace_back(cNode);
+    }
+    auto make_tuple_cnode = func_graph_->NewCNode(make_tuple_inputs);
+    make_tuple_cnode->set_fullname_with_scope("return tuple");
+
+    std::vector<AnfNodePtr> op_inputs;
+    auto value_node = NewValueNode(GetReturnPrim());
+    op_inputs.emplace_back(value_node);
+    op_inputs.emplace_back(make_tuple_cnode);
+    auto cnode = func_graph_->NewCNode(op_inputs);
+    cnode->set_fullname_with_scope("return");
+    func_graph_->set_return(cnode);
+  } else {
+    auto value_node = NewValueNode(GetReturnPrim());
+    std::vector<AnfNodePtr> op_inputs{value_node};
+    auto cnode = GetNode(meta_graph_->outputIndex.front());
+    if (nullptr == cnode) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_ERROR;
     }
-    make_tuple_inputs.emplace_back(cNode);
+    op_inputs.emplace_back(cnode);
+    auto return_cnode = func_graph_->NewCNode(op_inputs);
+    return_cnode->set_fullname_with_scope("return");
+    func_graph_->set_return(return_cnode);
   }
-  auto make_tuple_cnode = func_graph_->NewCNode(make_tuple_inputs);
-  make_tuple_cnode->set_fullname_with_scope("return tuple");
-
-  std::vector<AnfNodePtr> op_inputs;
-  auto value_node = NewValueNode(GetReturnPrim());
-  op_inputs.emplace_back(value_node);
-  op_inputs.emplace_back(make_tuple_cnode);
-  auto cnode = func_graph_->NewCNode(op_inputs);
-  cnode->set_fullname_with_scope("return");
-  func_graph_->set_return(cnode);
   return RET_OK;
 }
 

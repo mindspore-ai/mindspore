@@ -60,6 +60,7 @@ add_compile_definitions(NO_DLIB)
 add_compile_options(-fPIC)
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+    string(REPLACE "-g" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
 if (BUILD_DEVICE)
