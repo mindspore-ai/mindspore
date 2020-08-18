@@ -82,6 +82,11 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
     return nullptr;
   }
   int index = GetCreatorFuncIndex(desc);
+  if (index >= array_size_) {
+    MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+                  << desc.type;
+    return nullptr;
+  }
   auto it = creator_arrays_[index];
   if (it != nullptr) {
     return it;
@@ -91,9 +96,9 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
 
 int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
   int index;
-  int device_index = static_cast<int>(desc.arch);
-  int dType_index = static_cast<int>(desc.data_type);
-  int op_index = static_cast<int>(desc.type);
+  int device_index = static_cast<int>(desc.arch) - kKernelArch_MIN;
+  int dType_index = static_cast<int>(desc.data_type) - kNumberTypeBegin;
+  int op_index = static_cast<int>(desc.type) - PrimitiveType_MIN;
   index = device_index * data_type_length_ * op_type_length_ + dType_index * op_type_length_ + op_index;
   return index;
 }
@@ -115,6 +120,11 @@ void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, c
   }
   KernelKey desc = {arch, data_type, op_type};
   int index = GetCreatorFuncIndex(desc);
+  if (index >= array_size_) {
+    MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+                  << desc.type;
+    return;
+  }
   creator_arrays_[index] = creator;
 }
 
