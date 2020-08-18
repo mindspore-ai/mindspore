@@ -115,6 +115,13 @@ def test_auto_parallel_error():
         compile_net(net)
 
 
+def test_auto_parallel():
+    context.set_context(save_graphs=True)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2, global_rank=0)
+    net = Net(split_string="fake")
+    compile_net(net)
+
+
 def test_axis_error():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=2, global_rank=0)
     strategy1 = ((2, 1), (1, 2))
