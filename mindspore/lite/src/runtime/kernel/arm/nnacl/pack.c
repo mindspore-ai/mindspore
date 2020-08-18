@@ -978,6 +978,19 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
   return;
 }
 
+void PackNHWCToNCHWInt8(const void *src, void *dst, int batch, int plane, int channel) {
+  for (int n = 0; n < batch; n++) {
+    for (int c = 0; c < channel; c++) {
+      for (int hw = 0; hw < plane; hw++) {
+        int nhwc_index = n * channel * plane + hw * channel + c;
+        int nchw_index = n * channel * plane + c * plane + hw;
+        ((int8_t *)dst)[nchw_index] = ((int8_t *)src)[nhwc_index];
+      }
+    }
+  }
+  return;
+}
+
 void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
   return PackNHWCToNCHWFp32(src, dst, batch, channel, plane);
 }

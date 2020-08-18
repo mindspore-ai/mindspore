@@ -26,8 +26,12 @@ class AnfMatmulPopulater : public AnfNodePopulater {
                const std::vector<AnfNodePtr> &inputs) override;
 
  private:
-  void PopulaterQuantParam(const PrimitivePtr &prim, std::vector<std::vector<schema::QuantParamT>> *vecQuantParam);
-  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
+  void PopulaterQuantParam(
+          const PrimitivePtr &prim,
+          std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+          std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
+  void CalQuantParam(const double &mean, const double &stdDev, float *mMin,
+                       float *mMax);
 };
 }  // namespace mindspore::lite
 

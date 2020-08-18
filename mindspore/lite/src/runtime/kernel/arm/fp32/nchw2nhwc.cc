@@ -37,8 +37,13 @@ int Nchw2NhwcCPUKernel::Run() {
   auto output = out_tensors_[0];
 
   if (input->shape().size() == 4) {
-    PackNCHWToNHWCFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
-                       output->Channel());
+    if (input->data_type() == kNumberTypeFloat32) {
+      PackNCHWToNHWCFp32(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
+                         output->Channel());
+    } else if (input->data_type() == kNumberTypeInt8) {
+      PackNCHWToNHWCInt8(input->Data(), output->Data(), output->Batch(), output->Height() * output->Width(),
+                         output->Channel());
+    }
   } else {
     memcpy(output->Data(), input->Data(), input->ElementsNum() * sizeof(float));
   }
@@ -67,4 +72,5 @@ kernel::LiteKernel *CpuNchw2NhwcFp32KernelCreator(const std::vector<lite::tensor
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, CpuNchw2NhwcFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nchw2Nhwc, CpuNchw2NhwcFp32KernelCreator)
 }  // namespace mindspore::kernel

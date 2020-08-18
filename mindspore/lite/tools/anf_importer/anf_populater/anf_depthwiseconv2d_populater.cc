@@ -31,8 +31,10 @@ void AnfDepwiseconv2DPopulater::CalQuantParam(const double &mean, const double &
   *mMax = static_cast<float>((qmax - mean) / stdDev);
 }
 
-void AnfDepwiseconv2DPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
-                                                    std::vector<std::vector<schema::QuantParamT>> *vecQuantParam) {
+void AnfDepwiseconv2DPopulater::PopulaterQuantParam(
+        const PrimitivePtr &prim,
+        std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+        std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
   auto narrow_range = prim->GetAttr("narrow_range");
   bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
   auto num_bits = prim->GetAttr("num_bits");
@@ -63,7 +65,7 @@ void AnfDepwiseconv2DPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
   quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                numbitsRangeQuantParam);
   quants.emplace_back(quantParam);
-  vecQuantParam->emplace_back(quants);
+  vecInputQuantParam->emplace_back(quants);
 
   quants.clear();
   int biasQuantSize = 0;
@@ -82,7 +84,7 @@ void AnfDepwiseconv2DPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
                                    numbitsRangeQuantParam);
       quants.emplace_back(quantParam);
     }
-    vecQuantParam->emplace_back(quants);
+    vecInputQuantParam->emplace_back(quants);
   }
 
   quants.clear();
@@ -90,10 +92,12 @@ void AnfDepwiseconv2DPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
     quantParam.min = 0.0;
     quantParam.max = 0.0;
     quantParam.zeroPoint = 0;
-    quantParam.scale = vecQuantParam->at(0).at(0).scale * vecQuantParam->at(1).at(i).scale;
+
+    quantParam.scale =
+            vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(i).scale;
     quants.emplace_back(quantParam);
   }
-  vecQuantParam->emplace_back(quants);
+  vecInputQuantParam->emplace_back(quants);
 
   quants.clear();
   auto outputMin = prim->GetAttr("output_minq");
@@ -108,7 +112,7 @@ void AnfDepwiseconv2DPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
     quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
                                  numbitsRangeQuantParam);
     quants.emplace_back(quantParam);
-    vecQuantParam->emplace_back(quants);
+    vecOutputQuantParam->emplace_back(quants);
   }
 }
 
@@ -177,10 +181,12 @@ int AnfDepwiseconv2DPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValu
   MS_ASSERT(primitiveTValuePtr != nullptr);
   primitiveTValuePtr->SetPrimitiveT(primitive.release());
 
-  if (primitiveTValuePtr->GetQuantType()) {
-    std::vector<std::vector<schema::QuantParamT>> vecQuantParam;
-    PopulaterQuantParam(prim, &vecQuantParam);
-    primitiveTValuePtr->SetInputQuantParam(vecQuantParam);
+  if (primitiveTValuePtr->GetQuantType() == schema::QuantType_AwareTraining) {
+    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
+    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
+    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
+    primitiveTValuePtr->SetInputQuantParam(vecInputQuantParam);
+    primitiveTValuePtr->SetOutputQuantParam(vecOutputQuantParam);
   }
   return 0;
 }
