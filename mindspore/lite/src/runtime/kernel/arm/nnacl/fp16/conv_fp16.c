@@ -334,7 +334,7 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   bool relu6 = conv_param->is_relu6_;
   // todo
   int thread_count = conv_param->thread_num_;
-  int tile_n = 16;
+  const int tile_n = 16;
   int output_count = out_h * out_w;
   int output_tile_count = UP_DIV(output_count, tile_n);
 
@@ -379,7 +379,7 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
                  float16_t *tile_buffer, float16_t *block_unit_buffer, float16_t *tmp_dst_buffer, float16_t *tmp_out,
                  int task_id, ConvParameter *conv_param) {
   int thread_count = conv_param->thread_num_;
-  int tile_num = 16;
+  const int tile_num = 16;
   const int output_unit = 4;
   const int k_plane = 36;
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
@@ -427,7 +427,7 @@ void UnPack3x3OutputFp16(const float16_t *src, float16_t *dst, int batch, int he
     float16_t *batch_out = dst + ro_batch_size;
     for (int h = 0; h < height; h++) {
       int src_h_offset = h * out_w_block * C4NUM * C8NUM;
-      int dst_h_offset = h * width * channel;
+      const int dst_h_offset = h * width * channel;
       for (int w = 0; w < width; w++) {
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;
@@ -462,7 +462,7 @@ void UnPack3x3ReluOutputFp16(const float16_t *src, float16_t *dst, int batch, in
     float16_t *batch_out = dst + ro_batch_size;
     for (int h = 0; h < height; h++) {
       int src_h_offset = h * out_w_block * C4NUM * C8NUM;
-      int dst_h_offset = h * width * channel;
+      const int dst_h_offset = h * width * channel;
       for (int w = 0; w < width; w++) {
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;
@@ -502,7 +502,7 @@ void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, i
     float16_t *batch_out = dst + ro_batch_size;
     for (int h = 0; h < height; h++) {
       int src_h_offset = h * out_w_block * C4NUM * C8NUM;
-      int dst_h_offset = h * width * channel;
+      const int dst_h_offset = h * width * channel;
       for (int w = 0; w < width; w++) {
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;
@@ -545,7 +545,7 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   int out_unit = conv_param->output_unit_;
   int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
   int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
-  int tile_num = 16;
+  const int tile_num = 16;
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, tile_num);
   int out_channel = conv_param->output_channel_;
@@ -594,7 +594,7 @@ void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, i
     int dst_batch_offset = b * height * width * channel;
     for (int h = 0; h < height; h++) {
       int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
-      int dst_h_offset = dst_batch_offset + h * width * channel;
+      const int dst_h_offset = dst_batch_offset + h * width * channel;
       for (int w = 0; w < width; w++) {
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;
@@ -633,7 +633,7 @@ void UnPackWinogradReluOutputFp16(const float16_t *src, float16_t *dst, int batc
     int dst_batch_offset = b * height * width * channel;
     for (int h = 0; h < height; h++) {
       int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
-      int dst_h_offset = dst_batch_offset + h * width * channel;
+      const int dst_h_offset = dst_batch_offset + h * width * channel;
       for (int w = 0; w < width; w++) {
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;
@@ -679,7 +679,7 @@ void UnPackWinogradRelu6OutputFp16(const float16_t *src, float16_t *dst, int bat
     int dst_batch_offset = b * height * width * channel;
     for (int h = 0; h < height; h++) {
       int src_h_offset = src_batch_offset + C8NUM * (h * out_w_block_num * output_unit);
-      int dst_h_offset = dst_batch_offset + h * width * channel;
+      const int dst_h_offset = dst_batch_offset + h * width * channel;
       for (int w = 0; w < width; w++) {
         int src_w_offset = src_h_offset + w * C8NUM;
         int dst_w_offset = dst_h_offset + w * channel;

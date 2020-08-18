@@ -284,7 +284,7 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
   int pad_w = conv_param->pad_w_;
   int pad_h = conv_param->pad_h_;
   int ic4 = UP_DIV(input_channel, C4NUM);
-  int input_unit = 4;
+  const int input_unit = 4;
   if (out_w_block == 0) {
     return;
   }

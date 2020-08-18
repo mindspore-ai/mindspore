@@ -39,7 +39,7 @@ kernel::LiteKernel *CpuMatmulKernelCreator(const std::vector<lite::tensor::Tenso
     case kNumberTypeInt8:
     case kNumberTypeUInt8: {
       kernel = new (std::nothrow) MatmulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-      if (!kernel) {
+      if (kernel == nullptr) {
         MS_LOG(ERROR) << "kernel is nullptr.";
         return nullptr;
       }

@@ -510,6 +510,7 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
   auto ret = memcpy_s(biasTensor->data.data(), bShapeSize * sizeof(int32_t), qDatas, bShapeSize * sizeof(int32_t));
   if (ret != EOK) {
     //    MS_LOGE("memcpy_s failed: %d", ret);
+    delete[] qDatas;
     return RET_ERROR;
   }
   delete[] qDatas;

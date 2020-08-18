@@ -437,7 +437,7 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
-  int input_unit_square = 4 * 4;
+  const int input_unit_square = 4 * 4;
   float *tile_buffer = buffer_list[0];
   float *block_unit_buffer = buffer_list[1];
   float *tmp_dst_buffer = buffer_list[2];

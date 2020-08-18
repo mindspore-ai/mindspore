@@ -55,7 +55,7 @@ int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t lef
 }
 
 int FractionsBits(int kIntegerBits) {
-  int totalBits = 8 * sizeof(int32_t) - 1;
+  const int totalBits = 8 * sizeof(int32_t) - 1;
   return totalBits - kIntegerBits;
 }
 
@@ -82,7 +82,7 @@ int32_t BitNot(int32_t a) { return ~(uint32_t)a; }
 int SelectUsingMask(int mask, int bound, int val) { return BitXor(BitAnd(mask, bound), BitAnd(BitNot(mask), val)); }
 
 int32_t MaskNonZero(int32_t a) {
-  int32_t zreo = 0;
+  const int32_t zreo = 0;
   return a ? BitNot(zreo) : zreo;
 }
 

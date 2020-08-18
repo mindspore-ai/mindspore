@@ -26,7 +26,7 @@ int ElementNotEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int elem
                         ArithmeticQuantArg *quant_arg) {
   float in0_bias = -quant_arg->in0_args_.zp_ * quant_arg->in0_args_.scale_;
   float in1_bias = -quant_arg->in1_args_.zp_ * quant_arg->in1_args_.scale_;
-  float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
+  const float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
   float out_zp = quant_arg->out_args_.zp_;
 
   for (int index = 0; index < element_size; ++index) {
@@ -45,7 +45,7 @@ int ElementNotEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int elem
 int ElementEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg) {
   float in0_bias = -quant_arg->in0_args_.zp_ * quant_arg->in0_args_.scale_;
   float in1_bias = -quant_arg->in1_args_.zp_ * quant_arg->in1_args_.scale_;
-  float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
+  const float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
   float out_zp = quant_arg->out_args_.zp_;
   for (int index = 0; index < element_size; ++index) {
     float in0_real = input0[index] * quant_arg->in0_args_.scale_ + in0_bias;
@@ -63,7 +63,7 @@ int ElementEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element
 int ElementLessInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg) {
   float in0_bias = -quant_arg->in0_args_.zp_ * quant_arg->in0_args_.scale_;
   float in1_bias = -quant_arg->in1_args_.zp_ * quant_arg->in1_args_.scale_;
-  float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
+  const float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
   float out_zp = quant_arg->out_args_.zp_;
   for (int index = 0; index < element_size; ++index) {
     float in0_real = input0[index] * quant_arg->in0_args_.scale_ + in0_bias;
@@ -78,7 +78,7 @@ int ElementLessEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int ele
                          ArithmeticQuantArg *quant_arg) {
   float in0_bias = -quant_arg->in0_args_.zp_ * quant_arg->in0_args_.scale_;
   float in1_bias = -quant_arg->in1_args_.zp_ * quant_arg->in1_args_.scale_;
-  float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
+  const float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
   float out_zp = quant_arg->out_args_.zp_;
 
   for (int index = 0; index < element_size; ++index) {
@@ -94,7 +94,7 @@ int ElementGreaterInt8(int8_t *input0, int8_t *input1, int8_t *output, int eleme
                        ArithmeticQuantArg *quant_arg) {
   float in0_bias = -quant_arg->in0_args_.zp_ * quant_arg->in0_args_.scale_;
   float in1_bias = -quant_arg->in1_args_.zp_ * quant_arg->in1_args_.scale_;
-  float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
+  const float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
   float out_zp = quant_arg->out_args_.zp_;
 
   for (int index = 0; index < element_size; ++index) {
@@ -110,7 +110,7 @@ int ElementGreaterEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int 
                             ArithmeticQuantArg *quant_arg) {
   float in0_bias = -quant_arg->in0_args_.zp_ * quant_arg->in0_args_.scale_;
   float in1_bias = -quant_arg->in1_args_.zp_ * quant_arg->in1_args_.scale_;
-  float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
+  const float output_inverse_scale = 1.f / quant_arg->out_args_.scale_;
   float out_zp = quant_arg->out_args_.zp_;
   for (int index = 0; index < element_size; ++index) {
     float in0_real = input0[index] * quant_arg->in0_args_.scale_ + in0_bias;

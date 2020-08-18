@@ -539,7 +539,7 @@ void Conv3x3Fp16OutputTransform(const float16_t *gemm_out, float16_t *out_data, 
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
                                 int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
                                 InputTransformUnitFp16Func input_trans_func) {
-  int tile_num = 16;
+  const int tile_num = 16;
   int input_unit = conv_param->input_unit_;
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
