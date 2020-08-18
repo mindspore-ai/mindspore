@@ -27,7 +27,8 @@ namespace ps {
 using mindspore::kernel::SparseApplyLazyAdamCPUKernel;
 class SparseApplyLazyAdamPSKernel : public SparseApplyLazyAdamCPUKernel, public PServerKernel {
  public:
-  SparseApplyLazyAdamPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
+  SparseApplyLazyAdamPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+      : PServerKernel(rank_id, pserver_num, worker_num) {}
   ~SparseApplyLazyAdamPSKernel() override = default;
 
   void InitKernel(const CNodePtr &cnode,

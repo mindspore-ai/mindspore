@@ -26,7 +26,8 @@ namespace kernel {
 namespace ps {
 class EmbeddingLookUpPSKernel : public EmbeddingLookUpCPUKernel, public PServerKernel {
  public:
-  EmbeddingLookUpPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
+  EmbeddingLookUpPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+      : PServerKernel(rank_id, pserver_num, worker_num) {}
   ~EmbeddingLookUpPSKernel() override = default;
 
   void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;
