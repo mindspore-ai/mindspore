@@ -32,6 +32,10 @@ DecodeOp::DecodeOp(bool is_rgb_format) : is_rgb_format_(is_rgb_format) {
 
 Status DecodeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  // check the input tensor shape
+  if (input->Rank() != 1) {
+    RETURN_STATUS_UNEXPECTED("DecodeOp error: invalid input shape, only support 1D input.");
+  }
   if (is_rgb_format_) {  // RGB colour mode
     return Decode(input, output);
   } else {  // BGR colour mode
