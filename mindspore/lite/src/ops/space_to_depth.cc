@@ -58,9 +58,9 @@ int SpaceToDepth::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   }
 
   int32_t block_size = GetBlockSize();
-  if (input_shape[NHWC_C] % (block_size * block_size) != 0 || input_shape[NHWC_C] == 0) {
-    MS_LOG(ERROR) << "input dimension c size " << input_shape[NHWC_C] << " should be mulitple of block_size("
-                  << block_size << ") * block_size)!";
+  if (input_shape[NHWC_H] % block_size != 0 || input_shape[NHWC_H] == 0 || input_shape[NHWC_W] % block_size != 0 ||
+      input_shape[NHWC_W] == 0) {
+    MS_LOG(ERROR) << "input dimension h or w size error!";
     return 1;
   }
   std::vector<int32_t> output_shape(input_shape.size());
