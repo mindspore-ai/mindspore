@@ -55,7 +55,7 @@ This is an example of training YOLOV3-DarkNet53-Quant with COCO2014 dataset in M
 
 ```
 # distributed training
-sh run_distribute_train.sh [DATASET_PATH] [RESUME_YOLOV3] [MINDSPORE_HCCL_CONFIG_PATH]
+sh run_distribute_train.sh [DATASET_PATH] [RESUME_YOLOV3] [RANK_TABLE_FILE]
  
 # standalone training
 sh run_standalone_train.sh [DATASET_PATH] [RESUME_YOLOV3]
