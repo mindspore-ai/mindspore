@@ -123,14 +123,15 @@ bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &n
 const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator_arrays_; }
 
 kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *> &in_tensors,
-                                      const std::vector<tensor::Tensor *> &out_tensors,
-                                      const PrimitiveC *primitive, const Context *ctx,
-                                      const kernel::KernelKey &key) {
+                                              const std::vector<tensor::Tensor *> &out_tensors,
+                                              const PrimitiveC *primitive, const Context *ctx,
+                                              const kernel::KernelKey &key) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(ctx);
   auto parameter = kernel::PopulateParameter(primitive);
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << primitive->Type();
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
+                  << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
     return nullptr;
   }
   auto creator = GetCreator(key);
