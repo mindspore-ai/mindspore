@@ -67,7 +67,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   auto pre_node = transform_node->input(1);
   auto conv_node = pre_node->cast<CNodePtr>();
   if (IsMultiOutputTensors(func_graph, conv_node)) {
-    return transform_node;
+    return nullptr;
   }
 
   auto abstr = transform_node->abstract();
@@ -76,8 +76,16 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "Unsupported conv node, " << conv_node->DebugString();
     return node;
   }
-  auto trans_scale = new (std::nothrow) float[kernel_nums];
-  auto trans_bias = new (std::nothrow) float[kernel_nums];
+  auto trans_scale = new(std::nothrow) float[kernel_nums];
+  if (trans_scale == nullptr) {
+    MS_LOG(ERROR) << "tensor_data is nullptr";
+    return nullptr;
+  }
+  auto trans_bias = new(std::nothrow) float[kernel_nums];
+  if (trans_bias == nullptr) {
+    MS_LOG(ERROR) << "tensor_data is nullptr";
+    return nullptr;
+  }
   GenTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
   GenNewConvTensor(func_graph, conv_node, kernel_nums, trans_scale, trans_bias);
   delete[] trans_bias;
@@ -155,7 +163,11 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
     bias_data = reinterpret_cast<float *>(bias_tensor->tensor_addr());
     bias_flag = true;
   } else {
-    bias_data = new (std::nothrow) float[kernel_num];
+    bias_data = new(std::nothrow) float[kernel_num];
+    if (trans_scale == nullptr) {
+      MS_LOG(ERROR) << "tensor_data is nullptr";
+      return;
+    }
   }
   CalNewBiasTensor(bias_data, kernel_num, bias_flag, trans_scale, trans_bias);
   if (!bias_flag) {
@@ -193,7 +205,11 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
                                                  const float *trans_scale, const float *trans_bias) const {
   MS_ASSERT(bias_data != nullptr);
   if (bias_flag) {
-    auto tmp_bias_data = new (std::nothrow) float[kernel_num];
+    auto tmp_bias_data = new(std::nothrow) float[kernel_num];
+    if (tmp_bias_data == nullptr) {
+      MS_LOG(ERROR) << "tensor_data is nullptr";
+      return;
+    }
     if (EOK != memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset bias data failed";
     }

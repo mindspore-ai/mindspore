@@ -83,7 +83,11 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   if (kernel_nums <= 0) {
     MS_LOG(EXCEPTION) << "kernel num less than 0";
   }
-  auto add_bias_data = new (std::nothrow) float[kernel_nums];
+  auto add_bias_data = new(std::nothrow) float[kernel_nums];
+  if (add_bias_data == nullptr) {
+    MS_LOG(ERROR) << "tensor_data is nullptr";
+    return;
+  }
   auto bias_add_weight = bias_node->input(kAddWEIGHTINDEX);
   CheckIfNodeIsParam(bias_add_weight);
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
@@ -140,7 +144,7 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   AnfNodePtr conv_node_anf = add_node->input(1);
   CheckIfAnfNodeIsNull(conv_node_anf);
   if (IsMultiOutputTensors(func_graph, conv_node_anf)) {
-    return add_node;
+    return nullptr;
   }
   auto conv_node = conv_node_anf->cast<CNodePtr>();
   CheckIfCNodeIsNull(conv_node);
