@@ -26,6 +26,7 @@ Convolution1x1CPUKernel::~Convolution1x1CPUKernel() {
   FreeTmpBuffer();
   if (matmul_param_ != nullptr) {
     delete matmul_param_;
+    matmul_param_ = nullptr;
   }
 }
 
@@ -42,6 +43,7 @@ void Convolution1x1CPUKernel::FreeTmpBuffer() {
     free(input_ptr_);
     input_ptr_ = nullptr;
   }
+  return;
 }
 
 int Convolution1x1CPUKernel::ReSize() {

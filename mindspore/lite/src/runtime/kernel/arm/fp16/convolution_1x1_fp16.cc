@@ -105,16 +105,24 @@ int Convolution1x1FP16CPUKernel::Init() {
   return ReSize();
 }
 
-int Convolution1x1FP16CPUKernel::ReSize() {
-  FreeTmpBuffer();
-  if (fp16_weight_ != nullptr) {
-    free(fp16_weight_);
-    fp16_weight_ = nullptr;
+void Convolution1x1FP16CPUKernel::FreeTmpBuffer() {
+  if (weight_ptr_ != nullptr) {
+    free(weight_ptr_);
+    weight_ptr_ = nullptr;
   }
-  if (input_ptr_ != nullptr) {
+  if (pack_input_ != nullptr) {
+    free(pack_input_);
+    pack_input_ = nullptr;
+  }
+  if (pre_trans_input_ && input_ptr_ != nullptr) {
     free(input_ptr_);
     input_ptr_ = nullptr;
   }
+  return;
+}
+
+int Convolution1x1FP16CPUKernel::ReSize() {
+  FreeTmpBuffer();
 
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
