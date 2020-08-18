@@ -28,13 +28,12 @@ TEST_F(TestTfliteParserConv, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Transpose) << "wrong Op Type";
-  ASSERT_EQ(meta_graph->nodes.at(1)->primitive->value.type, schema::PrimitiveType_Conv2D) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Conv2D) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserConv, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.at(1)->primitive->value.AsConv2D(), nullptr);
-  auto val = meta_graph->nodes.at(1)->primitive->value.AsConv2D();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsConv2D(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsConv2D();
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->group, 1);
   ASSERT_EQ(val->activationType, schema::ActivationType_NO_ACTIVATION);

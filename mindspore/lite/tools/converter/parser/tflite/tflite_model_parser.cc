@@ -221,12 +221,29 @@ STATUS TfliteModelParser::UpdateOp(schema::MetaGraphT *sub_graph) {
     if (op->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
       auto attr = op->primitive->value.AsDepthwiseConv2D();
       if (attr->channelMultiplier > 1) {
-        // update attr
         std::unique_ptr<schema::Conv2DT> conv_attr(new schema::Conv2DT);
+        // get channel attr
+        if (op->inputIndex.empty()) {
+          MS_LOG(ERROR) << "the input of DepthwiseConv2D is null";
+          return RET_NULL_PTR;
+        }
+        auto data_id = op->inputIndex[0];
+        if (sub_graph->allTensors.size() <= data_id) {
+          MS_LOG(ERROR) << "the number of allTensors is less than " << data_id;
+          return RET_ERROR;
+        }
+        auto &data_tensor = sub_graph->allTensors.at(data_id);
+        if (data_tensor == nullptr) {
+          MS_LOG(ERROR) << "the data tensor is null";
+          return RET_NULL_PTR;
+        }
+        auto data_shape = data_tensor->dims;
+        conv_attr->channelIn = data_shape[3];
+        conv_attr->channelOut = conv_attr->channelIn * attr->channelMultiplier;
+
+        // update attr
         conv_attr->group = 0;
         conv_attr->format = attr->format;
-        conv_attr->channelIn = attr->channelIn;
-        conv_attr->channelOut = attr->channelIn * attr->channelMultiplier;
         conv_attr->kernelH = attr->kernelH;
         conv_attr->kernelW = attr->kernelW;
         conv_attr->strideH = attr->strideH;
