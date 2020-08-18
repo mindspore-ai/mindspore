@@ -17,6 +17,7 @@
 #ifndef MS_ONNX_DECONV_PARSER_H
 #define MS_ONNX_DECONV_PARSER_H
 
+#include <memory>
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
@@ -28,9 +29,8 @@ class OnnxDeConvParser : public OnnxNodeParser {
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 
  private:
-  bool ParseGroupDeConvolution(schema::CNodeT *op, schema::DeConv2DT *attr);
+  bool ParseGroupDeConvolution(const std::unique_ptr<schema::DeConv2DT> &attr, schema::CNodeT *op);
 };
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MS_ONNX_DECONV_PARSER_H
-

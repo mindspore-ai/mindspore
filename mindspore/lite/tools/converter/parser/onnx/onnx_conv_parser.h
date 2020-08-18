@@ -17,6 +17,7 @@
 #ifndef MS_ONNX_CONV_PARSER_H
 #define MS_ONNX_CONV_PARSER_H
 
+#include <memory>
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
@@ -28,9 +29,8 @@ class OnnxConvParser : public OnnxNodeParser {
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 
  private:
-  bool ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *attr);
+  bool ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::CNodeT *op);
 };
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MS_ONNX_CONV_PARSER_H
-

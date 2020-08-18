@@ -360,6 +360,8 @@ PrimitiveC *ModelImpl::CopyPrimitive(const schema::Primitive *src_prim) {
       return new DeDepthwiseConv2D(const_cast<schema::Primitive *>(src_prim));
     case schema::PrimitiveType_Shape:
       return new Shape(const_cast<schema::Primitive *>(src_prim));
+    case schema::PrimitiveType_Unsqueeze:
+      return new Unsqueeze(const_cast<schema::Primitive *>(src_prim));
     default:
       break;
   }

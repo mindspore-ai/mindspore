@@ -19,17 +19,17 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph,
-                              const onnx::NodeProto &onnx_node,
+STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SliceParser";
   std::unique_ptr<schema::SliceT> attr(new schema::SliceT());
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto& attribute_name = onnx_node_attr.name();
+    const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {
       const int size = onnx_node_attr.ints_size();
+      MS_LOG(ERROR) << "SLICE starts size " << size;
       for (int i = 0; i < size; ++i) {
-          attr->begin.emplace_back(static_cast<int32_t>(onnx_node_attr.ints(i)));
+        attr->begin.emplace_back(static_cast<int32_t>(onnx_node_attr.ints(i)));
       }
     } else if (attribute_name == "ends") {
       const int size = onnx_node_attr.ints_size();
@@ -49,4 +49,3 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph,
 OnnxNodeRegistrar g_onnxSliceParser("Slice", new OnnxSliceParser());
 }  // namespace lite
 }  // namespace mindspore
-
