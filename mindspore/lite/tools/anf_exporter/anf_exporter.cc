@@ -134,7 +134,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
         for (auto input_quant_param : input_quant_params[i]) {
           std::unique_ptr<schema::QuantParamT> input_quant_param_ptr =
             std::make_unique<schema::QuantParamT>(input_quant_param);
-          MS_LOG(DEBUG) << "[input]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
+          MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
                         << " zp: " << input_quant_param_ptr->zeroPoint;
           tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
         }
@@ -152,7 +152,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
         if (tensor_output->quantParams.empty()) {
           std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
             std::make_unique<schema::QuantParamT>(output_quant_param);
-          MS_LOG(DEBUG) << "[input]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
+          MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
                         << " zp: " << output_quant_param_ptr->zeroPoint;
           tensor_output->quantParams.emplace_back(std::move(output_quant_param_ptr));
         }
