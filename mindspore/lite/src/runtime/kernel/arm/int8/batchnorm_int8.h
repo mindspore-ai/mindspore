@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCHNORM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCHNORM_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
+#include "src/runtime/kernel/arm/nnacl/int8/batchnorm_int8.h"
 #include "src/runtime/kernel/arm/nnacl/batchnorm_parameter.h"
 
 using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class BatchnormCPUKernel : public LiteKernel {
+class BatchnormInt8CPUKernel : public LiteKernel {
  public:
-  BatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                     const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
+  BatchnormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                         const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                         const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
   }
-  ~BatchnormCPUKernel() override;
+  ~BatchnormInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -43,12 +43,12 @@ class BatchnormCPUKernel : public LiteKernel {
   int DoExecute(int tid);
 
  private:
-  float *in_addr_ = nullptr;
-  float *mean_addr_ = nullptr;
-  float *var_addr_ = nullptr;
-  float *out_addr_ = nullptr;
+  int8_t *in_addr_ = nullptr;
+  int8_t *out_addr_ = nullptr;
+  float *alpha_addr_ = nullptr;
+  float *beta_addr_ = nullptr;
   BatchNormParameter *batchnorm_param_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCHNORM_H_

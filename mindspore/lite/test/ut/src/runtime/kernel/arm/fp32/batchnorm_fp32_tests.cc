@@ -147,4 +147,63 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   output0_tensor.SetData(nullptr);
   MS_LOG(INFO) << "TestFusedBathNormFp32 accuracy passed";
 }
+
+TEST_F(TestBatchnormFp32, easyTest) {
+  std::vector<float> in_data = {1, 4, 2, 5, 3, 6, -1, -4, -2, -5, -3, -6};
+  std::vector<float> in_data1 = {0.1, 0.6};
+  std::vector<float> in_data2 = {3, 4};
+  std::vector<lite::tensor::Tensor *> inputs_tensor;
+  std::vector<lite::tensor::Tensor *> outputs_tensor;
+
+  BatchNormParameter op_param;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
+  op_param.epsilon_ = 0.001f;
+
+  std::vector<int> shape = {1, 1, 6, 2};
+  lite::tensor::Tensor input0_tensor;
+  lite::tensor::Tensor input1_tensor;
+  lite::tensor::Tensor input2_tensor;
+  inputs_tensor.push_back(&input0_tensor);
+  inputs_tensor.push_back(&input1_tensor);
+  inputs_tensor.push_back(&input2_tensor);
+  input0_tensor.SetData(in_data.data());
+  input1_tensor.SetData(in_data1.data());
+  input2_tensor.SetData(in_data2.data());
+  input0_tensor.set_shape(shape);
+  input1_tensor.set_shape({2});
+  input2_tensor.set_shape({2});
+
+  std::vector<float> output(12);
+  std::vector<float> corr_out = {0.519529, 1.69979,  1.09678,  2.19973,  1.67404,  2.69966,
+                                 -0.63498, -2.29971, -1.21223, -2.79965, -1.78949, -3.29959};
+
+  lite::tensor::Tensor output0_tensor;
+  outputs_tensor.push_back(&output0_tensor);
+  output0_tensor.SetData(output.data());
+  output0_tensor.set_shape(shape);
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
+  lite::Context ctx;
+  ctx.thread_num_ = 1;
+  kernel::LiteKernel *kernel =
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
+  auto output_tensor_shape = output0_tensor.shape();
+  kernel->Run();
+
+  printf("==================output data=================\n");
+  for (int i = 0; i < output0_tensor.ElementsNum(); i++) {
+    std::cout << output[i] << " ,";
+  }
+  std::cout << std::endl;
+  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+
+  input0_tensor.SetData(nullptr);
+  input1_tensor.SetData(nullptr);
+  input2_tensor.SetData(nullptr);
+  output0_tensor.SetData(nullptr);
+  MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
+}
+
 }  // namespace mindspore
