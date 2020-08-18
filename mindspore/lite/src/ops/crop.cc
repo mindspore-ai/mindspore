@@ -46,9 +46,12 @@ int Crop::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::T
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
     return RET_PARAM_INVALID;
   }
-  outputs[0]->set_shape(inputs[1]->shape());
   outputs[0]->SetFormat(inputs[0]->GetFormat());
   outputs[0]->set_data_type(inputs[0]->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  outputs[0]->set_shape(inputs[1]->shape());
   return RET_OK;
 }
 }  // namespace lite

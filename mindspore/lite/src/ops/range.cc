@@ -50,12 +50,18 @@ int Range::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   MS_ASSERT(output != nullptr);
   auto range_prim = this->primitive->value_as_Range();
   MS_ASSERT(range_prim != nullptr);
+
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+
   int shape_size = std::ceil(static_cast<float>(range_prim->limit() - range_prim->start()) / range_prim->delta());
   std::vector<int> in_shape(1);
   in_shape.push_back(shape_size);
   output->set_shape(in_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
+
   return RET_OK;
 }
 }  // namespace lite

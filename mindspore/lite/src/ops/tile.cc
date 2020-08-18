@@ -40,6 +40,11 @@ int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto tile_prim = this->primitive->value_as_Tile();
   MS_ASSERT(tile_prim != nullptr);
   std::vector<int> out_shape;
@@ -49,9 +54,8 @@ int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     int tmp = input->shape()[i] * multiples[i];
     out_shape.push_back(tmp);
   }
-  output->SetFormat(input->GetFormat());
+
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace lite

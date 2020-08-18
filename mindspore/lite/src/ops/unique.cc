@@ -42,12 +42,15 @@ int Unique::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   MS_ASSERT(output0 != nullptr);
   auto &output1 = outputs_.at(1);
   MS_ASSERT(output1 != nullptr);
-  output0->set_shape(input->shape());
   output0->set_data_type(input->data_type());
-  output1->set_shape(input->shape());
   output1->set_data_type(kNumberTypeInt32);
   output1->SetFormat(input->GetFormat());
   output0->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  output0->set_shape(input->shape());
+  output1->set_shape(input->shape());
   return RET_OK;
 }
 }  // namespace lite

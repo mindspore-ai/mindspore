@@ -43,6 +43,11 @@ int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::T
     MS_LOG(ERROR) << "input size" << inputs.size() << " is error!";
     return RET_INPUT_TENSOR_ERROR;
   }
+  output->SetFormat(input->GetFormat());
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   for (int i = 1; i < inputs.size(); ++i) {
     if (inputs.at(i)->shape() != inputs.at(0)->shape()) {
       MS_LOG(ERROR) << "AddN inputs shape is not equal!";
@@ -53,9 +58,8 @@ int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::T
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-  output->SetFormat(input->GetFormat());
+
   output->set_shape(input->shape());
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace lite

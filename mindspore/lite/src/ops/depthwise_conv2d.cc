@@ -120,7 +120,11 @@ int DepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
   MS_ASSERT(weight != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-
+  output->SetFormat(input->GetFormat());
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto in_shape = input->shape();
   int input_h = in_shape.at(1);
   int input_w = in_shape.at(2);
@@ -158,8 +162,6 @@ int DepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
   out_shape.at(3) = weight->shape()[0] * weight->shape()[3];  // in_channel * out_channel
 
   output->set_shape(out_shape);
-  output->SetFormat(input->GetFormat());
-  output->set_data_type(input->data_type());
   return 0;
 }
 }  // namespace lite

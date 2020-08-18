@@ -95,6 +95,11 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  output->set_data_type(input->data_type());
+  output->SetFormat(schema::Format_NHWC);
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   int input_h = input->shape().at(1);
   int input_w = input->shape().at(2);
   auto pooling_prim = this->primitive->value_as_Pooling();
@@ -137,9 +142,6 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   input_shape.at(1) = output_h;
   input_shape.at(2) = output_w;
   output->set_shape(input_shape);
-  output->set_data_type(input->data_type());
-  // todo: temp fix
-  output->SetFormat(schema::Format_NHWC);
   return RET_OK;
 }
 }  // namespace lite

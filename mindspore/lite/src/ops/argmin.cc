@@ -55,6 +55,11 @@ int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
   }
+  output->SetFormat(input->GetFormat());
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto argmin_prim = this->primitive->value_as_ArgMin();
   auto input_shape_size = input->shape().size();
   int axis = argmin_prim->axis() < 0 ? argmin_prim->axis() + input_shape_size : argmin_prim->axis();
@@ -68,9 +73,8 @@ int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   } else {
     output_shape[axis] = argmin_prim->topK();
   }
-  output->SetFormat(input->GetFormat());
+
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace lite

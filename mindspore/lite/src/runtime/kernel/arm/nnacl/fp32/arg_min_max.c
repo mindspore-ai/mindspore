@@ -18,15 +18,29 @@
 #include <float.h>
 
 int ArgCompareAscFp32(const void *a, const void *b) {
-  return ((ArgElement *)a)->data_.f_data_ - ((ArgElement *)b)->data_.f_data_;
+  float a_value = ((ArgElement *)a)->data_.f_data_;
+  float b_value = ((ArgElement *)b)->data_.f_data_;
+  if (b_value > a_value) {
+    return -1;
+  }
+  if (b_value < a_value) {
+    return 1;
+  }
+
+  return 0;
 }
 
 int ArgCompareDescFp32(const void *a, const void *b) {
-  // cmp funtion of qsort must return int type
-  auto b_value = ((ArgElement *)b)->data_.f_data_;
-  auto a_value = ((ArgElement *)a)->data_.f_data_;
-  int res = b_value > a_value ? 1 : -1;
-  return res;
+  float b_value = ((ArgElement *)b)->data_.f_data_;
+  float a_value = ((ArgElement *)a)->data_.f_data_;
+  if (b_value > a_value) {
+    return 1;
+  }
+  if (b_value < a_value) {
+    return -1;
+  }
+
+  return 0;
 }
 
 void ArgMaxDim0OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {

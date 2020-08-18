@@ -46,6 +46,12 @@ int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vect
   MS_ASSERT(ids != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  output->SetFormat(params_->GetFormat());
+  output->set_data_type(params_->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+
   auto embedding_shape = params_->shape();
   embedding_shape.erase(embedding_shape.begin());
   std::vector<int> output_shape(ids->shape());
@@ -61,7 +67,6 @@ int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vect
     }
   }
   output->set_shape(output_shape);
-  output->set_data_type(params_->data_type());
   return RET_OK;
 }
 }  // namespace lite

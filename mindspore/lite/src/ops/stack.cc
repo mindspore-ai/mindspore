@@ -56,6 +56,11 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     return RET_PARAM_INVALID;
   }
   auto input = inputs.at(0);
+  outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto input_shape = input->shape();
   auto stack_prim = this->primitive->value_as_Stack();
   std::vector<int32_t> output_shape = input_shape;
@@ -84,8 +89,6 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   }
   output_shape.insert(output_shape.begin() + axis, inputs.size());
   outputs[0]->set_shape(output_shape);
-  outputs[0]->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

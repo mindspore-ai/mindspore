@@ -25,10 +25,13 @@ int Rank::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  std::vector<int> in_shape(1, 1);
-  output->set_shape(in_shape);
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  std::vector<int> in_shape(1, 1);
+  output->set_shape(in_shape);
   return RET_OK;
 }
 }  // namespace lite

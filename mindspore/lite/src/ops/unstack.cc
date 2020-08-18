@@ -44,6 +44,14 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
     MS_LOG(ERROR) << "Invalid axis " << prim->axis();
     return RET_PARAM_INVALID;
   }
+  for (auto &out : outputs) {
+    MS_ASSERT(out != nullptr);
+    out->set_data_type(input->data_type());
+    out->SetFormat(input->GetFormat());
+  }
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   std::vector<int> output_shape;
   for (size_t i = 0; i < input_shape.size(); ++i) {
     if (i != axis) {
@@ -53,8 +61,6 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
   for (auto &out : outputs) {
     MS_ASSERT(out != nullptr);
     out->set_shape(output_shape);
-    out->set_data_type(input->data_type());
-    out->SetFormat(input->GetFormat());
   }
   return RET_OK;
 }

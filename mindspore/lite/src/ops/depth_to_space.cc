@@ -50,6 +50,11 @@ int DepthToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
     MS_LOG(ERROR) << "depth_to_space only support NHWC now!";
     return 1;
   }
+  outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
@@ -68,10 +73,7 @@ int DepthToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
   output_shape[NHWC_W] = input_shape[NHWC_W] * block_size;
   output_shape[NHWC_C] = input_shape[NHWC_C] / (block_size * block_size);
   outputs[0]->set_shape(output_shape);
-  outputs[0]->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
-
-  return 0;
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

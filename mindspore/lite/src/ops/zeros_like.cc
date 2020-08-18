@@ -29,10 +29,12 @@ int ZerosLike::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vect
                   << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
   }
-  output->set_shape(input->shape());
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
-
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  output->set_shape(input->shape());
   return RET_OK;
 }
 }  // namespace lite

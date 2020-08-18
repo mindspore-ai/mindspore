@@ -46,6 +46,12 @@ int GatherNd::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
   MS_ASSERT(indices != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto in_shape = input->shape();
   int in_rank = in_shape.size();
   auto indices_shape = indices->shape();
@@ -63,8 +69,6 @@ int GatherNd::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
     out_shape.emplace_back(in_shape[i]);
   }
   output->set_shape(out_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite

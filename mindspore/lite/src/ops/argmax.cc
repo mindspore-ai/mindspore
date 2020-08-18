@@ -55,6 +55,12 @@ int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
   }
+
+  output->SetFormat(input->GetFormat());
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto argmax_prim = this->primitive->value_as_ArgMax();
   std::vector<int> output_shape(input->shape());
   auto input_shape_size = input->shape().size();
@@ -68,9 +74,8 @@ int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   } else {
     output_shape[axis] = argmax_prim->topK();
   }
-  output->SetFormat(input->GetFormat());
+
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace lite

@@ -25,6 +25,11 @@ int Nhwc2Nchw::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vect
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  output->SetFormat(schema::Format_NCHW);
+  output->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   std::vector<int> nhwc_shape = input->shape();
   if (nhwc_shape.size() != 4) {
     output->set_shape(nhwc_shape);
@@ -36,8 +41,6 @@ int Nhwc2Nchw::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vect
     nchw_shape[NCHW_W] = nhwc_shape[NHWC_W];
     output->set_shape(nchw_shape);
   }
-  output->SetFormat(schema::Format_NCHW);
-  output->set_data_type(input->data_type());
   return RET_OK;
 }
 }  // namespace lite

@@ -44,6 +44,14 @@ int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   MS_ASSERT(input0 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  for (int i = 0; i < kLstmOutputNum; i++) {
+    outputs_[i]->set_data_type(input->data_type());
+    outputs_[i]->SetFormat(input->GetFormat());
+  }
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+
   std::vector<int> in_shape = input->shape();
   std::vector<int> w_shape = weight_i->shape();  // layer, hidden_size * 4, input_size
   if (in_shape.size() != 3 || w_shape.size() != 3) {
@@ -65,10 +73,7 @@ int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   state_shape[2] = hidden_size;
   outputs_[1]->set_shape(state_shape);
   outputs_[2]->set_shape(state_shape);
-  for (int i = 0; i < kLstmOutputNum; i++) {
-    outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->SetFormat(input->GetFormat());
-  }
+
   return RET_OK;
 }
 }  // namespace lite

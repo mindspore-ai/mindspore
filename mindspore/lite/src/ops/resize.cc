@@ -66,6 +66,11 @@ int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<
   if (output == nullptr) {
     return 1;
   }
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto new_height = GetNewHeight();
   auto new_width = GetNewWidth();
 
@@ -75,10 +80,8 @@ int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<
   output_shape.push_back(new_width);
   output_shape.push_back(input->Channel());
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
 
-  return 0;
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

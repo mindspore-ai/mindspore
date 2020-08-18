@@ -46,6 +46,11 @@ int BroadcastTo::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vec
     return 1;
   }
   auto input = inputs.at(0);
+  outputs[0]->SetFormat(input->GetFormat());
+  outputs[0]->set_data_type(input->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   std::vector<int32_t> dst_shape(this->primitive->value_as_BroadcastTo()->dst_shape()->begin(),
                                  this->primitive->value_as_BroadcastTo()->dst_shape()->end());
   auto input_shape = input->shape();
@@ -72,10 +77,8 @@ int BroadcastTo::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vec
     shape[i] = dst_shape[i];
     --input_shape_index;
   }
-  outputs[0]->SetFormat(input->GetFormat());
   outputs[0]->set_shape(shape);
-  outputs[0]->set_data_type(input->data_type());
-  return 0;
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

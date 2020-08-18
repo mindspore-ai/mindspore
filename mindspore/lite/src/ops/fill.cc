@@ -45,6 +45,11 @@ int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
   }
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
   auto fill_prim = this->primitive->value_as_Fill();
   if (fill_prim == nullptr) {
     MS_LOG(ERROR) << "Fill primitive is null!";
@@ -53,8 +58,6 @@ int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   std::vector<int> output_shape;
   (void)output_shape.insert(output_shape.begin(), fill_prim->dims()->begin(), fill_prim->dims()->end());
   output->set_shape(output_shape);
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
   return RET_OK;
 }
 }  // namespace lite
