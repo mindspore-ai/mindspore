@@ -767,11 +767,19 @@ Status CsvOp::ComputeColMap() {
       for (int32_t i = 0; i < col_names.size(); i++) {
         // consider the case of CRLF
         col_names[i].erase(col_names[i].find_last_not_of('\r') + 1);
-        column_name_id_map_[col_names[i]] = i;
+        if (column_name_id_map_.find(col_names[i]) == column_name_id_map_.end()) {
+          column_name_id_map_[col_names[i]] = i;
+        } else {
+          RETURN_STATUS_UNEXPECTED("Duplicate column names are not allowed");
+        }
       }
     } else {
       for (int32_t i = 0; i < column_name_list_.size(); i++) {
-        column_name_id_map_[column_name_list_[i]] = i;
+        if (column_name_id_map_.find(column_name_list_[i]) == column_name_id_map_.end()) {
+          column_name_id_map_[column_name_list_[i]] = i;
+        } else {
+          RETURN_STATUS_UNEXPECTED("Duplicate column names are not allowed");
+        }
       }
     }
   } else {
