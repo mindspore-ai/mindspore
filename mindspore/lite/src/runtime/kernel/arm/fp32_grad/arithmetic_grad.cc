@@ -120,13 +120,27 @@ int ArithmeticGradCPUKernel::InferShape() {
         arithmeticParameter_->out_shape_[i] = outShape[i];
       }
     }
+
     tile_data0 = new (std::nothrow) float[inputs_.at(0)->ElementsNum()];
-    MS_ASSERT(tile_data0 != nullptr);
+    if (tile_data0 == nullptr) {
+      MS_LOG(ERROR) << "new data0 fail!";
+      return RET_ERROR;
+    }
     tile_data1 = new (std::nothrow) float[inputs_.at(0)->ElementsNum()];
-    MS_ASSERT(tile_data1 != nullptr);
+    if (tile_data1 == nullptr) {
+      MS_LOG(ERROR) << "new data1 fail!";
+      delete tile_data0;
+      return RET_ERROR;
+    }
+
     if (type() == PrimitiveType_DivGrad) {
       tile_data2 = new (std::nothrow) float[inputs_.at(0)->ElementsNum()];
-      MS_ASSERT(tile_data2 != nullptr);
+      if (tile_data2 == nullptr) {
+        MS_LOG(ERROR) << "new data2 fail!";
+        delete tile_data0;
+        delete tile_data1;
+        return RET_ERROR;
+      }
     }
   }
 

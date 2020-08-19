@@ -203,6 +203,7 @@ TEST_F(ConvScaleFusionTest, TestConvScaleNode) {
   for (auto &cnode : new_meta_graph->nodes) {
     ASSERT_EQ(cnode->primitive->value.AsConv2D()->hasBias, true);
   }
+  delete anf_transform;
 }
 
 TEST_F(ConvScaleFusionTest, TestDeptiwiseConvScaleNode) {
@@ -217,5 +218,6 @@ TEST_F(ConvScaleFusionTest, TestDeptiwiseConvScaleNode) {
     ASSERT_EQ(cnode->primitive->value.AsDepthwiseConv2D()->hasBias, true);
     ASSERT_EQ(cnode->inputIndex.size(), 3);
   }
+  delete anf_transform;
 }
 }  // namespace mindspore

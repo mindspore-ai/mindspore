@@ -172,7 +172,11 @@ int ConvolutionSWFP16CPUKernel::ReSize() {
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
   // init sliding window param
-  slidingWindow_param_ = new SlidingWindowParam;
+  slidingWindow_param_ = new (std::nothrow) SlidingWindowParam;
+  if (slidingWindow_param_ == nullptr) {
+    MS_LOG(ERROR) << "new SlidingWindowParam fail!";
+    return RET_ERROR;
+  }
   InitSlidingParamConv(slidingWindow_param_, conv_param_, C4NUM);
   return RET_OK;
 }

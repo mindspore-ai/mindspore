@@ -23,7 +23,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_context_Context_creat
                                                                                           jint device_type,
                                                                                           jint thread_num,
                                                                                           jint cpu_bind_mode) {
-  auto *context = new mindspore::lite::Context();
+  auto *context = new (std::nothrow) mindspore::lite::Context();
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "new Context fail!";
+    return (jlong)context;
+  }
   switch (device_type) {
     case 0:
       context->device_ctx_.type = mindspore::lite::DT_CPU;

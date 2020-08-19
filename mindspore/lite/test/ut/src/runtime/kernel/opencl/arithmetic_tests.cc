@@ -141,7 +141,7 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
 
   delete kernel;
   delete arith_kernel;
-
+  delete param;
   for (auto tensor : inputs) {
     delete tensor;
   }

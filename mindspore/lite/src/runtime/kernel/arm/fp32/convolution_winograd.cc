@@ -145,7 +145,12 @@ int ConvolutionWinogradCPUKernel::MallocFilterMatrix(int oc_block, int oc_block_
     return RET_ERROR;
   }
   memset(matrix_buffer, 0, trans_matrix_data_size);
-  trans_weight_ = new Matrix();
+  trans_weight_ = new (std::nothrow) Matrix();
+  if (trans_weight_ == nullptr) {
+    MS_LOG(ERROR) << "new Matrix fail!";
+    free(matrix_buffer);
+    return RET_ERROR;
+  }
   trans_weight_->SetData(matrix_buffer);
   trans_weight_->SetNDim(5);
 

@@ -97,7 +97,10 @@ kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::t
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_ActivationGrad);
   auto *kernel = new (std::nothrow) ActivationGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ActivationGradCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InferShape kernel failed, name: " << opParameter->name_ << ", type: "

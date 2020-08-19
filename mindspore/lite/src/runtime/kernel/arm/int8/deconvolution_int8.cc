@@ -108,7 +108,11 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
 }
 
 int DeConvInt8CPUKernel::InitParam() {
-  matmul_param_ = new MatMulParameter();
+  matmul_param_ = new (std::nothrow) MatMulParameter();
+  if (matmul_param_ == nullptr) {
+    MS_LOG(ERROR) << "new MatMulParameter fail!";
+    return RET_ERROR;
+  }
   matmul_param_->row_ = conv_param_->input_h_ * conv_param_->input_w_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * conv_param_->kernel_h_ * conv_param_->kernel_w_;
@@ -121,6 +125,7 @@ int DeConvInt8CPUKernel::InitParam() {
   } else {
     /*todo */
   }
+
   return RET_OK;
 }
 

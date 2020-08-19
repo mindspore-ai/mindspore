@@ -122,8 +122,13 @@ kernel::LiteKernel *CpuArithmeticSelfInt8KernelCreator(const std::vector<lite::t
     MS_LOG(ERROR) << "Creator failed, opParameter is nullptr!";
     return nullptr;
   }
+
   auto *kernel = new (std::nothrow) ArithmeticSelfInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ArithmeticSelfInt8CPUKernel fail!";
+    return nullptr;
+  }
+
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
