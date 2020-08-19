@@ -51,6 +51,8 @@ class _Conv(Cell):
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
+        self.weight_init = weight_init
+        self.bias_init = bias_init
         if isinstance(padding, int):
             Validator.check_integer('padding', padding, 0, Rel.GE, self.cls_name)
             self.padding = padding
@@ -85,12 +87,12 @@ class _Conv(Cell):
             shape = [in_channels, out_channels // group, *kernel_size]
         else:
             shape = [out_channels, in_channels // group, *kernel_size]
-        self.weight = Parameter(initializer(weight_init, shape), name='weight')
+        self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
         if check_bool(has_bias):
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
+            self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
         else:
-            if bias_init != 'zeros':
+            if self.bias_init != 'zeros':
                 logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
             self.bias = None
 
@@ -249,11 +251,8 @@ class Conv2d(_Conv):
                 self.dilation,
                 self.group,
                 self.has_bias,
-                self.weight,
-                self.bias)
-
-        if self.has_bias:
-            s += ', bias={}'.format(self.bias)
+                self.weight_init,
+                self.bias_init)
         return s
 
 
@@ -431,11 +430,8 @@ class Conv1d(_Conv):
                 self.dilation,
                 self.group,
                 self.has_bias,
-                self.weight,
-                self.bias)
-
-        if self.has_bias:
-            s += ', bias={}'.format(self.bias)
+                self.weight_init,
+                self.bias_init)
         return s
 
 
@@ -605,8 +601,8 @@ class Conv2dTranspose(_Conv):
                                                   self.dilation,
                                                   self.group,
                                                   self.has_bias,
-                                                  self.weight,
-                                                  self.bias)
+                                                  self.weight_init,
+                                                  self.bias_init)
         return s
 
 
@@ -788,8 +784,8 @@ class Conv1dTranspose(_Conv):
                                                   self.dilation,
                                                   self.group,
                                                   self.has_bias,
-                                                  self.weight,
-                                                  self.bias)
+                                                  self.weight_init,
+                                                  self.bias_init)
         return s
 
 

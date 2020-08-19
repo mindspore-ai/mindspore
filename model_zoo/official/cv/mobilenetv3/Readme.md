@@ -27,8 +27,8 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 # Environment Requirements
 
-- Hardware（Ascend/GPU）
-  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Hardware（GPU）
+  - Prepare hardware environment with GPU processor.
 - Framework
   - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
 - For more information, please check the resources below：
@@ -60,14 +60,12 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ### Usage
 
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
 
 ### Launch
 
 ``` 
 # training example
-  Ascend: sh run_train.sh Ascend 8 192.168.0.1 0,1,2,3,4,5,6,7 ~/imagenet/train/
   GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
 ```
 
@@ -86,14 +84,12 @@ epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
 
 ### Usage
 
-- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
 - GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
 ``` 
 # infer example
-    Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
     GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
 ```
 

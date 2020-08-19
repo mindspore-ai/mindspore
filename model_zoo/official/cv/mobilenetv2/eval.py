@@ -30,7 +30,7 @@ from src.mobilenetV2 import mobilenet_v2
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--device_targe', type=str, default=None, help='run device_targe')
+parser.add_argument('--device_target', type=str, default=None, help='run device_target')
 args_opt = parser.parse_args()
 
 
