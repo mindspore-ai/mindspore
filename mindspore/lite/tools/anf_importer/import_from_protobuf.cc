@@ -1129,7 +1129,12 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, output_shape);
 
     inputs.clear();
-    inputs.push_back(NewValueNode(prim::kPrimReturn));
+    auto primReturn = std::make_unique<schema::PrimitiveT>();
+    MS_ASSERT(primReturn != nullptr);
+    primReturn->value.type = schema::PrimitiveType_Return;
+    std::shared_ptr<PrimitiveTValue> primitiveTReturnValuePtr = std::make_shared<PrimitiveTValue>(primReturn.release());
+    MS_ASSERT(primitiveTReturnValuePtr != nullptr);
+    inputs.push_back(NewValueNode(primitiveTReturnValuePtr));
     inputs.push_back(cnode_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);

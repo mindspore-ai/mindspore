@@ -18,6 +18,7 @@
 #include "tools/common/converter_op_utils.h"
 #include "utils/log_adapter.h"
 #include "src/common/utils.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -166,6 +167,9 @@ STATUS WeightFormatHardCodePass::HardCodeMS(const std::unique_ptr<CNodeT> &node,
       if (opType == PrimitiveType_Conv2D) {
         weightTensor->format = Format_KCHW;
       } else if (opType == PrimitiveType_DepthwiseConv2D) {
+        if (weightTensor->format == Format_KCHW) {
+          TransFilterFormat<float>(weightTensor.get(), kKCHW2CKHW);
+        }
         weightTensor->format = Format_CKHW;
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(opType) << ", node: " << node->name;

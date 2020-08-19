@@ -387,7 +387,8 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       }
       meta_graphT->allTensors.emplace_back(msTensor);
       if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D)
-          || IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D)) {
+          || IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D)
+          || IsPrimitiveCNode(cnode, schema::PrimitiveType_FusedBatchNorm)) {
         break;
       }
     }
