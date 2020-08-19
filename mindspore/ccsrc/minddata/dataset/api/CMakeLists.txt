@@ -7,6 +7,7 @@ if (ENABLE_PYTHON)
             python/bindings.cc
             python/bindings/dataset/engine/cache/bindings.cc
             python/bindings/dataset/core/bindings.cc
+            python/bindings/dataset/callback/bindings.cc
             python/bindings/dataset/kernels/data/bindings.cc
             python/bindings/dataset/kernels/bindings.cc
             python/bindings/dataset/engine/datasetops/bindings.cc

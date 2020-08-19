@@ -58,6 +58,7 @@ add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(text)
+add_subdirectory(callback)
 ######################################################################
 add_dependencies(utils core)
 add_dependencies(kernels-image core)
@@ -74,6 +75,7 @@ add_dependencies(engine-cache-server core)
 add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
 add_dependencies(engine core)
+add_dependencies(callback core)
 add_dependencies(text core)
 add_dependencies(text-kernels core)
 add_dependencies(cpp-API core)
@@ -87,6 +89,7 @@ endif ()
 ################### Create _c_dataengine Library ######################
 set(submodules
     $<TARGET_OBJECTS:core>
+    $<TARGET_OBJECTS:callback>
     $<TARGET_OBJECTS:utils>
     $<TARGET_OBJECTS:kernels>
     $<TARGET_OBJECTS:kernels-image>
@@ -135,14 +138,14 @@ endif()
 target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if (ENABLE_PYTHON)
-        target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})  
+        target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})
     else()
         target_link_libraries(_c_dataengine PRIVATE mindspore::protobuf ${SECUREC_LIBRARY})
     endif()
 else()
     set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
     if (ENABLE_PYTHON)
-        target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY}) 
+        target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
     else()
         target_link_libraries(_c_dataengine PRIVATE -ldl mindspore::protobuf ${SECUREC_LIBRARY})
     endif()

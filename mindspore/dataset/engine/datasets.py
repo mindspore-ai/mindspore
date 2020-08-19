@@ -44,7 +44,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset,\
+    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
     check_paddeddataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..text.utils import DE_C_INTER_SENTENCEPIECE_MODE
@@ -395,7 +395,7 @@ class Dataset:
 
     @check_map
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
-            num_parallel_workers=None, python_multiprocessing=False, cache=None):
+            num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
         """
         Apply each operation in operations to this dataset.
 
@@ -438,6 +438,8 @@ class Dataset:
                 option could be beneficial if the python operation is computational heavy (default=False).
             cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
                 The cache feature is under development and is not recommended.
+            callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None).
+
 
         Returns:
             MapDataset, dataset after mapping operation.
@@ -552,7 +554,7 @@ class Dataset:
             >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
         """
         return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers,
-                          python_multiprocessing, cache)
+                          python_multiprocessing, cache, callbacks)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=1):
@@ -1548,6 +1550,7 @@ class DatasetOp(Dataset):
             return self.children[0].get_class_indexing()
         raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
 
+
 class BucketBatchByLengthDataset(DatasetOp):
     """
     The result of applying BucketBatchByLength operator to the input dataset.
@@ -1964,14 +1967,14 @@ class MapDataset(DatasetOp):
             option could be beneficial if the python operation is computational heavy (default=False).
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
             The cache feature is under development and is not recommended.
-
+        callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None)
 
         Raises:
             ValueError: If len(input_columns) != len(output_columns) and columns_order is not specified.
     """
 
     def __init__(self, input_dataset, input_columns=None, operations=None, output_columns=None, columns_order=None,
-                 num_parallel_workers=None, python_multiprocessing=False, cache=None):
+                 num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
         super().__init__(num_parallel_workers)
         self.children.append(input_dataset)
         if input_columns is not None and not isinstance(input_columns, list):
@@ -1996,6 +1999,11 @@ class MapDataset(DatasetOp):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
 
+        if callbacks is not None and not isinstance(callbacks, list):
+            callbacks = [callbacks]
+
+        self.callbacks = callbacks
+
     def get_args(self):
         args = super().get_args()
         args["input_columns"] = self.input_columns
@@ -2003,6 +2011,9 @@ class MapDataset(DatasetOp):
         args["output_columns"] = self.output_columns
         args["columns_order"] = self.columns_order
         args["cache"] = self.cache.cache_client if self.cache is not None else None
+
+        if self.callbacks is not None:
+            args["callbacks"] = [cb.create_runtime_obj() for cb in self.callbacks]
         return args
 
     def get_dataset_size(self):
@@ -2034,6 +2045,7 @@ class MapDataset(DatasetOp):
         new_op.cache = copy.deepcopy(self.cache, memodict)
         new_op.operations = self.operations
         new_op.dataset_size = self.dataset_size
+        new_op.callbacks = self.callbacks
         return new_op
 
     # Iterator bootstrap will be called on iterator construction.
@@ -2393,7 +2405,6 @@ class ConcatDataset(DatasetOp):
                         self._children_start_end_index_[index][0] = cumulative_samples_nums
                         self._children_start_end_index_[index][1] = tem_value % sampler.num_shards
 
-
                 tem_sampler = copy.deepcopy(sampler)
                 tem_sampler.set_offset(cumulative_samples_nums)
                 child.sampler = tem_sampler
@@ -2556,7 +2567,7 @@ class RangeDataset(MappableDataset):
 
     def get_dataset_size(self):
         if self.dataset_size is None:
-            self.dataset_size = math.ceil((self.stop - self.start)/self.step)
+            self.dataset_size = math.ceil((self.stop - self.start) / self.step)
         return self.dataset_size
 
 
@@ -3423,7 +3434,7 @@ class GeneratorDataset(MappableDataset):
                 if not self.num_shards:
                     self.dataset_size = len(self.source)
                 else:
-                    self.dataset_size = math.ceil(len(self.source)/self.num_shards)
+                    self.dataset_size = math.ceil(len(self.source) / self.num_shards)
 
                 rows_from_sampler = self._get_sampler_dataset_size()
                 if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
@@ -5428,6 +5439,7 @@ class NumpySlicesDataset(GeneratorDataset):
                          num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
                          num_shards=num_shards, shard_id=shard_id)
 
+
 class _PaddedDataset:
     """
     Mainly for combining false samples provided by users into a dataset.
@@ -5435,6 +5447,7 @@ class _PaddedDataset:
     Args:
         padded_samples (list(dict)): the data provided by user to added to initial Dataset
     """
+
     def __init__(self, padded_samples):
         self.column_names = list(padded_samples[0].keys())
         self.padded_samples = padded_samples
@@ -5444,6 +5457,7 @@ class _PaddedDataset:
 
     def __len__(self):
         return len(self.padded_samples)
+
 
 class PaddedDataset(GeneratorDataset):
     """
@@ -5463,6 +5477,7 @@ class PaddedDataset(GeneratorDataset):
         >>> data1 = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)}]
         >>> ds1 = ds.PaddedDataset(data1)
     """
+
     @check_paddeddataset
     def __init__(self, padded_samples):
         dataset = _PaddedDataset(padded_samples)

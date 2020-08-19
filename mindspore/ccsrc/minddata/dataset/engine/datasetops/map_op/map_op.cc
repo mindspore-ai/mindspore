@@ -15,25 +15,23 @@
  */
 #include <algorithm>
 #include <cstring>
-#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <vector>
 #include "minddata/dataset/core/config_manager.h"
 
+#include "minddata/dataset/callback/callback_param.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_buffer.h"
-#include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
-#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
 #include "minddata/dataset/engine/datasetops/map_op/gpu_map_job.h"
+#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
+#include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "utils/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -58,6 +56,7 @@ Status MapOp::Builder::Build(std::shared_ptr<MapOp> *ptr) {
   RETURN_IF_NOT_OK(sanityCheck());
   *ptr = std::make_shared<MapOp>(std::move(build_in_col_names_), std::move(build_out_col_names_),
                                  std::move(build_tensor_funcs_), build_num_workers_, build_op_connector_size_);
+  (*ptr)->callback_manager_.AddCallbacks(std::move(builder_callbacks_));
   return Status::OK();
 }
 
@@ -164,7 +163,10 @@ Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job)
 Status MapOp::operator()() {
   // Create and register the local queues.
   local_queues_.Init(num_workers_, oc_queue_size_);
+  // init callback
+  RETURN_IF_NOT_OK(callback_manager_.Init(shared_from_this()));
   Status rc = local_queues_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(master_pause_wp_.Register(tree_->AllTasks()));
   if (rc.IsError()) {
     TaskManager::FindMe()->Post();
     return rc;
@@ -175,28 +177,51 @@ Status MapOp::operator()() {
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(rc);
+  // num_buffers received, including eoe, num_epoch, num_step of current epoch
+  int64_t num_buf = 0, ep_step = 0, total_step = 0;
+  RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
 
-  int64_t que_id = 0;
   std::unique_ptr<DataBuffer> buff;
-  bool is_eof = false;
-  // Drain output connector of the previous op, generate jobs for worker threads, and distribute them via local queues
-  // Stop when all worker threads are finished (received EOF)
-  while (!is_eof) {
+
+  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buff, 0));
+  while (!buff->eof()) {
+    if (op_current_repeats_ % op_num_repeats_per_epoch() == 0) {
+      RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+    }
+    while (!buff->eoe()) {
+      ep_step++;
+      total_step++;
+      // Create an empty map worker job to be populated by a databuffer and map jobs
+      RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+      std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(buff));
+
+      // Populate map worker job for a worker to execute
+      RETURN_IF_NOT_OK(GenerateWorkerJob(&worker_job));
+
+      // Push map worker job to the corresponding worker's queue
+      RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));
+      RETURN_IF_NOT_OK(callback_manager_.StepEnd(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buff, 0));
+    }
+
+    // send the eoe buffer to worker
+
+    // reset epoch_step when a new epoch is about to start
+    if ((op_current_repeats_ + 1) % op_num_repeats_per_epoch() == 0) {
+      RETURN_IF_NOT_OK(callback_manager_.EpochEnd(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
+      ep_step = 0;
+    }
+    std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(buff));
+    RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));
+    UpdateRepeatAndEpochCounter();
     RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buff, 0));
-    is_eof = buff->eof();
-
-    // Create an empty map worker job to be populated by a databuffer and map jobs
-    std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>();
-    worker_job->databuffer = std::move(buff);
-
-    // Populate map worker job for a worker to execute
-    RETURN_IF_NOT_OK(GenerateWorkerJob(&worker_job));
-
-    // Push map worker job to the corresponding worker's queue
-    RETURN_IF_NOT_OK(local_queues_[que_id]->Add(std::move(worker_job)));
-    que_id = (que_id + 1) % num_workers_;
   }
-
+  // the last eoe increments the eoe count by 1, but this shouldn't be reflected on End() callback
+  //  RETURN_IF_NOT_OK(callback_manager_.End(CallbackParam(op_current_epochs_, ep_step, total_step)));
+  // handle eof logic
+  std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(buff));
+  RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));
   return Status::OK();
 }
 
@@ -213,25 +238,19 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
   // Fetch next data buffer and map job list
   RETURN_IF_NOT_OK(FetchNextWork(worker_id, &in_buffer, &job_list));
 
-  // Sanity check the databuffer.
-  // Special case: if there's more threads than buffers, some threads simply get the final control
-  // messages (eoe/eof), and so they will not perform the check.
-  if (!in_buffer->eoe() && !in_buffer->eof()) {
-    int32_t num_rows = in_buffer->NumRows();
-    int32_t num_cols = in_buffer->NumCols();
-    if (num_rows == 0 || num_cols == 0) {
-      RETURN_STATUS_UNEXPECTED("MapOp is getting an empty DataBuffer.");
-    }
-  }
-
   // Now that init work is done, drop into the main fetching loop.
   // Map op does not use child iterator, and it needs to manually handle eoe and eof's itself
   // rather than use the base-class defaults.
   while (true) {
-    // Handle EOE and EOF ourselves. Implicit eoe/eof handling in GetNextInput does not work
-    // with Performance Mode design.
-    if (in_buffer->eoe()) {
-      UpdateRepeatAndEpochCounter();
+    // handle the pause logic. Pause is triggered when an buffer id of -1 with no special flag and no row is received
+    if (in_buffer->id() == -1 && in_buffer->buffer_flags() == DataBuffer::kDeBFlagNone && in_buffer->NumRows() == 0) {
+      // when worker receives the signal from master thread, it increments a atomic int
+      // the last guy who increments the counter, wakes up master thread
+      if (++num_workers_paused_ == num_workers_) master_pause_wp_.Set();
+      // this will block the worker until master thread gives it a new work
+      RETURN_IF_NOT_OK(FetchNextWork(worker_id, &in_buffer, &job_list));
+      continue;
+    } else if (in_buffer->eoe()) {
       // Calling base class EoeReceived to forward eoe buffer.
       RETURN_IF_NOT_OK(EoeReceived(worker_id));
       // Fetch next data buffer and map job list
@@ -243,6 +262,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
       break;
     }
 
+    CHECK_FAIL_RETURN_UNEXPECTED(in_buffer->NumRows() * in_buffer->NumCols() != 0, "MapOp got an empty DataBuffer.");
     std::unique_ptr<TensorQTable> new_tensor_table(std::make_unique<TensorQTable>());
     // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
     RETURN_IF_NOT_OK(WorkerCompute(in_buffer.get(), new_tensor_table.get(), job_list));
@@ -281,9 +301,9 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_tabl
   std::vector<TensorRow> result_table;
   // Executing the list of jobs
   for (size_t i = 0; i < job_list.size(); i++) {
-    // Executre MapJob.
+    // Execute MapJob.
     RETURN_IF_NOT_OK(job_list[i]->Run(job_input_table, &result_table));
-    // Assign the pocessed data as an input for the next job processing, except for the last TensorOp in the list.
+    // Assign the processed data as an input for the next job processing, except for the last TensorOp in the list.
     if (i + 1 < job_list.size()) {
       job_input_table = std::move(result_table);
     }
@@ -427,6 +447,21 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
 Status MapOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<MapOp>(), modified);
+}
+
+Status MapOp::PauseFromMaster() {
+  // reset num_paused workers to 0
+  num_workers_paused_ = 0;
+  for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
+    // a special buffer (id=-1, empty, none flag) is used to signal that worker needs to pause.
+    RETURN_IF_NOT_OK(local_queues_[wkr_id]->Add(
+      std::make_unique<MapWorkerJob>(std::make_unique<DataBuffer>(-1, DataBuffer::kDeBFlagNone))));
+  }
+  // wait until all workers are done processing their work in local_queue_
+  RETURN_IF_NOT_OK(master_pause_wp_.Wait());
+  // clear the WaitPost for the next Wait()
+  master_pause_wp_.Clear();
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -21,6 +21,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "minddata/dataset/callback/callback_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/status.h"
@@ -358,6 +360,14 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return boolean returns true if it's last iteration
   bool IsLastIteration() { return op_total_repeats_ == op_current_repeats_ + 1; }
 
+  /// This function is only intended to be called by CallbackManager within the master thread of ParallelOp
+  /// The expected behavior is this, when this function is invoked, this function will block until all the workers
+  /// have finished their remaining work and go to sleep. Since all ParallelOps use a QueueList to sync with master.
+  /// They would automatically wait on the QueueList when they are done. Hence, for now, a Unpause() function is not
+  /// needed. Only parallelOp needs to override this function.
+  /// \return Status
+  virtual Status PauseFromMaster() { return Status::OK(); }
+
  protected:
   /// \brief Removes a parent operator from this operator
   /// \notes External callers do not have access to this function
@@ -394,6 +404,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   std::unique_ptr<DbConnector> out_connector_;                   // Output Connector
   std::unordered_map<std::string, int32_t> column_name_id_map_;  // Mapping between col index and col name
   std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map
+  CallbackManager callback_manager_;                             // Manages callbacks associated with a DatasetOp
 
  private:
   /// Sets the operator id.

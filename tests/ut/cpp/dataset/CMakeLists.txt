@@ -15,6 +15,7 @@ SET(DE_UT_SRCS
         bounding_box_augment_op_test.cc
         arena_test.cc
         btree_test.cc
+        callback_test.cc
         center_crop_op_test.cc
         channel_swap_test.cc
         circular_pool_test.cc

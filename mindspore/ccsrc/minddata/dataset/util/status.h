@@ -59,6 +59,13 @@ namespace dataset {
     }                                                                           \
   } while (false)
 
+#define RETURN_OK_IF_TRUE(_condition) \
+  do {                                \
+    if (_condition) {                 \
+      return Status::OK();            \
+    }                                 \
+  } while (false)
+
 enum class StatusCode : char {
   kOK = 0,
   kOutOfMemory = 1,
