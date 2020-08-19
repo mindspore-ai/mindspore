@@ -41,15 +41,7 @@ int ConcatFp16CPUKernel::Init() {
   return ReSize();
 }
 
-int ConcatFp16CPUKernel::ReSize() {
-  FreeTmpBuffer();
-  auto ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    FreeTmpBuffer();
-    return ret;
-  }
-  return ConcatBaseCPUKernel::ReSize();
-}
+int ConcatFp16CPUKernel::ReSize() { return ConcatBaseCPUKernel::ReSize(); }
 
 int ConcatFp16CPUKernel::MallocTmpBuffer() {
   for (const auto &in_tensor : in_tensors_) {
@@ -105,6 +97,13 @@ int ConcatFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
+
+  auto ret = MallocTmpBuffer();
+  if (ret != RET_OK) {
+    FreeTmpBuffer();
+    return ret;
+  }
+
   auto input_num = in_tensors_.size();
   std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
 

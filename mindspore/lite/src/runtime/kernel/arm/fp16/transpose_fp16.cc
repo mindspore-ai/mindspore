@@ -59,12 +59,6 @@ int TransposeFp16CPUKernel::ReSize() {
     param->out_strides_[i] = out_shape[i + 1] * param->out_strides_[i + 1];
   }
 
-  FreeFp16Buffer();
-  auto ret = MallocFp16Buffer();
-  if (ret != RET_OK) {
-    FreeFp16Buffer();
-    return ret;
-  }
   return RET_OK;
 }
 
@@ -149,8 +143,14 @@ int TransposeFp16CPUKernel::Run() {
   auto &out_tensor = out_tensors_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {
     MS_LOG(ERROR) << "null pointer referencing.";
-    FreeFp16Buffer();
     return RET_ERROR;
+  }
+
+  // malloc when Run
+  ret = MallocFp16Buffer();
+  if (ret != RET_OK) {
+    FreeFp16Buffer();
+    return ret;
   }
 
   if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
