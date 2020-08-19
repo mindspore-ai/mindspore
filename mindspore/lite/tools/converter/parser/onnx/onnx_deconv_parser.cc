@@ -21,14 +21,14 @@
 
 namespace mindspore {
 namespace lite {
-bool OnnxDeConvParser::ParseGroupDeConvolution(schema::CNodeT *op, schema::DeConv2DT *attr) {
+bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeConv2DT> &attr, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DeConvParser";
   if (attr == nullptr || attr->group != attr->channelOut) {
     return false;
   }
-  auto deDepthwiseConv2DParam(new (std::nothrow) schema::DeDepthwiseConv2DT());
+  std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam(new (std::nothrow) schema::DeDepthwiseConv2DT());
   if (deDepthwiseConv2DParam == nullptr) {
-    // MS_LOGW("new DeDepthwiseConv2DT failed");
+    MS_LOG(ERROR) << "new DeDepthwiseConv2DT failed";
     return false;
   }
   deDepthwiseConv2DParam->format = attr->format;
@@ -51,15 +51,14 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(schema::CNodeT *op, schema::DeCon
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
     delete (op->primitive->value.value);
-    op->primitive->value.value = deDepthwiseConv2DParam;
+    op->primitive->value.value = deDepthwiseConv2DParam.release();
   }
   return true;
 }
 
-STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph,
-                               const onnx::NodeProto &onnx_node,
+STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
-  auto attr = new schema::DeConv2DT();
+  std::unique_ptr<schema::DeConv2DT> attr(new (std::nothrow) schema::DeConv2DT());
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -133,23 +132,20 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph,
   attr->format = schema::Format_NCHW;
   attr->hasBias = onnx_node.input().size() == 3;
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_DeConv2D;
-    op->primitive->value.value = attr;
-  }
-
   if (attr->group != 1) {
-    if (!ParseGroupDeConvolution(op, attr)) {
-      delete attr;
-      // MS_LOGE("Convert DeConvolution to DeDepthwise failed");
+    if (!ParseGroupDeConvolution(attr, op)) {
+      MS_LOG(ERROR) << "Convert DeConvolution to DeDepthwise failed";
       return RET_ERROR;
     }
+  } else {
+    op->primitive = std::make_unique<schema::PrimitiveT>();
+    op->primitive->value.type = schema::PrimitiveType_DeConv2D;
+    op->primitive->value.value = attr.release();
   }
+
   return RET_OK;
 }
 
 OnnxNodeRegistrar g_onnxDeConvParser("ConvTranspose", new OnnxDeConvParser());
 }  // namespace lite
 }  // namespace mindspore
-

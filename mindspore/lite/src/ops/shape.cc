@@ -37,11 +37,7 @@ int Shape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   }
   auto in_tensor = inputs_.front();
   auto out_tensor = outputs_.front();
-  auto ret_dtype = out_tensor->set_data_type(kNumberTypeInt32);
-  if (ret_dtype != in_tensor->data_type()) {
-    MS_LOG(ERROR) << "Set datatype fails.";
-    return RET_ERROR;
-  }
+  out_tensor->set_data_type(kNumberTypeInt32);
   if (!GetInferFlag()) {
     return RET_OK;
   }

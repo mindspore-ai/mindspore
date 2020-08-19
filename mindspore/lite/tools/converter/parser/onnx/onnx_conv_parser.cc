@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-bool OnnxConvParser::ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *attr) {
+bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DepthwiseConvParser";
   if (attr == nullptr || attr->group != attr->channelIn) {
     return false;
@@ -55,7 +55,7 @@ bool OnnxConvParser::ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *
 
 STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ConvParser";
-  auto attr = new schema::Conv2DT();
+  std::unique_ptr<schema::Conv2DT> attr(new (std::nothrow) schema::Conv2DT());
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -153,17 +153,15 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   } else {
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
-
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.type = schema::PrimitiveType_Conv2D;
-  op->primitive->value.value = attr;
-
   if (attr->group != 1) {
-    if (!ParseGroupConvolution(op, attr)) {
-      delete attr;
+    if (!ParseGroupConvolution(attr, op)) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return RET_ERROR;
     }
+  } else {
+    op->primitive = std::make_unique<schema::PrimitiveT>();
+    op->primitive->value.type = schema::PrimitiveType_Conv2D;
+    op->primitive->value.value = attr.release();
   }
   return RET_OK;
 }
