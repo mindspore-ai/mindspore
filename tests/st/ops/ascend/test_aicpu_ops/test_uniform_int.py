@@ -41,15 +41,3 @@ def test_net_1D():
     tminval, tmaxval = Tensor(minval, mstype.int32), Tensor(maxval, mstype.int32)
     output = net(tminval, tmaxval)
     assert output.shape == (3, 2, 4)
-
-
-def test_net_ND():
-    seed = 10
-    shape = (3, 2, 1)
-    minval = np.array([[[1, 2]], [[3, 4]], [[5, 6]]]).astype(np.int32)
-    maxval = np.array([10]).astype(np.int32)
-    net = Net(shape, seed)
-    tminval, tmaxval = Tensor(minval), Tensor(maxval)
-    output = net(tminval, tmaxval)
-    print(output.asnumpy())
-    assert output.shape == (3, 2, 2)
