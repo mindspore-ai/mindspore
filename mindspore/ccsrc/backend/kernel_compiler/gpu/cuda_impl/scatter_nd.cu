@@ -41,7 +41,7 @@ __global__ void ScatterNdKernel(S *indices, T *update, T *output, const size_t b
     out_bound |= write_index >= output_size;
 
     if (!out_bound) {
-      ms_atomic_add(&output[write_index], update[read_index]);
+      MsAtomicAdd(&output[write_index], update[read_index]);
     }
   }
 }
@@ -68,3 +68,13 @@ template void ScatterNd<int, int>(int *indices, int *update, int *output, const 
                                   const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
                                   const size_t &indices_dim_1, int *indices_stride, int *work_shape,
                                   cudaStream_t stream);
+// NOLINTNEXTLINE
+template void ScatterNd<short, int>(int *indices, short *update, short *output, const size_t &block_size,
+                                    const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
+                                    const size_t &indices_dim_1, int *indices_stride, int *work_shape,
+                                    cudaStream_t stream);
+template void ScatterNd<unsigned char, int>(int *indices, unsigned char *update, unsigned char *output,
+                                            const size_t &block_size, const size_t &input_size,
+                                            const size_t &output_size, const size_t &indices_dim_0,
+                                            const size_t &indices_dim_1, int *indices_stride, int *work_shape,
+                                            cudaStream_t stream);

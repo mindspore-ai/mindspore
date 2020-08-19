@@ -61,7 +61,7 @@ __global__ void ResizeNearestNeighborGrad(const int input_size, const T *input, 
           out_width - 1);
     // pos_array[0] N, pos_array[1] C, out_y H, out_x W
     output_pos = pos_array[0] * d2 * d3 * d4 + pos_array[1] * d3 * d4 + out_y * d4 + out_x;
-    ms_atomic_add(&output[output_pos], input[pos]);
+    MsAtomicAdd(&output[output_pos], input[pos]);
   }
 }
 

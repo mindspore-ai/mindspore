@@ -15,6 +15,7 @@
  */
 
 #include <vector>
+
 #include "backend/kernel_compiler/gpu/cuda_impl/broadcast_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 

@@ -218,10 +218,10 @@ __global__ void ROIAlignGradKernel(size_t size, const T *dy, const T *roi_boxes,
         T *dx_3 = dx + offset + y_high * width + x_low;
         T *dx_4 = dx + offset + y_high * width + x_high;
         if (x_low >= 0 && x_high >= 0 && y_low >= 0 && y_high >= 0) {
-          ms_atomic_add(dx_1, g1);
-          ms_atomic_add(dx_2, g2);
-          ms_atomic_add(dx_3, g3);
-          ms_atomic_add(dx_4, g4);
+          MsAtomicAdd(dx_1, g1);
+          MsAtomicAdd(dx_2, g2);
+          MsAtomicAdd(dx_3, g3);
+          MsAtomicAdd(dx_4, g4);
         }
       }
     }

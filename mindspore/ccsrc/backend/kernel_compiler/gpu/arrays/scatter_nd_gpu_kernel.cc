@@ -29,5 +29,11 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ScatterNdGpuFwdKernel, int, int)
+MS_REG_GPU_KERNEL_TWO(
+  ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+  ScatterNdGpuFwdKernel, short, int)  // NOLINT
+MS_REG_GPU_KERNEL_TWO(
+  ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  ScatterNdGpuFwdKernel, uchar, int)
 }  // namespace kernel
 }  // namespace mindspore
