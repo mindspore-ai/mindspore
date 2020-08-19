@@ -54,7 +54,7 @@ void DepthwiseBorderPixelInt8(int8_t *dst, const int16_t *src, const int16_t *we
     }
     tmp_buffer[c] += bias[c];
     tmp_buffer[c] = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(tmp_buffer[c] * (1 << (unsigned int)left), multiplier), right);
+      SaturatingRoundingDoublingHighMul(tmp_buffer[c] * (1 << (unsigned int)left), multiplier), -right);
     tmp_buffer[c] += out_zp;
     tmp_buffer[c] = MSMAX(tmp_buffer[c], acc_min);
     tmp_buffer[c] = MSMIN(tmp_buffer[c], acc_max);
