@@ -20,8 +20,10 @@
 
 void BatchNormInt8(int8_t *output_ptr, const int8_t *input_ptr, const float *alpha_ptr, const float *beta_ptr,
                    int task_id, BatchNormParameter *param) {
-  for (int c = task_id; c < param->channel_; c += param->op_parameter_.thread_num_) {
-    for (int u = 0; u < param->unit_; u++) {
+  int unit_st = task_id * param->unit_;
+  int unit_end = MSMIN((task_id + 1) * param->unit_, param->units_);
+  for (int u = unit_st; u < unit_end; u++) {
+    for (int c = 0; c < param->channel_; c++) {
       int32_t output_tmp = round(input_ptr[u * param->channel_ + c] * alpha_ptr[c] + beta_ptr[c]);
       output_tmp = output_tmp > 127 ? 127 : output_tmp;
       output_tmp = output_tmp < -128 ? -128 : output_tmp;

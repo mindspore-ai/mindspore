@@ -192,6 +192,7 @@ OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
   }
   batch_norm_param->op_parameter_.type_ = primitive->Type();
   batch_norm_param->epsilon_ = param->GetEpsilon();
+  batch_norm_param->fused_ = false;
   return reinterpret_cast<OpParameter *>(batch_norm_param);
 }
 
@@ -648,6 +649,7 @@ OpParameter *PopulateFusedBatchNorm(const mindspore::lite::PrimitiveC *primitive
   batch_norm_param->op_parameter_.type_ = primitive->Type();
   auto param = dynamic_cast<const mindspore::lite::FusedBatchNorm *>(primitive);
   batch_norm_param->epsilon_ = param->GetEpsilon();
+  batch_norm_param->fused_ = true;
   return reinterpret_cast<OpParameter *>(batch_norm_param);
 }
 

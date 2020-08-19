@@ -23,7 +23,9 @@ typedef struct BatchNormParameter {
   OpParameter op_parameter_;
   float epsilon_;
   int unit_;
+  int units_;
   int channel_;
+  bool fused_;
 } BatchNormParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_BATCHNORM_PARAMETER_H_
