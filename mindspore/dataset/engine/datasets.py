@@ -3085,20 +3085,22 @@ def _cpp_sampler_fn(sampler, dataset):
         yield tuple([np.array(x, copy=False) for x in val])
 
 
-def _cpp_sampler_fn_mp(sampler, dataset, num_worker):
+def _cpp_sampler_fn_mp(sampler, dataset, num_worker, multi_process):
     """
     Multiprocessing generator function wrapper for mappable dataset with cpp sampler.
     """
     indices = sampler.get_indices()
-    return _sampler_fn_mp(indices, dataset, num_worker)
+    sample_fn = SamplerFn(dataset, num_worker, multi_process)
+    return sample_fn.process(indices)
 
 
-def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker):
+def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker, multi_process):
     """
     Multiprocessing generator function wrapper for mappable dataset with python sampler.
     """
     indices = _fetch_py_sampler_indices(sampler, num_samples)
-    return _sampler_fn_mp(indices, dataset, num_worker)
+    sample_fn = SamplerFn(dataset, num_worker, multi_process)
+    return sample_fn.process(indices)
 
 
 def _fetch_py_sampler_indices(sampler, num_samples):
@@ -3132,62 +3134,91 @@ def _fill_worker_indices(workers, indices, idx):
     return idx
 
 
-def _sampler_fn_mp(indices, dataset, num_worker):
+class SamplerFn:
     """
-    Multiprocessing generator function wrapper master process.
+    Multiprocessing or multithread generator function wrapper master process.
     """
-    workers = []
-    # Event for end of epoch
-    eoe = multiprocessing.Event()
+    def __init__(self, dataset, num_worker, multi_process):
+        self.workers = []
+        self.num_worker = num_worker
+        self.multi_process = multi_process
+        # Event for end of epoch
+        if multi_process is True:
+            self.eoe = multiprocessing.Event()
+            self.eof = multiprocessing.Event()
+        else:
+            self.eoe = threading.Event()
+            self.eof = threading.Event()
+        # Create workers
+        for _ in range(num_worker):
+            if multi_process is True:
+                worker = _GeneratorWorkerMp(dataset, self.eoe, self.eof)
+            else:
+                worker = _GeneratorWorkerMt(dataset, self.eoe, self.eof)
+            worker.daemon = True
+            self.workers.append(worker)
 
-    # Create workers
-    for _ in range(num_worker):
-        worker = _GeneratorWorker(dataset, eoe)
-        worker.daemon = True
-        workers.append(worker)
+    def process(self, indices):
+        """
+        The main process, start the child process or child thread, and fill the index queue,
+        get the result from the result and return.
+        """
+        # Fill initial index queues
+        idx_cursor = 0
+        idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
 
-    # Fill initial index queues
-    idx_cursor = 0
-    idx_cursor = _fill_worker_indices(workers, indices, idx_cursor)
+        # Start all workers
+        for w in self.workers:
+            w.start()
 
-    # Start all workers
-    for w in workers:
-        w.start()
+        # Fetch results
+        for i in range(len(indices)):
+            # Fetch result and put index
+            try:
+                result = self.workers[i % self.num_worker].get()
+            except queue.Empty:
+                raise Exception("Generator worker process timeout")
+            except KeyboardInterrupt:
+                self.eof.set()
+                for w in self.workers:
+                    w.terminate()
+                    w.join()
+                raise Exception("Generator worker receives KeyboardInterrupt")
+            if idx_cursor < len(indices):
+                idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
+            # Set eoe event once all indices are sent
+            if idx_cursor == len(indices) and not self.eoe.is_set():
+                self.eoe.set()
+            yield tuple([np.array(x, copy=False) for x in result])
 
-    # Fetch results
-    for i in range(len(indices)):
-        # Fetch result and put index
-        try:
-            result = workers[i % num_worker].get()
-        except queue.Empty:
-            raise Exception("Generator worker process timeout")
-        except KeyboardInterrupt:
-            for w in workers:
-                w.terminate()
+    def __del__(self):
+        self.eoe.set()
+        self.eof.set()
+        if self.multi_process is False:
+            for w in self.workers:
                 w.join()
-            raise Exception("Generator worker receives KeyboardInterrupt")
-        if idx_cursor < len(indices):
-            idx_cursor = _fill_worker_indices(workers, indices, idx_cursor)
-        # Set eoe event once all indices are sent
-        if idx_cursor == len(indices) and not eoe.is_set():
-            eoe.set()
-        yield tuple([np.array(x, copy=False) for x in result])
 
 
-def _generator_worker_loop(dataset, idx_queue, result_queue, eoe):
+def _generator_worker_loop(dataset, idx_queue, result_queue, eoe, eof):
     """
-    Multiprocessing generator worker process loop.
+    Multiprocessing or multithread generator worker process loop.
     """
     while True:
         # Fetch index, block
         try:
-            idx = idx_queue.get()
+            idx = idx_queue.get(timeout=10)
         except KeyboardInterrupt:
             raise Exception("Generator worker receives KeyboardInterrupt")
+        except queue.Empty:
+            if eof.is_set() or eoe.is_set():
+                raise Exception("Generator worker receives queue.Empty")
+            continue
         if idx is None:
             # When the queue is out of scope from master process, a None item can be fetched from the queue.
             # Upon receiving None, worker process should check if EOE is set.
             assert eoe.is_set(), ""
+            return
+        if eof.is_set():
             return
         # Fetch data, any exception from __getitem__ will terminate worker and timeout master process
         result = dataset[idx]
@@ -3197,17 +3228,19 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eoe):
         except KeyboardInterrupt:
             raise Exception("Generator worker receives KeyboardInterrupt")
         del result, idx
+        if eoe.is_set() and idx_queue.empty():
+            return
 
 
-class _GeneratorWorker(multiprocessing.Process):
+class _GeneratorWorkerMt(threading.Thread):
     """
-    Worker process for multiprocess Generator.
+    Worker process for multithread Generator.
     """
 
-    def __init__(self, dataset, eoe):
-        self.idx_queue = multiprocessing.Queue(16)
-        self.res_queue = multiprocessing.Queue(16)
-        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eoe))
+    def __init__(self, dataset, eoe, eof):
+        self.idx_queue = queue.Queue(16)
+        self.res_queue = queue.Queue(16)
+        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eoe, eof))
 
     def put(self, item):
         """
@@ -3219,7 +3252,30 @@ class _GeneratorWorker(multiprocessing.Process):
         """
         Get function for worker result queue. Block with timeout.
         """
-        return self.res_queue.get()
+        return self.res_queue.get(timeout=10)
+
+
+class _GeneratorWorkerMp(multiprocessing.Process):
+    """
+    Worker process for multiprocess Generator.
+    """
+
+    def __init__(self, dataset, eoe, eof):
+        self.idx_queue = multiprocessing.Queue(16)
+        self.res_queue = multiprocessing.Queue(16)
+        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eoe, eof))
+
+    def put(self, item):
+        """
+        Put function for worker index queue. Never block. Raise queue.Full on failure.
+        """
+        self.idx_queue.put_nowait(item)
+
+    def get(self):
+        """
+        Get function for worker result queue. Block with timeout.
+        """
+        return self.res_queue.get(timeout=10)
 
     def __del__(self):
         self.terminate()
@@ -3282,6 +3338,8 @@ class GeneratorDataset(MappableDataset):
             When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
             when num_shards is also specified. Random accessible input is required.
+        python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
+            option could be beneficial if the python operation is computational heavy (default=True).
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -3318,12 +3376,14 @@ class GeneratorDataset(MappableDataset):
 
     @check_generatordataset
     def __init__(self, source, column_names=None, column_types=None, schema=None, num_samples=None,
-                 num_parallel_workers=1, shuffle=None, sampler=None, num_shards=None, shard_id=None):
+                 num_parallel_workers=1, shuffle=None, sampler=None, num_shards=None, shard_id=None,
+                 python_multiprocessing=True):
         super().__init__(num_parallel_workers)
         self.source = source
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.num_shards = num_shards
+        self.python_multiprocessing = python_multiprocessing
 
         if column_names is not None and not isinstance(column_names, list):
             column_names = [column_names]
@@ -3405,12 +3465,16 @@ class GeneratorDataset(MappableDataset):
                 sampler_instance.set_num_rows(len(self.source))
                 sampler_instance.initialize()
                 if new_op.num_parallel_workers > 1:
-                    new_op.source = (lambda: _cpp_sampler_fn_mp(sampler_instance, self.source, new_op.num_parallel_workers))
+                    new_op.source = (lambda: _cpp_sampler_fn_mp(sampler_instance, self.source,
+                                                                new_op.num_parallel_workers,
+                                                                self.python_multiprocessing))
                 else:
                     new_op.source = (lambda: _cpp_sampler_fn(sampler_instance, self.source))
             else:
                 if new_op.num_parallel_workers > 1:
-                    new_op.source = (lambda: _py_sampler_fn_mp(new_op.sampler, new_op.num_samples, self.source, new_op.num_parallel_workers))
+                    new_op.source = (lambda: _py_sampler_fn_mp(new_op.sampler, new_op.num_samples, self.source,
+                                                               new_op.num_parallel_workers,
+                                                               self.python_multiprocessing))
                 else:
                     new_op.source = (lambda: _py_sampler_fn(new_op.sampler, new_op.num_samples, self.source))
         else:

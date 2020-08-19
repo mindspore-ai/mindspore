@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/engine/gnn/feature.h"
+
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_TENSOR_PROTO_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_TENSOR_PROTO_H_
+
+#include <deque>
+#include <memory>
+#include <vector>
+
+#include "proto/gnn_tensor.pb.h"
+#include "minddata/dataset/core/tensor.h"
 
 namespace mindspore {
 namespace dataset {
-namespace gnn {
 
-Feature::Feature(FeatureType type_name, std::shared_ptr<Tensor> value, bool is_shared_memory)
-    : type_name_(type_name), value_(value), is_shared_memory_(is_shared_memory) {}
+Status TensorToPb(const std::shared_ptr<Tensor> tensor, TensorPb *tensor_pb);
 
-}  // namespace gnn
+Status PbToTensor(const TensorPb *tensor_pb, std::shared_ptr<Tensor> *tensor);
+
 }  // namespace dataset
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_TENSOR_PROTO_H_

@@ -28,11 +28,9 @@ using mindspore::MsLogLevel::INFO;
 namespace mindspore {
 namespace mindrecord {
 ShardWriter::ShardWriter()
-    : shard_count_(1),
-      header_size_(kDefaultHeaderSize),
-      page_size_(kDefaultPageSize),
-      row_count_(0),
-      schema_count_(1) {}
+    : shard_count_(1), header_size_(kDefaultHeaderSize), page_size_(kDefaultPageSize), row_count_(0), schema_count_(1) {
+  compression_size_ = 0;
+}
 
 ShardWriter::~ShardWriter() {
   for (int i = static_cast<int>(file_streams_.size()) - 1; i >= 0; i--) {
@@ -201,6 +199,7 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
   if (ret == FAILED) {
     return FAILED;
   }
+  compression_size_ = shard_header_->GetCompressionSize();
   ret = Open(real_addresses, true);
   if (ret == FAILED) {
     MS_LOG(ERROR) << "Open file failed";
@@ -614,7 +613,9 @@ MSRStatus ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>
   // compress blob
   if (shard_column_->CheckCompressBlob()) {
     for (auto &blob : blob_data) {
-      blob = shard_column_->CompressBlob(blob);
+      int64_t compression_bytes = 0;
+      blob = shard_column_->CompressBlob(blob, &compression_bytes);
+      compression_size_ += compression_bytes;
     }
   }
 
@@ -1177,6 +1178,11 @@ MSRStatus ShardWriter::WriteShardHeader() {
     MS_LOG(ERROR) << "Shard header is null";
     return FAILED;
   }
+
+  int64_t compression_temp = compression_size_;
+  uint64_t compression_size = compression_temp > 0 ? compression_temp : 0;
+  shard_header_->SetCompressionSize(compression_size);
+
   auto shard_header = shard_header_->SerializeHeader();
   // Write header data to multi files
   if (shard_count_ > static_cast<int>(file_streams_.size()) || shard_count_ > static_cast<int>(shard_header.size())) {

@@ -15,6 +15,7 @@
 """
 User-defined API for MindRecord GNN writer.
 """
+import numpy as np
 social_data = [[348, 350], [348, 327], [348, 329], [348, 331], [348, 335],
                [348, 336], [348, 337], [348, 338], [348, 340], [348, 341],
                [348, 342], [348, 343], [348, 344], [348, 345], [348, 346],
@@ -29,7 +30,7 @@ social_data = [[348, 350], [348, 327], [348, 329], [348, 331], [348, 335],
                [355, 352], [353, 350], [352, 349], [351, 349], [350, 349]]
 
 # profile:  (num_features, feature_data_types, feature_shapes)
-node_profile = (0, [], [])
+node_profile = (2, ["int64", "int32"], [[-1], [-1]])
 edge_profile = (0, [], [])
 
 
@@ -51,7 +52,9 @@ def yield_nodes(task_id=0):
     node_list.sort()
     print(node_list)
     for node_id in node_list:
-        node = {'id': node_id, 'type': 1}
+        node = {'id': node_id, 'type': 1,
+                'feature_1': np.ones((5,), dtype=np.int64),
+                'feature_2': np.ones((10,), dtype=np.int32)}
         yield node
 
 

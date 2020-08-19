@@ -43,6 +43,7 @@ ShardReader::ShardReader() {
   page_size_ = 0;
   header_size_ = 0;
   num_rows_ = 0;
+  total_blob_size_ = 0;
   num_padded_ = 0;
 }
 
@@ -55,9 +56,11 @@ std::pair<MSRStatus, std::vector<std::string>> ShardReader::GetMeta(const std::s
     return {FAILED, {}};
   }
   auto header = ret.second;
-  meta_data = {{"header_size", header["header_size"]}, {"page_size", header["page_size"]},
-               {"version", header["version"]},         {"index_fields", header["index_fields"]},
-               {"schema", header["schema"]},           {"blob_fields", header["blob_fields"]}};
+  uint64_t compression_size = header.contains("compression_size") ? header["compression_size"].get<uint64_t>() : 0;
+  meta_data = {{"header_size", header["header_size"]},   {"page_size", header["page_size"]},
+               {"compression_size", compression_size},   {"version", header["version"]},
+               {"index_fields", header["index_fields"]}, {"schema", header["schema"]},
+               {"blob_fields", header["blob_fields"]}};
   return {SUCCESS, header["shard_addresses"]};
 }
 
@@ -145,6 +148,11 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
   for (const auto &rg : row_group_summary) {
     num_rows_ += std::get<3>(rg);
   }
+  auto disk_size = page_size_ * row_group_summary.size();
+  auto compression_size = shard_header_->GetCompressionSize();
+  total_blob_size_ = disk_size + compression_size;
+  MS_LOG(INFO) << "Blob data size, on disk: " << disk_size << " , addtional uncompression: " << compression_size
+               << " , Total: " << total_blob_size_;
 
   MS_LOG(INFO) << "Get meta from mindrecord file & index file successfully.";
 
@@ -270,6 +278,11 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
     }
   }
   return row_group_summary;
+}
+
+MSRStatus ShardReader::GetTotalBlobSize(int64_t *total_blob_size) {
+  *total_blob_size = total_blob_size_;
+  return SUCCESS;
 }
 
 MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string>> &labels,

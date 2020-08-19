@@ -20,9 +20,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/gnn/node.h"
 #include "minddata/dataset/engine/gnn/feature.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {

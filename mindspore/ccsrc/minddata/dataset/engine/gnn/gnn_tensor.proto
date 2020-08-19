@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/engine/gnn/feature.h"
 
-namespace mindspore {
-namespace dataset {
-namespace gnn {
+syntax = "proto3";
 
-Feature::Feature(FeatureType type_name, std::shared_ptr<Tensor> value, bool is_shared_memory)
-    : type_name_(type_name), value_(value), is_shared_memory_(is_shared_memory) {}
+package mindspore.dataset;
 
-}  // namespace gnn
-}  // namespace dataset
-}  // namespace mindspore
+enum DataTypePb {
+  DE_PB_UNKNOWN = 0;
+  DE_PB_BOOL = 1;
+  DE_PB_INT8 = 2;
+  DE_PB_UINT8 = 3;
+  DE_PB_INT16 = 4;
+  DE_PB_UINT16 = 5;
+  DE_PB_INT32 = 6;
+  DE_PB_UINT32 = 7;
+  DE_PB_INT64 = 8;
+  DE_PB_UINT64 = 9;
+  DE_PB_FLOAT16 = 10;
+  DE_PB_FLOAT32 = 11;
+  DE_PB_FLOAT64 = 12;
+  DE_PB_STRING = 13;
+}
+
+message TensorPb {
+  repeated int64 dims = 1; // tensor shape info
+  DataTypePb tensor_type = 2; // tensor content data type
+  bytes data = 3; // tensor data
+}

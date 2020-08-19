@@ -33,7 +33,9 @@ using mindspore::MsLogLevel::ERROR;
 namespace mindspore {
 namespace mindrecord {
 std::atomic<bool> thread_status(false);
-ShardHeader::ShardHeader() : shard_count_(0), header_size_(0), page_size_(0) { index_ = std::make_shared<Index>(); }
+ShardHeader::ShardHeader() : shard_count_(0), header_size_(0), page_size_(0), compression_size_(0) {
+  index_ = std::make_shared<Index>();
+}
 
 MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load_dataset) {
   shard_count_ = headers.size();
@@ -54,6 +56,7 @@ MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool l
       ParseShardAddress(header["shard_addresses"]);
       header_size_ = header["header_size"].get<uint64_t>();
       page_size_ = header["page_size"].get<uint64_t>();
+      compression_size_ = header.contains("compression_size") ? header["compression_size"].get<uint64_t>() : 0;
     }
     if (SUCCESS != ParsePage(header["page"], shard_index, load_dataset)) {
       return FAILED;
@@ -146,9 +149,12 @@ std::pair<MSRStatus, json> ShardHeader::BuildSingleHeader(const std::string &fil
     return {FAILED, json()};
   }
   json raw_header = ret.second;
+  uint64_t compression_size =
+    raw_header.contains("compression_size") ? raw_header["compression_size"].get<uint64_t>() : 0;
   json header = {{"shard_addresses", raw_header["shard_addresses"]},
                  {"header_size", raw_header["header_size"]},
                  {"page_size", raw_header["page_size"]},
+                 {"compression_size", compression_size},
                  {"index_fields", raw_header["index_fields"]},
                  {"blob_fields", raw_header["schema"][0]["blob_fields"]},
                  {"schema", raw_header["schema"][0]["schema"]},
@@ -343,6 +349,7 @@ std::vector<std::string> ShardHeader::SerializeHeader() {
       s += "\"index_fields\":" + index + ",";
       s += "\"page\":" + pages[shardId] + ",";
       s += "\"page_size\":" + std::to_string(page_size_) + ",";
+      s += "\"compression_size\":" + std::to_string(compression_size_) + ",";
       s += "\"schema\":" + schema + ",";
       s += "\"shard_addresses\":" + address + ",";
       s += "\"shard_id\":" + std::to_string(shardId) + ",";

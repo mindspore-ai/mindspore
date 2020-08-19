@@ -65,6 +65,11 @@ class ShardHeader {
   /// \return the Statistic
   std::vector<std::shared_ptr<Statistics>> GetStatistics();
 
+  /// \brief add the statistic and save it
+  /// \param[in] statistic info of slim size
+  /// \return null
+  int64_t GetSlimSizeStatistic(const json &slim_size_json);
+
   /// \brief get the fields of the index
   /// \return the fields of the index
   std::vector<std::pair<uint64_t, std::string>> GetFields();
@@ -114,9 +119,13 @@ class ShardHeader {
 
   uint64_t GetPageSize() const { return page_size_; }
 
+  uint64_t GetCompressionSize() const { return compression_size_; }
+
   void SetHeaderSize(const uint64_t &header_size) { header_size_ = header_size; }
 
   void SetPageSize(const uint64_t &page_size) { page_size_ = page_size; }
+
+  void SetCompressionSize(const uint64_t &compression_size) { compression_size_ = compression_size; }
 
   std::vector<std::string> SerializeHeader();
 
@@ -177,6 +186,7 @@ class ShardHeader {
   uint32_t shard_count_;
   uint64_t header_size_;
   uint64_t page_size_;
+  uint64_t compression_size_;
 
   std::shared_ptr<Index> index_;
   std::vector<std::string> shard_addresses_;

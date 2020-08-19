@@ -16,8 +16,11 @@
 graphdata.py supports loading graph dataset for GNN network training,
 and provides operations related to graph data.
 """
+import atexit
+import time
 import numpy as np
-from mindspore._c_dataengine import Graph
+from mindspore._c_dataengine import GraphDataClient
+from mindspore._c_dataengine import GraphDataServer
 from mindspore._c_dataengine import Tensor
 
 from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_get_all_edges, \
@@ -34,14 +37,52 @@ class GraphData:
         dataset_file (str): One of file names in dataset.
         num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel
             (default=None).
+        working_mode (str, optional): Set working mode, now support 'local'/'client'/'server' (default='local').
+
+            - 'local', used in non-distributed training scenarios.
+
+            - 'client', used in distributed training scenarios, the client does not load data,
+              but obtains data from the server.
+
+            - 'server', used in distributed training scenarios, the server loads the data
+              and is available to the client.
+
+        hostname (str, optional): Valid when working_mode is set to 'client' or 'server',
+            set the hostname of the graph data server (default='127.0.0.1').
+        port (int, optional): Valid when working_mode is set to 'client' or 'server',
+            set the port of the graph data server, the range is 1024-65535 (default=50051).
+        num_client (int, optional): Valid when working_mode is set to 'server',
+            set the number of clients expected to connect, and the server will allocate corresponding
+            resources according to this parameter (default=1).
+        auto_shutdown (bool, optional): Valid when working_mode is set to 'server',
+            Control when all clients have connected and no client connected to the server,
+            automatically exit the server (default=True).
     """
 
     @check_gnn_graphdata
-    def __init__(self, dataset_file, num_parallel_workers=None):
+    def __init__(self, dataset_file, num_parallel_workers=None, working_mode='local', hostname='127.0.0.1', port=50051,
+                 num_client=1, auto_shutdown=True):
         self._dataset_file = dataset_file
+        self._working_mode = working_mode
         if num_parallel_workers is None:
             num_parallel_workers = 1
-        self._graph = Graph(dataset_file, num_parallel_workers)
+
+        def stop():
+            self._graph_data.stop()
+        atexit.register(stop)
+
+        if working_mode in ['local', 'client']:
+            self._graph_data = GraphDataClient(dataset_file, num_parallel_workers, working_mode, hostname, port)
+
+        if working_mode == 'server':
+            self._graph_data = GraphDataServer(
+                dataset_file, num_parallel_workers, hostname, port, num_client, auto_shutdown)
+            try:
+                while self._graph_data.is_stoped() is not True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                # self._graph_data.stop()
+                raise Exception("Graph data server receives KeyboardInterrupt")
 
     @check_gnn_get_all_nodes
     def get_all_nodes(self, node_type):
@@ -62,7 +103,9 @@ class GraphData:
         Raises:
             TypeError: If `node_type` is not integer.
         """
-        return self._graph.get_all_nodes(node_type).as_array()
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.get_all_nodes(node_type).as_array()
 
     @check_gnn_get_all_edges
     def get_all_edges(self, edge_type):
@@ -83,7 +126,9 @@ class GraphData:
         Raises:
             TypeError: If `edge_type` is not integer.
         """
-        return self._graph.get_all_edges(edge_type).as_array()
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.get_all_edges(edge_type).as_array()
 
     @check_gnn_get_nodes_from_edges
     def get_nodes_from_edges(self, edge_list):
@@ -99,7 +144,9 @@ class GraphData:
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
         """
-        return self._graph.get_nodes_from_edges(edge_list).as_array()
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.get_nodes_from_edges(edge_list).as_array()
 
     @check_gnn_get_all_neighbors
     def get_all_neighbors(self, node_list, neighbor_type):
@@ -123,7 +170,9 @@ class GraphData:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `neighbor_type` is not integer.
         """
-        return self._graph.get_all_neighbors(node_list, neighbor_type).as_array()
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.get_all_neighbors(node_list, neighbor_type).as_array()
 
     @check_gnn_get_sampled_neighbors
     def get_sampled_neighbors(self, node_list, neighbor_nums, neighbor_types):
@@ -155,7 +204,9 @@ class GraphData:
             TypeError: If `neighbor_nums` is not list or ndarray.
             TypeError: If `neighbor_types` is not list or ndarray.
         """
-        return self._graph.get_sampled_neighbors(
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.get_sampled_neighbors(
             node_list, neighbor_nums, neighbor_types).as_array()
 
     @check_gnn_get_neg_sampled_neighbors
@@ -182,7 +233,9 @@ class GraphData:
             TypeError: If `neg_neighbor_num` is not integer.
             TypeError: If `neg_neighbor_type` is not integer.
         """
-        return self._graph.get_neg_sampled_neighbors(
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.get_neg_sampled_neighbors(
             node_list, neg_neighbor_num, neg_neighbor_type).as_array()
 
     @check_gnn_get_node_feature
@@ -207,10 +260,12 @@ class GraphData:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
         """
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
         if isinstance(node_list, list):
             node_list = np.array(node_list, dtype=np.int32)
         return [
-            t.as_array() for t in self._graph.get_node_feature(
+            t.as_array() for t in self._graph_data.get_node_feature(
                 Tensor(node_list),
                 feature_types)]
 
@@ -236,10 +291,12 @@ class GraphData:
             TypeError: If `edge_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
         """
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
         if isinstance(edge_list, list):
             edge_list = np.array(edge_list, dtype=np.int32)
         return [
-            t.as_array() for t in self._graph.get_edge_feature(
+            t.as_array() for t in self._graph_data.get_edge_feature(
                 Tensor(edge_list),
                 feature_types)]
 
@@ -252,7 +309,9 @@ class GraphData:
             dict: Meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
             node_feature_type and edge_feature_type.
         """
-        return self._graph.graph_info()
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.graph_info()
 
     @check_gnn_random_walk
     def random_walk(
@@ -285,5 +344,7 @@ class GraphData:
             TypeError: If `target_nodes` is not list or ndarray.
             TypeError: If `meta_path` is not list or ndarray.
         """
-        return self._graph.random_walk(target_nodes, meta_path, step_home_param, step_away_param,
-                                       default_node).as_array()
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server")
+        return self._graph_data.random_walk(target_nodes, meta_path, step_home_param, step_away_param,
+                                            default_node).as_array()

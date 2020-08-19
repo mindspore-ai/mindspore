@@ -18,6 +18,7 @@ Built-in validators.
 """
 import inspect as ins
 import os
+import re
 from functools import wraps
 
 import numpy as np
@@ -912,16 +913,36 @@ def check_split(method):
     return new_method
 
 
+def check_hostname(hostname):
+    if len(hostname) > 255:
+        return False
+    if hostname[-1] == ".":
+        hostname = hostname[:-1] # strip exactly one dot from the right, if present
+    allowed = re.compile("(?!-)[A-Z\\d-]{1,63}(?<!-)$", re.IGNORECASE)
+    return all(allowed.match(x) for x in hostname.split("."))
+
+
 def check_gnn_graphdata(method):
     """check the input arguments of graphdata."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [dataset_file, num_parallel_workers], _ = parse_user_args(method, *args, **kwargs)
+        [dataset_file, num_parallel_workers, working_mode, hostname,
+         port, num_client, auto_shutdown], _ = parse_user_args(method, *args, **kwargs)
         check_file(dataset_file)
-
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
+        type_check(hostname, (str,), "hostname")
+        if check_hostname(hostname) is False:
+            raise ValueError("The hostname is illegal")
+        type_check(working_mode, (str,), "working_mode")
+        if working_mode not in {'local', 'client', 'server'}:
+            raise ValueError("Invalid working mode")
+        type_check(port, (int,), "port")
+        check_value(port, (1024, 65535), "port")
+        type_check(num_client, (int,), "num_client")
+        check_value(num_client, (1, 255), "num_client")
+        type_check(auto_shutdown, (bool,), "auto_shutdown")
         return method(self, *args, **kwargs)
 
     return new_method

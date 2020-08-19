@@ -83,6 +83,7 @@ endif()
 if (ENABLE_TDTQUE)
     add_dependencies(engine-tdt core)
 endif ()
+
 ################### Create _c_dataengine Library ######################
 set(submodules
     $<TARGET_OBJECTS:core>
@@ -181,4 +182,8 @@ else()
     elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         set_target_properties(_c_dataengine PROPERTIES MACOSX_RPATH ON)
     endif ()
+endif()
+
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_link_libraries(_c_dataengine PRIVATE mindspore::grpc++)
 endif()
