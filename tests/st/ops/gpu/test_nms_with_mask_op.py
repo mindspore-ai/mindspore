@@ -21,29 +21,6 @@ import mindspore
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
-def manualNMS(bbox, overlap_val_iou):
-    mask = [True] * len(bbox)
-    for box_a_index, _ in enumerate(bbox):
-        if not mask[box_a_index]:
-            continue  # ignore if not in list
-        box_a = bbox[box_a_index]  # select box for value extraction
-        for box_b_index in range(box_a_index + 1, len(bbox)):
-            if not mask[box_b_index]:
-                continue  # ignore if not in list
-            box_b = bbox[box_b_index]
-            areaA = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
-            areaB = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
-            overlap_x1 = max(box_a[0], box_b[0])
-            overlap_y1 = max(box_a[1], box_b[1])
-            overlap_x2 = min(box_a[2], box_b[2])
-            overlap_y2 = min(box_a[3], box_b[3])
-            width = max((overlap_x2 - overlap_x1), 0)
-            height = max((overlap_y2 - overlap_y1), 0)
-            # generate IOU decision
-            mask[box_b_index] = not (
-                (width * height)/(areaA + areaB - (width * height))) > overlap_val_iou
-    return mask
-
 
 def runMSRun(op, bbox):
     inputs = Tensor(bbox, mindspore.float32)
@@ -60,10 +37,10 @@ def runMSRun(op, bbox):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nms_with_mask_check_order():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     nms_op = P.NMSWithMask(0.5)
-    for _ in range(500):
-        count = 20
+    for _ in range(10):
+        count = 8000
         box = np.random.randint(1, 100, size=(count, 4))
         box[:, 2] = box[:, 0] + box[:, 2]
         box[:, 3] = box[:, 1] + box[:, 3]
@@ -75,28 +52,6 @@ def test_nms_with_mask_check_order():
         np_sorted_scores = (np.sort(unsorted_scores, axis=0)[::-1][:, 0])  # sort manually
         np.testing.assert_array_almost_equal(
             ms_sorted_scores, np_sorted_scores)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_nms_with_masl_check_result():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_count = 500
-    for x in range(1, test_count+1):
-        count = 20  # size of bbox lists
-        nms_op = P.NMSWithMask(x * 0.002)  # will test full range b/w 0 and 1
-        box = np.random.randint(1, 100, size=(count, 4))
-        box[:, 2] = box[:, 0] + box[:, 2]
-        box[:, 3] = box[:, 1] + box[:, 3]
-        unsorted_scores = np.random.rand(count, 1)
-        sorted_scores = np.sort(unsorted_scores, axis=0)[::-1]
-        bbox = np.hstack((box, sorted_scores))
-        bbox = Tensor(bbox, dtype=mindspore.float32)
-        _, _, mask = nms_op(bbox)
-        mask = mask.asnumpy()
-        manual_mask = manualNMS(box, x * 0.002)
-        np.testing.assert_array_equal(mask, np.array(manual_mask))
 
 
 @pytest.mark.level0

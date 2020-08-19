@@ -18,7 +18,7 @@
 #include <limits>
 #include <algorithm>
 
-int RoundUpPower2M(int v) {
+int NMSRoundUpPower2(int v) {
   v--;
   v |= v >> 1;
   v |= v >> 2;
@@ -30,10 +30,20 @@ int RoundUpPower2M(int v) {
 }
 
 template <typename T>
-__inline__ __device__ void SwapM(T *lhs, T *rhs) {
+__inline__ __device__ void Swap(T *lhs, T *rhs) {
   T tmp = lhs[0];
   lhs[0] = rhs[0];
   rhs[0] = tmp;
+}
+
+template <typename T>
+__global__ void PopulateOutput(T *data_in, T *data_out, int *index_buff, const int num, int box_size_) {
+  for (int box_num = blockIdx.x * blockDim.x + threadIdx.x; box_num < num; box_num += blockDim.x * gridDim.x) {
+    int correct_index = index_buff[(num - 1) - box_num];  // flip the array around
+    for (int x = 0; x < 5; x++) {
+      data_out[(box_num * box_size_) + x] = data_in[(correct_index * box_size_) + x];
+    }
+  }
 }
 
 template <typename T>
@@ -96,38 +106,29 @@ __global__ void FinalPass(const int num, const float IOU_value, T *output, T *ar
   }
 }
 
-template <typename T, typename S>
-__global__ void BitonicSortByKeyKernelM(const int outer, const int inner, const int ceil_power2, S *data_in,
-                                        S *data_out, T *index_buff, S *data_buff, int box_size_) {
-  // default: sort with share memory
-  extern __shared__ T share_mem_NMS[];
-  T *index_arr = share_mem_NMS;
-  S *data_arr = reinterpret_cast<S *>(index_arr + ceil_power2);
-  // sort with RAM
-  if (index_buff != nullptr && data_buff != nullptr) {
-    index_arr = index_buff + blockIdx.x * ceil_power2;
-    data_arr = data_buff + blockIdx.x * ceil_power2;
-  }
+template <typename T>
+__global__ void NMS_BitonicSortByKeyKernel(const int outer, const int inner, const int ceil_power2, T *input,
+                                           T *data_buff, int *index_buff, int box_size_) {
   for (int i = threadIdx.x; i < ceil_power2; i += blockDim.x) {
-    index_arr[i] = (i < inner) ? T(i) : std::numeric_limits<T>::max();
-    // populated directly from input data
-    data_arr[i] = (i < inner) ? data_in[(blockIdx.x * inner + i) * box_size_ + 4] : std::numeric_limits<S>::max();
+    data_buff[i] = (i < inner) ? input[(i * box_size_) + 4] : std::numeric_limits<T>::max();
+    index_buff[i] = i;
   }
   __syncthreads();
+
   for (size_t i = 2; i <= ceil_power2; i <<= 1) {
     for (size_t j = (i >> 1); j > 0; j >>= 1) {
       for (size_t tid = threadIdx.x; tid < ceil_power2; tid += blockDim.x) {
         size_t tid_comp = tid ^ j;
         if (tid_comp > tid) {
           if ((tid & i) == 0) {
-            if (data_arr[tid] > data_arr[tid_comp]) {
-              SwapM(&index_arr[tid], &index_arr[tid_comp]);
-              SwapM(&data_arr[tid], &data_arr[tid_comp]);
+            if (data_buff[tid] > data_buff[tid_comp]) {
+              Swap(&data_buff[tid], &data_buff[tid_comp]);
+              Swap(&index_buff[tid], &index_buff[tid_comp]);
             }
           } else {
-            if (data_arr[tid] < data_arr[tid_comp]) {
-              SwapM(&index_arr[tid], &index_arr[tid_comp]);
-              SwapM(&data_arr[tid], &data_arr[tid_comp]);
+            if (data_buff[tid] < data_buff[tid_comp]) {
+              Swap(&data_buff[tid], &data_buff[tid_comp]);
+              Swap(&index_buff[tid], &index_buff[tid_comp]);
             }
           }
         }
@@ -135,36 +136,21 @@ __global__ void BitonicSortByKeyKernelM(const int outer, const int inner, const 
       __syncthreads();
     }
   }
-  T correct_index;
-  for (size_t tid = threadIdx.x; tid < inner; tid += blockDim.x) {
-    correct_index = index_arr[(inner - 1) - tid];
-    // moved data from input to output, correct ordering using sorted index array
-    for (auto i : {0, 1, 2, 3, 4}) {
-      data_out[(blockIdx.x * inner + tid) * box_size_ + i] =
-        data_in[(blockIdx.x * inner + correct_index) * box_size_ + i];
-    }
-  }
 }
 
 template <typename T>
-void CalPreprocess(const int num, int *sel_idx, T *area, T *output, int box_size_, cudaStream_t cuda_stream) {
+void CalPreprocess(const int num, int *sel_idx, T *area, T *input, T *output, int *index_buff, int box_size_,
+                   cudaStream_t cuda_stream) {
+  PopulateOutput<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(input, output, index_buff, num, box_size_);
   Preprocess<<<GET_BLOCKS(num), GET_THREADS, 0, cuda_stream>>>(num, sel_idx, area, output, box_size_);
 }
 
-template <typename T, typename S>
-void BitonicSortByKeyM(const int &outer, const int &inner, S *data_in, S *data_out, T *index_buff, S *data_buff,
-                       int box_size_, cudaStream_t stream) {
-  int ceil_power2 = RoundUpPower2M(inner);
-  size_t share_mem = ceil_power2 * (sizeof(T) + sizeof(S));
-  if (share_mem > SHARED_MEM_PER_BLOCK) {
-    share_mem = 0;
-  } else {
-    data_buff = nullptr;
-    index_buff = nullptr;
-  }
-  int thread = std::min(ceil_power2, GET_THREADS);
-  BitonicSortByKeyKernelM<<<outer, thread, share_mem, stream>>>(outer, inner, ceil_power2, data_in, data_out,
-                                                                index_buff, data_buff, box_size_);
+template <typename T>
+void CalSortInit(const int &num, T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size_,
+                 cudaStream_t stream) {
+  int ceil_p_2 = NMSRoundUpPower2(num);
+  int thread = std::min(ceil_p_2, GET_THREADS);
+  NMS_BitonicSortByKeyKernel<<<1, thread, 0, stream>>>(1, num, ceil_p_2, data_in, data_buff, index_buff, box_size_);
 }
 
 template <typename T>
@@ -180,11 +166,11 @@ void CalFinalPass(const int num, const float IOU_value, T *output, T *area, bool
   FinalPass<<<1, 1, 0, cuda_stream>>>(num, IOU_value, output, area, sel_boxes, box_size_);
 }
 
-template void CalPreprocess<float>(const int num, int *sel_idx, float *area, float *output, int box_size_,
-                                   cudaStream_t cuda_stream);
+template void CalPreprocess<float>(const int num, int *sel_idx, float *area, float *input, float *output,
+                                   int *index_buff, int box_size_, cudaStream_t cuda_stream);
 
-template void BitonicSortByKeyM(const int &outer, const int &inner, float *data_in, float *data_out, int *index_buff,
-                                float *data_buff, int box_size_, cudaStream_t stream);
+template void CalSortInit<float>(const int &inner, float *data_in, float *data_out, int *index_buff, float *data_buff,
+                                 int box_size_, cudaStream_t stream);
 
 template void CalNMSWithMask<float>(const int num, const float IOU_value, float *output, float *area, bool *sel_boxes,
                                     int box_size_, cudaStream_t cuda_stream);

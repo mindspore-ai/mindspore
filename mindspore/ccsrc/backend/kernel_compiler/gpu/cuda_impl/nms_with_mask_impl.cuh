@@ -20,18 +20,21 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
-void CalPreprocess(const int num, int *sel_idx, T *area, T *output, int box_size_, cudaStream_t cuda_stream);
+void CalPreprocess(const int num, int *sel_idx, T *area, T *input, T *output, int *index_buff, int box_size_,
+                   cudaStream_t cuda_stream);
 
 template <typename T>
 void CalNMSWithMask(const int num, const float IOU_value, T *output, T *area, bool *sel_boxes, int box_size_,
                     cudaStream_t cuda_stream);
 
-template <typename T, typename S>
-void BitonicSortByKeyM(const int &outer, const int &inner, S *data_in, S *data_out, T *index_buff, S *data_buff,
-                       int box_size_, cudaStream_t stream);
+template <typename T>
+void CalSortInit(const int &inner, T *data_in, T *data_out, int *index_buff, T *data_buff, int box_size_,
+                 cudaStream_t stream);
 
 template <typename T>
 void CalFinalPass(const int num, const float IOU_value, T *output, T *area, bool *sel_boxes, int box_size_,
                   cudaStream_t cuda_stream);
+
+int NMSRoundUpPower2(int v);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_NMS_WITH_MASK_IMPL_H_
