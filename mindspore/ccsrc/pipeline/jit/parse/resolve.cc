@@ -263,7 +263,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   }
   SymbolResolver symbol_resolver(name_space, symbol, node);
   if (!symbol_resolver.Resolve()) {
-    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    MS_EXCEPTION(TypeError) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 
   py::object obj = symbol_resolver.result();
