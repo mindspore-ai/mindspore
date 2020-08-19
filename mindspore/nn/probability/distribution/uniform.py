@@ -17,7 +17,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import convert_to_batch, check_greater, check_type
+from ._utils.utils import convert_to_batch, check_greater, check_type, check_distribution_name,\
+                          raise_none_error
 
 class Uniform(Distribution):
     """
@@ -101,6 +102,7 @@ class Uniform(Distribution):
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, "Uniform")
         super(Uniform, self).__init__(seed, dtype, name, param)
+        self.parameter_type = dtype
         if low is not None and high is not None:
             self._low = convert_to_batch(low, self.broadcast_shape, dtype)
             self._high = convert_to_batch(high, self.broadcast_shape, dtype)
@@ -153,8 +155,12 @@ class Uniform(Distribution):
         .. math::
             range(U) = high -low
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         return high - low
 
     def _mean(self, low=None, high=None):
@@ -162,18 +168,25 @@ class Uniform(Distribution):
         .. math::
             MEAN(U) = \frac{low + high}{2}.
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         return (low + high) / 2.
-
 
     def _var(self, low=None, high=None):
         r"""
         .. math::
             VAR(U) = \frac{(high -low) ^ 2}{12}.
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         return self.sq(high - low) / 12.0
 
     def _entropy(self, low=None, high=None):
@@ -181,8 +194,12 @@ class Uniform(Distribution):
         .. math::
             H(U) = \log(high - low).
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         return self.log(high - low)
 
     def _cross_entropy(self, dist, low_b, high_b, low_a=None, high_a=None):
@@ -196,9 +213,8 @@ class Uniform(Distribution):
             low_a (Tensor): lower bound of distribution a. Default: self.low.
             high_a (Tensor): upper bound of distribution a. Default: self.high.
         """
-        if dist == 'Uniform':
-            return self._entropy(low=low_a, high=high_a) + self._kl_loss(dist, low_b, high_b, low_a, high_a)
-        return None
+        check_distribution_name(dist, 'Uniform')
+        return self._entropy(low=low_a, high=high_a) + self._kl_loss(dist, low_b, high_b, low_a, high_a)
 
     def _prob(self, value, low=None, high=None):
         r"""
@@ -214,8 +230,15 @@ class Uniform(Distribution):
             pdf(x) = \frac{1.0}{high -low} if low <= x <= high;
             pdf(x) = 0 if x > high;
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        if value is None:
+            raise_none_error("value")
+        value = self.cast(value, self.dtype)
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         neg_ones = self.fill(self.dtype, self.shape(value), -1.0)
         prob = self.exp(neg_ones * self.log(high - low))
         broadcast_shape = self.shape(prob)
@@ -236,13 +259,22 @@ class Uniform(Distribution):
             low_a (Tensor): lower bound of distribution a. Default: self.low.
             high_a (Tensor): upper bound of distribution a. Default: self.high.
         """
-        if dist == 'Uniform':
-            low_a = self.low if low_a is None else low_a
-            high_a = self.high if high_a is None else high_a
-            kl = self.log(high_b - low_b) / self.log(high_a - low_a)
-            comp = self.logicaland(self.lessequal(low_b, low_a), self.lessequal(high_a, high_b))
-            return self.select(comp, kl, self.log(self.zeroslike(kl)))
-        return None
+        check_distribution_name(dist, 'Uniform')
+        if low_b is None:
+            raise_none_error("low_b")
+        if high_b is None:
+            raise_none_error("high_b")
+        low_b = self.cast(low_b, self.parameter_type)
+        high_b = self.cast(high_b, self.parameter_type)
+        low_a = self.cast(low_a, self.parameter_type) if low_a is not None else self.low
+        if low_a is None:
+            raise_none_error("low_a")
+        high_a = self.cast(high_a, self.parameter_type) if high_a is not None else self.high
+        if high_a is None:
+            raise_none_error("high_a")
+        kl = self.log(high_b - low_b) / self.log(high_a - low_a)
+        comp = self.logicaland(self.lessequal(low_b, low_a), self.lessequal(high_a, high_b))
+        return self.select(comp, kl, self.log(self.zeroslike(kl)))
 
     def _cdf(self, value, low=None, high=None):
         r"""
@@ -258,8 +290,15 @@ class Uniform(Distribution):
             cdf(x) = \frac{x - low}{high -low} if low <= x <= high;
             cdf(x) = 1 if x > high;
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        if value is None:
+            raise_none_error("value")
+        value = self.cast(value, self.dtype)
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         prob = (value - low) / (high - low)
         broadcast_shape = self.shape(prob)
         zeros = self.fill(self.dtypeop(prob), broadcast_shape, 0.0)
@@ -281,8 +320,12 @@ class Uniform(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        low = self.low if low is None else low
-        high = self.high if high is None else high
+        low = self.cast(low, self.parameter_type) if low is not None else self.low
+        if low is None:
+            raise_none_error("low")
+        high = self.cast(high, self.parameter_type) if high is not None else self.high
+        if high is None:
+            raise_none_error("high")
         broadcast_shape = self.shape(low + high)
         l_zero = self.const(0.0)
         h_one = self.const(1.0)
