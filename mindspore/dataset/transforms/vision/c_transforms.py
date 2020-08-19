@@ -97,12 +97,11 @@ class AutoContrast(cde.AutoContrastOp):
 class RandomSharpness(cde.RandomSharpnessOp):
     """
     Adjust the sharpness of the input image by a fixed or random degree. degree of 0.0 gives a blurred image,
-            a degree of 1.0 gives the original image, and a degree of 2.0 gives a sharpened image.
+    a degree of 1.0 gives the original image, and a degree of 2.0 gives a sharpened image.
 
     Args:
-        degrees (sequence): Range of random sharpness adjustment degrees.
-            it should be in (min, max) format. If min=max, then it is a
-            single fixed magnitude operation (default = (0.1, 1.9)).
+        degrees (tuple, optional): Range of random sharpness adjustment degrees. It should be in (min, max) format.
+            If min=max, then it is a single fixed magnitude operation (default = (0.1, 1.9)).
 
     Raises:
         TypeError : If degrees is not a list or tuple.
@@ -1036,11 +1035,9 @@ class RandomSolarize(cde.RandomSolarizeOp):
     Invert all pixel values above a threshold.
 
     Args:
-        threshold (sequence): Range of random solarize threshold.
-        Threshold values should always be in range of [0, 255], and
-        include at least one integer value in the given range and
-        be in (min, max) format. If min=max, then it is a single
-        fixed magnitude operation (default=(0, 255)).
+        threshold (tuple, optional): Range of random solarize threshold. Threshold values should always be
+            in range of [0, 255], and include at least one integer value in the given range and
+            be in (min, max) format. If min=max, then it is a single fixed magnitude operation (default=(0, 255)).
     """
 
     @check_random_solarize
