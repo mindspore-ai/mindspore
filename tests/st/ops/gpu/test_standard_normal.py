@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
@@ -31,7 +32,9 @@ class Net(nn.Cell):
     def construct(self):
         return self.stdnormal(self.shape)
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_net():
     seed = 10
     seed2 = 10
