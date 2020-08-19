@@ -214,8 +214,8 @@ class WideDeepModel(nn.Cell):
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
-            self.wide_w.set_param_ps()
-            self.embedding_table.set_param_ps()
+            self.deep_embeddinglookup.embedding_table.set_param_ps()
+            self.wide_embeddinglookup.embedding_table.set_param_ps()
         else:
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target='DEVICE')
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target='DEVICE')

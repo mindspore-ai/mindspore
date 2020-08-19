@@ -15,6 +15,7 @@
 # limitations under the License.
 # ============================================================================
 """Providing interface methods."""
+import os
 import types
 from collections import OrderedDict
 from functools import wraps
@@ -468,7 +469,7 @@ class _Executor:
         return self._executor.has_compiled(phase)
 
     def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only"):
+        if context.get_context("precompile_only") or os.getenv("MS_ROLE") == "MS_PSERVER":
             return None
         return self.run(obj, *args, phase=phase)
 
