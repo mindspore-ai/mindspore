@@ -140,5 +140,4 @@ kernel::LiteKernel *CpuSplitFp16KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Split, CpuSplitFp16KernelCreator)
-
 }  // namespace mindspore::kernel

@@ -58,20 +58,13 @@ int ReduceFp16CPUKernel::Init() {
 }
 
 int ReduceFp16CPUKernel::ReSize() {
-  if (fp16_input_ != nullptr) {
-    context_->allocator->Free(fp16_input_);
-    fp16_input_ = nullptr;
+  FreeTmpBuffer();
+  auto ret = MallocTmpBuffer();
+  if (ret != RET_OK) {
+    FreeTmpBuffer();
+    return ret;
   }
-  auto in_tensor = in_tensors_.front();
-  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-    fp16_input_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(in_tensor->ElementsNum() * sizeof(float16_t)));
-    if (fp16_input_ == nullptr) {
-      return RET_ERROR;
-    }
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensor->Data()), fp16_input_, in_tensor->ElementsNum());
-  }
-  return MallocTmpBuffer();
+  return RET_OK;
 }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
@@ -99,9 +92,13 @@ int ReduceFp16CPUKernel::Run() {
 
   tmp_shape_ = in_tensors_.at(0)->shape();
   auto in_tensor = in_tensors_.at(0);
-  if (in_tensor->data_type() == kNumberTypeFloat16) {
+  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
+    auto input_data = reinterpret_cast<float *>(in_tensor->Data());
+    Float32ToFloat16(input_data, fp16_input_, in_tensor->ElementsNum());
+  } else {
     fp16_input_ = reinterpret_cast<float16_t *>(in_tensor->Data());
   }
+
   fp16_src_data_ = fp16_input_;
   for (int i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_[i];
@@ -117,6 +114,7 @@ int ReduceFp16CPUKernel::Run() {
     axis_size_ = tmp_shape_[axis];
     auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
+      FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       return RET_ERROR;
     }
@@ -132,16 +130,11 @@ int ReduceFp16CPUKernel::Run() {
     memcpy(out_tensor->Data(), fp16_dst_data_, out_tensor->ElementsNum() * sizeof(float16_t));
   }
 
-  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-    context_->allocator->Free(fp16_input_);
-  }
-  fp16_input_ = nullptr;
-
   FreeTmpBuffer();
   return RET_OK;
 }
 
-int ReduceFp16CPUKernel::FreeTmpBuffer() {
+void ReduceFp16CPUKernel::FreeTmpBuffer() {
   for (auto buffer : data_buffers_) {
     if (buffer != nullptr) {
       context_->allocator->Free(buffer);
@@ -149,12 +142,17 @@ int ReduceFp16CPUKernel::FreeTmpBuffer() {
     }
   }
   data_buffers_.clear();
-  return RET_OK;
+
+  auto in_tensor = in_tensors_.at(0);
+  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
+    if (fp16_input_ != nullptr) {
+      context_->allocator->Free(fp16_input_);
+      fp16_input_ = nullptr;
+    }
+  }
 }
 
 int ReduceFp16CPUKernel::MallocTmpBuffer() {
-  auto ret = FreeTmpBuffer();
-
   auto input_shape = in_tensors_.at(0)->shape();
   for (auto i = 0; i < num_axes_; i++) {
     int axis = axes_[i];
@@ -166,13 +164,23 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
     }
     float16_t *buffer = reinterpret_cast<float16_t *>(context_->allocator->Malloc(size * sizeof(float16_t)));
     if (buffer == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed.";
+      MS_LOG(ERROR) << "Malloc data failed";
       return RET_ERROR;
     }
     data_buffers_.emplace_back(buffer);
     input_shape[axis] = 1;
   }
-  return ret;
+
+  auto in_tensor = in_tensors_.front();
+  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
+    fp16_input_ =
+      reinterpret_cast<float16_t *>(context_->allocator->Malloc(in_tensor->ElementsNum() * sizeof(float16_t)));
+    if (fp16_input_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuReduceFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
@@ -235,6 +243,6 @@ kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, CpuReduceFp16KernelCreator)
-// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mean, CpuMeanFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, CpuReduceFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mean, CpuMeanFp16KernelCreator)
 }  // namespace mindspore::kernel

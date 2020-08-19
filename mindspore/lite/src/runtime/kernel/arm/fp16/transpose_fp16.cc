@@ -59,10 +59,19 @@ int TransposeFp16CPUKernel::ReSize() {
     param->out_strides_[i] = out_shape[i + 1] * param->out_strides_[i + 1];
   }
 
-  if (fp16_in_data_ != nullptr) {
-    context_->allocator->Free(fp16_in_data_);
-    fp16_in_data_ = nullptr;
+  FreeFp16Buffer();
+  auto ret = MallocFp16Buffer();
+  if (ret != RET_OK) {
+    FreeFp16Buffer();
+    return ret;
   }
+  return RET_OK;
+}
+
+int TransposeFp16CPUKernel::MallocFp16Buffer() {
+  auto &in_tensor = in_tensors_.front();
+  auto &out_tensor = out_tensors_.front();
+
   if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
     fp16_in_data_ =
       reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * in_tensor->ElementsNum()));
@@ -70,11 +79,6 @@ int TransposeFp16CPUKernel::ReSize() {
       MS_LOG(ERROR) << "Malloc data failed";
       return RET_ERROR;
     }
-  }
-
-  if (fp16_out_data_ != nullptr) {
-    context_->allocator->Free(fp16_out_data_);
-    fp16_out_data_ = nullptr;
   }
   if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
     fp16_out_data_ =
@@ -87,6 +91,24 @@ int TransposeFp16CPUKernel::ReSize() {
   return RET_OK;
 }
 
+void TransposeFp16CPUKernel::FreeFp16Buffer() {
+  auto &in_tensor = in_tensors_.front();
+  auto &out_tensor = out_tensors_.front();
+
+  if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
+    if (fp16_in_data_ != nullptr) {
+      context_->allocator->Free(fp16_in_data_);
+      fp16_in_data_ = nullptr;
+    }
+  }
+  if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
+    if (fp16_out_data_ != nullptr) {
+      context_->allocator->Free(fp16_out_data_);
+      fp16_out_data_ = nullptr;
+    }
+  }
+}
+
 int TransposeFp16CPUKernel::TransposeParallel(int task_id) {
   int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
   if (num_unit_thread <= 0) {
@@ -95,13 +117,6 @@ int TransposeFp16CPUKernel::TransposeParallel(int task_id) {
   int thread_offset = task_id * thread_h_stride_;
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
 
-  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
-    fp16_in_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->Data());
-  }
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
-    fp16_out_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->Data());
-  }
-
   auto ret = DoTranspose(fp16_in_data_, fp16_out_data_, in_shape_, out_shape_, param, thread_offset,
                          thread_offset + num_unit_thread);
   if (ret != RET_OK) {
@@ -109,12 +124,6 @@ int TransposeFp16CPUKernel::TransposeParallel(int task_id) {
     return RET_ERROR;
   }
 
-  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32 || in_tensors_.at(0)->data_type() == kNumberTypeFloat) {
-    context_->allocator->Free(fp16_in_data_);
-  }
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32 || out_tensors_.at(0)->data_type() == kNumberTypeFloat) {
-    context_->allocator->Free(fp16_out_data_);
-  }
   return RET_OK;
 }
 
@@ -139,7 +148,8 @@ int TransposeFp16CPUKernel::Run() {
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {
-    MS_LOG(ERROR) << "null pointer dreferencing.";
+    MS_LOG(ERROR) << "null pointer referencing.";
+    FreeFp16Buffer();
     return RET_ERROR;
   }
 
@@ -159,23 +169,15 @@ int TransposeFp16CPUKernel::Run() {
   ret = LiteBackendParallelLaunch(TransposeRun, this, thread_h_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
+    FreeFp16Buffer();
     return ret;
   }
 
-  if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(fp16_in_data_);
-    fp16_in_data_ = nullptr;
-  }
   if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
     out_data_ = reinterpret_cast<float *>(out_tensor->Data());
-    if (out_data_ == nullptr) {
-      return RET_ERROR;
-    }
     Float16ToFloat32(fp16_out_data_, out_data_, out_tensor->ElementsNum());
-
-    context_->allocator->Free(fp16_out_data_);
-    fp16_out_data_ = nullptr;
   }
+  FreeFp16Buffer();
 
   return ret;
 }
@@ -206,5 +208,5 @@ kernel::LiteKernel *CpuTransposeFp16KernelCreator(const std::vector<lite::tensor
   return kernel;
 }
 
-// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Transpose, CpuTransposeFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Transpose, CpuTransposeFp16KernelCreator)
 }  // namespace mindspore::kernel

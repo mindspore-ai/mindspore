@@ -41,6 +41,7 @@ class ConcatFp16CPUKernel : public ConcatBaseCPUKernel {
   int Run() override;
 
  private:
+  int MallocTmpBuffer();
   void FreeTmpBuffer();
 
  private:

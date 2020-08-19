@@ -43,7 +43,15 @@ int ConcatFp16CPUKernel::Init() {
 
 int ConcatFp16CPUKernel::ReSize() {
   FreeTmpBuffer();
+  auto ret = MallocTmpBuffer();
+  if (ret != RET_OK) {
+    FreeTmpBuffer();
+    return ret;
+  }
+  return ConcatBaseCPUKernel::ReSize();
+}
 
+int ConcatFp16CPUKernel::MallocTmpBuffer() {
   for (const auto &in_tensor : in_tensors_) {
     float16_t *ptr = nullptr;
     if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
@@ -58,10 +66,6 @@ int ConcatFp16CPUKernel::ReSize() {
 
   auto &out_tensor = out_tensors_.at(0);
   if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
-    if (fp16_output_ != nullptr) {
-      context_->allocator->Free(fp16_output_);
-      fp16_output_ = nullptr;
-    }
     fp16_output_ =
       reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * out_tensors_[0]->ElementsNum()));
     if (fp16_output_ == nullptr) {
@@ -70,17 +74,29 @@ int ConcatFp16CPUKernel::ReSize() {
     }
   }
 
-  return ConcatBaseCPUKernel::ReSize();
+  return RET_OK;
 }
 
 void ConcatFp16CPUKernel::FreeTmpBuffer() {
-  for (auto ptr : fp16_inputs_) {
-    if (ptr != nullptr) {
-      context_->allocator->Free(ptr);
-      ptr = nullptr;
+  for (auto i = 0; i < fp16_inputs_.size(); i++) {
+    auto &in_tensor = in_tensors_.at(i);
+    auto in_ptr = fp16_inputs_.at(i);
+    if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
+      if (in_ptr != nullptr) {
+        context_->allocator->Free(in_ptr);
+        in_ptr = nullptr;
+      }
     }
   }
   fp16_inputs_.clear();
+
+  auto &out_tensor = out_tensors_.at(0);
+  if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
+    if (fp16_output_ != nullptr) {
+      context_->allocator->Free(fp16_output_);
+      fp16_output_ = nullptr;
+    }
+  }
 }
 
 int ConcatFp16CPUKernel::Run() {
@@ -119,24 +135,10 @@ int ConcatFp16CPUKernel::Run() {
   ConcatFp16(reinterpret_cast<void **>(fp16_inputs_.data()), input_num, axis_, inputs_output_shape.data(),
              output_shape.size(), reinterpret_cast<void *>(fp16_output_));
 
-  // free fp16 in out buffer
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32 || out_tensors_.at(0)->data_type() == kNumberTypeFloat) {
     Float16ToFloat32(fp16_output_, reinterpret_cast<float *>(output_addr), out_tensors_.at(0)->ElementsNum());
-    context_->allocator->Free(fp16_output_);
-    fp16_output_ = nullptr;
   }
-  for (auto i = 0; i < fp16_inputs_.size(); i++) {
-    const auto in_tensor = in_tensors_[i];
-    if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-      auto ptr = fp16_inputs_[i];
-      if (ptr != nullptr) {
-        context_->allocator->Free(ptr);
-        ptr = nullptr;
-      }
-    }
-  }
-  fp16_inputs_.clear();
-
+  FreeTmpBuffer();
   return RET_OK;
 }
 
@@ -164,5 +166,5 @@ kernel::LiteKernel *CpuConcatFp16KernelCreator(const std::vector<lite::tensor::T
   }
   return kernel;
 }
-// REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, CpuConcatFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, CpuConcatFp16KernelCreator)
 }  // namespace mindspore::kernel
