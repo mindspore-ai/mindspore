@@ -37,16 +37,23 @@ int SoftmaxInt8CPUKernel::Init() {
 
   auto in_quant_args = input_tensor->GetQuantParams();
   quant_params_.in_quant_args_.scale_ = in_quant_args.front().scale;
-  quant_params_.in_quant_args_.zp_ = in_quant_args.front().zeroPoint;
+  quant_params_.in_quant_args_.zp_ = -in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   MS_ASSERT(out_tensor);
 
   auto out_quant_args = out_tensor->GetQuantParams();
   quant_params_.out_quant_arg_.scale_ = out_quant_args.front().scale;
-  quant_params_.out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  quant_params_.out_quant_arg_.zp_ = -out_quant_args.front().zeroPoint;
   quant_params_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   quant_params_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+
+  const double input_real_multiplier =
+    MSMIN(quant_params_.in_quant_args_.scale_ * (1 << (unsigned int)(31 - 5)), (1ll << 31) - 1.0);
+  int right_shift = 0;
+  QuantizeMultiplierSmallerThanOne(input_real_multiplier, &quant_params_.output_multiplier_, &right_shift);
+  quant_params_.shift_left_ = right_shift < 0 ? -right_shift : 0;
+  quant_params_.shift_right_ = right_shift > 0 ? right_shift : 0;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -72,12 +79,12 @@ int SoftmaxInt8CPUKernel::ReSize() {
     return ret;
   }
   FreeTmpBuffer();
-  exp_data_ = reinterpret_cast<float *>(malloc(softmax_param_->element_size_ * sizeof(float)));
+  exp_data_ = reinterpret_cast<int *>(malloc(softmax_param_->element_size_ * sizeof(int)));
   int inner_size = 1;
   for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
     inner_size *= softmax_param_->input_shape_[i];
   }
-  sum_data_ = reinterpret_cast<float *>(malloc(inner_size * sizeof(float)));
+  sum_data_ = reinterpret_cast<int *>(malloc(inner_size * sizeof(int)));
   return RET_OK;
 }
 
@@ -125,12 +132,7 @@ int SoftmaxInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
-  int ele_size = softmax_param_->element_size_;
-  for (int i = 0; i < ele_size; i++) {
-    float input_scaled = ((input_ptr[i] - quant_params_.in_quant_args_.zp_) * quant_params_.in_quant_args_.scale_);
-    exp_data_[i] = exp(input_scaled);
-  }
+
   int error_code = LiteBackendParallelLaunch(SoftmaxRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Softmax function error error_code[" << error_code << "]";

@@ -16,16 +16,16 @@
 
 #include "nnacl/int8/softmax_int8.h"
 #include <math.h>
+#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/quantization/quantize.h"
+#include "nnacl/errorcode.h"
 
-int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, float *exp_data, float *sum_data,
+int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp_data, int *sum_data,
                 SoftmaxQuantArg quant_param, SoftmaxParameter *parameter) {
   int32_t axis = parameter->axis_;
   int n_dim = parameter->n_dim_;
   int *input_shape = parameter->input_shape_;
   int axis_shape_size = input_shape[axis];
-
-  double output_scale = quant_param.out_quant_arg_.scale_;
-  int32_t output_zp = quant_param.out_quant_arg_.zp_;
 
   int inner_size = 1;
   for (int i = axis + 1; i < n_dim; i++) {
@@ -34,22 +34,37 @@ int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, float *e
 
   for (int o = 0; o < count; o++) {
     int outter_offset = o * axis_shape_size * inner_size;
-    for (int i = 0; i < inner_size; i++) {
-      float sum = 0;
-      for (int j = 0; j < axis_shape_size; j++) {
-        int axis_offset = outter_offset + i + j * inner_size;
-        sum += exp_data[axis_offset];
+
+    for (int c = 0; c < inner_size; c++) {
+      int8_t max_row = quant_param.output_activation_min_;
+      for (int i = 0; i < axis_shape_size; ++i) {
+        int axis_offset = outter_offset + c + i * inner_size;
+        max_row = MSMAX(max_row, input_ptr[axis_offset]);
       }
-      sum_data[i] = sum;
+
+      int32_t exp_sum = 0;
+      for (int i = 0; i < axis_shape_size; ++i) {
+        int axis_offset = outter_offset + c + i * inner_size;
+        const int32_t input_val = input_ptr[axis_offset] - max_row;
+        const int32_t input_scaled = SaturatingRoundingDoublingHighMul(
+          input_val * (1 << (unsigned int)quant_param.shift_left_), quant_param.output_multiplier_);
+        int exp_val = exp_on_negative_values(input_scaled, 5);
+        exp_data[axis_offset] = exp_val;
+        exp_sum = exp_sum + Rescale(exp_val, 0, 12);
+      }
+      sum_data[c] = exp_sum;
     }
-    for (int j = 0; j < axis_shape_size; j++) {
-      int axis_offset = outter_offset + j * inner_size;
-      for (int i = 0; i < inner_size; i++) {
-        int inner_offset = axis_offset + i;
-        float real_output = exp_data[inner_offset] / sum_data[i];
-        int32_t output_scaled = round(real_output / output_scale) + output_zp;
-        output_ptr[inner_offset] =
-          MSMAX(quant_param.output_activation_min_, MSMIN(quant_param.output_activation_max_, output_scaled));
+    for (int i = 0; i < axis_shape_size; ++i) {
+      int axis_offset = outter_offset + i * inner_size;
+      for (int c = 0; c < inner_size; ++c) {
+        int num_bits_over_unit;
+        int shifted_scale = ComputerReciproal(sum_data[c], 12, &num_bits_over_unit);
+        int unsat_output = RoundingDivideByPOT(
+          SaturatingRoundingDoublingHighMul(shifted_scale, exp_data[axis_offset + c]), num_bits_over_unit + 31 - 8);
+
+        int raw_output = unsat_output + quant_param.output_activation_min_;
+        output_ptr[axis_offset + c] =
+          (int8_t)MSMAX(quant_param.output_activation_min_, MSMIN(raw_output, quant_param.output_activation_max_));
       }
     }
   }

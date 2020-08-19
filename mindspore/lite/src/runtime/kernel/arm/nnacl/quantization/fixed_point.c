@@ -86,24 +86,22 @@ int32_t MaskNonZero(int32_t a) {
   return a ? BitNot(zreo) : zreo;
 }
 
-int SaturatingRoundingMultiplyByPOT(int32_t x, int Exponent) {
-  int ExponentSign = (Exponent > 0 ? 1 : Exponent < 0 ? -1 : 0);
-  if (ExponentSign == 0) {
-    return x;
-  } else if (ExponentSign == 1) {
+static inline int SaturatingRoundingMultiplyByPOT(int32_t x, int Exponent) {
+  if (Exponent > 0) {
     const int min = INT32_MIN;
     const int max = INT32_MAX;
-    const int thresold = ((1 << (uint32_t)(31 - Exponent)) - 1);
+    const int scalar_int_bits = 8 * sizeof(int32_t);
+    const int thresold = ((1 << (uint32_t)(scalar_int_bits - 1 - Exponent)) - 1);
     const int postive_mask = MaskNonZero(x > thresold);
     const int negative_mask = MaskNonZero(x < -thresold);
-    int result = x << Exponent;
+    int result = x * ((int32_t)(1) << (uint32_t)Exponent);
     result = SelectUsingMask(postive_mask, max, result);
     result = SelectUsingMask(negative_mask, min, result);
     return result;
-  } else if (ExponentSign == -1) {
+  } else if (Exponent < 0) {
     return RoundingDivideByPOT(x, -Exponent);
   } else {
-    return 0;
+    return x;
   }
 }
 
@@ -113,7 +111,7 @@ int32_t Rescale(int x, int kIntegerBitsSrc, int kIntegerBitsDst) {
   return result;
 }
 
-static int32_t one_over_one_plus_x_for_x_in_0_1(int32_t a) {
+int32_t one_over_one_plus_x_for_x_in_0_1(int32_t a) {
   int one = FixedPoint_One(0, FractionsBits(0));
   int half_denominator = RoundingHalfSum(a, one);
   const int constant_48_over_17 = 1515870810;
@@ -159,6 +157,71 @@ int32_t ComputerReciproal(int32_t x, int x_digits, int *recip_shift) {
   const int32_t shifted_scaled = one_over_one_plus_x_for_x_in_0_1(shifted_minus_one);
   return shifted_scaled;
 }
+int ConstantPOT(int fractional_bits, int exponent) {
+  int offset = fractional_bits + exponent;
+  return (1 << (uint32_t)offset);
+}
+
+int32_t MaskIfNonZero(int32_t a) { return a ? BitNot(0) : 0; }
+
+int32_t MaskIfZero(int32_t a) { return MaskIfNonZero(!a); }
+
+int32_t MaskIfLessThan(int32_t a, int32_t b) { return MaskIfNonZero((a < b)); }
+
+int exp_on_interval_between_negative_one_quarter_and_0_excl(int a) {
+  const int constant_term = 1895147668;
+  const int constant_1_over_3 = 715827883;
+  // We're evaluating a Taylor expansion around -1/8, so we do the change of
+  // variable: x = a + 1/8.
+  // In fixed-point with 0 integer bits, 1/8 is represented by 1 << 28.
+  int kFractionalBits = FractionsBits(0);
+  int x = a + ConstantPOT(kFractionalBits, -3);
+  int x2 = SaturatingRoundingDoublingHighMul(x, x);
+  int x3 = SaturatingRoundingDoublingHighMul(x2, x);
+  int x4 = SaturatingRoundingDoublingHighMul(x2, x2);
+  int x4_over_4 = SaturatingRoundingMultiplyByPOT(x4, -2);
+  int x4_over_24_plus_x3_over_6_plus_x2_over_2 =
+    SaturatingRoundingMultiplyByPOT((SaturatingRoundingDoublingHighMul((x4_over_4 + x3), constant_1_over_3) + x2), -1);
+  return constant_term +
+         SaturatingRoundingDoublingHighMul(constant_term, (x + x4_over_24_plus_x3_over_6_plus_x2_over_2));
+}
+
+int exp_on_negative_values(int a, const int tIntegerBits) {
+  int kIntegerBits = tIntegerBits;
+  int kFractionalBits = FractionsBits(tIntegerBits);
+  const int kOneQuarter = ConstantPOT(kFractionalBits, -2);
+  int mask = kOneQuarter - 1;
+  int a_mod_quarter_minus_one_quarter = ((unsigned)(a)&mask) - kOneQuarter;
+  int result =
+    exp_on_interval_between_negative_one_quarter_and_0_excl(Rescale(a_mod_quarter_minus_one_quarter, tIntegerBits, 0));
+  int remainder = a_mod_quarter_minus_one_quarter - a;
+
+#define GEMMLOWP_EXP_BARREL_SHIFTER(Exponent, FixedPointMultiplier)                           \
+  if (kIntegerBits > Exponent) {                                                              \
+    const int kMultiplier = FixedPointMultiplier;                                             \
+    int kShiftAmount = kIntegerBits > Exponent ? kFractionalBits + Exponent : 0;              \
+    result = SelectUsingMask(MaskIfNonZero(BitAnd(remainder, (1 << (uint32_t)kShiftAmount))), \
+                             SaturatingRoundingDoublingHighMul(result, kMultiplier), result); \
+  }
+  GEMMLOWP_EXP_BARREL_SHIFTER(-2, 1672461947);
+  GEMMLOWP_EXP_BARREL_SHIFTER(-1, 1302514674);
+  GEMMLOWP_EXP_BARREL_SHIFTER(+0, 790015084);
+  GEMMLOWP_EXP_BARREL_SHIFTER(+1, 290630308);
+  GEMMLOWP_EXP_BARREL_SHIFTER(+2, 39332535);
+  GEMMLOWP_EXP_BARREL_SHIFTER(+3, 720401);
+  GEMMLOWP_EXP_BARREL_SHIFTER(+4, 242);
+#undef GEMMLOWP_EXP_BARREL_SHIFTER
+
+  int clampB = kIntegerBits > 5 ? 36 - kIntegerBits : 0;
+  if (kIntegerBits > 5) {
+    const int clamp = -(1 << (uint32_t)clampB);
+    result = SelectUsingMask(MaskIfLessThan(a, clamp), 0, result);
+  }
+
+  result = SelectUsingMask(MaskIfZero(a), FixedPoint_One(0, kFractionalBits), result);
+  return result;
+}
+
 #ifdef ENABLE_NEON
 int32x4_t RoundingDivideByPOTInt32x4(int32x4_t x, int exponent) {
   const int32x4_t shift_vec = vdupq_n_s32(-exponent);
