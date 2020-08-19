@@ -27,13 +27,13 @@ class LossMonitor(Callback):
     If the loss is NAN or INF, it will terminate training.
 
     Note:
-        If per_print_times is 0 do not print loss.
+        If per_print_times is 0, do not print loss.
 
     Args:
-        per_print_times (int): Print loss every times. Default: 1.
+        per_print_times (int): Print the loss each every time. Default: 1.
 
     Raises:
-        ValueError: If print_step is not int or less than zero.
+        ValueError: If print_step is not an integer or less than zero.
     """
 
     def __init__(self, per_print_times=1):

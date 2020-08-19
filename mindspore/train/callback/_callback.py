@@ -75,9 +75,9 @@ class Callback:
     """
     Abstract base class used to build a callback class. Callbacks are context managers
     which will be entered and exited when passing into the Model.
-    You can leverage this mechanism to init and release resources automatically.
+    You can use this mechanism to initialize and release resources automatically.
 
-    Callback function will execution some operating to the current step or epoch.
+    Callback function will execute some operations in the current step or epoch.
 
     Examples:
         >>> class Print_info(Callback):
@@ -229,11 +229,11 @@ class RunContext:
     """
     Provides information about the model.
 
-    Run call being made. Provides information about original request to model function.
-    callback objects can stop the loop by calling request_stop() of run_context.
+    Provides information about original request to model function.
+    Callback objects can stop the loop by calling request_stop() of run_context.
 
     Args:
-        original_args (dict): Holding the related information of model etc.
+        original_args (dict): Holding the related information of model.
     """
     def __init__(self, original_args):
         if not isinstance(original_args, dict):
@@ -246,13 +246,13 @@ class RunContext:
         Get the _original_args object.
 
         Returns:
-           Dict, a object holding the original arguments of model.
+           Dict, an object that holds the original arguments of model.
         """
         return self._original_args
 
     def request_stop(self):
         """
-        Sets stop requested during training.
+        Sets stop requirement during training.
 
         Callbacks can use this function to request stop of iterations.
         model.train() checks whether this is called or not.
