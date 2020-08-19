@@ -24,7 +24,10 @@ template <typename T>
 void StandardNormal(int seed, int seed2, curandState *globalState,
                     T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
-void UniformReal(int seed, curandState *globalState,
-                   T *input1, size_t input_size_1, T *input2, size_t input_size_2,
-                   T *output, size_t count, cudaStream_t cuda_stream);
+void UniformInt(int seed, int seed2, curandState *globalState,
+                T *input1, size_t input_size_1, T *input2, size_t input_size_2,
+                T *output, size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void UniformReal(int seed, int seed2, curandState *globalState,
+                 T *output, size_t count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_RANDOMOPIMPL_H_
