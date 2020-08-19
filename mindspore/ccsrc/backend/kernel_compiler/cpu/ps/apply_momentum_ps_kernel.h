@@ -26,7 +26,8 @@ namespace kernel {
 namespace ps {
 class ApplyMomentumPSKernel : public ApplyMomentumCPUKernel, public PServerKernel {
  public:
-  ApplyMomentumPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
+  ApplyMomentumPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+      : PServerKernel(rank_id, pserver_num, worker_num) {}
   ~ApplyMomentumPSKernel() override = default;
 
   bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

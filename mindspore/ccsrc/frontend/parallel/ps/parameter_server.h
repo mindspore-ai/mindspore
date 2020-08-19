@@ -114,6 +114,7 @@ class ParameterServer {
   void InitGrad(const Key &key, const GradPtr &grad);
   void InitEmbeddingTable(const Key &key,
                           const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes);
+  bool HasWeight(const Key &key);
   void Finalize();
   void UpdateWeights();
   void AccumGrad(const Keys &key, const Values &values, const Lengths &lengths);
@@ -211,12 +212,14 @@ void ParameterServer<T>::ServerHandler::HandleInitWeights(const ::ps::KVMeta &re
     Key key = req_data.keys[i];
     size_t data_len = req_data.lens.size() != key_num ? req_data.vals.size() / key_num : req_data.lens[i];
 
-    WeightPtr weight_ptr = std::make_shared<::ps::SArray<T>>();
-    weight_ptr->CopyFrom(data_ptr + pos, data_len);
-    ps_->InitWeight(key, weight_ptr);
+    if (!ps_->HasWeight(key)) {
+      WeightPtr weight_ptr = std::make_shared<::ps::SArray<T>>();
+      weight_ptr->CopyFrom(data_ptr + pos, data_len);
+      ps_->InitWeight(key, weight_ptr);
 
-    GradPtr grad_ptr = std::make_shared<::ps::SArray<T>>(data_len, 0);
-    ps_->InitGrad(key, grad_ptr);
+      GradPtr grad_ptr = std::make_shared<::ps::SArray<T>>(data_len, 0);
+      ps_->InitGrad(key, grad_ptr);
+    }
     pos += data_len;
   }
 }
@@ -379,22 +382,22 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
       MS_EXCEPTION_IF_NULL(cnode);
       if (optim_name == kSparseAdam) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyAdamPSKernel>(rank_id_, pserver_num_);
+          std::make_shared<kernel::ps::SparseApplyAdamPSKernel>(rank_id_, pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseLazyAdam) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernel>(rank_id_, pserver_num_);
+          std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernel>(rank_id_, pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kApplyMomentum) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::ApplyMomentumPSKernel>(rank_id_, pserver_num_);
+          std::make_shared<kernel::ps::ApplyMomentumPSKernel>(rank_id_, pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseFtrl) {
         std::shared_ptr<PServerKernel> optimizer =
-          std::make_shared<kernel::ps::SparseApplyFtrlPSKernel>(rank_id_, pserver_num_);
+          std::make_shared<kernel::ps::SparseApplyFtrlPSKernel>(rank_id_, pserver_num_, worker_num_);
         optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
         optimizers_[key] = optimizer;
       }
@@ -416,8 +419,8 @@ const CNodePtr ParameterServer<T>::GetCNode(const std::string &name) const {
 
 template <typename T>
 void ParameterServer<T>::InitWeight(const Key &key, const WeightPtr &weight) {
-  MS_LOG(INFO) << "Initializing weight for key " << key << ", server rank " << rank_id_;
   if ((weights_.count(key) == 0) || (is_embedding_[key] && weights_.count(key) != 0)) {
+    MS_LOG(INFO) << "Initializing weight for key " << key << ", server rank " << rank_id_;
     weights_[key] = weight;
     tokens_[key] = 0;
     is_embedding_[key] = false;
@@ -435,29 +438,37 @@ void ParameterServer<T>::InitGrad(const Key &key, const GradPtr &grad) {
 template <typename T>
 void ParameterServer<T>::InitEmbeddingTable(
   const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
-  std::shared_ptr<PServerKernel> lookup = std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(rank_id_, pserver_num_);
-  lookup->InitKernel(shapes);
-  embedding_lookup_ops_[key] = lookup;
+  if (weights_.count(key) == 0) {
+    std::shared_ptr<PServerKernel> lookup =
+      std::make_shared<kernel::ps::EmbeddingLookUpPSKernel>(rank_id_, pserver_num_, worker_num_);
+    lookup->InitKernel(shapes);
+    embedding_lookup_ops_[key] = lookup;
 
-  // Init embedding weight
-  const std::vector<size_t> &input_shapes = lookup->input_sizes();
-  size_t total_dims = 1;
-  for (auto shape : input_shapes) {
-    total_dims *= shape;
+    // Init embedding weight
+    const std::vector<size_t> &input_shapes = lookup->input_sizes();
+    size_t total_dims = 1;
+    for (auto shape : input_shapes) {
+      total_dims *= shape;
+    }
+
+    WeightPtr embedding = std::make_shared<Weight>(total_dims, 0);
+    T *embedding_data = embedding->data();
+    std::default_random_engine engine;
+    std::normal_distribution<float> random(0, 0.01);
+    for (size_t i = 0; i < total_dims; i++) {
+      embedding_data[i] = random(engine);
+    }
+    weights_[key] = embedding;
+    tokens_[key] = 0;
+    is_embedding_[key] = true;
+
+    grads_accum_counter_[key] = 0;
   }
+}
 
-  WeightPtr embedding = std::make_shared<Weight>(total_dims, 0);
-  T *embedding_data = embedding->data();
-  std::default_random_engine engine;
-  std::normal_distribution<float> random(0, 0.01);
-  for (size_t i = 0; i < total_dims; i++) {
-    embedding_data[i] = random(engine);
-  }
-  weights_[key] = embedding;
-  tokens_[key] = 0;
-  is_embedding_[key] = true;
-
-  grads_accum_counter_[key] = 0;
+template <typename T>
+bool ParameterServer<T>::HasWeight(const Key &key) {
+  return (weights_.count(key) > 0 && !is_embedding_.count(key));
 }
 
 template <typename T>

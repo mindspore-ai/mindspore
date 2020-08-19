@@ -85,7 +85,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
-  grads_offset_ += incr_grad_size;
+  grads_offset_ += lengths[grad_index];
   gradient()->size += incr_grad_size;
 
   // Append indice data to the end
@@ -103,7 +103,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   if (ret2 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
   }
-  indices_offset_ += incr_indice_size;
+  indices_offset_ += lengths[indices_index];
   indices()->size += incr_indice_size;
 }
 
@@ -157,15 +157,58 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(epsilon);
   inputs_.push_back(grad);
   inputs_.push_back(indices);
-  grads_offset_ = 0;
-  indices_offset_ = 0;
+  grads_offset_ = grad->size / sizeof(float);
+  indices_offset_ = indices->size / sizeof(int);
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
-  void *data_ptr = values.data();
-  AddressPtr beta1_power = inputs_[3];
-  size_t size = values.size() * sizeof(float);
-  auto ret = memcpy_s(beta1_power->addr, size, data_ptr, size);
+  float *data_ptr = values.data();
+  int offset = 0;
+
+  AddressPtr &beta1_power = inputs_[3];
+  int size = lens[0];
+  int bytes = sizeof(float);
+  auto ret = memcpy_s(beta1_power->addr, size * bytes, data_ptr + offset, size * bytes);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  offset += size;
+  AddressPtr &beta2_power = inputs_[4];
+  size = lens[1];
+  ret = memcpy_s(beta2_power->addr, size * bytes, data_ptr + offset, size * bytes);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  offset += size;
+  AddressPtr &lr = inputs_[5];
+  size = lens[2];
+  ret = memcpy_s(lr->addr, size * bytes, data_ptr + offset, size * bytes);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  offset += size;
+  AddressPtr &beta1 = inputs_[6];
+  size = lens[3];
+  ret = memcpy_s(beta1->addr, size * bytes, data_ptr + offset, size * bytes);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  offset += size;
+  AddressPtr &beta2 = inputs_[7];
+  size = lens[4];
+  ret = memcpy_s(beta2->addr, size * bytes, data_ptr + offset, size * bytes);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  offset += size;
+  AddressPtr &epsilon = inputs_[8];
+  size = lens[5];
+  ret = memcpy_s(epsilon->addr, size * bytes, data_ptr + offset, size * bytes);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
@@ -188,8 +231,8 @@ SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(linear);
   inputs_.push_back(grad);
   inputs_.push_back(indices);
-  grads_offset_ = 0;
-  indices_offset_ = 0;
+  grads_offset_ = grad->size / sizeof(float);
+  indices_offset_ = indices->size / sizeof(int);
 }
 
 const AddressPtr &SparseFtrlOptimInfo::gradient() { return inputs_[3]; }

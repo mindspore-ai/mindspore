@@ -27,7 +27,8 @@ namespace ps {
 using mindspore::parallel::ps::Util;
 class PServerKernel {
  public:
-  PServerKernel(size_t rank_id, size_t pserver_num) : rank_id_(rank_id), pserver_num_(pserver_num) {}
+  PServerKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+      : rank_id_(rank_id), pserver_num_(pserver_num), worker_num_(worker_num) {}
   ~PServerKernel() = default;
   PServerKernel(const PServerKernel &) = delete;
   PServerKernel &operator=(const PServerKernel &) = delete;
@@ -50,6 +51,7 @@ class PServerKernel {
 
   size_t rank_id_;
   size_t pserver_num_;
+  size_t worker_num_;
 };
 }  // namespace ps
 }  // namespace kernel

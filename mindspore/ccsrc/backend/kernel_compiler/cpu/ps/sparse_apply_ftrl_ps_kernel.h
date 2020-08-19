@@ -27,7 +27,8 @@ namespace ps {
 using mindspore::kernel::SparseApplyFtrlCPUKernel;
 class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerKernel {
  public:
-  SparseApplyFtrlPSKernel(size_t rank_id, size_t pserver_num) : PServerKernel(rank_id, pserver_num) {}
+  SparseApplyFtrlPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+      : PServerKernel(rank_id, pserver_num, worker_num) {}
   ~SparseApplyFtrlPSKernel() override = default;
 
   void InitKernel(const CNodePtr &cnode,
