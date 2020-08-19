@@ -35,7 +35,7 @@ class AnfConvPopulater : public AnfNodePopulater {
  private:
   void PopulaterConv2DMultiGroup(
       const PrimitivePtr &prim,
-      const std::unique_ptr<schema::PrimitiveT> &primitive, const int &group);
+      const std::unique_ptr<schema::PrimitiveT> &primitive, const int &group, const std::vector<AnfNodePtr> &inputs);
   void PopulaterConv2DSingleGroup(
       const PrimitivePtr &prim,
       const std::unique_ptr<schema::PrimitiveT> &primitive, const int &group);
