@@ -285,12 +285,12 @@ void ConvertInputs(const PrimitivePyPtr &prim, const py::list &args, const OpExe
 
 void PynativeInfer(const PrimitivePyPtr &prim, const py::list &py_args, OpExecInfo *const op_exec_info,
                    const abstract::AbstractBasePtrList &args_spec_list) {
-  MS_LOG(DEBUG) << "prim " << prim->name() << "input infer" << mindspore::ToString(args_spec_list);
+  MS_LOG(DEBUG) << "prim " << prim->name() << " input infer " << mindspore::ToString(args_spec_list);
   prim->BeginRecordAddAttr();
   AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   prim->EndRecordAddAttr();
   op_exec_info->abstract = infer_res;
-  MS_LOG(DEBUG) << "prim " << prim->name() << "infer result " << op_exec_info->abstract->ToString();
+  MS_LOG(DEBUG) << "prim " << prim->name() << " infer result " << op_exec_info->abstract->ToString();
 }
 
 OpExecInfoPtr GenerateOpExecInfo(const py::args &args) {
@@ -632,7 +632,8 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
     auto obj = op_exec_info->op_inputs[i];
     bool op_mask = py::hasattr(obj, "__parameter__");
     (*op_masks).push_back(op_mask);
-    MS_LOG(DEBUG) << "gen args i " << i << op_exec_info->op_name << " op mask" << op_mask << "grad_flag_" << grad_flag_;
+    MS_LOG(DEBUG) << "gen " << op_exec_info->op_name << " arg " << i << ": op mask " << op_mask << " grad_flag_ "
+                  << grad_flag_;
 
     AnfNodePtr node = nullptr;
     abstract::AbstractBasePtr abs = nullptr;
@@ -646,11 +647,17 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
     if (node != nullptr && node->abstract() != nullptr) {
       abs = node->abstract();
     }
+    MS_LOG(DEBUG) << prim->ToString() << " abs is nullptr " << (abs == nullptr) << " is_const_value "
+                  << prim->is_const_value();
     if (abs == nullptr || prim->is_const_value()) {
       MS_LOG(DEBUG) << "MakeCnode get node no in map" << id;
       ValuePtr input_value = PyAttrValue(obj);
-      bool broaden = !prim->is_const_value() && input_value->isa<tensor::Tensor>();
-      abs = abstract::FromValueInside(input_value, broaden);
+      abs = input_value->ToAbstract();
+      if (!prim->is_const_value()) {
+        auto config = abstract::AbstractBase::kBroadenTensorOnly;
+        abs = abs->Broaden(config);
+        MS_LOG(DEBUG) << "broaden for " << prim->ToString() << " " << config;
+      }
       node_abs_map_[id] = abs;
     }
     (*args_spec_list).push_back(abs);
