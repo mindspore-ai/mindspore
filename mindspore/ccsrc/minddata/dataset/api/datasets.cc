@@ -25,6 +25,7 @@
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
+#include "minddata/dataset/engine/datasetops/source/csv_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
@@ -156,6 +157,18 @@ std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::str
                                   const std::string &task, const bool &decode,
                                   const std::shared_ptr<SamplerObj> &sampler) {
   auto ds = std::make_shared<CocoDataset>(dataset_dir, annotation_file, task, decode, sampler);
+
+  // Call derived class validation method.
+  return ds->ValidateParams() ? ds : nullptr;
+}
+
+// Function to create a CSVDataset.
+std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, char field_delim,
+                                const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
+                                const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
+                                int32_t num_shards, int32_t shard_id) {
+  auto ds = std::make_shared<CSVDataset>(dataset_files, field_delim, column_defaults, column_names, num_samples,
+                                         shuffle, num_shards, shard_id);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -1018,6 +1031,84 @@ std::vector<std::shared_ptr<DatasetOp>> CocoDataset::Build() {
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, rows_per_buffer_,
                              connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
   node_ops.push_back(op);
+  return node_ops;
+}
+
+// Constructor for CSVDataset
+CSVDataset::CSVDataset(const std::vector<std::string> &csv_files, char field_delim,
+                       const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
+                       const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
+                       int32_t num_shards, int32_t shard_id)
+    : dataset_files_(csv_files),
+      field_delim_(field_delim),
+      column_defaults_(column_defaults),
+      column_names_(column_names),
+      num_samples_(num_samples),
+      shuffle_(shuffle),
+      num_shards_(num_shards),
+      shard_id_(shard_id) {}
+
+bool CSVDataset::ValidateParams() {
+  if (!ValidateDatasetFilesParam("CSVDataset", dataset_files_)) {
+    return false;
+  }
+
+  if (field_delim_ == '"' || field_delim_ == '\r' || field_delim_ == '\n') {
+    MS_LOG(ERROR) << "CSVDataset: The field delimiter should not be \", \\r, \\n";
+    return false;
+  }
+
+  if (num_samples_ < -1) {
+    MS_LOG(ERROR) << "CSVDataset: Invalid number of samples: " << num_samples_;
+    return false;
+  }
+
+  if (!ValidateDatasetShardParams("CSVDataset", num_shards_, shard_id_)) {
+    return false;
+  }
+
+  return true;
+}
+
+// Function to build CSVDataset
+std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+  std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_list;
+  for (auto v : column_defaults_) {
+    if (v->type == CsvType::INT) {
+      column_default_list.push_back(
+        std::make_shared<CsvOp::Record<int>>(CsvOp::INT, std::dynamic_pointer_cast<CsvRecord<int>>(v)->value));
+    } else if (v->type == CsvType::FLOAT) {
+      column_default_list.push_back(
+        std::make_shared<CsvOp::Record<float>>(CsvOp::FLOAT, std::dynamic_pointer_cast<CsvRecord<float>>(v)->value));
+    } else if (v->type == CsvType::STRING) {
+      column_default_list.push_back(std::make_shared<CsvOp::Record<std::string>>(
+        CsvOp::STRING, std::dynamic_pointer_cast<CsvRecord<std::string>>(v)->value));
+    }
+  }
+
+  std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
+    dataset_files_, field_delim_, column_default_list, column_names_, num_workers_, rows_per_buffer_, num_samples_,
+    worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_);
+  RETURN_EMPTY_IF_ERROR(csv_op->Init());
+  if (shuffle_ == ShuffleMode::kGlobal) {
+    // Inject ShuffleOp
+    std::shared_ptr<DatasetOp> shuffle_op = nullptr;
+    int64_t num_rows = 0;
+
+    // First, get the number of rows in the dataset
+    RETURN_EMPTY_IF_ERROR(CsvOp::CountAllFileRows(dataset_files_, column_names_.empty(), &num_rows));
+
+    // Add the shuffle op after this op
+    RETURN_EMPTY_IF_ERROR(AddShuffleOp(dataset_files_.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                       rows_per_buffer_, &shuffle_op));
+    node_ops.push_back(shuffle_op);
+  }
+
+  node_ops.push_back(csv_op);
   return node_ops;
 }
 
