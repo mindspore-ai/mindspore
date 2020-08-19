@@ -59,7 +59,7 @@ int CaffePReluCPUKernel::Run() {
   output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
   auto channels = input->shape();
   prelu_param_->negtive_slope_ = reinterpret_cast<float *>(input1->Data());
-  prelu_param_->channel_num_ = channels.at(1);
+  prelu_param_->channel_num_ = channels.at(channels.size() - 1);
 
   auto ret = LiteBackendParallelLaunch(CaffePReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
