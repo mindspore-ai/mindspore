@@ -8,13 +8,14 @@ WideDeep model jointly trained wide linear models and deep neural network, which
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset and convert the dataset to mindrecord, command as follows:
+- Place the raw dataset under a certain path, such as: ./recommendation_dataset/origin_data, if you use [criteo dataset](https://s3-eu-west-1.amazonaws.com/kaggle-display-advertising-challenge-dataset/dac.tar.gz), please downlowd the dataset and unzip it to ./recommendation_dataset/origin_data.
+
+- Convert the dataset to mindrecord, command as follows:
 ```
-python src/preprocess_data.py  --dense_dim=13 --slot_dim=26 --threshold=100 --train_line_count=45840617 --skip_id_convert=0
+python src/preprocess_data.py --data_path=./recommendation_dataset --dense_dim=13 --slot_dim=26 --threshold=100 --train_line_count=45840617 --skip_id_convert=0
 
 ```
 Arguments:
-  * `--data_type` {criteo,synthetic}: Currently we support criteo dataset and synthetic dataset.(Default: ./criteo_data/).
   * `--data_path` : The path of the data file.
   * `--dense_dim` : The number of your continues fields.
   * `--slot_dim` : The number of your sparse fields, it can also be called category features.

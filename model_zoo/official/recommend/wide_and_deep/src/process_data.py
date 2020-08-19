@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Criteo data process
+Recommendation dataset process
 """
 
 import os
@@ -27,7 +27,7 @@ import pandas as pd
 TRAIN_LINE_COUNT = 45840617
 TEST_LINE_COUNT = 6042135
 
-class CriteoStatsDict():
+class RecommendationDatasetStatsDict():
     """create data dict"""
     def __init__(self):
         self.field_size = 39 # value_1-13; cat_1-26;
@@ -135,7 +135,7 @@ def mkdir_path(file_path):
         os.makedirs(file_path)
   #
 
-def statsdata(data_file_path, output_path, criteo_stats):
+def statsdata(data_file_path, output_path, recommendation_dataset_stats):
     """data status"""
     with open(data_file_path, encoding="utf-8") as file_in:
         errorline_list = []
@@ -157,9 +157,9 @@ def statsdata(data_file_path, output_path, criteo_stats):
             cats = items[14:]
             assert len(values) == 13, "value.size: {}".format(len(values))
             assert len(cats) == 26, "cat.size: {}".format(len(cats))
-            criteo_stats.stats_vals(values)
-            criteo_stats.stats_cats(cats)
-    criteo_stats.save_dict(output_path)
+            recommendation_dataset_stats.stats_vals(values)
+            recommendation_dataset_stats.stats_cats(cats)
+    recommendation_dataset_stats.save_dict(output_path)
     #
 
 
@@ -169,7 +169,8 @@ def add_write(file_path, wr_str):
 #
 
 
-def random_split_trans2h5(in_file_path, output_path, criteo_stats, part_rows=2000000, test_size=0.1, seed=2020):
+def random_split_trans2h5(in_file_path, output_path, recommendation_dataset_stats,
+                          part_rows=2000000, test_size=0.1, seed=2020):
     """random split trans2h5"""
     test_size = int(TRAIN_LINE_COUNT * test_size)
     # train_size = TRAIN_LINE_COUNT - test_size
@@ -207,7 +208,7 @@ def random_split_trans2h5(in_file_path, output_path, criteo_stats, part_rows=200
             cats = items[14:]
             assert len(values) == 13, "value.size: {}".format(len(values))
             assert len(cats) == 26, "cat.size: {}".format(len(cats))
-            ids, wts = criteo_stats.map_cat2id(values, cats)
+            ids, wts = recommendation_dataset_stats.map_cat2id(values, cats)
             if i not in test_indices_set:
                 train_feature_list.append(ids + wts)
                 train_label_list.append(label)
@@ -253,16 +254,17 @@ if __name__ == "__main__":
                         help="The path to save dataset")
     args, _ = parser.parse_known_args()
     base_path = args.raw_data_path
-    criteo_stat = CriteoStatsDict()
+    recommendation_dataset_stat = RecommendationDatasetStatsDict()
     # step 1, stats the vocab and normalize value
     datafile_path = base_path + "train_small.txt"
     stats_out_path = base_path + "stats_dict/"
     mkdir_path(stats_out_path)
-    statsdata(datafile_path, stats_out_path, criteo_stat)
+    statsdata(datafile_path, stats_out_path, recommendation_dataset_stat)
     print("------" * 10)
-    criteo_stat.load_dict(dict_path=stats_out_path, prefix="")
-    criteo_stat.get_cat2id(threshold=100)
+    recommendation_dataset_stat.load_dict(dict_path=stats_out_path, prefix="")
+    recommendation_dataset_stat.get_cat2id(threshold=100)
     # step 2, transform data trans2h5; version 2: np.random.shuffle
     infile_path = base_path + "train_small.txt"
     mkdir_path(args.output_path)
-    random_split_trans2h5(infile_path, args.output_path, criteo_stat, part_rows=2000000, test_size=0.1, seed=2020)
+    random_split_trans2h5(infile_path, args.output_path, recommendation_dataset_stat,
+                          part_rows=2000000, test_size=0.1, seed=2020)
