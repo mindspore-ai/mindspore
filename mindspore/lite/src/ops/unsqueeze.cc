@@ -53,11 +53,11 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto unsqueeze_prim = this->primitive->value_as_Unsqueeze();
-  auto dims = unsqueeze_prim->axis()->data();
+
+  auto dims = GetAxis().data();
   auto in_shape = input->shape();
   auto in_rank = in_shape.size();
-  auto dim_rank = unsqueeze_prim->axis()->size();
+  auto dim_rank = GetAxis().size();
   std::vector<int> out_shape;
   if (dim_rank == 0) {
     for (auto d : in_shape) {

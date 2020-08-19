@@ -46,7 +46,7 @@ void ArgMin::SetKeepDims(bool keep_dims) {}
 void ArgMin::SetAxisType(int axis_type) {}
 #endif
 
-int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+int ArgMin::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
@@ -60,18 +60,17 @@ int ArgMin::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto argmin_prim = this->primitive->value_as_ArgMin();
   auto input_shape_size = input->shape().size();
-  int axis = argmin_prim->axis() < 0 ? argmin_prim->axis() + input_shape_size : argmin_prim->axis();
+  int axis = GetAxis() < 0 ? GetAxis() + input_shape_size : GetAxis();
   if (axis >= input_shape_size || axis < 0) {
-    MS_LOG(ERROR) << "Invalid axis " << argmin_prim->axis() << ", input shape size: " << input_shape_size;
+    MS_LOG(ERROR) << "Invalid axis " << GetAxis() << ", input shape size: " << input_shape_size;
     return RET_PARAM_INVALID;
   }
   std::vector<int> output_shape(input->shape());
-  if (argmin_prim->topK() == 1 && !argmin_prim->keepDims()) {
+  if (GetTopK() == 1 && !GetKeepDims()) {
     output_shape.erase(output_shape.begin() + axis);
   } else {
-    output_shape[axis] = argmin_prim->topK();
+    output_shape[axis] = GetTopK();
   }
 
   output->set_shape(output_shape);

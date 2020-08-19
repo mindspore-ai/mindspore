@@ -45,14 +45,14 @@ int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     return RET_INPUT_TENSOR_ERROR;
   }
   output->SetFormat(input->GetFormat());
-  auto cast_prim = this->primitive->value_as_Cast();
+
   MS_ASSERT(cast_prim != nullptr);
-  output->set_data_type(static_cast<TypeId>(cast_prim->dstT()));
+  output->set_data_type(static_cast<TypeId>(GetDstT()));
   if (!GetInferFlag()) {
     return RET_OK;
   }
 
-  if (input->data_type() != cast_prim->srcT()) {
+  if (input->data_type() != GetSrcT()) {
     MS_LOG(ERROR) << "input dataType is error";
     return RET_INPUT_TENSOR_ERROR;
   }

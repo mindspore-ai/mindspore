@@ -49,14 +49,9 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   if (this->primitive == nullptr) {
     return RET_NULL_PTR;
   }
-  auto pad_prim = this->primitive->value_as_Pad();
-  if (pad_prim == nullptr) {
-    return RET_NULL_PTR;
-  }
-  auto paddings = pad_prim->paddings();
-  if (paddings == nullptr) {
-    return RET_NULL_PTR;
-  }
+
+  auto paddings = GetPaddings();
+
   auto input = inputs.front();
   if (input == nullptr) {
     return RET_NULL_PTR;
@@ -75,7 +70,7 @@ int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Te
   MS_ASSERT(input->shape().size() <= kInputRank);
   for (size_t i = 0; i < input_shape.size(); i++) {
     auto paddings_index = i + kInputRank - input_shape.size();
-    auto shape = input_shape[i] + (*paddings)[2 * paddings_index] + (*paddings)[2 * paddings_index + 1];
+    auto shape = input_shape[i] + paddings[2 * paddings_index] + paddings[2 * paddings_index + 1];
     output_shape.push_back(shape);
   }
 

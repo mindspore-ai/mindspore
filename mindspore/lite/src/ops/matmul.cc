@@ -62,11 +62,11 @@ int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-  auto matmul_prim = this->primitive->value_as_MatMul();
-  if (matmul_prim->transposeA()) {
+
+  if (GetTransposeA()) {
     std::swap(a_shape[a_shape.size() - 1], a_shape[a_shape.size() - 2]);
   }
-  if (matmul_prim->transposeB()) {
+  if (GetTransposeB()) {
     std::swap(b_shape[b_shape.size() - 1], b_shape[b_shape.size() - 2]);
   }
   std::vector<int> c_shape(a_shape);

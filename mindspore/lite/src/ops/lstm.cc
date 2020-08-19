@@ -58,18 +58,18 @@ int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
     MS_LOG(ERROR) << "OpLstm input dims should be 3.";
     return RET_ERROR;
   }
-  auto lstm_prim = this->primitive->value_as_Lstm();
+
   int hidden_size = w_shape[1] / 4;
   // set output
   std::vector<int> out_shape(in_shape);
   out_shape[2] = hidden_size;
-  if (lstm_prim->bidirection()) {
+  if (GetBidirection()) {
     out_shape.insert(out_shape.begin() + 1, 2);
   }
   output->set_shape(out_shape);
   // set hidden state, cell state
   std::vector<int> state_shape(in_shape);
-  state_shape[0] = lstm_prim->bidirection() ? 2 : 1;
+  state_shape[0] = GetBidirection() ? 2 : 1;
   state_shape[2] = hidden_size;
   outputs_[1]->set_shape(state_shape);
   outputs_[2]->set_shape(state_shape);

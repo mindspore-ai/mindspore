@@ -55,12 +55,10 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   }
   auto in_shape = in_tensor->shape();
   std::vector<int> out_shape;
-  // todo: getAxis
-  auto squeeze_prim = this->primitive->value_as_Squeeze();
-  MS_EXCEPTION_IF_NULL(squeeze_prim);
-  auto axis = squeeze_prim->axis();
+
+  auto axis = GetAxis();
   std::vector<int> axes_;
-  for (auto iter = axis->begin(); iter != axis->end(); iter++) {
+  for (auto iter = axis.begin(); iter != axis.end(); iter++) {
     axes_.push_back(*iter);
   }
   if (axes_.size() == 0) {

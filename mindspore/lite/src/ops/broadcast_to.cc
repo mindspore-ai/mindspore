@@ -39,11 +39,10 @@ constexpr int kBroadcastToInputNum = 1;
 constexpr int kBroadcastToOutputNum = 1;
 }  // namespace
 
-int BroadcastTo::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+int BroadcastTo::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   if (inputs.size() != kBroadcastToInputNum || outputs.size() != kBroadcastToOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ", output size:" << outputs.size();
-    return 1;
+    return RET_PARAM_INVALID;
   }
   auto input = inputs.at(0);
   outputs[0]->SetFormat(input->GetFormat());
@@ -51,27 +50,26 @@ int BroadcastTo::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vec
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  std::vector<int32_t> dst_shape(this->primitive->value_as_BroadcastTo()->dst_shape()->begin(),
-                                 this->primitive->value_as_BroadcastTo()->dst_shape()->end());
+  std::vector<int32_t> dst_shape(GetDstShape().begin(), GetDstShape().end());
   auto input_shape = input->shape();
   std::vector<int> shape(dst_shape.size());
   int input_shape_index = input_shape.size() - 1;
   if (input_shape.size() > dst_shape.size()) {
     MS_LOG(ERROR) << "input shape size " << input_shape.size() << " should <= broadcast to shape size "
                   << dst_shape.size() << "!";
-    return 1;
+    return RET_PARAM_INVALID;
   }
 
   for (int i = dst_shape.size() - 1; i >= 0; --i) {
     if (dst_shape[i] < 0) {
       MS_LOG(ERROR) << "shape[" << i << "] = " << dst_shape[i] << " ] should be > 0!";
-      return 1;
+      return RET_PARAM_INVALID;
     }
     if (input_shape_index >= 0) {
       auto dim = input_shape[input_shape_index];
       if (dim != dst_shape[i] && dim != 1) {
         MS_LOG(ERROR) << "Invalid broadcast shape!";
-        return 1;
+        return RET_PARAM_INVALID;
       }
     }
     shape[i] = dst_shape[i];

@@ -47,8 +47,7 @@ int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto expand_dims_prim = this->primitive->value_as_ExpandDims();
-  int dim = expand_dims_prim->dim();
+  int dim = GetDim();
   if (dim < 0) {
     dim += input->shape().size() + 1;
   }
