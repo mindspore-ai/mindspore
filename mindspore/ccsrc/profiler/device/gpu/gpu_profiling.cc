@@ -108,7 +108,7 @@ void CUPTICallBackFunc(void *user_data, CUpti_CallbackDomain domain, CUpti_Callb
 
   PROFILER_ERROR_IF_NULLPTR(cb_data);
   if (cb_data->context == nullptr) {
-    MS_LOG(DEBUG) << "callback data context is null , correlation Id:" << cb_data->correlationId
+    MS_LOG(DEBUG) << "Callback data context is null , correlation Id:" << cb_data->correlationId
                   << " callback id:" << cb_id;
     return;
   }
@@ -320,12 +320,12 @@ void GPUProfiler::OpsParser() {
     }
   }
 
-  MS_LOG(INFO) << "GPU_profiler, op_name, op_count , kernel_count, kernel_api_count,|"
-                  ",cupti_activity_total_time, cupti_api_call_total_time, op_host_cost_total_time,|"
-                  ",cupti_activity_average_time,cupti_api_call_average_time, op_host_cost_average_time,|"
-                  ",mem_bytes,registers_per_thread,static_shared_memory,dynamic_shared_memory"
-                  ",block_x,block_y,block_z,grid_x,grid_y,grid_z"
-               << std::endl;
+  MS_LOG(DEBUG) << "GPU_profiler, op_name, op_count , kernel_count, kernel_api_count,|"
+                   ",cupti_activity_total_time, cupti_api_call_total_time, op_host_cost_total_time,|"
+                   ",cupti_activity_average_time,cupti_api_call_average_time, op_host_cost_average_time,|"
+                   ",mem_bytes,registers_per_thread,static_shared_memory,dynamic_shared_memory"
+                   ",block_x,block_y,block_z,grid_x,grid_y,grid_z"
+                << std::endl;
 
   std::vector<std::pair<std::string, OpInfo>> order_vec(op_info_map_.begin(), op_info_map_.end());
 
@@ -335,20 +335,20 @@ void GPUProfiler::OpsParser() {
   std::sort(order_vec.begin(), order_vec.end(), cmp_func);
 
   for (auto iter = order_vec.begin(); iter != order_vec.end(); iter++) {
-    MS_LOG(INFO) << "GPU_profiler"
-                 << "," << iter->first << "," << iter->second.op_count << "," << iter->second.op_kernel_count << ","
-                 << iter->second.op_kernel_api_count << ","
-                 << "|," << iter->second.cupti_activity_time << "," << iter->second.cupti_api_call_time << ","
-                 << round(iter->second.op_host_cost_time) << ","
-                 << "|," << round(iter->second.cupti_activity_time / iter->second.op_count) << ","
-                 << round(iter->second.cupti_api_call_time / iter->second.op_count) << ","
-                 << round(iter->second.op_host_cost_time / iter->second.op_count) << ","
-                 << "|," << iter->second.memcpy_info.bytes << "," << iter->second.kernel_info.registers_per_thread
-                 << "," << iter->second.kernel_info.static_shared_memory << ","
-                 << iter->second.kernel_info.dynamic_shared_memory << "," << iter->second.kernel_info.block_x << ","
-                 << iter->second.kernel_info.block_y << "," << iter->second.kernel_info.block_z << ","
-                 << iter->second.kernel_info.grid_x << "," << iter->second.kernel_info.grid_y << ","
-                 << iter->second.kernel_info.grid_z << std::endl;
+    MS_LOG(DEBUG) << "GPU_profiler"
+                  << "," << iter->first << "," << iter->second.op_count << "," << iter->second.op_kernel_count << ","
+                  << iter->second.op_kernel_api_count << ","
+                  << "|," << iter->second.cupti_activity_time << "," << iter->second.cupti_api_call_time << ","
+                  << iter->second.op_host_cost_time << ","
+                  << "|," << round(iter->second.cupti_activity_time / iter->second.op_count) << ","
+                  << round(iter->second.cupti_api_call_time / iter->second.op_count) << ","
+                  << round(iter->second.op_host_cost_time / iter->second.op_count) << ","
+                  << "|," << iter->second.memcpy_info.bytes << "," << iter->second.kernel_info.registers_per_thread
+                  << "," << iter->second.kernel_info.static_shared_memory << ","
+                  << iter->second.kernel_info.dynamic_shared_memory << "," << iter->second.kernel_info.block_x << ","
+                  << iter->second.kernel_info.block_y << "," << iter->second.kernel_info.block_z << ","
+                  << iter->second.kernel_info.grid_x << "," << iter->second.kernel_info.grid_y << ","
+                  << iter->second.kernel_info.grid_z << std::endl;
   }
 }
 
@@ -454,6 +454,7 @@ void GPUProfiler::OpDataProducerEnd() {
     op_host_time_stop_ = GetHostTimeStamp();
     op_time_elapsed = (op_host_time_stop_ - op_host_time_start_) / kTimeUnit;
   }
+  MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
   SetRunTimeData(op_name_, op_time_elapsed);
 }
 
@@ -478,7 +479,7 @@ void GPUProfiler::Stop() {
 
 void GPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
-    MS_LOG(WARNING) << "profile_data_path is empty, skip save profile data.";
+    MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
     DataSaver dataSaver;
     dataSaver.ParseOpInfo(op_info_map_);
@@ -638,7 +639,7 @@ void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
       break;
     }
     default:
-      MS_LOG(WARNING) << "unknown activity type!";
+      MS_LOG(WARNING) << "Unknown activity type!";
       return;
   }
 
@@ -651,7 +652,7 @@ void CUPTIAPI GPUProfiler::AllocBuffer(uint8_t **buffer, size_t *size, size_t *m
     MS_LOG(ERROR) << "Out of memory, activity buffer alloc failed.";
     return;
   }
-
+  MS_LOG(DEBUG) << "Alloc activity buffer, buffer size: " << BUF_SIZE;
   *size = BUF_SIZE;
   *maxNumRecords = 0;
 }
@@ -659,12 +660,14 @@ void CUPTIAPI GPUProfiler::AllocBuffer(uint8_t **buffer, size_t *size, size_t *m
 void CUPTIAPI GPUProfiler::ProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *buffer, size_t size,
                                          size_t validSize) {
   if (!enable_flag_) {
+    MS_LOG(DEBUG) << "Profiler is not enable, skip to process activity record.";
     free(buffer);
     return;
   }
   CUptiResult status;
   CUpti_Activity *record = NULL;
 
+  MS_LOG(DEBUG) << "Process activity buffer, valid size:" << validSize << ",Stream ID:" << streamId;
   if (validSize > 0) {
     do {
       status = CuptiActivityGetNextRecord(buffer, validSize, &record);

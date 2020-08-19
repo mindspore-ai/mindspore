@@ -672,9 +672,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
   int exec_order = 1;
 
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-  if (profiler_inst == nullptr) {
-    MS_LOG(ERROR) << "gpu profiler instance is nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(profiler_inst);
 
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
