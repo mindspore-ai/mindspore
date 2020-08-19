@@ -15,7 +15,10 @@
 """Stochastic Variational Inference(SVI)."""
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore._checkparam import check_int_positive
+from ....cell import Cell
 from ....wrap.cell_wrapper import TrainOneStepCell
+from .elbo import ELBO
 
 
 class SVI:
@@ -35,7 +38,12 @@ class SVI:
 
     def __init__(self, net_with_loss, optimizer):
         self.net_with_loss = net_with_loss
+        self.loss_fn = getattr(net_with_loss, '_loss_fn')
+        if not isinstance(self.loss_fn, ELBO):
+            raise TypeError('The loss function for variational inference should be ELBO.')
         self.optimizer = optimizer
+        if not isinstance(optimizer, Cell):
+            raise TypeError('The optimizer should be Cell type.')
         self._loss = 0.0
 
     def run(self, train_dataset, epochs=10):
@@ -49,6 +57,7 @@ class SVI:
         Outputs:
             Cell, the trained probability network.
         """
+        epochs = check_int_positive(epochs)
         train_net = TrainOneStepCell(self.net_with_loss, self.optimizer)
         train_net.set_train()
         for _ in range(1, epochs+1):

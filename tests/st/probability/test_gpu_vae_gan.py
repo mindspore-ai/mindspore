@@ -22,6 +22,7 @@ import mindspore.dataset.transforms.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.nn.probability.dpn import VAE
 from mindspore.nn.probability.infer import ELBO, SVI
 
@@ -93,17 +94,18 @@ class VaeGan(nn.Cell):
         self.dense = nn.Dense(20, 400)
         self.vae = VAE(self.E, self.G, 400, 20)
         self.shape = P.Shape()
+        self.normal = C.normal
         self.to_tensor = P.ScalarToArray()
 
     def construct(self, x):
-        recon_x, x, mu, std, z, prior = self.vae(x)
-        z_p = prior('sample', self.shape(mu), self.to_tensor(0.0), self.to_tensor(1.0))
+        recon_x, x, mu, std = self.vae(x)
+        z_p = self.normal(self.shape(mu), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)
         z_p = self.dense(z_p)
         x_p = self.G(z_p)
         ld_real = self.D(x)
         ld_fake = self.D(recon_x)
         ld_p = self.D(x_p)
-        return ld_real, ld_fake, ld_p, recon_x, x, mu, std, z, prior
+        return ld_real, ld_fake, ld_p, recon_x, x, mu, std
 
 
 class VaeGanLoss(nn.Cell):
@@ -111,13 +113,13 @@ class VaeGanLoss(nn.Cell):
         super(VaeGanLoss, self).__init__()
         self.zeros = P.ZerosLike()
         self.mse = nn.MSELoss(reduction='sum')
-        self.elbo = ELBO(latent_prior='Normal', output_dis='Normal')
+        self.elbo = ELBO(latent_prior='Normal', output_prior='Normal')
 
     def construct(self, data, label):
-        ld_real, ld_fake, ld_p, recon_x, x, mean, std, z, prior = data
+        ld_real, ld_fake, ld_p, recon_x, x, mean, std = data
         y_real = self.zeros(ld_real) + 1
         y_fake = self.zeros(ld_fake)
-        elbo_data = (recon_x, x, mean, std, z, prior)
+        elbo_data = (recon_x, x, mean, std)
         loss_D = self.mse(ld_real, y_real)
         loss_GD = self.mse(ld_p, y_fake)
         loss_G = self.mse(ld_fake, y_real)
@@ -154,11 +156,11 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 
-if __name__ == "__main__":
+def test_vae_gan():
     vae_gan = VaeGan()
     net_loss = VaeGanLoss()
     optimizer = nn.Adam(params=vae_gan.trainable_params(), learning_rate=0.001)
     ds_train = create_dataset(image_path, 128, 1)
     net_with_loss = nn.WithLossCell(vae_gan, net_loss)
     vi = SVI(net_with_loss=net_with_loss, optimizer=optimizer)
-    vae_gan = vi.run(train_dataset=ds_train, epochs=10)
+    vae_gan = vi.run(train_dataset=ds_train, epochs=5)

@@ -119,10 +119,12 @@ if __name__ == '__main__':
     param_dict = load_checkpoint('checkpoint_lenet.ckpt')
     load_param_into_net(network, param_dict)
     # get train and eval dataset
-    ds_train = create_dataset('workspace/mnist/train')
+    epi_ds_train = create_dataset('workspace/mnist/train')
+    ale_ds_train = create_dataset('workspace/mnist/train')
     ds_eval = create_dataset('workspace/mnist/test')
     evaluation = UncertaintyEvaluation(model=network,
-                                       train_dataset=ds_train,
+                                       epi_train_dataset=epi_ds_train,
+                                       ale_train_dataset=ale_ds_train,
                                        task_type='classification',
                                        num_classes=10,
                                        epochs=1,

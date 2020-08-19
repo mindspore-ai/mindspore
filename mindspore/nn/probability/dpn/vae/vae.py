@@ -49,8 +49,12 @@ class VAE(Cell):
         super(VAE, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        if (not isinstance(encoder, Cell)) or (not isinstance(decoder, Cell)):
+            raise TypeError('The encoder and decoder should be Cell type.')
         self.hidden_size = check_int_positive(hidden_size)
         self.latent_size = check_int_positive(latent_size)
+        if hidden_size < latent_size:
+            raise ValueError('The latent_size should be less than or equal to the hidden_size.')
         self.normal = C.normal
         self.exp = P.Exp()
         self.reshape = P.Reshape()

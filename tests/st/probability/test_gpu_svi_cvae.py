@@ -60,12 +60,10 @@ class Decoder(nn.Cell):
         return z
 
 
-class WithLossCell(nn.Cell):
-    def __init__(self, backbone, loss_fn):
-        super(WithLossCell, self).__init__(auto_prefix=False)
-        self._backbone = backbone
-        self._loss_fn = loss_fn
-
+class CVAEWithLossCell(nn.WithLossCell):
+    """
+    Rewrite WithLossCell for CVAE
+    """
     def construct(self, data, label):
         out = self._backbone(data, label)
         return self._loss_fn(out, label)
@@ -100,7 +98,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 
-if __name__ == "__main__":
+def test_svi_cave():
     # define the encoder and decoder
     encoder = Encoder(num_classes=10)
     decoder = Decoder()
@@ -113,11 +111,11 @@ if __name__ == "__main__":
     # define the training dataset
     ds_train = create_dataset(image_path, 128, 1)
     # define the WithLossCell modified
-    net_with_loss = WithLossCell(cvae, net_loss)
+    net_with_loss = CVAEWithLossCell(cvae, net_loss)
     # define the variational inference
     vi = SVI(net_with_loss=net_with_loss, optimizer=optimizer)
     # run the vi to return the trained network.
-    cvae = vi.run(train_dataset=ds_train, epochs=10)
+    cvae = vi.run(train_dataset=ds_train, epochs=5)
     # get the trained loss
     trained_loss = vi.get_train_loss()
     # test function: generate_sample
@@ -128,3 +126,6 @@ if __name__ == "__main__":
         sample_x = Tensor(sample['image'], dtype=mstype.float32)
         sample_y = Tensor(sample['label'], dtype=mstype.int32)
         reconstructed_sample = cvae.reconstruct_sample(sample_x, sample_y)
+    print('The loss of the trained network is ', trained_loss)
+    print('The shape of the generated sample is ', generated_sample.shape)
+    print('The shape of the reconstructed sample is ', reconstructed_sample.shape)
