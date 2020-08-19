@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_CACHE_MERGE_OP_H_
 
+#include <algorithm>
 #include <atomic>
 #include <deque>
 #include <map>
@@ -28,6 +29,7 @@
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/util/queue.h"
+#include "minddata/dataset/util/queue_map.h"
 #include "minddata/dataset/util/semaphore.h"
 
 namespace mindspore {
@@ -36,28 +38,34 @@ namespace dataset {
 /// stream
 class CacheMergeOp : public ParallelOp {
  public:
-  // Some handshake structures among the main thread, cleaner threads and parallel op threads.
-  class TensorRowRequest {
+  // Some handshake structures between CacheMissWorkerEntry and Cleaner
+  class TensorRowCacheRequest {
    public:
     enum class State : uint8_t {
-      kEmpty = 0,  // No row in the deque
+      kEmpty = 0,  // Initial state. Row hasn't arrived from cache miss stream yet.
       kDirty = 1,  // Cleaner hasn't flushed it to the cache server yet.
       kClean = 2   // The row has been flushed already.
     };
-    explicit TensorRowRequest(row_id_type id) : st_(State::kEmpty), use_count_(0) {}
-    ~TensorRowRequest() = default;
+    TensorRowCacheRequest() : st_(State::kEmpty) {}
+    ~TensorRowCacheRequest() = default;
+    /// Getter and Setter of the state
     State GetState() const { return st_; }
     void SetState(State newState) { st_ = newState; }
-    Status Wait(TensorRow *out);
-    void WakeUpAny(TensorRow &&row);
-    Status Release(TensorRow *out);
+    /// Take a tensor row and send rpc call to the server async
+    /// \param cc Cache client of the CacheMergeOp
+    /// \param row TensorRow to be sent to the server
+    /// \return Status object
+    /// \note Thread safe
+    Status AsyncSendCacheRequest(const std::shared_ptr<CacheClient> &cc, const TensorRow &row);
+
+    /// \brief We send the row to the server async so the CacheMissWorkerEntry can continue.
+    /// It is the cleaner that will check the result.
+    /// \return Status object
+    Status CheckCacheResult();
 
    private:
-    std::mutex dq_mux_;
     std::atomic<State> st_;
-    Semaphore use_count_;
-    std::deque<TensorRow> row_;
-    TensorRow cleaner_copy_;
+    std::shared_ptr<CacheRowRequest> cleaner_copy_;
   };
 
   constexpr static int kCacheHitChildIdx = 0;   // Cache hit stream
@@ -80,6 +88,8 @@ class CacheMergeOp : public ParallelOp {
     /// \return Builder setter method returns reference to the builder.
     Builder &SetNumWorkers(int32_t num_workers) {
       build_num_workers_ = num_workers;
+      // Adjust the number of cleaners to match the number of workers
+      build_num_cleaners_ = std::max(build_num_cleaners_, build_num_workers_);
       return *this;
     }
 
@@ -159,7 +169,6 @@ class CacheMergeOp : public ParallelOp {
   /// \param workerId
   /// \return Status object
   Status CacheMissWorkerEntry(int32_t workerId);
-  Status GetRq(row_id_type row_id, TensorRowRequest **);
 
   /// \brief Base-class override for NodePass pre-visit acceptor
   /// \param[in] p The node to visit
@@ -188,10 +197,17 @@ class CacheMergeOp : public ParallelOp {
 
  private:
   std::mutex mux_;
-  std::map<row_id_type, MemGuard<TensorRowRequest, Allocator<TensorRowRequest>>> cache_miss_map_;
+  QueueMap<row_id_type, TensorRow> cache_miss_;
+  std::map<row_id_type, MemGuard<TensorRowCacheRequest, Allocator<TensorRowCacheRequest>>> io_request_;
   std::unique_ptr<Queue<row_id_type>> io_que_;
   std::shared_ptr<CacheClient> cache_client_;
   int32_t num_cleaners_;
+
+  /// \brief Locate the cache request from the io_request_ map
+  /// \param row_id
+  /// \param out pointer to the cache request
+  /// \return Status object
+  Status GetRq(row_id_type row_id, TensorRowCacheRequest **out);
 
   /// \brief These are the entry functions for the cleaner threads. Each cleaner is responsible for
   /// moving cache miss TensorRow into the CacheServer.

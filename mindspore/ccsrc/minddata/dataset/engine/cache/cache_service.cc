@@ -76,7 +76,7 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
       *row_id_generated = GetNextRowId();
       // Some debug information on how many rows we have generated so far.
       if ((*row_id_generated) % 1000 == 0) {
-        MS_LOG(DEBUG) << "Number of rows cached: " << *row_id_generated;
+        MS_LOG(DEBUG) << "Number of rows cached: " << (*row_id_generated) + 1;
       }
     } else {
       if (msg->row_id() < 0) {
@@ -103,6 +103,45 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
     // Now we cache the flat buffer.
     CachePool::key_type key;
     RETURN_IF_NOT_OK(cp_->Insert(all_data, &key));
+    Status rc = map_->DoInsert(*row_id_generated, key);
+    if (rc == Status(StatusCode::kDuplicateKey)) {
+      MS_LOG(DEBUG) << "Ignoring duplicate key.";
+    } else {
+      RETURN_IF_NOT_OK(rc);
+    }
+    return Status::OK();
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
+}
+
+Status CacheService::FastCacheRow(const ReadableSlice &src, row_id_type *row_id_generated) {
+  SharedLock rw(&rw_lock_);
+  RETURN_UNEXPECTED_IF_NULL(row_id_generated);
+  if (st_ == State::kFetchPhase) {
+    // For this kind of cache service, once we are done with the build phase into fetch phase, we can't
+    // allow other to cache more rows.
+    RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
+  }
+  try {
+    // If we don't need to generate id, we need to find it from the buffer.
+    if (generate_id_) {
+      *row_id_generated = GetNextRowId();
+      // Some debug information on how many rows we have generated so far.
+      if ((*row_id_generated) % 1000 == 0) {
+        MS_LOG(DEBUG) << "Number of rows cached: " << (*row_id_generated) + 1;
+      }
+    } else {
+      auto msg = GetTensorRowHeaderMsg(src.GetPointer());
+      if (msg->row_id() < 0) {
+        std::string errMsg = "Expect positive row id: " + std::to_string(msg->row_id());
+        RETURN_STATUS_UNEXPECTED(errMsg);
+      }
+      *row_id_generated = msg->row_id();
+    }
+    // Now we cache the flat buffer.
+    CachePool::key_type key;
+    RETURN_IF_NOT_OK(cp_->Insert({src}, &key));
     Status rc = map_->DoInsert(*row_id_generated, key);
     if (rc == Status(StatusCode::kDuplicateKey)) {
       MS_LOG(DEBUG) << "Ignoring duplicate key.";
@@ -155,20 +194,15 @@ Status CacheService::GetStat(CacheService::ServiceStat *out) {
   }
   return Status::OK();
 }
-Status CacheService::BatchFetch(const std::vector<row_id_type> &v, MemGuard<uint8_t> *out) const {
-  RETURN_UNEXPECTED_IF_NULL(out);
+
+Status CacheService::PreBatchFetch(const std::vector<row_id_type> &v, std::vector<key_size_pair> *out,
+                                   int64_t *mem_sz) {
   SharedLock rw(&rw_lock_);
-  if (st_ == State::kBuildPhase) {
-    // For this kind of cache service, we can't fetch yet until we are done with caching all the rows.
-    RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
-  }
+  RETURN_UNEXPECTED_IF_NULL(out);
+  RETURN_UNEXPECTED_IF_NULL(mem_sz);
   const auto num_elements = v.size();
-  int64_t mem_sz = (num_elements + 1) * sizeof(int64_t);
-  int64_t data_offset = mem_sz;
-  std::vector<int64_t> sz_v;
-  std::vector<CachePool::key_type> keys;
-  sz_v.reserve(num_elements);
-  keys.reserve(num_elements);
+  *mem_sz = (num_elements + 1) * sizeof(int64_t);
+  (*out).reserve(num_elements);
   for (auto row_id : v) {
     auto r = map_->Search(row_id);
     if (r.second) {
@@ -180,25 +214,33 @@ Status CacheService::BatchFetch(const std::vector<row_id_type> &v, MemGuard<uint
         errMsg += std::to_string(key);
         RETURN_STATUS_UNEXPECTED(errMsg);
       }
-      keys.push_back(key);
-      sz_v.push_back(sz);
-      mem_sz += sz;
+      (*out).emplace_back(key, sz);
+      (*mem_sz) += sz;
     } else {
-      keys.push_back(-1);
-      sz_v.push_back(0);
+      (*out).emplace_back(-1, 0);
     }
   }
-  MemGuard<uint8_t> mem;
-  RETURN_IF_NOT_OK(mem.allocate(mem_sz));
-  auto *offset_array = reinterpret_cast<int64_t *>(mem.GetMutablePointer());
+  return Status::OK();
+}
+
+Status CacheService::BatchFetch(const std::vector<row_id_type> &v, const std::vector<key_size_pair> &info,
+                                WritableSlice *out) const {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  SharedLock rw(&rw_lock_);
+  if (st_ == State::kBuildPhase) {
+    // For this kind of cache service, we can't fetch yet until we are done with caching all the rows.
+    RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
+  }
+  const auto num_elements = v.size();
+  int64_t data_offset = (num_elements + 1) * sizeof(int64_t);
+  auto *offset_array = reinterpret_cast<int64_t *>(out->GetMutablePointer());
   offset_array[0] = data_offset;
-  WritableSlice all(mem.GetMutablePointer(), mem.GetSizeInBytes());
   for (auto i = 0; i < num_elements; ++i) {
-    auto sz = sz_v.at(i);
+    auto sz = info.at(i).second;
     offset_array[i + 1] = offset_array[i] + sz;
     if (sz > 0) {
-      WritableSlice row_data(all, offset_array[i], sz);
-      auto key = keys.at(i);
+      WritableSlice row_data(*out, offset_array[i], sz);
+      auto key = info.at(i).first;
       size_t bytesRead = 0;
       RETURN_IF_NOT_OK(cp_->Read(key, &row_data, &bytesRead));
       if (bytesRead != sz) {
@@ -208,7 +250,6 @@ Status CacheService::BatchFetch(const std::vector<row_id_type> &v, MemGuard<uint
       }
     }
   }
-  *out = std::move(mem);
   return Status::OK();
 }
 Status CacheService::CacheSchema(const void *buf, int64_t len) {
@@ -232,18 +273,26 @@ Status CacheService::CacheSchema(const void *buf, int64_t len) {
   }
   return Status::OK();
 }
-Status CacheService::FetchSchema(MemGuard<uint8_t> *out) const {
+Status CacheService::FetchSchema(std::string *out) const {
   SharedLock rw(&rw_lock_);
   if (st_ == State::kBuildPhase) {
     // For this kind of cache service, we can't fetch yet until we are done with caching all the rows.
     RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
   }
   RETURN_UNEXPECTED_IF_NULL(out);
-  MemGuard<uint8_t> mem;
+  // We are going to use std::string to allocate and hold the result which will be eventually
+  // 'moved' to the protobuf message (which underneath is also a std::string) for the purpose
+  // to minimize memory copy.
+  std::string mem;
   if (schema_key_ >= 0) {
     auto len = cp_->GetSize(schema_key_);
-    RETURN_IF_NOT_OK(mem.allocate(len));
-    auto slice = WritableSlice(mem.GetMutablePointer(), len);
+    try {
+      mem.resize(len);
+      CHECK_FAIL_RETURN_UNEXPECTED(mem.capacity() >= len, "Programming error");
+    } catch (const std::bad_alloc &e) {
+      return Status(StatusCode::kOutOfMemory);
+    }
+    auto slice = WritableSlice(mem.data(), len);
     RETURN_IF_NOT_OK(cp_->Read(schema_key_, &slice));
     *out = std::move(mem);
   } else {

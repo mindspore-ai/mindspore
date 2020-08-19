@@ -43,13 +43,18 @@ class MindDataTestCacheOp : public UT::DatasetOpTesting {
   }
 };
 
-TEST_F(MindDataTestCacheOp, TestCacheServer) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
   Status rc;
-  CacheClient myClient(1, 0, true);  // use arbitrary session of 1, size of 0, spilling is true
+  CacheClient::Builder builder;
+  // use arbitrary session of 1, size of 0, spilling// is true
+  builder.SetSessionId(1).SetCacheMemSz(0).SetSpill(true);
+  std::shared_ptr<CacheClient> myClient;
+  rc = builder.Build(&myClient);
+  ASSERT_TRUE(rc.IsOk());
   // cksum value of 1 for CreateCache here...normally you do not directly create a cache and the cksum arg is generated.
-  rc = myClient.CreateCache(1, true);
-  EXPECT_TRUE(rc.IsOk());
-  std::cout << myClient << std::endl;
+  rc = myClient->CreateCache(1, true);
+  ASSERT_TRUE(rc.IsOk());
+  std::cout << *myClient << std::endl;
 
   // Create a schema using the C api's
   int32_t rank = 0;  // not used
@@ -68,11 +73,11 @@ TEST_F(MindDataTestCacheOp, TestCacheServer) {
 
   std::unordered_map<std::string, int32_t> map;
   rc = testSchema->GetColumnNameMap(&map);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Test the CacheSchema api
-  rc = myClient.CacheSchema(map);
-  EXPECT_TRUE(rc.IsOk());
+  rc = myClient->CacheSchema(map);
+  ASSERT_TRUE(rc.IsOk());
 
   // Create a tensor, take a snapshot and restore it back, and compare.
   std::shared_ptr<Tensor> t;
@@ -88,48 +93,54 @@ TEST_F(MindDataTestCacheOp, TestCacheServer) {
   TensorRow row;
   row.push_back(t);
   int64_t row_id;
-  rc = myClient.WriteRow(row, &row_id);
-  EXPECT_TRUE(rc.IsOk());
+  rc = myClient->WriteRow(row, &row_id);
+  ASSERT_TRUE(rc.IsOk());
 
   // Switch off build phase.
-  rc = myClient.BuildPhaseDone();
-  EXPECT_TRUE(rc.IsOk());
+  rc = myClient->BuildPhaseDone();
+  ASSERT_TRUE(rc.IsOk());
 
   // Now restore from cache.
   row.clear();
-  rc = myClient.GetRows({row_id}, &tbl);
+  rc = myClient->GetRows({row_id}, &tbl);
   row = tbl.front();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   auto r = row.front();
   std::cout << *r << std::endl;
   // Compare
   bool cmp = (*t == *r);
-  EXPECT_TRUE(cmp);
+  ASSERT_TRUE(cmp);
 
   // Get back the schema and verify
   std::unordered_map<std::string, int32_t> map_out;
-  rc = myClient.FetchSchema(&map_out);
-  EXPECT_TRUE(rc.IsOk());
+  rc = myClient->FetchSchema(&map_out);
+  ASSERT_TRUE(rc.IsOk());
   cmp = (map_out == map);
-  EXPECT_TRUE(cmp);
+  ASSERT_TRUE(cmp);
 
   // Test Purge and Destroy
-  rc = myClient.PurgeCache();
-  EXPECT_TRUE(rc.IsOk());
-  rc = myClient.DestroyCache();
-  EXPECT_TRUE(rc.IsOk());
+  rc = myClient->PurgeCache();
+  ASSERT_TRUE(rc.IsOk());
+  rc = myClient->DestroyCache();
+  ASSERT_TRUE(rc.IsOk());
 }
 
-TEST_F(MindDataTestCacheOp, TestConcurrencyRequest) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestConcurrencyRequest) {
   // Clear the rc of the master thread if any
   (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;
   Status rc;
-  CacheClient myClient(1, 1, true);  // use arbitrary session of 1, size 1, spilling is true
+  // use arbitrary session of 1, size 1, spilling is true
+  CacheClient::Builder builder;
+  // use arbitrary session of 1, size of 0, spilling// is true
+  builder.SetSessionId(1).SetCacheMemSz(1).SetSpill(true);
+  std::shared_ptr<CacheClient> myClient;
+  rc = builder.Build(&myClient);
+  ASSERT_TRUE(rc.IsOk());
   // cksum value of 1 for CreateCache here...normally you do not directly create a cache and the cksum arg is generated.
-  rc = myClient.CreateCache(1, true);
-  EXPECT_TRUE(rc.IsOk());
-  std::cout << myClient << std::endl;
+  rc = myClient->CreateCache(1, true);
+  ASSERT_TRUE(rc.IsOk());
+  std::cout << *myClient << std::endl;
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
   t->SetItemAt<uint64_t>({0, 0}, 1);
@@ -146,19 +157,19 @@ TEST_F(MindDataTestCacheOp, TestConcurrencyRequest) {
     Status vg_rc = vg.CreateAsyncTask("Test agent", [&myClient, &row]() -> Status {
       TaskManager::FindMe()->Post();
       for (auto i = 0; i < 500; i++) {
-        RETURN_IF_NOT_OK(myClient.WriteRow(row));
+        RETURN_IF_NOT_OK(myClient->WriteRow(row));
       }
       return Status::OK();
     });
-    EXPECT_TRUE(vg_rc.IsOk());
+    ASSERT_TRUE(vg_rc.IsOk());
   }
   ASSERT_TRUE(vg.join_all().IsOk());
   ASSERT_TRUE(vg.GetTaskErrorIfAny().IsOk());
-  rc = myClient.BuildPhaseDone();
+  rc = myClient->BuildPhaseDone();
   ASSERT_TRUE(rc.IsOk());
   // Get statistics from the server.
-  CacheClient::ServiceStat stat{};
-  rc = myClient.GetStat(&stat);
+  CacheServiceStat stat{};
+  rc = myClient->GetStat(&stat);
   ASSERT_TRUE(rc.IsOk());
   std::cout << stat.min_row_id << ":" << stat.max_row_id << ":" << stat.num_mem_cached << ":" << stat.num_disk_cached
             << "\n";
@@ -168,15 +179,15 @@ TEST_F(MindDataTestCacheOp, TestConcurrencyRequest) {
   for (auto i = stat.min_row_id; i <= stat.max_row_id; ++i) {
     tbl.clear();
     row.clear();
-    rc = myClient.GetRows({i}, &tbl);
-    EXPECT_TRUE(rc.IsOk());
+    rc = myClient->GetRows({i}, &tbl);
+    ASSERT_TRUE(rc.IsOk());
     row = tbl.front();
     auto r = row.front();
     bool cmp = (*t == *r);
-    EXPECT_TRUE(cmp);
+    ASSERT_TRUE(cmp);
   }
-  rc = myClient.DestroyCache();
-  EXPECT_TRUE(rc.IsOk());
+  rc = myClient->DestroyCache();
+  ASSERT_TRUE(rc.IsOk());
 }
 
 // Simple test with a repeated cache op over random data producer
@@ -187,7 +198,7 @@ TEST_F(MindDataTestCacheOp, TestConcurrencyRequest) {
 //        |
 //   RandomDataOp
 //
-TEST_F(MindDataTestCacheOp, TestRandomDataCache1) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   Status rc;
   int32_t rank = 0;  // not used
   MS_LOG(INFO) << "UT test TestRandomDataCache1";
@@ -218,13 +229,18 @@ TEST_F(MindDataTestCacheOp, TestRandomDataCache1) {
          .SetDataSchema(std::move(testSchema))
          .SetTotalRows(50)  // 50 samples for now
          .Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // CacheOp
   // size of 0, spilling is true
-  std::shared_ptr<CacheClient> myClient = std::make_shared<CacheClient>(1, 0, true);
+  CacheClient::Builder builder;
+  // use arbitrary session of 1, size of 0, spilling// is true
+  builder.SetSessionId(1).SetCacheMemSz(0).SetSpill(true);
+  std::shared_ptr<CacheClient> myClient;
+  rc = builder.Build(&myClient);
+  ASSERT_TRUE(rc.IsOk());
   std::shared_ptr<CacheOp> myCacheOp;
 
   int64_t num_samples = 0;
@@ -236,29 +252,29 @@ TEST_F(MindDataTestCacheOp, TestRandomDataCache1) {
          .SetRowsPerBuffer(4)
          .SetSampler(std::move(seq_sampler))
          .Build(&myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
   uint32_t numRepeats = 4;
   std::shared_ptr<RepeatOp> myRepeatOp;
   rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
   rc = myRepeatOp->AddChild(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myCacheOp->AddChild(myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
   rc = myTree->Prepare();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // quick check to see what tree looks like
   std::ostringstream ss;
@@ -268,24 +284,24 @@ TEST_F(MindDataTestCacheOp, TestRandomDataCache1) {
   std::cout << *myClient << std::endl;
 
   rc = myTree->Launch();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Start the loop of reading tensors from our pipeline
   DatasetIterator dI(myTree);
   TensorRow tensorList;
   rc = dI.FetchNextTensorRow(&tensorList);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   int rowCount = 0;
   while (!tensorList.empty()) {
     // Don't display these rows, just count them
     MS_LOG(INFO) << "Row fetched #: " << rowCount;
     rc = dI.FetchNextTensorRow(&tensorList);
-    EXPECT_TRUE(rc.IsOk());
+    ASSERT_TRUE(rc.IsOk());
     rowCount++;
   }
   ASSERT_EQ(rowCount, 200);
   rc = myClient->DestroyCache();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 }
 
 //// Simple test with a repeated cache op over random data producer.
@@ -297,7 +313,7 @@ TEST_F(MindDataTestCacheOp, TestRandomDataCache1) {
 ////        |
 ////   RandomDataOp
 ////
-TEST_F(MindDataTestCacheOp, TestRandomDataCacheSpill) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   Status rc;
   int32_t rank = 0;  // not used
   MS_LOG(INFO) << "UT test TestRandomDataCacheSpill";
@@ -328,15 +344,20 @@ TEST_F(MindDataTestCacheOp, TestRandomDataCacheSpill) {
          .SetDataSchema(std::move(testSchema))
          .SetTotalRows(10)
          .Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // CacheOp
   int64_t num_samples = 0;
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
-  std::shared_ptr<CacheClient> myClient = std::make_shared<CacheClient>(1, 4, true);
+  CacheClient::Builder builder;
+  // use arbitrary session of 1, size of 0, spilling// is true
+  builder.SetSessionId(1).SetCacheMemSz(4).SetSpill(true);
+  std::shared_ptr<CacheClient> myClient;
+  rc = builder.Build(&myClient);
+  ASSERT_TRUE(rc.IsOk());
   std::shared_ptr<CacheOp> myCacheOp;
   rc = CacheOp::Builder()
          .SetNumWorkers(4)
@@ -344,60 +365,65 @@ TEST_F(MindDataTestCacheOp, TestRandomDataCacheSpill) {
          .SetRowsPerBuffer(3)
          .SetSampler(std::move(seq_sampler))
          .Build(&myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
   uint32_t numRepeats = 4;
   std::shared_ptr<RepeatOp> myRepeatOp;
   rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
   rc = myRepeatOp->AddChild(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myCacheOp->AddChild(myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
   rc = myTree->Prepare();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   std::cout << *myClient << std::endl;
 
   rc = myTree->Launch();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Start the loop of reading tensors from our pipeline
   DatasetIterator dI(myTree);
   TensorRow tensorList;
   rc = dI.FetchNextTensorRow(&tensorList);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   int rowCount = 0;
   while (!tensorList.empty()) {
     // Don't display these rows, just count them
     MS_LOG(INFO) << "Row fetched #: " << rowCount;
     rc = dI.FetchNextTensorRow(&tensorList);
-    EXPECT_TRUE(rc.IsOk());
+    ASSERT_TRUE(rc.IsOk());
     rowCount++;
   }
   ASSERT_EQ(rowCount, 40);
   rc = myClient->DestroyCache();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 }
 
-TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   Status rc;
   int64_t num_samples = 0;
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
 
-  std::shared_ptr<CacheClient> myClient = std::make_shared<CacheClient>(1, 0, true);
+  CacheClient::Builder ccbuilder;
+  // use arbitrary session of 1, size of 0, spilling// is true
+  ccbuilder.SetSessionId(1).SetCacheMemSz(0).SetSpill(true);
+  std::shared_ptr<CacheClient> myClient;
+  rc = ccbuilder.Build(&myClient);
+  ASSERT_TRUE(rc.IsOk());
 
   // In a mappable dataset, it uses a complex interactions of cache lookup op and cache merge op.
   // Rather than manually build this, the way to do it is to choose the position of the cache in the tree by
@@ -417,44 +443,44 @@ TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
     .SetRecursive(true)
     .SetImageFolderDir(datasets_root_path_ + "/testPK/data");
   rc = builder.Build(&so);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
   uint32_t numRepeats = 4;
   std::shared_ptr<RepeatOp> myRepeatOp;
   rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   auto myTree = std::make_shared<ExecutionTree>();
   rc = myTree->AssociateNode(so);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   rc = myRepeatOp->AddChild(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myCacheOp->AddChild(so);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   rc = myTree->Prepare();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->Launch();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   // Start the loop of reading tensors from our pipeline
   DatasetIterator dI(myTree);
   TensorRow tensorList;
   rc = dI.FetchNextTensorRow(&tensorList);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   int rowCount = 0;
   while (!tensorList.empty()) {
     rc = dI.FetchNextTensorRow(&tensorList);
-    EXPECT_TRUE(rc.IsOk());
+    ASSERT_TRUE(rc.IsOk());
     if (rc.IsError()) {
       std::cout << rc << std::endl;
       break;
@@ -464,7 +490,7 @@ TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
   ASSERT_EQ(rowCount, 176);
   std::cout << "Row count : " << rowCount << std::endl;
   rc = myClient->DestroyCache();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 }
 
 //// Simple test with a repeated cache op over random data producer.
@@ -480,7 +506,7 @@ TEST_F(MindDataTestCacheOp, TestImageFolderCacheMerge) {
 ////        |
 ////   RandomDataOp
 ////
-TEST_F(MindDataTestCacheOp, TestCacheInheritSampler) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheInheritSampler) {
   Status rc;
   int32_t rank = 0;  // not used
   MS_LOG(INFO) << "UT test TestCacheInheritSampler";
@@ -517,57 +543,62 @@ TEST_F(MindDataTestCacheOp, TestCacheInheritSampler) {
          .SetTotalRows(10)
          .SetSampler(std::move(seq_sampler))
          .Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // CacheOp
-  std::shared_ptr<CacheClient> myClient = std::make_shared<CacheClient>(1, 4, true);
+  CacheClient::Builder ccbuilder;
+  // use arbitrary session of 1, size of 0, spilling// is true
+  ccbuilder.SetSessionId(1).SetCacheMemSz(4).SetSpill(true);
+  std::shared_ptr<CacheClient> myClient;
+  rc = ccbuilder.Build(&myClient);
+  ASSERT_TRUE(rc.IsOk());
   std::shared_ptr<CacheOp> myCacheOp;
   rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetRowsPerBuffer(3).Build(&myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
   uint32_t numRepeats = 4;
   std::shared_ptr<RepeatOp> myRepeatOp;
   rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
   rc = myRepeatOp->AddChild(myCacheOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myCacheOp->AddChild(myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
   rc = myTree->Prepare();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   std::cout << *myClient << std::endl;
 
   rc = myTree->Launch();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 
   // Start the loop of reading tensors from our pipeline
   DatasetIterator dI(myTree);
   TensorRow tensorList;
   rc = dI.FetchNextTensorRow(&tensorList);
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
   int rowCount = 0;
   while (!tensorList.empty()) {
     // Don't display these rows, just count them
     MS_LOG(INFO) << "Row fetched #: " << rowCount;
     rc = dI.FetchNextTensorRow(&tensorList);
-    EXPECT_TRUE(rc.IsOk());
+    ASSERT_TRUE(rc.IsOk());
     rowCount++;
   }
   ASSERT_EQ(rowCount, 40);
   rc = myClient->DestroyCache();
-  EXPECT_TRUE(rc.IsOk());
+  ASSERT_TRUE(rc.IsOk());
 }

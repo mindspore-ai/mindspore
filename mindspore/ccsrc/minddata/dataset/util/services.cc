@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #endif
 #include <unistd.h>
-#include "minddata/dataset/engine/cache/cache_server.h"
 #include "minddata/dataset/util/circular_pool.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -59,35 +58,15 @@ std::string Services::GetUniqueID() {
   return std::string(buffer, UNIQUEID_LEN);
 }
 
-TaskManager &Services::getTaskMgrInstance() {
-  Services &sm = GetInstance();
-  return *(static_cast<TaskManager *>(sm.sa_[kSlotTaskMgr_]));
-}
-
-CacheServer &Services::getCacheServer() {
-  Services &sm = GetInstance();
-  return *(static_cast<CacheServer *>(sm.sa_[kSlotCacheMgr_]));
-}
-
 Status Services::CreateAllInstances() {
-  // In order, TaskMgr, BufferMgr
-  Status rc;
-  sa_[kSlotTaskMgr_] = new (&rc, pool_) TaskManager();
-  RETURN_IF_NOT_OK(rc);
-  rc = sa_[kSlotTaskMgr_]->ServiceStart();
-  RETURN_IF_NOT_OK(rc);
-  // TODO(jesse) : Get the parameters from config file. Right now spill to /tmp and spawn 3 workers
-#if !defined(_WIN32) && !defined(_WIN64)
-  sa_[kSlotCacheMgr_] = new (&rc, pool_) CacheServer("/tmp", 3);
-  RETURN_IF_NOT_OK(rc);
-  rc = sa_[kSlotCacheMgr_]->ServiceStart();
-#else
-  sa_[kSlotCacheMgr_] = nullptr;
-#endif
-  return rc;
+  // First one is always the TaskManager
+  RETURN_IF_NOT_OK(TaskManager::CreateInstance());
+  TaskManager &tm = TaskManager::GetInstance();
+  RETURN_IF_NOT_OK(tm.ServiceStart());
+  return Status::OK();
 }
 
-Services::Services() : pool_(nullptr), sa_{nullptr} {
+Services::Services() : pool_(nullptr) {
   Status rc = CircularPool::CreateCircularPool(&pool_, -1, 16, true);  // each arena 16M
   if (rc.IsError()) {
     std::terminate();
@@ -95,22 +74,11 @@ Services::Services() : pool_(nullptr), sa_{nullptr} {
 }
 
 Services::~Services() noexcept {
-  try {
-    // In reverse order
-    CacheServer *cs = static_cast<CacheServer *>(sa_[kSlotCacheMgr_]);
-    if (cs != nullptr) {
-      (void)cs->ServiceStop();
-      cs->~CacheServer();
-      pool_->Deallocate(cs);
-    }
-    TaskManager *tm = static_cast<TaskManager *>(sa_[kSlotTaskMgr_]);
-    if (tm != nullptr) {
-      (void)tm->ServiceStop();
-      tm->~TaskManager();
-      pool_->Deallocate(tm);
-    }
-  } catch (const std::exception &e) {
-    // Do nothing.
+  // Shutdown in reverse order.
+  auto n = hook_.size();
+  while (n > 0) {
+    hook_.pop_back();
+    n = hook_.size();
   }
 }
 }  // namespace dataset

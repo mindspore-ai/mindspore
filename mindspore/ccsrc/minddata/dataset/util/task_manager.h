@@ -54,7 +54,16 @@ class TaskManager : public Service {
 
   TaskManager &operator=(const TaskManager &) = delete;
 
-  static TaskManager &GetInstance() noexcept { return Services::getTaskMgrInstance(); }
+  static Status CreateInstance() {
+    std::call_once(init_instance_flag_, [&]() -> Status {
+      auto &svcManager = Services::GetInstance();
+      RETURN_IF_NOT_OK(svcManager.AddHook(&instance_));
+      return Status::OK();
+    });
+    return Status::OK();
+  }
+
+  static TaskManager &GetInstance() noexcept { return *instance_; }
 
   Status DoServiceStart() override;
 
@@ -96,6 +105,8 @@ class TaskManager : public Service {
   Status WatchDog();
 
  private:
+  static std::once_flag init_instance_flag_;
+  static TaskManager *instance_;
   RWLock lru_lock_;
   SpinLock free_lock_;
   SpinLock tg_lock_;

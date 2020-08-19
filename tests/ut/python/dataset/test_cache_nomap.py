@@ -15,6 +15,8 @@
 """
 Testing cache operator with non-mappable datasets
 """
+import os
+import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
@@ -25,6 +27,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic1():
     """
     A random dataset (a non mappable dataset) with a cache over it just after the leaf
@@ -54,6 +57,7 @@ def test_cache_nomap_basic1():
     logger.info("test_cache_nomap_basic1 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic2():
     """
     A random dataset (a non mappable dataset) with a cache over it just after the leaf
@@ -85,6 +89,7 @@ def test_cache_nomap_basic2():
     logger.info("test_cache_nomap_basic2 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic3():
     """
     A TF reader dataset (a non mappable dataset) with a cache over it just after the leaf
@@ -112,9 +117,21 @@ def test_cache_nomap_basic3():
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 12
+
+    # Contact the server to get the statistics
+    stat = some_cache.GetStat()
+    cache_sz = stat.avg_cache_sz
+    num_mem_cached = stat.num_mem_cached
+    num_disk_cached = stat.num_disk_cached
+
+    logger.info("Number of rows cached in memory: {}".format(num_mem_cached))
+    logger.info("Number of rows spilled to disk: {}".format(num_disk_cached))
+    logger.info("Average row cache size: {}".format(cache_sz))
+
     logger.info("test_cache_nomap_basic3 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic4():
     """
     A TF reader dataset (a non mappable dataset) with a map decode and cache after it
@@ -155,6 +172,7 @@ def test_cache_nomap_basic4():
     logger.info("test_cache_nomap_basic4 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic5():
     """
     A TF reader dataset (a non mappable dataset) with a cache over it just after the leaf
@@ -191,6 +209,7 @@ def test_cache_nomap_basic5():
     logger.info("test_cache_nomap_basic5 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic6():
     """
     A TF reader dataset (a non mappable dataset) with a cache over it just after the leaf
@@ -230,6 +249,7 @@ def test_cache_nomap_basic6():
     logger.info("test_cache_nomap_basic6 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic7():
     """
     A TF reader dataset (a non mappable dataset) that uses global shuffle, and is cached followed by
@@ -265,6 +285,7 @@ def test_cache_nomap_basic7():
     logger.info("test_cache_nomap_basic7 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share1():
     """
     It is allowed to share the cache between the following two trees:
@@ -280,7 +301,7 @@ def test_cache_nomap_allowed_share1():
 
     ds.config.set_seed(1)
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True, prefetch_size=32)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -300,6 +321,7 @@ def test_cache_nomap_allowed_share1():
     logger.info("test_cache_nomap_allowed_share1 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share2():
     """
     It is allowed to share the cache between the following two trees (with map decode):
@@ -341,6 +363,7 @@ def test_cache_nomap_allowed_share2():
     logger.info("test_cache_nomap_allowed_share2 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share3():
     """
     It is allowed to share the cache between the following two trees (different shard ids):
@@ -376,6 +399,7 @@ def test_cache_nomap_allowed_share3():
     logger.info("test_cache_nomap_allowed_share3 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share4():
     """
     It is allowed to share the cache between the following two trees:
@@ -414,6 +438,7 @@ def test_cache_nomap_allowed_share4():
     logger.info("test_cache_nomap_allowed_share4 Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_disallowed_share1():
     """
     It is not allowed to share the cache between the following two trees:

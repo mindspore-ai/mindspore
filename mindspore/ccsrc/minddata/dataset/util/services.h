@@ -16,9 +16,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SERVICES_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SERVICES_H_
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/service.h"
@@ -27,7 +29,7 @@
 namespace mindspore {
 namespace dataset {
 class TaskManager;
-class CacheServer;
+
 class Services {
  public:
   static Status CreateInstance() {
@@ -59,10 +61,6 @@ class Services {
 
   ~Services() noexcept;
 
-  static TaskManager &getTaskMgrInstance();
-
-  static CacheServer &getCacheServer();
-
   std::shared_ptr<MemoryPool> GetServiceMemPool() { return pool_; }
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -80,19 +78,29 @@ class Services {
     return Allocator<T>(Services::GetInstance().GetServiceMemPool());
   }
 
+  /// \brief Add a new service to the start up list.
+  /// \tparam T Class that implements Service
+  /// \return Status object and where the service is located in the hook_ list
+  template <typename T, typename... Args>
+  Status AddHook(T **out, Args &&... args) {
+    RETURN_UNEXPECTED_IF_NULL(out);
+    try {
+      (*out) = new T(std::forward<Args>(args)...);
+      std::unique_ptr<T> svc(*out);
+      hook_.push_back(std::move(svc));
+    } catch (const std::bad_alloc &e) {
+      return Status(StatusCode::kOutOfMemory);
+    }
+    return Status::OK();
+  }
+
  private:
   static std::once_flag init_instance_flag_;
   static std::unique_ptr<Services> instance_;
   // A small pool used for small objects that last until the
   // Services Manager shuts down. Used by all sub-services.
   std::shared_ptr<MemoryPool> pool_;
-  // We use pointers here instead of unique_ptr because we
-  // want to have ultimate control on the order of
-  // construction and destruction.
-  static constexpr int kSlotTaskMgr_ = 0;
-  static constexpr int kSlotCacheMgr_ = 1;
-  static constexpr int kNumServices_ = 2;
-  Service *sa_[kNumServices_];
+  std::vector<std::unique_ptr<Service>> hook_;
 
   Services();
 

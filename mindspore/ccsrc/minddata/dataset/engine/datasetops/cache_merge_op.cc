@@ -16,8 +16,10 @@
 #include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <iomanip>
+#include <utility>
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
@@ -41,9 +43,13 @@ void CacheMergeOp::Print(std::ostream &out, bool show_all) const {
     out << "\n\n";
   }
 }
+
 CacheMergeOp::CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t numCleaners,
                            std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<Sampler> &sampler)
-    : ParallelOp(numWorkers, opConnectorSize, sampler), num_cleaners_(numCleaners), cache_client_(cache_client) {}
+    : ParallelOp(numWorkers, opConnectorSize, sampler),
+      num_cleaners_(numCleaners),
+      cache_client_(std::move(cache_client)) {}
+
 Status CacheMergeOp::operator()() {
   // A queue of row id to let cleaner send cache miss rows to the cache server
   // We don't want a small queue as this will block the parallel op workers.
@@ -62,6 +68,7 @@ Status CacheMergeOp::operator()() {
   TaskManager::FindMe()->Post();
   return Status::OK();
 }
+
 // Each parallel worker will pop from the CacheHit stream. If there is a missing TensorRow, we will wait
 // until it shows up in the pool.
 Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
@@ -82,10 +89,8 @@ Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
         RETURN_IF_NOT_OK(db_ptr->PopRow(&row));
         if (row.empty()) {
           auto row_id = row.getId();
-          TensorRowRequest *rq = nullptr;
-          RETURN_IF_NOT_OK(GetRq(row_id, &rq));
           // Block until the row shows up in the pool.
-          RETURN_IF_NOT_OK(rq->Wait(&row));
+          RETURN_IF_NOT_OK(cache_miss_.PopFront(row_id, &row));
         }
         tbl->push_back(std::move(row));
       }
@@ -97,6 +102,7 @@ Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(EofReceived(worker_id));
   return Status::OK();
 }
+
 Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
   TaskManager::FindMe()->Post();
   // We will simply pop TensorRow from the stream and insert them into the pool and
@@ -123,17 +129,27 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
           std::string errMsg = "Expect positive row id: " + std::to_string(row_id);
           RETURN_STATUS_UNEXPECTED(errMsg);
         }
-        TensorRowRequest *rq = nullptr;
+        // Technically number of this row shows up in the cache miss stream is equal to the number
+        // of P() call. However the cleaner wants it too. So we need an extra copy.
+        TensorRowCacheRequest *rq;
         RETURN_IF_NOT_OK(GetRq(row_id, &rq));
-        rq->WakeUpAny(std::move(row));
-        // Let the cleaner to flush out this row (async) to the cache server.
-        RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
+        if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
+          // We will send the request async. But any error we most
+          // likely ignore and continue.
+          Status rc;
+          rc = rq->AsyncSendCacheRequest(cache_client_, row);
+          if (rc.IsOk()) {
+            RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
+          }
+        }
+        RETURN_IF_NOT_OK(cache_miss_.Add(row_id, std::move(row)));
       }
     }
     RETURN_IF_NOT_OK(cache_missing_stream->GetNextBuffer(&db_ptr, workerId));
   }
   return Status::OK();
 }
+
 Status CacheMergeOp::Cleaner() {
   TaskManager::FindMe()->Post();
   while (true) {
@@ -142,45 +158,28 @@ Status CacheMergeOp::Cleaner() {
     if (row_id < 0) {
       break;
     }
-    TensorRowRequest *rq = nullptr;
+    // Locate the cache request
+    TensorRowCacheRequest *rq;
     RETURN_IF_NOT_OK(GetRq(row_id, &rq));
-    if (rq->GetState() == TensorRowRequest::State::kClean) {
-      // If already flushed, move on to the next one.
+    // If already flushed, move on to the next one.
+    if (rq->GetState() == TensorRowCacheRequest::State::kClean) {
       continue;
     }
-    TensorRow row;
-    RETURN_IF_NOT_OK(rq->Release(&row));
-    CHECK_FAIL_RETURN_UNEXPECTED(!row.empty(), "Programming error.");
-    Status rc = cache_client_->WriteRow(row);
-    // Bad rc should not bring down the pipeline
+    Status rc = rq->CheckCacheResult();
     if (rc.IsError()) {
-      MS_LOG(WARNING) << "Cache not successful." << rc.ToString();
+      // If interrupt, time to quit.
+      if (rc.get_code() == StatusCode::kInterrupted) {
+        return Status::OK();
+      }
+      MS_LOG(INFO) << "Cache row not successful: " << rc.ToString();
+      // Bad rc should not bring down the pipeline. We will simply continue and
+      // change the state back to empty. We don't need a CAS from CLEAN back to EMPTY.
+      rq->SetState(TensorRowCacheRequest::State::kEmpty);
     }
-    rq->SetState(TensorRowRequest::State::kClean);
   }
   return Status::OK();
 }
 
-Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowRequest **out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  std::unique_lock<std::mutex> lck(mux_);
-  auto it = cache_miss_map_.find(row_id);
-  if (it != cache_miss_map_.end()) {
-    *out = it->second.GetMutablePointer();
-  } else {
-    // We will create a new one.
-    auto alloc = Services::GetAllocator<TensorRowRequest>();
-    auto r = cache_miss_map_.emplace(row_id, MemGuard<TensorRowRequest, Allocator<TensorRowRequest>>(alloc));
-    if (r.second) {
-      auto &mem = r.first->second;
-      RETURN_IF_NOT_OK(mem.allocate(1, row_id));
-      *out = mem.GetMutablePointer();
-    } else {
-      RETURN_STATUS_UNEXPECTED("Map insert fail.");
-    }
-  }
-  return Status::OK();
-}
 Status CacheMergeOp::PrepareNodePostAction() {  // Run any common code from super class first before adding our own
                                                 // specific logic
   CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 2, "Incorrect number of children");
@@ -199,6 +198,7 @@ Status CacheMergeOp::PrepareNodePostAction() {  // Run any common code from supe
   RETURN_IF_NOT_OK(rc);
   return Status::OK();
 }
+
 Status CacheMergeOp::ComputeColMap() {
   CHECK_FAIL_RETURN_UNEXPECTED(child_[kCacheMissChildIdx] != nullptr, "Cache miss stream empty");
   if (column_name_id_map().empty()) {
@@ -207,53 +207,13 @@ Status CacheMergeOp::ComputeColMap() {
   CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map().empty(), "No column map detected");
   return Status::OK();
 }
-Status CacheMergeOp::TensorRowRequest::Wait(TensorRow *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  // Block until the missing row is in the pool.
-  RETURN_IF_NOT_OK(use_count_.P());
-  std::unique_lock<std::mutex> lck(dq_mux_);
-  CHECK_FAIL_RETURN_UNEXPECTED(!row_.empty(), "Programming error");
-  *out = std::move(row_.front());
-  row_.pop_front();
-  return Status::OK();
-}
-void CacheMergeOp::TensorRowRequest::WakeUpAny(TensorRow &&row) {
-  std::unique_lock<std::mutex> lck(dq_mux_);
-  // Technically number of this row shows up in the cache miss stream is equal to the number
-  // of P() call. However the cleaner wants it too. So we need an extra copy.
-  if (GetState() == State::kEmpty) {
-    // We will do a deep copy
-    for (auto &ts : row) {
-      std::shared_ptr<Tensor> out_ts;
-      Tensor::CreateFromTensor(ts, &out_ts);
-      cleaner_copy_.push_back(out_ts);
-    }
-    cleaner_copy_.setId(row.getId());
-    // Change the state to dirty
-    SetState(State::kDirty);
-  }
-  row_.push_back(std::move(row));
-  // Bump up the use count by 1. This wake up any parallel worker which is waiting
-  // for this row.
-  use_count_.V();
-}
-Status CacheMergeOp::TensorRowRequest::Release(TensorRow *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  // We are not holding any mutex here because the cleaner isn't really touching the deque row_.
-  // In case we have multiple cleaners and they all see the copy, only one of them will
-  // get it.
-  auto expected = State::kDirty;
-  if (st_.compare_exchange_strong(expected, State::kClean)) {
-    *out = std::move(cleaner_copy_);
-  }
-  return Status::OK();
-}
+
 // Builder constructor. Creates the builder object.
 CacheMergeOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   build_num_workers_ = cfg->num_parallel_workers();
   build_op_connector_size_ = cfg->op_connector_size();
-  build_num_cleaners_ = 1;
+  build_num_cleaners_ = cfg->num_parallel_workers();
 }
 
 // Check if the required parameters are set by the builder.
@@ -310,6 +270,61 @@ Status CacheMergeOp::EofReceived(int32_t worker_id) {
   }
   MS_LOG(DEBUG) << "Cache merge sending eof";
   return DatasetOp::EofReceived(worker_id);
+}
+
+Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowCacheRequest **out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  std::unique_lock<std::mutex> lock(mux_);
+  auto it = io_request_.find(row_id);
+  if (it != io_request_.end()) {
+    *out = it->second.GetMutablePointer();
+  } else {
+    // We will create a new one.
+    auto alloc = Services::GetAllocator<TensorRowCacheRequest>();
+    auto r = io_request_.emplace(row_id, MemGuard<TensorRowCacheRequest, Allocator<TensorRowCacheRequest>>(alloc));
+    if (r.second) {
+      auto &mem = r.first->second;
+      RETURN_IF_NOT_OK(mem.allocate(1));
+      *out = mem.GetMutablePointer();
+    } else {
+      RETURN_STATUS_UNEXPECTED("Map insert fail.");
+    }
+  }
+  return Status::OK();
+}
+
+Status CacheMergeOp::TensorRowCacheRequest::AsyncSendCacheRequest(const std::shared_ptr<CacheClient> &cc,
+                                                                  const TensorRow &row) {
+  auto expected = State::kEmpty;
+  if (st_.compare_exchange_strong(expected, State::kDirty)) {
+    // We will do a deep copy but write directly into CacheRequest protobuf or shared memory
+    Status rc;
+    cleaner_copy_ =
+      std::make_shared<CacheRowRequest>(cc->server_connection_id_, cc->cookie(), cc->SupportLocalClient());
+    rc = cleaner_copy_->SerializeCacheRowRequest(cc.get(), row);
+    if (rc.IsOk()) {
+      // Send the request async. The cleaner will check the return code.
+      rc = cc->PushRequest(cleaner_copy_);
+    }
+    if (rc.IsError()) {
+      // Clean up the shared pointer and reset the state back to empty
+      cleaner_copy_.reset();
+      st_ = State::kEmpty;
+    }
+  }
+  return Status::OK();
+}
+
+Status CacheMergeOp::TensorRowCacheRequest::CheckCacheResult() {
+  auto expected = State::kDirty;
+  if (st_.compare_exchange_strong(expected, State::kClean)) {
+    // Success or not, we will release the memory.
+    // We simply move it out of the structure and let it go out of scope.
+    auto cache_request = std::move(cleaner_copy_);
+    RETURN_IF_NOT_OK(cache_request->Wait());
+    return Status::OK();
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

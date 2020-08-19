@@ -25,15 +25,22 @@ class DatasetCache:
     A client to interface with tensor caching service
     """
 
-    def __init__(self, session_id=None, size=0, spilling=False):
+    def __init__(self, session_id=None, size=0, spilling=False, port=50052, prefetch_size=20):
         check_uint32(session_id, "session_id")
         check_uint64(size, "size")
         type_check(spilling, (bool,), "spilling")
+        check_uint32(port, "port")
+        check_uint32(prefetch_size, "prefetch size")
 
         self.session_id = session_id
         self.size = size
         self.spilling = spilling
-        self.cache_client = CacheClient(session_id, size, spilling)
+        self.port = port
+        self.prefetch_size = prefetch_size
+        self.cache_client = CacheClient(session_id, size, spilling, port, prefetch_size)
+
+    def GetStat(self):
+        return self.cache_client.GetStat()
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
@@ -44,5 +51,7 @@ class DatasetCache:
         new_cache.session_id = copy.deepcopy(self.session_id, memodict)
         new_cache.spilling = copy.deepcopy(self.spilling, memodict)
         new_cache.size = copy.deepcopy(self.size, memodict)
+        new_cache.port = copy.deepcopy(self.port, memodict)
+        new_cache.prefetch_size = copy.deepcopy(self.prefetch_size, memodict)
         new_cache.cache_client = self.cache_client
         return new_cache

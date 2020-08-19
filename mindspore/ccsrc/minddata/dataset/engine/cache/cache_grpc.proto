@@ -1,0 +1,54 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+package mindspore.dataset;
+option cc_enable_arenas = true;
+
+// The session_id and crc work together to uniquely identify this particular cache and allow
+// sharing of the cache.
+message CacheClientInfo {
+  uint32 session_id = 1;
+  uint32 crc = 2;
+}
+
+message CacheRequest {
+  // Type of rpc request
+  int32 type = 1;
+  // Extra optional flag used by individual request if needed
+  uint32 flag = 2;
+  oneof connect_info {
+    // The server_connection_id is the actual id we use for operations after the cache is built
+    int64 connection_id = 3;
+    // But some request like CreateCache we have to use the session id and crc to connect to the server.
+    CacheClientInfo connection_info = 4;
+  }
+  // Everything else is just vector of buffers
+  repeated bytes buf_data = 5;
+}
+
+message CacheReply {
+  int32 rc = 1;
+  string msg = 2;
+  // Extra optional flag used by individual request if needed
+  uint32 flag = 3;
+  // What the server send back is a plain buffer
+  bytes result = 4;
+}
+
+service CacheServerGreeter {
+  rpc CacheServerRequest (CacheRequest) returns (CacheReply) {}
+}

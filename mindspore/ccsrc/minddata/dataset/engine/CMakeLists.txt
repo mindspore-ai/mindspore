@@ -20,10 +20,8 @@ if (ENABLE_PYTHON)
     target_include_directories(engine PRIVATE ${pybind11_INCLUDE_DIRS})
 endif()
 
+add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt engine-gnn engine-perf engine-cache-client engine-datasetops-mapop)
+
 if (ENABLE_TDTQUE)
-  add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt engine-opt engine-gnn engine-perf
-                   engine-cache-client engine-cache-server engine-datasetops-mapop)
-else ()
-  add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt engine-gnn engine-perf
-                   engine-cache-client engine-cache-server engine-datasetops-mapop)
+  add_dependencies(engine engine-tdt)
 endif ()

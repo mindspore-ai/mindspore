@@ -28,7 +28,6 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
-#include "minddata/dataset/engine/cache/de_tensor_generated.h"
 #include "minddata/dataset/util/arena.h"
 #include "minddata/dataset/util/btree.h"
 #include "minddata/dataset/util/cache_pool.h"
@@ -38,7 +37,8 @@
 
 namespace mindspore {
 namespace dataset {
-struct CacheStat;
+/// Some typedef used for BatchFetch
+using key_size_pair = std::pair<CachePool::key_type, size_t>;
 /// \brief A cache service for storing/fetching buffers to in memory cache and may spill to disk the cache service is
 /// created to support spilling
 class CacheService : public Service {
@@ -69,12 +69,26 @@ class CacheService : public Service {
   /// \param[out] row_id_generated The row id assigned to this row if any
   /// \return Status object
   Status CacheRow(const std::vector<const void *> &buf, row_id_type *row_id_generated);
+
+  /// \brief A fast version of CacheRow where all the data is already in one contiguous piece.
+  /// \param src Slice of the data
+  /// \param row_id_generated
+  /// \return Status object
+  Status FastCacheRow(const ReadableSlice &src, row_id_type *row_id_generated);
+
+  /// \brief This function is used in preparation for batch fetching.
+  /// It calculates how much memory we should allocate and which row id are present.
+  /// \param[in/out] Pointer to vector of <CachePool::key_type, size_t>
+  /// \param[in/out] mem_sz how much memory is required to batch fetch
+  /// \return Status object
+  Status PreBatchFetch(const std::vector<row_id_type> &v, std::vector<key_size_pair> *, int64_t *mem_sz);
+
   /// \brief Main function to fetch rows in batch. The output is a contiguous memory which will be decoded
   /// by the CacheClient. Cache miss is not an error, and will be coded in the output to mark an empty row.
   /// \param[in] v A vector of row id.
   /// \param[out] out A contiguous memory buffer that holds the requested rows.
   /// \return Status object
-  Status BatchFetch(const std::vector<row_id_type> &v, MemGuard<uint8_t> *out) const;
+  Status BatchFetch(const std::vector<row_id_type> &v, const std::vector<key_size_pair> &, WritableSlice *out) const;
 
   /// \brief Getter function
   /// \return Spilling path
@@ -102,7 +116,7 @@ class CacheService : public Service {
   /// \brief Fetch schema
   /// \param out A contiguous memory that contains the serialized form of schema.
   /// \return Status object
-  Status FetchSchema(MemGuard<uint8_t> *out) const;
+  Status FetchSchema(std::string *out) const;
   /// \brief Purge the content of a cache
   /// \return Status object
   Status Purge();
