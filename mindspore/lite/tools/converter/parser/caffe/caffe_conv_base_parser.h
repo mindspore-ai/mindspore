@@ -40,9 +40,7 @@ class CaffeConvBaseParser {
 
   int ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType);
 
-  int ParseChannelOut(const caffe::ConvolutionParameter &convParam);
-
-  int ParseChannelIn(const caffe::LayerParameter &proto, const int &group);
+  int ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut);
 
   STATUS ParseWeight(const caffe::LayerParameter &weight, std::vector<schema::TensorT *> *weightVec);
 };

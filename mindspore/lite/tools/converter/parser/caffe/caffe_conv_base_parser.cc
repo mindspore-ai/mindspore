@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/caffe/caffe_conv_base_parser.h"
 #include <algorithm>
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_conv_base_parser.h"
 
 const uint32_t PAD_DEFAULT_VALUE = 0;
 const uint32_t STRIDE_DEFAULT_VALUE = 1;
@@ -35,7 +35,7 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
    */
   if (convParam.has_pad_h() || convParam.has_pad_w()) {
     if (convParam.pad_size() != 0) {
-      // MS_LOGE("Either pad or pad_h/w should be specified; not both");
+      MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
       return RET_ERROR;
     }
 
@@ -76,11 +76,11 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
 STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *stride) {
   if (convParam.has_stride_h() || convParam.has_stride_w()) {
     if (convParam.stride_size() != 0) {
-      // MS_LOGE("Either stride or stride_h/w should be specified; not both");
+      MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
       return RET_ERROR;
     }
     if (!convParam.has_stride_h() || !convParam.has_stride_w()) {
-      // MS_LOGE("stride_h/w must appear at the same time!");
+      MS_LOG(ERROR) << "stride_h/w must appear at the same time!";
       return RET_ERROR;
     }
     (*stride)[0] = convParam.stride_h();
@@ -120,14 +120,14 @@ STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &co
 STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *kernel) {
   if (convParam.has_kernel_h() || convParam.has_kernel_w()) {
     if (convParam.kernel_size_size() != 0) {
-      // MS_LOGE("Either kernel_size or kernel_h/w should be specified; not both.")
+      MS_LOG(ERROR) << "Either kernel_size or kernel_h/w should be specified; not both.";
       return RET_ERROR;
     }
     if (convParam.has_kernel_h() && convParam.has_kernel_w()) {
       (*kernel)[0] = convParam.kernel_h();
       (*kernel)[1] = convParam.kernel_w();
     } else {
-      // MS_LOGE("kernel_h/w must appear at the same time!");
+      MS_LOG(ERROR) << "kernel_h/w must appear at the same time!";
       return RET_ERROR;
     }
   } else if (convParam.kernel_size_size() != 0) {
@@ -157,40 +157,27 @@ int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam
   return group;
 }
 
-int CaffeConvBaseParser::ParseChannelIn(const caffe::LayerParameter &proto, const int &group) {
-  int res = 0;
-  auto &weightBlob = proto.blobs(0);
-  if (weightBlob.has_shape()) {
-    res = weightBlob.shape().dim(1) * group;
-  } else {
-    // get shape information from Blob parameters(caffe proto v1)
-    if (proto.type() == "Deconvolution") {
-      res = weightBlob.num() * group;
-    } else {
-      res = weightBlob.channels() * group;
-    }
-  }
-  return res;
-}
-
-int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &convParam) {
+int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut) {
+    MS_ASSERT(channelOut != nullptr);
   if (!convParam.has_num_output()) {
-    // MS_LOGE("Parse num_output for failed.");
+    MS_LOG(ERROR) << "Parse num_output for failed.";
+    return RET_ERROR;
   }
-  return convParam.num_output();
+  *channelOut = convParam.num_output();
+  return RET_OK;
 }
 
 STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
                                         std::vector<schema::TensorT *> *weightVec) {
   // Layer must have Filter
   if (weight.blobs_size() == 0) {
-    // MS_LOGE("No filter data in layer %s", weight.name().c_str());
+    MS_LOG(ERROR) << "No filter data in layer " <<  weight.name().c_str();
     return RET_ERROR;
   }
 
   auto filter = ConvertWeight(weight.blobs(0));
   if (filter == nullptr) {
-    // MS_LOGE("Convert weight for layer %s failed", weight.name().c_str());
+    MS_LOG(ERROR) << "Convert weight for layer " << weight.name().c_str() << " failed";
     return RET_ERROR;
   }
   weightVec->push_back(filter);
@@ -200,13 +187,13 @@ STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
   if (convParam.bias_term() && weight.blobs_size() > 1) {
     auto bias = ConvertWeight(weight.blobs(1));
     if (bias == nullptr) {
-      // MS_LOGE("Convert bias for layer %s failed", weight.name().c_str());
+      MS_LOG(ERROR) << "Convert bias for layer " << weight.name().c_str() << " failed";
       return RET_ERROR;
     }
 
     std::vector<int32_t> shape = bias->dims;
     if (shape.size() != CAFFE_CONV_BIAS_DIM_NUM) {
-      // MS_LOGE("Bias dim-num of layer %s is not supported");
+      MS_LOG(ERROR) << "Bias dim-num of layer "<< weight.name().c_str() << " is not supported";
       return RET_ERROR;
     }
     weightVec->push_back(bias);

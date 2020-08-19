@@ -16,6 +16,7 @@
 
 #include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_convolution_parser.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
@@ -62,7 +63,8 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   std::vector<int64_t> pad(4, 0);
   auto status = convParser.ParsePads(convParam, &pad);
   if (status != RET_OK) {
-    // MS_LOGE("ParsePads for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() <<" failed";
+    return RET_ERROR;
   }
   attr->padUp = pad[0];
   attr->padDown = pad[1];
@@ -73,7 +75,8 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   std::vector<int64_t> stride(2, 0);
   status = convParser.ParseStrides(convParam, &stride);
   if (status != RET_OK) {
-    // MS_LOGE("ParseStrides for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
+    return RET_ERROR;
   }
   attr->strideH = stride[0];
   attr->strideW = stride[1];
@@ -82,7 +85,8 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   std::vector<int64_t> dilation(2, 0);
   status = convParser.ParseDilations(convParam, &dilation);
   if (status != RET_OK) {
-    // MS_LOGE("ParseDilations for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParseDilations for " << proto.name().c_str() << " failed";
+    return RET_ERROR;
   }
   attr->dilateH = dilation[0];
   attr->dilateW = dilation[1];
@@ -91,15 +95,26 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   std::vector<int64_t> kernel(2, 0);
   status = convParser.ParseKernels(convParam, &kernel);
   if (status != RET_OK) {
-    // MS_LOGE("ParseKernels for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParseKernels for " << proto.name().c_str() << " failed";
+    return RET_ERROR;
   }
   attr->kernelH = kernel[0];
   attr->kernelW = kernel[1];
 
   attr->hasBias = convParam.bias_term();
   attr->group = convParser.ParseGroup(convParam, proto.type());
-  attr->channelOut = convParser.ParseChannelOut(convParam);
-  attr->channelIn = convParser.ParseChannelIn(weight, attr->group);
+  auto ret = convParser.ParseChannelOut(convParam, &(attr->channelOut));
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "conv channel out failed";
+    return RET_ERROR;
+  }
+  auto &weightBlob = weight.blobs(0);
+  if (weightBlob.has_shape()) {
+    attr->channelIn = weightBlob.shape().dim(1) * attr->group;
+  } else {
+    // get shape information from Blob parameters(caffe proto v1)
+    attr->channelIn = weightBlob.channels() * attr->group;
+  }
   attr->padMode = schema::PadMode_CAFFE;
   op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.type = schema::PrimitiveType_Conv2D;
@@ -108,9 +123,9 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   ParseGroupConvolution(op, attr);
   status = convParser.ParseWeight(weight, weightVec);
   if (status != RET_OK) {
-    // MS_LOGE("ParseWeight for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParseWeight for " << proto.name().c_str() << " failed";
   }
-  return RET_OK;
+  return status;
 }
 
 CaffeNodeRegistrar g_caffeConvolutionParser("Convolution", new CaffeConvolutionParser());

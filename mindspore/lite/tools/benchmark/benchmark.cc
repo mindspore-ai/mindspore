@@ -98,10 +98,15 @@ int Benchmark::ReadInputFile() {
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;
       char *binBuf = ReadFile(_flags->input_data_list[i].c_str(), &size);
+      if (binBuf == nullptr) {
+          MS_LOG(ERROR) << "ReadFile return nullptr";
+          return RET_ERROR;
+      }
       auto tensorDataSize = cur_tensor->Size();
       if (size != tensorDataSize) {
-        std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size << std::endl;
-        MS_LOG(ERROR) << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size;
+        std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize
+            << size << std::endl;
+        MS_LOG(ERROR) << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size;
         return RET_ERROR;
       }
       auto inputData = cur_tensor->MutableData();
@@ -508,6 +513,17 @@ int Benchmark::Init() {
   MS_LOG(INFO) << "WarmUpLoopCount = " << this->_flags->warmUpLoopCount;
   MS_LOG(INFO) << "NumThreads = " << this->_flags->numThreads;
   MS_LOG(INFO) << "calibDataPath = " << this->_flags->calibDataPath;
+
+  if (this->_flags->loopCount < 1) {
+    MS_LOG(ERROR) << "LoopCount:" << this->_flags->loopCount << " must be greater than 0";
+    return RET_ERROR;
+  }
+
+  if (this->_flags->numThreads < 1) {
+    MS_LOG(ERROR) << "numThreads:" << this->_flags->numThreads << " must be greater than 0";
+    return RET_ERROR;
+  }
+
   if (this->_flags->cpuBindMode == -1) {
     MS_LOG(INFO) << "cpuBindMode = MID_CPU";
   } else if (this->_flags->cpuBindMode == 1) {

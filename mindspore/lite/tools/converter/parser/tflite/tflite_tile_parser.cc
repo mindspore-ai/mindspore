@@ -47,7 +47,11 @@ STATUS TfliteTileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     MS_LOG(ERROR) << "get tile -> multiples failed";
     return RET_ERROR;
   }
-
+  std::vector<int> dims(attr->multiples.size(), 0);
+  for (int i = 0; i < dims.size(); ++i) {
+    dims[i] = i;
+  }
+  attr->dims = dims;
   op->primitive->value.type = schema::PrimitiveType_Tile;
   op->primitive->value.value = attr.release();
 
