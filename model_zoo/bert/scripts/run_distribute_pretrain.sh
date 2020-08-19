@@ -54,7 +54,7 @@ do
     export GLOG_log_dir=${CUR_DIR}/ms_log
     export GLOG_logtostderr=0
     env > env.log
-    taskset -c $cmdopt python ../run_pretrain.py  \
+    taskset -c $cmdopt nohup python ../run_pretrain.py  \
     --distribute="true" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
