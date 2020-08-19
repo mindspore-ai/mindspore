@@ -50,11 +50,33 @@ class Net2(Cell):
         return out
 
 
+class Net3(Cell):
+    def __init__(self, weight, weight2, weight3, strategy1=None, strategy2=None, is_parameter=True):
+        super().__init__()
+        self.concat = P.Concat(axis=0).set_strategy(strategy1)
+        if is_parameter:
+            self.weight = Parameter(weight, "w1")
+        else:
+            self.weight = weight
+        self.mul = P.Mul().set_strategy(strategy2)
+        self.weight2 = Parameter(weight2, "w2")
+        self.weight3 = Parameter(weight3, "w3")
+
+    def construct(self, x, b):
+        out = self.concat((self.weight, self.weight2, self.weight3))
+        out = self.mul(x, out)
+        return out
+
+
 _x = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
 _w1 = Tensor(np.ones([96, 64, 32]), dtype=ms.float32)
 _w2 = Tensor(np.ones([32, 64, 32]), dtype=ms.float32)
 _w3 = Tensor(np.ones([128, 16, 32]), dtype=ms.float32)
 _b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
+
+w1 = Tensor(np.ones([48, 64, 32]), dtype=ms.float32)
+w2 = Tensor(np.ones([16, 64, 32]), dtype=ms.float32)
+w3 = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
 
 
 def compile_net(net):
@@ -125,4 +147,10 @@ def test_concat_auto_parallel2():
     strategy1 = None
     strategy2 = None
     net = Net2(_w3, strategy1, strategy2, axis=1)
+    compile_net(net)
+
+
+def test_concat_auto_parallel_3_tensor():
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    net = Net3(w1, w2, w3)
     compile_net(net)

@@ -223,15 +223,30 @@ Status ConcatInfo::GenerateStrategies(int32_t stage_id) {
       input_split.push_back(1);
     }
   }
-  Shapes splittable_inputs;
-  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
-    splittable_inputs.push_back(input_split);
-  }
+
+  // to generate the first input's strategy
+  Shapes splittable_input = {input_split};
+  Shapes tmp_inputs_shape = {inputs_shape_[0]};
 
   std::vector<StrategyPtr> sp_vector;
   is_auto_parallel_ = true;
-  if (GenerateStrategiesWithBroadcast(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+  if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Generate strategies failed";
     return FAILED;
+  }
+
+  // the others strategies are equal to the first input's strategy
+  for (auto &sp : sp_vector) {
+    if ((sp == nullptr) || sp->GetInputDim().empty()) {
+      MS_LOG(ERROR) << name_ << ": The strategy is null or empty";
+      return FAILED;
+    }
+    Strategys tmp_strategy;
+    Dimensions first_input_strategy = sp->GetInputDim()[0];
+    for (size_t i = 0; i < inputs_shape_.size(); ++i) {
+      tmp_strategy.push_back(first_input_strategy);
+    }
+    sp->ResetInputs(tmp_strategy);
   }
 
   size_t success = 0;

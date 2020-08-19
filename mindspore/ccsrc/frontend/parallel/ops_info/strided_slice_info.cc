@@ -111,7 +111,6 @@ Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   Dimensions strategy_value = stra[0];
   bool has_split = std::any_of(strategy_value.begin(), strategy_value.end(), [](int32_t v) { return v > 1; });
-
   if (has_split && has_mask_) {
     MS_LOG(ERROR) << name_ << ": When there is a mask, the input is not supported to be split";
     return FAILED;
