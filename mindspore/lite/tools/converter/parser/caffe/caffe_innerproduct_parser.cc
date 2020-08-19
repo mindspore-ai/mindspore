@@ -40,6 +40,7 @@ STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const 
   if (innerProductParam.bias_term()) {
     attr->hasBias = true;
   }
+  attr->activationType = schema::ActivationType_NO_ACTIVATION;
 
   // parse weight
   if (weight.blobs_size() == 0) {
