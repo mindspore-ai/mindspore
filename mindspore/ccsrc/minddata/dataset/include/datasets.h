@@ -25,9 +25,11 @@
 #include <utility>
 #include <string>
 #include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
+#include "minddata/dataset/include/type_id.h"
 
 namespace mindspore {
 namespace dataset {
@@ -41,6 +43,7 @@ class TensorShape;
 namespace api {
 
 class TensorOperation;
+class SchemaObj;
 class SamplerObj;
 // Datasets classes (in alphabetical order)
 class CelebADataset;
@@ -51,6 +54,7 @@ class CocoDataset;
 class ImageFolderDataset;
 class ManifestDataset;
 class MnistDataset;
+class RandomDataset;
 class TextFileDataset;
 class VOCDataset;
 // Dataset Op classes (in alphabetical order)
@@ -64,6 +68,11 @@ class ShuffleDataset;
 class SkipDataset;
 class TakeDataset;
 class ZipDataset;
+
+/// \brief Function to create a SchemaObj
+/// \param[in] schema_file Path of schema file
+/// \return Shared pointer to the current schema
+std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "");
 
 /// \brief Function to create a CelebADataset
 /// \notes The generated dataset has two columns ['image', 'attr'].
@@ -186,6 +195,21 @@ std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir,
 /// \return Shared pointer to the current ConcatDataset
 std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
                                          const std::shared_ptr<Dataset> &datasets2);
+
+/// \brief Function to create a RandomDataset
+/// \param[in] total_rows Number of rows for the dataset to generate (default=0, number of rows is random)
+/// \param[in] schema SchemaObj to set column type, data type and data shape
+/// \param[in] columns_list List of columns to be read (default=None, read all columns)
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
+///    will be used to randomly iterate the entire dataset
+/// \return Shared pointer to the current Dataset
+template <typename T = std::shared_ptr<SchemaObj>>
+std::shared_ptr<RandomDataset> RandomData(const int32_t &total_rows = 0, T schema = nullptr,
+                                          std::vector<std::string> columns_list = {},
+                                          std::shared_ptr<SamplerObj> sampler = nullptr) {
+  auto ds = std::make_shared<RandomDataset>(total_rows, schema, std::move(columns_list), std::move(sampler));
+  return ds->ValidateParams() ? ds : nullptr;
+}
 
 /// \brief Function to create a TextFileDataset
 /// \notes The generated dataset has one column ['text']
@@ -353,6 +377,66 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;
   int32_t worker_connector_size_;
+};
+
+class SchemaObj {
+ public:
+  /// \brief Constructor
+  explicit SchemaObj(const std::string &schema_file = "");
+
+  /// \brief Destructor
+  ~SchemaObj() = default;
+
+  /// \brief SchemaObj init function
+  /// \return bool true if schema init success
+  bool init();
+
+  /// \brief Add new column to the schema
+  /// \param[in] name name of the column.
+  /// \param[in] de_type data type of the column(TypeId).
+  /// \param[in] shape shape of the column.
+  /// \return bool true if schema init success
+  bool add_column(std::string name, TypeId de_type, std::vector<int32_t> shape);
+
+  /// \brief Add new column to the schema
+  /// \param[in] name name of the column.
+  /// \param[in] de_type data type of the column(std::string).
+  /// \param[in] shape shape of the column.
+  /// \return bool true if schema init success
+  bool add_column(std::string name, std::string de_type, std::vector<int32_t> shape);
+
+  /// \brief Get a JSON string of the schema
+  /// \return JSON string of the schema
+  std::string to_json();
+
+  /// \brief Get a JSON string of the schema
+  std::string to_string() { return to_json(); }
+
+  /// \brief set a new value to dataset_type
+  inline void set_dataset_type(std::string dataset_type) { dataset_type_ = dataset_type; }
+
+  /// \brief set a new value to num_rows
+  inline void set_num_rows(int32_t num_rows) { num_rows_ = num_rows; }
+
+  /// \brief get the current num_rows
+  inline int32_t get_num_rows() { return num_rows_; }
+
+ private:
+  /// \brief Parse the columns and add it to columns
+  /// \param[in] columns dataset attribution information, decoded from schema file.
+  ///    support both nlohmann::json::value_t::array and nlohmann::json::value_t::onject.
+  /// \return JSON string of the schema
+  bool parse_column(nlohmann::json columns);
+
+  /// \brief Get schema file from json file
+  /// \param[in] json_obj object of json parsed.
+  /// \return bool true if json dump success
+  bool from_json(nlohmann::json json_obj);
+
+  int32_t num_rows_;
+  std::string dataset_type_;
+  std::string schema_file_;
+  nlohmann::json columns_;
 };
 
 /* ####################################### Derived Dataset classes ################################# */
@@ -560,6 +644,53 @@ class MnistDataset : public Dataset {
  private:
   std::string dataset_dir_;
   std::shared_ptr<SamplerObj> sampler_;
+};
+
+class RandomDataset : public Dataset {
+ public:
+  // Some constants to provide limits to random generation.
+  static constexpr int32_t kMaxNumColumns = 4;
+  static constexpr int32_t kMaxRank = 4;
+  static constexpr int32_t kMaxDimValue = 32;
+
+  /// \brief Constructor
+  RandomDataset(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema, std::vector<std::string> columns_list,
+                std::shared_ptr<SamplerObj> sampler)
+      : total_rows_(total_rows),
+        schema_path_(""),
+        schema_(std::move(schema)),
+        columns_list_(columns_list),
+        sampler_(std::move(sampler)) {}
+
+  /// \brief Constructor
+  RandomDataset(const int32_t &total_rows, std::string schema_path, std::vector<std::string> columns_list,
+                std::shared_ptr<SamplerObj> sampler)
+      : total_rows_(total_rows), schema_path_(schema_path), columns_list_(columns_list), sampler_(std::move(sampler)) {}
+
+  /// \brief Destructor
+  ~RandomDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  /// \brief A quick inline for producing a random number between (and including) min/max
+  /// \param[in] min minimum number that can be generated.
+  /// \param[in] max maximum number that can be generated.
+  /// \return The generated random number
+  int32_t GenRandomInt(int32_t min, int32_t max);
+
+  int32_t total_rows_;
+  std::string schema_path_;
+  std::shared_ptr<SchemaObj> schema_;
+  std::vector<std::string> columns_list_;
+  std::shared_ptr<SamplerObj> sampler_;
+  std::mt19937 rand_gen_;
 };
 
 /// \class TextFileDataset
