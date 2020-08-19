@@ -952,7 +952,9 @@ Status DEPipeline::ParseBucketBatchByLengthOp(const py::dict &args, std::shared_
         (void)builder->SetBucketBatchSizes(ToIntVector(value));
       }
       if (key == "element_length_function") {
-        (void)builder->SetElementLengthFunction(value.cast<py::function>());
+        std::shared_ptr<TensorOp> py_func;
+        py_func = std::make_shared<PyFuncOp>(value.cast<py::function>(), DataType::DE_INT32);
+        (void)builder->SetElementLengthFunction(py_func);
       }
       if (key == "pad_info") {
         PadInfo pad_info;

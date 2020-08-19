@@ -27,9 +27,11 @@
 
 namespace mindspore {
 namespace dataset {
-class __attribute__((visibility("hidden"))) PyFuncOp : public TensorOp {
+class PyFuncOp : public TensorOp {
  public:
-  explicit PyFuncOp(py::function func) : py_func_ptr_(std::move(func)) {}
+  explicit PyFuncOp(py::function func) : py_func_ptr_(std::move(func)) { output_type_ = DataType::DE_UNKNOWN; }
+  explicit PyFuncOp(py::function func, DataType::Type output_type)
+      : py_func_ptr_(std::move(func)), output_type_(output_type) {}
 
   ~PyFuncOp() override = default;
 
@@ -39,10 +41,18 @@ class __attribute__((visibility("hidden"))) PyFuncOp : public TensorOp {
   // Compute function for n-n mapping.
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
+  /// \brief Function to convert a primitive type py::object to a TensorRow
+  /// \notes Changes the py::object to a tensor with corresponding C++ DataType based on output_type_ and adds it to a
+  ///    TensorRow. This function is used inside Compute.
+  /// \param[in] ret_py_obj The python object we want to cast
+  /// \param[output] The TensorRow output
+  /// \return Status
+  Status CastOutput(const py::object &ret_py_obj, TensorRow *output);
   std::string Name() const override { return kPyFuncOp; }
 
  private:
   py::function py_func_ptr_;
+  DataType::Type output_type_;
 };
 }  // namespace dataset
 }  // namespace mindspore

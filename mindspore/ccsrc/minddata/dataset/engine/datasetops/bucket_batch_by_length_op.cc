@@ -85,7 +85,7 @@ Status BucketBatchByLengthOp::Builder::Build(std::shared_ptr<BucketBatchByLength
 BucketBatchByLengthOp::BucketBatchByLengthOp(std::vector<std::string> length_dependent_columns,
                                              std::vector<int32_t> bucket_boundaries,
                                              std::vector<int32_t> bucket_batch_sizes,
-                                             py::function element_length_function, PadInfo pad_info,
+                                             std::shared_ptr<TensorOp> element_length_function, PadInfo pad_info,
                                              bool pad_to_bucket_boundary, bool drop_remainder,
                                              int32_t op_connector_size)
     : PipelineOp(op_connector_size),
@@ -155,34 +155,15 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
   // call pyfunc here if given pyfunc, otherwise return 0th dimension of shape of
   // the single column specified in length_dependent_columns_
   if (element_length_function_) {
-    py::gil_scoped_acquire gil_acquire;
-    if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
-    }
-    try {
-      size_t number_of_arguments = length_dependent_columns_.size();
-      py::tuple input_arguments(number_of_arguments);
-      for (size_t i = 0; i < number_of_arguments; i++) {
-        py::array argument_value;
-        int32_t column_index = column_name_id_map_[length_dependent_columns_[i]];
-        RETURN_IF_NOT_OK(element[column_index]->GetDataAsNumpy(&argument_value));
-        input_arguments[i] = argument_value;
-      }
-
-      py::object length = element_length_function_(*input_arguments);
-      *out_element_length = length.cast<int32_t>();
-      if (*out_element_length < 0) {
-        return Status(StatusCode::kPyFuncException, "Element length function should return a non negative integer.");
-      }
-    } catch (const py::error_already_set &e) {
-      return Status(StatusCode::kPyFuncException, e.what());
-    } catch (const py::cast_error &e) {
-      return Status(StatusCode::kPyFuncException, "Count not cast output of element length function to int32_t.");
+    TensorRow output;
+    RETURN_IF_NOT_OK(element_length_function_->Compute(element, &output));
+    RETURN_IF_NOT_OK(output.at(0)->GetItemAt(out_element_length, {0}));
+    if (*out_element_length < 0) {
+      RETURN_STATUS_UNEXPECTED("BucketBatchByLength: element_length_function returned negative integer");
     }
   } else {
     *out_element_length = element[0]->shape()[0];
   }
-
   return Status::OK();
 }
 

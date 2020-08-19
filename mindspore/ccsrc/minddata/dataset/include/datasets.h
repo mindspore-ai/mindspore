@@ -30,6 +30,8 @@
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/type_id.h"
+#include "minddata/dataset/kernels/c_func_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/text/vocab.h"
 #endif
@@ -72,6 +74,7 @@ class VOCDataset;
 #endif
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
+class BucketBatchByLengthDataset;
 #ifndef ENABLE_ANDROID
 class BuildVocabDataset;
 #endif
@@ -369,6 +372,35 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     be dropped and not propagated to the next node
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
+
+  /// \brief Function to create a BucketBatchByLengthDataset
+  /// \notes Combines batch_size number of consecutive rows into batches
+  /// \param[in] column_names Columns passed to element_length_function
+  /// \param[in] bucket_boundaries A list consisting of the upper boundaries of the buckets.
+  ///    Must be strictly increasing. If there are n boundaries, n+1 buckets are created: One bucket for
+  ///    [0, bucket_boundaries[0]), one bucket for [bucket_boundaries[i], bucket_boundaries[i+1]) for each
+  ///    0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
+  /// \param[in] bucket_batch_sizes A list consisting of the batch sizes for each bucket.
+  ///    Must contain elements equal to the size of bucket_boundaries + 1.
+  /// \param[in] element_length_function A function pointer that takes in TensorRow and outputs a TensorRow. The output
+  ///    must contain a single tensor containing a single int32_t. If no value is provided, then size of column_names
+  ///    must be 1, and the size of the first dimension of that column will be taken as the length (default=nullptr)
+  /// \param[in] pad_info Represents how to batch each column. The key corresponds to the column name, the value must
+  ///    be a tuple of 2 elements.  The first element corresponds to the shape to pad to, and the second element
+  ///    corresponds to the value to pad with. If a column is not specified, then that column will be padded to the
+  ///    longest in the current batch, and 0 will be used as the padding value. Any unspecified dimensions will be
+  ///    padded to the longest in the current batch, unless if pad_to_bucket_boundary is true. If no padding is wanted,
+  ///    set pad_info to None (default=empty dictionary).
+  /// \param[in] pad_to_bucket_boundary If true, will pad each unspecified dimension in pad_info to the bucket_boundary
+  ///    minus 1. If there are any elements that fall into the last bucket, an error will occur (default=false).
+  /// \param[in] drop_remainder If true, will drop the last batch for each bucket if it is not a full batch
+  ///    (default=false).
+  /// \return Shared pointer to the current BucketBatchByLengthDataset
+  std::shared_ptr<BucketBatchByLengthDataset> BucketBatchByLength(
+    const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
+    const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow) = nullptr,
+    const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
+    bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 
 #ifndef ENABLE_ANDROID
   /// \brief Function to create a Vocab from source dataset
@@ -951,6 +983,36 @@ class BatchDataset : public Dataset {
   bool pad_;
   std::vector<std::string> cols_to_map_;
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
+};
+
+class BucketBatchByLengthDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  BucketBatchByLengthDataset(
+    const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
+    const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow) = nullptr,
+    const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
+    bool pad_to_bucket_boundary = false, bool drop_remainder = false);
+
+  /// \brief Destructor
+  ~BucketBatchByLengthDataset() = default;
+
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \return The list of shared pointers to the newly created DatasetOps
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::vector<std::string> column_names_;
+  std::vector<int32_t> bucket_boundaries_;
+  std::vector<int32_t> bucket_batch_sizes_;
+  TensorRow (*element_length_function_)(TensorRow);
+  std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_info_;
+  bool pad_to_bucket_boundary_;
+  bool drop_remainder_;
 };
 
 #ifndef ENABLE_ANDROID
