@@ -17,111 +17,53 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_THREAD_POOL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_THREAD_POOL_H_
 
-#include <mutex>
-#include <condition_variable>
-#include <thread>
-#include <vector>
-#include <string>
-#include <atomic>
-#include <memory>
-#include <utility>
-#include <functional>
-#include <iostream>
-#include "src/runtime/runtime_api.h"
+#include <stdbool.h>
+#include "include/thread_pool_config.h"
 
-namespace mindspore {
-namespace predict {
-#ifndef CPU_SET
-const int CPU_SETSIZE = 1024;
-#define __NCPUBITS (8 * sizeof(uint64_t))
-typedef struct {
-  uint64_t __bits[CPU_SETSIZE / __NCPUBITS];
-} cpu_set_t;
+/**
+ * create thread pool and init
+ * @param thread_num
+ * @param mode
+ */
+int ConfigThreadPool(int context_id, int thread_num, CpuBindMode mode);
 
-#define CPU_SET_LOCAL(cpu, cpusetp) ((cpusetp)->__bits[(cpu) / __NCPUBITS] |= (1UL << ((cpu) % __NCPUBITS)))
-#endif
+/**
+ *
+ * @param session_index, support multi session
+ * @param job
+ * @param content
+ * @param task_num
+ */
+int ParallelLaunch(int context_id, int (*job)(void *, int), void *content, int task_num);
 
-constexpr int kSingleThreadMaxTask = 2;
-using TvmEnv = LiteParallelGroupEnv;
-using WorkFun = std::function<int(int, TvmEnv *, void *)>;
-using TaskParam = struct Param {
-  void *cdata;
-  TvmEnv *tvmParam;
-};
-using ThreadPoolTask = std::pair<WorkFun, TaskParam>;
-enum AffinityMode : int { BIG_CORE = 1, MID_CORE = -1, NO_BIND = 0 };
+/**
+ * bind each thread to specified cpu core
+ * @param is_bind
+ * @param mode
+ */
+int BindThreads(int context_id, bool is_bind, CpuBindMode mode);
 
-class LiteQueue {
- public:
-  LiteQueue() = default;
-  ~LiteQueue() = default;
-  bool Enqueue(ThreadPoolTask *task);
-  bool Dequeue(ThreadPoolTask **out);
-  std::atomic_int taskSize = {0};
+/**
+ * activate the thread pool
+ * @param context_id
+ */
+void ActivateThreadPool(int context_id);
 
- private:
-  std::atomic_int head = {0};
-  std::atomic_int tail = {0};
-  ThreadPoolTask *buffer[kSingleThreadMaxTask]{};
-};
+/**
+ * deactivate the thread pool
+ * @param context_id
+ */
+void DeactivateThreadPool(int context_id);
 
-class LiteThreadBind {
- public:
-  LiteThreadBind() = default;
-  ~LiteThreadBind() = default;
-  void InitSortedCpuId();
-  bool Bind(bool ifBind, int numThreads, bool master);
-  AffinityMode bindModel = MID_CORE;
-  std::vector<pthread_t> threadIdList;
+/**
+ *
+ * @return current thread num
+ */
+int GetCurrentThreadNum(int context_id);
 
- private:
-  bool BindMasterThread(bool bindFlag, int mode);
-  bool BindThreads(bool bindFlag);
-  bool SetCPUBind(pthread_t threadId, cpu_set_t *cpuSet);
-  int bigCore = 0;
-  int midCore = 0;
-  std::vector<unsigned int> sortedCpuIds{};
-};
-
-class ThreadPool {
- public:
-  ThreadPool() = default;
-  ~ThreadPool();
-  bool LaunchWork(WorkFun worker, void *cdata, int numTask);
-  void ConfigThreadPool(int mode, int numThreads);
-  void ConfigMaxThreadNum(unsigned int num);
-  bool BindAllThreads(bool ifBind, int mode, bool master = true);
-  ThreadPool(const ThreadPool &) = delete;
-  ThreadPool &operator=(const ThreadPool &) = delete;
-
- private:
-  bool SetThreadPool();
-  void AddNewThread(int newNums);
-  bool SetThreadCpuBind(bool ifBind, int mode, bool master);
-  bool AddTask(WorkFun &&worker, void *cdata, int numTask);
-  bool DistributeTask(ThreadPoolTask *task, int numTask);
-  void AddRunThread(int num);
-  void SubRunThread(int num);
-  bool CheckResult();
-
-  std::mutex poolMutex;
-  std::mutex tMutex;
-  std::condition_variable queueReady;
-  std::atomic_bool exitRun = {false};
-  std::vector<std::atomic_bool *> activateList{};
-  int curThreadNums = 1;
-  int curThreadRunNums = 1;
-  int configThreadNums = 1;
-  int configBindMode = -1;
-  std::vector<std::thread> threadList{};
-  std::vector<std::shared_ptr<LiteQueue>> queueList{};
-  std::unique_ptr<LiteThreadBind> threadBind{nullptr};
-  std::vector<std::pair<int, std::pair<bool, int>>> errorInfo{};
-};
-
-ThreadPool* GlobalThreadPool();
-}  // namespace predict
-}  // namespace mindspore
+/**
+ * destroy thread pool, and release resource
+ */
+void DestroyThreadPool(int context_id);
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_THREAD_POOL_H_
-

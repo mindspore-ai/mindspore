@@ -30,13 +30,13 @@ using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
 namespace {
-int CastRun(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
+int CastRun(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "input cdata is nullptr!";
     return RET_ERROR;
   }
 
-  return reinterpret_cast<CastFp16CPUKernel *>(cdata)->DoCast(thread_id);
+  return reinterpret_cast<CastFp16CPUKernel *>(cdata)->DoCast(task_id);
 }
 }  // namespace
 
@@ -91,7 +91,7 @@ int CastFp16CPUKernel::Run() {
   if (data_num_ == 0) {
     return RET_OK;
   }
-  return LiteBackendParallelLaunch(CastRun, this, op_parameter_->thread_num_);
+  return ParallelLaunch(THREAD_POOL_DEFAULT, CastRun, this, op_parameter_->thread_num_);
 }
 
 kernel::LiteKernel *CpuCastFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

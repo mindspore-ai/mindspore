@@ -89,7 +89,7 @@ int GatherCPUKernel::DoGather(int task_id) {
   return error_code;
 }
 
-int GatherRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int GatherRun(void *cdata, int task_id) {
   auto gather_kernel = reinterpret_cast<GatherCPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {
@@ -112,7 +112,7 @@ int GatherCPUKernel::Run() {
     context_->allocator->Free(indices_data_);
     return RET_ERROR;
   }
-  int error_code = LiteBackendParallelLaunch(GatherRun, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, GatherRun, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << error_code << "]";
   }

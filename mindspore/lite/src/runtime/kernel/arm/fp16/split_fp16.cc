@@ -63,7 +63,7 @@ int SplitFp16CPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-static int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int SplitRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<SplitFp16CPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
@@ -97,7 +97,7 @@ int SplitFp16CPUKernel::Run() {
       output_ptr_[i] = reinterpret_cast<float16_t *>(out_tensors_.at(i)->Data());
     }
   }
-  ret = LiteBackendParallelLaunch(SplitRun, this, thread_n_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
     return RET_ERROR;

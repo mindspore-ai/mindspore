@@ -72,7 +72,7 @@ int TransposeCPUKernel::TransposeParallel(int task_id) {
   return RET_OK;
 }
 
-int TransposeRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int TransposeRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<TransposeCPUKernel *>(cdata);
   auto ret = g_kernel->TransposeParallel(task_id);
   if (ret != RET_OK) {
@@ -101,7 +101,7 @@ int TransposeCPUKernel::Run() {
   in_shape_ = const_cast<int *>(in_tensor->shape().data());
   out_shape_ = const_cast<int *>(out_tensor->shape().data());
 
-  ret = LiteBackendParallelLaunch(TransposeRun, this, thread_h_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, TransposeRun, this, thread_h_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
     return ret;

@@ -44,7 +44,7 @@ class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
   SqueezeQuantArg *quant_Squeeze_parm_;
 };
 
-int SqueezeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int SqueezeInt8Run(void *cdata, int task_id);
 
 }  // namespace mindspore::kernel
 

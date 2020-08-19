@@ -63,7 +63,7 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   return RET_OK;
 }
 
-int LocalResponseNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int LocalResponseNormRun(void *cdata, int task_id) {
   auto lrn = reinterpret_cast<LocalResponseNormCPUKernel *>(cdata);
   auto error_code = lrn->DoLocalResponseNorm(task_id);
   if (error_code != RET_OK) {
@@ -79,7 +79,7 @@ int LocalResponseNormCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(LocalResponseNormRun, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, LocalResponseNormRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LocalResponseNorm function error error_code[" << error_code << "]";
     return RET_ERROR;

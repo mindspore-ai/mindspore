@@ -46,7 +46,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
   CropParameter *crop_para_;
 };
 
-int CropInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int CropInt8Run(void *cdata, int task_id);
 void PadOffset(int input_dim, CropParameter *crop_para);
 }  // namespace mindspore::kernel
 

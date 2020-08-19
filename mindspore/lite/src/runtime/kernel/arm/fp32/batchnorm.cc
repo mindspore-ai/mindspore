@@ -75,7 +75,7 @@ int BatchnormCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
     return ret;
   }
-  ret = LiteBackendParallelLaunch(BatchNormRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
@@ -88,7 +88,7 @@ int BatchnormCPUKernel::DoExecute(int task_id) {
   return mindspore::lite::RET_OK;
 }
 
-int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int BatchNormRun(void *cdata, int task_id) {
   auto kernel = reinterpret_cast<BatchnormCPUKernel *>(cdata);
   auto ret = kernel->DoExecute(task_id);
   if (ret != RET_OK) {

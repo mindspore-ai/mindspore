@@ -30,7 +30,7 @@ int PowerCPUKernel::Init() { return RET_OK; }
 
 int PowerCPUKernel::ReSize() { return RET_OK; }
 
-int PowerImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PowerImpl(void *cdata, int task_id) {
   auto kernel = reinterpret_cast<PowerCPUKernel *>(cdata);
   auto ret = kernel->RunImpl(task_id);
   if (ret != RET_OK) {
@@ -46,7 +46,7 @@ int PowerCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto ret = LiteBackendParallelLaunch(PowerImpl, this, thread_count_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, PowerImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerCPUKernel error: " << ret;
     return RET_ERROR;

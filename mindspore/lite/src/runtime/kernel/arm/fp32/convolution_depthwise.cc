@@ -89,7 +89,7 @@ int ConvolutionDepthwiseCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvDwRun(void *cdata, int task_id) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseCPUKernel *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {
@@ -116,7 +116,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->Data());
 
-  ret = LiteBackendParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

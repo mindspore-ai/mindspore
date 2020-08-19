@@ -41,7 +41,7 @@ int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int ConstantOfShapeRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConstantOfShapeRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<ConstantOfShapeCPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -62,7 +62,7 @@ int ConstantOfShapeCPUKernel::Run() {
   param_->unit_ = UP_DIV(param_->element_sz_, thread_num);
   param_->op_parameter_.thread_num_ = thread_num;
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
-  auto ret = LiteBackendParallelLaunch(ConstantOfShapeRun, this, thread_num);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConstantOfShapeRun, this, thread_num);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error error_code[" << ret << "]";
     return ret;

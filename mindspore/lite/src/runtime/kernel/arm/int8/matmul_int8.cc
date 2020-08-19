@@ -111,7 +111,7 @@ int MatmulInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int MatmulInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int MatmulInt8Run(void *cdata, int task_id) {
   auto op = reinterpret_cast<MatmulInt8CPUKernel *>(cdata);
   auto ret = op->RunImpl(task_id);
   if (ret != RET_OK) {
@@ -152,7 +152,7 @@ int MatmulInt8CPUKernel::Run() {
     auto &q = quant_params_;
     CalcInputSums(cur_a_ptr, params_->row_, params_->deep_, q.weight.zp_, input_sums_);
     CalcWeightBiasSums(cur_b_ptr, params_->deep_, params_->col_, q.input.zp_, q.weight.zp_, NULL, weight_bias_sums_);
-    ret = LiteBackendParallelLaunch(MatmulInt8Run, this, thread_count_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, MatmulInt8Run, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";
       return ret;

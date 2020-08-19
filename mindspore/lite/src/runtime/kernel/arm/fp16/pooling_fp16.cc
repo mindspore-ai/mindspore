@@ -89,7 +89,7 @@ int PoolingFp16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int PoolingFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int PoolingFp16Impl(void *cdata, int task_id) {
   auto pooling = reinterpret_cast<PoolingFp16CPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -109,7 +109,7 @@ int PoolingFp16CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
   Float32ToFloat16(input_ptr, fp16_input_, ele_num);
 
-  int error_code = LiteBackendParallelLaunch(PoolingFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;

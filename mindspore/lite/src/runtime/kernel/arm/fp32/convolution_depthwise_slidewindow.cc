@@ -123,7 +123,7 @@ int ConvolutionDepthwiseSWCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwSWRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvDwSWRun(void *cdata, int task_id) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseSWCPUKernel *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {
@@ -167,7 +167,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
     packed_output_ = output_ptr;
   }
 
-  ret = LiteBackendParallelLaunch(ConvDwSWRun, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwSWRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWRun error: error_code[" << ret << "]";
     return RET_ERROR;

@@ -217,7 +217,7 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Int8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int Convolution1x1Int8Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<Convolution1x1Int8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -253,7 +253,7 @@ int Convolution1x1Int8CPUKernel::Run() {
     PackInputSum16x4Int8(packed_input_, input_sum_, matmul_param_->deep_, matmul_param_->col_, matmul_param_->row_,
                          conv_param_);
 
-    int error_code = LiteBackendParallelLaunch(Convolution1x1Int8Impl, this, thread_count_);
+    int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution1x1Int8Impl, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "conv1x1 fp16 error error_code[" << error_code << "]";
       return RET_ERROR;

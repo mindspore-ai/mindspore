@@ -212,7 +212,7 @@ int Convolution3x3CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int Convolution3x3Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int Convolution3x3Impl(void *cdata, int task_id) {
   auto conv3x3 = reinterpret_cast<Convolution3x3CPUKernel *>(cdata);
   auto error_code = conv3x3->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -262,7 +262,7 @@ int Convolution3x3CPUKernel::Run() {
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  int error_code = LiteBackendParallelLaunch(Convolution3x3Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution3x3Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 error error_code[" << error_code << "]";
     FreeTmpBuffer();

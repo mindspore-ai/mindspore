@@ -347,7 +347,7 @@ int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int ConvolutionWinogradFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvolutionWinogradFp16Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionWinogradFP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -404,7 +404,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   int in_channel = conv_param_->input_channel_;
   PackNHWCToNHWC8Fp16(execute_input_, nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionWinogradFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionWinogradFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << error_code << "]";
     FreeTmpBuffer();

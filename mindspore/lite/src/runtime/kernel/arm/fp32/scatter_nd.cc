@@ -137,7 +137,7 @@ int ScatterNDCPUKernel::ScatterND(int task_id) {
   return RET_OK;
 }
 
-int ScatterNDRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ScatterNDRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<ScatterNDCPUKernel *>(cdata);
   auto ret = g_kernel->ScatterND(task_id);
   if (ret != RET_OK) {
@@ -153,7 +153,7 @@ int ScatterNDCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  ret = LiteBackendParallelLaunch(ScatterNDRun, this, thread_n_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ScatterNDRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ScatterND error error_code[" << ret << "]";
     return RET_ERROR;

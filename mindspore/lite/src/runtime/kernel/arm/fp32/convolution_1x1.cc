@@ -149,7 +149,7 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int Convolution1x1Run(void *cdata, int task_id) {
   auto conv1x1 = reinterpret_cast<Convolution1x1CPUKernel *>(cdata);
   auto error_code = conv1x1->DoConv1x1(task_id);
   if (error_code != RET_OK) {
@@ -179,7 +179,7 @@ int Convolution1x1CPUKernel::Run() {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
                 src_out + batch_index * matmul_param_->row_ * matmul_param_->col_);
 
-    int error_code = LiteBackendParallelLaunch(Convolution1x1Run, this, thread_count_);
+    int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution1x1Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "conv1x1 strassen error error_code[" << error_code << "]";
       return RET_ERROR;

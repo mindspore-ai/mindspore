@@ -159,7 +159,7 @@ int ConvolutionSWCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionSWImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvolutionSWImpl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionSWCPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -187,7 +187,7 @@ int ConvolutionSWCPUKernel::Run() {
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionSWImpl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionSWImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     FreeTmpBuffer();

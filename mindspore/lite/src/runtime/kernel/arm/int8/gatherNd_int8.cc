@@ -114,7 +114,7 @@ int GatherNdInt8CPUKernel::DoGatherNd(int task_id) {
   return RET_OK;
 }
 
-int GatherNdInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int GatherNdInt8Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<GatherNdInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoGatherNd(task_id);
   if (ret != RET_OK) {
@@ -132,7 +132,7 @@ int GatherNdInt8CPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.front()->Data());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.front()->Data());
-  auto ret = LiteBackendParallelLaunch(GatherNdInt8Run, this, thread_sz_count_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, GatherNdInt8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
     return ret;

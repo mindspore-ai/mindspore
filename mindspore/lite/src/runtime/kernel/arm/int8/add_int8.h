@@ -46,7 +46,7 @@ class QuantizedAddCPUKernel : public LiteKernel {
   int8_t *output_data_ = nullptr;
 };
 
-int AddInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int AddInt8Run(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ADD_INT8_H_

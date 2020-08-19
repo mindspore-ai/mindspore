@@ -92,7 +92,7 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
   return error_code;
 }
 
-int ActivationRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ActivationRun(void *cdata, int task_id) {
   auto activation_kernel = reinterpret_cast<ActivationFp16CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
@@ -115,7 +115,7 @@ int ActivationFp16CPUKernel::Run() {
     return ret;
   }
 
-  int error_code = LiteBackendParallelLaunch(ActivationRun, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ActivationRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
     FreeTmpBuffer();

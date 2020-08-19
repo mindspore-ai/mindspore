@@ -28,13 +28,13 @@ using mindspore::schema::PrimitiveType_AddN;
 
 namespace mindspore::kernel {
 namespace {
-int AddNLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
+int AddNLaunch(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_NULL_PTR;
   }
   auto kernel = reinterpret_cast<AddNCPUKernel *>(cdata);
-  return kernel->AddNParallelRun(thread_id);
+  return kernel->AddNParallelRun(task_id);
 }
 }  // namespace
 
@@ -74,7 +74,7 @@ int AddNCPUKernel::Run() {
   in1_addr_ = input0_data;
   in2_addr_ = input1_data;
   out_addr_ = output_data;
-  ret = LiteBackendParallelLaunch(AddNLaunch, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddNLaunch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "addn launch fail!ret: " << ret;
     return RET_ERROR;
@@ -82,7 +82,7 @@ int AddNCPUKernel::Run() {
   for (size_t i = 2; i < in_tensors_.size(); ++i) {
     in1_addr_ = reinterpret_cast<float *>(in_tensors_[i]->Data());
     in2_addr_ = output_data;
-    ret = LiteBackendParallelLaunch(AddNLaunch, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddNLaunch, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "addn launch fail!ret: " << ret << ", input index: " << i;
       return RET_ERROR;

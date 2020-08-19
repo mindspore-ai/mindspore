@@ -70,7 +70,7 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
   return RET_OK;
 }
 
-int UnsqueezeIn8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int UnsqueezeIn8Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<Unsqueezeint8CPUKernel *>(cdata);
   auto ret = g_kernel->DoUnsqueeze(task_id);
   if (ret != RET_OK) {
@@ -88,7 +88,7 @@ int Unsqueezeint8CPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
-  ret = LiteBackendParallelLaunch(UnsqueezeIn8Run, this, thread_sz_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error error_code[" << ret << "]";
     return ret;

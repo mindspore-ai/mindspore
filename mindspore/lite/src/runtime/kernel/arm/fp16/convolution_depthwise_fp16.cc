@@ -98,7 +98,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-static int ConvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvDwFp16Run(void *cdata, int task_id) {
   auto conv_dw_fp16 = reinterpret_cast<ConvolutionDepthwiseFp16CPUKernel *>(cdata);
   auto ret = conv_dw_fp16->Execute(task_id);
   if (ret != RET_OK) {
@@ -125,7 +125,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = LiteBackendParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;

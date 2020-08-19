@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 namespace {
-int LeakyReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int LeakyReluRun(void *cdata, int task_id) {
   auto kernel_relu = reinterpret_cast<LeakyReluCPUKernel *>(cdata);
   auto ret = kernel_relu->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -66,7 +66,7 @@ int LeakyReluCPUKernel::Run() {
   input_data = reinterpret_cast<float *>(input->Data());
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  auto ret = LiteBackendParallelLaunch(LeakyReluRun, this, context_->thread_num_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, LeakyReluRun, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PReluDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

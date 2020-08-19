@@ -78,7 +78,7 @@ int PoolingCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int PoolingImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PoolingImpl(void *cdata, int task_id) {
   auto pooling = reinterpret_cast<PoolingCPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -94,7 +94,7 @@ int PoolingCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(PoolingImpl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;

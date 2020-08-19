@@ -94,7 +94,7 @@ void FullconnectionCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
   RowMajor2Col8Major(src_ptr, dst_ptr, fc_param_->col_, fc_param_->deep_);
 }
 
-int FcFp32MatmulRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int FcFp32MatmulRun(void *cdata, int task_id) {
   auto fc = reinterpret_cast<FullconnectionCPUKernel *>(cdata);
   auto error_code = fc->DoMatmul(task_id);
   if (error_code != RET_OK) {
@@ -129,7 +129,7 @@ int FullconnectionCPUKernel::Run() {
   if (!fc_param_->a_const_) InitMatrixA(a_ptr, a_c12_ptr_);
   if (!fc_param_->b_const_) InitMatrixB(b_ptr, b_r8_ptr_);
 
-  LiteBackendParallelLaunch(FcFp32MatmulRun, this, thread_count_);
+  ParallelLaunch(THREAD_POOL_DEFAULT, FcFp32MatmulRun, this, thread_count_);
 
   return RET_OK;
 }

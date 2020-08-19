@@ -86,17 +86,17 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->Data()),
                        static_cast<int8_t *>(in_tensors_.at(1)->Data()), input0_data_, input1_data_, &tile_para);
-    ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
   return ret;
 }
 
-int MulInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int MulInt8Run(void *cdata, int task_id) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->DoExecute(task_id);
   return lite::RET_OK;

@@ -111,7 +111,7 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   return RET_OK;
 }
 
-int GatherInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int GatherInt8Run(void *cdata, int task_id) {
   auto gather_kernel = reinterpret_cast<GatherInt8CPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {
@@ -127,7 +127,7 @@ int GatherInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(GatherInt8Run, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, GatherInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << error_code << "]";
     return RET_ERROR;

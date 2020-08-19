@@ -39,7 +39,7 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int SparseToDenseRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SparseToDenseRun(void *cdata, int task_id) {
   auto s2ddata = reinterpret_cast<SparseToDenseCPUKernel *>(cdata);
   auto ret = s2ddata->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -70,7 +70,7 @@ int SparseToDenseCPUKernel::Run() {
   std::vector<int> temp_shape = output0->shape();
   output_shape_ = reinterpret_cast<int *>(temp_shape.data());
 
-  ret = LiteBackendParallelLaunch(SparseToDenseRun, this, s2d_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SparseToDenseRun, this, s2d_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SparseToDenseRun error: error_code[" << ret << "]";
     return RET_ERROR;

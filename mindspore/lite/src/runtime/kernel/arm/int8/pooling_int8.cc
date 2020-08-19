@@ -69,7 +69,7 @@ int PoolingInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int PoolingInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PoolingInt8Impl(void *cdata, int task_id) {
   auto pooling = reinterpret_cast<PoolingInt8CPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -85,7 +85,7 @@ int PoolingInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = LiteBackendParallelLaunch(PoolingInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "poolingInt8 error error_code[" << error_code << "]";
     return RET_ERROR;

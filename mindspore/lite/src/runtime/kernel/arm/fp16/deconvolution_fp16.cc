@@ -137,7 +137,7 @@ void DeConvolutionFp16CPUKernel::FreeRunBuf() {
   return;
 }
 
-static int DeConvFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int DeConvFp16Run(void *cdata, int task_id) {
   auto deconv = reinterpret_cast<DeConvolutionFp16CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {
@@ -188,7 +188,7 @@ int DeConvolutionFp16CPUKernel::Run() {
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     RowMajor2Col16MajorFp16(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
-    error_code = LiteBackendParallelLaunch(DeConvFp16Run, this, thread_count_);
+    error_code = ParallelLaunch(THREAD_POOL_DEFAULT, DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
       return RET_ERROR;
