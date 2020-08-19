@@ -98,12 +98,12 @@ int ReduceBaseCPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = CheckParameters();
-  if (ret != RET_OK) {
-    return ret;
-  }
 
   return RET_OK;
+}
+
+int ReduceBaseCPUKernel::ReSize() {
+  return CheckParameters();
 }
 
 kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

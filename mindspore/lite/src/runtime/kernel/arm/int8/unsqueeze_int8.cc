@@ -29,10 +29,6 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
 int Unsqueezeint8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   auto *input_tensor = in_tensors_.at(0);
   auto quant_args = input_tensor->GetQuantParams();
   MS_ASSERT(quant_args.size() == 1);
@@ -43,9 +39,10 @@ int Unsqueezeint8CPUKernel::Init() {
   Unsq_para_->quant_arg.out_quant_args_.scale_ = out_quant_args.front().scale;
   Unsq_para_->quant_arg.out_quant_args_.zp_ = out_quant_args.front().zeroPoint;
   Unsq_para_->thread_count_ = thread_count_;
-
-  int ret = ReSize();
-  return ret;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int Unsqueezeint8CPUKernel::ReSize() {
@@ -86,7 +83,7 @@ int UnsqueezeIn8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int Unsqueezeint8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());

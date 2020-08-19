@@ -46,9 +46,9 @@ class PadInt8CPUKernel : public LiteKernel {
   void FreeQuantParam();
 
  private:
-  PadParameter *pad_param_;
-  int8_t *in_data_;
-  int8_t *out_data_;
+  PadParameter *pad_param_ = nullptr;
+  int8_t *in_data_ = nullptr;
+  int8_t *out_data_ = nullptr;
   int in_dims_[DEFAULT_PAD_NDIMS];
   int out_dims_[DEFAULT_PAD_NDIMS];
 };

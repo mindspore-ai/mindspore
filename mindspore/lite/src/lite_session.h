@@ -79,7 +79,6 @@ class LiteSession : public session::LiteSession {
   std::vector<tensor::Tensor *> tensors_;
   // graph input tensors
   std::vector<tensor::Tensor *> inputs_;
-  std::vector<tensor::Tensor *> inputs_old_;
   // graph output tensors
   std::vector<tensor::Tensor *> outputs_;
   // graph input MSTensors

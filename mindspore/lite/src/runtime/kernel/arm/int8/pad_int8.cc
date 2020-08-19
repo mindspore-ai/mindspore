@@ -88,27 +88,24 @@ int PadInt8CPUKernel::InitPadParam() {
 }
 
 int PadInt8CPUKernel::ReSize() {
-  InitPadParam();
-  return RET_OK;
-}
-
-int PadInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   int error_code = InitPadParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "InitPadParam failed. errorcode: " << error_code;
     return error_code;
   }
+  return RET_OK;
+}
 
-  error_code = SetQuantParam();
+int PadInt8CPUKernel::Init() {
+  auto error_code = SetQuantParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SetQuantParam failed. errorcode: " << error_code;
     return error_code;
   }
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int PadInt8CPUKernel::RunImpl(int task_id) {
@@ -128,8 +125,8 @@ int PadInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 int PadInt8CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   in_data_ = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
   out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());

@@ -25,18 +25,10 @@ using mindspore::schema::PrimitiveType_Tile;
 
 namespace mindspore::kernel {
 int TileCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
-  auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
-  for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
-    tile_parameter_->in_shape_[i] = in_tensors_[0]->shape()[i];
-    tile_parameter_->out_shape_[i] = out_tensors_[0]->shape()[i];
-  }
-  ComputeStrides(tile_parameter_->in_shape_, tile_parameter_->in_strides_, tile_parameter_->in_dim_);
-  ComputeStrides(tile_parameter_->out_shape_, tile_parameter_->out_strides_, tile_parameter_->in_dim_);
-  return RET_OK;
+  return ReSize();
 }
 
 void TileCPUKernel::ComputeStrides(int *shape, int *strides, int ndim) {
@@ -47,13 +39,22 @@ void TileCPUKernel::ComputeStrides(int *shape, int *strides, int ndim) {
   }
 }
 
-int TileCPUKernel::ReSize() { return RET_OK; }
+int TileCPUKernel::ReSize() {
+  auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
+  for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
+    tile_parameter_->in_shape_[i] = in_tensors_[0]->shape()[i];
+    tile_parameter_->out_shape_[i] = out_tensors_[0]->shape()[i];
+  }
+  ComputeStrides(tile_parameter_->in_shape_, tile_parameter_->in_strides_, tile_parameter_->in_dim_);
+  ComputeStrides(tile_parameter_->out_shape_, tile_parameter_->out_strides_, tile_parameter_->in_dim_);
+  return RET_OK;
+}
 
 int TileCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());

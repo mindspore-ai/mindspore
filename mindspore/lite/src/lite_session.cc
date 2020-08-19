@@ -219,7 +219,6 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const {
 int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_EXCEPTION_IF_NULL(this->context_);
   SetMaxWokerNum(context_->thread_num_);
-  context_->running_ = true;
   if (before == nullptr && after == nullptr) {
     return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {
@@ -333,19 +332,21 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &
 }
 
 int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) {
-  inputs_old_.clear();
-  inputs_old_ = inputs_;
+  std::vector<tensor::Tensor *> inputs_old(inputs_);
   auto ret = ResizeInputs(inputs);
   if (ret != RET_OK) {
-    inputs_ = inputs_old_;
+    inputs_ = inputs_old;
     return ret;
   }
 
   Scheduler scheduler(context_);
   ret = scheduler.ReSizeKernels(kernels_);
   if (ret != RET_OK) {
-    inputs_ = inputs_old_;
-    scheduler.ReSizeKernels(kernels_);
+    inputs_ = inputs_old;
+    auto resize_ret = scheduler.ReSizeKernels(kernels_);
+    if (resize_ret != RET_OK) {
+      MS_LOG(ERROR) << "restore kernel size fail!ret: " << resize_ret;
+    }
     return ret;
   }
   return RET_OK;

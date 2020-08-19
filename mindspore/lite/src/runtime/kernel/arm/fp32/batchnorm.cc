@@ -60,11 +60,21 @@ int BatchnormCPUKernel::InitConstTensor() {
 }
 
 int BatchnormCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
 
+int BatchnormCPUKernel::ReSize() {
+  if (mean_addr_ != nullptr) {
+    free(mean_addr_);
+    mean_addr_ = nullptr;
+  }
+  if (var_addr_ != nullptr) {
+    free(var_addr_);
+    var_addr_ = nullptr;
+  }
   auto input_shapes = in_tensors_[0]->shape();
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
@@ -79,15 +89,6 @@ int BatchnormCPUKernel::Init() {
   if (ret != 0) {
     MS_LOG(ERROR) << "Batchnorm fp32 InitConstTensor failed.";
     return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int BatchnormCPUKernel::ReSize() {
-  auto input_shapes = in_tensors_[0]->shape();
-  batchnorm_param_->unit_ = 1;
-  for (int i = 0; i < input_shapes.size() - 1; i++) {
-    batchnorm_param_->unit_ *= input_shapes[i];
   }
   return RET_OK;
 }

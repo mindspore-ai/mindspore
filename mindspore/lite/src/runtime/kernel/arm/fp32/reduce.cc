@@ -81,7 +81,13 @@ int ReduceCPUKernel::Init() {
   return ReSize();
 }
 
-int ReduceCPUKernel::ReSize() { return MallocTmpBuffer(); }
+int ReduceCPUKernel::ReSize() {
+  auto ret = ReduceBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  return MallocTmpBuffer();
+}
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
   auto ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, tmp_shape_.data(), dst_data_, task_id,

@@ -76,6 +76,40 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest1_keep_dim) {
   CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
 }
 
+TEST_F(TestArgMinMaxTestFp32, ArgMaxTest_axis2_keep_dim) {
+  std::vector<float> in = {10, 20, 30,
+                           11, 15, 10,
+                            5, 10, 12,
+                            10, 20, 30,
+                           11, 15, 10,
+                            5, 10, 12,
+                            10, 20, 30,
+                           11, 15, 10,
+                            5, 10, 12
+                          };
+  std::vector<float> except_out = {1, 0, 0, 1, 0, 0, 1, 0, 0};
+  std::vector<int> shape = {1, 3, 3, 3};
+  float out[9];
+  ArgMinMaxParameter param;
+  param.topk_ = 1;
+  param.out_value_ = false;
+  param.axis_ = 2;
+  param.data_type_ = 43;
+  param.dims_size_ = 4;
+  param.get_max_ = true;
+  param.keep_dims_ = true;
+  param.arg_elements_ = reinterpret_cast<ArgElement *>(malloc(shape[param.axis_] * sizeof(ArgElement)));
+  std::vector<int> out_shape = {1, 3, 1, 3};
+  ComputeStrides(shape.data(), param.in_strides_, shape.size());
+  ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
+  ArgMinMax(in.data(), out, shape.data(), &param);
+  for (size_t i = 0; i < except_out.size(); ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
+}
+
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest2) {
   std::vector<float> in = {10, 20, 30, 40, 90,
                            20, 11, 15, 1,  50,

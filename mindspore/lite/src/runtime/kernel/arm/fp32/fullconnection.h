@@ -47,10 +47,10 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
   void InitMatrixB(float *src_ptr, float *dst_ptr);
 
  private:
-  float *a_c8_ptr_;
-  float *b_r8_ptr_;
-  float *c_r8x8_ptr_;
-  float *bias_ptr_;
+  float *a_c8_ptr_ = nullptr;
+  float *b_r8_ptr_ = nullptr;
+  float *c_r8x8_ptr_ = nullptr;
+  float *bias_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_

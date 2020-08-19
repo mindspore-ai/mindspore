@@ -59,7 +59,11 @@ int ReduceFp16CPUKernel::Init() {
 
 int ReduceFp16CPUKernel::ReSize() {
   FreeTmpBuffer();
-  auto ret = MallocTmpBuffer();
+  auto ret = ReduceBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();
     return ret;
