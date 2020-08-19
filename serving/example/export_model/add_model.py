@@ -30,10 +30,9 @@ class Net(nn.Cell):
     def construct(self, x_, y_):
         return self.add(x_, y_)
 
-x = np.ones(4).astype(np.float32)
-y = np.ones(4).astype(np.float32)
-
 def export_net():
+    x = np.ones([2, 2]).astype(np.float32)
+    y = np.ones([2, 2]).astype(np.float32)
     add = Net()
     output = add(Tensor(x), Tensor(y))
     export(add, Tensor(x), Tensor(y), file_name='tensor_add.mindir', file_format='MINDIR')

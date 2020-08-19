@@ -24,6 +24,7 @@ namespace mindspore {
 namespace serving {
 struct Arguments {
   int32_t grpc_port = 5500;
+  int32_t rest_api_port = 5501;
   std::string grpc_socket_path;
   std::string ssl_config_file;
   int32_t poll_model_wait_seconds = 1;

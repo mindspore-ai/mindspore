@@ -21,7 +21,7 @@
 #include <memory>
 #include "util/file_system_operation.h"
 #include "include/infer_log.h"
-#include "core/server.h"
+#include "core/session.h"
 
 namespace mindspore {
 namespace serving {

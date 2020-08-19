@@ -19,6 +19,7 @@
 
 #include "common/common_test.h"
 #include "serving/core/server.h"
+#include "serving/core/session.h"
 #include "include/inference.h"
 #include "include/infer_tensor.h"
 #include "serving/core/serving_tensor.h"

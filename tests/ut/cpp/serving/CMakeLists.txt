@@ -87,4 +87,3 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../)
 add_library(ut_serving_obj OBJECT ${SERVING_SRC_TEST})
 
-

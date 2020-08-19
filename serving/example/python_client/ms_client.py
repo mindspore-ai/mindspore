@@ -37,14 +37,14 @@ def run():
     request = ms_service_pb2.PredictRequest()
 
     x = request.data.add()
-    x.tensor_shape.dims.extend([4])
+    x.tensor_shape.dims.extend([2, 2])
     x.tensor_type = ms_service_pb2.MS_FLOAT32
-    x.data = (np.ones([4]).astype(np.float32)).tobytes()
+    x.data = (np.ones([2, 2]).astype(np.float32)).tobytes()
 
     y = request.data.add()
-    y.tensor_shape.dims.extend([4])
+    y.tensor_shape.dims.extend([2, 2])
     y.tensor_type = ms_service_pb2.MS_FLOAT32
-    y.data = (np.ones([4]).astype(np.float32)).tobytes()
+    y.data = (np.ones([2, 2]).astype(np.float32)).tobytes()
 
     try:
         result = stub.Predict(request)

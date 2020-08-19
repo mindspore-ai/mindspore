@@ -93,7 +93,10 @@ if (ENABLE_ACL)
 endif ()
 
 include_directories(${CMAKE_BINARY_DIR})
+
 add_executable(ms_serving ${SERVING_SRC})
+#libevent
+target_link_libraries(ms_serving mindspore::event mindspore::event_pthreads)
 
 target_link_libraries(ms_serving ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF} pthread)
 if (ENABLE_D)

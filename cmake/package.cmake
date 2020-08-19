@@ -163,6 +163,13 @@ if (ENABLE_GPU)
     )
 endif ()
 
+if (ENABLE_SERVING OR ENABLE_TESTCASES)
+    file(GLOB_RECURSE LIBEVENT_LIB_LIST
+            ${libevent_LIBPATH}/libevent*
+            ${libevent_LIBPATH}/libevent_pthreads*
+    )
+endif ()
+
 if (NOT ENABLE_GE)
     if (ENABLE_D)
         if (DEFINED ENV{ASCEND_CUSTOM_PATH})
@@ -191,6 +198,7 @@ if (NOT ENABLE_GE)
                 ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libslog.so
                 ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/liberror_manager.so
                 ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
+                ${LIBEVENT_LIB_LIST}
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
@@ -272,5 +280,11 @@ if (ENABLE_SERVING)
         TARGETS inference
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
+    )
+
+    install(
+            FILES ${LIBEVENT_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
     )
 endif ()

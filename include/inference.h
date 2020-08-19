@@ -74,6 +74,10 @@ class MS_API InferSession {
                               const RequestBase & /*request*/, ReplyBase & /*reply*/) {
     return FAILED;
   }
+  virtual Status GetModelInputsInfo(uint32_t graph_id, std::vector<inference::InferTensor> *tensor_list) const {
+    Status status(SUCCESS);
+    return status;
+  }
   static std::shared_ptr<InferSession> CreateSession(const std::string &device, uint32_t device_id);
 };
 
