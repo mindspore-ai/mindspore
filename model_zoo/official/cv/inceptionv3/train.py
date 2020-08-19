@@ -28,16 +28,18 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore import dataset as de
+from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.common.initializer import XavierUniform, initializer
 
-from src.config import config_gpu as cfg
+from src.config import config_gpu, config_ascend
 from src.dataset import create_dataset
 from src.inception_v3 import InceptionV3
 from src.lr_generator import get_lr
 from src.loss import CrossEntropy
 
-random.seed(cfg.random_seed)
-np.random.seed(cfg.random_seed)
-de.config.set_seed(cfg.random_seed)
+random.seed(1)
+np.random.seed(1)
+de.config.set_seed(1)
 
 
 if __name__ == '__main__':
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-
+    cfg = config_ascend if args_opt.platform == 'Ascend' else config_gpu
     # init distributed
     if args_opt.is_distributed:
         if args_opt.platform == "Ascend":
@@ -73,7 +75,7 @@ if __name__ == '__main__':
     batches_per_epoch = dataset.get_dataset_size()
 
     # network
-    net = InceptionV3(num_classes=cfg.num_classes)
+    net = InceptionV3(num_classes=cfg.num_classes, dropout_keep_prob=cfg.dropout_keep_prob, has_bias=cfg.has_bias)
 
     # loss
     loss = CrossEntropy(smooth_factor=cfg.smooth_factor, num_classes=cfg.num_classes, factor=cfg.aux_factor)
@@ -92,6 +94,11 @@ if __name__ == '__main__':
         else:
             no_decayed_params.append(param)
 
+    if args_opt.platform == "Ascend":
+        for param in net.trainable_params():
+            if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+                np.random.seed(seed=1)
+                param.set_parameter_data(initializer(XavierUniform(), param.data.shape, param.data.dtype))
     group_params = [{'params': decayed_params, 'weight_decay': cfg.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]
@@ -104,7 +111,12 @@ if __name__ == '__main__':
     if args_opt.resume:
         ckpt = load_checkpoint(args_opt.resume)
         load_param_into_net(net, ckpt)
-    model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'})
+    if args_opt.platform == "Ascend":
+        loss_scale_manager = FixedLossScaleManager(cfg.loss_scale, drop_overflow_update=False)
+        model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'}, amp_level=cfg.amp_level,
+                      loss_scale_manager=loss_scale_manager)
+    else:
+        model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'}, amp_level=cfg.amp_level)
 
     print("============== Starting Training ==============")
     loss_cb = LossMonitor(per_print_times=batches_per_epoch)
