@@ -25,6 +25,7 @@ from .bernoulli import Bernoulli
 from .exponential import Exponential
 from .uniform import Uniform
 from .geometric import Geometric
+from .categorical import Categorical
 
 __all__ = ['Distribution',
            'TransformedDistribution',
@@ -32,4 +33,5 @@ __all__ = ['Distribution',
            'Bernoulli',
            'Exponential',
            'Uniform',
+           'Categorical',
            'Geometric',]
