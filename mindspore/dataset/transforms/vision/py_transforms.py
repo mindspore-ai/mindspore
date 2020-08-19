@@ -1115,7 +1115,8 @@ class RandomAffine:
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
         fill_value (Union[tuple, int], optional): Optional fill_value to fill the area outside the transform
-            in the output image. Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
+            in the output image. There must be three elements in tuple and the value of single element is [0, 255].
+            Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
 
     Raises:
         ValueError: If degrees is negative.
@@ -1127,6 +1128,7 @@ class RandomAffine:
         TypeError: If translate is specified but is not list or a tuple of length 2.
         TypeError: If scale is not a list or tuple of length 2.
         TypeError: If shear is not a list or tuple of length 2 or 4.
+        TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),

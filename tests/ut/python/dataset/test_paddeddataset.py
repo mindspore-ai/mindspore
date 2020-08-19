@@ -225,30 +225,62 @@ def test_imagefolder_padded():
     assert verify_list[9] == 6
 
 def test_imagefolder_padded_with_decode():
-    DATA_DIR = "../data/dataset/testPK/data"
-    data = ds.ImageFolderDatasetV2(DATA_DIR)
-
-    white_io = BytesIO()
-    Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')
-    padded_sample = {}
-    padded_sample['image'] = np.array(bytearray(white_io), dtype='uint8')
-    padded_sample['label'] = np.array(-1, np.int32)
-
-    white_samples = [padded_sample, padded_sample, padded_sample, padded_sample]
-    data2 = ds.PaddedDataset(white_samples)
-    data3 = data + data2
-
     num_shards = 5
     count = 0
     for shard_id in range(num_shards):
+        DATA_DIR = "../data/dataset/testPK/data"
+        data = ds.ImageFolderDatasetV2(DATA_DIR)
+
+        white_io = BytesIO()
+        Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')
+        padded_sample = {}
+        padded_sample['image'] = np.array(bytearray(white_io.getvalue()), dtype='uint8')
+        padded_sample['label'] = np.array(-1, np.int32)
+
+        white_samples = [padded_sample, padded_sample, padded_sample, padded_sample]
+        data2 = ds.PaddedDataset(white_samples)
+        data3 = data + data2
+
         testsampler = ds.DistributedSampler(num_shards=num_shards, shard_id=shard_id, shuffle=False, num_samples=None)
         data3.use_sampler(testsampler)
-        data3.map(input_columns="image", operations=V_C.Decode())
+        data3 = data3.map(input_columns="image", operations=V_C.Decode())
+        shard_sample_count = 0
         for ele in data3.create_dict_iterator():
             print("label: {}".format(ele['label']))
             count += 1
+            shard_sample_count += 1
+        assert shard_sample_count in (9, 10)
     assert count == 48
 
+def test_imagefolder_padded_with_decode_and_get_dataset_size():
+    num_shards = 5
+    count = 0
+    for shard_id in range(num_shards):
+        DATA_DIR = "../data/dataset/testPK/data"
+        data = ds.ImageFolderDatasetV2(DATA_DIR)
+
+        white_io = BytesIO()
+        Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')
+        padded_sample = {}
+        padded_sample['image'] = np.array(bytearray(white_io.getvalue()), dtype='uint8')
+        padded_sample['label'] = np.array(-1, np.int32)
+
+        white_samples = [padded_sample, padded_sample, padded_sample, padded_sample]
+        data2 = ds.PaddedDataset(white_samples)
+        data3 = data + data2
+
+        testsampler = ds.DistributedSampler(num_shards=num_shards, shard_id=shard_id, shuffle=False, num_samples=None)
+        data3.use_sampler(testsampler)
+        shard_dataset_size = data3.get_dataset_size()
+        data3 = data3.map(input_columns="image", operations=V_C.Decode())
+        shard_sample_count = 0
+        for ele in data3.create_dict_iterator():
+            print("label: {}".format(ele['label']))
+            count += 1
+            shard_sample_count += 1
+        assert shard_sample_count in (9, 10)
+        assert shard_dataset_size == shard_sample_count
+    assert count == 48
 
 def test_more_shard_padded():
     result_list = []
