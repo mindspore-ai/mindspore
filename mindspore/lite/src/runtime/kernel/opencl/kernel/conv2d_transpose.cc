@@ -192,9 +192,7 @@ kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::t
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
-    // MS_LOG(ERROR) << "Init kernel failed, name: " << opDef.name()->str()
-    //               << ", type: " << lite::EnumNameOpT(opDef.attr_type());
+  if (ret != RET_OK) {
     delete kernel;
     return nullptr;
   }

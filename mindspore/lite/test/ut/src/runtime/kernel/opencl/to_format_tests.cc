@@ -20,7 +20,7 @@
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/transpose.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/kernel/to_format.h"
 
 namespace mindspore {
 class TestToFormatOpenCL : public mindspore::CommonTest {
@@ -28,8 +28,8 @@ class TestToFormatOpenCL : public mindspore::CommonTest {
   TestToFormatOpenCL() {}
 };
 
-TEST_F(TestToFormatOpenCL, TransposeFp32) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
+    auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   int h = 64;
@@ -38,20 +38,44 @@ TEST_F(TestToFormatOpenCL, TransposeFp32) {
   size_t input_size;
   std::string input_path = "./test_data/transpose/transpose_fp32_input.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-
-  lite::tensor::Tensor *tensor_x =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, h, w, c}, schema::Format_NHWC4);
-
-  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, c, h, w});
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data load error.";
+    return;
+  }
+  std::vector<int> input_shape = {1, h, w, c};
+  auto tensor_x_ptr =
+    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC4);
+  auto tensor_x = tensor_x_ptr.get();
+  if (tensor_x == nullptr) {
+    MS_LOG(ERROR) << "tensor_x create error.";
+    return;
+  }
+  std::vector<int> out_shape = {1, c, h, w};
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
+  auto tensor_out = tensor_out_ptr.get();
+  if (tensor_out == nullptr) {
+    MS_LOG(ERROR) << "tensor_out create error.";
+    return;
+  }
   std::vector<lite::tensor::Tensor *> inputs{tensor_x};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
-  auto *arith_kernel = new kernel::TransposeOpenCLKernel(nullptr, inputs, outputs);
+  auto arith_kernel_ptr = std::make_unique<kernel::ToFormatOpenCLKernel>(nullptr, inputs, outputs);
+  auto arith_kernel = arith_kernel_ptr.get();
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "arith_kernel create error.";
+    return;
+  }
   arith_kernel->Init();
 
   inputs[0]->MallocData(allocator);
 
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
+  auto pGraph = pGraph_ptr.get();
+  if (pGraph == nullptr) {
+    MS_LOG(ERROR) << "pGraph create error.";
+    return;
+  }
   pGraph->Init();
   memcpy(inputs[0]->Data(), input_data, input_size);
   pGraph->Run();
@@ -59,6 +83,10 @@ TEST_F(TestToFormatOpenCL, TransposeFp32) {
   size_t output_size;
   std::string output_path = "./test_data/transpose/transpose_fp32_output.bin";
   auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
+  if (correct_data == nullptr) {
+    MS_LOG(ERROR) << "correct_data create error.";
+    return;
+  }
   printf("==================output data=================\n");
   float *output_data = reinterpret_cast<float *>(tensor_out->Data());
   std::cout << std::endl;
@@ -74,15 +102,7 @@ TEST_F(TestToFormatOpenCL, TransposeFp32) {
 
   // compare
   CompareOutputData(output_data, correct_data, h * w * c, 0.00001);
-  MS_LOG(INFO) << "TestMatMulFp32 passed";
-  for (auto tensor : inputs) {
-    delete tensor;
-  }
-  for (auto tensor : outputs) {
-    delete tensor;
-  }
-  delete arith_kernel;
-  delete pGraph;
+  MS_LOG(INFO) << "Test TransposeFp32 passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
