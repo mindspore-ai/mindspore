@@ -30,6 +30,11 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
+#include "utils/system/file_system.h"
+#include "utils/system/env.h"
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 using debugger::EventReply;
 using debugger::GraphProto;
 using debugger::ModelProto;
@@ -60,7 +65,10 @@ Debugger::Debugger()
       is_dataset_graph_(false),
       partial_memory_(false),
       last_overflow_bin_(0),
-      overflow_bin_path_("") {}
+      overflow_bin_path_(""),
+      ssl_certificate(true),
+      certificate_dir(""),
+      certificate_passphrase("") {}
 
 void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   // access lock for public method
@@ -175,7 +183,8 @@ void Debugger::EnableDebugger() {
 
   // initialize grpc client
   if (debugger_enabled_) {
-    grpc_client_ = std::make_unique<GrpcClient>(host, port);
+    SetDebuggerConfFromJsonFile();
+    grpc_client_ = std::make_unique<GrpcClient>(host, port, ssl_certificate, certificate_dir, certificate_passphrase);
   }
 
   debug_services_ = std::make_unique<DebugServices>();
@@ -785,6 +794,90 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
   }
 
   return op_names;
+}
+
+bool Debugger::SetDebuggerConfFromJsonFile() {
+  const char *config_path_str = std::getenv("MINDSPORE_CONFIG_PATH");
+  if (config_path_str != nullptr) {
+    MS_LOG(INFO) << "Getenv MINDSPORE_CONFIG_PATH :" << config_path_str;
+  } else {
+    MS_LOG(INFO) << "No need debugger config path. please export MINDSPORE_CONFIG_PATH eg: MINDSPORE_CONFIG_PATH=/etc";
+    ssl_certificate = false;
+    return false;
+  }
+  char real_path[4096] = {0};
+  if (nullptr == realpath(config_path_str, real_path)) {
+    MS_LOG(ERROR) << "Env debugger config path error, " << config_path_str;
+    ssl_certificate = false;
+    return false;
+  }
+  std::string debugger_config_file = std::string(real_path) + "/debugger_config.json";
+  std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
+  MS_EXCEPTION_IF_NULL(fs);
+  if (!fs->FileExist(debugger_config_file)) {
+    MS_LOG(ERROR) << debugger_config_file << " not exist.";
+    ssl_certificate = false;
+    return false;
+  }
+
+  return ParseDebuggerConfig(debugger_config_file);
+}
+
+bool Debugger::ParseDebuggerConfig(const std::string &debugger_config_file) {
+  std::ifstream jsonFile(debugger_config_file);
+  if (!jsonFile.is_open()) {
+    MS_LOG(ERROR) << debugger_config_file << " open failed.";
+    ssl_certificate = false;
+    return false;
+  }
+  json j;
+  jsonFile >> j;
+  if (j.find("DebuggerSettings") == j.end()) {
+    MS_LOG(ERROR) << "DebuggerSettings is not exist.";
+    ssl_certificate = false;
+    return false;
+  } else {
+    json debuggerSettings = j.at("DebuggerSettings");
+    // convert json to string
+    std::stringstream ss;
+    ss << debuggerSettings;
+    std::string cfg = ss.str();
+    MS_LOG(INFO) << "Debugger Settings Json: " << cfg;
+    if (!IsConfigExist(debuggerSettings)) {
+      return false;
+    }
+    if (!IsConfigValid(debuggerSettings)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Debugger::IsConfigExist(const nlohmann::json &debuggerSettings) {
+  if (debuggerSettings.find("ssl_certificate") == debuggerSettings.end() ||
+      debuggerSettings.find("certificate_dir") == debuggerSettings.end() ||
+      debuggerSettings.find("certificate_passphrase") == debuggerSettings.end()) {
+    MS_LOG(ERROR) << "DebuggerSettings keys is not exist.";
+    ssl_certificate = false;
+    return false;
+  }
+  return true;
+}
+
+bool Debugger::IsConfigValid(const nlohmann::json &debuggerSettings) {
+  auto enable_secure = debuggerSettings.at("ssl_certificate");
+  auto certificate_dir_ = debuggerSettings.at("certificate_dir");
+  auto certificate_passphrase_ = debuggerSettings.at("certificate_passphrase");
+  if (!(enable_secure.is_boolean() && certificate_dir_.is_string() && certificate_passphrase_.is_string())) {
+    MS_LOG(ERROR) << "Element's type in Debugger config json is invalid.";
+    ssl_certificate = false;
+    return false;
+  }
+
+  ssl_certificate = enable_secure;
+  certificate_dir = certificate_dir_;
+  certificate_passphrase = certificate_passphrase_;
+  return true;
 }
 
 }  // namespace mindspore
