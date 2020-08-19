@@ -24,16 +24,16 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.deepfm import ModelBuilder, AUCMetric
 from src.config import DataConfig, ModelConfig, TrainConfig
-from src.dataset import create_dataset
+from src.dataset import create_dataset, DataType
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 parser = argparse.ArgumentParser(description='CTR Prediction')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-
+parser.add_argument('--device_target', type=str, default="Ascend", help='Ascend, GPU, or CPU')
 args_opt, _ = parser.parse_known_args()
 device_id = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
 
 
 def add_write(file_path, print_str):
@@ -47,7 +47,8 @@ if __name__ == '__main__':
     train_config = TrainConfig()
 
     ds_eval = create_dataset(args_opt.dataset_path, train_mode=False,
-                             epochs=1, batch_size=train_config.batch_size)
+                             epochs=1, batch_size=train_config.batch_size,
+                             data_type=DataType(data_config.data_format))
     model_builder = ModelBuilder(ModelConfig, TrainConfig)
     train_net, eval_net = model_builder.get_train_eval_net()
     train_net.set_train()

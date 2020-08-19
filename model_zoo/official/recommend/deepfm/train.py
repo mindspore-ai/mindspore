@@ -16,11 +16,14 @@
 import os
 import sys
 import argparse
+import random
+import numpy as np
 
 from mindspore import context, ParallelMode
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
+import mindspore.dataset.engine as de
 
 from src.deepfm import ModelBuilder, AUCMetric
 from src.config import DataConfig, ModelConfig, TrainConfig
@@ -34,24 +37,41 @@ parser.add_argument('--ckpt_path', type=str, default=None, help='Checkpoint path
 parser.add_argument('--eval_file_name', type=str, default="./auc.log", help='eval file path')
 parser.add_argument('--loss_file_name', type=str, default="./loss.log", help='loss file path')
 parser.add_argument('--do_eval', type=bool, default=True, help='Do evaluation or not.')
-
+parser.add_argument('--device_target', type=str, default="Ascend", help='Ascend, GPU, or CPU')
 args_opt, _ = parser.parse_known_args()
-device_id = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
+rank_size = int(os.environ.get("RANK_SIZE", 1))
 
+random.seed(1)
+np.random.seed(1)
+de.config.set_seed(1)
 
 if __name__ == '__main__':
     data_config = DataConfig()
     model_config = ModelConfig()
     train_config = TrainConfig()
 
-    rank_size = int(os.environ.get("RANK_SIZE", 1))
     if rank_size > 1:
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True)
-        init()
-        rank_id = int(os.environ.get('RANK_ID'))
+        if args_opt.device_target == "Ascend":
+            device_id = int(os.getenv('DEVICE_ID'))
+            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True)
+            init()
+            rank_id = int(os.environ.get('RANK_ID'))
+        elif args_opt.device_target == "GPU":
+            init("nccl")
+            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=get_group_size(),
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
+            rank_id = get_rank()
+        else:
+            print("Unsupported device_target ", args_opt.device_target)
+            exit()
     else:
+        device_id = int(os.getenv('DEVICE_ID'))
+        context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
         rank_size = None
         rank_id = None
 
@@ -73,6 +93,8 @@ if __name__ == '__main__':
     callback_list = [time_callback, loss_callback]
 
     if train_config.save_checkpoint:
+        if rank_size:
+            train_config.ckpt_file_name_prefix = train_config.ckpt_file_name_prefix + str(get_rank())
         config_ck = CheckpointConfig(save_checkpoint_steps=train_config.save_checkpoint_steps,
                                      keep_checkpoint_max=train_config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix=train_config.ckpt_file_name_prefix,

@@ -14,12 +14,13 @@
 # limitations under the License.
 # ============================================================================
 echo "Please run the script as: "
-echo "sh scripts/run_standalone_train.sh DEVICE_ID DATASET_PATH"
-echo "for example: sh scripts/run_standalone_train.sh 0 /dataset_path"
+echo "sh scripts/run_standalone_train.sh DEVICE_ID DEVICE_TARGET DATASET_PATH"
+echo "for example: sh scripts/run_standalone_train.sh 0 GPU /dataset_path"
 echo "After running the script, the network runs in the background, The log will be generated in ms_log/output.log"
 
 export DEVICE_ID=$1
-DATA_URL=$2
+DEVICE_TARGET=$2
+DATA_URL=$3
 
 mkdir -p ms_log
 CUR_DIR=`pwd`
@@ -31,4 +32,5 @@ python -u train.py \
     --ckpt_path="checkpoint" \
     --eval_file_name='auc.log' \
     --loss_file_name='loss.log' \
+    --device_target=$DEVICE_TARGET \
     --do_eval=True > ms_log/output.log 2>&1 &
