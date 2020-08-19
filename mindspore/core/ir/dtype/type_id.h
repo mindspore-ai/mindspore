@@ -19,9 +19,6 @@
 #ifndef MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
 #define MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_
 
-#include <unordered_map>
-#include <string>
-
 namespace mindspore {
 //
 // Supported meta type
