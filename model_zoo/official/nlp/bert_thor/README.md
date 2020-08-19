@@ -1,93 +1,218 @@
-# BERT Example
+# Bert-THOR Example
+
+- [Description](#Description)
+- [Model Architecture](#Model-Architecture)
+- [Dataset](#Dataset)
+- [Features](#Features)
+- [Environment Requirements](#Environment-Requirements)
+- [Quick Start](#Quick-Start)
+- [Script Description](#Script-Description)
+    - [Script and Sample Code](#Script-Code-Structure)
+    - [Script Parameters](#Script-Parameters)
+    - [Training Process](#Training-Process)
+    - [Evaluation Process](#Evaluation-Process)
+- [Model Description](#Model-Description) 
+    - [Evaluation Performance](#Evaluation-Performance)
+- [Description of Random Situation](#Description-of-Random-Situation)
+- [ModelZoo Homepage](#ModelZoo-Homepage)
+
 ## Description
-This is an example of training bert by second-order optimizer THOR. THOR is a novel approximate seond-order optimization method in MindSpore.
 
-## Requirements
-- Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
-- Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc.
->  Notes:
-   If you are running a fine-tuning or evaluation task, prepare a checkpoint from pre-train.
+This is an example of training Bert with MLPerf v0.7 dataset by second-order optimizer THOR. THOR is a novel approximate seond-order optimization method in MindSpore. With fewer iterations, THOR can finish Bert-Large training in 14 minutes to a masked lm accuracy of 71.3% using 8 Ascend 910, which is much faster than SGD with Momentum. 
 
-## Running the Example
-### Pre-Training
-- Set options in `config.py`, including optimizer and network. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) for more information about dataset and the json schema file.
+## Model Architecture
+The architecture of Bert contains 3 embedding layers which are used to look up token embeddings, position embeddings and segmentation embeddings; Then BERT basically consists of a stack of Transformer encoder blocks; finally bert are trained for two tasks: Masked Language Model and Next Sentence Prediction.
 
-- Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base, BERT-NEZHA and BERT-large model.
+## Dataset
+Dataset used: MLPerf v0.7 dataset for BERT
+- Dataset size 9,600,000 samples
+  - Train：9,600,000 samples
+  - Test：first 10,000 consecutive samples of the training set
+  
+- Data format：tfrecord
+  
+- Download and preporcess datasets
+  - Note：Data will be processed using scripts in https://github.com/mlperf/training/tree/master/language_model/tensorflow/bert
+  with the help of this link users could make the data files step by step.
 
-    ``` bash   
-    sh scripts/run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
-    ```
-- Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base, BERT-NEZHA and BERT-large model.
+> The generated tfrecord has 500 parts:
+> ```
+> ├── part-00000-of-00500.tfrecord        # train dataset
+> └── part-00001-of-00500.tfrecord        # train dataset
+> ```
 
-    ``` bash   
-    sh scripts/run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR RANK_TABLE_FILE
-    ```  
 
-## Usage
-### Pre-Training
-``` 
-usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
-                        [--enable_save_ckpt ENABLE_SAVE_CKPT]
-                        [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
-                        [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] [--save_checkpoint_path CHECKPOINT_PATH]
-                        [--save_checkpoint_steps N] [--save_checkpoint_num N] 
-                        [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR]
+## Features
+The classical first-order optimization algorithm, such as SGD, has a small amount of computation, but the convergence speed is slow and requires lots of iterations. The second-order optimization algorithm uses the second-order derivative of the target function to accelerate convergence, can converge faster to the optimal value of the model and requires less iterations. But the application of the second-order optimization algorithm in deep neural network training is not common because of the high computation cost. The main computational cost of the second-order optimization algorithm lies in the inverse operation of the second-order information matrix (Hessian matrix, FIM, etc.), and the time complexity is about O (n^3). On the basis of the existing natural gradient algorithm, we developed the available second-order optimizer THOR in MindSpore by adopting approximation and shearing of FIM information matrix to reduce the computational complexity of the inverse matrix. With eight Ascend 910 chips, THOR can complete Bert-Large training in 14min.
 
-options:
-    --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
-    --epoch_size               epoch size: N, default is 1
-    --device_num               number of used devices: N, default is 1
-    --device_id                device id: N, default is 0
-    --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"
-    --enable_lossscale         enable lossscale: "true" | "false", default is "true"
-    --do_shuffle               enable shuffle: "true" | "false", default is "true"
-    --enable_data_sink         enable data sink: "true" | "false", default is "true"
-    --data_sink_steps          set data sink steps: N, default is 1
-    --save_checkpoint_path     path to save checkpoint files: PATH, default is ""
-    --save_checkpoint_steps    steps for saving checkpoint files: N, default is 1000
-    --save_checkpoint_num      number for saving checkpoint files: N, default is 1
-    --data_dir                 path to dataset directory: PATH, default is ""
-    --schema_dir               path to schema.json file, PATH, default is ""
+## Environment Requirements
+- Hardware（Ascend/GPU）
+  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Framework
+  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+
+## Quick Start
+After installing MindSpore via the official website, you can start training and evaluation as follows: 
+- Running on Ascend
+
+```python
+# run distributed training example
+sh scripts/run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
+
+# run evaluation example
+python pretrain_eval.py
 ```
-## Options and Parameters
-It contains of parameters of BERT model and options for training, which is set in file `config.py`, `bert_net_config.py` and `evaluation_config.py` respectively.
-### Options:
-```
-config.py:
-    bert_network                    version of BERT model: base | nezha | large, default is large
-    optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum | Thor, default is "Thor"
+> For distributed training, a hccl configuration file with JSON format needs to be created in advance. About the configuration file, you can refer to the [HCCL_TOOL](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
-```
+## Script Description
 
-### Parameters:
-```
-Parameters for dataset and network (Pre-Training/Evaluation):
-    batch_size                      batch size of input dataset: N, default is 12
-    seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 21136
-    hidden_size                     size of bert encoder layers: N, default is 768
-    num_hidden_layers               number of hidden layers: N, default is 12
-    num_attention_heads             number of attention heads: N, default is 12
-    intermediate_size               size of intermediate layer: N, default is 3072
-    hidden_act                      activation function used: ACTIVATION, default is "gelu"
-    hidden_dropout_prob             dropout probability for BertOutput: Q, default is 0.1
-    attention_probs_dropout_prob    dropout probability for BertAttention: Q, default is 0.1
-    max_position_embeddings         maximum length of sequences: N, default is 512
-    type_vocab_size                 size of token type vocab: N, default is 16
-    initializer_range               initialization value of TruncatedNormal: Q, default is 0.02
-    use_relative_positions          use relative positions or not: True | False, default is False
-    input_mask_from_dataset         use the input mask loaded form dataset or not: True | False, default is True
-    token_type_ids_from_dataset     use the token type ids loaded from dataset or not: True | False, default is True
-    dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
-    compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float16
+### Script Code Structure
 
-Parameters for optimizer:
-    Thor:
-    momentum                        momentum for the moving average: Q
-    weight_decay                    weight decay: Q
-    loss_scale                      loss scale: N
-    frequency                       the step interval to update second-order information matrix: N, default is 100
-    batch_size                      batch size of input dataset: N, default is 12
+```shell
+├── model_zoo
+	├──official
+		├──nlp
+			├── bert_thor
+				├── README.md                                # descriptions bert_thor
+				├── scripts
+					├── run_distribute_pretrain.sh           # launch distributed training for Ascend
+					└── run_standalone_pretrain.sh           # launch single training for Ascend
+				├──src
+					├── bert_for_pre_training.py             # Bert for pretraining
+					├── bert_model.py                        # Bert model
+					├── bert_net_config.py                   # network config setting
+					├── config.py                            # config setting used in dataset.py
+					├── dataset.py                           # Data operations used in run_pretrain.py
+					├── dataset_helper.py                    # Dataset help for minddata dataset
+					├── evaluation_config.py                 # config settings, will be used in finetune.py
+					├── fused_layer_norm.py                  # fused layernorm
+					├── grad_reducer_thor.py                 # grad_reducer_thor
+					├── lr_generator.py                      # learning rate generator
+					├── model_thor.py                        # Model
+					├── thor_for_bert.py                     # thor_for_bert
+					├── thor_for_bert_arg.py                 # thor_for_bert_arg
+					├── thor_layer.py                        # thor_layer
+					└── utils.py                             # utils
+				├── pretrain_eval.py                         # infer script
+    			└── run_pretrain.py                          # train script
 ```
 
+
+### Script Parameters
+
+Parameters for both training and inference can be set in config.py.
+
+```
+"device_target": 'Ascend',            # device where the code will be implemented
+"distribute": "false",                # Run distribute
+"epoch_size": "1",                    # Epoch size
+"enable_save_ckpt": "true",           # Enable save checkpoint
+"enable_lossscale": "false",          # Use lossscale or not
+"do_shuffle": "true",                 # Enable shuffle for dataset
+"save_checkpoint_path": "",           # Save checkpoint path
+"load_checkpoint_path": "",           # Load checkpoint file path
+"train_steps": -1,                    # meaning run all steps according to epoch number
+"device_id": 4,                       # Device id, default is 4
+"enable_data_sink": "true",           # Enable data sink, default is true
+"data_sink_steps": "100",             # Sink steps for each epoch, default is 100
+"save_checkpoint_steps",: 1000,       # Save checkpoint steps
+"save_checkpoint_num": 1,             # Save checkpoint numbers, default is 1
+```
+### Training Process
+
+####  Ascend 910
+
+```
+  sh run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
+```
+We need three parameters for this scripts.
+- `DEVICE_NUM`: the device number for distributed train.
+- `EPOCH_SIZE`: Epoch size used in the model
+- `DATA_DIR`：Data path, it is better to use absolute path.
+- `SCHEMA_DIR `：Schema path, it is better to use absolute path
+- `RANK_TABLE_FILE`: the path of rank_table.json
+
+Training result will be stored in the current path, whose folder name begins with the file name that the user defines.  Under this, you can find checkpoint file together with result like the followings in log.
+```
+...
+epoch: 1, step: 1, outputs are [5.0842705], total_time_span is 795.4807660579681, step_time_span is 795.4807660579681
+epoch: 1, step: 100, outputs are [4.4550357], total_time_span is 579.6836116313934, step_time_span is 5.855390016478721
+epoch: 1, step: 101, outputs are [4.804837], total_time_span is 0.6697461605072021, step_time_span is 0.6697461605072021
+epoch: 1, step: 200, outputs are [4.453913], total_time_span is 26.3735454082489, step_time_span is 0.2663994485681707
+epoch: 1, step: 201, outputs are [4.6619444], total_time_span is 0.6340286731719971, step_time_span is 0.6340286731719971
+epoch: 1, step: 300, outputs are [4.251204], total_time_span is 26.366267919540405, step_time_span is 0.2663259385812162
+epoch: 1, step: 301, outputs are [4.1396527], total_time_span is 0.6269843578338623, step_time_span is 0.6269843578338623
+epoch: 1, step: 400, outputs are [4.3717675], total_time_span is 26.37460947036743, step_time_span is 0.2664101966703781
+epoch: 1, step: 401, outputs are [4.9887424], total_time_span is 0.6313872337341309, step_time_span is 0.6313872337341309
+epoch: 1, step: 500, outputs are [4.7275505], total_time_span is 26.377585411071777, step_time_span is 0.2664402566774927
+......
+epoch: 3, step: 2001, outputs are [1.5040319], total_time_span is 0.6242287158966064, step_time_span is 0.6242287158966064
+epoch: 3, step: 2100, outputs are [1.232682], total_time_span is 26.37802791595459, step_time_span is 0.26644472642378375
+epoch: 3, step: 2101, outputs are [1.1442064], total_time_span is 0.6277685165405273, step_time_span is 0.6277685165405273
+epoch: 3, step: 2200, outputs are [1.8860981], total_time_span is 26.378745555877686, step_time_span is 0.2664519753118958
+epoch: 3, step: 2201, outputs are [1.4248213], total_time_span is 0.6273438930511475, step_time_span is 0.6273438930511475
+epoch: 3, step: 2300, outputs are [1.2741681], total_time_span is 26.374130964279175, step_time_span is 0.2664053632755472
+epoch: 3, step: 2301, outputs are [1.2470423], total_time_span is 0.6276984214782715, step_time_span is 0.6276984214782715
+epoch: 3, step: 2400, outputs are [1.2646998], total_time_span is 26.37843370437622, step_time_span is 0.2664488252967295
+epoch: 3, step: 2401, outputs are [1.2794371], total_time_span is 0.6266779899597168, step_time_span is 0.6266779899597168
+epoch: 3, step: 2500, outputs are [1.265375], total_time_span is 26.374578714370728, step_time_span is 0.2664098860037447
+
+...
+```
+
+
+### Evaluation Process
+
+Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/bert_thor/LOG0/checkpoint_bert-3_1000.ckpt".
+#### Ascend 910
+
+```
+  python pretrain_eval.py
+```
+We need two parameters in evaluation_config.py for this scripts.
+- `DATA_FILE`：the file of evaluation dataset.
+- `FINETUNE_CKPT`: the absolute path for checkpoint file.
+
+> checkpoint can be produced in training process.
+
+Inference result will be stored in the example path,  you can find result like the followings in log.
+
+```
+step:  1000 Accuracy:  [0.27491578]
+step:  2000 Accuracy:  [0.69612586]
+step:  3000 Accuracy:  [0.71377236]
+```
+## Model Description
+
+### Evaluation Performance 
+
+| Parameters                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |
+| Model Version              | BERT-LARGE                                              |
+| Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  |
+| uploaded Date              | 06/01/2020 (month/day/year)                         |
+| MindSpore Version          | 0.6.0-alpha                                                       |
+| Dataset                    | MLPerf v0.7 dataset                                                   | 
+| Training Parameters        | total steps=3000, batch_size = 12             |
+| Optimizer                  | THOR                                                         |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       |1.5654222                                                   |
+| Speed                      | 269ms/step（8pcs）                     |
+| Total time                 | 14 mins                          |
+| Parameters (M)             | 330                                                       |
+| Checkpoint for Fine tuning | 4.5G(.ckpt file)                                         |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert_thor |
+
+
+
+## Description of Random Situation
+
+In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in  run_pretrain.py.
+
+
+## ModelZoo Homepage
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
