@@ -485,12 +485,12 @@ std::string Tensor::ToString() const {
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
   data_sync();
-  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ",\n";
+  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ',';
   if (DataSize() < small_tensor_size) {
     // Only print data for small tensor.
-    buf << data().ToString(data_type_, shape_) << ')';
+    buf << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_) << ')';
   } else {
-    buf << "[...])";
+    buf << " [...])";
   }
   return buf.str();
 }
@@ -500,8 +500,8 @@ std::string Tensor::ToStringRepr() const {
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
   data_sync();
-  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ",\n"
-      << data().ToString(data_type_, shape_) << ')';
+  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ','
+      << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_) << ')';
   return buf.str();
 }
 
