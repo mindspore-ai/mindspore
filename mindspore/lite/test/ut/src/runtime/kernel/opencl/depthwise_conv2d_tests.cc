@@ -23,24 +23,12 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/depthwise_conv2d.h"
 
-
-#define SAFE_DELETE_ARRAY(a) \
-  if (a != nullptr) {        \
-    delete[] a;              \
-    a = nullptr;             \
-  }
-#define SAFE_DELETE_PTR(a) \
-  if (a != nullptr) {      \
-    delete a;              \
-    a = nullptr;           \
-  }
-
 bool IMAGE2D_OPEN = true;
 
 namespace mindspore {
 class TestConvolutionDwOpenCL : public mindspore::CommonTest {
  public:
-  TestConvolutionDwOpenCL(){}
+  TestConvolutionDwOpenCL() {}
 };
 
 void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *weight_data, float_t *gnd_data,
@@ -52,13 +40,16 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
   // pack input
   int IC4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int pack_input_size = C4NUM * IC4 * conv_param->input_h_ * conv_param->input_w_;
-  float *packed_input = new float[pack_input_size];
-  memset(packed_input, 0, pack_input_size * sizeof(float));
+  auto packed_input = std::make_unique<float>(pack_input_size);
+  if (packed_input.get() == nullptr) {
+    return;
+  }
+  memset(packed_input.get(), 0, pack_input_size * sizeof(float));
   int plane = conv_param->input_w_ * conv_param->input_h_;
   if (format == schema::Format_NHWC4) {
-    PackNHWCToNHWC4Fp32(input_data, packed_input, 1, plane, conv_param->input_channel_);
+    PackNHWCToNHWC4Fp32(input_data, packed_input.get(), 1, plane, conv_param->input_channel_);
   } else {
-    PackNHWCToNC4HW4Fp32(input_data, packed_input, 1, plane, conv_param->input_channel_);
+    PackNHWCToNC4HW4Fp32(input_data, packed_input.get(), 1, plane, conv_param->input_channel_);
   }
 
   // pack weight
@@ -77,61 +68,62 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
   std::vector<int> shape_bias = {conv_param->output_channel_};
   std::vector<int> shape_out = {conv_param->output_batch_, conv_param->output_h_, conv_param->output_w_,
                                 conv_param->output_channel_};
-  lite::tensor::Tensor *tensor_a =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_in, format);  // Note!!!actual is NHWC4
-  lite::tensor::Tensor *tensor_b =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_filter, schema::Format_NHWC);
-  lite::tensor::Tensor *tensor_c =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_bias, schema::Format_NHWC);
-  lite::tensor::Tensor *tensor_d = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_out, format);
-  std::vector<lite::tensor::Tensor *> inputs{tensor_a, tensor_b, tensor_c};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_d};
+  auto tensor_a =
+    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_in, format);  // Note!!!actual is NHWC4
+  auto tensor_b = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_filter, schema::Format_NHWC);
+  auto tensor_c = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_bias, schema::Format_NHWC);
+  auto tensor_d = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_out, format);
+  std::vector<lite::tensor::Tensor *> inputs{tensor_a.get(), tensor_b.get(), tensor_c.get()};
+  std::vector<lite::tensor::Tensor *> outputs{tensor_d.get()};
+  if (tensor_a.get() == nullptr || tensor_b.get() == nullptr || tensor_c.get() == nullptr ||
+      tensor_d.get() == nullptr) {
+    return;
+  }
 
   // freamework to do!!!
   inputs[1]->SetData(packed_weight);
   inputs[2]->SetData(bias_data);
 
-  OpParameter * parameter = reinterpret_cast<OpParameter *>(conv_param);
-  auto *pKernel = new kernel::DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
+  OpParameter *parameter = reinterpret_cast<OpParameter *>(conv_param);
+  auto pKernel = std::make_unique<kernel::DepthwiseConv2dOpenCLKernel>(parameter, inputs, outputs);
+  if (pKernel.get() == nullptr) {
+    return;
+  }
   pKernel->Init();
 
-  std::vector<kernel::LiteKernel *> kernels{pKernel};
-  std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
+  std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
+  std::vector<lite::tensor::Tensor *> inputs_{tensor_a.get()};
   size_t C4 = UP_DIV(inputs[0]->Channel(), C4NUM);
-  // if (IMAGE2D_OPEN && format == schema::Format_NHWC4) {
-  //   std::vector<size_t> img_size{inputs[0]->Width() * C4, (size_t)inputs[0]->Height(), CL_FLOAT};
-  //   auto in_data = allocator->Malloc(inputs[0]->Size(), img_size);
-  //   inputs[0]->SetData(in_data);
-  // } else if (IMAGE2D_OPEN && format == schema::Format_NC4HW4) {
-  //   std::vector<size_t> img_size{(size_t)inputs[0]->Width(), inputs[0]->Height() * C4, CL_FLOAT};
-  //   auto in_data = allocator->Malloc(inputs[0]->Size(), img_size);
-  //   inputs[0]->SetData(in_data);
-  // } else {
-    inputs[0]->MallocData(allocator);
-  // }
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
+  inputs[0]->MallocData(allocator);
+  auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
+  if (pKernel.get() == nullptr) {
+    return;
+  }
   pGraph->Init();
 
   // freamework to do!!!
-  memcpy(inputs[0]->Data(), packed_input, sizeof(float) * pack_input_size);
+  memcpy(inputs[0]->Data(), packed_input.get(), sizeof(float) * pack_input_size);
 
   pGraph->Run();
   if (is_compare) {
-    float_t* packed_output = reinterpret_cast<float *>(outputs[0]->Data());
-    float_t *packed_correct_data = new float_t[packed_output_size];
-    memset(packed_correct_data, 0, packed_output_size * sizeof(float_t));
+    float_t *packed_output = reinterpret_cast<float *>(outputs[0]->Data());
+    auto packed_correct_data = std::make_unique<float_t>(packed_output_size);
+    if (packed_correct_data) {
+      return;
+    }
+    memset(packed_correct_data.get(), 0, packed_output_size * sizeof(float_t));
     if (format == schema::Format_NC4HW4) {
-      PackNHWCToNC4HW4Fp32(gnd_data, packed_correct_data, conv_param->output_batch_,
-                          conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
+      PackNHWCToNC4HW4Fp32(gnd_data, packed_correct_data.get(), conv_param->output_batch_,
+                           conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
     } else {
-      PackNHWCToNHWC4Fp32(gnd_data, packed_correct_data, conv_param->output_batch_,
+      PackNHWCToNHWC4Fp32(gnd_data, packed_correct_data.get(), conv_param->output_batch_,
                           conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
     }
 
     printf("==================input_data=================\n");
     std::cout << std::endl;
     for (int i = 0; i < pack_input_size; i++) {
-      std::cout << packed_input[i] << ", ";
+      std::cout << packed_input.get()[i] << ", ";
     }
     std::cout << std::endl;
     printf("==================weight data=================\n");
@@ -142,36 +134,26 @@ void DepthWiseTestMain(ConvParameter *conv_param, float_t *input_data, float_t *
     std::cout << std::endl;
     printf("==================output data=================\n");
     std::cout << std::endl;
-    for (int i = 0; i < 80/*packed_output_size*/; i++) {
+    for (int i = 0; i < 80 /*packed_output_size*/; i++) {
       std::cout << packed_output[i] << ", ";
     }
     std::cout << std::endl;
     printf("==================expected output data=================\n");
     for (int i = 0; i < packed_output_size; i++) {
-      std::cout << packed_correct_data[i] << ", ";
+      std::cout << packed_correct_data.get()[i] << ", ";
     }
     std::cout << std::endl;
     // compare
-    CommonTest::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
-    SAFE_DELETE_ARRAY(packed_correct_data)
+    CommonTest::CompareOutputData(packed_output, packed_correct_data.get(), packed_output_size, 0.00001);
   }
 
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
-  SAFE_DELETE_ARRAY(packed_input);
-  for (auto tensor : inputs) {
-    SAFE_DELETE_PTR(tensor)
-  }
-  for (auto tensor : outputs) {
-    SAFE_DELETE_PTR(tensor)
-  }
-  SAFE_DELETE_PTR(pKernel)
-  SAFE_DELETE_PTR(pGraph)
   return;
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
-  ConvParameter *conv_param = new ConvParameter();
+  auto conv_param = std::make_unique<ConvParameter>();
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 4;
@@ -212,12 +194,12 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
   float gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4);
+  DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
-  ConvParameter *conv_param = new ConvParameter();
+  auto conv_param = std::make_unique<ConvParameter>();
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 3;
@@ -285,12 +267,12 @@ TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
                       0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4);
+  DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
-  ConvParameter *conv_param = new ConvParameter();
+  auto conv_param = std::make_unique<ConvParameter>();
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 4;
@@ -331,12 +313,12 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
   float gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
-  ConvParameter *conv_param = new ConvParameter();
+  auto conv_param = std::make_unique<ConvParameter>();
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 3;
@@ -404,15 +386,14 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
                       0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
-
 
 TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  ConvParameter *conv_param = new ConvParameter();
+  auto conv_param = std::make_unique<ConvParameter>();
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 4;
@@ -470,29 +451,26 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   std::vector<int> shape_bias = {conv_param->output_channel_};
   std::vector<int> shape_out = {conv_param->output_batch_, conv_param->output_h_, conv_param->output_w_,
                                 conv_param->output_channel_};
-  lite::tensor::Tensor *tensor_a =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_in, schema::Format_NC4HW4);  // Note!!!actual is NHWC4
-  lite::tensor::Tensor *tensor_b =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_filter, schema::Format_NHWC);
-  lite::tensor::Tensor *tensor_c =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_bias, schema::Format_NHWC);
-  lite::tensor::Tensor *tensor_d =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_out, schema::Format_NC4HW4);
-  std::vector<lite::tensor::Tensor *> inputs{tensor_a, tensor_b, tensor_c};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_d};
+  auto tensor_a = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_in,
+                                                         schema::Format_NC4HW4);  // Note!!!actual is NHWC4
+  auto tensor_b = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_filter, schema::Format_NHWC);
+  auto tensor_c = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_bias, schema::Format_NHWC);
+  auto tensor_d = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_out, schema::Format_NC4HW4);
+  std::vector<lite::tensor::Tensor *> inputs{tensor_a.get(), tensor_b.get(), tensor_c.get()};
+  std::vector<lite::tensor::Tensor *> outputs{tensor_d.get()};
 
   // freamework to do!!!
   inputs[1]->SetData(packed_weight);
   inputs[2]->SetData(bias_data);
 
-  OpParameter * parameter = reinterpret_cast<OpParameter *>(conv_param);
-  auto *pKernel = new kernel::DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
+  OpParameter *parameter = reinterpret_cast<OpParameter *>(conv_param.get());
+  auto pKernel = std::make_unique<kernel::DepthwiseConv2dOpenCLKernel>(parameter, inputs, outputs);
   pKernel->Init();
 
-  std::vector<kernel::LiteKernel *> kernels{pKernel};
-  std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
+  std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
+  std::vector<lite::tensor::Tensor *> inputs_{tensor_a.get()};
   inputs[0]->MallocData();
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
+  auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   // freamework to do!!!
@@ -533,14 +511,6 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
 
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
-  for (auto tensor : inputs) {
-    SAFE_DELETE_PTR(tensor)
-  }
-  for (auto tensor : outputs) {
-    SAFE_DELETE_PTR(tensor)
-  }
-  SAFE_DELETE_PTR(pKernel)
-  SAFE_DELETE_PTR(pGraph)
   MS_LOG(INFO) << "TestConvolutionDwNoPadFp32 passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
@@ -548,7 +518,7 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
 TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  ConvParameter *conv_param = new ConvParameter();
+  auto conv_param = std::make_unique<ConvParameter>();
   {
     conv_param->input_batch_ = 1;
     conv_param->input_h_ = 3;
@@ -589,10 +559,10 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   // pack input
   int IC4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int pack_input_size = C4NUM * IC4 * conv_param->input_h_ * conv_param->input_w_;
-  float *packed_input = new float[pack_input_size];
-  memset(packed_input, 0, pack_input_size * sizeof(float));
+  auto packed_input = std::make_unique<float>(pack_input_size);
+  memset(packed_input.get(), 0, pack_input_size * sizeof(float));
   int plane = conv_param->input_w_ * conv_param->input_h_;
-  PackNHWCToNC4HW4Fp32(input_data, packed_input, 1, plane, conv_param->input_channel_);
+  PackNHWCToNC4HW4Fp32(input_data, packed_input.get(), 1, plane, conv_param->input_channel_);
 
   // co h w ci
   float weight_data[] = {0.67063785, 0.21038257, 0.12892629, 0.31542835, 0.36371076, 0.57019675, 0.43860152, 0.9883738,
@@ -634,33 +604,30 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   std::vector<int> shape_bias = {conv_param->output_channel_};
   std::vector<int> shape_out = {conv_param->output_batch_, conv_param->output_h_, conv_param->output_w_,
                                 conv_param->output_channel_};
-  lite::tensor::Tensor *tensor_a =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_in, schema::Format_NC4HW4);  // Note!!!actual is NHWC4
-  lite::tensor::Tensor *tensor_b =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_filter, schema::Format_NHWC);
-  lite::tensor::Tensor *tensor_c =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_bias, schema::Format_NHWC);
-  lite::tensor::Tensor *tensor_d =
-    new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), shape_out, schema::Format_NC4HW4);
-  std::vector<lite::tensor::Tensor *> inputs{tensor_a, tensor_b, tensor_c};
-  std::vector<lite::tensor::Tensor *> outputs{tensor_d};
+  auto tensor_a = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_in,
+                                                         schema::Format_NC4HW4);  // Note!!!actual is NHWC4
+  auto tensor_b = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_filter, schema::Format_NHWC);
+  auto tensor_c = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_bias, schema::Format_NHWC);
+  auto tensor_d = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), shape_out, schema::Format_NC4HW4);
+  std::vector<lite::tensor::Tensor *> inputs{tensor_a.get(), tensor_b.get(), tensor_c.get()};
+  std::vector<lite::tensor::Tensor *> outputs{tensor_d.get()};
 
   // freamework to do!!!
   inputs[1]->SetData(packed_weight);
   inputs[2]->SetData(bias_data);
 
-  OpParameter * parameter = reinterpret_cast<OpParameter *>(conv_param);
-  auto *pKernel = new kernel::DepthwiseConv2dOpenCLKernel(parameter, inputs, outputs);
+  OpParameter *parameter = reinterpret_cast<OpParameter *>(conv_param.get());
+  auto pKernel = std::make_unique<kernel::DepthwiseConv2dOpenCLKernel>(parameter, inputs, outputs);
   pKernel->Init();
 
-  std::vector<kernel::LiteKernel *> kernels{pKernel};
-  std::vector<lite::tensor::Tensor *> inputs_{tensor_a};
+  std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
+  std::vector<lite::tensor::Tensor *> inputs_{tensor_a.get()};
   inputs[0]->MallocData();
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs_, outputs, kernels, kernels, kernels);
+  auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
   pGraph->Init();
 
   // freamework to do!!!
-  memcpy(inputs[0]->Data(), packed_input, sizeof(float) * pack_input_size);
+  memcpy(inputs[0]->Data(), packed_input.get(), sizeof(float) * pack_input_size);
 
   pGraph->Run();
   float *packed_output = reinterpret_cast<float *>(outputs[0]->Data());
@@ -672,15 +639,15 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
                           2.3769147,  2.3185873,  0.6133741,  0.9687358,  0.9987654,  1.0254729,  0.8368954, 0.74171704,
                           0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                           1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
-  float *packed_correct_data = new float[packed_output_size];
-  memset(packed_correct_data, 0, packed_output_size * sizeof(float));
-  PackNHWCToNC4HW4Fp32(correct_data, packed_correct_data, conv_param->output_batch_,
+  auto packed_correct_data = std::make_unique<float>(packed_output_size);
+  memset(packed_correct_data.get(), 0, packed_output_size * sizeof(float));
+  PackNHWCToNC4HW4Fp32(correct_data, packed_correct_data.get(), conv_param->output_batch_,
                        conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_);
 
   printf("==================input_data=================\n");
   std::cout << std::endl;
   for (int i = 0; i < pack_input_size; i++) {
-    std::cout << packed_input[i] << ", ";
+    std::cout << packed_input.get()[i] << ", ";
   }
   std::cout << std::endl;
   printf("==================weight data=================\n");
@@ -697,117 +664,81 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   std::cout << std::endl;
   printf("==================expected output data=================\n");
   for (int i = 0; i < packed_output_size; i++) {
-    std::cout << packed_correct_data[i] << ", ";
+    std::cout << packed_correct_data.get()[i] << ", ";
   }
   std::cout << std::endl;
   // compare
-  CommonTest::CompareOutputData(packed_output, packed_correct_data, packed_output_size, 0.00001);
+  CommonTest::CompareOutputData(packed_output, packed_correct_data.get(), packed_output_size, 0.00001);
 
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
-  SAFE_DELETE_ARRAY(packed_input);
-  SAFE_DELETE_ARRAY(packed_correct_data)
-  for (auto tensor : inputs) {
-    SAFE_DELETE_PTR(tensor)
-  }
-  for (auto tensor : outputs) {
-    SAFE_DELETE_PTR(tensor)
-  }
-  SAFE_DELETE_PTR(pKernel)
-  SAFE_DELETE_PTR(pGraph)
   MS_LOG(INFO) << "TestConvolutionDwPadFp32 passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
   std::vector<std::vector<int>> src_shape{
-    {1, 32, 112, 112},
-    {1, 96, 112, 112},
-    {1, 144, 56, 56},
-    {1, 144, 56, 56},
-    {1, 192, 28, 28},
-    {1, 192, 28, 28},
-    {1, 384, 14, 14},
-    {1, 576, 14, 14},
-    {1, 576, 14, 14},
-    {1, 960, 7, 7},
+    {1, 32, 112, 112}, {1, 96, 112, 112}, {1, 144, 56, 56}, {1, 144, 56, 56}, {1, 192, 28, 28},
+    {1, 192, 28, 28},  {1, 384, 14, 14},  {1, 576, 14, 14}, {1, 576, 14, 14}, {1, 960, 7, 7},
   };
   std::vector<std::vector<int>> dst_shape{
-    {1, 32, 112, 112},
-    {1, 96, 56, 56},
-    {1, 144, 56, 56},
-    {1, 144, 28, 28},
-    {1, 192, 28, 28},
-    {1, 192, 14, 14},
-    {1, 384, 14, 14},
-    {1, 576, 14, 14},
-    {1, 576, 7, 7},
-    {1, 960, 7, 7},
+    {1, 32, 112, 112}, {1, 96, 56, 56},  {1, 144, 56, 56}, {1, 144, 28, 28}, {1, 192, 28, 28},
+    {1, 192, 14, 14},  {1, 384, 14, 14}, {1, 576, 14, 14}, {1, 576, 7, 7},   {1, 960, 7, 7},
   };
   std::vector<std::vector<int>> filter_shape{
-    {32, 1, 1, 1},
-    {96, 3, 3, 1},
-    {144, 1, 1, 1},
-    {144, 3, 3, 1},
-    {192, 1, 1, 1},
-    {192, 3, 3, 1},
-    {384, 1, 1, 1},
-    {576, 1, 1, 1},
-    {576, 3, 3, 1},
-    {960, 1, 1, 1},
+    {32, 1, 1, 1},  {96, 3, 3, 1},  {144, 1, 1, 1}, {144, 3, 3, 1}, {192, 1, 1, 1},
+    {192, 3, 3, 1}, {384, 1, 1, 1}, {576, 1, 1, 1}, {576, 3, 3, 1}, {960, 1, 1, 1},
   };
 
   // nhwc
-  size_t in_size = 96*112*112;
-  float_t *input_data = new float_t[in_size];
-  memset(input_data, 0, in_size);
+  size_t in_size = 96 * 112 * 112;
+  auto input_data = std::make_unique<float_t>(in_size);
+  memset(input_data.get(), 0, in_size);
   for (auto i = 0; i < in_size; ++i) {
-    input_data[i] = 1;
+    input_data.get()[i] = 1;
   }
   // co h w ci
-  size_t wt_size = 576*3*3;
-  float_t *weight_data = new float_t[wt_size];
-  memset(weight_data, 0, wt_size);
+  size_t wt_size = 576 * 3 * 3;
+  auto weight_data = std::make_unique<float_t>(wt_size);
+  memset(weight_data.get(), 0, wt_size);
   for (auto i = 0; i < wt_size; ++i) {
-    weight_data[i] = 1;
+    weight_data.get()[i] = 1;
   }
-  size_t out_size = 96*112*112;
-  float_t *gnd_data = new float_t[out_size];
-  memset(gnd_data, 0, out_size);
-//  for (auto i = 0; i < in_size; ++i) {
-//    gnd_data[i] = 1;
-//  }
+  size_t out_size = 96 * 112 * 112;
+  auto gnd_data = std::make_unique<float_t>(out_size);
+  memset(gnd_data.get(), 0, out_size);
+  //  for (auto i = 0; i < in_size; ++i) {
+  //    gnd_data[i] = 1;
+  //  }
   for (size_t i = 0; i < src_shape.size(); ++i) {
     const int MAX_RUN_TIMES = 1;
     for (int j = 0; j < MAX_RUN_TIMES; ++j) {
       printf("========profiling depthwise, in shape(%d,%d,%d,%d), out shape(%d,%d,%d,%d), iter%d========\n",
-        src_shape[i][0], src_shape[i][1], src_shape[i][2], src_shape[i][3],
-        dst_shape[i][0], dst_shape[i][1], dst_shape[i][2], dst_shape[i][3], j);
-      ConvParameter *conv_param = new ConvParameter();
+             src_shape[i][0], src_shape[i][1], src_shape[i][2], src_shape[i][3], dst_shape[i][0], dst_shape[i][1],
+             dst_shape[i][2], dst_shape[i][3], j);
+      auto conv_param = std::make_unique<ConvParameter>();
       {
-        conv_param->input_batch_    = 1;
-        conv_param->input_h_        = src_shape[i][2];
-        conv_param->input_w_        = src_shape[i][3];
-        conv_param->input_channel_  = src_shape[i][1];
-        conv_param->output_batch_   = 1;
-        conv_param->output_h_       = dst_shape[i][2];
-        conv_param->output_w_       = dst_shape[i][3];
+        conv_param->input_batch_ = 1;
+        conv_param->input_h_ = src_shape[i][2];
+        conv_param->input_w_ = src_shape[i][3];
+        conv_param->input_channel_ = src_shape[i][1];
+        conv_param->output_batch_ = 1;
+        conv_param->output_h_ = dst_shape[i][2];
+        conv_param->output_w_ = dst_shape[i][3];
         conv_param->output_channel_ = dst_shape[i][1];
-        conv_param->kernel_h_       = filter_shape[i][1];
-        conv_param->kernel_w_       = filter_shape[i][2];
-        conv_param->stride_h_       = conv_param->output_h_/conv_param->input_h_;
-        conv_param->stride_w_       = conv_param->output_w_/conv_param->input_w_;
-        conv_param->pad_h_          = (conv_param->kernel_h_-1)/2;
-        conv_param->pad_w_          = (conv_param->kernel_w_-1)/2;
-        conv_param->dilation_h_     = 1;
-        conv_param->dilation_w_     = 1;
+        conv_param->kernel_h_ = filter_shape[i][1];
+        conv_param->kernel_w_ = filter_shape[i][2];
+        conv_param->stride_h_ = conv_param->output_h_ / conv_param->input_h_;
+        conv_param->stride_w_ = conv_param->output_w_ / conv_param->input_w_;
+        conv_param->pad_h_ = (conv_param->kernel_h_ - 1) / 2;
+        conv_param->pad_w_ = (conv_param->kernel_w_ - 1) / 2;
+        conv_param->dilation_h_ = 1;
+        conv_param->dilation_w_ = 1;
       }
-//      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, false);
-       DepthWiseTestMain(conv_param, input_data, weight_data, nullptr, schema::Format_NHWC4, false);
+      //      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, false);
+      DepthWiseTestMain(conv_param.get(), input_data.get(), weight_data.get(), nullptr, schema::Format_NHWC4, false);
     }
   }
-  SAFE_DELETE_ARRAY(input_data);
-  SAFE_DELETE_ARRAY(weight_data);
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
@@ -817,48 +748,46 @@ TEST_F(TestConvolutionDwOpenCL, Buffer2Image) {
   std::vector<int> filter_shape{96, 3, 3, 1};
 
   // nhwc
-  size_t in_size = 96*112*112;
-  float_t *input_data = new float_t[in_size];
-  memset(input_data, 0, in_size);
+  size_t in_size = 96 * 112 * 112;
+  auto input_data = std::make_unique<float_t>(in_size);
+  memset(input_data.get(), 0, in_size);
   for (auto i = 0; i < in_size; ++i) {
-    input_data[i] = 1;
+    input_data.get()[i] = 1;
   }
   // co h w ci
-  size_t wt_size = 576*3*3;
-  float_t *weight_data = new float_t[wt_size];
-  memset(weight_data, 0, wt_size);
+  size_t wt_size = 576 * 3 * 3;
+  auto weight_data = std::make_unique<float_t>(wt_size);
+  memset(weight_data.get(), 0, wt_size);
   for (auto i = 0; i < wt_size; ++i) {
-    weight_data[i] = 1;
+    weight_data.get()[i] = 1;
   }
-  size_t out_size = 96*112*112;
-  float_t *gnd_data = new float_t[out_size];
-  memset(gnd_data, 0, out_size);
-//  for (auto i = 0; i < in_size; ++i) {
-//    gnd_data[i] = 1;
-//  }
-    ConvParameter *conv_param = new ConvParameter();
-    {
-      conv_param->input_batch_    = 1;
-      conv_param->input_h_        = src_shape[2];
-      conv_param->input_w_        = src_shape[3];
-      conv_param->input_channel_  = src_shape[1];
-      conv_param->output_batch_   = 1;
-      conv_param->output_h_       = dst_shape[2];
-      conv_param->output_w_       = dst_shape[3];
-      conv_param->output_channel_ = dst_shape[1];
-      conv_param->kernel_h_       = filter_shape[1];
-      conv_param->kernel_w_       = filter_shape[2];
-      conv_param->stride_h_       = conv_param->output_h_/conv_param->input_h_;
-      conv_param->stride_w_       = conv_param->output_w_/conv_param->input_w_;
-      conv_param->pad_h_          = (conv_param->kernel_h_-1)/2;
-      conv_param->pad_w_          = (conv_param->kernel_w_-1)/2;
-      conv_param->dilation_h_     = 1;
-      conv_param->dilation_w_     = 1;
-    }
-//      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, true);
-      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NHWC4, true);
-  SAFE_DELETE_ARRAY(input_data);
-  SAFE_DELETE_ARRAY(weight_data);
+  size_t out_size = 96 * 112 * 112;
+  auto gnd_data = std::make_unique<float_t>(out_size);
+  memset(gnd_data.get(), 0, out_size);
+  //  for (auto i = 0; i < in_size; ++i) {
+  //    gnd_data[i] = 1;
+  //  }
+  auto conv_param = std::make_unique<ConvParameter>();
+  {
+    conv_param->input_batch_ = 1;
+    conv_param->input_h_ = src_shape[2];
+    conv_param->input_w_ = src_shape[3];
+    conv_param->input_channel_ = src_shape[1];
+    conv_param->output_batch_ = 1;
+    conv_param->output_h_ = dst_shape[2];
+    conv_param->output_w_ = dst_shape[3];
+    conv_param->output_channel_ = dst_shape[1];
+    conv_param->kernel_h_ = filter_shape[1];
+    conv_param->kernel_w_ = filter_shape[2];
+    conv_param->stride_h_ = conv_param->output_h_ / conv_param->input_h_;
+    conv_param->stride_w_ = conv_param->output_w_ / conv_param->input_w_;
+    conv_param->pad_h_ = (conv_param->kernel_h_ - 1) / 2;
+    conv_param->pad_w_ = (conv_param->kernel_w_ - 1) / 2;
+    conv_param->dilation_h_ = 1;
+    conv_param->dilation_w_ = 1;
+  }
+  //      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, true);
+  DepthWiseTestMain(conv_param.get(), input_data.get(), weight_data.get(), gnd_data.get(), schema::Format_NHWC4, true);
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
