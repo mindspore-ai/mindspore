@@ -238,6 +238,9 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
 Status TFReaderOp::operator()() {
   RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
 
+  // Put here to avoid register failed when Worker_Entry thread exits unexpected
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
+
   // launch one thread, responsible for filling mIOBlockQueue
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&TFReaderOp::WaitToFillIOBlockQueue, this)));
 
@@ -249,8 +252,6 @@ Status TFReaderOp::operator()() {
   // must be called after launching workers. workers can't be spawned after this post,
   // so workers have to be kept alive until the end of the program
   TaskManager::FindMe()->Post();
-
-  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {
