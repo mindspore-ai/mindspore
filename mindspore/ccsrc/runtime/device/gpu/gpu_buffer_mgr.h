@@ -111,6 +111,14 @@ class GpuBufferMgr {
   // call for dataset send thread
   EXPORT void CloseConfirm();
 
+  EXPORT size_t Size(unsigned int handle);
+
+  EXPORT size_t Size(unsigned int device_id, const std::string &channel_name);
+
+  EXPORT size_t Capacity(unsigned int handle);
+
+  EXPORT size_t Capacity(unsigned int device_id, const std::string &channel_name);
+
  private:
   void set_device() const;
 

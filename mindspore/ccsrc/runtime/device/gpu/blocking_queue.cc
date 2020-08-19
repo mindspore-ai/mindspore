@@ -22,7 +22,15 @@
 namespace mindspore {
 namespace device {
 GpuQueue::GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity)
-    : buffer_(addr), head_(0), tail_(0), shape_(shape), len_(0), capacity_(capacity), stream_(0), node_info_(nullptr) {
+    : buffer_(addr),
+      head_(0),
+      tail_(0),
+      shape_(shape),
+      len_(0),
+      size_(0),
+      capacity_(capacity),
+      stream_(0),
+      node_info_(nullptr) {
   CHECK_CUDA_RET_WITH_ERROR(cudaStreamCreate(&stream_), "Cuda Create Stream Failed");
   node_info_ = std::make_unique<NodeInfo[]>(capacity);
   for (auto item : shape) {
@@ -52,6 +60,7 @@ BlockQueueStatus_T GpuQueue::Push(const std::vector<DataItemGpu> &data) {
   CHECK_CUDA_RET_WITH_ERROR(cudaEventCreate(&(*(node_info_[tail_].event_))), "Cuda Create Event Failed");
   node_info_[tail_].data_ = data;
   tail_ = (tail_ + 1) % (capacity_);
+  ++size_;
   return SUCCESS;
 }
 
@@ -69,6 +78,7 @@ BlockQueueStatus_T GpuQueue::Front(void **addr, size_t *len) const {
 
 BlockQueueStatus_T GpuQueue::Pop() {
   head_ = (head_ + 1) % (capacity_);
+  --size_;
   return SUCCESS;
 }
 
