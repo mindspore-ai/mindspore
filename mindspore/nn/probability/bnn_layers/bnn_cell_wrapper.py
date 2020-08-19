@@ -26,8 +26,8 @@ class ClassWrap:
         self._cls = cls
         self.bnn_loss_file = None
 
-    def __call__(self, backbone, loss_fn, backbone_factor, kl_factor):
-        obj = self._cls(backbone, loss_fn, backbone_factor, kl_factor)
+    def __call__(self, backbone, loss_fn, dnn_factor, bnn_factor):
+        obj = self._cls(backbone, loss_fn, dnn_factor, bnn_factor)
         bnn_with_loss = obj()
         self.bnn_loss_file = obj.bnn_loss_file
         return bnn_with_loss
@@ -65,6 +65,11 @@ class WithBNNLossCell:
     """
 
     def __init__(self, backbone, loss_fn, dnn_factor=1, bnn_factor=1):
+        if not isinstance(dnn_factor, (int, float)):
+            raise TypeError('The type of `dnn_factor` should be `int` or `float`')
+        if not isinstance(bnn_factor, (int, float)):
+            raise TypeError('The type of `bnn_factor` should be `int` or `float`')
+
         self.backbone = backbone
         self.loss_fn = loss_fn
         self.dnn_factor = dnn_factor

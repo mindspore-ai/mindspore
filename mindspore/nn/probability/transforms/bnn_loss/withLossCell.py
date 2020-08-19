@@ -54,3 +54,13 @@ class WithBNNLossCell(nn.Cell):
                 self.kl_loss.append(layer.compute_kl_loss)
             else:
                 self._add_kl_loss(layer)
+
+    @property
+    def backbone_network(self):
+        """
+        Returns the backbone network.
+
+        Returns:
+            Cell, the backbone network.
+        """
+        return self._backbone
