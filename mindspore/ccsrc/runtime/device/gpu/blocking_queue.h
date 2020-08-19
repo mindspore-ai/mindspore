@@ -44,13 +44,15 @@ class GpuQueue {
 
   void RegisterRelease(const std::function<void(void *)> &func) { host_release_ = func; }
 
-  inline bool IsEmpty() const { return head_ == tail_; }
-  inline bool IsFull() const { return head_ == ((tail_ + 1) % (capacity_)); }
+  inline bool IsEmpty() const { return size_ == 0; }
+  inline bool IsFull() const { return size_ == capacity_; }
 
   BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data);
   BlockQueueStatus_T Front(void **ptr, size_t *len) const;
   BlockQueueStatus_T Pop();
   bool Destroy();
+  size_t Size() { return size_; }
+  size_t Capacity() { return capacity_; }
 
  private:
   struct NodeInfo {
@@ -63,6 +65,7 @@ class GpuQueue {
   size_t tail_;
   std::vector<size_t> shape_;
   size_t len_;
+  size_t size_;
   size_t capacity_;
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
@@ -83,6 +86,8 @@ class BlockingQueue {
   BlockQueueStatus_T Front(void **ptr, size_t *len);
   BlockQueueStatus_T Pop();
   bool Destroy();
+  size_t Size() { return queue_->Size(); }
+  size_t Capacity() { return queue_->Capacity(); }
 
  private:
   std::mutex mutex_;
