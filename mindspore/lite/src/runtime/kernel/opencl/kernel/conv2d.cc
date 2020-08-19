@@ -65,6 +65,14 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << out_tensors_.front()->shape().size() << "D.";
     return RET_ERROR;
   }
+  if (!in_tensors_.at(1)->IsConst()) {
+    MS_LOG(ERROR) << "Conv2D don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() == 3 && !in_tensors_.at(2)->IsConst()) {
+    MS_LOG(ERROR) << "Conv2D don't support non-constant bias yet.";
+    return RET_ERROR;
+  }
   // for fusion: ActivationType_LEAKY_RELU ActivationType_TANH
   switch (static_cast<int>(param_->act_type_)) {
     case ActType_No:
@@ -302,16 +310,8 @@ int Conv2DOpenCLKernel::InitBias() {
 }
 
 int Conv2DOpenCLKernel::InitWeights() {
-  if (!in_tensors_.at(1)->IsConst()) {
-    MS_LOG(ERROR) << "Conv2D don't support non-constant filter yet.";
-    return RET_ERROR;
-  }
   InitFilter();
   if (has_bias_) {
-    if (!in_tensors_.at(2)->IsConst()) {
-      MS_LOG(ERROR) << "Conv2D don't support non-constant bias yet.";
-      return RET_ERROR;
-    }
     InitBias();
   }
   return RET_OK;

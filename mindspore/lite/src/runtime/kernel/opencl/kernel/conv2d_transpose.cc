@@ -49,6 +49,14 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
   }
+  if (!in_tensors_.at(1)->IsConst()) {
+    MS_LOG(ERROR) << "Conv2dTranspose don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() == 3 && !in_tensors_.at(2)->IsConst()) {
+    MS_LOG(ERROR) << "Conv2dTranspose don't support non-constant bias yet.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -117,10 +125,6 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
 }
 
 int Conv2dTransposeOpenCLKernel::InitWeights() {
-  if (!in_tensors_.at(1)->IsConst()) {
-    MS_LOG(ERROR) << "Conv2dTranspose don't support non-constant filter yet.";
-    return RET_ERROR;
-  }
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = in_tensors_[0]->shape()[3];
   int co = out_tensors_[0]->shape()[3];
@@ -189,11 +193,7 @@ int Conv2dTransposeOpenCLKernel::InitWeights() {
   bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * data_size, img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, div_co * C4NUM * data_size);
-  if (in_tensors_.size() >= 3) {
-    if (!in_tensors_.at(2)->IsConst()) {
-      MS_LOG(ERROR) << "Conv2dTranspose don't support non-constant bias yet.";
-      return RET_ERROR;
-    }
+  if (in_tensors_.size() == 3) {
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
