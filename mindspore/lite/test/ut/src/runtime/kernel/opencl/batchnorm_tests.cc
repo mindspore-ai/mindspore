@@ -32,13 +32,6 @@ class TestBatchnormOpenCLfp16 : public mindspore::CommonTest {
   TestBatchnormOpenCLfp16() {}
 };
 
-template <typename T>
-void CompareOutputData1(T *output_data, T *correct_data, int size, float err_bound) {
-  for (size_t i = 0; i < size; i++) {
-    T abs = fabs(output_data[i] - correct_data[i]);
-    ASSERT_LE(abs, err_bound);
-  }
-}
 TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   MS_LOG(INFO) << "begin test";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -46,7 +39,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
-  MS_LOG(INFO) << "Read tensors from .bin";
+  MS_LOG(INFO) << " Read tensors from .bin ";
   std::vector<int> input_shape = {1, 256, 256, 48};
   std::vector<int> output_shape = {1, 256, 256, 48};
   auto data_type = kNumberTypeFloat32;
@@ -59,7 +52,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   std::string var_path = "./test_data/batchnorm_varfp16.bin";
   std::string offset_path = "./test_data/batchnorm_offsetfp16.bin";
   std::string scale_path = "./test_data/batchnorm_scalefp16.bin";
-  std::string output_path = "./test_data/batchnorm_out_datafp16.bin";
+  std::string output_path = "./test_data/batchnorm_correctdatafp16.bin";
   auto input_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   auto correct_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
   size_t mean_size, var_size, scale_size, offset_size;
@@ -68,7 +61,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   auto scale_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(scale_path.c_str(), &scale_size));
   auto offset_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(offset_path.c_str(), &offset_size));
 
-  MS_LOG(INFO) << "construct tensors";
+  MS_LOG(INFO) << " construct tensors ";
   lite::tensor::Tensor *tensor_data =
     new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   lite::tensor::Tensor *tensor_mean =
@@ -81,13 +74,13 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
     new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
   if (tensor_data == nullptr || tensor_mean == nullptr || tensor_var == nullptr || tensor_scale == nullptr ||
       tensor_offset == nullptr) {
-    MS_LOG(INFO) << "init tensor failed";
+    MS_LOG(INFO) << " init tensor failed ";
     return;
   }
   auto *output_tensor =
     new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
   if (output_tensor == nullptr) {
-    MS_LOG(INFO) << "init tensor failed";
+    MS_LOG(INFO) << " init tensor failed ";
     delete tensor_data;
     delete tensor_mean;
     delete tensor_var;
@@ -98,10 +91,10 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   std::vector<lite::tensor::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
-  MS_LOG(INFO) << "initialize tensors";
+  MS_LOG(INFO) << " initialize tensors ";
   auto param = new (std::nothrow) BatchNormParameter();
   if (param == nullptr) {
-    MS_LOG(INFO) << "new BatchNormParameter failed";
+    MS_LOG(INFO) << " new BatchNormParameter failed ";
     for (auto tensor : outputs) {
       delete tensor;
     }
@@ -111,7 +104,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   auto *batchnorm_kernel =
     new (std::nothrow) kernel::BatchNormOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (batchnorm_kernel == nullptr) {
-    MS_LOG(INFO) << "new kernel::BatchNorm_kernel failed";
+    MS_LOG(INFO) << " new kernel::BatchNorm_kernel failed ";
     for (auto tensor : outputs) {
       delete tensor;
     }
@@ -125,11 +118,11 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
     input_tensor->MallocData(allocator);
   }
 
-  MS_LOG(INFO) << "initialize sub_graph";
+  MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{batchnorm_kernel};
   auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
-    MS_LOG(INFO) << "new kernel::SubGraphOpenCLKernel failed";
+    MS_LOG(INFO) << " new kernel::SubGraphOpenCLKernel failed ";
     for (auto tensor : outputs) {
       delete tensor;
     }
@@ -138,7 +131,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
     return;
   }
   sub_graph->Init();
-  MS_LOG(INFO) << "init tensors";
+  MS_LOG(INFO) << " init tensors ";
   memcpy(inputs[0]->Data(), input_data, input_size);
   memcpy(inputs[1]->Data(), scale_data, scale_size);
   memcpy(inputs[2]->Data(), offset_data, offset_size);
@@ -148,7 +141,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   sub_graph->Run();
 
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->Data());
-  CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
+  CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01);
   for (auto tensor : inputs) {
     delete tensor;
   }
@@ -158,15 +151,14 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   delete param;
   delete batchnorm_kernel;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
-  MS_LOG(INFO) << "begin test";
+  MS_LOG(INFO) << " begin test ";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
-  MS_LOG(INFO) << "Read tensors from .bin";
+  MS_LOG(INFO) << " Read tensors from .bin ";
   std::vector<int> input_shape = {1, 256, 256, 47};
   std::vector<int> output_shape = {1, 256, 256, 47};
   auto data_type = kNumberTypeFloat32;
@@ -188,7 +180,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   auto scale_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(scale_path.c_str(), &scale_size));
   auto offset_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(offset_path.c_str(), &offset_size));
 
-  MS_LOG(INFO) << "construct tensors";
+  MS_LOG(INFO) << " construct tensors ";
   lite::tensor::Tensor *tensor_data =
     new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   lite::tensor::Tensor *tensor_mean =
@@ -201,13 +193,13 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
     new (std::nothrow) lite::tensor::Tensor(data_type, {1, 1, 1, input_shape[3]}, schema::Format_NHWC, tensor_type);
   if (tensor_data == nullptr || tensor_mean == nullptr || tensor_var == nullptr || tensor_scale == nullptr ||
       tensor_offset == nullptr) {
-    MS_LOG(INFO) << "init tensor failed";
+    MS_LOG(INFO) << " init tensor failed ";
     return;
   }
   auto *output_tensor =
     new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
   if (output_tensor == nullptr) {
-    MS_LOG(INFO) << "init tensor failed";
+    MS_LOG(INFO) << " init tensor failed ";
     delete tensor_data;
     delete tensor_mean;
     delete tensor_var;
@@ -218,10 +210,10 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   std::vector<lite::tensor::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
-  MS_LOG(INFO) << "initialize tensors";
+  MS_LOG(INFO) << " initialize tensors ";
   auto param = new (std::nothrow) BatchNormParameter();
   if (param == nullptr) {
-    MS_LOG(INFO) << "new BatchNormParameter failed";
+    MS_LOG(INFO) << " new BatchNormParameter failed ";
     for (auto tensor : outputs) {
       delete tensor;
     }
@@ -231,7 +223,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   auto *batchnorm_kernel =
     new (std::nothrow) kernel::BatchNormOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (batchnorm_kernel == nullptr) {
-    MS_LOG(INFO) << "new kernel::BatchNorm_kernel failed";
+    MS_LOG(INFO) << " new kernel::BatchNorm_kernel failed ";
     for (auto tensor : outputs) {
       delete tensor;
     }
@@ -245,11 +237,11 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
     input_tensor->MallocData(allocator);
   }
 
-  MS_LOG(INFO) << "initialize sub_graph";
+  MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{batchnorm_kernel};
   auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
-    MS_LOG(INFO) << "new kernel::SubGraphOpenCLKernel failed";
+    MS_LOG(INFO) << " new kernel::SubGraphOpenCLKernel failed ";
     for (auto tensor : outputs) {
       delete tensor;
     }
@@ -258,7 +250,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
     return;
   }
   sub_graph->Init();
-  MS_LOG(INFO) << "init tensors";
+  MS_LOG(INFO) << " init tensors ";
   memcpy(inputs[0]->Data(), input_data, input_size);
   memcpy(inputs[1]->Data(), scale_data, scale_size);
   memcpy(inputs[2]->Data(), offset_data, offset_size);
@@ -268,7 +260,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   sub_graph->Run();
 
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
-  CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
+  CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
   for (auto tensor : inputs) {
     delete tensor;
   }
@@ -278,6 +270,5 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   delete param;
   delete batchnorm_kernel;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

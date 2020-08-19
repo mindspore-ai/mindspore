@@ -94,7 +94,7 @@ int ToFormatOpenCLKernel::InitNHWCShape() {
 int ToFormatOpenCLKernel::ReSize() { return RET_OK; }
 
 int ToFormatOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
-  std::vector<size_t> vec = {nhwc_shape_[1], nhwc_shape_[2], UP_DIV(nhwc_shape_[3], C4NUM)};
+  std::vector<size_t> vec = {nhwc_shape_[0] * nhwc_shape_[1], nhwc_shape_[2], UP_DIV(nhwc_shape_[3], C4NUM)};
   *global_size = std::move(vec);
   return RET_OK;
 }
@@ -107,13 +107,13 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
   size_t im_dst_x, im_dst_y;
   std::vector<int> shapex = out_tensors_[0]->shape();
   if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-    int c = shapex[1];
-    int h = shapex[2];
+    int c = shapex[1] * shapex[2];
+    int h = shapex[0];
     int w = shapex[3];
     im_dst_y = h * UP_DIV(c, C4NUM);
     im_dst_x = w;
   } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    int h = shapex[1];
+    int h = shapex[0] * shapex[1];
     int w = shapex[2];
     int c = shapex[3];
     im_dst_x = w * UP_DIV(c, C4NUM);

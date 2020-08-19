@@ -37,8 +37,6 @@ class ConcatOpenCLKernel : public OpenCLKernel {
 
   int ReSize() override;
 
-  int Run_axis0();
-
   int Run() override;
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 

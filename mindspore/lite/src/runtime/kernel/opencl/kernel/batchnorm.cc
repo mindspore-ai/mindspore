@@ -100,7 +100,7 @@ void BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
   local->push_back(z);
 }
 int BatchNormOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
+  MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<BatchNormParameter *>(this->op_parameter_);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto input0_shape = in_tensors_[0]->shape();
@@ -136,12 +136,12 @@ kernel::LiteKernel *OpenCLBatchnormKernelCreator(const std::vector<lite::tensor:
                                                  const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) BatchNormOpenCLKernel(opParameter, inputs, outputs);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new BatchnormOpenCLKernel failed";
+    MS_LOG(ERROR) << " new BatchnormOpenCLKernel failed ";
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: Convolution";
+    MS_LOG(ERROR) << " Init kernel failed, name: Batchnorm ";
     delete kernel;
     return nullptr;
   }
