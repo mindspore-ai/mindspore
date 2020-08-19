@@ -110,12 +110,20 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   auto tensor_type = schema::NodeType_ValueNode;
   std::vector<lite::tensor::Tensor *> inputs;
   for (auto &shape : input_shapes) {
-    inputs.push_back(new lite::tensor::Tensor(data_type, shape, schema::Format_NHWC4, tensor_type));
+    auto input_temp = new (std::nothrow) lite::tensor::Tensor(data_type, shape, schema::Format_NHWC4, tensor_type);
+    inputs.push_back(input_temp);
+    if (input_temp == nullptr) {
+      MS_LOG(INFO) << "new input_tensor failed";
+      return;
+    }
   }
   auto *output_tensor =
     new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(INFO) << "new output_tensor failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
     return;
   }
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
@@ -125,6 +133,12 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   auto param = new (std::nothrow) ConcatParameter();
   if (param == nullptr) {
     MS_LOG(INFO) << "new ConcatParameter failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
     return;
   }
   param->axis_ = 3;
@@ -132,6 +146,13 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
     new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (concat_kernel == nullptr) {
     MS_LOG(INFO) << "new kernel::ConcatOpenCLKernel failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
     return;
   }
   concat_kernel->Init();
@@ -145,6 +166,14 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
     MS_LOG(INFO) << "new kernel::SubGraphOpenCLKernel failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete concat_kernel;
     return;
   }
   sub_graph->Init();
@@ -181,6 +210,7 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   for (auto tensor : outputs) {
     delete tensor;
   }
+  delete param;
   delete concat_kernel;
   delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();

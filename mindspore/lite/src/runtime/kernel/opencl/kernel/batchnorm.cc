@@ -124,7 +124,7 @@ int BatchNormOpenCLKernel::Run() {
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
 
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 
 kernel::LiteKernel *OpenCLBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                  const std::vector<lite::tensor::Tensor *> &outputs,

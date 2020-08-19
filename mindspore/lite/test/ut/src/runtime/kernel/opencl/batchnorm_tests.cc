@@ -80,6 +80,11 @@ TEST_F(TestBatchnormOpenCL, Batchnorminput_dim4) {
     new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(INFO) << "init tensor failed";
+    delete tensor_data;
+    delete tensor_mean;
+    delete tensor_var;
+    delete tensor_scale;
+    delete tensor_offset;
     return;
   }
   std::vector<lite::tensor::Tensor *> inputs = {tensor_data, tensor_scale, tensor_offset, tensor_mean, tensor_var};
@@ -89,6 +94,9 @@ TEST_F(TestBatchnormOpenCL, Batchnorminput_dim4) {
   auto param = new (std::nothrow) BatchNormParameter();
   if (param == nullptr) {
     MS_LOG(INFO) << "new BatchNormParameter failed";
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
     return;
   }
   param->epsilon_ = pow(10, -5);
@@ -96,6 +104,10 @@ TEST_F(TestBatchnormOpenCL, Batchnorminput_dim4) {
     new (std::nothrow) kernel::BatchNormOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (batchnorm_kernel == nullptr) {
     MS_LOG(INFO) << "new kernel::BatchNorm_kernel failed";
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
     return;
   }
   batchnorm_kernel->Init();
@@ -110,6 +122,11 @@ TEST_F(TestBatchnormOpenCL, Batchnorminput_dim4) {
   auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
     MS_LOG(INFO) << "new kernel::SubGraphOpenCLKernel failed";
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete batchnorm_kernel;
     return;
   }
   sub_graph->Init();
@@ -129,6 +146,15 @@ TEST_F(TestBatchnormOpenCL, Batchnorminput_dim4) {
 
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->Data());
   CompareOutputData1(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete param;
+  delete batchnorm_kernel;
+  delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
