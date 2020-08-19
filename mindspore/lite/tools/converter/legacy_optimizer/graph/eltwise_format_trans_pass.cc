@@ -136,7 +136,7 @@ STATUS EltwiseFormatTransPass::Run(schema::MetaGraphT *graph) {
 
     STATUS status = RET_OK;
     auto input_tensor_size = (*iter)->inputIndex.size();
-    for (auto i = 0; i < input_tensor_size; i++) {
+    for (size_t i = 0; i < input_tensor_size; i++) {
       iter = InsertFormatTransNode(graph, iter, kBefore, i, pre_insert_trans_type_, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Insert" << pre_insert_trans_type_ << "before " << (*iter)->name << " failed";
@@ -144,7 +144,7 @@ STATUS EltwiseFormatTransPass::Run(schema::MetaGraphT *graph) {
       }
     }
     auto output_tensor_size = (*iter)->outputIndex.size();
-    for (auto i = 0; i < output_tensor_size; i++) {
+    for (size_t i = 0; i < output_tensor_size; i++) {
       iter = InsertFormatTransNode(graph, iter, kAfter, i, post_insert_trans_type_, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Insert" << post_insert_trans_type_ << "Node before " << (*iter)->name << " failed";

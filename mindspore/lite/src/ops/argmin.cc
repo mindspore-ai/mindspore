@@ -61,7 +61,7 @@ int ArgMin::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<
     return RET_OK;
   }
   auto input_shape_size = input->shape().size();
-  int axis = GetAxis() < 0 ? GetAxis() + input_shape_size : GetAxis();
+  auto axis = GetAxis() < 0 ? GetAxis() + input_shape_size : GetAxis();
   if (axis >= input_shape_size || axis < 0) {
     MS_LOG(ERROR) << "Invalid axis " << GetAxis() << ", input shape size: " << input_shape_size;
     return RET_PARAM_INVALID;

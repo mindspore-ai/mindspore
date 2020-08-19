@@ -23,7 +23,7 @@ STATUS CaffeInspector::InspectModel(const caffe::NetParameter &proto) {
   net = proto;
 
   if (proto.layer_size() == 0) {
-    // MS_LOGE("net layer num is zero, prototxt file may be invalid.");
+    MS_LOG(ERROR) << "net layer num is zero, prototxt file may be invalid.";
     return RET_ERROR;
   }
 
@@ -32,12 +32,13 @@ STATUS CaffeInspector::InspectModel(const caffe::NetParameter &proto) {
   SetTopsAndBottoms();
 
   FindInputAndOutput();
+  return RET_OK;
 }
 
 STATUS CaffeInspector::ParseInput() {
   if (net.input_size() > 0) {
-    // MS_LOGI("This net exist input.");
-    for (int i = 0; i < net.input_size(); i++) {
+    MS_LOG(INFO) << "This net exist input.";
+    for (size_t i = 0; i < net.input_size(); i++) {
       graphInput.insert(net.input(i));
     }
   }
@@ -55,6 +56,7 @@ STATUS CaffeInspector::FindInputAndOutput() {
       graphOutput.insert(iter);
     }
   }
+  return RET_OK;
 }
 
 STATUS CaffeInspector::SetTopsAndBottoms() {
@@ -73,6 +75,7 @@ STATUS CaffeInspector::SetTopsAndBottoms() {
       layerBottoms.insert(layer.bottom(j));
     }
   }
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

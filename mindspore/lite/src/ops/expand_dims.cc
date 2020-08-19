@@ -51,7 +51,7 @@ int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<te
   if (dim < 0) {
     dim += input->shape().size() + 1;
   }
-  if (dim > input->shape().size()) {
+  if (dim > static_cast<int>(input->shape().size())) {
     MS_LOG(ERROR) << "attribute dim out of range";
     return RET_INPUT_TENSOR_ERROR;
   }

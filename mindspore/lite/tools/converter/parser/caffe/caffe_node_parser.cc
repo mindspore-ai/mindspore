@@ -95,6 +95,7 @@ STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) 
       shape->push_back(proto.shape().dim(i));
     }
   }
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

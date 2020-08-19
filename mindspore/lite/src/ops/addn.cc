@@ -48,7 +48,7 @@ int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::T
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  for (int i = 1; i < inputs.size(); ++i) {
+  for (size_t i = 1; i < inputs.size(); ++i) {
     if (inputs.at(i)->shape() != inputs.at(0)->shape()) {
       MS_LOG(ERROR) << "AddN inputs shape is not equal!";
       return RET_INPUT_TENSOR_ERROR;

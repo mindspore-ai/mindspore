@@ -66,8 +66,8 @@ int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   auto shape_tmp1 = inputs_.at(1)->shape();
   auto shape_tmp2 = inputs_.at(2)->shape();
   int axisout = 0;
-  int temp = 0;
-  for (int j = 0; j < shape_tmp.size(); j++) {
+  size_t temp = 0;
+  for (size_t j = 0; j < shape_tmp.size(); j++) {
     if (shape_tmp[j] == shape_tmp1[j] && shape_tmp[j] != shape_tmp2[j]) {
       axisout = j;
       break;

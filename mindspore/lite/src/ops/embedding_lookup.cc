@@ -58,7 +58,7 @@ int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vect
   for (size_t i = 0; i < embedding_shape.size(); ++i) {
     output_shape.push_back(embedding_shape.at(i));
   }
-  for (int i = 1; i < inputs_.size() - 1; ++i) {
+  for (size_t i = 1; i < inputs_.size() - 1; ++i) {
     auto embedding_shape_t = inputs_.at(i)->shape();
     embedding_shape_t.erase(embedding_shape_t.begin());
     if (embedding_shape_t != embedding_shape) {

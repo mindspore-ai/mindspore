@@ -62,15 +62,15 @@ int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     axes_.push_back(*iter);
   }
   if (axes_.size() == 0) {
-    for (int i = 0; i < in_shape.size(); i++) {
+    for (size_t i = 0; i < in_shape.size(); i++) {
       if (in_shape[i] != 1) {
         out_shape.push_back(in_shape[i]);
       }
     }
   } else {
-    int axisIdx = 0;
-    for (int i = 0; i < in_shape.size(); i++) {
-      if (axisIdx < axes_.size() && axes_[axisIdx] == i) {
+    size_t axisIdx = 0;
+    for (size_t i = 0; i < in_shape.size(); i++) {
+      if (axisIdx < axes_.size() && axes_[axisIdx] == static_cast<int>(i)) {
         MS_ASSERT(in_shape[i] == 1);
         axisIdx++;
         continue;

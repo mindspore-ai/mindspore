@@ -110,7 +110,7 @@ int PriorBox::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tens
   std::vector<float> different_aspect_ratios{1.0f};
   auto aspect_ratios = GetAspectRatios();
   MS_ASSERT(aspect_ratios != nullptr);
-  for (auto i = 0; i < aspect_ratios.size(); i++) {
+  for (size_t i = 0; i < aspect_ratios.size(); i++) {
     float ratio = aspect_ratios[i];
     bool exist = std::any_of(different_aspect_ratios.begin(), different_aspect_ratios.end(),
                              [&](float v) { return abs(ratio - v) < 1e-6; });

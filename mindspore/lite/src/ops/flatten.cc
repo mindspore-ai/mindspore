@@ -42,7 +42,7 @@ int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   std::vector<int> output_shape(2);
   output_shape[0] = input_shape[0];
   output_shape[1] = 1;
-  for (int i = 1; i < input_shape.size(); i++) {
+  for (size_t i = 1; i < input_shape.size(); i++) {
     output_shape[1] *= input_shape[i];
   }
   output->set_shape(output_shape);

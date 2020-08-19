@@ -60,7 +60,7 @@ int FullConnection::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
     MS_LOG(ERROR) << "Input tensors num error";
     return 1;
   }
-  if (GetAxis() < 1 || GetAxis() > input0->shape().size()) {
+  if (GetAxis() < 1 || GetAxis() > static_cast<int>(input0->shape().size())) {
     MS_LOG(ERROR) << "FullConnection axis invalid";
     return 1;
   }

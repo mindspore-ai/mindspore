@@ -64,7 +64,7 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
   auto input_shape = input->shape();
 
   std::vector<int32_t> output_shape = input_shape;
-  int axis = GetAxis() < 0 ? GetAxis() + input_shape.size() : GetAxis();
+  auto axis = GetAxis() < 0 ? GetAxis() + input_shape.size() : GetAxis();
   if (axis < 0 || axis > input_shape.size()) {
     MS_LOG(ERROR) << "Invalid axis " << GetAxis();
     return RET_PARAM_INVALID;
