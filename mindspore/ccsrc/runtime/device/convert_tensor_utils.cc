@@ -18,19 +18,19 @@
 namespace mindspore {
 namespace device {
 void HalfToFloat(void *dst, const void *src, size_t elem_num) {
-  auto half_data = static_cast<const Eigen::half *>(src);
+  auto half_data = static_cast<const float16 *>(src);
   auto float_data = static_cast<float *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
-    float tmp = Eigen::half_impl::half_to_float(half_data[i]);
+    float tmp = half_to_float(half_data[i]);
     float_data[i] = tmp;
   }
 }
 
 void FloatToHalf(void *dst, const void *src, size_t elem_num) {
   auto float_data = static_cast<const float *>(src);
-  auto half_data = static_cast<Eigen::half *>(dst);
+  auto half_data = static_cast<float16 *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
-    half_data[i] = Eigen::half(float_data[i]);
+    half_data[i] = float16(float_data[i]);
   }
 }
 

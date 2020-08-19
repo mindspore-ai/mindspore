@@ -29,7 +29,6 @@ namespace lite {
 using int32 = int32_t;
 using int64 = int64_t;
 using uint64 = uint64_t;
-using float16 = Eigen::half;
 class MSANFModelParser {
  public:
   MSANFModelParser() : producer_name_(""), model_version_(0), ir_version_(0) {}

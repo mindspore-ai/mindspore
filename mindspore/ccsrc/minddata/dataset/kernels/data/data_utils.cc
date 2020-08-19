@@ -345,14 +345,14 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
   for (; out_itr != out_end; in_itr++, out_itr++) {
     float element = *in_itr;
-    float float16_max = static_cast<float>(std::numeric_limits<Eigen::half>::max());
-    float float16_min = static_cast<float>(std::numeric_limits<Eigen::half>::lowest());
+    float float16_max = static_cast<float>(std::numeric_limits<float16>::max());
+    float float16_min = static_cast<float>(std::numeric_limits<float16>::lowest());
     if (element > float16_max || element < float16_min) {
       RETURN_STATUS_UNEXPECTED("Value " + std::to_string(element) + " is outside of valid float16 range [" +
                                std::to_string(float16_max) + ", " + std::to_string(float16_min) + "].");
     }
 
-    *out_itr = Eigen::half(*in_itr);
+    *out_itr = float16(*in_itr);
   }
 
   return Status::OK();

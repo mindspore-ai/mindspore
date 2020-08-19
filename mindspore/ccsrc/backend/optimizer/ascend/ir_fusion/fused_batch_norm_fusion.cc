@@ -91,9 +91,9 @@ ValuePtr FusedBatchNormFusion::GetFactor(const EquivPtr &equiv) const {
   auto tensor_ptr = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   if (tensor_ptr->data_type() == kNumberTypeFloat16) {
-    auto *half_data = static_cast<const Eigen::half *>(tensor_ptr->data_c());
+    auto *half_data = static_cast<const float16 *>(tensor_ptr->data_c());
     MS_EXCEPTION_IF_NULL(half_data);
-    float float_data = Eigen::half_impl::half_to_float(half_data[0]);
+    float float_data = half_to_float(half_data[0]);
     return MakeValue(float_data);
   } else if (tensor_ptr->data_type() == kNumberTypeFloat32) {
     auto *tensor_data = static_cast<const float *>(tensor_ptr->data_c());

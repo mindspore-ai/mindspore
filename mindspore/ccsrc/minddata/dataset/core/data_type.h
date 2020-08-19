@@ -25,8 +25,7 @@
 #include "minddata/dataset/core/pybind_support.h"
 namespace py = pybind11;
 #else
-#include "Eigen/Core"
-using float16 = Eigen::half;
+#include "base/float16.h"
 #endif
 #include "minddata/dataset/core/constants.h"
 namespace mindspore {
