@@ -1,4 +1,6 @@
 /**
+ * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
+ *
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +78,6 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
 }
 
 void FuncGraph::DumpFuncGraph(const std::string &path) {
-  // draw::Draw(path + ".dot", shared_from_base<FuncGraph>());
   if (drawer_) {
     drawer_(path + ".dot", shared_from_base<FuncGraph>());
   }
