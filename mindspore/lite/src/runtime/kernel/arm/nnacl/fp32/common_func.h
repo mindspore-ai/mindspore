@@ -71,6 +71,11 @@ void DeconvDwFp32Border(float *dst, const float *src, const float *weight, size_
 
 void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
                         size_t plane_size, size_t stride, size_t relu_type);
+
+void ConvSwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height,
+                      size_t width, size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel,
+                      size_t ic4, size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step,
+                      size_t relu, size_t relu6);
 #endif
 
 #ifdef __cplusplus

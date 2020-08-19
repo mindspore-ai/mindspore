@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/conv.h"
 #include <string.h>
+#include "nnacl/fp32/common_func.h"
 #include "nnacl/winograd_transform.h"
 
 void SWBorderPixel(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
@@ -83,6 +84,7 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
   }  // height loop
 }
 
+#ifndef ENABLE_ARM64
 void SWCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width, int kernel_h,
               int kernel_w, int out_h_step, int block_channel, int ic4, int in_sh_step, int in_sw_step, int in_kh_step,
               int in_kw_step, bool is_relu, bool is_relu6) {
@@ -135,6 +137,7 @@ void SWCenter(float *dst, const float *src, const float *weight, const float *bi
     src_h += in_sh_step;
   }  // dst_height loop
 }
+#endif
 
 // fp32 sliding window
 void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *tmp_out_block,
@@ -172,11 +175,23 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
           src_data + in_h_start * slidingWindow_param->in_h_step_ + in_w_start * slidingWindow_param->ic4_channel_;
         float *out_t = dst_data + slidingWindow_param->top_ * slidingWindow_param->out_h_step_ +
                        slidingWindow_param->left_ * slidingWindow_param->block_channel_;
+#ifdef ENABLE_ARM64
+        ConvSwFp32Center(out_t, in_t, weight, bias, slidingWindow_param->bottom_ - slidingWindow_param->top_,
+                         slidingWindow_param->right_ - slidingWindow_param->left_, conv_param->kernel_h_,
+                         conv_param->kernel_w_, slidingWindow_param->out_h_step_ * sizeof(float),
+                         slidingWindow_param->block_channel_ * sizeof(float), ic4,
+                         slidingWindow_param->in_sh_step_ * sizeof(float),
+                         slidingWindow_param->in_sw_step_ * sizeof(float),
+                         slidingWindow_param->in_kh_step_ * sizeof(float),
+                         slidingWindow_param->in_kw_step_ * sizeof(float),
+                         conv_param->is_relu_, conv_param->is_relu6_);
+#else
         SWCenter(out_t, in_t, weight, bias, slidingWindow_param->bottom_ - slidingWindow_param->top_,
-                 slidingWindow_param->right_ - slidingWindow_param->left_, conv_param->kernel_h_, conv_param->kernel_w_,
-                 slidingWindow_param->out_h_step_, slidingWindow_param->block_channel_, ic4,
+                 slidingWindow_param->right_ - slidingWindow_param->left_, conv_param->kernel_h_,
+                 conv_param->kernel_w_, slidingWindow_param->out_h_step_, slidingWindow_param->block_channel_, ic4,
                  slidingWindow_param->in_sh_step_, slidingWindow_param->in_sw_step_, slidingWindow_param->in_kh_step_,
                  slidingWindow_param->in_kw_step_, conv_param->is_relu_, conv_param->is_relu6_);
+#endif
       }
     }  // output C4 loop
     src += slidingWindow_param->in_step_;
