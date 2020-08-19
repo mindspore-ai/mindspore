@@ -66,8 +66,8 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
     auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
     const bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->dilation_h_ == 1 &&
                             param->dilation_w_ == 1 && param->stride_h_ == 1 && param->stride_w_ == 1;
-    const bool channel_good = CO_SLICES % 4 == 0 && CI_SLICES >= 16 && CO_SLICES >= 16;
-    const bool hw_good = TILES_X * TILES_Y >= 32;
+    const bool channel_good = CI_SLICES >= 12 && CO_SLICES >= 12;
+    const bool hw_good = TILES_X * TILES_Y >= 16;
     return attr_valid && channel_good && hw_good;
   }
 
