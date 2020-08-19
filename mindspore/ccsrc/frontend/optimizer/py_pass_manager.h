@@ -27,7 +27,7 @@
 #include "ir/graph_utils.h"
 #include "utils/ms_utils.h"
 
-#include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/resource.h"
 #include "frontend/optimizer/pattern.h"
 #include "frontend/optimizer/py_pass.h"
 #include "frontend/optimizer/pass_group.h"
@@ -53,12 +53,21 @@ class PyPassManager {
   static PyPassManagerPtr GetInstance();
   virtual ~PyPassManager() = default;
   void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-               Phase phase = Phase::RESOLVE, bool run_only_once = false, bool multigraph = true);
+               Phase phase = Phase::RESOLVE, bool run_only_once = false);
   void Unregiste(const std::string &pass_name, Phase phase);
+  void GenNewParameter(const PatternPtr &parameter);
   PassGroupPtr GetPassGroup(Phase phase);
   void ClearRes();
+  MatchResultPtr GetMatchResult() { return res_; }
+  void SetRenorm(bool should_renorm) { should_renorm_ = should_renorm; }
+  bool ShouldRenorm() { return should_renorm_; }
+  void SetResource(pipeline::ResourcePtr resource) { resource_ = resource; }
+  pipeline::ResourcePtr GetResource() { return resource_; }
 
  private:
+  bool should_renorm_ = true;
+  MatchResultPtr res_;
+  pipeline::ResourcePtr resource_;
   static std::unordered_map<Phase, PassGroupPtr> phase_to_group_;
 };
 }  // namespace python_pass

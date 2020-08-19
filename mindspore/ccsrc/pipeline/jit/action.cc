@@ -448,8 +448,21 @@ void ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
   MS_EXCEPTION_IF_NULL(res->manager());
   MS_EXCEPTION_IF_NULL(res->func_graph());
   auto ppm = opt::python_pass::PyPassManager::GetInstance();
+  ppm->SetResource(res);
   if (!ppm->GetPassGroup(phase)->Run(res->func_graph())) {
     MS_LOG(DEBUG) << "No match.\n";
+  } else if (phase == opt::python_pass::Phase::OPT && opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
+    MS_LOG(DEBUG) << "Entered PyStub Renorm";
+    // Renomalize
+    MS_EXCEPTION_IF_NULL(res->func_graph());
+    FuncGraphPtr func_graph = res->func_graph();
+    abstract::AbstractBasePtrList args_spec;
+    auto parameters = func_graph->parameters();
+    (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
+                         [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+    FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
+    res->set_func_graph(new_fg);
+    res->set_args_spec(args_spec);
   }
 }
 
@@ -477,6 +490,7 @@ static std::vector<ActionItem> CommonPipeline() {
   }
   // Add resolve-stage python pass stub
   actions.emplace_back(std::make_pair("py_resolve", ResolveActionPyStub));
+
   actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));

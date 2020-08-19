@@ -21,13 +21,26 @@
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "ir/scalar.h"
+#include "ir/graph_utils.h"
+#include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/resource.h"
+#include "frontend/optimizer/py_pass_manager.h"
+#include "utils/info.h"
+#include "debug/anf_ir_dump.h"
+#include "debug/draw.h"
 
 namespace mindspore {
 namespace opt {
 namespace python_pass {
 namespace internal {
-AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr &res);
+const char PARAMETER_MODULE[] = "mindspore.common.parameter";
+const char PARAMETER_CLASS[] = "Parameter";
+const char SET_PARAM[] = "__setattr__";
+AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &func_graph);
+AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph, const MatchResultPtr &res);
+void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
+                              bool requires_grad, bool layerwise_parallel);
 
 std::string GetNodeRepr(AnfNodePtr node) {
   if (node != nullptr) {
@@ -42,8 +55,10 @@ std::string GetNodeRepr(AnfNodePtr node) {
       repr += ")";
       return repr;
     }
-    if (node->isa<ValueNode>()) {
-      return GetValueNode(node)->ToString();
+    if (node->isa<Parameter>()) {
+      return "[Parameter]" + node->ToString();
+    } else if (node->isa<ValueNode>()) {
+      return "[Value]" + GetValueNode(node)->ToString();
     }
     return node->ToString();
   }
@@ -82,7 +97,7 @@ AnfNodePtr BuildNewTensor(const PatternPtr &pattern, const MatchResultPtr &res) 
   return std::make_shared<ValueNode>(input_tensor);
 }
 
-AnfNodePtr BuildPrimitiveValueNode(const PatternPtr &pattern, const MatchResultPtr &res) {
+AnfNodePtr BuildPrimitiveValueNode(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &fg) {
   auto call_with_pattern = pattern->cast<CallWithPtr>();
   MS_EXCEPTION_IF_NULL(call_with_pattern);
   auto prim = call_with_pattern->prim_value();
@@ -91,15 +106,70 @@ AnfNodePtr BuildPrimitiveValueNode(const PatternPtr &pattern, const MatchResultP
   }
   auto prim_pattern = call_with_pattern->prim_pattern();
   MS_EXCEPTION_IF_NULL(prim_pattern);
-  return ProcessSinglePattern(prim_pattern, res);
+  return ProcessSinglePattern(prim_pattern, res, fg);
 }
 
-AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr &res) {
+AnfNodePtr BuildNewParameter(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &func_graph) {
+  auto new_para_pattern = pattern->cast<NewParameterPtr>();
+  MS_EXCEPTION_IF_NULL(new_para_pattern);
+  if (!new_para_pattern->built()) {
+    static int parameter_id = 0;
+    auto para_name = new_para_pattern->para_name() + new_para_pattern->unique_name() + std::to_string(parameter_id++);
+    auto para_node = std::make_shared<Parameter>(func_graph);
+    MS_EXCEPTION_IF_NULL(para_node);
+    para_node->set_name(para_name);
+    // Set function graph
+    para_node->set_func_graph(func_graph);
+    // Set Debug Info
+    auto debug_info = std::make_shared<NodeDebugInfo>(para_name);
+    para_node->set_debug_info(debug_info);
+    // Set abstract
+    auto default_value = new_para_pattern->default_tensor();
+    MS_EXCEPTION_IF_NULL(default_value);
+    para_node->set_abstract(default_value->ToAbstract()->Broaden());
+    res->add_entry(pattern, para_node);
+    func_graph->add_parameter(para_node);
+    // Reflect back to Cell._params
+    internal::ReflectParamBackToPython(para_node, para_name, default_value, new_para_pattern->requires_grad(),
+                                       new_para_pattern->layerwise_parallel());
+    MS_LOG(WARNING) << "Adding parameter: " + para_node->ToString() + " parameter name:" + para_node->name();
+    new_para_pattern->set_built(true);
+    return para_node;
+  } else {
+    // Built, fetch the node
+    auto para_node = res->get_node(pattern);
+    MS_EXCEPTION_IF_NULL(para_node);
+    return para_node;
+  }
+}
+
+AnfNodePtr BuildImmNode(const PatternPtr &pattern, const MatchResultPtr &res) {
+  auto imm_pattern = pattern->cast<ImmPtr>();
+  MS_EXCEPTION_IF_NULL(imm_pattern);
+  auto value = imm_pattern->value();
+  auto scalar_value_ptr = std::make_shared<Int32Imm>(value);
+  return std::make_shared<ValueNode>(scalar_value_ptr);
+}
+
+AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &func_graph) {
   if (pattern->should_replace()) {
     // Find replacement in the MatchResult
     auto target_node = res->get_node(pattern);
     if (target_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot find target node in pattern match result, pattern: " + pattern->unique_name() + "\n";
+      // If it's base pattern(in contrast to complex pattern like CallWith/IsIn/IsNot), raise runtime exception.
+      if (pattern->isa<IsPrimTypeOf>() || pattern->isa<NewTensor>() || pattern->isa<NewParameter>()) {
+        MS_LOG(EXCEPTION) << "Cannot find target node, pattern: " + pattern->unique_name() + "\n";
+        return nullptr;
+      }
+      // Try to build this pattern and add to MatchResult, since this pattern is defined inside target
+      auto new_node = BuildTarget(pattern, func_graph, res);
+      if (new_node == nullptr) {
+        MS_LOG(EXCEPTION) << "Try to build pattern node but FAILED. pattern: " + pattern->unique_name() + "\n";
+      }
+      return new_node;
+    }
+    if (pattern->isa<NewParameter>()) {
+      return target_node;
     }
     return target_node;
   }
@@ -109,7 +179,19 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
   } else if (pattern->isa<NewTensor>()) {
     return BuildNewTensor(pattern, res);
   } else if (pattern->isa<CallWith>()) {
-    return BuildPrimitiveValueNode(pattern, res);
+    return BuildPrimitiveValueNode(pattern, res, func_graph);
+  } else if (pattern->isa<NewParameter>()) {
+    return BuildNewParameter(pattern, res, func_graph);
+  } else if (pattern->isa<Imm>()) {
+    return BuildImmNode(pattern, res);
+  }
+  return nullptr;
+}
+
+AnfNodePtr ProcessComplexPatternFirstInput(const PatternPtr &pattern, const MatchResultPtr &res,
+                                           const FuncGraphPtr &func_graph) {
+  if (pattern->isa<CallWith>()) {
+    return BuildPrimitiveValueNode(pattern, res, func_graph);
   }
   return nullptr;
 }
@@ -117,91 +199,154 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
 AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph, const MatchResultPtr &res) {
   auto target_inputs = pattern->inputs();
   if (target_inputs.size() == 0) {
-    return ProcessSinglePattern(pattern, res);
+    auto new_node = ProcessSinglePattern(pattern, res, func_graph);
+    if (new_node != nullptr) {
+      res->add_entry(pattern, new_node);
+    }
+    return new_node;
   }
   // Build up the AnfNode in a recursive manner
   std::vector<AnfNodePtr> new_inputs;
-  auto prim_value_node = ProcessSinglePattern(pattern, res);
+  auto prim_value_node = ProcessComplexPatternFirstInput(pattern, res, func_graph);
   MS_EXCEPTION_IF_NULL(prim_value_node);
   new_inputs.push_back(prim_value_node);
   for (auto &iter : target_inputs) {
     if (iter == pattern) {
-      MS_LOG(EXCEPTION) << "Circle references: Pattern takes itself as input. Got pattern: " + pattern->unique_name() +
-                             "\n";
+      MS_LOG(EXCEPTION) << "Circle references. Got pattern: " + pattern->unique_name() + "\n";
     }
-    new_inputs.push_back(BuildTarget(iter, func_graph, res));
+    auto input_node = BuildTarget(iter, func_graph, res);
+    if (input_node == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to build input node for pattern : " + iter->unique_name() + "\n";
+    }
+    new_inputs.push_back(input_node);
   }
-  return func_graph->NewCNode(new_inputs);
+  auto new_node = func_graph->NewCNode(new_inputs);
+  res->add_entry(pattern, new_node);
+  return new_node;
 }
+
+void DrawNode(string name, AnfNodePtr node) {
+  auto context_ptr = MsContext::GetInstance();
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  auto new_func_graph = std::make_shared<FuncGraph>();
+  new_func_graph->set_output(node, true);
+  if (save_graphs) {
+    auto ir_dump_path = save_graphs_path + "/" + name + ".ir";
+    auto dot_dump_path = save_graphs_path + "/" + name + ".dot";
+    DumpIR(ir_dump_path, new_func_graph);
+    draw::Draw(dot_dump_path, new_func_graph);
+  }
+}
+
+void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
+                              bool requires_grad, bool layerwise_parallel) {
+  // 1. Get current cell object
+  auto ppm = opt::python_pass::PyPassManager::GetInstance();
+  auto resource = ppm->GetResource();
+  py::object top_cell = resource->input();
+  if (py::isinstance<py::none>(top_cell)) {
+    MS_LOG(EXCEPTION) << "Failed to get top cell from resource.";
+  }
+  // 2. New a Parameter object with the above-specified args
+  py::object parameter_class = py::module::import(PARAMETER_MODULE).attr(PARAMETER_CLASS);
+  py::object new_parameter = parameter_class(default_input, param_name, requires_grad, layerwise_parallel);
+  // 3. Add the new python Parameter object to Cell's _params atttributes
+  top_cell.attr(SET_PARAM)(param_name, new_parameter);
+  // 4. Set default_param for param_node
+  ValuePtr param_value = nullptr;
+  bool converted = parse::ConvertData(new_parameter, &param_value, false);
+  if (!converted) {
+    MS_LOG(EXCEPTION) << "Failed to convert new parameter to ValuePtr.";
+  }
+  MS_EXCEPTION_IF_NULL(param);
+  auto param_node = param->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param_node);
+  param_node->set_default_param(param_value);
+}
+
+void Reset(PatternPtr pattern) {
+  if (pattern->isa<IsPrimTypeOf>()) {
+    auto prim_pattern = pattern->cast<IsPrimTypeOfPtr>();
+    prim_pattern->reset();
+    return;
+  } else if (pattern->isa<NewParameter>()) {
+    auto new_param_pattern = pattern->cast<NewParameterPtr>();
+    new_param_pattern->reset();
+    return;
+  } else if (pattern->isa<CallWith>()) {
+    auto call_with_pattern = pattern->cast<CallWithPtr>();
+    for (auto sub_pattern : call_with_pattern->inputs()) {
+      Reset(sub_pattern);
+    }
+    return;
+  }
+  return;
+}
+
 }  // namespace internal
 
-AnfNodePtr PythonPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(src_pattern_);
-  MS_EXCEPTION_IF_NULL(dst_pattern_);
-  auto res = src_pattern_->match(node);
-  if (res != nullptr) {
-    res->dump();
-    MS_LOG(WARNING) << "Matched pattern: " + src_pattern_->unique_name();
+AnfNodePtr PythonPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const MatchResultPtr &res) {
+  auto match_res = src_pattern_->match(node);
+  if (match_res != nullptr) {
+    MS_LOG(DEBUG) << "Matched pattern: " + src_pattern_->unique_name() + " node : " + internal::GetNodeRepr(node);
+    res->merge(match_res);
     auto new_node = internal::BuildTarget(dst_pattern_, func_graph, res);
-    dst_pattern_->reset();
-    MS_LOG(DEBUG) << "To be replaced node: " + internal::GetNodeRepr(new_node) + "\n";
+    internal::Reset(dst_pattern());
+    MS_LOG(WARNING) << "To be replaced node: " + internal::GetNodeRepr(new_node) + "\n";
     return new_node;
   }
-  src_pattern_->reset();
+  internal::Reset(src_pattern());
   return nullptr;
 }
 
-bool PythonPass::Run(const FuncGraphPtr &func_graph) {
+bool PythonPass::Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(dst_pattern_);
+  if (src_pattern_ == nullptr) {
+    // Add NewParameter
+    auto new_para_pattern = dst_pattern_->cast<NewParameterPtr>();
+    if (new_para_pattern == nullptr) {
+      MS_LOG(EXCEPTION) << "Expect NewParameter pattern for target if src pattern is null.";
+    }
+    auto para_name = new_para_pattern->para_name() + new_para_pattern->unique_name();
+    MS_LOG(DEBUG) << "Adding New parameter : " + para_name;
+    auto para_node = std::make_shared<Parameter>(func_graph);
+    MS_EXCEPTION_IF_NULL(para_node);
+    para_node->set_name(para_name);
+    // Set function graph
+    para_node->set_func_graph(func_graph);
+    // Set Debug Info
+    auto debug_info = std::make_shared<NodeDebugInfo>(para_name);
+    para_node->set_debug_info(debug_info);
+    // Set abstract
+    auto default_value = new_para_pattern->default_tensor();
+    MS_EXCEPTION_IF_NULL(default_value);
+    para_node->set_abstract(default_value->ToAbstract()->Broaden());
+    res->add_entry(dst_pattern_, para_node);
+    func_graph->add_parameter(para_node);
+    // Reflect back to Cell._params
+    internal::ReflectParamBackToPython(para_node, para_name, default_value, new_para_pattern->requires_grad(),
+                                       new_para_pattern->layerwise_parallel());
+    MS_LOG(WARNING) << "Adding parameter: " + para_node->ToString() + " parameter name:" + para_node->name();
+    return true;
+  }
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
-  auto seen = NewSeenGeneration();
-  // 1024 is for the initial capacity of deque
-  std::deque<AnfNodePtr> todo(1024);
-  todo.push_back(func_graph->output());
+  auto graph_nodes_sorted = TopoSort(func_graph->output());
   bool changes = false;
 
-  auto &all_nodes = manager->all_nodes();
-  while (!todo.empty()) {
-    AnfNodePtr node = todo.front();
-    todo.pop_front();
-    // Check whether this node has been matched.
-    if (node == nullptr || node->seen_ == seen || !internal::IsTraversable(node) || !all_nodes.contains(node)) {
-      continue;
-    }
-    node->seen_ = seen;
-    // Select nodes that this transform can be applied.
-    AnfNodePtr new_node = Run(func_graph, node);
-    bool change = (new_node != nullptr);
+  // Traverse once
+  for (auto &node : graph_nodes_sorted) {
+    AnfNodePtr new_node = Run(func_graph, node, res);
     if (new_node != nullptr && new_node != node) {
+      internal::DrawNode(dst_pattern_->unique_name(), new_node);
       (void)manager->Replace(node, new_node);
-    } else if (new_node == nullptr) {
-      new_node = node;
-    }
-    if (run_only_once_) {
-      return change;
-    }
-    // Find success, and add them to todo list
-    if (IsValueNode<FuncGraph>(node)) {
-      todo.push_back(GetValueNode<FuncGraphPtr>(node)->output());
-    }
-    if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(todo));
-    }
-    auto &node_users = manager->node_users();
-    if (change && node_users.find(node) != node_users.end()) {
-      for (auto &use : node_users[node]) {
-        auto use_node = use.first;
-        if (use_node == nullptr) {
-          continue;
-        }
-        todo.push_back(use_node);
-        if (use_node->seen_ == seen) {
-          use_node->seen_--;
-        }
-      }
+      changes = true;
     }
   }
   return changes;

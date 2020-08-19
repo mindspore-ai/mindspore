@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "frontend/optimizer/pass_group.h"
+#include "frontend/optimizer/py_pass_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,14 +36,15 @@ bool PassGroup::DeletePass(const std::string &pass_name) {
   return false;
 }
 
-bool PassGroup::Run(const FuncGraphPtr &func_graph, const std::vector<PythonPassPtr> &passes) const {
+bool PassGroup::Run(const FuncGraphPtr &func_graph, const std::vector<PythonPassPtr> &passes,
+                    const MatchResultPtr &res) const {
   if (func_graph == nullptr) {
     return false;
   }
   bool changed = false;
   for (const auto &pass : passes) {
     if (pass != nullptr) {
-      if (pass->Run(func_graph)) {
+      if (pass->Run(func_graph, res)) {
         changed = true;
       }
     }
@@ -54,8 +56,9 @@ bool PassGroup::Run(const FuncGraphPtr &func_graph) const {
   bool changed = false;
   // run all passes
   bool change = true;
+  auto res = PyPassManager::GetInstance()->GetMatchResult();
   while (change) {
-    change = Run(func_graph, passes_);
+    change = Run(func_graph, passes_, res);
     changed = change || changed;
     if (run_only_once_) {
       break;
