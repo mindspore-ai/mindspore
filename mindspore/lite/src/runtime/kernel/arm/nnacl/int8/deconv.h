@@ -22,16 +22,22 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/common_func.h"
+#include "nnacl/int8/matmul_int8.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep16, int col4,
+                         bool suppport_opt);
+void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, int row4, int col16, bool suppport_opt);
+void DeConvWeightTransInt8(int8_t *src, int8_t *dst, int input_channel, int output_channel, int plane,
+                           bool support_optimize_);
 
-int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, size_t row8, size_t col8, size_t deep,
-               ConvParameter *conv_param);
-
+int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, int32_t *weight_sum, int32_t *input_sum,
+               size_t act_row, size_t act_col, size_t act_deep, ConvParameter *conv_param,
+               MATMUL_OPT_R4_FUNC matmul_func);
 int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
-                   ConvParameter *conv_param);
+                   ConvParameter *conv_param, bool support_optimize);
 #ifdef __cplusplus
 }
 #endif
