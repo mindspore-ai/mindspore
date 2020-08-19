@@ -32,7 +32,7 @@ class DatasetOp;
 /// This class manages all the callbacks that are associated with a single DatasetOp. For now, only MapOp supports this.
 class CallbackManager {
  public:
-  /// CallbackManager default constructor. Init needs to be called before using the created instance.
+  /// \brief CallbackManager default constructor. Init needs to be called before using the created instance.
   CallbackManager() : enabled_(false) {}
 
   /// \brief

@@ -157,6 +157,38 @@ def get_monitor_sampling_interval():
     return _config.get_monitor_sampling_interval()
 
 
+def set_callback_timeout(timeout):
+    """
+    Set the default timeout (in seconds) for DSWaitedCallback.
+    In case of a deadlock, the wait function will exit after the timeout period.
+
+    Args:
+        timeout (int): timeout(s) to be used to end teh wait in DSWaitedCallback in case of a deadlock.
+
+    Raises:
+        ValueError: If timeout is invalid (<= 0 or > MAX_INT_32).
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> # sets the new timout value.
+        >>> ds.config.set_callback_timeout(100)
+    """
+    if timeout <= 0 or timeout > INT32_MAX:
+        raise ValueError("timeout given is not within the required range.")
+    _config.set_callback_timeout(timeout)
+
+
+def get_callback_timeout():
+    """
+    Get the default timeout for DSWaitedCallback.
+    In case of a deadlock, the wait function will exit after the timeout period.
+
+    Returns:
+        Int, the duration in seconds
+    """
+    return _config.get_callback_timeout()
+
+
 def __str__():
     """
     String representation of the configurations.

@@ -37,8 +37,10 @@ class DataBuffer {
   // Buffer flags
   enum BufferFlags : uint32_t {
     kDeBFlagNone = 0,
-    kDeBFlagEOF = 1,       // The buffer is an eof end-of-data msg
-    kDeBFlagEOE = 1u << 1  // The buffer is an eoe end-of-epoch msg
+    kDeBFlagEOF = 1,         // The buffer is an eof end-of-data msg
+    kDeBFlagEOE = 1u << 1,   // The buffer is an eoe end-of-epoch msg
+    kDeBFlagWait = 1u << 2,  // The buffer is an control signal for workers to suspend operations
+    kDeBFlagQuit = 1u << 3   // The buffer is a control signal for workers to quit
   };
 
   // Name: Constructor #1
@@ -63,6 +65,10 @@ class DataBuffer {
   bool eof() const { return (static_cast<uint32_t>(buffer_flags_) & static_cast<uint32_t>(kDeBFlagEOF)); }
 
   bool eoe() const { return (static_cast<uint32_t>(buffer_flags_) & static_cast<uint32_t>(kDeBFlagEOE)); }
+
+  bool wait() const { return (static_cast<uint32_t>(buffer_flags_) & static_cast<uint32_t>(kDeBFlagWait)); }
+
+  bool quit() const { return (static_cast<uint32_t>(buffer_flags_) & static_cast<uint32_t>(kDeBFlagQuit)); }
 
   // Simple getter funcs
   int32_t id() const { return buffer_id_; }

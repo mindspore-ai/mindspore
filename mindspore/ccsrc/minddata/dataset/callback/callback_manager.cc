@@ -50,7 +50,7 @@ Status CallbackManager::Begin(const CallbackParam &cb_param) {
   // return Status::OK() if no begin is needed
   RETURN_OK_IF_TRUE(callback_inds.empty());
 
-  RETURN_IF_NOT_OK(op_->PauseFromMaster());
+  RETURN_IF_NOT_OK(op_->WaitForWorkers());
 
   // Now do the actual callback
   for (size_t ind : callback_inds) {
@@ -69,7 +69,7 @@ Status CallbackManager::EpochBegin(const CallbackParam &cb_param) {
   // return Status::OK() if no epoch_begin is needed
   RETURN_OK_IF_TRUE(callback_inds.empty());
 
-  RETURN_IF_NOT_OK(op_->PauseFromMaster());
+  RETURN_IF_NOT_OK(op_->WaitForWorkers());
 
   // Now do the actual callback
   for (size_t ind : callback_inds) {
@@ -89,7 +89,7 @@ Status CallbackManager::StepBegin(const CallbackParam &cb_param) {
   // return Status::OK() if no step_begin is needed
   RETURN_OK_IF_TRUE(callback_inds.empty());
 
-  RETURN_IF_NOT_OK(op_->PauseFromMaster());
+  RETURN_IF_NOT_OK(op_->WaitForWorkers());
 
   // Now do the actual callback
   for (size_t ind : callback_inds) {
@@ -108,7 +108,7 @@ Status CallbackManager::End(const CallbackParam &cb_param) {
   // return Status::OK() if no end is needed
   RETURN_OK_IF_TRUE(callback_inds.empty());
 
-  RETURN_IF_NOT_OK(op_->PauseFromMaster());
+  RETURN_IF_NOT_OK(op_->WaitForWorkers());
 
   // Now do the actual callback
   for (size_t ind : callback_inds) {
@@ -127,7 +127,7 @@ Status CallbackManager::EpochEnd(const CallbackParam &cb_param) {
   // return Status::OK() if no epoch_end is needed
   RETURN_OK_IF_TRUE(callback_inds.empty());
 
-  RETURN_IF_NOT_OK(op_->PauseFromMaster());
+  RETURN_IF_NOT_OK(op_->WaitForWorkers());
 
   // Now do the actual callback
   for (size_t ind : callback_inds) {
@@ -147,7 +147,7 @@ Status CallbackManager::StepEnd(const CallbackParam &cb_param) {
   // return Status::OK() if no step_end is needed
   RETURN_OK_IF_TRUE(callback_inds.empty());
 
-  RETURN_IF_NOT_OK(op_->PauseFromMaster());
+  RETURN_IF_NOT_OK(op_->WaitForWorkers());
 
   // Now do the actual callback
   for (size_t ind : callback_inds) {

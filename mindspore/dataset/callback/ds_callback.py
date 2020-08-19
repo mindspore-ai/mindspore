@@ -18,6 +18,7 @@ Python callback class
 import threading
 from mindspore._c_dataengine import PyDSCallback
 from mindspore.train.callback import Callback
+import mindspore.dataset as ds
 from .validators import check_callback
 
 
@@ -170,7 +171,6 @@ class WaitedDSCallback(Callback, DSCallback):
         """
         self.epoch_run_context = run_context
         self.epoch_event.set()
-        self.epoch_event.clear()
 
     def ds_epoch_begin(self, ds_run_context):
         """
@@ -180,10 +180,12 @@ class WaitedDSCallback(Callback, DSCallback):
           ds_run_context: Include some information of the pipeline.
         """
         if ds_run_context.cur_epoch_num > 1:
-            if self.epoch_run_context is None:
-                self.epoch_event.wait()
+            success = self.epoch_event.wait(timeout=ds.config.get_callback_timeout())
+            self.epoch_event.clear()
+            if not success:
+                raise RuntimeError(f"ds_epoch_begin timed out after {ds.config.get_callback_timeout()} second(s)")
+            # by the time this thread wakes up, self.epoch_run_context is already available
             self.sync_epoch_begin(self.epoch_run_context, ds_run_context)
-            self.epoch_run_context = None
 
     def step_end(self, run_context):
         """
@@ -194,7 +196,6 @@ class WaitedDSCallback(Callback, DSCallback):
         """
         self.step_run_context = run_context
         self.step_event.set()
-        self.step_event.clear()
 
     def ds_step_begin(self, ds_run_context):
         """
@@ -204,10 +205,12 @@ class WaitedDSCallback(Callback, DSCallback):
             ds_run_context: Include some information of the pipeline.
         """
         if ds_run_context.cur_step_num > self.step_size:
-            if self.step_run_context is None:
-                self.step_event.wait()
+            success = self.step_event.wait(timeout=ds.config.get_callback_timeout())
+            self.step_event.clear()
+            if not success:
+                raise RuntimeError(f"ds_step_begin timed out after {ds.config.get_callback_timeout()} second(s)")
+            # by the time this thread wakes up, self.epoch_run_context is already available
             self.sync_step_begin(self.step_run_context, ds_run_context)
-            self.step_run_context = None
 
     def create_runtime_obj(self):
         """

@@ -68,6 +68,7 @@ constexpr uint32_t kCfgWorkerConnectorSize = 16;
 constexpr uint32_t kCfgOpConnectorSize = 16;
 constexpr uint32_t kCfgDefaultSeed = std::mt19937::default_seed;
 constexpr uint32_t kCfgMonitorSamplingInterval = 10;
+constexpr uint32_t kCfgCallbackTimeout = 60;  // timeout value for callback in seconds
 
 // Invalid OpenCV type should not be from 0 to 7 (opencv4/opencv2/core/hal/interface.h)
 constexpr uint8_t kCVInvalidType = 255;

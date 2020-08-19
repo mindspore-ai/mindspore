@@ -363,10 +363,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// This function is only intended to be called by CallbackManager within the master thread of ParallelOp
   /// The expected behavior is this, when this function is invoked, this function will block until all the workers
   /// have finished their remaining work and go to sleep. Since all ParallelOps use a QueueList to sync with master.
-  /// They would automatically wait on the QueueList when they are done. Hence, for now, a Unpause() function is not
-  /// needed. Only parallelOp needs to override this function.
+  /// They would automatically wait on the QueueList when they are done.
   /// \return Status
-  virtual Status PauseFromMaster() { return Status::OK(); }
+  virtual Status WaitForWorkers() { return Status::OK(); }
 
  protected:
   /// \brief Removes a parent operator from this operator
