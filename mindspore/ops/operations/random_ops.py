@@ -27,8 +27,8 @@ class StandardNormal(PrimitiveWithInfer):
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
     Args:
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int): Random seed. Must be non-negative. Default: 0.
+        seed2 (int): Random seed2. Must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -125,8 +125,8 @@ class Gamma(PrimitiveWithInfer):
         \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}},
 
     Args:
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int): Random seed. Must be non-negative. Default: 0.
+        seed2 (int): Random seed2. Must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -180,8 +180,8 @@ class Poisson(PrimitiveWithInfer):
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
 
     Args:
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int): Random seed. Must be non-negative. Default: 0.
+        seed2 (int): Random seed2. Must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -234,8 +234,8 @@ class UniformInt(PrimitiveWithInfer):
         The number in tensor a should be strictly less than b at any position after broadcasting.
 
     Args:
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int): Random seed. Must be non-negative. Default: 0.
+        seed2 (int): Random seed2. Must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -287,8 +287,8 @@ class UniformReal(PrimitiveWithInfer):
     Produces random floating-point values i, uniformly distributed on the interval [0, 1).
 
     Args:
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int): Random seed. Must be non-negative. Default: 0.
+        seed2 (int): Random seed2. Must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.

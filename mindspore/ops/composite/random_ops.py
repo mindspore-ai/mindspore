@@ -35,12 +35,12 @@ def set_seed(seed):
     random seed.
 
     Args:
-        seed(Int): the graph-level seed value that to be set.
+        seed(Int): the graph-level seed value that to be set. Must be non-negative.
 
     Examples:
         >>> C.set_seed(10)
     """
-    const_utils.check_int_positive("seed", seed, "set_seed")
+    const_utils.check_non_negative("seed", seed, "set_seed")
     global _GRAPH_SEED
     _GRAPH_SEED = seed
 
@@ -56,7 +56,7 @@ def get_seed():
         Interger. The current graph-level seed.
 
     Examples:
-        >>> C.get_seed(10)
+        >>> C.get_seed()
     """
     return _GRAPH_SEED
 
@@ -70,7 +70,7 @@ def normal(shape, mean, stddev, seed=0):
           With float32 data type.
         stddev (Tensor): The deviation σ distribution parameter. With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
+          Must be non-negative. Default: 0.
 
     Returns:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and stddev.
@@ -107,7 +107,7 @@ def uniform(shape, a, b, seed=0, dtype=mstype.float32):
           It defines the maximum possibly generated value. With int32 or float32 data type.
           If dtype is int32, only one number is allowed.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
+          Must be non-negative. Default: 0.
 
     Returns:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
@@ -151,7 +151,7 @@ def gamma(shape, alpha, beta, seed=0):
         alpha (Tensor): The alpha α distribution parameter. With float32 data type.
         beta (Tensor): The beta β distribution parameter. With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
+          Must be non-negative. Default: 0.
 
     Returns:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
@@ -163,10 +163,6 @@ def gamma(shape, alpha, beta, seed=0):
         >>> beta = Tensor(1.0, mstype.float32)
         >>> output = C.gamma(shape, alpha, beta, seed=5)
     """
-    alpha_dtype = F.dtype(alpha)
-    beta_dtype = F.dtype(beta)
-    const_utils.check_tensors_dtype_same(alpha_dtype, mstype.float32, "gamma")
-    const_utils.check_tensors_dtype_same(beta_dtype, mstype.float32, "gamma")
     const_utils.check_non_negative("seed", seed, "gamma")
     seed1 = get_seed()
     seed2 = seed
@@ -182,7 +178,7 @@ def poisson(shape, mean, seed=0):
         shape (tuple): The shape of random tensor to be generated.
         mean (Tensor): The mean μ distribution parameter. With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
+          Must be non-negative. Default: 0.
 
     Returns:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean.
@@ -193,8 +189,6 @@ def poisson(shape, mean, seed=0):
         >>> mean = Tensor(1.0, mstype.float32)
         >>> output = C.poisson(shape, mean, seed=5)
     """
-    mean_dtype = F.dtype(mean)
-    const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "poisson")
     const_utils.check_non_negative("seed", seed, "poisson")
     seed1 = get_seed()
     seed2 = seed
