@@ -19,7 +19,9 @@ ConvDwInt8Center:
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
-    sub sp, sp, #48
+    sub sp, sp, #176
+    st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
+    st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
     stp x21, x22, [sp], #16
     stp x23, x24, [sp], #16
@@ -631,7 +633,9 @@ ConvDwInt8Center:
         subs x4, x4, #1
         bne LoopH
 
-    sub sp, sp, #48
+    sub sp, sp, #176
+    ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
+    ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x23, x24, [sp], #16
