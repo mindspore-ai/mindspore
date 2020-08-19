@@ -578,6 +578,7 @@ table ExpandDims {
 
 table Tile {
     multiples: [int];
+    dims: [int];
 }
 
 table Cast {
@@ -885,4 +886,15 @@ table ToFormat {
 }
 
 table Return {
+}
+
+table Proposal {
+    feat_stride : float;
+    base_size : float;
+    min_size : float;
+    ratio : [float];
+    scale : [float];
+    pre_nms_topn : int;
+    post_nms_topn : int;
+    nms_thresh : float;
 }

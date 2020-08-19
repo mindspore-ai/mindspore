@@ -24,6 +24,7 @@
 #include "tools/converter/parser/caffe/caffe.pb.h"
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
 #include "include/errorcode.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
