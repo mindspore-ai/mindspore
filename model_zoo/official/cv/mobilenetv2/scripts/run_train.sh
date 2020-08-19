@@ -73,6 +73,7 @@ run_gpu()
     mpirun -n $2 --allow-run-as-root \
     python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
+        --pre_trained=$5 \
         --device_target=$1 \
         &> ../train.log &  # dataset train folder
 }
@@ -81,7 +82,7 @@ if [ $# -gt 6 ] || [ $# -lt 4 ]
 then
     echo "Usage:\n \
           Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH]\n \
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
+          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]\n \
           "
 exit 1
 fi
