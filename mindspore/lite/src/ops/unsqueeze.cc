@@ -67,10 +67,10 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
     }
   } else {
     auto sz = in_rank + dim_rank;
-    int in_itr = 0;
-    int ax_itr = 0;
-    for (int i = 0; i < sz; i++) {
-      if (ax_itr < dim_rank && dims[ax_itr] == i) {
+    size_t in_itr = 0;
+    size_t ax_itr = 0;
+    for (size_t i = 0; i < sz; i++) {
+      if (ax_itr < dim_rank && dims[ax_itr] == static_cast<int>(i)) {
         out_shape.emplace_back(1);
         ax_itr++;
       } else if (ax_itr < dim_rank && dims[ax_itr] + sz == i) {

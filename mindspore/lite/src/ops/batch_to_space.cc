@@ -85,7 +85,7 @@ int BatchToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
     MS_LOG(ERROR) << "Crops size should be " << kCropsSize;
     return RET_PARAM_INVALID;
   }
-  size_t mul_block_shape = 1;
+  int mul_block_shape = 1;
 
   for (size_t i = 0; i < kBlockShapeSize; ++i) {
     if (block_shape[i] <= 0) {

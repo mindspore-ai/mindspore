@@ -63,7 +63,7 @@ int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
   out_shape.resize(perm.size());
-  for (int i = 0; i < perm.size(); ++i) {
+  for (size_t i = 0; i < perm.size(); ++i) {
     out_shape[i] = in_shape[perm[i]];
   }
   output->set_shape(out_shape);

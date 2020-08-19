@@ -80,15 +80,15 @@ void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::v
   int input_count = inputs[0]->ElementsNum();
   int index = 0;
   int size = 1;
-  for (size_t i = 0; i < shape_size; i++) {
-    if (data[i] == -1) {
+  for (int i = 0; i < shape_size; i++) {
+    if (static_cast<int>(data[i]) == -1) {
       index = i;
     } else {
       size *= data[i];
     }
     out_shape->push_back(data[i]);
   }
-  if (data[index] == -1) {
+  if (static_cast<int>(data[index]) == -1) {
     (*out_shape)[index] = input_count / size;
   }
 }

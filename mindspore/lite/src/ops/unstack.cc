@@ -39,7 +39,7 @@ int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();
 
-  int axis = GetAxis() < 0 ? GetAxis() + input_shape.size() : GetAxis();
+  auto axis = GetAxis() < 0 ? GetAxis() + input_shape.size() : GetAxis();
   if (axis < 0 || axis >= input_shape.size()) {
     MS_LOG(ERROR) << "Invalid axis " << GetAxis();
     return RET_PARAM_INVALID;

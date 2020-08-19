@@ -37,16 +37,15 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
 
   // check bottom size
   if (proto.bottom_size() != CAFFE_BATCHNORMAL_BOTTOM_SIZE) {
-    // MS_LOGE("Layer %s bottom numbers is error, it must be %d, but is %d", proto.name().c_str(),
-    // CAFFE_BATCHNORMAL_BOTTOM_SIZE, proto.bottom_size());
+    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "bottom numbers is error, it must be " \
+                  << CAFFE_BATCHNORMAL_BOTTOM_SIZE << "but is " << proto.bottom_size();
     return RET_ERROR;
   }
 
   // check top size
   if (proto.top_size() != CAFFE_BATCHNORMAL_TOP_SIZE) {
-    // MS_LOGE("Layer %s top numbers is error, it must be %d, but is %d", \
-               proto.name().c_str(), CAFFE_BATCHNORMAL_TOP_SIZE,
-    // proto.top_size());
+    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "top numbers is error, it must be " \
+                  << CAFFE_BATCHNORMAL_TOP_SIZE << "but is " << proto.top_size();
     return RET_ERROR;
   }
 

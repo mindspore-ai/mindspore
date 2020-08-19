@@ -55,7 +55,7 @@ int Arithmetic::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vec
     ndim_ = input_shape1.size();
     auto fill_dim_num = input_shape1.size() - input_shape0.size();
     int j = 0;
-    for (int i = 0; i < input_shape1.size(); i++) {
+    for (size_t i = 0; i < input_shape1.size(); i++) {
       if (i < fill_dim_num) {
         in_shape0_[i] = 1;
       } else {
@@ -68,7 +68,7 @@ int Arithmetic::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vec
     ndim_ = input_shape0.size();
     auto fill_dim_num = input_shape0.size() - input_shape1.size();
     int j = 0;
-    for (int i = 0; i < input_shape0.size(); i++) {
+    for (size_t i = 0; i < input_shape0.size(); i++) {
       if (i < fill_dim_num) {
         in_shape1_[i] = 1;
       } else {
@@ -77,14 +77,14 @@ int Arithmetic::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vec
       in_shape0_[i] = input_shape0[i];
     }
   } else {
-    for (int i = 0; i < input_shape0.size(); i++) {
+    for (size_t i = 0; i < input_shape0.size(); i++) {
       in_shape1_[i] = input_shape1[i];
       in_shape0_[i] = input_shape0[i];
     }
   }
 
   std::vector<int> output_shape;
-  for (size_t i = 0; i < ndim_; i++) {
+  for (int i = 0; i < ndim_; i++) {
     if (in_shape0_[i] != in_shape1_[i]) {
       if (in_shape0_[i] == 1) {
         out_shape_[i] = in_shape1_[i];

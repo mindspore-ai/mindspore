@@ -67,7 +67,7 @@ int SliceOp::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<
   std::vector<int32_t> slice_begin(GetBegin().begin(), GetBegin().end());
   std::vector<int32_t> slice_size(GetSize().begin(), GetSize().end());
   std::vector<int32_t> output_shape(input_shape.size());
-  for (int i = 0; i < input_shape.size(); ++i) {
+  for (size_t i = 0; i < input_shape.size(); ++i) {
     if (slice_size[i] < 0 && slice_size[i] != -1) {
       MS_LOG(ERROR) << "Invalid size input!size[" << i << "]=" << slice_size[i];
       return RET_PARAM_INVALID;

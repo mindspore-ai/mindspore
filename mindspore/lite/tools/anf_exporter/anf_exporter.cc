@@ -118,7 +118,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     // activation
     auto input_quant_params = primitive->GetInputQuantParams();
     auto node_type = primitive->GetPrimitiveT()->value.type;
-    for (int i = 0; i < input_quant_params.size(); i++) {
+    for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
         MS_LOG(ERROR) << "node: " << dst_node->name << " input has " << input_quant_params.size()
                       << " quant_params; but only " << dst_node->inputIndex.size() << " input";
@@ -375,7 +375,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
 
   if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
-    for (int i = 0; i < tuple->size(); i++) {
+    for (size_t i = 0; i < tuple->size(); i++) {
       auto msTensor = new schema::TensorT();
       msTensor->nodeType = schema::NodeType_Parameter;
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());

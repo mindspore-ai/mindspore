@@ -62,7 +62,7 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     return RET_ERROR;
   }
   int number_split = spilt_prim->numberSplit();
-  if (outputs_.size() != number_split) {
+  if (static_cast<int>(outputs_.size()) != number_split) {
     MS_LOG(ERROR) << "outputs number is not equal to " << number_split;
     return RET_ERROR;
   }
