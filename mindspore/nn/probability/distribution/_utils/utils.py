@@ -45,10 +45,6 @@ def cast_to_tensor(t, hint_type=mstype.float32):
         return t
     t_type = hint_type
     if isinstance(t, Tensor):
-        #check if the Tensor in shape of Tensor(4)
-        if t.dim() == 0:
-            value = t.asnumpy()
-            return Tensor([value], dtype=t_type)
         #convert the type of tensor to dtype
         return Tensor(t.asnumpy(), dtype=t_type)
     if isinstance(t, (list, np.ndarray)):
@@ -56,7 +52,7 @@ def cast_to_tensor(t, hint_type=mstype.float32):
     if isinstance(t, bool):
         raise TypeError(f'Input cannot be Type Bool')
     if isinstance(t, (int, float)):
-        return Tensor([t], dtype=t_type)
+        return Tensor(t, dtype=t_type)
     raise TypeError("Input type is not supported.")
 
 def convert_to_batch(t, batch_shape, required_type):

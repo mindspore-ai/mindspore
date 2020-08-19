@@ -112,6 +112,7 @@ class Uniform(Distribution):
             self._high = high
 
         # ops needed for the class
+        self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
@@ -327,8 +328,16 @@ class Uniform(Distribution):
         if high is None:
             raise_none_error("high")
         broadcast_shape = self.shape(low + high)
+        origin_shape = shape + broadcast_shape
+        if origin_shape == ():
+            sample_shape = (1,)
+        else:
+            sample_shape = origin_shape
         l_zero = self.const(0.0)
         h_one = self.const(1.0)
-        sample_uniform = self.uniform(shape + broadcast_shape, l_zero, h_one, self.seed)
+        sample_uniform = self.uniform(sample_shape, l_zero, h_one, self.seed)
         sample = (high - low) * sample_uniform + low
-        return self.cast(sample, self.dtype)
+        value = self.cast(sample, self.dtype)
+        if origin_shape == ():
+            value = self.squeeze(value)
+        return value
