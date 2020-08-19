@@ -34,6 +34,7 @@
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 #include "minddata/dataset/engine/datasetops/concat_op.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
@@ -261,6 +262,37 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
   ds->children.push_back(shared_from_this());
 
   return ds;
+}
+
+// Function to create a Vocab from dataset
+std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &columns,
+                                           const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
+                                           const std::vector<std::string> &special_tokens, bool special_first) {
+  auto vocab = std::make_shared<Vocab>();
+  auto ds = std::make_shared<BuildVocabDataset>(vocab, columns, freq_range, top_k, special_tokens, special_first);
+
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+
+  ds->children.push_back(shared_from_this());
+
+  // Run tree here to starting building vocab
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  if (iter == nullptr) {
+    MS_LOG(ERROR) << "Fail to run iterator in BuildVocab.";
+    return nullptr;
+  }
+
+  // Finish building vocab by triggering GetNextRow
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  if (vocab == nullptr) {
+    MS_LOG(ERROR) << "Fail to build vocab.";
+    return nullptr;
+  }
+
+  return vocab;
 }
 
 // Function to create a Concat dataset
@@ -1450,10 +1482,49 @@ std::vector<std::shared_ptr<DatasetOp>> BatchDataset::Build() {
 
 bool BatchDataset::ValidateParams() {
   if (batch_size_ <= 0) {
-    MS_LOG(ERROR) << "Batch: Batch size cannot be negative";
+    MS_LOG(ERROR) << "Batch: batch_size should be positive integer, but got: " << batch_size_;
     return false;
   }
 
+  return true;
+}
+
+BuildVocabDataset::BuildVocabDataset(std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
+                                     const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
+                                     const std::vector<std::string> &special_tokens, bool special_first)
+    : vocab_(vocab),
+      columns_(columns),
+      freq_range_(freq_range),
+      top_k_(top_k),
+      special_tokens_(special_tokens),
+      special_first_(special_first) {}
+
+// Function to build BuildVocabDataset
+std::vector<std::shared_ptr<DatasetOp>> BuildVocabDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  std::shared_ptr<BuildVocabOp> build_vocab_op;
+  build_vocab_op = std::make_shared<BuildVocabOp>(vocab_, columns_, freq_range_, top_k_, special_tokens_,
+                                                  special_first_, num_workers_, connector_que_size_);
+  node_ops.push_back(build_vocab_op);
+  return node_ops;
+}
+
+bool BuildVocabDataset::ValidateParams() {
+  if (vocab_ == nullptr) {
+    MS_LOG(ERROR) << "BuildVocab: vocab is null.";
+    return false;
+  }
+  if (top_k_ < 0) {
+    MS_LOG(ERROR) << "BuildVocab: top_k shoule be positive, but got: " << top_k_;
+    return false;
+  }
+  if (freq_range_.first < 0 || freq_range_.second > kDeMaxFreq || freq_range_.first > freq_range_.second) {
+    MS_LOG(ERROR) << "BuildVocab: requency_range [a,b] should be 0 <= a <= b (a,b are inclusive), "
+                  << "but got [" << freq_range_.first << ", " << freq_range_.second << "]";
+    return false;
+  }
   return true;
 }
 
