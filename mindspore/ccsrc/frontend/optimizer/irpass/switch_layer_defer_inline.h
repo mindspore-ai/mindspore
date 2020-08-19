@@ -36,10 +36,9 @@ class SwitchLayerDeferInline : public AnfVisitor {
     auto tuple = dyn_cast<abstract::AbstractTuple>(cnode->inputs()[2]->abstract());
     for (auto elem : tuple->elements()) {
       auto abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(elem);
-      if (abstract == nullptr) {
-        return nullptr;
+      if (abstract != nullptr) {
+        *(abstract->func_graph()->switch_layer_input()) = true;
       }
-      *(abstract->func_graph()->switch_layer_input()) = true;
     }
     return nullptr;
   }
