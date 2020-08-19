@@ -40,13 +40,6 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
                       const mindspore::lite::PrimitiveC *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceInt8CPUKernel() {
-    for (auto i = 0; i < data_buffers_.size(); i++) {
-      int32_t *buffer = data_buffers_[i];
-      if (buffer != nullptr) {
-        free(buffer);
-        buffer = nullptr;
-      }
-    }
     for (auto qm : mean_multipliers_) {
       delete qm;
       qm = nullptr;
@@ -64,7 +57,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   }
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
   int CallReduceUnit(int task_id);
   int ReduceLastAxis(int task_id);
@@ -74,6 +67,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
 
  private:
   int MallocTmpBuffer();
+  void FreeTmpBuffer();
   int CalculateQuantArgs();
 
  private:
