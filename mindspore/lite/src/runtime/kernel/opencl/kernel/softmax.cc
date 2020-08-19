@@ -90,7 +90,8 @@ int SoftmaxOpenCLKernel::Init() {
   std::string program_name = "SoftMax";
   std::string source = softmax_source_fp32;
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
-
+  // framework not set this param yet! just use default.
+  parameter_->axis_ = 1;
   if (in_tensors_[0]->shape().size() == 4 && parameter_->axis_ == 3) {
     // support 4d tensor
     onexone_flag_ = false;
@@ -106,7 +107,10 @@ int SoftmaxOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   runtime_->CreateKernelFromIL(kernel_(), kernel_name);
 #else
-  if (mem_type_ == MEM_TYPE::BUF) {
+  if (!is_image_out_) {
+    out_mem_type_ = OpenCLMemType::BUF;
+  }
+  if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";
     program_name += "_BUF";
   } else {
@@ -119,6 +123,10 @@ int SoftmaxOpenCLKernel::Init() {
 #endif
   ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  if (!is_image_out_) {
+    ori_format_ = schema::Format_NC;
+    out_tensors_[0]->SetFormat(schema::Format_NC);
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return lite::RET_OK;
 }
