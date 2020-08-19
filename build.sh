@@ -392,11 +392,7 @@ build_mindspore()
     if [[ -n "$VERBOSE" ]]; then
       CMAKE_VERBOSE="--verbose"
     fi
-    if [[ "X$ENABLE_ACL" = "Xon" ]]; then
-    cmake --build . ${CMAKE_VERBOSE} -j$THREAD_NUM
-    else
     cmake --build . --target package ${CMAKE_VERBOSE} -j$THREAD_NUM
-    fi
     echo "success to build mindspore project!"
 }
 

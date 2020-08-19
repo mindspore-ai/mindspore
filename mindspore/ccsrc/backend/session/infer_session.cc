@@ -141,13 +141,17 @@ Status ServingTensor2MSTensor(size_t index, const InferTensorBase &out_tensor, t
   }
 
   ms_tensor = std::make_shared<tensor::Tensor>(data_type, shape);
-  if (ms_tensor->Size() != out_tensor.data_size()) {
+  if (out_tensor.data_size() == 0 || ms_tensor->Size() != out_tensor.data_size()) {
     MSI_LOG_ERROR << "input " << std::to_string(index)
                   << " data size not match shape and dtype, calculated required size " << ms_tensor->Size()
                   << ", given " << out_tensor.data_size();
     return INFER_STATUS(INVALID_INPUTS) << "input " << std::to_string(index)
                                         << " data size not match shape and dtype, calculated required size "
                                         << ms_tensor->Size() << ", given " << out_tensor.data_size();
+  }
+  if (out_tensor.data() == nullptr || ms_tensor->data_c() == nullptr) {
+    MSI_LOG_ERROR << "invalid data buffer";
+    return FAILED;
   }
   memcpy_s(ms_tensor->data_c(), ms_tensor->Size(), out_tensor.data(), out_tensor.data_size());
   return SUCCESS;
