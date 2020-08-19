@@ -83,6 +83,9 @@ class Profiler:
         self._output_path = os.path.join(self._output_path, "profiler")
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
+        else:
+            logger.warning("The target dir already exists. "
+                           "There may be some old profiling data, and they will be rewrote in the end.")
 
         if self._device_target and self._device_target == "GPU":
             from mindspore._c_expression import GPUProfiler
