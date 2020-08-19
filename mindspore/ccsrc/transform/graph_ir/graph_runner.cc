@@ -23,6 +23,7 @@
 #include "sys/time.h"
 #include "utils/utils.h"
 #include "./common.h"
+#include "utils/callbacks.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
 #endif

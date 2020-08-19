@@ -34,6 +34,9 @@
 #include "ops/array_ops.h"
 #include "ops/elewise_calculation_ops.h"
 #include "ops/math_ops.h"
+#ifdef ENABLE_GE
+#include "ops/save_ops.h"
+#endif
 
 namespace mindspore {
 namespace transform {

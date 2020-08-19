@@ -53,6 +53,7 @@
 #include "pipeline/jit/pipeline_ge.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/df_graph_manager.h"
+#include "transform/graph_ir/op_adapter_map.h"
 #endif
 
 namespace mindspore {
@@ -1038,7 +1039,7 @@ void ClearResAtexit() {
   opt::python_pass::PyPassManager::GetInstance()->ClearRes();
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
-  transform::DfGraphConvertor::get_adpt_map().clear();
+  transform::OpAdapterMap::get().clear();
 #endif
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
