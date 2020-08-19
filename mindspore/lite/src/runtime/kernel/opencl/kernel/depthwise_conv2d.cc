@@ -201,9 +201,9 @@ kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::t
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
-    MS_LOG(ERROR) << "Init DepthwiseConv2dOpenCLKernel failed!";
+  if (ret != RET_OK) {
     delete kernel;
+    MS_LOG(ERROR) << "Init DepthwiseConv2dOpenCLKernel failed!";
     return nullptr;
   }
   return kernel;
