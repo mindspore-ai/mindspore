@@ -59,16 +59,19 @@ int ConvolutionSWFP16CPUKernel::ProcessFilter() {
 }
 
 int ConvolutionSWFP16CPUKernel::InitWeightBias() {
-  int kernel_h = conv_param_->kernel_h_;
-  int kernel_w = conv_param_->kernel_w_;
-  int in_channel = conv_param_->input_channel_;
-  int out_channel = conv_param_->output_channel_;
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  int kernel_h = filter_tensor->Height();
+  int kernel_w = filter_tensor->Width();
+  int in_channel = filter_tensor->Channel();
+  int out_channel = filter_tensor->Batch();
+  conv_param_->input_channel_ = in_channel;
+  conv_param_->output_channel_ = out_channel;
   int oc4 = UP_DIV(out_channel, C4NUM);
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int pack_weight_size = oc4 * ic4 * C4NUM * C4NUM * kernel_plane;
 
-  // init weight
+  // ========================init weight==================== //
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -81,7 +84,7 @@ int ConvolutionSWFP16CPUKernel::InitWeightBias() {
     return ret;
   }
 
-  // init bias
+  // =======================init bias====================== //
   bias_data_ = malloc(oc4 * C4NUM * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
@@ -101,29 +104,16 @@ int ConvolutionSWFP16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionSWFP16CPUKernel::InitTmpBuffer() {
-  int in_channel = conv_param_->input_channel_;
   int out_channel = conv_param_->output_channel_;
-  int channel_block = UP_DIV(in_channel, C4NUM);
   int oc4 = UP_DIV(out_channel, C4NUM);
 
-  /*=============================nhwc4_input_============================*/
-  size_t nhwc4_input_size = channel_block * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ *
-                            conv_param_->input_w_ * sizeof(float16_t);
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
-
   /*=============================tmp_output_block_============================*/
-  tmp_output_block_ = reinterpret_cast<float16_t *>(malloc(conv_param_->output_batch_ * conv_param_->output_h_ *
-                                                           conv_param_->output_w_ * oc4 * C4NUM * sizeof(float16_t)));
+  tmp_output_block_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(
+    conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc4 * C4NUM * sizeof(float16_t)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_output_block_ failed.";
     return RET_ERROR;
   }
-
   return RET_OK;
 }
 
@@ -142,32 +132,44 @@ int ConvolutionSWFP16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  return ReSize();
-}
-
-int ConvolutionSWFP16CPUKernel::ReSize() {
-  FreeTmpBuffer();
-
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-    nhwc4_input_ = nullptr;
-  }
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init fail!ret: " << ret;
-    return ret;
-  }
-  ret = InitWeightBias();
+  auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
   }
-  ret = InitTmpBuffer();
+  ConfigInputOutput();
+  return ReSize();
+}
+
+int ConvolutionSWFP16CPUKernel::ReSize() {
+  auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
+    MS_LOG(ERROR) << "Resize is invalid.";
+    return ret;
+  }
+
+  FreeTmpBuffer();
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
+
+  ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBase init fail!ret: " << ret;
+    return ret;
+  }
+
+  /*=============================nhwc4_input_============================*/
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ *
+                            conv_param_->input_w_ * sizeof(float16_t);
+  nhwc4_input_ = malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
     return RET_ERROR;
   }
-  ConfigInputOutput();
+  memset(nhwc4_input_, 0, nhwc4_input_size);
 
   // init sliding window param
   slidingWindow_param_ = new SlidingWindowParam;
@@ -202,6 +204,11 @@ int ConvolutionSWFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
     return ret;
   }
+  ret = InitTmpBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init tmp buffer failed.";
+    return RET_ERROR;
+  }
 
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
@@ -212,6 +219,7 @@ int ConvolutionSWFP16CPUKernel::Run() {
   int error_code = LiteBackendParallelLaunch(ConvolutionSWFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv fp16 error error_code[" << error_code << "]";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
 
@@ -224,6 +232,7 @@ int ConvolutionSWFP16CPUKernel::Run() {
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
+  FreeTmpBuffer();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

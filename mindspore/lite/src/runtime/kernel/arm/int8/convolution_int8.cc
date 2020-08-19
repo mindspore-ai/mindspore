@@ -60,12 +60,15 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
 }
 
 int ConvolutionInt8CPUKernel::InitWeightBias() {
-  int kernel_h = conv_param_->kernel_h_;
-  int kernel_w = conv_param_->kernel_w_;
-  int in_channel = conv_param_->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int out_channel = conv_param_->output_channel_;
-  int oc4 = UP_DIV(out_channel, C4NUM);
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+  int kernel_h = filter_tensor->Height();
+  int kernel_w = filter_tensor->Width();
+  conv_param_->input_channel_ = input_channel;
+  conv_param_->output_channel_ = output_channel;
+  int ic4 = UP_DIV(input_channel, C4NUM);
+  int oc4 = UP_DIV(output_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
   int pack_weight_size = oc4 * ic4 * C4NUM * C4NUM * plane_c4 * C4NUM;
@@ -80,8 +83,8 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size);
-  auto *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * out_channel));
-  for (int i = 0; i < out_channel; i++) weight_sum[i] = 0;
+  auto *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * output_channel));
+  for (int i = 0; i < output_channel; i++) weight_sum[i] = 0;
   PackWeightInt8(origin_weight, conv_param_, packed_weight_, weight_sum);
 
   // init bias
@@ -93,42 +96,22 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, oc4 * C4NUM * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, out_channel * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   auto *bias_data = reinterpret_cast<int32_t *>(bias_data_);
   int c4_kernel_plane_size = kernel_plane * ic4 * C4NUM;
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    for (int i = 0; i < out_channel; i++) {
+    for (int i = 0; i < output_channel; i++) {
       bias_data[i] += filter_arg[i].zp_ * input_zp * c4_kernel_plane_size - weight_sum[i] * input_zp;
     }
   } else {
-    for (int i = 0; i < out_channel; i++) {
+    for (int i = 0; i < output_channel; i++) {
       bias_data[i] += filter_arg[0].zp_ * input_zp * c4_kernel_plane_size - weight_sum[i] * input_zp;
     }
   }
   free(weight_sum);
-  return RET_OK;
-}
-
-int ConvolutionInt8CPUKernel::InitTmpBuffer() {
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, tile_num_);
-  int in_channel = conv_param_->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
-  int plane_c4 = UP_DIV(kernel_plane, C4NUM);
-  int unit_size = plane_c4 * C4NUM * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * tile_num_ * unit_size;
-
-  /*=============================packed_input_============================*/
-  packed_input_ = reinterpret_cast<int8_t *>(malloc(conv_param_->input_batch_ * packed_input_size));
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size);
 
   /*=============================input_sum_============================*/
   size_t input_sum_size;
@@ -137,47 +120,45 @@ int ConvolutionInt8CPUKernel::InitTmpBuffer() {
   } else {
     input_sum_size = tile_num_ * thread_count_ * sizeof(int32_t);
   }
-  input_sum_ = reinterpret_cast<int32_t *>(malloc(input_sum_size));
+  input_sum_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(input_sum_size));
   if (input_sum_ == nullptr) {
     MS_LOG(ERROR) << "malloc input_sum_ failed.";
     return RET_ERROR;
   }
   memset(input_sum_, 0, tile_num_ * thread_count_ * sizeof(int32_t));
+  return RET_OK;
+}
 
+int ConvolutionInt8CPUKernel::InitTmpBuffer() {
+  MS_ASSERT(ctx_->allocator != nullptr);
   /*=============================tmp_dst_============================*/
   size_t tmp_dst_size = thread_count_ * tile_num_ * conv_param_->output_channel_ * sizeof(int32_t);
-  tmp_dst_ = reinterpret_cast<int32_t *>(malloc(tmp_dst_size));
+  tmp_dst_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(tmp_dst_size));
   if (tmp_dst_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_ failed.";
     return RET_ERROR;
   }
-  memset(tmp_dst_, 0, tmp_dst_size);
 
   /*=============================tmp_out_============================*/
-  tmp_out_ = reinterpret_cast<int8_t *>(malloc(thread_count_ * tile_num_ * conv_param_->output_channel_));
+  tmp_out_ =
+    reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(thread_count_ * tile_num_ * conv_param_->output_channel_));
   if (tmp_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_ failed.";
     return RET_ERROR;
   }
-
-  /*=============================nhwc4_input_============================*/
-  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
   return RET_OK;
 }
 
 int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
-  int kernel_h = conv_param_->kernel_h_;
-  int kernel_w = conv_param_->kernel_w_;
-  int in_channel = conv_param_->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int out_channel = conv_param_->output_channel_;
-  int oc4 = UP_DIV(out_channel, C4NUM);
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+  int kernel_h = filter_tensor->Height();
+  int kernel_w = filter_tensor->Width();
+  conv_param_->input_channel_ = input_channel;
+  conv_param_->output_channel_ = output_channel;
+  int ic4 = UP_DIV(input_channel, C4NUM);
+  int oc4 = UP_DIV(output_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
   int pack_weight_size = oc4 * ic4 * C4NUM * C4NUM * kernel_plane;
   auto filter_arg = conv_param_->conv_quant_arg_.filter_quant_args_;
@@ -191,8 +172,8 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size);
-  auto *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * out_channel));
-  for (int i = 0; i < out_channel; i++) weight_sum[i] = 0;
+  auto *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * output_channel));
+  for (int i = 0; i < output_channel; i++) weight_sum[i] = 0;
   PackWeightInt8Opt(origin_weight, conv_param_, packed_weight_, weight_sum);
 
   // init bias
@@ -204,41 +185,22 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
   memset(bias_data_, 0, oc4 * C4NUM * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, out_channel * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   auto *bias_data = reinterpret_cast<int32_t *>(bias_data_);
   int c4_kernel_plane_size = kernel_plane * ic4 * C4NUM;
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    for (int i = 0; i < out_channel; i++) {
+    for (int i = 0; i < output_channel; i++) {
       bias_data[i] += filter_arg[i].zp_ * input_zp * c4_kernel_plane_size - weight_sum[i] * input_zp;
     }
   } else {
-    for (int i = 0; i < out_channel; i++) {
+    for (int i = 0; i < output_channel; i++) {
       bias_data[i] += filter_arg[0].zp_ * input_zp * c4_kernel_plane_size - weight_sum[i] * input_zp;
     }
   }
   free(weight_sum);
-  return RET_OK;
-}
-
-int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, tile_num_);
-  int in_channel = conv_param_->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
-  int unit_size = kernel_plane * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * tile_num_ * unit_size;
-
-  /*=============================packed_input_============================*/
-  packed_input_ = reinterpret_cast<int8_t *>(malloc(conv_param_->input_batch_ * packed_input_size));
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size);
 
   /*=============================input_sum_============================*/
   size_t input_sum_size;
@@ -253,31 +215,26 @@ int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
     return RET_ERROR;
   }
   memset(input_sum_, 0, tile_num_ * thread_count_ * sizeof(int32_t));
+  return RET_OK;
+}
 
+int ConvolutionInt8CPUKernel::InitTmpBufferOpt() {
+  MS_ASSERT(ctx_->allocator != nullptr);
   /*=============================tmp_dst_============================*/
   size_t tmp_dst_size = thread_count_ * tile_num_ * conv_param_->output_channel_ * sizeof(int32_t);
-  tmp_dst_ = reinterpret_cast<int32_t *>(malloc(tmp_dst_size));
+  tmp_dst_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(tmp_dst_size));
   if (tmp_dst_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_ failed.";
     return RET_ERROR;
   }
-  memset(tmp_dst_, 0, tmp_dst_size);
 
   /*=============================tmp_out_============================*/
-  tmp_out_ = reinterpret_cast<int8_t *>(malloc(thread_count_ * tile_num_ * conv_param_->output_channel_));
+  tmp_out_ =
+    reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(thread_count_ * tile_num_ * conv_param_->output_channel_));
   if (tmp_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_ failed.";
     return RET_ERROR;
   }
-
-  /*=============================nhwc4_input_============================*/
-  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
   return RET_OK;
 }
 
@@ -296,62 +253,79 @@ int ConvolutionInt8CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  return ReSize();
-}
-
-int ConvolutionInt8CPUKernel::InitOpt() {
-  auto ret = InitWeightBiasOpt();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init weight bias failed.";
-    return RET_ERROR;
-  }
-  // init tmp input, output
-  ret = InitTmpBufferOpt();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionInt8CPUKernel::ReSize() {
-  FreeTmpBuffer();
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
-  }
   // config input output
   ConfigInputOutput();
   CheckSupportOptimize();
-  ret = SetQuantParam();
+  auto ret = SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
     return ret;
   }
   // init for opt
   if (support_optimize_) {
-    ret = InitOpt();
+    ret = InitWeightBiasOpt();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Initialization for optimized int8 conv failed.";
       return RET_ERROR;
     }
-    return RET_OK;
+  } else {
+    // init for situation that not support sdot
+    ret = InitWeightBias();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init weight bias failed.";
+      return RET_ERROR;
+    }
   }
 
-  // init for situation that not support sdot
-  ret = InitWeightBias();
+  return ReSize();
+}
+
+int ConvolutionInt8CPUKernel::ReSize() {
+  auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init weight bias failed.";
+    MS_LOG(ERROR) << "Resize is invalid.";
+    return ret;
+  }
+
+  FreeTmpBuffer();
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
+  if (packed_input_ != nullptr) {
+    free(packed_input_);
+    packed_input_ = nullptr;
+  }
+
+  ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-  // init tmp input, output
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
+  /*=============================nhwc4_input_============================*/
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
+  nhwc4_input_ = malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
     return RET_ERROR;
   }
+  memset(nhwc4_input_, 0, nhwc4_input_size);
+
+  /*=============================packed_input_============================*/
+  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
+  int output_tile_count = UP_DIV(output_count, tile_num_);
+  int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  int plane_c4 = UP_DIV(kernel_plane, C4NUM);
+  int unit_size = plane_c4 * C4NUM * ic4 * C4NUM;
+  int packed_input_size = output_tile_count * tile_num_ * unit_size;
+  packed_input_ = reinterpret_cast<int8_t *>(malloc(conv_param_->input_batch_ * packed_input_size));
+  if (packed_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc packed_input_ failed.";
+    return RET_ERROR;
+  }
+  memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size);
+
   return RET_OK;
 }
 
@@ -369,7 +343,7 @@ int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *mpenv, void *cdata) {
   auto conv = reinterpret_cast<ConvolutionInt8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -385,19 +359,33 @@ int ConvolutionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
+  if (support_optimize_) {
+    ret = InitTmpBufferOpt();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init tmp buffer failed.";
+      return RET_ERROR;
+    }
+  } else {
+    // init tmp input, output
+    ret = InitTmpBuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init tmp buffer failed.";
+      return RET_ERROR;
+    }
+  }
+
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
-  int in_batch = conv_param_->input_batch_;
-  int in_h = conv_param_->input_h_;
-  int in_w = conv_param_->input_w_;
-  int in_channel = conv_param_->input_channel_;
-  convert_func_(ori_input_data, nhwc4_input_, in_batch, in_h * in_w, in_channel);
+  convert_func_(ori_input_data, nhwc4_input_, conv_param_->input_batch_, conv_param_->input_h_ * conv_param_->input_w_,
+                conv_param_->input_channel_);
 
   int error_code = LiteBackendParallelLaunch(ConvolutionInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv int8 error error_code[" << error_code << "]";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
+  FreeTmpBuffer();
   return RET_OK;
 }
 

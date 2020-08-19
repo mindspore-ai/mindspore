@@ -30,7 +30,16 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
                        const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionCPUKernel() override { FreeTmpBuffer(); }
+  ~ConvolutionCPUKernel() override {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+    if (packed_input_ != nullptr) {
+      free(packed_input_);
+      packed_input_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;
@@ -42,17 +51,9 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-      packed_input_ = nullptr;
-    }
     if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
+      ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;
-    }
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
     }
   }
   float *packed_input_ = nullptr;

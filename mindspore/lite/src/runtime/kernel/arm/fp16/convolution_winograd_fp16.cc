@@ -110,10 +110,15 @@ void WinogradFilterTransformFp16(const float16_t *weight_data, Matrix *trans_wei
 }
 
 int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
-  int output_channel = conv_param_->output_channel_;
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  int in_channel = filter_tensor->Channel();
+  int out_channel = filter_tensor->Batch();
+  conv_param_->input_channel_ = in_channel;
+  conv_param_->output_channel_ = out_channel;
+
   int oc_block, oc_block_num;
   oc_block = C8NUM;
-  oc_block_num = UP_DIV(output_channel, C8NUM);
+  oc_block_num = UP_DIV(out_channel, C8NUM);
 
   // init weight
   auto ret = MallocFilterMatrix(oc_block, oc_block_num);
@@ -139,7 +144,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
-    for (int i = 0; i < output_channel; ++i) {
+    for (int i = 0; i < out_channel; ++i) {
       fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
   } else {
@@ -188,25 +193,14 @@ int ConvolutionWinogradFP16CPUKernel::MallocFilterMatrix(int oc_block, int oc_bl
 
 int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   int cal_num = 16;
-  int channel_in = conv_param_->input_channel_;
   int channel_out = conv_param_->output_channel_;
   int output_h = conv_param_->output_h_;
   int output_w = conv_param_->output_w_;
-  int ic8 = UP_DIV(channel_in, C8NUM);
   int oc8 = UP_DIV(channel_out, C8NUM);
-
-  /*=============================trans_input_============================*/
-  size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic8 * C8NUM * sizeof(float16_t);
-  trans_input_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
-  if (trans_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc trans_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(trans_input_, 0, tile_buffer_size);
 
   /*=============================gemm_out_============================*/
   gemm_out_ = reinterpret_cast<float16_t *>(
-    malloc(thread_count_ * cal_num * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float16_t)));
+    ctx_->allocator->Malloc(thread_count_ * cal_num * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float16_t)));
   if (gemm_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc gemm_out_ failed.";
     return RET_ERROR;
@@ -215,36 +209,26 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   /*=============================tmp_out_data_============================*/
   int out_w_block = UP_DIV(output_w, output_unit_);
   int out_h_block = UP_DIV(output_h, output_unit_);
-  tmp_out_data_ = reinterpret_cast<float16_t *>(malloc(conv_param_->output_batch_ * out_w_block * out_h_block *
-                                                       output_unit_ * output_unit_ * oc8 * C8NUM * sizeof(float16_t)));
+  tmp_out_data_ = reinterpret_cast<float16_t *>(
+    ctx_->allocator->Malloc(conv_param_->output_batch_ * out_w_block * out_h_block * output_unit_ * output_unit_ * oc8 *
+                            C8NUM * sizeof(float16_t)));
   if (tmp_out_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_out_data_ failed.";
     return RET_ERROR;
   }
 
   /*=============================tmp_data_============================*/
-  tmp_data_ =
-    reinterpret_cast<float16_t *>(malloc(thread_count_ * C8NUM * input_unit_ * input_unit_ * sizeof(float16_t)));
+  tmp_data_ = reinterpret_cast<float16_t *>(
+    ctx_->allocator->Malloc(thread_count_ * C8NUM * input_unit_ * input_unit_ * sizeof(float16_t)));
   if (tmp_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_data_ failed.";
     return RET_ERROR;
   }
-  memset(tmp_data_, 0, C8NUM * input_unit_ * input_unit_ * sizeof(float16_t));
 
   tmp_buffer_address_list_[0] = trans_input_;
   tmp_buffer_address_list_[1] = gemm_out_;
   tmp_buffer_address_list_[2] = tmp_out_data_;
   tmp_buffer_address_list_[3] = tmp_data_;
-
-  /*=============================nhwc4_input_============================*/
-  size_t nhwc8_input_size =
-    ic8 * C8NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
-  nhwc4_input_ = malloc(nhwc8_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc8_input_size);
   return RET_OK;
 }
 
@@ -270,17 +254,37 @@ int ConvolutionWinogradFP16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+  kernel_unit_ = conv_param_->kernel_h_;
+  input_unit_ = output_unit_ + kernel_unit_ - 1;
+  conv_param_->input_unit_ = input_unit_;
+  conv_param_->output_unit_ = output_unit_;
+
+  auto ret = InitWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init weight bias failed.";
+    return RET_ERROR;
+  }
   return ReSize();
 }
 
 int ConvolutionWinogradFP16CPUKernel::ReSize() {
+  auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Resize is invalid.";
+    return ret;
+  }
+
   FreeTmpBuffer();
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
   }
+  if (trans_input_ != nullptr) {
+    free(trans_input_);
+    trans_input_ = nullptr;
+  }
 
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
@@ -290,17 +294,28 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
 
-  ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init weight bias failed.";
+  int cal_num = 16;
+  int channel_in = conv_param_->input_channel_;
+  int ic8 = UP_DIV(channel_in, C8NUM);
+  /*=============================nhwc4_input_============================*/
+  size_t nhwc8_input_size =
+    ic8 * C8NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
+  nhwc4_input_ = malloc(nhwc8_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
     return RET_ERROR;
   }
-  // malloc tmp buffer
-  ret = InitTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.";
+  memset(nhwc4_input_, 0, nhwc8_input_size);
+
+  /*=============================trans_input_============================*/
+  size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic8 * C8NUM * sizeof(float16_t);
+  trans_input_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
+  if (trans_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc trans_input_ failed.";
     return RET_ERROR;
   }
+  memset(trans_input_, 0, tile_buffer_size);
+
   ret = ConfigInputOutput();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConfigInputOutput failed.";
@@ -339,6 +354,12 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     return ret;
   }
 
+  ret = InitTmpBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init tmp buffer failed.";
+    return RET_ERROR;
+  }
+
   int in_batch = conv_param_->input_batch_;
   int in_h = conv_param_->input_h_;
   int in_w = conv_param_->input_w_;
@@ -348,6 +369,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   int error_code = LiteBackendParallelLaunch(ConvolutionWinogradFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << error_code << "]";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
 
@@ -364,6 +386,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
+  FreeTmpBuffer();
   return RET_OK;
 }
 }  // namespace mindspore::kernel
