@@ -58,7 +58,7 @@ TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {
   ocl_runtime->Init();
 
   MS_LOG(INFO) << "create PoolingParameter";
-  auto param = new PoolingParameter();
+  auto param = new (std::nothrow) PoolingParameter();
   InitAvgPoolingParam(param);
 
   MS_LOG(INFO) << "create Tensors";
@@ -76,18 +76,37 @@ TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {
   };
   auto data_type = kNumberTypeFloat32;
   auto tensorType = schema::NodeType_ValueNode;
-  lite::tensor::Tensor *tensor_in = new lite::tensor::Tensor(data_type, shape_in, schema::Format_NHWC, tensorType);
-  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(data_type, shape_out, schema::Format_NHWC, tensorType);
+  lite::tensor::Tensor *tensor_in =
+    new (std::nothrow) lite::tensor::Tensor(data_type, shape_in, schema::Format_NHWC, tensorType);
+  lite::tensor::Tensor *tensor_out =
+    new (std::nothrow) lite::tensor::Tensor(data_type, shape_out, schema::Format_NHWC, tensorType);
+  if (tensor_in == nullptr) {
+    MS_LOG(ERROR) << "tensor_in null";
+    return;
+  }
+  if (tensor_out == nullptr) {
+    MS_LOG(ERROR) << "tensor_out null";
+    return;
+  }
   std::vector<lite::tensor::Tensor *> inputs{tensor_in};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
 
   MS_LOG(INFO) << "create OpenCL Kernel";
-  auto *pooling_kernel = new kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto *pooling_kernel =
+    new (std::nothrow) kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (pooling_kernel == nullptr) {
+    MS_LOG(ERROR) << "pooling_kernel null";
+    return;
+  }
   pooling_kernel->Init();
   std::vector<kernel::LiteKernel *> kernels{pooling_kernel};
 
   MS_LOG(INFO) << "create SubGraphOpenCLKernel";
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *pGraph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (pGraph == nullptr) {
+    MS_LOG(ERROR) << "pGraph null";
+    return;
+  }
   pGraph->Init();
 
   MS_LOG(INFO) << "initialize data";
