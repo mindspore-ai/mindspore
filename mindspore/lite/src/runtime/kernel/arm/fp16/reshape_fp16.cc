@@ -72,5 +72,5 @@ int ReshapeCPUKernel::Run() {
     context_->allocator->Free(input_ptr);
   }
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 }  // namespace mindspore::kernel

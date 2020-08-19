@@ -36,6 +36,8 @@ class TransposeFp16CPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int TransposeParallel(int task_id);
+  void FreeFp16Buffer();
+  int MallocFp16Buffer();
 
  private:
   int thread_num_;

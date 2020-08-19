@@ -52,7 +52,7 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
 
  private:
   int MallocTmpBuffer();
-  int FreeTmpBuffer();
+  void FreeTmpBuffer();
 };
 }  // namespace mindspore::kernel
 
