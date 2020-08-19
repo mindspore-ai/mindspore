@@ -1,15 +1,15 @@
 set(ANF_SRC
         ${ANF_SRC}
-#core / abstract
+        #core / abstract
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_function.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/analysis_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/param_validator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/dshape.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/utils.cc
-#core / base
+        #core / base
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/base/base_ref.cc
-#core / ir
+        #core / ir
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/anf.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/anf_extends.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/meta_func_graph.cc
@@ -55,6 +55,28 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
         )
 
+if (WIN32)
+    set(LITE_SRC
+            #src
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/tensor.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/model.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/context.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/runtime_api.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/workspace_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/allocator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/executor.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/scheduler.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_kernel.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/ms_tensor_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm/nnacl/pack.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/populate_parameter.cc
+            )
+endif()
+
 file(GLOB_RECURSE OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc)
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -91,12 +113,20 @@ add_subdirectory(parser/onnx)
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
 
+if (WIN32)
+    set(PROTO_LIBRARY mindspore::protobuf)
+else()
+    set(PROTO_LIBRARY protobuf)
+endif()
+
 add_executable(converter_lite
         main.cc
         ${ANF_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
+        ${LITE_SRC}
         )
+
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
         caffe_parser_mid
@@ -106,9 +136,9 @@ target_link_libraries(converter_lite PRIVATE
         graph_pass_mid
         fusion_mid
         quantizer_mid
-        protobuf
         quantizer_mid
         pthread
+        ${PROTO_LIBRARY}
         mindspore-lite
         ${SECUREC_LIBRARY}
         mindspore::json

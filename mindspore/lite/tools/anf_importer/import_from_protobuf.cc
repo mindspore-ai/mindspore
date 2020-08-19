@@ -1230,10 +1230,17 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
   std::unique_ptr<char> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
+#ifdef _WIN32
+  if (_fullpath(onnx_file.get(), model_path.c_str(), 1024) == nullptr) {
+    MS_LOG(ERROR) << "open file failed.";
+    return nullptr;
+  }
+#else
   if (realpath(model_path.c_str(), onnx_file.get()) == nullptr) {
     MS_LOG(ERROR) << "open file failed.";
     return nullptr;
   }
+#endif
   int fd = open(onnx_file.get(), O_RDONLY);
   google::protobuf::io::FileInputStream input(fd);
   google::protobuf::io::CodedInputStream code_input(&input);

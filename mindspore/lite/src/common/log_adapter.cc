@@ -120,7 +120,7 @@ if (IsPrint(log_level_)) {
     __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s",  location_.file_,
                         location_.line_, location_.func_, msg.str().c_str());
 #else
-    printf("%s [%s:%d] %s] %s\n:", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
+    printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
            msg.str().c_str());
 #endif
 }

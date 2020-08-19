@@ -48,7 +48,11 @@ void *WorkspacePool::AllocWorkSpaceMem(size_t size) {
       return alloc.second;
     }
 #else
+#ifdef _WIN32
+    alloc.second = _aligned_malloc(nbytes, kTempAllocaAlignment);
+#else
     alloc.second = memalign(kTempAllocaAlignment, nbytes);
+#endif
 #endif
   } else if (freeList.size() == 1) {  // one element
     alloc = *(freeList.begin());
@@ -63,7 +67,11 @@ void *WorkspacePool::AllocWorkSpaceMem(size_t size) {
         return alloc.second;
       }
 #else
+#ifdef _WIN32
+      alloc.second = _aligned_malloc(nbytes, kTempAllocaAlignment);
+#else
       alloc.second = memalign(kTempAllocaAlignment, nbytes);
+#endif
 #endif
     }
   } else {
@@ -92,7 +100,11 @@ void *WorkspacePool::AllocWorkSpaceMem(size_t size) {
         return alloc.second;
       }
 #else
+#ifdef _WIN32
+      alloc.second = _aligned_malloc(nbytes, kTempAllocaAlignment);
+#else
       alloc.second = memalign(kTempAllocaAlignment, nbytes);
+#endif
 #endif
     }
   }

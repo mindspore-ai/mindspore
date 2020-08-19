@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_OPTIMIZED_KERNEL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_OPTIMIZED_KERNEL_H_
 
+#ifndef _WIN32
 #include <dlfcn.h>
+#endif
 #ifdef __ANDROID__
 #include <asm/hwcap.h>
 #include "nnacl/nnacl_utils.h"
@@ -58,7 +60,9 @@ class OptimizeModule {
     if ((!support_optimize_ops) && (!support_fp16)) {
       return;
     }
+#ifndef _WIN32
     optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
+#endif
     if (optimized_op_handler_ == nullptr) {
       printf("Open optimize shared library failed.\n");
     }
