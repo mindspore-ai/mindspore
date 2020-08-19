@@ -64,16 +64,12 @@ class MS_API Context {
   /// \brief Destructor of MindSpore Lite Context.
   virtual ~Context();
 
-  void InferShapeInterrupt() { infer_shape_interrupt_ = true; }
-
  public:
   bool float16_priority = true; /**< allow priority select float16 kernel */
   DeviceContext device_ctx_{DT_CPU};
   int thread_num_ = 2; /**< thread number config for thread pool */
   std::shared_ptr<Allocator> allocator = nullptr;
   CpuBindMode cpu_bind_mode_ = MID_CPU;
-  bool infer_shape_interrupt_ = false;
-  bool running_ = false;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_CONTEXT_H_

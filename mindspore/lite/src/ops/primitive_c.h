@@ -57,7 +57,7 @@ class PrimitiveC {
 
   void SetInferFlag(bool flag);
 
-  virtual int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_);
+  virtual int InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs);
 
   int Type() const;
 

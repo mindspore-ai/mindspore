@@ -82,9 +82,7 @@ class LiteKernel {
   virtual int Prepare() {
     if (!InferShapeDone()) {
       (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
-      if (need_reinit_) {
-        Init();
-      }
+      ReSize();
     }
 
     auto &outputs = this->out_tensors();
@@ -152,8 +150,6 @@ class LiteKernel {
 
   void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
-  void set_need_reinit() { need_reinit_ = true; }
-
   const mindspore::lite::PrimitiveC *GetPrimitive() const { return primitive_; }
 
  protected:
@@ -170,7 +166,6 @@ class LiteKernel {
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;
-  bool need_reinit_ = false;
   bool is_model_output_ = false;
 };
 
