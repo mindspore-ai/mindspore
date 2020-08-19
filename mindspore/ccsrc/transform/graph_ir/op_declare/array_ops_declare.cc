@@ -87,4 +87,12 @@ ATTR_MAP(ReverseSequence) = {{"seq_dim", ATTR_DESC(seq_dim, AnyTraits<int>())},
                              {"batch_dim", ATTR_DESC(batch_dim, AnyTraits<int>())}};
 OUTPUT_MAP(ReverseSequence) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReverseSequence, kNameReverseSequence, ADPT_DESC(ReverseSequence))
+
+// EditDistance
+INPUT_MAP(EditDistance) = {{1, INPUT_DESC(hypothesis_indices)}, {2, INPUT_DESC(hypothesis_values)},
+                           {3, INPUT_DESC(hypothesis_shape)},   {4, INPUT_DESC(truth_indices)},
+                           {5, INPUT_DESC(truth_values)},       {6, INPUT_DESC(truth_shape)}};
+ATTR_MAP(EditDistance) = {{"normalize", ATTR_DESC(normalize, AnyTraits<bool>())}};
+OUTPUT_MAP(EditDistance) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(EditDistance, kNameEditDistance, ADPT_DESC(EditDistance))
 }  // namespace mindspore::transform
