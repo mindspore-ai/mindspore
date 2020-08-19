@@ -15,6 +15,7 @@
 """Power Bijector"""
 from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
 from .bijector import Bijector
 
 class PowerTransform(Bijector):
@@ -53,6 +54,7 @@ class PowerTransform(Bijector):
         param = dict(locals()) if param is None else param
         super(PowerTransform, self).__init__(name=name, param=param)
         validator.check_value_type('power', power, [int, float], self.name)
+        validator.check_number("power", power, 0, Rel.GE, self.name)
         self._power = power
         self.pow = P.Pow()
         self.exp = P.Exp()
