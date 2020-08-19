@@ -54,11 +54,15 @@ class MultinomialGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(&cflag), sizeof(T)), "cudaMalloc failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMallocHost(&flag, sizeof(T)), "cudaMallocHost failed.");
     CalFloatStatus(input_size_0_ / sizeof(T), input_addr, cflag, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaStreamSynchronize failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(flag, cflag, sizeof(T), cudaMemcpyDeviceToHost), "cudaMemcpyAsync failed.");
     if (*flag > 0) {
       MS_LOG(EXCEPTION) << "Input is invalid (containing NaN, -inf or inf)";
     }
     CheckNonNeg(input_size_0_ / sizeof(T), input_addr, cflag, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaStreamSynchronize failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(flag, cflag, sizeof(T), cudaMemcpyDeviceToHost), "cudaMemcpyAsync failed.");
     if (*flag > 0) {
       MS_LOG(EXCEPTION) << "Input is invalid (input element < 0)";
@@ -68,14 +72,16 @@ class MultinomialGpuKernel : public GpuKernel {
                                "cudaMalloc failed.");
     CumSum(input_addr, cum_sum_input, cum_sum_input, IntToSize(distributions_), IntToSize(categories), 1,
            IntToSize(categories), 1, false, false, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaStreamSynchronize failed.");
     CheckZero(IntToSize(distributions_), IntToSize(categories), cum_sum_input, cflag,
               reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaStreamSynchronize failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(flag, cflag, sizeof(T), cudaMemcpyDeviceToHost), "cudaMemcpyAsync failed.");
     if (*flag > 0) {
       MS_LOG(EXCEPTION) << "Input is invalid (sum <= 0)";
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaStreamSynchronize failed.");
     Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
                 IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
 

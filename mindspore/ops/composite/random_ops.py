@@ -196,7 +196,7 @@ def poisson(shape, mean, seed=0):
     value = random_poisson(shape, mean)
     return value
 
-def multinomial(inputs, num_sample=None, replacement=True, seed=0):
+def multinomial(inputs, num_sample, replacement=True, seed=0):
     r"""
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
     row of tensor input.
@@ -210,7 +210,7 @@ def multinomial(inputs, num_sample=None, replacement=True, seed=0):
 
     Inputs:
         - **input** (Tensor) - the input tensor containing probabilities, must be 1 or 2 dims.
-        - **num_samples** (int) - number of samples to draw, default None.
+        - **num_samples** (int) - number of samples to draw.
         - **replacement** (bool, optional) - whether to draw with replacement or not, default True.
 
     Outputs:
@@ -233,9 +233,7 @@ def multinomial(inputs, num_sample=None, replacement=True, seed=0):
         n_dist = 1
         if len(shape(inputs)) > 1:
             n_dist = shape(inputs)[-2]
-        a = Tensor(0.0, mstype.float32)
-        b = Tensor(1.0, mstype.float32)
-        random_uniform = P.UniformReal(seed=seed)((n_dist * num_sample,), a, b)
+        random_uniform = P.UniformReal(seed=seed)((n_dist * num_sample,))
         if n_dist != 1:
             random_uniform = reshape(random_uniform, (n_dist, num_sample))
         vals = P.RealDiv()(P.Log()(random_uniform), inputs + 1e-6)

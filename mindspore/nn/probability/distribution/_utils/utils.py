@@ -256,16 +256,16 @@ def check_tensor_type(name, inputs, valid_type):
    Check if inputs is proper.
 
    Args:
-       inputs: Tensor to be checked.
        name: inputs name
+       inputs: Tensor to be checked.
 
    Raises:
        ValueError: if inputs is not a proper Tensor.
    """
     if not isinstance(inputs, Tensor):
         raise TypeError(f"{name} should be a Tensor")
-    inputs = P.DType()(inputs)
-    if inputs not in valid_type:
+    input_type = P.DType()(inputs)
+    if input_type not in valid_type:
         raise TypeError(f"{name} dtype is invalid")
 
 def check_type(data_type, value_type, name):
