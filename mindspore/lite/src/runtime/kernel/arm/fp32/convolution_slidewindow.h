@@ -32,7 +32,12 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
                          const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ConvolutionSWCPUKernel() override { FreeTmpBuffer(); }
+  ~ConvolutionSWCPUKernel() override {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;
@@ -44,12 +49,8 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
-    }
     if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
+      ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;
     }
     if (slidingWindow_param_ != nullptr) {

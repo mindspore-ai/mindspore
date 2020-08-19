@@ -143,14 +143,19 @@ int ConvolutionFP16CPUKernel::Init() {
 }
 
 int ConvolutionFP16CPUKernel::ReSize() {
-  FreeTmpBuffer();
+  auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Resize is invalid.";
+    return ret;
+  }
 
+  FreeTmpBuffer();
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
   }
 
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init fail!ret: " << ret;
     return ret;

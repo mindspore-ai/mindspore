@@ -28,7 +28,16 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                              const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                              const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionSWFP16CPUKernel() override { FreeTmpBuffer(); }
+  ~ConvolutionSWFP16CPUKernel() override {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;
@@ -41,16 +50,8 @@ class ConvolutionSWFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-      fp16_weight_ = nullptr;
-    }
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
-    }
     if (tmp_output_block_ != nullptr) {
-      free(tmp_output_block_);
+      ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;
     }
     if (slidingWindow_param_ != nullptr) {

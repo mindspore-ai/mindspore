@@ -33,7 +33,20 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                    const mindspore::lite::PrimitiveC *primitive, int out_unit)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive), output_unit_(out_unit) {}
-  ~ConvolutionWinogradFP16CPUKernel() override { FreeTmpBuffer(); }
+  ~ConvolutionWinogradFP16CPUKernel() override {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+    if (trans_input_ != nullptr) {
+      free(trans_input_);
+      trans_input_ = nullptr;
+    }
+    if (trans_weight_ != nullptr) {
+      delete trans_weight_;
+      trans_weight_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;
@@ -46,29 +59,17 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-      fp16_weight_ = nullptr;
-    }
     if (tmp_data_ != nullptr) {
-      free(tmp_data_);
+      ctx_->allocator->Free(tmp_data_);
       tmp_data_ = nullptr;
     }
-    if (trans_input_ != nullptr) {
-      free(trans_input_);
-      trans_input_ = nullptr;
-    }
     if (gemm_out_ != nullptr) {
-      free(gemm_out_);
+      ctx_->allocator->Free(gemm_out_);
       gemm_out_ = nullptr;
     }
     if (tmp_out_data_ != nullptr) {
-      free(tmp_out_data_);
+      ctx_->allocator->Free(tmp_out_data_);
       tmp_out_data_ = nullptr;
-    }
-    if (trans_weight_ != nullptr) {
-      delete trans_weight_;
-      trans_weight_ = nullptr;
     }
   }
   int kernel_unit_;

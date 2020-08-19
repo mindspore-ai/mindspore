@@ -49,8 +49,11 @@ void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_
 }
 
 int Convolution3x3CPUKernel::InitWeightBias() {
-  auto input_channel = conv_param_->input_channel_;
-  auto output_channel = conv_param_->output_channel_;
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+  conv_param_->input_channel_ = input_channel;
+  conv_param_->output_channel_ = output_channel;
   int iC4 = UP_DIV(input_channel, C4NUM);
   int oC4 = UP_DIV(output_channel, C4NUM);
   int oc_block, oc_block_num;
@@ -91,56 +94,35 @@ int Convolution3x3CPUKernel::InitWeightBias() {
 }
 
 int Convolution3x3CPUKernel::InitTmpBuffer() {
-  int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   const int k_plane = 16;
-
-  /*=============================tile_buffer_============================*/
-  size_t tile_buffer_size = thread_count_ * TILE_NUM * k_plane * iC4 * C4NUM * sizeof(float);
-  tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
-  if (tile_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tile buffer failed.";
-    return RET_ERROR;
-  }
-  memset(tile_buffer_, 0, tile_buffer_size);
+  MS_ASSERT(ctx_->allocator != nullptr);
 
   /*=============================block_unit_buffer_============================*/
   size_t block_unit_buffer_size = thread_count_ * k_plane * C4NUM * sizeof(float);
-  block_unit_buffer_ = reinterpret_cast<float *>(malloc(block_unit_buffer_size));
+  block_unit_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc block_unit_buffer_ failed.";
     return RET_ERROR;
   }
-  memset(block_unit_buffer_, 0, block_unit_buffer_size);
 
   /*=============================tmp_dst_buffer_============================*/
   size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * k_plane * oC4 * C4NUM * sizeof(float);
-  tmp_dst_buffer_ = reinterpret_cast<float *>(malloc(tmp_dst_buffer_size));
+  tmp_dst_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_buffer_ failed.";
     return RET_ERROR;
   }
-  memset(tmp_dst_buffer_, 0, tmp_dst_buffer_size);
-
-  /*=============================nhwc4_input_============================*/
-  size_t nhwc4_input_size =
-    iC4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
 
   /*=============================nc4hw4_out_============================*/
   size_t nc4hw4_out_size =
     oC4 * C4NUM * conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * sizeof(float);
-  nc4hw4_out_ = reinterpret_cast<float *>(malloc(nc4hw4_out_size));
+  nc4hw4_out_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(nc4hw4_out_size));
   if (nc4hw4_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc nc4hw4_out_ failed.";
     return RET_ERROR;
   }
-  memset(nc4hw4_out_, 0, nc4hw4_out_size);
+
   tmp_buffer_address_list_[0] = tile_buffer_;
   tmp_buffer_address_list_[1] = block_unit_buffer_;
   tmp_buffer_address_list_[2] = tmp_dst_buffer_;
@@ -162,28 +144,57 @@ int Convolution3x3CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  return ReSize();
-}
-
-int Convolution3x3CPUKernel::ReSize() {
-  FreeTmpBuffer();
-
-  auto ret = ConvolutionBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.ret: " << ret;
-    return RET_ERROR;
-  }
-  ret = InitWeightBias();
+  auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.ret: " << ret;
     return RET_ERROR;
   }
-  ret = InitTmpBuffer();
+  ConfigInputOutput();
+  return ReSize();
+}
+
+int Convolution3x3CPUKernel::ReSize() {
+  auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init tmp buffer failed.ret: " << ret;
+    MS_LOG(ERROR) << "Resize is invalid.";
+    return ret;
+  }
+
+  FreeTmpBuffer();
+  if (nhwc4_input_ != nullptr) {
+    free(nhwc4_input_);
+    nhwc4_input_ = nullptr;
+  }
+  if (tile_buffer_ != nullptr) {
+    free(tile_buffer_);
+    tile_buffer_ = nullptr;
+  }
+
+  ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBase init failed.ret: " << ret;
     return RET_ERROR;
   }
-  ConfigInputOutput();
+
+  int iC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  /*=============================nhwc4_input_============================*/
+  size_t nhwc4_input_size =
+    iC4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
+  nhwc4_input_ = malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
+    return RET_ERROR;
+  }
+  memset(nhwc4_input_, 0, nhwc4_input_size);
+
+  /*=============================tile_buffer_============================*/
+  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * iC4 * C4NUM * sizeof(float);
+  tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
+  if (tile_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc tile buffer failed.";
+    return RET_ERROR;
+  }
+  memset(tile_buffer_, 0, tile_buffer_size);
   return RET_OK;
 }
 
@@ -214,17 +225,21 @@ int Convolution3x3CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
+
+  auto ret = InitTmpBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init tmp buffer failed.ret: " << ret;
+    return RET_ERROR;
+  }
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
-  int in_batch = conv_param_->input_batch_;
-  int in_h = conv_param_->input_h_;
-  int in_w = conv_param_->input_w_;
-  int in_channel = conv_param_->input_channel_;
-  PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, in_batch, in_h * in_w, in_channel);
+  PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
+                      conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
   int error_code = LiteBackendParallelLaunch(Convolution3x3Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 error error_code[" << error_code << "]";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
 
@@ -241,6 +256,7 @@ int Convolution3x3CPUKernel::Run() {
     PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
                          conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }
+  FreeTmpBuffer();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

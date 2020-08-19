@@ -93,6 +93,18 @@ int ConvolutionBaseCPUKernel::Init() {
   return RET_OK;
 }
 
+int ConvolutionBaseCPUKernel::CheckResizeValid() {
+  // ===============check in channel================= //
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto filter_in_channel = filter_tensor->Channel();
+  int resize_in_channel = in_tensors_.at(kInputIndex)->Channel();
+  if (filter_in_channel != resize_in_channel) {
+    MS_LOG(ERROR) << "Channel of resized input should be equal to in channel of filter.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ConvolutionBaseCPUKernel::CheckLayout(lite::tensor::Tensor *input_tensor) {
   auto data_type = input_tensor->data_type();
   auto input_format = input_tensor->GetFormat();

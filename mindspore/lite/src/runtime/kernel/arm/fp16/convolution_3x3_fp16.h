@@ -30,7 +30,20 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
                               const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~Convolution3x3FP16CPUKernel() override { FreeTmpBuffer(); }
+  ~Convolution3x3FP16CPUKernel() override {
+    if (fp16_weight_ != nullptr) {
+      free(fp16_weight_);
+      fp16_weight_ = nullptr;
+    }
+    if (transformed_filter_addr_ != nullptr) {
+      free(transformed_filter_addr_);
+      transformed_filter_addr_ = nullptr;
+    }
+    if (tile_buffer_ != nullptr) {
+      free(tile_buffer_);
+      tile_buffer_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;
@@ -42,29 +55,16 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (fp16_weight_ != nullptr) {
-      free(fp16_weight_);
-      fp16_weight_ = nullptr;
-    }
-
-    if (transformed_filter_addr_ != nullptr) {
-      free(transformed_filter_addr_);
-      transformed_filter_addr_ = nullptr;
-    }
-    if (tile_buffer_ != nullptr) {
-      free(tile_buffer_);
-      tile_buffer_ = nullptr;
-    }
     if (block_unit_buffer_ != nullptr) {
-      free(block_unit_buffer_);
+      ctx_->allocator->Free(block_unit_buffer_);
       block_unit_buffer_ = nullptr;
     }
     if (tmp_dst_buffer_ != nullptr) {
-      free(tmp_dst_buffer_);
+      ctx_->allocator->Free(tmp_dst_buffer_);
       tmp_dst_buffer_ = nullptr;
     }
     if (tmp_out_ != nullptr) {
-      free(tmp_out_);
+      ctx_->allocator->Free(tmp_out_);
       tmp_out_ = nullptr;
     }
   }
