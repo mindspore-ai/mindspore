@@ -9,8 +9,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}
-        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
-        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-convert-ubuntu'
+        cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || return 1
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
         if [ $? = 0 ]; then
@@ -30,8 +30,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}
-        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
-        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-convert-ubuntu'
+        cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || return 1
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
         if [ $? = 0 ]; then
@@ -51,8 +51,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}
-        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
-        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-convert-ubuntu'
+        cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || return 1
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
         if [ $? = 0 ]; then
@@ -72,8 +72,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}
-        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
-        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-convert-ubuntu'
+        cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || return 1
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1
         if [ $? = 0 ]; then
@@ -93,8 +93,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}
-        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
-        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-convert-ubuntu'
+        cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || return 1
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1
         if [ $? = 0 ]; then
@@ -114,8 +114,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}
-        echo 'cd  '${convertor_path}'/MSLite-*-linux_x86_64'
-        cd ${convertor_path}/MSLite-*-linux_x86_64 || return 1
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-convert-ubuntu'
+        cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || return 1
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --accuracyThreshold=1.5
         if [ $? = 0 ]; then
@@ -241,19 +241,27 @@ while getopts "a:c:m:d:" opt; do
     esac
 done
 
+file_name=$(ls ${arm_path}/*runtime-arm64*.tar.gz)
+IFS="-" read -r -a file_name_array <<< "$file_name"
+version=${file_name_array[2]}
+IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
+process_unit=${suffix[0]}
+
 # Unzip arm
 cd ${arm_path} || exit 1
-tar -zxf MSLite-*-linux_arm64.tar.gz || exit 1
+mkdir mindspore-lite-${version}-runtime-arm64-${process_unit}
+tar -zxf mindspore-lite-${version}-runtime-arm64-${process_unit}.tar.gz -C mindspore-lite-${version}-runtime-arm64-${process_unit} --strip-components 1 || exit 1
 
 # Unzip convertor
 cd ${convertor_path} || exit 1
-tar -zxf MSLite-*-linux_x86_64.tar.gz || exit 1
-cd ${convertor_path}/MSLite-*-linux_x86_64 || exit 1
+mkdir mindspore-lite-${version}-convert-ubuntu
+tar -zxf mindspore-lite-${version}-convert-ubuntu.tar.gz -C mindspore-lite-${version}-convert-ubuntu --strip-components 1 || exit 1
+cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || exit 1
 cp converter/converter_lite ./ || exit 1
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib/:./third_party/protobuf/lib
 
 # Convert the models
-cd ${convertor_path}/MSLite-*-linux_x86_64 || exit 1
+cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || exit 1
 
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
@@ -342,8 +350,8 @@ rm -rf ${basepath}/benchmark_test
 mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
 cd ${benchmark_test_path} || exit 1
-cp -a ${arm_path}/MSLite-*-linux_arm64/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-cp -a ${arm_path}/MSLite-*-linux_arm64/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
 # Copy the MindSpore models:
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1

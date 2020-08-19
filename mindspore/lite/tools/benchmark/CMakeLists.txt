@@ -15,3 +15,6 @@ if (PLATFORM_ARM32 OR PLATFORM_ARM64)
 else()
     target_link_libraries(benchmark mindspore-lite pthread)
 endif()
+
+install(TARGETS benchmark
+        RUNTIME DESTINATION ${MAIN_DIR}/benchmark COMPONENT ${COMPONENT_NAME})
