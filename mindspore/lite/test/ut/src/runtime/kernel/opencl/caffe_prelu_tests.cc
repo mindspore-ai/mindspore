@@ -93,15 +93,29 @@ TEST_F(TestCaffePReluOpenCL, CaffePReluFp32_dim4) {
   std::vector<int> output_shape = {1, 4, 3, 9};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  auto *input_tensor =
+    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "new input tensor error";
+    return;
+  }
   auto *output_tensor = new lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
-  auto *weight_tensor =
-    new lite::tensor::Tensor(data_type, std::vector<int>{input_shape[3]}, schema::Format_NHWC, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "new output_tensor error";
+    delete input_tensor;
+    return;
+  }
+  auto *weight_tensor = new (std::nothrow)
+    lite::tensor::Tensor(data_type, std::vector<int>{input_shape[3]}, schema::Format_NHWC, tensor_type);
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "new weight_tensor error";
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+
   std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
-  std::cout << input_tensor->ElementsNum() << std::endl;
-  std::cout << input_tensor->ElementsC4Num() << std::endl;
-  // freamework to do!!! allocate memory by hand
   inputs[0]->MallocData(allocator);
   inputs[1]->MallocData(allocator);
   std::cout << input_tensor->Size() << std::endl;
@@ -113,17 +127,33 @@ TEST_F(TestCaffePReluOpenCL, CaffePReluFp32_dim4) {
   MS_LOG(INFO) << "CaffePRelu==================weight data================";
   printf_tensor_caffeprelu(inputs[1], weight_tensor->ElementsNum());
 
-  auto param = new CaffePReluParameter();
+  auto param = new (std::nothrow) CaffePReluParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new param error!";
+    delete input_tensor;
+    delete output_tensor;
+    delete weight_tensor;
+    return;
+  }
   param->channel_num_ = input_shape[3];
   auto *caffeprelu_kernel =
     new (std::nothrow) kernel::CaffePReluOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (caffeprelu_kernel == nullptr) {
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete weight_tensor;
     MS_LOG(ERROR) << "Create caffe prelu kernel error.";
     return;
   }
 
   auto ret = caffeprelu_kernel->Init();
   if (ret != RET_OK) {
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete weight_tensor;
+    delete caffeprelu_kernel;
     MS_LOG(ERROR) << "caffeprelu_kernel init error.";
     return;
   }
@@ -132,24 +162,42 @@ TEST_F(TestCaffePReluOpenCL, CaffePReluFp32_dim4) {
   std::vector<kernel::LiteKernel *> kernels{caffeprelu_kernel};
   auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel({input_tensor}, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete weight_tensor;
+    delete caffeprelu_kernel;
     MS_LOG(ERROR) << "Create sub_graph kernel error.";
     return;
   }
   ret = sub_graph->Init();
   if (ret != RET_OK) {
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete weight_tensor;
+    delete caffeprelu_kernel;
+    delete sub_graph;
     MS_LOG(ERROR) << "sub_graph init error.";
     return;
   }
   MS_LOG(INFO) << "Sub graph begin running!";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
+    delete input_tensor;
+    delete output_tensor;
+    delete weight_tensor;
+    delete sub_graph;
     MS_LOG(ERROR) << "sub_graph run error.";
     return;
   }
 
   MS_LOG(INFO) << "CaffePRelu==================output data================";
   printf_tensor_caffeprelu(outputs[0], output_tensor->ElementsC4Num());
-  std::cout << "output date size:" << output_tensor->Size() << std::endl;
   CompareOutCaffePRelu(output_tensor, standard_answer_file);
+  delete input_tensor;
+  delete output_tensor;
+  delete weight_tensor;
+  delete sub_graph;
 }
 }  // namespace mindspore

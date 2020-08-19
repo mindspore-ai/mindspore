@@ -175,6 +175,8 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::T
   }
   if (inputs[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported multi-batch.";
+    delete kernel;
+    return nullptr;
   }
   auto ret = kernel->Init();
   if (0 != ret) {

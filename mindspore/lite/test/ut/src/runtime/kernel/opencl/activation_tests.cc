@@ -88,11 +88,14 @@ kernel::ActivationOpenClKernel *create_kernel(lite::opencl::OpenCLAllocator *all
   auto *kernel =
     new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (kernel == nullptr) {
+    delete param;
     MS_LOG(ERROR) << "Kernel:" << test_name << " create fail.";
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
+    delete param;
+    delete kernel;
     MS_LOG(ERROR) << "Init " << test_name << " fail.";
     return nullptr;
   }
@@ -110,18 +113,22 @@ int RunSubGraphOpenCLKernel(const std::vector<lite::tensor::Tensor *> &inputs,
   std::vector<kernel::LiteKernel *> kernels{kernel};
   auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
+    delete kernel;
     MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
     return RET_ERROR;
   }
   MS_LOG(INFO) << "Initialize sub_graph.";
   auto ret = sub_graph->Init();
   if (ret != RET_OK) {
+    delete kernel;
+    delete sub_graph;
     MS_LOG(ERROR) << "Init sub_graph error.";
     return RET_ERROR;
   }
   MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
   ret = sub_graph->Run();
   if (ret != RET_OK) {
+    delete sub_graph;
     MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
     return RET_ERROR;
   }
@@ -130,7 +137,7 @@ int RunSubGraphOpenCLKernel(const std::vector<lite::tensor::Tensor *> &inputs,
 }
 
 TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
-  MS_LOG(INFO) << "Begin test:";
+  MS_LOG(INFO) << "Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
@@ -140,11 +147,21 @@ TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
 
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
-  auto *output_tensor = new lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+  auto *input_tensor =
+    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "new input tensor error!";
+    return;
+  }
+  auto *output_tensor =
+    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "new output tensor error!";
+    delete input_tensor;
+    return;
+  }
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
-  // freamework to do!!! allocate memory by hand
   inputs[0]->MallocData(allocator);
 
   std::map<std::string, int> Test_Activation_Type;
@@ -175,13 +192,11 @@ TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
     MS_LOG(INFO) << "==================output data================";
     printf_tensor(outputs[0]);
     CompareRes(output_tensor, Test_Res_File[it->first]);
-    delete kernel;
     it++;
   }
 
   delete input_tensor;
   delete output_tensor;
   lite::opencl::OpenCLRuntime::DeleteInstance();
-  return;
 }
 }  // namespace mindspore
