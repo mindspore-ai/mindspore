@@ -62,7 +62,7 @@ int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   int h = shapex[1];
   int w = shapex[2];
   int c = shapex[3];
-  im_dst_x = UP_DIV(w * c, C4NUM);
+  im_dst_x = w * UP_DIV(c, C4NUM);
   im_dst_y = h;
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;

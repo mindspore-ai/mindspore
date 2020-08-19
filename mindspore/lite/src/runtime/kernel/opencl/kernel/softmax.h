@@ -41,17 +41,17 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
   int InitGlobalSize();
   int SetWorkGroupSize1x1();
   int SetWorkGroupSize();
-    std::vector<float> GetMaskForLastChannel(int channels);
+  std::vector<float> GetMaskForLastChannel(int channels);
 
  private:
   cl::Kernel kernel_;
   SoftmaxParameter *parameter_;
   lite::opencl::OpenCLRuntime *runtime_;
-  enum class MEM_TYPE { BUF, IMG } mem_type_{MEM_TYPE::IMG};
 
   bool onexone_flag_{false};
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;
+  bool is_image_out_{false};
 };
 
 }  // namespace mindspore::kernel
