@@ -39,6 +39,7 @@ using std::shared_ptr;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
+using CNodeKey = void *;
 const uint32_t kInvalidStreamId = UINT32_MAX;
 const uint32_t kInvalidEventId = UINT32_MAX;
 class AscendResourceMng {
@@ -108,8 +109,6 @@ class AscendStreamAssign {
   void AssignStream(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetHcomStreams(std::vector<uint32_t> *streams);
   void GetWaitStreams(vector<uint32_t> *wait_active_stream_list);
-  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
-  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   const std::vector<std::vector<uint32_t>> &get_stream_group() const { return stream_groups_; }
   const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
 
@@ -117,6 +116,8 @@ class AscendStreamAssign {
   AscendStreamAssign() = default;
   ~AscendStreamAssign() = default;
   void Reset();
+  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
+  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   void CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -130,6 +131,7 @@ class AscendStreamAssign {
   void UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
                           vector<CNodePtr> *orders);
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -141,6 +143,10 @@ class AscendStreamAssign {
   void GetProcessedStream(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetNeedActiveStreams(const NotNull<KernelGraphPtr> &graph_ptr);
   void ReorderIndependentOrders(const NotNull<KernelGraphPtr> &graph_ptr);
+  uint32_t GetMaxIndexTarget(const NotNull<KernelGraphPtr> &graph_ptr);
+  uint32_t GetIndexByKey(const NotNull<KernelGraphPtr> &graph_ptr, const CNodeKey &key);
+  uint32_t GetIndependentStreamSwitchStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
+  void GetIndependentMaxTarget(const NotNull<KernelGraphPtr> &graph_ptr);
 
   bool IsTaskSink();
   bool IsHcom(const CNodePtr &cur_cnode_ptr);
@@ -171,6 +177,7 @@ class AscendStreamAssign {
   std::map<uint32_t, uint32_t> common_stream_map_{};
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
+  std::set<CNodeKey> independent_targets_;
 
   // attr for memory copy reuse
   std::map<uint32_t, std::vector<uint32_t>> stream_relations_{};

@@ -103,6 +103,19 @@ CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::Kern
   return recv_node_ptr;
 }
 
+bool KernelAdjust::ExitIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  const auto &exe_orders = kernel_graph_ptr->execution_order();
+  for (const auto &node : exe_orders) {
+    if (AnfAlgo::IsIndependentNode(node)) {
+      MS_LOG(INFO) << "graph exit independent node";
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
   resource_manager.ResetResource();
@@ -117,10 +130,10 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
 
   std::vector<AnfNodePtr> *mute_inputs = kernel_graph_ptr->MutableInputs();
   MS_EXCEPTION_IF_NULL(mute_inputs);
-  mute_inputs->push_back(switch_loop_input[kLoopCountParamName]);
+  mute_inputs->push_back(switch_loop_input[kCurLoopCountParamName]);
+  mute_inputs->push_back(switch_loop_input[kNextLoopCountParamName]);
   mute_inputs->push_back(switch_loop_input[kEpochParamName]);
   mute_inputs->push_back(switch_loop_input[kIterLoopParamName]);
-  mute_inputs->push_back(switch_loop_input[kZeroParamName]);
   mute_inputs->push_back(switch_loop_input[kOneParamName]);
   for (const auto &input : kernel_graph_ptr->inputs()) {
     MS_EXCEPTION_IF_NULL(input);
@@ -145,7 +158,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
 
   // getnext loop process
   // getnext loop stream switch op
-  CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
+  CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kGetNextStreamSwitch);
   MS_EXCEPTION_IF_NULL(getnext_switch_app);
   uint32_t getnext_switch_stream_id = resource_manager.ApplyNewStream();
   AnfAlgo::SetStreamId(getnext_switch_stream_id, getnext_switch_app.get());
@@ -165,7 +178,9 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   }
 
   // update getnext loop stream switch true_branch_stream attr
+  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), getnext_switch_app);
   AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(getnext_stream_id), getnext_switch_app);
+  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kGetNextStreamSwitch), getnext_switch_app);
 
   // getnext loop fpbp start send
   uint32_t fpbp_start_event_id = resource_manager.ApplyNewEvent();
@@ -182,7 +197,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
 
     // End Of Sequence loop process
     // eos loop stream switch
-    CNodePtr eos_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
+    CNodePtr eos_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kEosStreamSwitch);
     MS_EXCEPTION_IF_NULL(eos_switch_app);
     uint32_t eos_switch_stream_id = resource_manager.ApplyNewStream();
     AnfAlgo::SetStreamId(eos_switch_stream_id, eos_switch_app.get());
@@ -197,6 +212,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
 
     // update eos loop stream switch true_branch_stream attr
     AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(eos_stream_id), eos_switch_app);
+    AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kEosStreamSwitch), eos_switch_app);
 
     // EndOfSequence op
     CNodePtr end_of_sequence_op = CreateEndOfSequenceOP(kernel_graph_ptr, getnext_cnode);
@@ -214,13 +230,27 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
     fpbp_active_streams.push_back(eos_switch_stream_id);
   }
 
+  bool exit_independent = ExitIndependent(kernel_graph_ptr);
+  if (exit_independent) {
+    // Independet parallel
+    CNodePtr independent_switch_app =
+      CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kIndependentStreamSwitch);
+    MS_EXCEPTION_IF_NULL(independent_switch_app);
+    uint32_t independent_switch_stream_id = resource_manager.ApplyNewStream();
+    AnfAlgo::SetStreamId(independent_switch_stream_id, independent_switch_app.get());
+    AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), independent_switch_app);
+    AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kIndependentStreamSwitch), independent_switch_app);
+    exec_order.push_back(independent_switch_app);
+  }
+
   // fpbp loop process
   // fpbp loop stream switch
-  CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input);
+  CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kFpBpStreamSwitch);
   MS_EXCEPTION_IF_NULL(fpbp_switch_app);
   uint32_t fpbp_switch_stream_id = resource_manager.ApplyNewStream();
   AnfAlgo::SetStreamId(fpbp_switch_stream_id, fpbp_switch_app.get());
   AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
+
   exec_order.push_back(fpbp_switch_app);
 
   // fpbp loop fpbp start recv
@@ -231,9 +261,9 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
 
   // update fpbp loop stream switch true_branch_stream attr
   AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(fpbp_stream_id), fpbp_switch_app);
-
-  // fpbp loop AssignAdd
-  CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input);
+  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kFpBpStreamSwitch), fpbp_switch_app);
+  // next loop AssignAdd
+  CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, false);
   MS_EXCEPTION_IF_NULL(assign_add_one);
   AnfAlgo::SetStreamId(fpbp_stream_id, assign_add_one.get());
   exec_order.push_back(assign_add_one);
@@ -271,6 +301,11 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   // fpbp loop other ops
   (void)std::copy(other_list.begin(), other_list.end(), std::back_inserter(exec_order));
 
+  // current assign add op
+  CNodePtr cur_assign_add = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, true);
+  MS_EXCEPTION_IF_NULL(cur_assign_add);
+  exec_order.push_back(cur_assign_add);
+
   // stream active to activate fpbp loop and eos loop
   CNodePtr fpbp_active_app = CreateStreamActiveOp(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(fpbp_active_app);
@@ -293,25 +328,25 @@ void KernelAdjust::CreateSwitchOpParameters(const std::shared_ptr<session::Kerne
     MS_LOG(EXCEPTION) << "create abstract before insert switch op failed!";
   }
 
-  ParameterPtr loop_count = std::make_shared<Parameter>(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(loop_count);
-  loop_count->set_name(kLoopCountParamName);
-  loop_count->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr loop_count_new = kernel_graph_ptr->NewParameter(loop_count);
+  ParameterPtr cur_loop_count = std::make_shared<Parameter>(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(cur_loop_count);
+  cur_loop_count->set_name(kCurLoopCountParamName);
+  cur_loop_count->set_abstract(paremeter_abstract_ptr);
+  ParameterPtr loop_count_cur = kernel_graph_ptr->NewParameter(cur_loop_count);
+  (*switch_loop_input)[kCurLoopCountParamName] = loop_count_cur;
 
-  (*switch_loop_input)[kLoopCountParamName] = loop_count_new;
+  ParameterPtr next_loop_count = std::make_shared<Parameter>(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(next_loop_count);
+  next_loop_count->set_name(kNextLoopCountParamName);
+  next_loop_count->set_abstract(paremeter_abstract_ptr);
+  ParameterPtr loop_count_next = kernel_graph_ptr->NewParameter(next_loop_count);
+  (*switch_loop_input)[kNextLoopCountParamName] = loop_count_next;
 
   ParameterPtr iter_loop = std::make_shared<Parameter>(kernel_graph_ptr);
   iter_loop->set_name(kIterLoopParamName);
   iter_loop->set_abstract(paremeter_abstract_ptr);
   ParameterPtr iter_loop_new = kernel_graph_ptr->NewParameter(iter_loop);
   (*switch_loop_input)[kIterLoopParamName] = iter_loop_new;
-
-  ParameterPtr zero = std::make_shared<Parameter>(kernel_graph_ptr);
-  zero->set_name(kZeroParamName);
-  zero->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr zero_new = kernel_graph_ptr->NewParameter(zero);
-  (*switch_loop_input)[kZeroParamName] = zero_new;
 
   ParameterPtr one = std::make_shared<Parameter>(kernel_graph_ptr);
   one->set_name(kOneParamName);
@@ -340,14 +375,22 @@ kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBui
 }
 
 CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                            const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+                                            const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                            StreamSwitchKind kind) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
     {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
   auto typeNone_abstract = std::make_shared<abstract::AbstractNone>();
   auto stream_switch = std::make_shared<Primitive>(kStreamSwitchOpName);
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(stream_switch));
-  inputs.push_back(switch_loop_input.at(kLoopCountParamName));
+  if (kind == kFpBpStreamSwitch || kind == kEosStreamSwitch) {
+    inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
+  } else if (kind == kGetNextStreamSwitch || kind == kIndependentStreamSwitch) {
+    inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
+  } else {
+    MS_LOG(ERROR) << "unknown stream switch kind";
+  }
+
   inputs.push_back(switch_loop_input.at(kIterLoopParamName));
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   CNodePtr stream_switch_app = kernel_graph_ptr->NewCNode(inputs);
@@ -430,9 +473,9 @@ CNodePtr KernelAdjust::CreateEndOfSequenceOP(const std::shared_ptr<session::Kern
   return end_of_sequence_node;
 }
 
-CNodePtr KernelAdjust::CreateStreamAssignAddnOP(
-  const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                                bool cur_loop) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
     {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
@@ -442,7 +485,12 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(
   auto assign_add = std::make_shared<Primitive>(kAssignAddOpName);
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(assign_add));
-  inputs.push_back(switch_loop_input.at(kLoopCountParamName));
+  if (cur_loop) {
+    inputs.push_back(switch_loop_input.at(kCurLoopCountParamName));
+  } else {
+    inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
+  }
+
   inputs.push_back(switch_loop_input.at(kOneParamName));
   CNodePtr assign_add_one = kernel_graph_ptr->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(assign_add_one);
@@ -454,8 +502,8 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(
   AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_add_one);
   AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_add_one);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
-  MS_EXCEPTION_IF_NULL(switch_loop_input.at(kLoopCountParamName));
-  assign_add_one->set_abstract(switch_loop_input.at(kLoopCountParamName)->abstract());
+  MS_EXCEPTION_IF_NULL(switch_loop_input.at(kCurLoopCountParamName));
+  assign_add_one->set_abstract(switch_loop_input.at(kCurLoopCountParamName)->abstract());
   return assign_add_one;
 }
 
@@ -510,14 +558,23 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
 void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   MS_LOG(INFO) << "---------------- LoadSwitchInputs---";
   MS_EXCEPTION_IF_NULL(inputs);
+  // current loop count
   std::vector<int> shp = {1};
-  tensor::TensorPtr loop_count_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(loop_count_tensor);
+  tensor::TensorPtr cur_loop_count = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(cur_loop_count);
   int32_t *val = nullptr;
-  val = static_cast<int32_t *>(loop_count_tensor->data_c());
+  val = static_cast<int32_t *>(cur_loop_count->data_c());
   MS_EXCEPTION_IF_NULL(val);
   *val = 0;
-  inputs->push_back(loop_count_tensor);
+  inputs->push_back(cur_loop_count);
+
+  // next loop count
+  tensor::TensorPtr next_loop_count = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(next_loop_count);
+  val = static_cast<int32_t *>(next_loop_count->data_c());
+  MS_EXCEPTION_IF_NULL(val);
+  *val = 0;
+  inputs->push_back(next_loop_count);
 
   // Epoch in device
   tensor::TensorPtr epoch_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
@@ -527,6 +584,7 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   *val = 0;
   inputs->push_back(epoch_tensor);
 
+  // total loop count per iter
   tensor::TensorPtr iter_loop_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(iter_loop_tensor);
   val = static_cast<int32_t *>(iter_loop_tensor->data_c());
@@ -534,13 +592,6 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   *val = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
   MS_LOG(INFO) << "iter_loop_tensor = " << *val;
   inputs->push_back(iter_loop_tensor);
-
-  tensor::TensorPtr zero_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(zero_tensor);
-  val = static_cast<int32_t *>(zero_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  *val = 0;
-  inputs->push_back(zero_tensor);
 
   tensor::TensorPtr one_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(one_tensor);

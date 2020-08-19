@@ -576,6 +576,14 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
     MS_LOG(INFO) << "GetNext disable mem_reuse";
     type = kDynamicMem;
   }
+
+  if (node->isa<CNode>()) {
+    bool independent = AnfAlgo::IsIndependentNode(node->cast<CNodePtr>());
+    if (independent && type == kReuseDynamicMem) {
+      MS_LOG(INFO) << "Independent disable mem_reuse";
+      type = kDynamicMem;
+    }
+  }
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
