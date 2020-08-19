@@ -26,17 +26,21 @@ class TopKInt8CPUKernel : public LiteKernel {
   explicit TopKInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                              const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                              const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+        TopkParameter *param = reinterpret_cast<TopkParameter *>(op_parameter_);
+        param->topk_node_list_ = nullptr;
+      }
   ~TopKInt8CPUKernel() override {
     TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-    free(parameter->topk_node_list_);
+    if (parameter->topk_node_list_ != nullptr) {
+      free(parameter->topk_node_list_);
+      parameter->topk_node_list_ = nullptr;
+    }
   }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
 };
 }  // namespace mindspore::kernel
 

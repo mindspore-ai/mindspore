@@ -25,20 +25,29 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-MatmulCPUKernel::~MatmulCPUKernel() {
-  ctx_->allocator->Free(a_c8_ptr_);
-  ctx_->allocator->Free(b_r8_ptr_);
-  ctx_->allocator->Free(c_r8x8_ptr_);
-  ctx_->allocator->Free(bias_ptr_);
+MatmulCPUKernel::~MatmulCPUKernel() { FreeTmpBuffer(); }
+
+void MatmulCPUKernel::FreeTmpBuffer() {
+  if (a_c8_ptr_ != nullptr) {
+    ctx_->allocator->Free(a_c8_ptr_);
+    a_c8_ptr_ = nullptr;
+  }
+  if (b_r8_ptr_ != nullptr) {
+    ctx_->allocator->Free(b_r8_ptr_);
+    b_r8_ptr_ = nullptr;
+  }
+  if (c_r8x8_ptr_ != nullptr) {
+    ctx_->allocator->Free(c_r8x8_ptr_);
+    c_r8x8_ptr_ = nullptr;
+  }
+  if (bias_ptr_ != nullptr) {
+    ctx_->allocator->Free(bias_ptr_);
+    bias_ptr_ = nullptr;
+  }
 }
 
-int MatmulCPUKernel::ReSize() { return RET_OK; }
-
-int MatmulCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
+int MatmulCPUKernel::ReSize() {
+  FreeTmpBuffer();
   int batch = 1;
   auto a_shape = in_tensors_[0]->shape();
   auto c_shape = out_tensors_[0]->shape();
@@ -63,17 +72,20 @@ int MatmulCPUKernel::Init() {
   thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, 8), thread_count_);
 
   a_c8_ptr_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(params_->row_8_ * params_->deep_ * sizeof(float)));
-  if (!a_c8_ptr_) {
+  if (a_c8_ptr_ == nullptr) {
+    FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
   memset(a_c8_ptr_, 0, params_->row_8_ * params_->deep_ * sizeof(float));
   b_r8_ptr_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(params_->col_8_ * params_->deep_ * sizeof(float)));
-  if (!b_r8_ptr_) {
+  if (b_r8_ptr_ == nullptr) {
+    FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
   memset(b_r8_ptr_, 0, params_->col_8_ * params_->deep_ * sizeof(float));
   c_r8x8_ptr_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(params_->row_8_ * params_->col_8_ * sizeof(float)));
-  if (!c_r8x8_ptr_) {
+  if (c_r8x8_ptr_ == nullptr) {
+    FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
   memset(c_r8x8_ptr_, 0, params_->row_8_ * params_->col_8_ * sizeof(float));
@@ -85,6 +97,10 @@ int MatmulCPUKernel::Init() {
 
   if (in_tensors_.size() == 3) {
     bias_ptr_ = reinterpret_cast<float *>(malloc(params_->col_8_ * sizeof(float)));
+    if (bias_ptr_ == nullptr) {
+      FreeTmpBuffer();
+      return RET_MEMORY_FAILED;
+    }
     memset(bias_ptr_, 0, params_->col_8_ * sizeof(float));
     memcpy(bias_ptr_, in_tensors_[2]->Data(), params_->col_ * sizeof(float));
   } else {
@@ -126,6 +142,13 @@ void MatmulCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
     RowMajor2Row8Major(src_ptr, dst_ptr, params_->deep_, params_->col_);
   }
   return;
+}
+
+int MatmulCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int MatmulCPUKernel::RunImpl(int task_id) {

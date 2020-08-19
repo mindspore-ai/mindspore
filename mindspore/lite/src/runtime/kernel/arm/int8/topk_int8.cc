@@ -25,11 +25,18 @@ using mindspore::schema::PrimitiveType_TopK;
 
 namespace mindspore::kernel {
 int TopKInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+int TopKInt8CPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  if (parameter->topk_node_list_ != nullptr) {
+    free(parameter->topk_node_list_);
+    parameter->topk_node_list_ = nullptr;
+  }
   lite::tensor::Tensor *input = in_tensors_.at(0);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
@@ -44,8 +51,6 @@ int TopKInt8CPUKernel::Init() {
   }
   return RET_OK;
 }
-
-int TopKInt8CPUKernel::ReSize() { return RET_OK; }
 
 int TopKInt8CPUKernel::Run() {
   auto ret = Prepare();
@@ -65,7 +70,11 @@ kernel::LiteKernel *CpuTopKInt8KernelCreator(const std::vector<lite::tensor::Ten
                                              const std::vector<lite::tensor::Tensor *> &outputs, OpParameter *parameter,
                                              const lite::Context *ctx, const KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(parameter != nullptr);
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "input parameter is nullptr!";
+    return nullptr;
+  }
+
   TopKInt8CPUKernel *kernel = new (std::nothrow) TopKInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new TopKInt8CPUKernel fail!";

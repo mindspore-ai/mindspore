@@ -32,7 +32,7 @@ class ReduceBaseCPUKernel : public LiteKernel {
   virtual ~ReduceBaseCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
 
  private:
   int CheckInputsOutputs();

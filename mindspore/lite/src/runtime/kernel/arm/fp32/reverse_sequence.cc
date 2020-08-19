@@ -24,10 +24,34 @@ using mindspore::schema::PrimitiveType_ReverseSequence;
 
 namespace mindspore::kernel {
 int ReverseSequenceCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
+  if (!InferShapeDone()) {
     return RET_OK;
   }
+  return ReSize();
+}
+
+void ReverseSequenceCPUKernel::ConvertAxisToPositive(const std::vector<int> shape, int *axis) {
+  if (axis != nullptr && *axis < 0) {
+    *axis += shape.size();
+  }
+}
+
+int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int axis) {
+  int count = 1;
+  for (int i = 0; i < axis; ++i) {
+    count *= shape[i];
+  }
+  return count;
+}
+int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) {
+  int count = 1;
+  for (int i = axis + 1; i < shape.size(); ++i) {
+    count *= shape[i];
+  }
+  return count;
+}
+
+int ReverseSequenceCPUKernel::ReSize() {
   auto input0 = in_tensors_.at(0);
   auto input1 = in_tensors_.at(1);
   auto output = out_tensors_.at(0);
@@ -64,34 +88,11 @@ int ReverseSequenceCPUKernel::Init() {
   return RET_OK;
 }
 
-void ReverseSequenceCPUKernel::ConvertAxisToPositive(const std::vector<int> shape, int *axis) {
-  if (axis != nullptr && *axis < 0) {
-    *axis += shape.size();
-  }
-}
-
-int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int axis) {
-  int count = 1;
-  for (int i = 0; i < axis; ++i) {
-    count *= shape[i];
-  }
-  return count;
-}
-int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) {
-  int count = 1;
-  for (int i = axis + 1; i < shape.size(); ++i) {
-    count *= shape[i];
-  }
-  return count;
-}
-
-int ReverseSequenceCPUKernel::ReSize() { return RET_OK; }
-
 int ReverseSequenceCPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
   }
   float *input0 = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
   int *input1 = reinterpret_cast<int *>(in_tensors_.at(1)->Data());

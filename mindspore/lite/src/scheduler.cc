@@ -82,6 +82,7 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
   MS_EXCEPTION_IF_NULL(tensors);
   auto meta_graph = model->GetMetaGraph();
   MS_EXCEPTION_IF_NULL(meta_graph);
+  bool infer_shape_interrupt = false;
   uint32_t kernelCount = meta_graph->nodes()->size();
   for (uint32_t i = 0; i < kernelCount; i++) {
     auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
@@ -101,27 +102,18 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
                     << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
       return RET_ERROR;
     }
-    if (!context_->infer_shape_interrupt_) {
-      auto ret = primitive->InferShape(inputs, outputs);
-      if (ret == RET_INFER_INVALID) {
-        MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << cNode->name()->str()
-                     << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type())
-                     << "flag set to false.";
-        primitive->SetInferFlag(false);
-        context_->InferShapeInterrupt();
-      } else if (ret != RET_OK) {
-        MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
-                      << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
-        return RET_INFER_ERR;
-      }
-    } else {
+    primitive->SetInferFlag(!infer_shape_interrupt);
+    auto ret = primitive->InferShape(inputs, outputs);
+    if (ret == RET_INFER_INVALID) {
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << cNode->name()->str()
+                   << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type())
+                   << "flag set to false.";
       primitive->SetInferFlag(false);
-      auto ret = primitive->InferShape(inputs, outputs);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "InferShape fail! name: " << cNode->name()->str()
-                      << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
-        return RET_INFER_ERR;
-      }
+      infer_shape_interrupt = true;
+    } else if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
+                    << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+      return RET_INFER_ERR;
     }
   }
   return RET_OK;

@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/fp32/fullconnection.h"
 #include "src/runtime/runtime_api.h"
-
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
@@ -48,15 +47,6 @@ void FullconnectionCPUKernel::FreeBuf() {
 
 int FullconnectionCPUKernel::ReSize() {
   FreeBuf();
-  Init();
-  return RET_OK;
-}
-
-int FullconnectionCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   fc_param_->row_ = (in_tensors_[0]->shape())[0];
   fc_param_->col_ = (in_tensors_[1]->shape())[0];
   fc_param_->deep_ = (in_tensors_[1]->shape())[1];
@@ -81,12 +71,14 @@ int FullconnectionCPUKernel::Init() {
 
   b_r8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->col_8_ * fc_param_->deep_ * sizeof(float)));
   if (b_r8_ptr_ == nullptr) {
+    FreeBuf();
     return RET_MEMORY_FAILED;
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float));
 
   c_r8x8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float)));
   if (c_r8x8_ptr_ == nullptr) {
+    FreeBuf();
     return RET_MEMORY_FAILED;
   }
   memset(c_r8x8_ptr_, 0, fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float));
@@ -96,6 +88,13 @@ int FullconnectionCPUKernel::Init() {
   InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c8_ptr_);
   InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
   return RET_OK;
+}
+
+int FullconnectionCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {

@@ -40,6 +40,7 @@ class FusedBatchnormCPUKernel : public LiteKernel {
   int Execute(int task_id);
 
  private:
+  void FreeTmpBuffer();
   float *in_addr_ = nullptr;
   float *mean_addr_ = nullptr;
   float *var_addr_ = nullptr;

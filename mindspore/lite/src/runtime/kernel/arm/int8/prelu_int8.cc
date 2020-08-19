@@ -29,34 +29,43 @@ using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 int PreluInt8CPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   PreluBaseCPUKernel::Init();
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->GetQuantParams();
   quant_prelu_parm_->quant_arg.in_args_.scale_ = in_quant_args.front().scale;
   quant_prelu_parm_->quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
-  auto input_dim = input_tensor->shape().size();
-  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
-  quant_prelu_parm_->input_dim_ = input_dim;
-  quant_prelu_parm_->element_num = in_tensors_[0]->Size();
+
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->GetQuantParams();
   quant_prelu_parm_->quant_arg.out_args_.scale_ = out_quant_args.front().scale;
   quant_prelu_parm_->quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
-  quant_prelu_parm_->in_shape_ = input_tensor->shape().data();
-  quant_prelu_parm_->out_shape_ = out_tensor->shape().data();
+
   quant_prelu_parm_->quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();
   quant_prelu_parm_->quant_arg.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
-int PreluInt8CPUKernel::ReSize() { return 0; }
+int PreluInt8CPUKernel::ReSize() {
+  auto *input_tensor = in_tensors_.at(kInputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
+  auto input_dim = input_tensor->shape().size();
+  MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
+  quant_prelu_parm_->input_dim_ = input_dim;
+  quant_prelu_parm_->element_num = in_tensors_[0]->Size();
+  quant_prelu_parm_->in_shape_ = input_tensor->shape().data();
+  quant_prelu_parm_->out_shape_ = out_tensor->shape().data();
+}
 
 int PreluInt8CPUKernel::Run() {
-  auto ret = LiteBackendParallelLaunch(PreluInt8Run, this, quant_prelu_parm_->op_parameter_.thread_num_);
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
+  }
+  ret = LiteBackendParallelLaunch(PreluInt8Run, this, quant_prelu_parm_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunPreluParam failed. errorcode: ";
   }
