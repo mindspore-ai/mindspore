@@ -38,11 +38,12 @@ int BatchNormOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
     im_dst_y = out_tensors_[0]->Height() * CO4;
     im_dst_x = out_tensors_[0]->Width();
   }
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto enable_fp16_ = ocl_runtime->GetFp16Enable();
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -148,4 +149,5 @@ kernel::LiteKernel *OpenCLBatchnormKernelCreator(const std::vector<lite::tensor:
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BatchNorm, OpenCLBatchnormKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BatchNorm, OpenCLBatchnormKernelCreator);
 }  // namespace mindspore::kernel
