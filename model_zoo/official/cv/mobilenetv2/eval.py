@@ -39,7 +39,7 @@ if __name__ == '__main__':
     net = None
     if args_opt.device_target == "Ascend":
         config = config_ascend
-        device_id = int(os.getenv('DEVICE_ID'))
+        device_id = int(os.getenv('DEVICE_ID', '0'))
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                             device_id=device_id, save_graphs=False)
         net = mobilenet_v2(num_classes=config.num_classes, device_target="Ascend")

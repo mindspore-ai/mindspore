@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """train_imagenet."""
-import os
+
 import time
 import argparse
 import random
@@ -47,20 +47,10 @@ de.config.set_seed(1)
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
-parser.add_argument('--device_target', type=str, default=None, help='run device_target')
+parser.add_argument('--device_target', type=str, default="GPU", help='run device_target')
 args_opt = parser.parse_args()
 
-if args_opt.device_target == "Ascend":
-    device_id = int(os.getenv('DEVICE_ID'))
-    rank_id = int(os.getenv('RANK_ID'))
-    rank_size = int(os.getenv('RANK_SIZE'))
-    run_distribute = rank_size > 1
-    device_id = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        device_id=device_id,
-                        save_graphs=False)
-elif args_opt.device_target == "GPU":
+if args_opt.device_target == "GPU":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="GPU",
                         save_graphs=False)
