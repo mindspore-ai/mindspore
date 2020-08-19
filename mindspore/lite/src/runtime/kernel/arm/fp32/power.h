@@ -21,14 +21,15 @@
 #include "include/context.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/nnacl/power.h"
+#include "src/runtime/kernel/arm/base/power_base.h"
 
 namespace mindspore::kernel {
-class PowerCPUKernel : public LiteKernel {
+class PowerCPUKernel : public PowerBaseCPUKernel {
  public:
   PowerCPUKernel(OpParameter *param, const std::vector<lite::tensor::Tensor *> &inputs,
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive),
+      : PowerBaseCPUKernel(param, inputs, outputs, ctx, primitive),
         ctx_(ctx),
         thread_count_(ctx->thread_num_),
         power_(reinterpret_cast<PowerParameter *>(op_parameter_)->power_),

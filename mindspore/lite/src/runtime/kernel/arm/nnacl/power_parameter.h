@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_H_
-#include <math.h>
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_PARAMETER_H_
+
 #include "nnacl/op_base.h"
-#include "nnacl/power_parameter.h"
+#include "nnacl/quantization/quantize.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Power(const float *input, const float *exponent, float *output, int len, float scale, float shift, bool broadcast);
-#ifdef __cplusplus
-}
-#endif
+typedef struct PowerParameter {
+  OpParameter op_parameter_;
+  PowerQuantArg quant_arg_;
+  float power_;
+  float scale_;
+  float shift_;
+  bool broadcast_;
+} PowerParameter;
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_POWER_PARAMETER_H_

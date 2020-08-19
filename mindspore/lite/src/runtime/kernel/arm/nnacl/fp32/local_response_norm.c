@@ -22,7 +22,7 @@ int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output
   int i, j, k;
   int left, right;
 
-  float depth_radius = param->depth_radius_;
+  int depth_radius = param->depth_radius_;
   float bias = param->bias_;
   float alpha = param->alpha_;
   float beta = param->beta_;

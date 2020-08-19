@@ -48,10 +48,6 @@ int SoftmaxCPUKernel::ReSize() {
   }
   auto n_dim = softmax_param_->n_dim_;
   auto axis = softmax_param_->axis_;
-  if (axis == -1) {
-    softmax_param_->axis_ += n_dim;
-    axis = softmax_param_->axis_;
-  }
   auto in_shape = in_tensors_.front()->shape();
   int out_plane_size = 1;
   for (int i = 0; i < axis; ++i) {
