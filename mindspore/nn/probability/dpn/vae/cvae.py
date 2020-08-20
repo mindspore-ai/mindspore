@@ -93,18 +93,21 @@ class ConditionalVAE(Cell):
         recon_x = self._decode(z_c)
         return recon_x, x, mu, std
 
-    def generate_sample(self, sample_y, generate_nums=None, shape=None):
+    def generate_sample(self, sample_y, generate_nums, shape):
         """
         Randomly sample from latent space to generate sample.
 
         Args:
             sample_y (Tensor): Define the label of sample, int tensor.
             generate_nums (int): The number of samples to generate.
-            shape(tuple): The shape of sample, it should be math:`(generate_nums, C, H, W)`.
+            shape(tuple): The shape of sample, it should be math:`(generate_nums, C, H, W)` or math:`(-1, C, H, W)`.
 
         Returns:
             Tensor, the generated sample.
         """
+        generate_nums = check_int_positive(generate_nums)
+        if not isinstance(shape, tuple) or len(shape) != 4 or shape[0] != generate_nums or shape[0] != -1:
+            raise ValueError('The shape should be (generate_nums, C, H, W) or (-1, C, H, W).')
         sample_z = self.normal((generate_nums, self.latent_size), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)
         sample_y = self.one_hot(sample_y)
         sample_c = self.concat((sample_z, sample_y))
