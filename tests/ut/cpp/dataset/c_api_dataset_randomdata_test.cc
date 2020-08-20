@@ -100,11 +100,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic2) {
   // Check if RandomDataOp read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    auto image = row["image"];
-    auto label = row["label"];
-    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    MS_LOG(INFO) << "Tensor label shape: " << label->shape();
-
+    // If no schema specified, RandomData will generate random columns
+    // So we don't check columns here
     iter->GetNextRow(&row);
     i++;
   }
