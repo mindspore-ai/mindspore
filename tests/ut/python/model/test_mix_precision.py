@@ -96,6 +96,8 @@ def test_on_momentum():
 
 def test_data_parallel_with_cast():
     """test_data_parallel_with_cast"""
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True, device_num=8)
     predict = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     net = LeNet5()
@@ -107,8 +109,6 @@ def test_data_parallel_with_cast():
                          learning_rate=0.1,
                          momentum=0.9)
     net = WithLossCell(net, loss_fn)
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True, device_num=8)
     net = TrainOneStepCell(net, optimizer)
 
     _executor.compile(net, predict, label)

@@ -176,8 +176,12 @@ class _AutoParallelContext:
 
         Raises:
             ValueError: If parallel mode is not supported.
+            RuntimeError: If there is any Initializer created before setting or changing parallel_mode.
         """
         self.check_context_handle()
+        if self.get_has_initializer():
+            self.set_has_initializer(False)
+            raise RuntimeError("Must set or change parallel mode before any Initializer created.")
         ret = self._context_handle.set_parallel_mode(parallel_mode)
         if ret is False:
             raise ValueError("Parallel mode does not support {}".format(parallel_mode))
@@ -248,6 +252,21 @@ class _AutoParallelContext:
         """Get whether load full batch on each device."""
         self.check_context_handle()
         return self._context_handle.get_full_batch()
+
+    def set_has_initializer(self, has_initializer):
+        """
+        Set whether any Initializer has been created.
+
+        Args:
+            has_initializer (bool): True if a Initializer created.
+        """
+        self.check_context_handle()
+        self._context_handle.set_has_initializer(has_initializer)
+
+    def get_has_initializer(self):
+        """Get whether any Initializer has been created."""
+        self.check_context_handle()
+        return self._context_handle.get_has_initializer()
 
     def set_strategy_ckpt_save_file(self, strategy_ckpt_save_file):
         """
@@ -543,6 +562,7 @@ def _set_auto_parallel_context(**kwargs):
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
+        RuntimeError: If there is any Initializer created before setting or changing parallel_mode.
     """
     for key, value in kwargs.items():
         if key not in _set_auto_parallel_context_func_map:

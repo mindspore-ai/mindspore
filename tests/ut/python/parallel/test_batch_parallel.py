@@ -94,12 +94,12 @@ def test_batch():
             return out4
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8), (1, 1, 1, 8))
     strategy3 = ((4, 1, 1, 2), (4, 1, 1, 2))
 
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
 
     x = Tensor(np.ones([128, 16, 34, 34]), dtype=ms.float32)

@@ -24,6 +24,7 @@ from mindspore import log as logger
 from . import dtype as mstype
 from .tensor import Tensor
 from .._c_expression import random_normal
+from ..parallel._utils import _set_has_initializer
 
 _INITIALIZER_ALIAS = dict()
 
@@ -42,6 +43,7 @@ class Initializer:
         self._kwargs = kwargs
         self.shape = None
         self.dtype = None
+        _set_has_initializer(True)
 
     def _initialize(self, *kwargs):
         raise NotImplementedError('Must be overridden!')

@@ -266,11 +266,11 @@ class BNReshapeDenseBNNet(nn.Cell):
 def test_bn_reshape_dense_bn_train_loss():
     batch_size = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     input_ = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
 
     _executor.compile(net, input_, label)
@@ -279,12 +279,12 @@ def test_bn_reshape_dense_bn_train_loss():
 def test_semi_one_hot_net_batch():
     batch_size = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     input_ = Tensor(np.ones([batch_size * 1, 512]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
     net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch())
     net = GradWrap(NetWithLoss(net))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
 
     _executor.compile(net, input_, label)
@@ -300,10 +300,10 @@ def test_semi_one_hot_net_model():
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2, input_num=2)
 
-    net = SemiAutoOneHotNet(args=Args(), strategy=StrategyModel())
-    opt = Momentum(net.trainable_params(), learning_rate, momentum)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=16)
     context.set_context(mode=context.GRAPH_MODE)
+    net = SemiAutoOneHotNet(args=Args(), strategy=StrategyModel())
+    opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)

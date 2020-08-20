@@ -20,6 +20,7 @@ from mindspore import Parameter, Tensor, context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.parallel._utils import _set_has_initializer
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
@@ -60,11 +61,12 @@ def test_matmul_sub():
             out = self.sub(out, b)
             return out
 
+    _set_has_initializer(False)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -85,10 +87,10 @@ def test_matmul_add():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -109,10 +111,10 @@ def test_matmul_mul():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -133,10 +135,10 @@ def test_matmul_div():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -157,10 +159,10 @@ def test_matmul_greater():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -181,10 +183,10 @@ def test_matmul_add_broadcast():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -205,10 +207,10 @@ def test_matmul_add_broadcast2():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 1))
     strategy2 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
@@ -229,10 +231,10 @@ def test_matmul_sub_broadcast():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -253,10 +255,10 @@ def test_matmul_sub_broadcast2():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 1))
     strategy2 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
@@ -277,10 +279,10 @@ def test_matmul_mul_broadcast():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -301,10 +303,10 @@ def test_matmul_mul_broadcast2():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 1))
     strategy2 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
@@ -325,10 +327,10 @@ def test_matmul_div_broadcast():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -349,10 +351,10 @@ def test_matmul_div_broadcast2():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 1))
     strategy2 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
@@ -373,10 +375,10 @@ def test_matmul_greater_broadcast():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -397,10 +399,10 @@ def test_matmul_greater_broadcast2():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 1))
     strategy2 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
@@ -421,10 +423,10 @@ def test_matmul_floordiv():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -445,10 +447,10 @@ def test_matmul_floordiv_broadcast():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -469,10 +471,10 @@ def test_matmul_floordiv_broadcast2():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 4), (4, 1))
     strategy2 = ((4, 1), (1, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)

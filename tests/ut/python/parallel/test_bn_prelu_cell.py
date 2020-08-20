@@ -198,6 +198,7 @@ def bn_net():
 
 def bn_common(parallel_mode, train_flag, strategy_loss=None):
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
@@ -218,7 +219,6 @@ def bn_common(parallel_mode, train_flag, strategy_loss=None):
 
     if parallel_mode == ParallelMode.DATA_PARALLEL:
         context.set_auto_parallel_context(parameter_broadcast=True)
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
     model = Model(net, loss, opt)
     if train_flag:
         model.train(epoch_size, dataset, dataset_sink_mode=False)

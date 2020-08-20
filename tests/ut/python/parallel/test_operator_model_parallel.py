@@ -353,6 +353,8 @@ def test_resnet_operator_batch_parallel():
 
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=dev_num, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=dev_num)
+    context.set_context(mode=context.GRAPH_MODE)
     predict = Tensor(np.ones([batch_size, 3, 224, 224]), dtype=ms.float32)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
@@ -363,9 +365,6 @@ def test_resnet_operator_batch_parallel():
     loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=dev_num)
-    context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss, opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
@@ -379,6 +378,8 @@ def test_resnet_model_parallel():
 
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=dev_num, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=dev_num)
+    context.set_context(mode=context.GRAPH_MODE)
     predict = Tensor(np.ones([batch_size, 64, 112, 112]), dtype=ms.float32)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
@@ -389,9 +390,6 @@ def test_resnet_model_parallel():
     loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=dev_num)
-    context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss, opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 

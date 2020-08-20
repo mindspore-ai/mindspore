@@ -118,6 +118,9 @@ def batchnorm_net(num_classes):
 
 
 def test_batchnorm_batch_parallel():
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=dev_num)
+    context.set_context(mode=context.GRAPH_MODE)
     num_classes = 1001
     batch_size = 32
     learning_rate = 0.1
@@ -134,9 +137,6 @@ def test_batchnorm_batch_parallel():
     loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=dev_num)
-    context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss, opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
 
