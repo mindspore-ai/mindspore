@@ -102,19 +102,26 @@ int ArithmeticOpenCLKernel::Init() {
     }
   }
 
+  lite::STATUS error_code = RET_OK;
 #ifdef PROGRAM_WITH_IL
-  runtime_->CreateKernelFromIL(kernel_(), kernel_name);
+  bool ret = runtime_->CreateKernelFromIL(kernel_(), kernel_name);
+  if (!ret) {
+    error_code = RET_ERROR;
+  }
 #else
   std::string program_name = "Arithmetic";
   std::set<std::string> build_options;
   std::string source = arithmetic_image2d_source_fp32;
   runtime_->LoadSource(program_name, source);
-  runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  error_code = runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  if (error_code != RET_OK) {
+    return error_code;
+  }
   ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   Image2dGetWorkGroupSize();
-  return 0;
+  return RET_OK;
 }
 
 int ArithmeticOpenCLKernel::Run() {
@@ -155,7 +162,7 @@ int ArithmeticOpenCLKernel::Run() {
   cl_int2 output_shape{W, H};
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, output_shape);
   ocl_runtime->RunKernel(kernel_, global_size_, local_size_, nullptr);
-  return 0;
+  return RET_OK;
 }
 
 kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
@@ -170,7 +177,7 @@ kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::tensor
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: Arithmetic";
     delete kernel;
     return nullptr;
