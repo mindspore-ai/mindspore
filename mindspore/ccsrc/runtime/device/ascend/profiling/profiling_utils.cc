@@ -120,7 +120,7 @@ void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const 
     }
   }
   if (getnext_outputs->empty()) {
-    MS_LOG(WARNING) << "GetNext not found";
+    MS_LOG(INFO) << "GetNext not found";
   }
 }
 
@@ -174,7 +174,7 @@ std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr
     }
   }
   if (last_tbe_kernel_name.empty()) {
-    MS_LOG(WARNING) << "tbe kernel not found in graph";
+    MS_LOG(INFO) << "tbe kernel not found in graph";
   }
   return last_tbe_kernel_name;
 }
@@ -330,7 +330,7 @@ bool ProfilingUtils::ValidComputeGraph(NotNull<const session::KernelGraph *> gra
 void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
                                          NotNull<const session::KernelGraph *> graph) {
   if (!ValidComputeGraph(graph)) {
-    MS_LOG(WARNING) << "Not a valid compute graph:" << graph->graph_id();
+    MS_LOG(INFO) << "Not a valid compute graph:" << graph->graph_id();
     return;
   }
 
