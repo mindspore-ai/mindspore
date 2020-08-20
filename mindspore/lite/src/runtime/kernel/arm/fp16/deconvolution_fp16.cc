@@ -53,17 +53,9 @@ int DeConvolutionFp16CPUKernel::ReSize() {
 }
 
 void DeConvolutionFp16CPUKernel::FreeParam() {
-  if (tmp_buffer_ != nullptr) {
-    free(tmp_buffer_);
-    tmp_buffer_ = nullptr;
-  }
   if (pack_input_ != nullptr) {
     free(pack_input_);
     pack_input_ = nullptr;
-  }
-  if (pack_output_ != nullptr) {
-    free(pack_output_);
-    pack_output_ = nullptr;
   }
   return;
 }
@@ -107,26 +99,42 @@ int DeConvolutionFp16CPUKernel::InitParam() {
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(conv_param_->output_channel_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(conv_param_->output_channel_, C8NUM), thread_count_);
 
-  pack_input_ = reinterpret_cast<float16_t *>(malloc(row16_ * matmul_param_->deep_ * sizeof(float16_t)));
+  size_t size = row16_ * matmul_param_->deep_ * sizeof(float16_t);
+  pack_input_ = reinterpret_cast<float16_t *>(malloc(size));
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "deconv Malloc pack_input_ error!";
     return RET_ERROR;
   }
+  memset(pack_input_, 0, size);
+  return RET_OK;
+}
 
+int DeConvolutionFp16CPUKernel::InitRunBuf() {
   pack_output_ = reinterpret_cast<float16_t *>(
-    malloc(UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * sizeof(float16_t)));
+    ctx_->allocator->Malloc(UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * sizeof(float16_t)));
   if (pack_output_ == nullptr) {
     MS_LOG(ERROR) << "deconv Malloc pack_output_ error!";
     return RET_NULL_PTR;
   }
 
-  tmp_buffer_ = reinterpret_cast<float16_t *>(malloc(row16_ * col8_ * sizeof(float16_t)));
+  tmp_buffer_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(row16_ * col8_ * sizeof(float16_t)));
   if (tmp_buffer_ == nullptr) {
     MS_LOG(ERROR) << "deconv Malloc tmp_buffer_ error!";
     return RET_ERROR;
   }
-
   return RET_OK;
+}
+
+void DeConvolutionFp16CPUKernel::FreeRunBuf() {
+  if (tmp_buffer_ != nullptr) {
+    ctx_->allocator->Free(tmp_buffer_);
+    tmp_buffer_ = nullptr;
+  }
+  if (pack_output_ != nullptr) {
+    ctx_->allocator->Free(pack_output_);
+    pack_output_ = nullptr;
+  }
+  return;
 }
 
 int DeConvFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
@@ -171,10 +179,16 @@ int DeConvolutionFp16CPUKernel::Run() {
   }
   ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
+  int error_code = InitRunBuf();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv fp32 InitRunBuf error! error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     RowMajor2Col16MajorFp16(execute_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
-    int error_code = LiteBackendParallelLaunch(DeConvFp16Run, this, thread_count_);
+    error_code = LiteBackendParallelLaunch(DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
       return RET_ERROR;
@@ -183,6 +197,7 @@ int DeConvolutionFp16CPUKernel::Run() {
 
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
+  FreeRunBuf();
 
   return RET_OK;
 }

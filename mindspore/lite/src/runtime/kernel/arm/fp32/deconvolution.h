@@ -45,6 +45,8 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int DoDeconv(int task_id);
 
  private:
+  int InitRunBuf();
+  void FreeRunBuf();
   int InitParam();
   int InitWeightBias();
   void FreeTmpBuffer();
