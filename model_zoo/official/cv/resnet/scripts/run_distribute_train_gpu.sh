@@ -55,7 +55,7 @@ then
 fi
 
 
-if [ ! -d $PATH2 ]
+if [ ! -d $PATH1 ]
 then 
     echo "error: DATASET_PATH=$PATH1 is not a directory"
 exit 1
