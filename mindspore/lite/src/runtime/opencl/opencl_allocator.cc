@@ -202,13 +202,14 @@ void OpenCLAllocator::Free(void *buf) {
     allocated_list_.erase(iter);
     free_list_.insert(std::make_pair(mem_buf->size_, mem_buf));
     UnLock();
+    buf = nullptr;
     MS_LOG(DEBUG) << "Free a new Image2D. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
-                  << ", device addr: " << mem_buf->device_ptr_ << ", image addr: " << mem_buf->image_ptr_;
+                  << ", device addr: " << mem_buf->device_ptr_ << ", image addr: " << mem_buf->image_ptr_
+                  << ", free list size: " << free_list_.size();
     return;
   }
   UnLock();
-  free(buf);
-  MS_LOG(DEBUG) << "Free host ptr: " << buf;
+  MS_LOG(WARNING) << "Host ptr " << buf << " has freed";
 }
 
 size_t OpenCLAllocator::GetTotalSize() {
@@ -305,7 +306,8 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
     new_host_ptr = ocl_runtime->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
   }
   if (new_host_ptr == nullptr) {
-    MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << mem_buf->device_ptr_ << ", host_ptr=" << host_ptr;
+    MS_LOG(WARNING) << "Map buffer failed, can not found buffer or already mapped, dev_ptr=" << mem_buf->device_ptr_
+                    << ", host_ptr=" << host_ptr;
     UnLock();
     return nullptr;
   }

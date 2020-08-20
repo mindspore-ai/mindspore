@@ -318,6 +318,7 @@ size_t LiteTensor::Size() const {
 
 void *LiteTensor::MutableData() const {
   MS_ASSERT(this->tensor_impl_ != nullptr);
+  this->tensor_impl_->Prepare();
   auto data = this->tensor_impl_->Data();
   if (nullptr == data) {
     auto ret = tensor_impl_->MallocData();

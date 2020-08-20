@@ -201,26 +201,10 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
   kernel::LiteKernel *sub_kernel = nullptr;
 #if SUPPORT_GPU
   if (arch == kernel::KERNEL_ARCH::kGPU) {
-    auto head_kernel = kernels.front();
-    auto tail_kernel = kernels.back();
-    std::vector<kernel::LiteKernel *> input_kernels{head_kernel};
-    std::vector<kernel::LiteKernel *> output_kernels{tail_kernel};
-    std::vector<tensor::Tensor *> input_tensors;
-    std::vector<tensor::Tensor *> output_tensors;
-    for (auto tensor : head_kernel->in_tensors()) {
-      if (tensor->Data() == nullptr) {
-        input_tensors.emplace_back(tensor);
-      }
-    }
-    for (auto tensor : tail_kernel->out_tensors()) {
-      if (tensor->Data() == nullptr) {
-        output_tensors.emplace_back(tensor);
-      }
-    }
-    //    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
-    //    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
-    //    std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
-    //    std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
+    std::vector<tensor::Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
+    std::vector<tensor::Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
+    std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
+    std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
     sub_kernel =
       new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels);
     sub_kernel->Init();
