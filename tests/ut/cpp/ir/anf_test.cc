@@ -19,8 +19,8 @@
 #include "common/common_test.h"
 
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
-#include "./common.h"
 
 namespace mindspore {
 

@@ -21,7 +21,7 @@
 #include "ir/manager.h"
 #include "ir/param_info.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "common/trans.h"
 #include "utils/config_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"

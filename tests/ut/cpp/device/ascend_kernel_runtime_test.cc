@@ -19,7 +19,6 @@
 #include "common/common_test.h"
 
 #include "runtime/device/kernel_runtime.h"
-#include "./common.h"
 
 namespace mindspore {
 class TestAscendKernelRuntime : public UT::Common {

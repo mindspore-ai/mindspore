@@ -31,7 +31,6 @@
 #include "ir/manager.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "./common.h"
 
 namespace mindspore {
 namespace pipeline {

@@ -20,7 +20,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace opt {

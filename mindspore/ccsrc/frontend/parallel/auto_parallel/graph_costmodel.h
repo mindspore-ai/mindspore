@@ -22,7 +22,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "mindspore/ccsrc/common.h"
 #include "utils/ms_utils.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/costmodel_context.h"

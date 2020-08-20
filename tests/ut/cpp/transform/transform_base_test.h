@@ -25,7 +25,6 @@
 
 #include "common/common_test.h"
 #include "pipeline/jit/parse/parse.h"
-#include "./common.h"
 
 #include "graph/tensor.h"
 #ifdef OPEN_SOURCE

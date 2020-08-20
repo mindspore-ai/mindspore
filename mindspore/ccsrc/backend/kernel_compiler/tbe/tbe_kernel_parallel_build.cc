@@ -27,7 +27,6 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "./common.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 

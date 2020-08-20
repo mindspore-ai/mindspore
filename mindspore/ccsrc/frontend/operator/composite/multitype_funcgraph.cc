@@ -26,7 +26,6 @@
 #include "frontend/optimizer/opt.h"
 #include "utils/ms_context.h"
 #include "pybind_api/api_register.h"
-#include "./common.h"
 #include "ir/signature.h"
 #include "debug/trace.h"
 

@@ -18,11 +18,12 @@
 #include <algorithm>
 #include <string>
 #include <memory>
+
+#include "pybind11/pybind11.h"
 #include "utils/log_adapter.h"
 #include "utils/config_manager.h"
 #include "sys/time.h"
 #include "utils/utils.h"
-#include "./common.h"
 #include "utils/callbacks.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
@@ -39,6 +40,8 @@ Session::Session(const std::map<std::string, std::string> &options) {
 Session::~Session() {}
 }  // namespace ge
 #endif
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace transform {

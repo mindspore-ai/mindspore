@@ -32,7 +32,6 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "frontend/operator/ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "./common.h"
 
 namespace mindspore {
 namespace device {

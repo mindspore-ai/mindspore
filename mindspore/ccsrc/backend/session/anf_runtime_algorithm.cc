@@ -20,7 +20,7 @@
 #include <set>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/utils.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/device_address.h"

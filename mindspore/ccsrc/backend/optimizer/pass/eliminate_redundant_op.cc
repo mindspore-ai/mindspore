@@ -21,7 +21,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {

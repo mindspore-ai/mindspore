@@ -24,7 +24,6 @@
 #include "abstract/param_validator.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/optimizer/opt.h"
-#include "./common.h"
 #include "pybind_api/api_register.h"
 
 namespace mindspore {

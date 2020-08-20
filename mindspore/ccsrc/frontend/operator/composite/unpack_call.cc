@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "./common.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "frontend/operator/cc_implementations.h"

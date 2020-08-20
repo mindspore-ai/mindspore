@@ -17,7 +17,6 @@
 #include "pybind_api/ir/primitive_py.h"
 #include <mutex>
 #include "ir/signature.h"
-#include "./common.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pybind11/pytypes.h"

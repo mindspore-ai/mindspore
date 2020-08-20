@@ -16,7 +16,7 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 
 #include <memory>
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
 

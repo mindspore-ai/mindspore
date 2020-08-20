@@ -20,8 +20,8 @@
 #include "common/common_test.h"
 #include "ir/value.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "pipeline/jit/parse/python_adapter.h"
 #include "frontend/operator/ops.h"
-#include "./common.h"
 
 namespace mindspore {
 namespace prim {

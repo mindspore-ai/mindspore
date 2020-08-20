@@ -22,7 +22,6 @@
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_declare/array_ops_declare.h"
 #include "frontend/operator/ops.h"
-#include "./common.h"
 
 using std::cout;
 using std::endl;

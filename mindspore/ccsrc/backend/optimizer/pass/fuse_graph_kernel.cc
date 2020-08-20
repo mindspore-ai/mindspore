@@ -24,7 +24,7 @@
 #include <queue>
 #include <vector>
 
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/utils.h"
 #include "ir/graph_utils.h"
 #include "backend/optimizer/common/helper.h"

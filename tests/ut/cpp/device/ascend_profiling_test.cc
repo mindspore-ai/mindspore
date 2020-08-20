@@ -19,7 +19,6 @@
 #include "./prof_reporter.h"
 #include "common/common_test.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
-#include "./common.h"
 #define private public
 #include "runtime/device/ascend/profiling/plugin_impl.h"
 #undef private
