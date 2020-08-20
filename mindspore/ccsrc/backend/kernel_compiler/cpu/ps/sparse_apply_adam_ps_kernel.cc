@@ -71,8 +71,8 @@ void SparseApplyAdamPSKernel::ReInit(const std::shared_ptr<std::vector<std::shar
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   const std::vector<size_t> &indices_shape = *(shape_vec[0]);
   indices_size_ = indices_shape[0];
-  workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float);
-  workspace_size_list_[1] = indices_size_ * sizeof(int);
+  workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
+  workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
 void SparseApplyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
@@ -85,10 +85,6 @@ void SparseApplyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
 bool SparseApplyAdamPSKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
   ReInit(inputs);
-  int *indices = reinterpret_cast<int *>(inputs[10]->addr);
-  for (size_t i = 0; i < inputs[10]->size / sizeof(int); i++) {
-    indices[i] -= row_offset_;
-  }
   return Launch(inputs, workspace, outputs);
 }
 

@@ -145,6 +145,7 @@ class ParameterServer {
 
   std::unordered_map<Key, std::shared_ptr<PServerKernel>> optimizers_;
   std::unordered_map<Key, InputsShapePtr> optim_inputs_shape_;
+  std::unordered_map<Key, InputsShapePtr> original_optim_inputs_shape_;
   std::unordered_map<Key, std::shared_ptr<OptimizerInfo>> optim_infos_;
   std::unordered_map<std::string, std::shared_ptr<OptimizerInfoBuilder>> optim_info_builders_;
   std::unordered_map<Key, std::string> weight_key_to_optims_;
@@ -366,19 +367,24 @@ void ParameterServer<T>::InitWeightKeyToOptims(const Key &key, const int &optim_
 template <typename T>
 void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &values, const Lengths &lengths) {
   InputsShapePtr inputs_shape = std::make_shared<InputsShape>();
+  InputsShapePtr original_inputs_shape = std::make_shared<InputsShape>();
   int val_idx = 0;
   const Key &key = keys[0];
   MS_LOG(INFO) << "Initializing optimizer inputs shape for key:" << key;
   if (optim_inputs_shape_.count(key) == 0) {
+    original_optim_inputs_shape_[key] = original_inputs_shape;
     optim_inputs_shape_[key] = inputs_shape;
   }
   for (size_t i = 0; i < keys.size(); i++) {
     auto shape = std::make_shared<std::vector<size_t>>();
+    auto original_shape = std::make_shared<std::vector<size_t>>();
     inputs_shape->push_back(shape);
+    original_inputs_shape->push_back(original_shape);
 
     int len = lengths[i];
     for (int j = 0; j < len; j++) {
-      shape->push_back(values[val_idx++]);
+      shape->push_back(values[val_idx]);
+      original_shape->push_back(values[val_idx++]);
     }
   }
   if (weight_key_to_optims_.count(key) > 0) {
@@ -512,7 +518,19 @@ void ParameterServer<T>::UpdateWeights() {
       const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
       const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
 
-      optim_info->ComputeMean(worker_num_);
+      std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
+        std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
+      std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>();
+      indices_shape->emplace_back(optim_info->indice_size());
+      shapes->push_back(indices_shape);
+
+      if (original_optim_inputs_shape_.count(key) != 0) {
+        for (auto &input_shapes : *(original_optim_inputs_shape_[key])) {
+          shapes->push_back(input_shapes);
+        }
+      }
+      optimizer->ReInit(shapes);
+      optim_info->ComputeMean(shapes, worker_num_, pserver_num_, rank_id_);
       optimizer->Execute(inputs, workspaces, outputs);
       optim_info->Reset();
       if (!is_embedding_[key]) {
