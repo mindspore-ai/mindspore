@@ -254,7 +254,6 @@ OpParameter *PopulatePreluParameter(const mindspore::lite::PrimitiveC *primitive
 
 OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto pooling_primitive = dynamic_cast<const mindspore::lite::Pooling *>(primitive);
-  // todo use malloc instead
   auto *pooling_param = new (std::nothrow) PoolingParameter();
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "new PoolingParameter failed.";
@@ -357,7 +356,6 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
   auto conv_primitive = dynamic_cast<const mindspore::lite::Conv2D *>(primitive);
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
-  // todo format
   conv_param->group_ = conv_primitive->GetGroup();
   conv_param->stride_h_ = conv_primitive->GetStrideH();
   conv_param->stride_w_ = conv_primitive->GetStrideW();
@@ -447,7 +445,6 @@ OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primit
   auto conv_primitive = dynamic_cast<const mindspore::lite::DeDepthwiseConv2D *>(primitive);
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
-  // todo format, group
   conv_param->stride_h_ = conv_primitive->GetStrideH();
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 

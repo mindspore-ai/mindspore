@@ -51,7 +51,6 @@ class NodeUtils {
                                    schema::TensorT *output, std::vector<int32_t> &stride);
 };
 
-// todo check this
 enum kTransFilterType {
   kKCHW2HWCK,  // 0
   kKCHW2KHWC,

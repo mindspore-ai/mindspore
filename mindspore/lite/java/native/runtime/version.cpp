@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "tools/benchmark/benchmark.h"
+#include <jni.h>
+#include "common/ms_log.h"
 #include "include/version.h"
 
-int main(int argc, const char **argv) {
-  MS_LOG(INFO) << mindspore::lite::Version();
-  return mindspore::lite::RunBenchmark(argc, argv);
+extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_lite_Version_version(JNIEnv *env, jobject thiz) {
+  return env->NewStringUTF(mindspore::lite::Version().c_str());
 }
-

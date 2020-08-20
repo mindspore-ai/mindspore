@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PREDICT_EXPANDDIMS_CONST_FOLD_PASS_H
-#define MINDSPORE_PREDICT_EXPANDDIMS_CONST_FOLD_PASS_H
+#ifndef MINDSPORE_LITE_INCLUDE_VERSION_H_
+#define MINDSPORE_LITE_INCLUDE_VERSION_H_
 
-#include "converter/optimizer/const_fold/const_fold_pass.h"
+#include <string>
 
 namespace mindspore {
 namespace lite {
-class ExpandDimsConstFoldPass : public ConstFoldPass {
- public:
-  ExpandDimsConstFoldPass() : ConstFoldPass(OpT_ExpandDims) {}
-
-  ~ExpandDimsConstFoldPass() override = default;
-
-  STATUS Run(GraphNode *graphNode) override;
-
-  STATUS CreateOp(SubGraphDefT *subGraph, OpDefT *node) override;
-
-  STATUS DoFold(SubGraphDefT *subGraph, OpDefT *node) override;
-};
+/// \brief Global method to get a version string.
+///
+/// \return The version string of MindSpore Lite.
+std::string Version() {
+  return "MindSpore Lite " + std::to_string(MS_VERSION_MAJOY) + "." + std::to_string(MS_VERSION_MINOR) + "." +
+         std::to_string(MS_VERSION_REVISION);
+}
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_PREDICT_EXPANDDIMS_CONST_FOLD_PASS_H
-
+#endif  // LITE_VERSION_H

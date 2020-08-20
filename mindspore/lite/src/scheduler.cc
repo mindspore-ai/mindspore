@@ -236,7 +236,6 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
 kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
                                             const std::vector<tensor::Tensor *> &out_tensors,
                                             const mindspore::lite::PrimitiveC *primitive) {
-  // todo: support NPU, APU
   MS_ASSERT(nullptr != primitive);
   auto data_type = in_tensors.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};

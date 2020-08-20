@@ -40,7 +40,7 @@ struct Path {
 struct PatternOp {
   std::string id;          // id of op in pattern
   std::vector<schema::PrimitiveType> types;  // type of matchable op
-  // TODO(...): only support node with no more than two preNode now
+  // only support node with no more than two preNode now
   // avoid loop reference
   std::shared_ptr<PatternOp> left;   // left input patternOp of this patternOp
   std::shared_ptr<PatternOp> right;  // right input patternOp of this patternOp

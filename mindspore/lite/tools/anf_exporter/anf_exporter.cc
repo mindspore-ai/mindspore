@@ -77,7 +77,6 @@ bool AnfExporter::RemoveIfTupleGetItem(const CNodePtr &cnode) {
         return false;
       }
       auto value_node = utils::cast<ValueNodePtr>(indexNode);
-      map_remove_get_item_[tuple_get_item_node->input(1)->fullname_with_scope()] = GetValue<int>(value_node->value());
     } else {
       inputs.emplace_back(cnode->input(i));
     }
@@ -201,12 +200,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
         primT->value.type == schema::PrimitiveType_MakeTuple) {
       continue;
     }
-    map_remove_get_item_.clear();
     RemoveIfMakeTuple(cnode);
-    //    if (!RemoveIfTupleGetItem(cnode)) {
-    //      MS_LOG(ERROR) << "RemoveIfTupleGetItem failed";
-    //      return nullptr;
-    //    }
 
     if (primT->value.type == schema::PrimitiveType_Return) {
       AddOutPutIfReturn(meta_graphT, cnode);

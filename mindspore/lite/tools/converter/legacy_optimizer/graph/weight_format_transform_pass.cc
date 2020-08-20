@@ -74,9 +74,9 @@ STATUS WeightFormatTransformPass::QuantDataFormatTrans(MetaGraphT *graph) {
         //        node->primitive->value.AsConv2D()->format = schema::Format_NHWC;
         weightTensor->format = curDstFormat;
       } else {
-        MS_LOG(WARNING) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
                         << EnumNameFormat(curDstFormat) << " failed, node : " << node->name;
-        // todo(00445839): consider varible weight condition
+        return ERROR;
       }
     }
   }
@@ -112,9 +112,9 @@ STATUS WeightFormatTransformPass::NonQuantDataFormatTrans(MetaGraphT *graph) {
         //          node->attr.AsConv2D()->format = Format_NCHW;
         weightTensor->format = curDstFormat;
       } else {
-        MS_LOG(WARNING) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
                         << EnumNameFormat(curDstFormat) << " failed, node : " << node->name;
-        // todo(00445839): consider varible weight condition
+        return ERROR;
       }
     } else {  // weight should be CKHW
       Format curDstFormat;
@@ -128,9 +128,9 @@ STATUS WeightFormatTransformPass::NonQuantDataFormatTrans(MetaGraphT *graph) {
         //          node->attr.AsDepthwiseConv2D()->format = Format_NCHW;
         weightTensor->format = curDstFormat;
       } else {
-        MS_LOG(WARNING) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"
                         << EnumNameFormat(curDstFormat) << " failed, node : " << node->name;
-        // todo(00445839): consider varible weight condition
+        return ERROR;
       }
     }
   }

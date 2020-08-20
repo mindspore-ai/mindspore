@@ -31,7 +31,7 @@ public class LiteSession {
 
     private long sessionPtr;
 
-    LiteSession() {
+    public LiteSession() {
         this.sessionPtr = 0;
     }
 

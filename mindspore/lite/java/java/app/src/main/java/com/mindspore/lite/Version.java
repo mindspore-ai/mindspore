@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "tools/benchmark/benchmark.h"
-#include "include/version.h"
+package com.mindspore.lite;
 
-int main(int argc, const char **argv) {
-  MS_LOG(INFO) << mindspore::lite::Version();
-  return mindspore::lite::RunBenchmark(argc, argv);
+public class Version {
+    static {
+        System.loadLibrary("mindspore-lite-jni");
+    }
+
+    public static native String version();
 }
-

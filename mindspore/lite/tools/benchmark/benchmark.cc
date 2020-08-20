@@ -82,16 +82,8 @@ int Benchmark::ReadInputFile() {
   }
 
   if (this->_flags->inDataType == kImage) {
-    //    int cvFlags;
-    //    if (inTensor->Channel() == 3) {
-    //      cvFlags = 0;  // cv::IMREAD_COLOR;
-    //    } else if (inTensor->Channel() == 1) {
-    //      cvFlags = 1;  // cv::IMREAD_GRAYSCALE;
-    //    } else {
-    //      MS_LOG(ERROR) << "Image mode only support imgChannel == 1 or 3, imgChannel : %lld", (long
-    //      long)inTensor->Channel(); return RET_PARAM_INVALID;
-    //    }
-    // todo fill inTensor->GetData()
+    MS_LOG(ERROR) << "Not supported image input";
+    return RET_ERROR;
   } else {
     for (auto i = 0; i < _flags->input_data_list.size(); i++) {
       auto cur_tensor = msInputs.at(i);
@@ -99,13 +91,12 @@ int Benchmark::ReadInputFile() {
       size_t size;
       char *binBuf = ReadFile(_flags->input_data_list[i].c_str(), &size);
       if (binBuf == nullptr) {
-          MS_LOG(ERROR) << "ReadFile return nullptr";
-          return RET_ERROR;
+        MS_LOG(ERROR) << "ReadFile return nullptr";
+        return RET_ERROR;
       }
       auto tensorDataSize = cur_tensor->Size();
       if (size != tensorDataSize) {
-        std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize
-            << size << std::endl;
+        std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size << std::endl;
         MS_LOG(ERROR) << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size;
         return RET_ERROR;
       }

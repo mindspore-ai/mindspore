@@ -72,11 +72,11 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       }
     }
     if (attribute_name == "ceil_mode") {
-      MS_ASSERT(false);  // todo (h00500767)
       attr->roundMode = schema::RoundMode_CEIL;
     }
     if (attribute_name == "dilations") {
-      MS_ASSERT(false);  // todo pooling op not support dilations now
+      MS_LOG(ERROR) << "pooling op not support dilations now";
+      return RET_ERROR;
     }
   }
   if (op != nullptr) {
