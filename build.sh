@@ -482,22 +482,17 @@ gene_ocl_program() {
     SPIRV_DIR=build/spirv
     rm -rf ${SPIRV_DIR}
     mkdir -pv ${SPIRV_DIR}
-    for sub_dir in "${CL_SRC_DIR}"/*
+    if [ ! -d ${CL_SRC_DIR} ]; then
+      return
+    fi
+    for file_path in "${CL_SRC_DIR}"/*
     do
-        data_type="$(basename ${sub_dir})"
-        if [ ! -d ${CL_SRC_DIR}/${data_type} ]; then
-          continue
-        fi
-        #echo $(cd "$(dirname $0)"; pwd)
-        for file_path in "${CL_SRC_DIR}/${data_type}"/*
-        do
-          file="$(basename ${file_path})"
-          if [ "${file##*.}" != "cl" ]; then
-            continue
-          fi
-          clang -Xclang -finclude-default-header -cl-std=CL2.0 --target=spir64-unknown-unknown -emit-llvm \
-                -c -O0 -o ${SPIRV_DIR}/${file%.*}.bc ${CL_SRC_DIR}/${data_type}/${file}
-        done
+      file="$(basename ${file_path})"
+      if [ "${file##*.}" != "cl" ]; then
+        continue
+      fi
+      clang -Xclang -finclude-default-header -cl-std=CL2.0 --target=spir64-unknown-unknown -emit-llvm \
+            -c -O0 -o ${SPIRV_DIR}/${file%.*}.bc ${CL_SRC_DIR}/${file}
     done
 
     bcs=`ls ${SPIRV_DIR}/*.bc`
