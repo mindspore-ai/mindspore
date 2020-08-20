@@ -38,6 +38,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
         x_desc_(nullptr),
         padded_descriptor_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
+        compute_format_(CUDNN_TENSOR_NCHW),
         old_height_(0),
         old_width_(0),
         pad_height_(0),
@@ -75,12 +76,18 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
 
     const float alpha = 1;
     const float beta = 0;
+
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_) {
       T *padded = GetDeviceAddress<T>(workspace, 1);
-      CalPad(padded_size_ / sizeof(T), x, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
-             old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
-
+      if (data_format_ == "NHWC") {
+        CalPadNHWC(padded_size_ / sizeof(T), x, n_, old_height_, old_width_, c_, old_height_ + pad_height_,
+                   old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else {
+        CalPad(padded_size_ / sizeof(T), x, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
+               old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded,
+               reinterpret_cast<cudaStream_t>(stream_ptr));
+      }
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnConvolutionBackwardFilter(cudnn_handle_, &alpha, padded_descriptor_, padded, dy_desc_, dy, conv_desc_,
                                        algo_, work_space, workspace_size_, &beta, dw_desc_, dw),
@@ -99,16 +106,21 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       return false;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(in_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "ConvGradFilterGpuBkwKernel input is null.";
       InitSizeLists();
       return true;
     }
-    std::vector<int> filter_shape;
+    data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    std::vector<size_t> filter_shape;
     GetFilterShape(kernel_node, &filter_shape);
+    if (data_format_ == "NHWC") {
+      compute_format_ = CUDNN_TENSOR_NHWC;
+    }
+    SetNCHW(in_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
     Set4DDesc(dy_shape, filter_shape, in_shape);
     group_ = GetAttr<int>(kernel_node, "group");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionGroupCount(conv_desc_, group_), "cudnnSetConvGroupCount failed");
@@ -120,18 +132,54 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t x_desc_real = nullptr;
+    int padA[2];
+    int strideA[2] = {stride_[0], stride_[1]};
+    int dilaA[2] = {dilation_[0], dilation_[1]};
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase || !symmetry_pad) {
-      SetPad(in_shape, kernel_node);
+      pad_height_ = pad_list[0] + pad_list[1];
+      pad_width_ = pad_list[2] + pad_list[3];
+      pad_top_ = pad_list[0];
+      pad_left_ = pad_list[2];
+      if (pad_height_ % 2 == 0 && pad_width_ % 2 == 0) {
+        use_pad_ = false;
+      }
+      int dimA[4];
+      int strideApadded[4];
+      if (data_format_ == "NCHW" || data_format_ == "DefaultFormat") {
+        auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
+                             IntToSize(old_width_ + pad_width_)};
+        SetDimA(padded_shape, dimA, data_format_);
+        SetStrideA(padded_shape, strideApadded, data_format_);
+      } else if (data_format_ == "NHWC") {
+        auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
+                             IntToSize(c_)};
+        SetDimA(padded_shape, dimA, data_format_);
+        SetStrideA(padded_shape, strideApadded, data_format_);
+      }
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, 4, dimA, strideApadded),
+        "cudnnSetTensor4dDescriptor failed");
+      if (use_pad_) {
+        padA[0] = 0;
+        padA[1] = 0;
+      } else {
+        padA[0] = pad_top_;
+        padA[1] = pad_left_;
+      }
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        cudnnSetConvolutionNdDescriptor(conv_desc_, 2, padA, strideA, dilaA, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+        "cudnnSetConvolutionNdDescriptor failed");
       x_desc_real = use_pad_ ? padded_descriptor_ : x_desc_;
     } else {
       if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
         pad_height_ = 0;
         pad_width_ = 0;
       }
+      padA[0] = pad_height_;
+      padA[1] = pad_width_;
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnSetConvolution2dDescriptor(conv_desc_, pad_height_, pad_width_, stride_[0], stride_[1], dilation_[2],
-                                        dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-        "GetConvolution2dDescriptor failed");
+        cudnnSetConvolutionNdDescriptor(conv_desc_, 2, padA, strideA, dilaA, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+        "cudnnSetConvolution2dDescriptor failed");
       x_desc_real = x_desc_;
     }
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
@@ -208,27 +256,6 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     }
     return true;
   }
-  void SetPad(const std::vector<size_t> &in_shape, const CNodePtr &kernel_node) {
-    auto pad_list = GetAttr<std::vector<int>>(kernel_node, "pad_list");
-    n_ = SizeToInt(in_shape[0]);
-    c_ = SizeToInt(in_shape[1]);
-    old_height_ = SizeToInt(in_shape[2]);
-    old_width_ = SizeToInt(in_shape[3]);
-    pad_height_ = pad_list[0] + pad_list[1];
-    pad_width_ = pad_list[2] + pad_list[3];
-    pad_top_ = pad_list[0];
-    pad_left_ = pad_list[2];
-    if (pad_height_ % 2 == 0 && pad_width_ % 2 == 0) {
-      use_pad_ = false;
-    }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(padded_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, n_,
-                                                           c_, old_height_ + pad_height_, old_width_ + pad_width_),
-                                "cudnnSetTensor4dDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolution2dDescriptor(
-                                  conv_desc_, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_[0], stride_[1],
-                                  dilation_[2], dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-                                "cudnnSetConvolution2dDescriptor failed");
-  }
   void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
     if (group_ > 1 || CUDNN_MAJOR < 7) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -249,27 +276,33 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
     }
   }
-  void GetFilterShape(const CNodePtr &kernel_node, std::vector<int> *filter_shape) {
+  void GetFilterShape(const CNodePtr &kernel_node, std::vector<size_t> *filter_shape) {
     auto shp_tuple_x = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("filter_sizes")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*filter_shape),
-                         [](const ValuePtr &e) -> int { return e->cast<Int32ImmPtr>()->value(); });
+                         [](const ValuePtr &e) -> size_t { return e->cast<Int32ImmPtr>()->value(); });
   }
-  void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<int> &filter_shape,
+  void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &filter_shape,
                  const std::vector<size_t> &in_shape) {
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(dy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(dy_shape[0]),
-                                 SizeToInt(dy_shape[1]), SizeToInt(dy_shape[2]), SizeToInt(dy_shape[3])),
-      "SetTensor4dDescriptor failed");
+    int nbDims = 4;
+    int dimA[4];
+    int strideAin[4];
+    int dimAdy[4];
+    int strideAdy[4];
+    SetDimA(in_shape, dimA, data_format_);
+    SetStrideA(in_shape, strideAin, data_format_);
+    SetDimA(dy_shape, dimAdy, data_format_);
+    SetStrideA(dy_shape, strideAdy, data_format_);
+    // filter shape always keep OIHW.
+    int filterDimA[4] = {SizeToInt(filter_shape[0]), SizeToInt(filter_shape[1]), SizeToInt(filter_shape[2]),
+                         SizeToInt(filter_shape[3])};
 
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(dy_desc_, cudnn_data_type_, nbDims, dimAdy, strideAdy),
+                                "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetFilter4dDescriptor(dw_desc_, cudnn_data_type_, CUDNN_TENSOR_NCHW, SizeToInt(dy_shape[1]), filter_shape[1],
-                                 filter_shape[2], filter_shape[3]),
-      "SetFilter4dDescriptor failed");
-
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(in_shape[0]),
-                                 SizeToInt(in_shape[1]), SizeToInt(in_shape[2]), SizeToInt(in_shape[3])),
-      "SetTensor4dDescriptor failed");
+      cudnnSetFilterNdDescriptor(dw_desc_, cudnn_data_type_, compute_format_, nbDims, filterDimA),
+      "cudnnSetFilterNdDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(x_desc_, cudnn_data_type_, nbDims, dimA, strideAin),
+                                "cudnnSetTensorNdDescriptor failed");
   }
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
     stride_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "stride");
@@ -292,11 +325,13 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   cudnnTensorDescriptor_t padded_descriptor_;
   cudnnConvolutionBwdFilterAlgo_t algo_;
   std::string pad_mode_;
+  std::string data_format_ = "NCHW";
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   const float pad_value_ = 0.0;
   cudnnDataType_t cudnn_data_type_;
+  cudnnTensorFormat_t compute_format_;
   int old_height_;
   int old_width_;
   int pad_height_;
@@ -319,4 +354,4 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_FILTER_GPU_KERNEL_H_
+#endif  // MINDePORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_FILTER_GPU_KERNEL_H_

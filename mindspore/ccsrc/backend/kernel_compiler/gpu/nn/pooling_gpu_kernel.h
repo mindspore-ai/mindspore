@@ -35,9 +35,9 @@ class PoolingGpuFwdKernel : public GpuKernel {
         input_descriptor_(nullptr),
         output_descriptor_(nullptr),
         pooling_descriptor_(nullptr),
-        padded_descriptor_(nullptr),
         pooling_mode_(CUDNN_POOLING_MAX),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
+        compute_format_(CUDNN_TENSOR_NCHW),
         old_height_(0),
         old_width_(0),
         pad_height_(0),
@@ -50,9 +50,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
         is_null_input_(false),
         input_size_(0),
         output_size_(0),
-        padded_size_(0),
-        workspace_size_(0),
-        use_pad_(true) {}
+        workspace_size_(0) {}
   ~PoolingGpuFwdKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -67,20 +65,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
     T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
     const float alpha = 1;
     const float beta = 0;
-    if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_) {
-      T *padded_addr = reinterpret_cast<T *>(workspace[0]->addr);
-      CalPad(padded_size_ / sizeof(T), input_addr, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
-             old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded_addr,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
 
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, padded_descriptor_,
-                                                      padded_addr, &beta, output_descriptor_, output_addr),
-                                  "cudnnPoolingForward failed");
-    } else {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_,
-                                                      input_addr, &beta, output_descriptor_, output_addr),
-                                  "cudnnPoolingForward failed");
-    }
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_,
+                                                    input_addr, &beta, output_descriptor_, output_addr),
+                                "cudnnPoolingForward failed");
     return true;
   }
   bool Init(const CNodePtr &kernel_node) {
@@ -89,39 +77,64 @@ class PoolingGpuFwdKernel : public GpuKernel {
       return false;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+
+    auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "PoolingGpuFwdKernel input is null.";
       InitSizeLists();
       return true;
     }
+    SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
+    int nbDims = 4;
+    int dimA[4];
+    int strideAin[4];
+    int dimAout[4];
+    int strideAout[4];
+    SetDimA(input_shape, dimA, data_format_);
+    SetStrideA(input_shape, strideAin, data_format_);
+    SetDimA(output_shape, dimAout, data_format_);
+    SetStrideA(output_shape, strideAout, data_format_);
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(input_shape[0]),
-                                 SizeToInt(input_shape[1]), SizeToInt(input_shape[2]), SizeToInt(input_shape[3])),
+      cudnnSetTensorNdDescriptor(input_descriptor_, cudnn_data_type_, nbDims, dimA, strideAin),
       "cudnnSetTensor4dDescriptor failed");
-
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(output_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(output_shape[0]),
-                                 SizeToInt(output_shape[1]), SizeToInt(output_shape[2]), SizeToInt(output_shape[3])),
+      cudnnSetTensorNdDescriptor(output_descriptor_, cudnn_data_type_, nbDims, dimAout, strideAout),
       "cudnnSetTensor4dDescriptor failed");
     auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
     int window_height = window[2];
     int window_width = window[3];
     stride_ = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
     SetPoolingMode(kernel_node);
+    int windowDimA[2] = {window_height, window_width};
+    int paddingA[2] = {0, 0};
+    int strideA[2] = {stride_[2], stride_[3]};
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
-      SetPad(input_shape, window_height, window_width);
+      pad_height_ =
+        std::max<int>(0, (((old_height_ / stride_[2]) * stride_[2] == old_height_ ? (old_height_ / stride_[2])
+                                                                                  : (old_height_ / stride_[2]) + 1) -
+                          1) *
+                             stride_[2] +
+                           window_height - old_height_);
+      pad_width_ =
+        std::max<int>(0, (((old_width_ / stride_[3]) * stride_[3] == old_width_ ? (old_width_ / stride_[3])
+                                                                                : (old_width_ / stride_[3]) + 1) -
+                          1) *
+                             stride_[3] +
+                           window_width - old_width_);
+      pad_top_ = pad_height_ / 2;
+      pad_left_ = pad_width_ / 2;
+      paddingA[0] = pad_top_;
+      paddingA[1] = pad_left_;
     } else {
       pad_height_ = 0;
       pad_width_ = 0;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnSetPooling2dDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN, window_height,
-                                    window_width, pad_height_, pad_width_, stride_[2], stride_[3]),
-        "cudnnSetPooling2dDescriptor failed");
     }
-
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
+                                                            2, windowDimA, paddingA, strideA),
+                                "cudnnSetPoolingNdDescriptor failed");
     InitSizeLists();
     return true;
   }
@@ -131,7 +144,6 @@ class PoolingGpuFwdKernel : public GpuKernel {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&input_descriptor_), "cudnnCreateTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&output_descriptor_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&padded_descriptor_), "cudnnCreateTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreatePoolingDescriptor(&pooling_descriptor_),
                                 "cudnnCreatePoolingDescriptor failed");
   }
@@ -146,15 +158,6 @@ class PoolingGpuFwdKernel : public GpuKernel {
     }
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
-    if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_ && !is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnGetTensorSizeInBytes(padded_descriptor_, reinterpret_cast<size_t *>(&padded_size_)),
-        "cudnnGetTensorSizeInBytes failed");
-      workspace_size_list_.push_back(padded_size_);
-      if (padded_size_ == 0) {
-        MS_LOG(EXCEPTION) << "Padded size is 0.";
-      }
-    }
     return;
   }
 
@@ -167,36 +170,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
     }
     return true;
   }
-  void SetPad(const std::vector<size_t> &input_shape, const int &window_height, const int &window_width) {
-    n_ = SizeToInt(input_shape[0]);
-    c_ = SizeToInt(input_shape[1]);
-    old_height_ = SizeToInt(input_shape[2]);
-    old_width_ = SizeToInt(input_shape[3]);
-    pad_height_ =
-      std::max<int>(0, (((old_height_ / stride_[2]) * stride_[2] == old_height_ ? (old_height_ / stride_[2])
-                                                                                : (old_height_ / stride_[2]) + 1) -
-                        1) *
-                           stride_[2] +
-                         window_height - old_height_);
-    pad_width_ =
-      std::max<int>(0, (((old_width_ / stride_[3]) * stride_[3] == old_width_ ? (old_width_ / stride_[3])
-                                                                              : (old_width_ / stride_[3]) + 1) -
-                        1) *
-                           stride_[3] +
-                         window_width - old_width_);
-    pad_top_ = pad_height_ / 2;
-    pad_left_ = pad_width_ / 2;
-    if (pad_height_ % 2 == 0 && pad_width_ % 2 == 0) {
-      use_pad_ = false;
-    }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(padded_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, n_,
-                                                           c_, old_height_ + pad_height_, old_width_ + pad_width_),
-                                "cudnnSetTensor4dDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetPooling2dDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
-                                                            window_height, window_width, use_pad_ ? 0 : pad_top_,
-                                                            use_pad_ ? 0 : pad_left_, stride_[2], stride_[3]),
-                                "cudnnSetPooling2dDescriptor failed");
-  }
+
   void SetPoolingMode(const CNodePtr &kernel_node) {
     pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("padding"));
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
@@ -211,7 +185,6 @@ class PoolingGpuFwdKernel : public GpuKernel {
   void DestroyResource() noexcept {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyPoolingDescriptor(pooling_descriptor_),
                                "cudnnDestroyPoolingDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(padded_descriptor_), "cudnnDestroyTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(output_descriptor_), "cudnnDestroyTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_descriptor_), "cudnnDestroyTensorDescriptor failed");
   }
@@ -220,16 +193,16 @@ class PoolingGpuFwdKernel : public GpuKernel {
   cudnnTensorDescriptor_t input_descriptor_;
   cudnnTensorDescriptor_t output_descriptor_;
   cudnnPoolingDescriptor_t pooling_descriptor_;
-  cudnnTensorDescriptor_t padded_descriptor_;
   cudnnPoolingMode_t pooling_mode_ = CUDNN_POOLING_MAX;
   std::vector<int> stride_;
   std::string mode_;
   std::string pad_mode_;
+  std::string data_format_ = "NCHW";
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   cudnnDataType_t cudnn_data_type_;
-
+  cudnnTensorFormat_t compute_format_;
   int old_height_;
   int old_width_;
   int pad_height_;
@@ -242,9 +215,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
   bool is_null_input_;
   size_t input_size_;
   size_t output_size_;
-  size_t padded_size_;
   size_t workspace_size_;
-  bool use_pad_;
 };
 }  // namespace kernel
 }  // namespace mindspore

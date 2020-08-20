@@ -45,23 +45,23 @@ def test_maxpool2d_grad():
         [24, 25, 26, 27, 28, 29],
         [30, 31, 32, 33, 34, 35]
     ]]]).astype(np.float32))
-    a = Tensor(np.array([[[
+    d = Tensor(np.array([[[
         [3, 3, 3],
         [3, 3, 3],
         [3, 3, 3]
     ]]]).astype(np.float32))
-    d = Tensor(np.array([[[
+    a = Tensor(np.array([[[
         [7, 9, 11],
         [19, 21, 23],
         [31, 33, 35]
     ]]]).astype(np.float32))
     expect_result = (np.array([[[
         [0, 0, 0, 0, 0, 0],
-        [0, 7, 0, 9, 0, 11],
+        [0, 3, 0, 3, 0, 3],
         [0, 0, 0, 0, 0, 0],
-        [0, 19, 0, 21, 0, 23],
+        [0, 3, 0, 3, 0, 3],
         [0, 0, 0, 0, 0, 0],
-        [0, 31, 0, 33, 0, 35]
+        [0, 3, 0, 3, 0, 3]
     ]]]))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")

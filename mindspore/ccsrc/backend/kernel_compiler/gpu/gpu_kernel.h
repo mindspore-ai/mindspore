@@ -21,6 +21,7 @@
 #include <cudnn.h>
 #include <string>
 #include <vector>
+#include <utility>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
@@ -71,6 +72,59 @@ class GpuKernel : public KernelMod {
     dst->push_back(src.size() < 3 ? 1 : SizeToInt(src[src.size() - 3]));
     dst->push_back(src.size() < 2 ? 1 : SizeToInt(src[src.size() - 2]));
     dst->push_back(src.size() == 0 ? 1 : SizeToInt(src[src.size() - 1]));
+  }
+
+  // transpose shape: NCHW To NHWC
+  void ShapeNCHW2NHWC(std::vector<size_t> *shape) {
+    std::swap((*shape)[1], (*shape)[3]);
+    std::swap((*shape)[2], (*shape)[1]);
+  }
+
+  void SetDimA(const std::vector<size_t> &shape, int *dimA, const std::string &format) {
+    if (format == "NCHW" || format == "DefaultFormat") {
+      dimA[0] = SizeToInt(shape[0]);
+      dimA[1] = SizeToInt(shape[1]);
+      dimA[2] = SizeToInt(shape[2]);
+      dimA[3] = SizeToInt(shape[3]);
+    } else if (format == "NHWC") {
+      dimA[0] = SizeToInt(shape[0]);
+      dimA[1] = SizeToInt(shape[3]);
+      dimA[2] = SizeToInt(shape[1]);
+      dimA[3] = SizeToInt(shape[2]);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data format " << format;
+    }
+  }
+  void SetStrideA(const std::vector<size_t> &shape, int *strideA, const std::string &format) {
+    if (format == "NCHW" || format == "DefaultFormat") {
+      strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3]);
+      strideA[1] = SizeToInt(shape[2] * shape[3]);
+      strideA[2] = SizeToInt(shape[3]);
+      strideA[3] = 1;
+    } else if (format == "NHWC") {
+      strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3]);
+      strideA[1] = 1;
+      strideA[2] = SizeToInt(shape[2] * shape[3]);
+      strideA[3] = SizeToInt(shape[3]);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data format " << format;
+    }
+  }
+
+  void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format) {
+    if (format == "NCHW" || format == "DefaultFormat") {
+      *n = SizeToInt(shape[0]);
+      *c = SizeToInt(shape[1]);
+      *h = SizeToInt(shape[2]);
+      *w = SizeToInt(shape[3]);
+    } else if (format == "NHWC") {
+      *n = SizeToInt(shape[0]);
+      *c = SizeToInt(shape[3]);
+      *h = SizeToInt(shape[1]);
+      *w = SizeToInt(shape[2]);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data format " << format;
+    }
   }
 
   inline void CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B,
