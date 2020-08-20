@@ -27,22 +27,21 @@ namespace tensor {
 class DETensor : public MSTensor {
  public:
   /// \brief Create a MSTensor pointer.
-  /// \param[data_type] DataTypeId of tensor to be created.
-  /// \param[shape] Shape of tensor to be created.
-  /// \return - MSTensor pointer.
+  /// \param[in] data_type DataTypeId of tensor to be created
+  /// \param[in] shape Shape of tensor to be created
+  /// \return MSTensor pointer
   static MSTensor *CreateTensor(TypeId data_type, const std::vector<int> &shape);
 
   /// \brief Create a MSTensor pointer.
-  /// \param[path] Path file to be read.
-  /// \return - MSTensor pointer.
+  /// \param[in] path Path to file to read
+  /// \return MSTensor pointer
   static MSTensor *CreateTensor(const std::string &path);
 
   /// \brief Create a MSTensor pointer.
-  /// \note This function returns null_ptr if tensor creation fails.
-  /// \param[data_type] DataTypeId of tensor to be created.
-  /// \param[shape] Shape of tensor to be created.
-  /// \param[data] Data pointer.
-  /// \return - MSTensor pointer.
+  /// \param[in] data_type Data TypeId of tensor to be created
+  /// \param[in] shape Shape of tensor to be created
+  /// \param[in] data Data pointer
+  /// \return MSTensor pointer
   static MSTensor *CreateFromMemory(TypeId data_type, const std::vector<int> &shape, void *data);
 
   DETensor(TypeId data_type, const std::vector<int> &shape);
@@ -52,7 +51,7 @@ class DETensor : public MSTensor {
   ~DETensor() = default;
 
   /// \brief Create a duplicate instance, convert the DETensor to the LiteTensor.
-  /// \return - MSTensor pointer.
+  /// \return MSTensor pointer
   MSTensor *ConvertToLiteTensor();
 
   std::shared_ptr<dataset::Tensor> tensor() const;
