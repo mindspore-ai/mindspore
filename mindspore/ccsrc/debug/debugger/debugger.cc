@@ -149,7 +149,7 @@ void Debugger::EnableDebugger() {
     last_overflow_bin_ = 0;
     DIR *d;
     d = opendir(overflow_bin_path_.c_str());
-    if (d) {
+    if (d != nullptr) {
       struct dirent *dir;
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG) {
@@ -718,9 +718,9 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
   std::vector<double> bin_list;
   std::vector<std::string> op_names;
   DIR *d;
-  struct dirent *dir;
+  struct dirent *dir = nullptr;
   d = opendir(overflow_bin_path_.c_str());
-  if (d) {
+  if (d != nullptr) {
     while ((dir = readdir(d)) != NULL) {
       if (dir->d_type == DT_REG) {
         std::string file_path = overflow_bin_path_;

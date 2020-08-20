@@ -35,6 +35,7 @@
 #include "minddata/dataset/engine/gnn/node.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/mindrecord/include/shard_reader.h"
+#include "minddata/dataset/engine/gnn/graph_data_impl.h"
 namespace mindspore {
 namespace dataset {
 namespace gnn {
@@ -48,8 +49,6 @@ using NodeFeatureMap = std::unordered_map<NodeType, std::unordered_set<FeatureTy
 using EdgeFeatureMap = std::unordered_map<EdgeType, std::unordered_set<FeatureType>>;
 using DefaultNodeFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
 using DefaultEdgeFeatureMap = std::unordered_map<FeatureType, std::shared_ptr<Feature>>;
-
-class GraphDataImpl;
 
 // this class interfaces with the underlying storage format (mindrecord)
 // it returns raw nodes and edges via GetNodesAndEdges
