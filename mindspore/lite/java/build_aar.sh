@@ -5,20 +5,20 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 TOP_PATH="${BASE_PATH}/../../.."
 # build mindspore-lite arm64
 cd ${TOP_PATH}
-bash build.sh -I arm64
-COMPILE_RET=$?
+#bash build.sh -I arm64
+#COMPILE_RET=$?
 
-if [[ "${COMPILE_RET}" -ne 0 ]]; then
-    echo "---------------- mindspore lite: build failed ----------------"
-    exit
-fi
+#if [[ "${COMPILE_RET}" -ne 0 ]]; then
+#    echo "---------------- mindspore lite: build failed ----------------"
+#    exit
+#fi
 
 # copy arm64 so
 cd ${TOP_PATH}/output/
-rm -rf MSLite-0.7.0-linux_arm64
-tar -zxvf MSLite-0.7.0-linux_arm64.tar.gz
+rm -rf mindspore-lite-0.6.0
+tar -zxvf mindspore-lite-0.6.0-runtime-arm64-cpu.tar.gz
 mkdir -p ${BASE_PATH}/lib/
-cp ${TOP_PATH}/output/MSLite-0.7.0-linux_arm64/lib/libmindspore-lite.so ${BASE_PATH}/lib/
+cp ${TOP_PATH}/output/mindspore-lite-0.6.0/lib/libmindspore-lite.so ${BASE_PATH}/lib/
 cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${BASE_PATH}/lib/
 
 # build jni so
