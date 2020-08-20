@@ -377,7 +377,7 @@ int ReduceProdInt8(const int outer_size, const int inner_size, const int axis_si
       if (isAddOverflow(prod, quant->in_zp_)) {
         return NNACL_ERRCODE_ADD_OVERFLOW;
       }
-      *inner_dst = prod + quant->in_zp_;  // todo overflow
+      *inner_dst = prod + quant->in_zp_;
     }
   }
   return NNACL_OK;

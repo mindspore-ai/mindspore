@@ -101,7 +101,6 @@ int PadCPUKernel::Run() {
   int output_size = output->DataSize();
 
   auto output_data = reinterpret_cast<float *>(output->Data());
-  // todo parallel memset to save time
   memset(output_data, 0, output_size * sizeof(float));
 
   int error_code = LiteBackendParallelLaunch(PadImpl, this, context_->thread_num_);

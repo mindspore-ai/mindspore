@@ -26,7 +26,6 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
   std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
   attr->format = schema::Format_NCHW;
   std::vector<onnx::TensorProto> params;
-  // TODO(wangzhe) shape may also come from other op, there need refactor to introduce tensor_cache
   for (int i = 0; i < onnx_node.input_size(); ++i) {
     const auto &input_name = onnx_node.input(i);
     for (const auto &it : onnx_graph.initializer()) {

@@ -802,7 +802,6 @@ STATUS PostTrainingQuantizer::CheckTensorVec(const std::string &nodeName,
  **/
 STATUS PostTrainingQuantizer::DoInference() {
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    // TODO(x) when model has inputs count > 1
     // get input tensor
     vector<mindspore::tensor::MSTensor *> inputs = session_->GetInputs();
     if (inputs.size() > 1) {
@@ -854,7 +853,6 @@ STATUS PostTrainingQuantizer::DoInference() {
 
 STATUS PostTrainingQuantizer::CollectDataFrequency() {
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    // TODO(x) when model has inputs count > 1
     // get input tensor
     vector<mindspore::tensor::MSTensor *> inputs = session_->GetInputs();
     if (inputs.size() > 1) {

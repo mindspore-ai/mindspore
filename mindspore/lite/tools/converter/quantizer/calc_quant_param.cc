@@ -168,7 +168,6 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       if (outQuantParam->inited) {
         continue;
       }
-      // todo copy quant params
       outTensor->quantParams.front() = std::move(outQuantParam);
     }
   }

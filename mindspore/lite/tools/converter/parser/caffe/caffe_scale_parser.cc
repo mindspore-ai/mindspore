@@ -43,7 +43,6 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
   attr->axis = axis;
 
   // parse scale
-  // todo expect only weight as scale not bias
   if (weight.blobs().size() == 1) {
     auto scale = ConvertWeight(weight.blobs(0));
     if (scale == nullptr) {

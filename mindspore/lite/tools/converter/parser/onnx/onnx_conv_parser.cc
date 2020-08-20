@@ -65,7 +65,6 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
         MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 2";
         return RET_ERROR;
       }
-      // TODO(wangzhe) verify the change
       attr->dilateH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->dilateW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "kernels") {
@@ -80,7 +79,6 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
         return RET_ERROR;
       }
-      // TODO(wangzhe) verify the change
       attr->kernelH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->kernelW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "auto_pad") {
@@ -99,7 +97,6 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
         MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 2";
         return RET_ERROR;
       }
-      // TODO(wangzhe) verify the change
       attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "order") {
@@ -143,7 +140,6 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       dims.insert(dims.begin(), iter->ints().begin(), iter->ints().end());
     }
     attr->channelOut = dims[0];
-    // TODO(wangzhe) verify this code
     attr->channelIn = dims[3] * attr->group;
   }
   attr->format = schema::Format_NCHW;

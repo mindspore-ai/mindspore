@@ -65,7 +65,7 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
   if (slope_size == 1) {
     attr->slope.push_back(*slope_raw_data);
     attr->channelShared = true;
-  } else {  // TODO(wangzhe) we don't check input tensor's channel size, this may cause problem
+  } else {
     attr->slope.resize(slope_size);
     attr->channelShared = false;
     if (memcpy_s(attr->slope.data(), slope_size * sizeof(float), slope_raw_data, slope_size * sizeof(float)) != 0) {

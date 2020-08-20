@@ -29,7 +29,7 @@ void WeightFormatHardCodePass::SetFmkType(converter::FmkType fmkType) { this->fm
 // pre set tensor format
 // non quant, filterFormat:
 //           conv     deconv     depth     dedepth
-// caffe   K(C/g)HW  C(K/g)HW      /         /     // todo with deconvOp
+// caffe   K(C/g)HW  C(K/g)HW      /         /
 // tf        HWCK     HWKC       HWCK      HWKC
 // onnx    K(C/g)HW  C(K/g)HW      /         /
 

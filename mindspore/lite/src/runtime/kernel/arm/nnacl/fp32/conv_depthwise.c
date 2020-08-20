@@ -423,7 +423,6 @@ void ConvDw3x3Fp32InputTrans(const float *input_data, float *trans_input, float 
   }
 }
 
-// todo yangruoqi: implement assembly
 void ConvDw3x3Fp32Winograd(float *trans_buffer, const float *weight, int out_h_block, int out_w_block) {
   const int unit = 4;
   for (int oh = 0; oh < out_h_block; oh++) {
