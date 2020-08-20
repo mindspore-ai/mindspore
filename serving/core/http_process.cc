@@ -102,7 +102,6 @@ Status GetDataFromJson(const json &json_data, std::string *data, HTTP_DATA_TYPE 
     }
     auto s_data = json_data.get<int32_t>();
     data->append(reinterpret_cast<char *>(&s_data), sizeof(int32_t));
-    MSI_LOG(INFO) << "data size " << data->size();
   } else if (json_data.is_number_float()) {
     if (*type == HTTP_DATA_NONE) {
       *type = HTTP_DATA_FLOAT;
@@ -112,7 +111,6 @@ Status GetDataFromJson(const json &json_data, std::string *data, HTTP_DATA_TYPE 
     }
     auto s_data = json_data.get<float>();
     data->append(reinterpret_cast<char *>(&s_data), sizeof(float));
-    MSI_LOG(INFO) << "data size " << data->size();
   } else {
     ERROR_INFER_STATUS(status, INVALID_INPUTS, "the input data type should be int or float");
     return status;
@@ -227,7 +225,6 @@ Status TransTensorToPredictRequest(const json &message_info, PredictRequest *req
     std::string msg_data;
     HTTP_DATA_TYPE type{HTTP_DATA_NONE};
     RecusiveGetTensor(tensor, 0, &shape, &msg_data, &type);
-    MSI_LOG(INFO) << shape << ", data = " << msg_data.size();
     auto iter = http_to_infer_map.find(type);
     if (iter == http_to_infer_map.end()) {
       ERROR_INFER_STATUS(status, INVALID_INPUTS, "the input type is not supported right now");

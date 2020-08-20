@@ -41,7 +41,8 @@ class MSClient {
 
     Tensor data;
     TensorShape shape;
-    shape.add_dims(4);
+    shape.add_dims(2);
+    shape.add_dims(2);
     *data.mutable_tensor_shape() = shape;
     data.set_tensor_type(ms_serving::MS_FLOAT32);
     std::vector<float> input_data{1, 2, 3, 4};
@@ -58,7 +59,7 @@ class MSClient {
 
     // The actual RPC.
     Status status = stub_->Predict(&context, request, &reply);
-    std::cout << "Compute [1, 2, 3, 4] + [1, 2, 3, 4]" << std::endl;
+    std::cout << "Compute [[1, 2], [3, 4]] + [[1, 2], [3, 4]]" << std::endl;
 
     // Act upon its status.
     if (status.ok()) {
