@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Softplus Bijector"""
+import numpy as np
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 from mindspore.nn.layer.activation import LogSigmoid
 from mindspore._checkparam import Validator as validator
-from ..distribution._utils.utils import cast_to_tensor
+from ..distribution._utils.utils import cast_to_tensor, CheckTensor
 from .bijector import Bijector
 
 class Softplus(Bijector):
@@ -52,18 +54,27 @@ class Softplus(Bijector):
                  sharpness=1.0,
                  name='Softplus'):
         param = dict(locals())
-        validator.check_value_type('sharpness', sharpness, [float], name)
+        validator.check_value_type('sharpness', sharpness, [int, float], name)
         super(Softplus, self).__init__(name=name, param=param)
         self._sharpness = cast_to_tensor(sharpness)
 
+        self.abs = P.Abs()
         self.exp = P.Exp()
         self.expm1 = self._expm1_by_step
+        self.fill = P.Fill()
+        self.greater = P.Greater()
+        self.less = P.Less()
         self.log_sigmoid = LogSigmoid()
         self.log = P.Log()
+        self.logicalor = P.LogicalOr()
+        self.select = P.Select()
+        self.shape = P.Shape()
         self.sigmoid = P.Sigmoid()
-
         self.softplus = self._softplus
         self.inverse_softplus = self._inverse_softplus
+
+        self.checktensor = CheckTensor()
+        self.threshold = np.log(np.finfo(np.float32).eps) + 1
 
     def _expm1_by_step(self, x):
         """
@@ -72,7 +83,15 @@ class Softplus(Bijector):
         return self.exp(x) - 1.0
 
     def _softplus(self, x):
-        return self.log(self.exp(x) + 1.0)
+        too_small = self.less(x, self.threshold)
+        too_large = self.greater(x, -self.threshold)
+        too_small_value = self.exp(x)
+        too_large_value = x
+        ones = self.fill(mstype.float32, self.shape(x), 1.0)
+        too_small_or_too_large = self.logicalor(too_small, too_large)
+        x = self.select(too_small_or_too_large, ones, x)
+        y = self.log(self.exp(x) + 1.0)
+        return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))
 
     def _inverse_softplus(self, x):
         r"""
@@ -80,7 +99,15 @@ class Softplus(Bijector):
             f(x) = \frac{\log(1 + e^{x}))}
             f^{-1}(y) = \frac{\log(e^{y} - 1)}
         """
-        return self.log(self.expm1(x))
+        too_small = self.less(x, self.threshold)
+        too_large = self.greater(x, -self.threshold)
+        too_small_value = self.log(x)
+        too_large_value = x
+        ones = self.fill(mstype.float32, self.shape(x), 1.0)
+        too_small_or_too_large = self.logicalor(too_small, too_large)
+        x = self.select(too_small_or_too_large, ones, x)
+        y = x + self.log(self.abs(self.expm1(-x)))
+        return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))
 
     @property
     def sharpness(self):
@@ -94,6 +121,7 @@ class Softplus(Bijector):
         return shape
 
     def _forward(self, x):
+        self.checktensor(x, 'x')
         scaled_value = self.sharpness * x
         return self.softplus(scaled_value) / self.sharpness
 
@@ -103,6 +131,7 @@ class Softplus(Bijector):
             f(x) = \frac{\log(1 + e^{kx}))}{k}
             f^{-1}(y) = \frac{\log(e^{ky} - 1)}{k}
         """
+        self.checktensor(y, 'y')
         scaled_value = self.sharpness * y
         return self.inverse_softplus(scaled_value) / self.sharpness
 
@@ -113,6 +142,7 @@ class Softplus(Bijector):
             f'(x) = \frac{e^{kx}}{ 1 + e^{kx}}
             \log(f'(x)) =  kx - \log(1 + e^{kx}) = kx - f(kx)
         """
+        self.checktensor(x, 'x')
         scaled_value = self.sharpness * x
         return self.log_sigmoid(scaled_value)
 
@@ -123,5 +153,6 @@ class Softplus(Bijector):
             f'(y) = \frac{e^{ky}}{e^{ky} - 1}
             \log(f'(y)) = ky - \log(e^{ky} - 1) = ky - f(ky)
         """
+        self.checktensor(y, 'y')
         scaled_value = self.sharpness * y
         return scaled_value - self.inverse_softplus(scaled_value)

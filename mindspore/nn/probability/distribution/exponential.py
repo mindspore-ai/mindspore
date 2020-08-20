@@ -20,6 +20,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
+from ._utils.utils import CheckTensor, CheckTuple
 
 class Exponential(Distribution):
     """
@@ -125,6 +126,9 @@ class Exponential(Distribution):
         self.sq = P.Square()
         self.uniform = C.uniform
 
+        self.checktensor = CheckTensor()
+        self.checktuple = CheckTuple()
+
     def extend_repr(self):
         if self.is_scalar_batch:
             str_info = f'rate = {self.rate}'
@@ -139,14 +143,21 @@ class Exponential(Distribution):
         """
         return self._rate
 
+    def _check_param(self, rate):
+        """
+        Check availablity of distribution specific args rate.
+        """
+        if rate is not None:
+            self.checktensor(rate, 'rate')
+            return self.cast(rate, self.parameter_type)
+        return self.rate if self.rate is not None else raise_none_error('rate')
+
     def _mean(self, rate=None):
         r"""
         .. math::
             MEAN(EXP) = \frac{1.0}{\lambda}.
         """
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        rate = self._check_param(rate)
         return 1.0 / rate
 
     def _mode(self, rate=None):
@@ -154,9 +165,7 @@ class Exponential(Distribution):
         .. math::
             MODE(EXP) = 0.
         """
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        rate = self._check_param(rate)
         return self.fill(self.dtype, self.shape(rate), 0.)
 
     def _sd(self, rate=None):
@@ -164,9 +173,7 @@ class Exponential(Distribution):
         .. math::
             sd(EXP) = \frac{1.0}{\lambda}.
         """
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        rate = self._check_param(rate)
         return 1.0 / rate
 
     def _entropy(self, rate=None):
@@ -174,13 +181,10 @@ class Exponential(Distribution):
         .. math::
             H(Exp) = 1 - \log(\lambda).
         """
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        rate = self._check_param(rate)
         return 1.0 - self.log(rate)
 
-
-    def _cross_entropy(self, dist, rate_b, rate_a=None):
+    def _cross_entropy(self, dist, rate_b, rate=None):
         """
         Evaluate cross_entropy between Exponential distributions.
 
@@ -190,7 +194,7 @@ class Exponential(Distribution):
             rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
         check_distribution_name(dist, 'Exponential')
-        return self._entropy(rate=rate_a) + self._kl_loss(dist, rate_b, rate_a)
+        return self._entropy(rate) + self._kl_loss(dist, rate_b, rate)
 
 
     def _prob(self, value, rate=None):
@@ -208,12 +212,9 @@ class Exponential(Distribution):
         .. math::
             pdf(x) = rate * \exp(-1 * \lambda * x) if x >= 0 else 0
         """
-        if value is None:
-            raise_none_error("value")
+        self.checktensor(value, "value")
         value = self.cast(value, self.dtype)
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        rate = self._check_param(rate)
         prob = self.exp(self.log(rate) - rate * value)
         zeros = self.fill(self.dtypeop(prob), self.shape(prob), 0.0)
         comp = self.less(value, zeros)
@@ -233,19 +234,16 @@ class Exponential(Distribution):
         .. math::
             cdf(x) = 1.0 - \exp(-1 * \lambda * x) if x >= 0 else 0
         """
-        if value is None:
-            raise_none_error("value")
+        self.checktensor(value, 'value')
         value = self.cast(value, self.dtype)
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        rate = self._check_param(rate)
         cdf = 1.0 - self.exp(-1. * rate * value)
         zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, cdf)
 
 
-    def _kl_loss(self, dist, rate_b, rate_a=None):
+    def _kl_loss(self, dist, rate_b, rate=None):
         """
         Evaluate exp-exp kl divergence, i.e. KL(a||b).
 
@@ -255,12 +253,9 @@ class Exponential(Distribution):
             rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
         check_distribution_name(dist, 'Exponential')
-        if rate_b is None:
-            raise_none_error("rate_b")
+        self.checktensor(rate_b, 'rate_b')
         rate_b = self.cast(rate_b, self.parameter_type)
-        rate_a = self.cast(rate_a, self.parameter_type) if rate_a is not None else self.rate
-        if rate_a is None:
-            raise_none_error("rate_a")
+        rate_a = self._check_param(rate)
         return self.log(rate_a) - self.log(rate_b) + rate_b / rate_a - 1.0
 
     def _sample(self, shape=(), rate=None):
@@ -274,9 +269,8 @@ class Exponential(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        rate = self.cast(rate, self.parameter_type) if rate is not None else self.rate
-        if rate is None:
-            raise_none_error("rate")
+        self.checktuple(shape, 'shape')
+        rate = self._check_param(rate)
         origin_shape = shape + self.shape(rate)
         if origin_shape == ():
             sample_shape = (1,)

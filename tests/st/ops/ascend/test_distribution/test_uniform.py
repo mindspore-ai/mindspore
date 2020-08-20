@@ -88,7 +88,7 @@ def test_kl_loss():
     high_a = 1.5
     low_b = -1.0
     high_b = 2.0
-    expect_kl_loss = np.log(high_b - low_b) / np.log(high_a - low_a)
+    expect_kl_loss = np.log(high_b - low_b) - np.log(high_a - low_a)
     kl = KL()
     output = kl(Tensor(low_b, dtype=dtype.float32), Tensor(high_b, dtype=dtype.float32))
     tol = 1e-6

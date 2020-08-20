@@ -16,6 +16,7 @@
 from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
+from ..distribution._utils.utils import CheckTensor
 from .bijector import Bijector
 
 class PowerTransform(Bijector):
@@ -62,6 +63,8 @@ class PowerTransform(Bijector):
         self.log1p = self._log1p_by_step
         self.expm1 = self._expm1_by_step
 
+        self.checktensor = CheckTensor()
+
     def _log1p_by_step(self, x):
         """
         Log1p ops on GPU device or when device_target == GPU.
@@ -86,11 +89,13 @@ class PowerTransform(Bijector):
         return shape
 
     def _forward(self, x):
+        self.checktensor(x, 'x')
         if self.power == 0:
             return self.exp(x)
         return self.exp(self.log1p(x * self.power) / self.power)
 
     def _inverse(self, y):
+        self.checktensor(y, 'y')
         if self.power == 0:
             return self.log(y)
         return self.expm1(self.log(y) * self.power) / self.power
@@ -107,6 +112,7 @@ class PowerTransform(Bijector):
                 f'(x) = e^\frac{\log(xc + 1)}{c} * \frac{1}{xc + 1}
                 \log(f'(x)) =  (\frac{1}{c} - 1) * \log(xc + 1)
         """
+        self.checktensor(x, 'x')
         if self.power == 0:
             return x
         return (1. / self.power - 1) * self.log1p(x * self.power)
@@ -123,4 +129,5 @@ class PowerTransform(Bijector):
                 f'(x) = \frac{e^c\log(y)}{y}
                 \log(f'(x)) =  \log(\frac{e^c\log(y)}{y}) = (c-1) * \log(y)
         """
+        self.checktensor(y, 'y')
         return (self.power - 1) * self.log(y)
