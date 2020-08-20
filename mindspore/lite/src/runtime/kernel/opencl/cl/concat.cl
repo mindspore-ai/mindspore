@@ -1,5 +1,4 @@
 // #pragma OPENCL EXTENSION cl_khr_fp16 : enable
-#define FLT4 float4
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
 __kernel void Concat(__read_only image2d_t input0, __read_only image2d_t input1, __write_only image2d_t output,

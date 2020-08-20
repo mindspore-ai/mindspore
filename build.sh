@@ -460,24 +460,20 @@ build_gtest() {
 
 gene_clhpp() {
     CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
-    for sub_dir in "${CL_SRC_DIR}"/*
+    if [ ! -d ${CL_SRC_DIR} ]; then
+      return
+    fi
+    cd ${CL_SRC_DIR}/
+    rm -rf *.inc
+    echo "$(cd "$(dirname $0)"; pwd)"
+    for file_path in "${CL_SRC_DIR}"/*
     do
-        data_type="$(basename ${sub_dir})"
-        if [ ! -d ${CL_SRC_DIR}/${data_type} ]; then
-          continue
-        fi
-        cd ${CL_SRC_DIR}/${data_type}
-        rm -rf *.inc
-        echo "$(cd "$(dirname $0)"; pwd)"
-        for file_path in "${CL_SRC_DIR}/${data_type}"/*
-        do
-            file="$(basename ${file_path})"
-            inc_file=`echo ${CL_SRC_DIR}/${data_type}/${file} | sed 's/$/.inc/'`
-            sed 's/^/\"/;s/$/    \\n\" \\/' ${CL_SRC_DIR}/${data_type}/${file} > ${inc_file}
-            kernel_name=`echo ${file} | sed s'/.\{3\}$//'`
-	    sed -i "1i\static const char *${kernel_name}_source_${data_type} =\"\\n\" \\" ${inc_file}
-            sed -i '$a\;' ${inc_file}
-        done
+        file="$(basename ${file_path})"
+        inc_file=`echo ${CL_SRC_DIR}/${file} | sed 's/$/.inc/'`
+        sed 's/^/\"/;s/$/    \\n\" \\/' ${CL_SRC_DIR}/${file} > ${inc_file}
+        kernel_name=`echo ${file} | sed s'/.\{3\}$//'`
+  sed -i "1i\static const char *${kernel_name}_source =\"\\n\" \\" ${inc_file}
+        sed -i '$a\;' ${inc_file}
     done
 }
 

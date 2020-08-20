@@ -20,7 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/batchnorm.h"
-#include "src/runtime/kernel/opencl/cl/fp32/batchnorm.cl.inc"
+#include "src/runtime/kernel/opencl/cl/batchnorm.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -50,7 +50,7 @@ int BatchNormOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
 }
 int BatchNormOpenCLKernel::Init() {
   std::set<std::string> build_options;
-  std::string source = batchnorm_source_fp32;
+  std::string source = batchnorm_source;
   std::string program_name = "batch_normalization";
   std::string kernel_name = "batch_normalization";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();

@@ -21,8 +21,7 @@
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/transpose.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp16/transpose.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/transpose.cl.inc"
+#include "src/runtime/kernel/opencl/cl/transpose.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -45,11 +44,7 @@ int TransposeOpenCLKernel::Init() {
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::set<std::string> build_options;
-#ifdef ENABLE_FP16
-  std::string source = transpose_source_fp16;
-#else
-  std::string source = transpose_source_fp32;
-#endif
+  std::string source = transpose_source;
   std::string program_name = "transpose";
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);

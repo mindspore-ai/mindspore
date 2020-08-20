@@ -22,7 +22,7 @@
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/cl/fp32/to_format.cl.inc"
+#include "src/runtime/kernel/opencl/cl/to_format.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -37,10 +37,9 @@ int ToFormatOpenCLKernel::Init() {
   auto parameter = reinterpret_cast<OpenCLToFormatParameter *>(op_parameter_);
   out_mem_type_ = parameter->out_mem_type;
   std::string program_name = "to_format";
-  std::map<schema::Format, std::string> format_str{{schema::Format_NCHW, "NCHW"},
-                                                   {schema::Format_NHWC, "NHWC"},
-                                                   {schema::Format_NC4HW4, "NC4HW4"},
-                                                   {schema::Format_NHWC4, "NHWC4"}};
+  std::map<schema::Format, std::string> format_str{{schema::Format_NCHW, "NCHW"},     {schema::Format_NHWC, "NHWC"},
+                                                   {schema::Format_NC4HW4, "NC4HW4"}, {schema::Format_NC4, "NHWC4"},
+                                                   {schema::Format_NC, "NHWC"},       {schema::Format_NHWC4, "NHWC4"}};
   std::string kernel_name =
     "to_format_" + format_str[in_tensors_[0]->GetFormat()] + "_to_" + format_str[out_tensors_[0]->GetFormat()];
   if (out_mem_type_ == OpenCLMemType::IMG) {
@@ -49,49 +48,54 @@ int ToFormatOpenCLKernel::Init() {
     kernel_name += "_BUF";
   }
 
+  this->set_name(kernel_name);
 #ifdef PROGRAM_WITH_IL
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::set<std::string> build_options;
-#ifdef ENABLE_FP16
-  std::string source = to_format_source_fp16;
-#else
-  std::string source = to_format_source_fp32;
-#endif
+  std::string source = to_format_source;
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  InitNHWCShape();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  return RET_OK;
+}
+
+int ToFormatOpenCLKernel::InitNHWCShape() {
+  std::vector<int> shapex = out_tensors_[0]->shape();
+  size_t n, h, w, c;
+  if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4 || out_tensors_[0]->GetFormat() == schema::Format_NHWC) {
+    n = shapex[0];
+    h = shapex[1];
+    w = shapex[2];
+    c = shapex[3];
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4 ||
+             out_tensors_[0]->GetFormat() == schema::Format_NCHW) {
+    n = shapex[0];
+    h = shapex[2];
+    w = shapex[3];
+    c = shapex[1];
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4 || out_tensors_[0]->GetFormat() == schema::Format_NC) {
+    n = shapex[0];
+    h = 1;
+    w = 1;
+    c = shapex[1];
+  } else {
+    n = shapex[0];
+    h = shapex[1];
+    w = shapex[2];
+    c = shapex[3];
+  }
+  nhwc_shape_ = {n, h, w, c};
   return RET_OK;
 }
 
 int ToFormatOpenCLKernel::ReSize() { return RET_OK; }
 
 int ToFormatOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
-  std::vector<int> shapex = out_tensors_[0]->shape();
-  if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4 || out_tensors_[0]->GetFormat() == schema::Format_NHWC) {
-    int h = shapex[1];
-    int w = shapex[2];
-    int c = shapex[3];
-    int c4 = UP_DIV(c, C4NUM);
-    std::vector<size_t> vec = {(size_t)h, (size_t)w, (size_t)c4};
-    *global_size = std::move(vec);
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4 ||
-             out_tensors_[0]->GetFormat() == schema::Format_NCHW) {
-    int h = shapex[2];
-    int w = shapex[3];
-    int c = shapex[1];
-    int c4 = UP_DIV(c, C4NUM);
-    std::vector<size_t> vec = {(size_t)c4, (size_t)h, (size_t)w};
-    *global_size = std::move(vec);
-  } else if (out_tensors_[0]->GetFormat() == out_tensors_[0]->GetFormat() == schema::Format_NCHW) {
-    int h = shapex[2];
-    int w = shapex[3];
-    int c = shapex[1];
-    int w4 = UP_DIV(w, C4NUM);
-    std::vector<size_t> vec = {(size_t)w4, (size_t)h, (size_t)c};
-    *global_size = std::move(vec);
-  }
+  std::vector<size_t> vec = {nhwc_shape_[1], nhwc_shape_[2], UP_DIV(nhwc_shape_[3], C4NUM)};
+  *global_size = std::move(vec);
   return RET_OK;
 }
 int ToFormatOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &global_size,
@@ -114,6 +118,12 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     int c = shapex[3];
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
+    int h = 1;
+    int w = 1;
+    int c = shapex[1];
+    im_dst_x = w * UP_DIV(c, C4NUM);
+    im_dst_y = h;
   } else {
     MS_LOG(ERROR) << "Unsupported format. " << out_tensors_[0]->GetFormat();
   }
@@ -128,15 +138,13 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
   return RET_OK;
 }
 int ToFormatOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << "ToFormat"
-                << " Running!";
+  MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {};
   std::vector<size_t> global;
   GetGlobalSize(0, &global);
-  auto shapex = in_tensors_[0]->shape();
-  cl_int4 shape{shapex.size() > 0 ? shapex[0] : 1, shapex.size() > 1 ? shapex[1] : 1, shapex.size() > 2 ? shapex[2] : 1,
-                shapex.size() > 3 ? shapex[3] : 1};
+
+  cl_int4 shape{(cl_int)nhwc_shape_[0], (cl_int)nhwc_shape_[1], (cl_int)nhwc_shape_[2], (cl_int)nhwc_shape_[3]};
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
   ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data());

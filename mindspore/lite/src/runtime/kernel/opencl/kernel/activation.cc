@@ -24,7 +24,7 @@
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 
-#include "src/runtime/kernel/opencl/cl/fp32/activation.cl.inc"
+#include "src/runtime/kernel/opencl/cl/activation.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -46,7 +46,7 @@ int ActivationOpenClKernel::Init() {
   }
   std::string program_name = "";
   std::string kernel_name = "";
-  std::string source = activation_source_fp32;
+  std::string source = activation_source;
   if (type_ == ActivationType_RELU) {
     program_name = "RELU";
     kernel_name = "Relu";

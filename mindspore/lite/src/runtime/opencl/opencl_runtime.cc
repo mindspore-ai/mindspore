@@ -288,13 +288,13 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
   if (fp16_enable_) {
     // fp16 enable, kernel will use half and read_imageh and write_imageh.
     build_options_str =
-      "-DFLOAT=half -DFLOAT4=half4 -DRI_F=read_imageh "
-      "-DWI_F=write_imageh";
+      "-DFLT=half -DFLT4=half4 -DFLT16=half16 "
+      "-DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT4=convert_half4";
   } else {
     // fp16 not enable, kernel will use float and read_imagef and write_imagef.
     build_options_str =
-      "-DFLOAT=float -DFLOAT4=float4 -DRI_F=read_imagef "
-      "-DWI_F=write_imagef";
+      "-DFLT=float -DFLT4=float4 -DFLT16=float16 "
+      "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT4=convert_float4";
   }
 
   build_options_str = std::accumulate(

@@ -21,8 +21,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp16/matmul.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/matmul.cl.inc"
+#include "src/runtime/kernel/opencl/cl/matmul.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -40,11 +39,7 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::set<std::string> build_options;
-#ifdef ENABLE_FP16
-  std::string source = matmul_source_fp16;
-#else
-  std::string source = matmul_source_fp32;
-#endif
+  std::string source = matmul_source;
   std::string program_name = "MatMul";
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);

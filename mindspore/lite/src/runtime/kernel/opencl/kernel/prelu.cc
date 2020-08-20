@@ -23,7 +23,7 @@
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/cl/fp32/activation.cl.inc"
+#include "src/runtime/kernel/opencl/cl/activation.cl.inc"
 #include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -40,7 +40,7 @@ int PReluOpenCLKernel::Init() {
     return RET_ERROR;
   }
   std::set<std::string> build_options;
-  std::string source = activation_source_fp32;
+  std::string source = activation_source;
   std::string program_name = "PRelu";
   std::string kernel_name = "ReluScalar";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();

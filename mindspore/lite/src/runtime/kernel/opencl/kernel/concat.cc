@@ -20,7 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/concat.h"
-#include "src/runtime/kernel/opencl/cl/fp32/concat.cl.inc"
+#include "src/runtime/kernel/opencl/cl/concat.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -66,7 +66,7 @@ int ConcatOpenCLKernel::Init() {
   }
   if (in_tensors_.size() == 2) {
     std::set<std::string> build_options;
-    std::string source = concat_source_fp32;
+    std::string source = concat_source;
     std::string program_name = "Concat";
     std::string kernel_name = "Concat";
     auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -76,7 +76,7 @@ int ConcatOpenCLKernel::Init() {
 
   if (in_tensors_.size() == 3) {
     std::set<std::string> build_options;
-    std::string source = concat_source_fp32;
+    std::string source = concat_source;
     std::string program_name = "Concat3input";
     std::string kernel_name = "Concat3input";
     auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();

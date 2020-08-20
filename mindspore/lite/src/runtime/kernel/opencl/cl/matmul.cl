@@ -1,7 +1,3 @@
-#define FLT4 float4
-#define FLT16 float16
-#define READ_IMAGE read_imagef
-#define WRITE_IMAGE write_imagef
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void MatMul(__read_only image2d_t input, __global FLT16 *weight, __read_only image2d_t bias,
                      __write_only image2d_t output, int2 offset_ci, int2 offset_co, int has_bias) {

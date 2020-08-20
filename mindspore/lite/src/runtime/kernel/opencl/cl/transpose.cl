@@ -1,7 +1,3 @@
-#define FLT float
-#define FLT4 float4
-#define READ_IMAGE read_imagef
-#define WRITE_IMAGE write_imagef
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void transpose_IMG(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 HW, int2 C) {
   int X = get_global_id(0);
