@@ -18,6 +18,7 @@
 #include <utility>
 #include <memory>
 #include "minddata/dataset/kernels/image/resize_op.h"
+#include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
@@ -29,7 +30,7 @@ namespace dataset {
 
 Status ResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  BOUNDING_BOX_CHECK(input);
+  RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
 
   int32_t input_h = input[0]->shape()[0];
   int32_t input_w = input[0]->shape()[1];
@@ -45,7 +46,7 @@ Status ResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   int32_t output_w = (*output)[0]->shape()[1];  // output width if ResizeWithBBox
 
   size_t bboxCount = input[1]->shape()[0];  // number of rows in bbox tensor
-  RETURN_IF_NOT_OK(UpdateBBoxesForResize((*output)[1], bboxCount, output_w, output_h, input_w, input_h));
+  RETURN_IF_NOT_OK(BoundingBox::UpdateBBoxesForResize((*output)[1], bboxCount, output_w, output_h, input_w, input_h));
   return Status::OK();
 }
 }  // namespace dataset

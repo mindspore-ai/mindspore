@@ -17,6 +17,7 @@
 #include <utility>
 
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 
@@ -25,7 +26,7 @@ namespace dataset {
 const float RandomVerticalFlipWithBBoxOp::kDefProbability = 0.5;
 Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  BOUNDING_BOX_CHECK(input);
+  RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
 
   if (distribution_(rnd_)) {
     dsize_t imHeight = input[0]->shape()[0];
@@ -34,14 +35,13 @@ Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *
     // one time allocation -> updated in the loop
     // type defined based on VOC test dataset
     for (int i = 0; i < boxCount; i++) {
-      float boxCorner_y = 0.0, boxHeight = 0.0;
-      float newBoxCorner_y = 0.0;
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&boxCorner_y, {i, 1}));  // get min y of bbox
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&boxHeight, {i, 3}));    // get height of bbox
+      std::shared_ptr<BoundingBox> bbox;
+      RETURN_IF_NOT_OK(BoundingBox::ReadFromTensor(input[1], i, &bbox));
 
       // subtract (curCorner + height) from (max) for new Corner position
-      newBoxCorner_y = (imHeight - 1.0) - ((boxCorner_y + boxHeight) - 1.0);
-      RETURN_IF_NOT_OK(input[1]->SetItemAt({i, 1}, newBoxCorner_y));
+      BoundingBox::bbox_float newBoxCorner_y = (imHeight - 1.0) - ((bbox->y() + bbox->height()) - 1.0);
+      bbox->SetY(newBoxCorner_y);
+      RETURN_IF_NOT_OK(bbox->WriteToTensor(input[1], i));
     }
 
     output->resize(2);

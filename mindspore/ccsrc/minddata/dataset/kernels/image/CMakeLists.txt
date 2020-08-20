@@ -4,6 +4,7 @@ add_subdirectory(soft_dvpp)
 add_library(kernels-image OBJECT
     affine_op.cc
     auto_contrast_op.cc
+    bounding_box.cc
     center_crop_op.cc
     crop_op.cc
     cut_out_op.cc

@@ -15,6 +15,7 @@
  */
 #include <utility>
 #include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/cv_tensor.h"
@@ -25,22 +26,21 @@ const float RandomHorizontalFlipWithBBoxOp::kDefProbability = 0.5;
 
 Status RandomHorizontalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  BOUNDING_BOX_CHECK(input);
+  RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
   if (distribution_(rnd_)) {
     // To test bounding boxes algorithm, create random bboxes from image dims
     size_t num_of_boxes = input[1]->shape()[0];      // set to give number of bboxes
     float img_center = (input[0]->shape()[1] / 2.);  // get the center of the image
     for (int i = 0; i < num_of_boxes; i++) {
-      float b_w = 0;  // bounding box width
-      float min_x = 0;
-      // get the required items
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&min_x, {i, 0}));
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&b_w, {i, 2}));
+      std::shared_ptr<BoundingBox> bbox;
+      RETURN_IF_NOT_OK(BoundingBox::ReadFromTensor(input[1], i, &bbox));
       // do the flip
-      float diff = img_center - min_x;       // get distance from min_x to center
-      float refl_min_x = diff + img_center;  // get reflection of min_x
-      float new_min_x = refl_min_x - b_w;    // subtract from the reflected min_x to get the new one
-      RETURN_IF_NOT_OK(input[1]->SetItemAt<float>({i, 0}, new_min_x));
+      BoundingBox::bbox_float diff = img_center - bbox->x();   // get distance from min_x to center
+      BoundingBox::bbox_float refl_min_x = diff + img_center;  // get reflection of min_x
+      BoundingBox::bbox_float new_min_x =
+        refl_min_x - bbox->width();  // subtract from the reflected min_x to get the new one
+      bbox->SetX(new_min_x);
+      RETURN_IF_NOT_OK(bbox->WriteToTensor(input[1], i));
     }
     (*output).resize(2);
     // move input to output pointer of bounding boxes

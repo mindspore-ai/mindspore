@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
@@ -27,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  BOUNDING_BOX_CHECK(input);
+  RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
 
   std::shared_ptr<Tensor> pad_image;
   int32_t t_pad_top, t_pad_bottom, t_pad_left, t_pad_right;
@@ -46,7 +47,7 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
 
   // update bounding boxes with new values based on relevant image padding
   if (t_pad_left || t_pad_bottom) {
-    RETURN_IF_NOT_OK(PadBBoxes(&(*output)[1], boxCount, t_pad_left, t_pad_top));
+    RETURN_IF_NOT_OK(BoundingBox::PadBBoxes(&(*output)[1], boxCount, t_pad_left, t_pad_top));
   }
   if (!crop_further) {
     // no further cropping required
@@ -59,7 +60,7 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
   RandomCropOp::GenRandomXY(&x, &y, padded_image_w, padded_image_h);
   int maxX = x + RandomCropOp::crop_width_;  // max dims of selected CropBox on image
   int maxY = y + RandomCropOp::crop_height_;
-  RETURN_IF_NOT_OK(UpdateBBoxesForCrop(&(*output)[1], &boxCount, x, y, maxX, maxY));
+  RETURN_IF_NOT_OK(BoundingBox::UpdateBBoxesForCrop(&(*output)[1], &boxCount, x, y, maxX, maxY));
   return Crop(pad_image, &(*output)[0], x, y, RandomCropOp::crop_width_, RandomCropOp::crop_height_);
 }
 }  // namespace dataset
