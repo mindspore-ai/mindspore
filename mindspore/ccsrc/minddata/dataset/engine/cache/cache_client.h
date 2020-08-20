@@ -44,13 +44,7 @@ class CacheClient {
   /// \brief A builder to help creating a CacheClient object
   class Builder {
    public:
-    Builder() : session_id_(0), cache_mem_sz_(0), spill_(false), port_(0), num_workers_(0), prefetch_size_(0) {
-      std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-      hostname_ = "127.0.0.1";
-      port_ = 50052;
-      num_workers_ = cfg->num_parallel_workers();
-      prefetch_size_ = 20;  // rows_per_buf is too small (1 by default).
-    }
+    Builder();
 
     /// Setter function to set the session id
     /// \param session_id
@@ -117,22 +111,9 @@ class CacheClient {
     int32_t getNumWorkers() const { return num_workers_; }
     int32_t getPrefetchSize() const { return prefetch_size_; }
 
-    Status SanityCheck() {
-      CHECK_FAIL_RETURN_UNEXPECTED(session_id_ > 0, "session id must be positive");
-      CHECK_FAIL_RETURN_UNEXPECTED(cache_mem_sz_ >= 0, "cache memory size must not be negative. (0 implies unlimited");
-      CHECK_FAIL_RETURN_UNEXPECTED(num_workers_ > 0, "rpc workers must be positive");
-      CHECK_FAIL_RETURN_UNEXPECTED(prefetch_size_ > 0, "prefetch size must be positive");
-      CHECK_FAIL_RETURN_UNEXPECTED(!hostname_.empty(), "hostname must not be empty");
-      return Status::OK();
-    }
+    Status SanityCheck();
 
-    Status Build(std::shared_ptr<CacheClient> *out) {
-      RETURN_UNEXPECTED_IF_NULL(out);
-      RETURN_IF_NOT_OK(SanityCheck());
-      *out = std::make_shared<CacheClient>(session_id_, cache_mem_sz_, spill_, hostname_, port_, num_workers_,
-                                           prefetch_size_);
-      return Status::OK();
-    }
+    Status Build(std::shared_ptr<CacheClient> *out);
 
    private:
     session_id_type session_id_;

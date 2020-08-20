@@ -19,10 +19,37 @@
 #include <iostream>
 #include <string>
 
+#include "mindspore/core/utils/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"
 
 namespace mindspore {
 namespace dataset {
+ConfigManager::ConfigManager()
+    : rows_per_buffer_(kCfgRowsPerBuffer),
+      num_parallel_workers_(kCfgParallelWorkers),
+      worker_connector_size_(kCfgWorkerConnectorSize),
+      op_connector_size_(kCfgOpConnectorSize),
+      seed_(kCfgDefaultSeed),
+      monitor_sampling_interval_(kCfgMonitorSamplingInterval),
+      callback_timout_(kCfgCallbackTimeout),
+      cache_host_(kCfgDefaultCacheHost),
+      cache_port_(kCfgDefaultCachePort) {
+  auto env_cache_host = std::getenv("MS_CACHE_HOST");
+  auto env_cache_port = std::getenv("MS_CACHE_PORT");
+  if (env_cache_host) {
+    cache_host_ = env_cache_host;
+  }
+  if (env_cache_port) {
+    char *end = nullptr;
+    cache_port_ = strtol(env_cache_port, &end, 10);
+    if (*end != '\0') {
+      MS_LOG(WARNING) << "\nCache port from env variable MS_CACHE_PORT is invalid, back to use default "
+                      << kCfgDefaultCachePort << std::endl;
+      cache_port_ = kCfgDefaultCachePort;
+    }
+  }
+}
+
 // A print method typically used for debugging
 void ConfigManager::Print(std::ostream &out) const {
   // Don't show the test/internal ones.  Only display the main ones here.
@@ -42,6 +69,8 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
   set_op_connector_size(j.value("opConnectorSize", op_connector_size_));
   set_seed(j.value("seed", seed_));
   set_monitor_sampling_interval(j.value("monitorSamplingInterval", monitor_sampling_interval_));
+  set_cache_host(j.value("cacheHost", cache_host_));
+  set_cache_port(j.value("cachePort", cache_port_));
   return Status::OK();
 }
 
@@ -91,5 +120,8 @@ void ConfigManager::set_monitor_sampling_interval(uint32_t interval) { monitor_s
 
 void ConfigManager::set_callback_timeout(uint32_t timeout) { callback_timout_ = timeout; }
 
+void ConfigManager::set_cache_host(std::string cache_host) { cache_host_ = cache_host; }
+
+void ConfigManager::set_cache_port(int32_t cache_port) { cache_port_ = cache_port; }
 }  // namespace dataset
 }  // namespace mindspore

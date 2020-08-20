@@ -41,7 +41,7 @@ namespace dataset {
 // those values.
 class ConfigManager {
  public:
-  ConfigManager() = default;
+  ConfigManager();
 
   // destructor
   ~ConfigManager() = default;
@@ -89,6 +89,14 @@ class ConfigManager {
   // @return The internal worker-to-master connector queue size
   int32_t worker_connector_size() const { return worker_connector_size_; }
 
+  // getter function
+  // @return The hostname of cache server
+  std::string cache_host() const { return cache_host_; }
+
+  // getter function
+  // @return The port of cache server
+  int32_t cache_port() const { return cache_port_; }
+
   // setter function
   // @param rows_per_buffer - The setting to apply to the config
   void set_rows_per_buffer(int32_t rows_per_buffer);
@@ -104,6 +112,14 @@ class ConfigManager {
   // setter function
   // @param connector_size - The setting to apply to the config
   void set_op_connector_size(int32_t connector_size);
+
+  // setter function
+  // @param cache_host - The hostname of cache server
+  void set_cache_host(std::string cache_host);
+
+  // setter function
+  // @param cache_port - The port of cache server
+  void set_cache_port(int32_t cache_port);
 
   uint32_t seed() const;
 
@@ -128,13 +144,15 @@ class ConfigManager {
   int32_t callback_timeout() const { return callback_timout_; }
 
  private:
-  int32_t rows_per_buffer_{kCfgRowsPerBuffer};
-  int32_t num_parallel_workers_{kCfgParallelWorkers};
-  int32_t worker_connector_size_{kCfgWorkerConnectorSize};
-  int32_t op_connector_size_{kCfgOpConnectorSize};
-  uint32_t seed_{kCfgDefaultSeed};
-  uint32_t monitor_sampling_interval_{kCfgMonitorSamplingInterval};
-  uint32_t callback_timout_{kCfgCallbackTimeout};
+  int32_t rows_per_buffer_;
+  int32_t num_parallel_workers_;
+  int32_t worker_connector_size_;
+  int32_t op_connector_size_;
+  uint32_t seed_;
+  uint32_t monitor_sampling_interval_;
+  uint32_t callback_timout_;
+  std::string cache_host_;
+  int32_t cache_port_;
 
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
