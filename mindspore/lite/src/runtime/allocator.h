@@ -41,6 +41,7 @@ class Allocator {
   virtual size_t GetTotalSize() { return 0; }
   virtual void Clear() {}
   static std::shared_ptr<Allocator> Create();
+  virtual void *Prepare(void *ptr) { return ptr; }
   std::string name;
 };
 

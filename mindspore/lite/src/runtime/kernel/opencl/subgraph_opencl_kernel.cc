@@ -165,17 +165,6 @@ int SubGraphOpenCLKernel::Init() {
 
   MallocTensorWithReuse();
 
-  // Map buffer for write, it is not necessary for fine-grained
-  for (auto &tensor : in_tensors_) {
-    void *data = tensor->Data();
-    // It is required with coarse-grained SVM
-    if (data != nullptr) {
-      data = allocator_->MapBuffer(data, CL_MAP_WRITE, nullptr, true);
-      tensor->SetData(data);
-    } else {
-      MS_LOG(ERROR) << "SubGraphOpenCLKernel input nullptr!";
-    }
-  }
   return RET_OK;
 }
 
@@ -254,26 +243,13 @@ int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::tensor::
 }
 
 int SubGraphOpenCLKernel::UnInit() {
-  for (const auto tensor : in_tensors_) {
-    if (tensor != nullptr) {
-      tensor->FreeData();
-    }
-  }
-  for (const auto tensor : out_tensors_) {
-    if (tensor != nullptr) {
-      allocator_->UnmapBuffer(tensor->Data());
-      tensor->FreeData();
-    }
-  }
   for (const auto tensor : in_convert_tensors_) {
     if (tensor != nullptr) {
-      tensor->FreeData();
       delete tensor;
     }
   }
   for (const auto tensor : out_convert_tensors_) {
     if (tensor != nullptr) {
-      tensor->FreeData();
       delete tensor;
     }
   }

@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "src/runtime/allocator.h"
+#include "CL/cl2.hpp"
 
 namespace mindspore::lite::opencl {
 
@@ -59,6 +60,12 @@ class OpenCLAllocator : public Allocator {
   int UnmapBuffer(void *host_ptr, void *command_queue = nullptr);
   MEM_TYPE GetMemType(void *host_ptr);
   int GetImageSize(void *host_ptr, std::vector<size_t> *img_size);
+  void *Prepare(void *ptr) override {
+    if (ptr != nullptr) {
+      ptr = MapBuffer(ptr, CL_MAP_WRITE, nullptr, true);
+    }
+    return ptr;
+  }
 
  private:
   void Lock();

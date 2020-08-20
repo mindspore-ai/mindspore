@@ -178,6 +178,12 @@ class Tensor : public mindspore::tensor::MetaTensor {
 
   std::vector<tensor::QuantArg> GetQuantParams() const;
 
+  void Prepare() {
+    if (allocator_ != nullptr) {
+      data_ = allocator_->Prepare(data_);
+    }
+  }
+
  protected:
   void *data_ = nullptr;
   void *device_data_ = nullptr;
