@@ -39,5 +39,35 @@ config_gpu = edict({
     'opt_eps': 1.0,
     'keep_checkpoint_max': 100,
     'ckpt_path': './checkpoint/',
-    'is_save_on_master': 0
+    'is_save_on_master': 0,
+    'dropout_keep_prob': 0.5,
+    'has_bias': True,
+    'amp_level': 'O0'
+})
+
+config_ascend = edict({
+    'random_seed': 1,
+    'rank': 0,
+    'group_size': 1,
+    'work_nums': 8,
+    'decay_method': 'cosine',
+    "loss_scale": 1024,
+    'batch_size': 128,
+    'epoch_size': 250,
+    'num_classes': 1000,
+    'smooth_factor': 0.1,
+    'aux_factor': 0.2,
+    'lr_init': 0.00004,
+    'lr_max': 0.4,
+    'lr_end': 0.000004,
+    'warmup_epochs': 1,
+    'weight_decay': 0.00004,
+    'momentum': 0.9,
+    'opt_eps': 1.0,
+    'keep_checkpoint_max': 100,
+    'ckpt_path': './checkpoint/',
+    'is_save_on_master': 0,
+    'dropout_keep_prob': 0.8,
+    'has_bias': False,
+    'amp_level': 'O3'
 })

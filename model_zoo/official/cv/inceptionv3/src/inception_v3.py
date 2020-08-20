@@ -19,10 +19,10 @@ from mindspore.common.initializer import XavierUniform
 
 
 class BasicConv2d(nn.Cell):
-    def __init__(self, in_channel, out_channel, kernel_size, stride=1, pad_mode='same', padding=0):
+    def __init__(self, in_channel, out_channel, kernel_size, stride=1, pad_mode='same', padding=0, has_bias=False):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=stride,
-                              pad_mode=pad_mode, padding=padding, weight_init=XavierUniform(), has_bias=True)
+                              pad_mode=pad_mode, padding=padding, weight_init=XavierUniform(), has_bias=has_bias)
         self.bn = nn.BatchNorm2d(out_channel, eps=0.001, momentum=0.9997)
         self.relu = nn.ReLU()
 
@@ -34,23 +34,23 @@ class BasicConv2d(nn.Cell):
 
 
 class Inception_A(nn.Cell):
-    def __init__(self, in_channels, pool_features):
+    def __init__(self, in_channels, pool_features, has_bias=False):
         super(Inception_A, self).__init__()
         self.concat = P.Concat(axis=1)
-        self.branch0 = BasicConv2d(in_channels, 64, kernel_size=1)
+        self.branch0 = BasicConv2d(in_channels, 64, kernel_size=1, has_bias=has_bias)
         self.branch1 = nn.SequentialCell([
-            BasicConv2d(in_channels, 48, kernel_size=1),
-            BasicConv2d(48, 64, kernel_size=5)
+            BasicConv2d(in_channels, 48, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(48, 64, kernel_size=5, has_bias=has_bias)
         ])
         self.branch2 = nn.SequentialCell([
-            BasicConv2d(in_channels, 64, kernel_size=1),
-            BasicConv2d(64, 96, kernel_size=3),
-            BasicConv2d(96, 96, kernel_size=3)
+            BasicConv2d(in_channels, 64, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(64, 96, kernel_size=3, has_bias=has_bias),
+            BasicConv2d(96, 96, kernel_size=3, has_bias=has_bias)
 
         ])
         self.branch_pool = nn.SequentialCell([
             nn.AvgPool2d(kernel_size=3, pad_mode='same'),
-            BasicConv2d(in_channels, pool_features, kernel_size=1)
+            BasicConv2d(in_channels, pool_features, kernel_size=1, has_bias=has_bias)
         ])
 
     def construct(self, x):
@@ -63,14 +63,14 @@ class Inception_A(nn.Cell):
 
 
 class Inception_B(nn.Cell):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, has_bias=False):
         super(Inception_B, self).__init__()
         self.concat = P.Concat(axis=1)
-        self.branch0 = BasicConv2d(in_channels, 384, kernel_size=3, stride=2, pad_mode='valid')
+        self.branch0 = BasicConv2d(in_channels, 384, kernel_size=3, stride=2, pad_mode='valid', has_bias=has_bias)
         self.branch1 = nn.SequentialCell([
-            BasicConv2d(in_channels, 64, kernel_size=1),
-            BasicConv2d(64, 96, kernel_size=3),
-            BasicConv2d(96, 96, kernel_size=3, stride=2, pad_mode='valid')
+            BasicConv2d(in_channels, 64, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(64, 96, kernel_size=3, has_bias=has_bias),
+            BasicConv2d(96, 96, kernel_size=3, stride=2, pad_mode='valid', has_bias=has_bias)
 
         ])
         self.branch_pool = nn.MaxPool2d(kernel_size=3, stride=2)
@@ -84,25 +84,25 @@ class Inception_B(nn.Cell):
 
 
 class Inception_C(nn.Cell):
-    def __init__(self, in_channels, channels_7x7):
+    def __init__(self, in_channels, channels_7x7, has_bias=False):
         super(Inception_C, self).__init__()
         self.concat = P.Concat(axis=1)
-        self.branch0 = BasicConv2d(in_channels, 192, kernel_size=1)
+        self.branch0 = BasicConv2d(in_channels, 192, kernel_size=1, has_bias=has_bias)
         self.branch1 = nn.SequentialCell([
-            BasicConv2d(in_channels, channels_7x7, kernel_size=1),
-            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(1, 7)),
-            BasicConv2d(channels_7x7, 192, kernel_size=(7, 1))
+            BasicConv2d(in_channels, channels_7x7, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(1, 7), has_bias=has_bias),
+            BasicConv2d(channels_7x7, 192, kernel_size=(7, 1), has_bias=has_bias)
         ])
         self.branch2 = nn.SequentialCell([
-            BasicConv2d(in_channels, channels_7x7, kernel_size=1),
-            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(7, 1)),
-            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(1, 7)),
-            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(7, 1)),
-            BasicConv2d(channels_7x7, 192, kernel_size=(1, 7))
+            BasicConv2d(in_channels, channels_7x7, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(7, 1), has_bias=has_bias),
+            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(1, 7), has_bias=has_bias),
+            BasicConv2d(channels_7x7, channels_7x7, kernel_size=(7, 1), has_bias=has_bias),
+            BasicConv2d(channels_7x7, 192, kernel_size=(1, 7), has_bias=has_bias)
         ])
         self.branch_pool = nn.SequentialCell([
             nn.AvgPool2d(kernel_size=3, pad_mode='same'),
-            BasicConv2d(in_channels, 192, kernel_size=1)
+            BasicConv2d(in_channels, 192, kernel_size=1, has_bias=has_bias)
         ])
 
     def construct(self, x):
@@ -115,18 +115,18 @@ class Inception_C(nn.Cell):
 
 
 class Inception_D(nn.Cell):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, has_bias=False):
         super(Inception_D, self).__init__()
         self.concat = P.Concat(axis=1)
         self.branch0 = nn.SequentialCell([
-            BasicConv2d(in_channels, 192, kernel_size=1),
-            BasicConv2d(192, 320, kernel_size=3, stride=2, pad_mode='valid')
+            BasicConv2d(in_channels, 192, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(192, 320, kernel_size=3, stride=2, pad_mode='valid', has_bias=has_bias)
         ])
         self.branch1 = nn.SequentialCell([
-            BasicConv2d(in_channels, 192, kernel_size=1),
-            BasicConv2d(192, 192, kernel_size=(1, 7)),  # check
-            BasicConv2d(192, 192, kernel_size=(7, 1)),
-            BasicConv2d(192, 192, kernel_size=3, stride=2, pad_mode='valid')
+            BasicConv2d(in_channels, 192, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(192, 192, kernel_size=(1, 7), has_bias=has_bias),  # check
+            BasicConv2d(192, 192, kernel_size=(7, 1), has_bias=has_bias),
+            BasicConv2d(192, 192, kernel_size=3, stride=2, pad_mode='valid', has_bias=has_bias)
         ])
         self.branch_pool = nn.MaxPool2d(kernel_size=3, stride=2)
 
@@ -139,22 +139,22 @@ class Inception_D(nn.Cell):
 
 
 class Inception_E(nn.Cell):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, has_bias=False):
         super(Inception_E, self).__init__()
         self.concat = P.Concat(axis=1)
-        self.branch0 = BasicConv2d(in_channels, 320, kernel_size=1)
-        self.branch1 = BasicConv2d(in_channels, 384, kernel_size=1)
-        self.branch1_a = BasicConv2d(384, 384, kernel_size=(1, 3))
-        self.branch1_b = BasicConv2d(384, 384, kernel_size=(3, 1))
+        self.branch0 = BasicConv2d(in_channels, 320, kernel_size=1, has_bias=has_bias)
+        self.branch1 = BasicConv2d(in_channels, 384, kernel_size=1, has_bias=has_bias)
+        self.branch1_a = BasicConv2d(384, 384, kernel_size=(1, 3), has_bias=has_bias)
+        self.branch1_b = BasicConv2d(384, 384, kernel_size=(3, 1), has_bias=has_bias)
         self.branch2 = nn.SequentialCell([
-            BasicConv2d(in_channels, 448, kernel_size=1),
-            BasicConv2d(448, 384, kernel_size=3)
+            BasicConv2d(in_channels, 448, kernel_size=1, has_bias=has_bias),
+            BasicConv2d(448, 384, kernel_size=3, has_bias=has_bias)
         ])
-        self.branch2_a = BasicConv2d(384, 384, kernel_size=(1, 3))
-        self.branch2_b = BasicConv2d(384, 384, kernel_size=(3, 1))
+        self.branch2_a = BasicConv2d(384, 384, kernel_size=(1, 3), has_bias=has_bias)
+        self.branch2_b = BasicConv2d(384, 384, kernel_size=(3, 1), has_bias=has_bias)
         self.branch_pool = nn.SequentialCell([
             nn.AvgPool2d(kernel_size=3, pad_mode='same'),
-            BasicConv2d(in_channels, 192, kernel_size=1)
+            BasicConv2d(in_channels, 192, kernel_size=1, has_bias=has_bias)
         ])
 
     def construct(self, x):
@@ -203,30 +203,30 @@ class AuxLogits(nn.Cell):
 
 
 class InceptionV3(nn.Cell):
-    def __init__(self, num_classes=10, is_training=True):
+    def __init__(self, num_classes=10, is_training=True, has_bias=False, dropout_keep_prob=0.8):
         super(InceptionV3, self).__init__()
         self.is_training = is_training
-        self.Conv2d_1a = BasicConv2d(3, 32, kernel_size=3, stride=2, pad_mode='valid')
-        self.Conv2d_2a = BasicConv2d(32, 32, kernel_size=3, stride=1, pad_mode='valid')
-        self.Conv2d_2b = BasicConv2d(32, 64, kernel_size=3, stride=1)
+        self.Conv2d_1a = BasicConv2d(3, 32, kernel_size=3, stride=2, pad_mode='valid', has_bias=has_bias)
+        self.Conv2d_2a = BasicConv2d(32, 32, kernel_size=3, stride=1, pad_mode='valid', has_bias=has_bias)
+        self.Conv2d_2b = BasicConv2d(32, 64, kernel_size=3, stride=1, has_bias=has_bias)
         self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2)
-        self.Conv2d_3b = BasicConv2d(64, 80, kernel_size=1)
-        self.Conv2d_4a = BasicConv2d(80, 192, kernel_size=3, pad_mode='valid')
+        self.Conv2d_3b = BasicConv2d(64, 80, kernel_size=1, has_bias=has_bias)
+        self.Conv2d_4a = BasicConv2d(80, 192, kernel_size=3, pad_mode='valid', has_bias=has_bias)
         self.maxpool2 = nn.MaxPool2d(kernel_size=3, stride=2)
-        self.Mixed_5b = Inception_A(192, pool_features=32)
-        self.Mixed_5c = Inception_A(256, pool_features=64)
-        self.Mixed_5d = Inception_A(288, pool_features=64)
-        self.Mixed_6a = Inception_B(288)
-        self.Mixed_6b = Inception_C(768, channels_7x7=128)
-        self.Mixed_6c = Inception_C(768, channels_7x7=160)
-        self.Mixed_6d = Inception_C(768, channels_7x7=160)
-        self.Mixed_6e = Inception_C(768, channels_7x7=192)
-        self.Mixed_7a = Inception_D(768)
-        self.Mixed_7b = Inception_E(1280)
-        self.Mixed_7c = Inception_E(2048)
+        self.Mixed_5b = Inception_A(192, pool_features=32, has_bias=has_bias)
+        self.Mixed_5c = Inception_A(256, pool_features=64, has_bias=has_bias)
+        self.Mixed_5d = Inception_A(288, pool_features=64, has_bias=has_bias)
+        self.Mixed_6a = Inception_B(288, has_bias=has_bias)
+        self.Mixed_6b = Inception_C(768, channels_7x7=128, has_bias=has_bias)
+        self.Mixed_6c = Inception_C(768, channels_7x7=160, has_bias=has_bias)
+        self.Mixed_6d = Inception_C(768, channels_7x7=160, has_bias=has_bias)
+        self.Mixed_6e = Inception_C(768, channels_7x7=192, has_bias=has_bias)
+        self.Mixed_7a = Inception_D(768, has_bias=has_bias)
+        self.Mixed_7b = Inception_E(1280, has_bias=has_bias)
+        self.Mixed_7c = Inception_E(2048, has_bias=has_bias)
         if is_training:
             self.aux_logits = AuxLogits(768, num_classes)
-        self.logits = Logits(num_classes, dropout_keep_prob=0.5)
+        self.logits = Logits(num_classes, dropout_keep_prob)
 
     def construct(self, x):
         x = self.Conv2d_1a(x)
