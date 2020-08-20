@@ -54,7 +54,6 @@ class AnfExporter {
  private:
   std::map<std::string, int> node_id_map_;
   std::vector<schema::CNodeT *> graph_input_nodes_;
-  std::map<std::string, int> map_remove_get_item_;
 };
 
 schema::MetaGraphT *Export(const FuncGraphPtr &func_graph);

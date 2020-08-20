@@ -212,9 +212,7 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const {
-  return this->input_vec_;
-}
+std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 
 int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_EXCEPTION_IF_NULL(this->context_);

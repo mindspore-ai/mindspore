@@ -469,7 +469,7 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_Pooling] = linearCalcer;
     _registerMap[schema::PrimitiveType_Resize] = linearCalcer;
     _registerMap[schema::PrimitiveType_Reshape] = linearCalcer;
-    _registerMap[schema::PrimitiveType_Shape] = linearCalcer;  // todo if shape influence postNode's output quantParam
+    _registerMap[schema::PrimitiveType_Shape] = linearCalcer;
     _registerMap[schema::PrimitiveType_SoftMax] = new CalcToSet(0, 1);
     _registerMap[schema::PrimitiveType_Squeeze] = linearCalcer;
     _registerMap[schema::PrimitiveType_RealDiv] = new CalcRealDiv();
@@ -481,7 +481,6 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_FullConnection] = commonCalcer;
     _registerMap[schema::PrimitiveType_Nchw2Nhwc] = linearCalcer;
     _registerMap[schema::PrimitiveType_Nhwc2Nchw] = linearCalcer;
-    // todo
     // detection_postprocess op's quant param will not infer only fetch from preNode or postNode
     // because we will not insert quantTransNode after this node in tflite_graph_8bit model if input data is float.
     // if quantTransNode is inserted after detection_postprocess node, there will be some errors

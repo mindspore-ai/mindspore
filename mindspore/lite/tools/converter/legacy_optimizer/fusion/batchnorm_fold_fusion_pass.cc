@@ -295,7 +295,6 @@ STATUS BatchNormFoldFusionPass::CheckPath(MetaGraphT *graph,
   MS_ASSERT(mulFold->inputIndex.size() == 3);
   MS_ASSERT(preConv->inputIndex.front() == convNode->inputIndex.front());
   MS_ASSERT(preConv->inputIndex.at(1) == mulFold->inputIndex.front());
-  // todo
   return RET_OK;
 }
 

@@ -33,7 +33,6 @@ class ParamValueLite : public Value {
 
   size_t tensor_size() const { return tensor_size_; }
   void set_tensor_size(size_t size) { tensor_size_ = size; }
-  // todo
   void *tensor_addr() const { return tensor_addr_; }
   void set_tensor_addr(void *addr) { tensor_addr_ = addr; }
 

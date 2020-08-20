@@ -137,7 +137,6 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       MS_LOG(ERROR) << "unsupported round mode.";
     }
   }
-  // todo: fmk type
   auto input_shape = input->shape();
   input_shape.at(1) = output_h;
   input_shape.at(2) = output_w;

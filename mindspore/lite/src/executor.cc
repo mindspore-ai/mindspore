@@ -113,8 +113,6 @@ int Executor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format 
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(nullptr != allocator);
   MS_ASSERT(4 == tensor->shape().size());
-  //  auto src_format = tensor->GetFormat();
-  // todo
   MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                 << schema::EnumNameFormat(dst_format) << " in uint8";
   return RET_ERROR;

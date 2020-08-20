@@ -158,7 +158,6 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
         MS_LOG(ERROR) << "Can't find input node.";
         return RET_ERROR;
       }
-      // todo: CheckInputNodeType, the first node should be op;
       op_inputs.push_back(node);
     }
     auto new_cnode = func_graph_->NewCNode(op_inputs);

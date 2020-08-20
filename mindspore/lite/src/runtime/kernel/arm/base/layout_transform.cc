@@ -20,7 +20,6 @@
 using mindspore::schema::Format;
 namespace mindspore::kernel {
 LayoutConvertor LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
-  // todo
   if (src_format == schema::Format_NHWC && dst_format == schema::Format_NC4HW4) {
     return PackNHWCToNC4HW4Fp32;
   } else if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
@@ -39,7 +38,6 @@ LayoutConvertor LayoutTransformFp32(schema::Format src_format, schema::Format ds
 }
 
 LayoutConvertor LayoutTransformInt8(schema::Format src_format, schema::Format dst_format) {
-  // todo
   if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
     return PackNHWCToNHWC4Int8;
   } else {
@@ -48,7 +46,6 @@ LayoutConvertor LayoutTransformInt8(schema::Format src_format, schema::Format ds
 }
 
 LayoutConvertor LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format) {
-  // todo
   switch (data_type) {
     case kNumberTypeInt8:
       return LayoutTransformInt8(src_format, dst_format);

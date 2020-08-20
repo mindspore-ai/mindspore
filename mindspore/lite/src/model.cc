@@ -380,34 +380,6 @@ int ModelImpl::BuildOps() {
     auto srcPrim = cNode->primitive();
 
     this->ops_[name] = CopyPrimitive(srcPrim);
-    //    flatbuffers::FlatBufferBuilder fbb(1024);
-    //    schema::Conv2DBuilder conv2DBuilder(fbb);
-    //    conv2DBuilder.add_padMode(srcPrim->value_as_Conv2D()->padMode());
-    //    conv2DBuilder.add_channelOut(srcPrim->value_as_Conv2D()->channelOut());
-    //    conv2DBuilder.add_channelIn(srcPrim->value_as_Conv2D()->channelIn());
-    //    conv2DBuilder.add_strideH(srcPrim->value_as_Conv2D()->strideH());
-    //    conv2DBuilder.add_strideW(srcPrim->value_as_Conv2D()->strideW());
-    //    conv2DBuilder.add_dilateH(srcPrim->value_as_Conv2D()->dilateH());
-    //    conv2DBuilder.add_dilateW(srcPrim->value_as_Conv2D()->dilateW());
-    //    conv2DBuilder.add_kernelH(srcPrim->value_as_Conv2D()->kernelH());
-    //    conv2DBuilder.add_kernelW(srcPrim->value_as_Conv2D()->kernelW());
-    //    conv2DBuilder.add_padUp(srcPrim->value_as_Conv2D()->padUp());
-    //    conv2DBuilder.add_padDown(srcPrim->value_as_Conv2D()->padDown());
-    //    conv2DBuilder.add_padLeft(srcPrim->value_as_Conv2D()->padLeft());
-    //    conv2DBuilder.add_padRight(srcPrim->value_as_Conv2D()->padRight());
-    //    conv2DBuilder.add_format(srcPrim->value_as_Conv2D()->format());
-    //    conv2DBuilder.add_group(srcPrim->value_as_Conv2D()->group());
-    //    conv2DBuilder.add_activationType(srcPrim->value_as_Conv2D()->activationType());
-    //    schema::PrimitiveBuilder primBuilder(fbb);
-    //    primBuilder.add_value_type(srcPrim->value_type());
-    //    primBuilder.add_value(conv2DBuilder.Finish());
-    //
-    //    fbb.Finish(conv2DBuilder.Finish());
-    //    auto buf = fbb.GetBufferPointer();
-    //    auto conv2D = flatbuffers::GetRoot<schema::Conv2D>(buf);
-    //    fbb.Clear();
-    //
-    //    return const_cast<mindspore::predict::OpDef *>(opDef);
   }
   return 0;
 }

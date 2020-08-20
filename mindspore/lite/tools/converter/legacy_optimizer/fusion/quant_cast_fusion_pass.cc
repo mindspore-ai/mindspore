@@ -49,7 +49,6 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
   auto dstNode = graph->nodes.at(dstPath->nodeIdx).get();
   MS_ASSERT(dstNode != nullptr);
 
-  // todo check
   if (srcNode->inputIndex.empty() && srcNode->outputIndex.empty()) {
     MS_LOG(DEBUG) << "srcNode " << srcNode->name.c_str() << " has been removed";
     return RET_NO_CHANGE;

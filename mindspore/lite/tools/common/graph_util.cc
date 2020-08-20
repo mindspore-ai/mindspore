@@ -175,7 +175,7 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
     }
   }
 
-  // todo whether need to remove weightInputTensores
+  // whether need to remove weightInputTensores
   // remove all node's outputTensors
   RemoveTensor(graphT, outputTensorIdxes);
   node->inputIndex.clear();

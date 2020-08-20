@@ -60,17 +60,17 @@ class LiteSession : public session::LiteSession {
   int ConvertTensors(const lite::Model *model);
 
   void InitGraphInOutTensors(const lite::Model *model);
-  // init this->inputs_
+
   void InitGraphInputTensors(const lite::Model *model);
-  // init this->input_vec_
+
   void InitGraphInputMSTensors(const lite::Model *model);
-  // init this->outputs_
+
   void InitGraphOutputTensors(const lite::Model *model);
-  // init this->input_map_
+
   void InitGraphInputMap(const lite::Model *model);
-  // init this->output_map_
+
   void InitGraphOutputMap(const lite::Model *model);
-  // resize inputs
+
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs);
 
  protected:

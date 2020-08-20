@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_INCLUDE_MS_TENSOR_H_
-#define MINDSPORE_INCLUDE_MS_TENSOR_H_
+#ifndef MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
+#define MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 
 #include <utility>
 #include <vector>
@@ -105,4 +105,4 @@ class MS_API MSTensor {
 };
 }  // namespace tensor
 }  // namespace mindspore
-#endif  // MINDSPORE_INCLUDE_MS_TENSOR_H_
+#endif  // MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_

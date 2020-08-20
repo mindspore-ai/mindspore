@@ -82,7 +82,6 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
       MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
       return nullptr;
     }
-    // todo hangangqiang
     graph = ModelParser::Fb2Anf(meta_graph);
   }
   if (graph == nullptr) {

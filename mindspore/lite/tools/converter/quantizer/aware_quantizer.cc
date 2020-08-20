@@ -311,7 +311,6 @@ STATUS AwareQuantizer::SetAttrToConvolution(const schema::MetaGraphT *subGraph,
 }
 
 STATUS AwareQuantizer::GenerateQuantParam() {
-  // todo why?
   MS_ASSERT(graph->inputIndex.size() == 1);
   // set graphInputNode input
   for (auto graphInputIndex : graph->inputIndex) {
