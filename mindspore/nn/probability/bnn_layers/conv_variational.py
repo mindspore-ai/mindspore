@@ -61,6 +61,12 @@ class _ConvVariational(_Conv):
             raise ValueError('Attr \'pad_mode\' of \'Conv2d\' Op passed '
                              + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
 
+        if not isinstance(stride, (int, tuple)):
+            raise TypeError('The type of `stride` should be `int` of `tuple`')
+
+        if not isinstance(dilation, (int, tuple)):
+            raise TypeError('The type of `dilation` should be `int` of `tuple`')
+
         # convolution args
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -87,13 +93,10 @@ class _ConvVariational(_Conv):
                 raise TypeError('The type of `weight_prior_fn` should be `NormalPrior`')
             self.weight_prior = weight_prior_fn()
 
-        if isinstance(weight_posterior_fn, Cell):
-            if weight_posterior_fn.__class__.__name__ != 'NormalPosterior':
-                raise TypeError('The type of `weight_posterior_fn` should be `NormalPosterior`')
-        else:
-            if weight_posterior_fn.__name__ != 'NormalPosterior':
-                raise TypeError('The type of `weight_posterior_fn` should be `NormalPosterior`')
-        self.weight_posterior = weight_posterior_fn(shape=self.shape, name='bnn_weight')
+        try:
+            self.weight_posterior = weight_posterior_fn(shape=self.shape, name='bnn_weight')
+        except TypeError:
+            raise TypeError('The type of `weight_posterior_fn` should be `NormalPosterior`')
 
         if self.has_bias:
             self.bias.requires_grad = False
@@ -107,13 +110,10 @@ class _ConvVariational(_Conv):
                     raise TypeError('The type of `bias_prior_fn` should be `NormalPrior`')
                 self.bias_prior = bias_prior_fn()
 
-            if isinstance(bias_posterior_fn, Cell):
-                if bias_posterior_fn.__class__.__name__ != 'NormalPosterior':
-                    raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
-            else:
-                if bias_posterior_fn.__name__ != 'NormalPosterior':
-                    raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
-            self.bias_posterior = bias_posterior_fn(shape=[self.out_channels], name='bnn_bias')
+            try:
+                self.bias_posterior = bias_posterior_fn(shape=[self.out_channels], name='bnn_bias')
+            except TypeError:
+                raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
 
         # mindspore operations
         self.bias_add = P.BiasAdd()

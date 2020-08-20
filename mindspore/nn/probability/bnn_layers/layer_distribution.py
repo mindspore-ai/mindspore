@@ -51,15 +51,16 @@ class NormalPosterior(Cell):
 
     Args:
         name (str): Name prepended to trainable parameter.
-        shape (list): Shape of the mean and standard deviation.
+        shape (list, tuple): Shape of the mean and standard deviation.
         dtype (class `mindspore.dtype`): The argument is used to define the data type of the output tensor.
             Default: mindspore.float32.
-        loc_mean ( float, array_like of floats): Mean of distribution to initialize trainable parameters. Default: 0.
-        loc_std ( float, array_like of floats): Standard deviation of distribution to initialize trainable parameters.
-            Default: 0.1.
-        untransformed_scale_mean ( float, array_like of floats): Mean of distribution to initialize trainable
+        loc_mean (int, float, array_like of floats): Mean of distribution to initialize trainable parameters.
+            Default: 0.
+        loc_std (int, float, array_like of floats): Standard deviation of distribution to initialize trainable
+            parameters. Default: 0.1.
+        untransformed_scale_mean (int, float, array_like of floats): Mean of distribution to initialize trainable
             parameters. Default: -5.
-        untransformed_scale_std ( float, array_like of floats): Standard deviation of distribution to initialize
+        untransformed_scale_std (int, float, array_like of floats): Standard deviation of distribution to initialize
             trainable parameters. Default: 0.1.
 
     Returns:
@@ -80,20 +81,25 @@ class NormalPosterior(Cell):
         if not isinstance(shape, (tuple, list)):
             raise TypeError('The type of `shape` should be `tuple` or `list`')
 
-        if not (np.array(shape) > 0).all():
-            raise ValueError('Negative dimensions are not allowed')
+        try:
+            mean_arr = np.random.normal(loc_mean, loc_std, shape)
+        except ValueError as msg:
+            raise ValueError(msg)
+        except TypeError as msg:
+            raise TypeError(msg)
 
-        if not (np.array(loc_std) >= 0).all():
-            raise ValueError('The value of `loc_std` < 0')
-        if not (np.array(untransformed_scale_std) >= 0).all():
-            raise ValueError('The value of `untransformed_scale_std` < 0')
+        try:
+            untransformed_scale_arr = np.random.normal(untransformed_scale_mean, untransformed_scale_std, shape)
+        except ValueError as msg:
+            raise ValueError(msg)
+        except TypeError as msg:
+            raise TypeError(msg)
 
         self.mean = Parameter(
-            Tensor(np.random.normal(loc_mean, loc_std, shape), dtype=dtype), name=name + '_mean')
+            Tensor(mean_arr, dtype=dtype), name=name + '_mean')
 
         self.untransformed_std = Parameter(
-            Tensor(np.random.normal(untransformed_scale_mean, untransformed_scale_std, shape), dtype=dtype),
-            name=name + '_untransformed_std')
+            Tensor(untransformed_scale_arr, dtype=dtype), name=name + '_untransformed_std')
 
         self.normal = Normal()
 
