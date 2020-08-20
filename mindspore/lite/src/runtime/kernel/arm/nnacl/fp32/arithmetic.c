@@ -379,7 +379,6 @@ int BroadcastSub(float *input0, float *input1, float *tile_input0, float *tile_i
   return ElementSub(tile_input0, tile_input1, output, element_size);
 }
 
-// todo c=a/b,if(b==0)
 int ElementDiv(float *input0, float *input1, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     if (input1[i] == 0) {

@@ -90,7 +90,7 @@ TEST_F(TestResizeBilinearInt8, Bilinear0) {
   int8_t expect[16] = {4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 5, 5, 6, 6};
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, align_corners, thread_num);
-  kernel_->Init();  // todo delete
+  kernel_->Init();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, 16, err_percent_);

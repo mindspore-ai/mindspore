@@ -66,8 +66,7 @@ STATUS OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PowParser";
   if (op != nullptr) {
-    // TODO(wangzhe) attr power need populate
-    std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
+    std::unique_ptr<schema::PowerT> attr(new schema::PowerT());
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Power;
     op->primitive->value.value = attr.release();

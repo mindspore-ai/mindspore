@@ -263,7 +263,6 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
   pooling_param->global_ = pooling_primitive->GetGlobal();
   pooling_param->window_w_ = pooling_primitive->GetWindowW();
   pooling_param->window_h_ = pooling_primitive->GetWindowH();
-  // todo format
   auto pooling_lite_primitive = (lite::Pooling *)primitive;
   MS_ASSERT(nullptr != pooling_lite_primitive);
   pooling_param->pad_u_ = pooling_lite_primitive->PadUp();
@@ -402,7 +401,6 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   auto conv_primitive = dynamic_cast<const mindspore::lite::DepthwiseConv2D *>(primitive);
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
-  // todo format, group
   conv_param->stride_h_ = conv_primitive->GetStrideH();
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 

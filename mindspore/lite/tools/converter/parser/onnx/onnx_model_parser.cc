@@ -241,7 +241,6 @@ STATUS OnnxModelParser::ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node,
       std::for_each(shape.begin(), shape.end(), [&data_count](int dim) { data_count *= dim; });
       size_t data_size = 0;
       if (onnx_node.op_type() == "Int8GivenIntTensorFill") {
-        // todo  how to read onnx-ori-dataType
         tensor->dataType = kNumberTypeInt32;
         data_size = data_count * sizeof(int32_t) / sizeof(uint8_t);
         tensor->data.resize(data_size);
@@ -252,9 +251,7 @@ STATUS OnnxModelParser::ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node,
           castedTensorData[i] = int32_t(iter->ints().data()[i]);
         }
       } else if (onnx_node.op_type() == "Int8GivenTensorFill") {
-        // todo  how to read onnx-ori-dataType
         tensor->dataType = kNumberTypeUInt8;
-        // todo: add * sizof(string)
         data_size = data_count;
         tensor->data.resize(data_size);
         MS_LOG(DEBUG) << "tensor data size " << data_size << ", s: " << sizeof(iter->s().data());

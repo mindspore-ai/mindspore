@@ -348,7 +348,7 @@ STATUS BatchNormFoldFusionPass::GenNewBiasTensor() {  // bias has no quant
     MS_LOG(ERROR) << "new BiasTensor failed";
     return RET_ERROR;
   }
-  newBiasTensor->dataType = 0;  // todo is float
+  newBiasTensor->dataType = 0;
   newBiasTensor->format = Format_NUM_OF_FORMAT;
   newBiasTensor->refCount = schema::NodeType_ValueNode;
   newBiasTensor->dims = biasShape;

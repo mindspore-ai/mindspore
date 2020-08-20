@@ -328,7 +328,6 @@ TEST_F(TestConvolutionFp16, ConvTest2) {
 TEST_F(TestConvolutionFp16, Conv3x3Test1) {
   auto conv_param = new ConvParameter();
   InitConvParamGroup1Fp16(conv_param);
-  // todo
   int thread_count = 1;
   int tile_num = 16;
   int output_batch = conv_param->output_batch_;
@@ -474,7 +473,6 @@ TEST_F(TestConvolutionFp16, Conv3x3Test1) {
 TEST_F(TestConvolutionFp16, Conv3x3Test2) {
   auto conv_param = new ConvParameter();
   InitConvParamGroup2Fp16(conv_param);
-  // todo
   int thread_count = 1;
   int tile_num = 16;
   int output_batch = conv_param->output_batch_;

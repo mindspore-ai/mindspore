@@ -152,7 +152,7 @@ void DeConvWeightTransInt8(int8_t *src, int8_t *dst, int input_channel, int outp
       }
     }
   } else {
-    /* todo normal int8 deconv */
+    /* normal int8 deconv */
   }
   return;
 }
@@ -171,7 +171,7 @@ void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, 
       weight_sum[c] = filter_zp * input_zp * deep16 - value * input_zp;
     }
   } else {
-    /* todo normal int8 deconv */
+    /* normal int8 deconv */
   }
   return;
 }
@@ -188,7 +188,7 @@ void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, int 
       dst[r] = tmp_value * filter_zp;
     }
   } else {
-    /* todo normal int8 deconv */
+    /* normal int8 deconv */
   }
   return;
 }
@@ -199,7 +199,7 @@ int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, int32
   if (matmul_func != NULL) {
     matmul_func(input, weight, output, act_row, act_col, act_deep, input_sum, weight_sum);
   } else {
-    /* todo normal int8 deconv */
+    /* normal int8 deconv */
   }
   return NNACL_OK;
 }
@@ -210,7 +210,7 @@ int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t
   if (support_optimize) {
     error_code = DeConvPostInt8C4(src, bias, tmp, out, output_channel, conv_param);
   } else {
-    /* todo normal int8 deconv post */
+    /* normal int8 deconv post */
   }
   return error_code;
 }

@@ -92,7 +92,7 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor0) {
   err_percent_ = 0.25f;
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, false, thread_num);
-  kernel_->Init();  // todo delete
+  kernel_->Init();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, 16, err_percent_);

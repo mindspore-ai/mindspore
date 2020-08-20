@@ -332,7 +332,6 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   int out_channel = conv_param->output_channel_;
   bool relu = conv_param->is_relu_;
   bool relu6 = conv_param->is_relu6_;
-  // todo
   int thread_count = conv_param->thread_num_;
   const int tile_n = 16;
   int output_count = out_h * out_w;

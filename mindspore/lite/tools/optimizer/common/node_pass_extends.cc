@@ -33,11 +33,11 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
   manager->AddFuncGraph(func_graph);
 
   std::unordered_set<AnfNodePtr> seen_node;
-  std::deque<AnfNodePtr> todo{func_graph->output()};
+  std::deque<AnfNodePtr> to_process{func_graph->output()};
   bool changes = false;
-  while (!todo.empty()) {
-    AnfNodePtr node = todo.front();
-    todo.pop_front();
+  while (!to_process.empty()) {
+    AnfNodePtr node = to_process.front();
+    to_process.pop_front();
     if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
       continue;
     }
@@ -53,15 +53,15 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     if (new_node && IsValueNode<FuncGraph>(new_node)) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(new_node);
       MS_EXCEPTION_IF_NULL(const_func_graph);
-      todo.push_back(const_func_graph->output());
+      to_process.push_back(const_func_graph->output());
     } else if (new_node && new_node->isa<CNode>()) {
       if (IsGraphKernel(new_node)) {
-        todo.push_back(new_node);
+        to_process.push_back(new_node);
       }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
-      (void)todo.insert(todo.end(), inputs.begin(), inputs.end());
+      (void)to_process.insert(to_process.end(), inputs.begin(), inputs.end());
     }
     changes = changes || change;
   }

@@ -138,7 +138,6 @@ TEST_F(TestPack, PackWeightFp32) {
 
 #ifdef ENABLE_FP16
 TEST_F(TestPack, PackInputFp16) {
-  // todo
   size_t input_size;
   std::string input_path = "./test_data/conv/convfp32_input_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));

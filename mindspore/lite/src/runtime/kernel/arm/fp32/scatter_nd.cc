@@ -87,7 +87,6 @@ int ScatterNDCPUKernel::ReSize() {
       return RET_ERROR;
     }
   }
-  // todo check indeices out of range
   // for (size_t i = 0; i < static_cast<size_t>(indice_unit_rank); i++) {}
 
   // calculate unit_size_

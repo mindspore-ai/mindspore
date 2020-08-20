@@ -174,7 +174,6 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
         break;
       }
     }
-    // todo y00520784 : layer.input_param().shape(0)
     if (layer.type() == "Input") {
       std::unique_ptr<schema::TensorT> msTensor = std::make_unique<schema::TensorT>();
       for (int j = 0; j < layer.input_param().shape(0).dim_size(); j++) {

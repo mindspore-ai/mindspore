@@ -130,7 +130,6 @@ int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema
     tensor->SetFormat(dst_format);
     return RET_OK;
   } else if (dst_format == schema::Format_NHWC) {
-    // TODO(wandongdong): add support !!
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
@@ -200,7 +199,6 @@ int OpenCLExecutor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::F
   MS_ASSERT(nullptr != tensor);
   MS_ASSERT(4 == tensor->shape().size());
   //  auto src_format = tensor->GetFormat();
-  // todo
   MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
                 << schema::EnumNameFormat(dst_format) << " in uint8";
   return RET_ERROR;
