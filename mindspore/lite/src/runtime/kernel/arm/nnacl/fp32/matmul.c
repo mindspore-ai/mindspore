@@ -269,7 +269,7 @@ void MatMul8x8(const float *a, const float *b, float *dst, const float *bias, Ac
 
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row, int col,
             int stride, bool write_nhwc) {
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
   MatmulFloatNeon64(a, b, c, bias, (int)act_type, deep, row, col, stride, write_nhwc);
 #else
   MatMul8x8(a, b, c, bias, act_type, deep, row, col, stride, write_nhwc);

@@ -19,8 +19,8 @@
 
 #include "nnacl/op_base.h"
 
-typedef void (*MATMUL_OPT_R4_FUNC)(int32_t *dst, const int8_t *a, const int8_t *b, const int32_t *bias,
-                                   const int32_t *input_sum, size_t row_4, size_t col_4, size_t deep_16);
+typedef void (*MATMUL_OPT_R4_FUNC)(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
+                                   const int *input_sum, const int *bias);
 
 typedef void (*MAT_TRANS_FUNC)(void *dst, void *a, int row, int col);
 

@@ -39,6 +39,28 @@ class MatmulInt8CPUKernel : public MatmulBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
+#ifdef ENABLE_ARM64
+    if (a_r4d16_ptr_ != nullptr) {
+      ctx_->allocator->Free(a_r4d16_ptr_);
+      a_r4d16_ptr_ = nullptr;
+    }
+    if (b_c4d16_ptr_ != nullptr) {
+      ctx_->allocator->Free(b_c4d16_ptr_);
+      b_c4d16_ptr_ = nullptr;
+    }
+    if (c_r4c4_ptr_ != nullptr) {
+      ctx_->allocator->Free(c_r4c4_ptr_);
+      c_r4c4_ptr_ = nullptr;
+    }
+    if (a_sums_ != nullptr) {
+      ctx_->allocator->Free(a_sums_);
+      a_sums_ = nullptr;
+    }
+    if (b_bias_ != nullptr) {
+      ctx_->allocator->Free(b_bias_);
+      b_bias_ = nullptr;
+    }
+#else
     if (a_c8_ptr_ != nullptr) {
       ctx_->allocator->Free(a_c8_ptr_);
       a_c8_ptr_ = nullptr;
@@ -51,12 +73,24 @@ class MatmulInt8CPUKernel : public MatmulBaseCPUKernel {
       ctx_->allocator->Free(c_r8x8_ptr_);
       c_r8x8_ptr_ = nullptr;
     }
+#endif
   }
   MatmulQuantArg quant_params_;
+#ifdef ENABLE_ARM64
+  int8_t *a_r4d16_ptr_ = nullptr;
+  int8_t *b_c4d16_ptr_ = nullptr;
+  int8_t *c_r4c4_ptr_ = nullptr;
+  int *a_sums_ = nullptr;
+  int *b_bias_ = nullptr;
+  int r4_;
+  int c4_;
+  int d16_;
+#else
   int8_t *a_c8_ptr_ = nullptr;
   int8_t *b_r8_ptr_ = nullptr;
   int *c_r8x8_ptr_ = nullptr;
-};
+#endif
+};  // namespace mindspore::kernel
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_INT8_H_

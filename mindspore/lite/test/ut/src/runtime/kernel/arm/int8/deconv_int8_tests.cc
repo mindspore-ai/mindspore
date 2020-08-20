@@ -270,7 +270,7 @@ TEST_F(TestDeconvInt8, MatMulOptTest1) {
     7894,   -51,    0,      0,      -4775,  -29785, 0,      0,      -12597, 4088,   0,      0,      -17420, 1815,
     0,      0,      15796,  3101,   0,      0,      -37969, -10818, 0,      0,      12714,  -7827,  0,      0,
     0,      0,      0,      0,      0,      0,      0,      0};
-  MatMulOptR4Int8(tmp_output, packed_a, packed_b, weight_sum, input_sum, 12, 24, 16);
+  MatMulOptR4Int8(packed_a, packed_b, tmp_output, 12, 24, 16, input_sum, weight_sum);
   CompareOutputData(tmp_output, correct_tmp_output, 12 * 3 * 8, 0);
 }
 
