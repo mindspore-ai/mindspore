@@ -950,3 +950,25 @@ TEST_F(MindDataTestPipeline, TestZipSuccess2) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+#if !defined(_WIN32) && !defined(_WIN64)
+#ifndef ENABLE_ANDROID
+TEST_F(MindDataTestPipeline, TestNumWorkersValidate) {
+  // Testing the static zip() function
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNumWorkersValidate.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 9));
+  EXPECT_NE(ds, nullptr);
+
+  // test if set num_workers=-1
+  std::shared_ptr<Dataset> ds1 = ds->SetNumWorkers(-1);
+  EXPECT_EQ(ds1, nullptr);
+
+  // test if set num_workers>cpu_count
+  std::shared_ptr<Dataset> ds2 = ds->SetNumWorkers(UINT32_MAX);
+  EXPECT_EQ(ds2, nullptr);
+}
+#endif
+#endif

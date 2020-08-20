@@ -555,7 +555,7 @@ def check_map(method):
          callbacks], _ = \
             parse_user_args(method, *args, **kwargs)
 
-        nreq_param_columns = ['input_columns', 'output_columns']
+        nreq_param_columns = ['input_columns', 'output_columns', 'columns_order']
 
         if columns_order is not None:
             type_check(columns_order, (list,), "columns_order")
@@ -571,7 +571,7 @@ def check_map(method):
             else:
                 type_check(callbacks, (callback.DSCallback,), "callbacks")
 
-        for param_name, param in zip(nreq_param_columns, [input_columns, output_columns]):
+        for param_name, param in zip(nreq_param_columns, [input_columns, output_columns, columns_order]):
             if param is not None:
                 check_columns(param, param_name)
         if callbacks is not None:

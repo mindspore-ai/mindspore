@@ -309,6 +309,19 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object
   std::shared_ptr<Dataset> SetNumWorkers(int32_t num_workers) {
+#if !defined(_WIN32) && !defined(_WIN64)
+#ifndef ENABLE_ANDROID
+    int32_t cpu_count = sysconf(_SC_NPROCESSORS_CONF);
+    if (cpu_count < 0 || cpu_count > INT32_MAX) {
+      MS_LOG(ERROR) << "Error determining current CPU: " << cpu_count;
+      return nullptr;
+    }
+    if (num_workers < 1 || num_workers > cpu_count) {
+      MS_LOG(ERROR) << "num_workers exceeds the boundary between 1 and " << cpu_count;
+      return nullptr;
+    }
+#endif
+#endif
     num_workers_ = num_workers;
     return shared_from_this();
   }
@@ -336,7 +349,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
   ///    can be set to default, which corresponds to 0/total_words separately
   /// \param[in] top_k Number of words to be built into vocab. top_k most frequent words are
-  //     taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
+  ///    taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
   /// \param[in] special_tokens A list of strings, each one is a special token
   /// \param[in] special_first Whether special_tokens will be prepended/appended to vocab, If special_tokens
   ///    is specified and special_first is set to default, special_tokens will be prepended
