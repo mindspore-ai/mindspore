@@ -42,7 +42,7 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ReverseSequenceT> attr(new schema::ReverseSequenceT());
+  std::unique_ptr<schema::ReverseSequenceT> attr = std::make_unique<schema::ReverseSequenceT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsReverseSequenceOptions();
   if (tflite_attr == nullptr) {

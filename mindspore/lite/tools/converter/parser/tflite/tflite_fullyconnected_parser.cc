@@ -47,7 +47,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
   } else if (std::strcmp(node_name, "FakeQuant") == 0) {
     MS_LOG(DEBUG) << "parse TfliteFakeQuantParser";
   }
-  std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
+  std::unique_ptr<schema::FullConnectionT> attr = std::make_unique<schema::FullConnectionT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsFullyConnectedOptions();
   if (tflite_attr == nullptr) {
@@ -55,7 +55,9 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
     return RET_NULL_PTR;
   }
 
-  attr->hasBias = true;
+  bool hasBias = tflite_op->inputs.size() > 2 && tflite_op->inputs[2] != -1;
+
+  attr->hasBias = hasBias;
   attr->axis = 1;
   attr->useAxis = false;
   attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
@@ -67,8 +69,10 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
              tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
              tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_KHWC);
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  if (hasBias) {
+    AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+               tflite_op->inputs[2], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  }
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
               tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;

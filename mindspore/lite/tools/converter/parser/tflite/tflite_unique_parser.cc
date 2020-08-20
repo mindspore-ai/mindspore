@@ -41,7 +41,7 @@ STATUS TfliteUniqueParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::UniqueT> attr(new schema::UniqueT());
+  std::unique_ptr<schema::UniqueT> attr = std::make_unique<schema::UniqueT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsUniqueOptions();
   if (tflite_attr == nullptr) {

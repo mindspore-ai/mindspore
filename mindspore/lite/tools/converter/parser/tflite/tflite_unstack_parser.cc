@@ -42,7 +42,7 @@ STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::UnstackT> attr(new schema::UnstackT());
+  std::unique_ptr<schema::UnstackT> attr = std::make_unique<schema::UnstackT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsUnpackOptions();
   if (tflite_attr == nullptr) {

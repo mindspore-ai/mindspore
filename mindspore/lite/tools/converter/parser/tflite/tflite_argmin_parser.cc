@@ -40,7 +40,7 @@ STATUS TfliteArgminParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ArgMinT> attr(new schema::ArgMinT());
+  std::unique_ptr<schema::ArgMinT> attr = std::make_unique<schema::ArgMinT>();
 
   attr->outMaxValue = false;
   attr->topK = 1;

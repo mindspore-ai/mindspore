@@ -40,7 +40,7 @@ STATUS TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::OneHotT> attr(new schema::OneHotT());
+  std::unique_ptr<schema::OneHotT> attr = std::make_unique<schema::OneHotT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsOneHotOptions();
   if (tflite_attr == nullptr) {

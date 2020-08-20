@@ -40,7 +40,7 @@ STATUS TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::RankT> attr(new schema::RankT());
+  std::unique_ptr<schema::RankT> attr = std::make_unique<schema::RankT>();
 
   op->primitive->value.type = schema::PrimitiveType_Rank;
   op->primitive->value.value = attr.release();

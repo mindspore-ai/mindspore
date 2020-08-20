@@ -40,7 +40,7 @@ STATUS TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::PadT> attr(new schema::PadT());
+  std::unique_ptr<schema::PadT> attr = std::make_unique<schema::PadT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsPadOptions();
   if (tflite_attr == nullptr) {

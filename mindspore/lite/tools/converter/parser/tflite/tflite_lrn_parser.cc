@@ -41,7 +41,7 @@ STATUS TfliteLRNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_o
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::LocalResponseNormalizationT> attr(new schema::LocalResponseNormalizationT());
+  std::unique_ptr<schema::LocalResponseNormalizationT> attr = std::make_unique<schema::LocalResponseNormalizationT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsLocalResponseNormalizationOptions();
   if (tflite_attr == nullptr) {

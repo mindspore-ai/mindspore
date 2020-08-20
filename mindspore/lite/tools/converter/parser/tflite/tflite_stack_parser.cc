@@ -40,7 +40,7 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::StackT> attr(new schema::StackT());
+  std::unique_ptr<schema::StackT> attr = std::make_unique<schema::StackT>();
   const auto &tflite_attr = tflite_op->builtin_options.AsPackOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";

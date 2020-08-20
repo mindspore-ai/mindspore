@@ -40,7 +40,7 @@ STATUS TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ArgMaxT> attr(new schema::ArgMaxT());
+  std::unique_ptr<schema::ArgMaxT> attr = std::make_unique<schema::ArgMaxT>();
 
   attr->outMaxValue = false;
   attr->topK = 1;

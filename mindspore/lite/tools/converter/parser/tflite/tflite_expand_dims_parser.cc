@@ -28,6 +28,8 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
                                      std::vector<int32_t> *tensors_id,
                                      std::vector<schema::Format> *tensors_format,
                                      std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -38,8 +40,7 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
-  std::unique_ptr<schema::ExpandDimsT> attr(new schema::ExpandDimsT());
+  std::unique_ptr<schema::ExpandDimsT> attr = std::make_unique<schema::ExpandDimsT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsExpandDimsOptions();
   if (tflite_attr == nullptr) {

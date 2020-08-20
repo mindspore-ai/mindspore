@@ -41,7 +41,7 @@ STATUS TfliteTileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::TileT> attr(new schema::TileT());
+  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->multiples)) {
     MS_LOG(ERROR) << "get tile -> multiples failed";

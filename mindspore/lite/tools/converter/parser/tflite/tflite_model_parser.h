@@ -58,14 +58,14 @@ class TfliteModelParser : public ModelParser {
   STATUS ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
                    const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                    const QuantType &quant_type,
-                   schema::MetaGraphT* sub_graph);
+                   schema::MetaGraphT *sub_graph);
 
   STATUS ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                       schema::MetaGraphT* sub_graph);
+                       schema::MetaGraphT *sub_graph);
 
   STATUS GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                      schema::MetaGraphT* sub_graph);
+                      schema::MetaGraphT *sub_graph);
 
   STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph);
 

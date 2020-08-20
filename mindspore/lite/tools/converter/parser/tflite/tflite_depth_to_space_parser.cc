@@ -41,7 +41,7 @@ STATUS TfliteDepthToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::DepthToSpaceT> attr(new schema::DepthToSpaceT());
+  std::unique_ptr<schema::DepthToSpaceT> attr = std::make_unique<schema::DepthToSpaceT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsDepthToSpaceOptions();
   if (tflite_attr == nullptr) {

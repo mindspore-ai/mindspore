@@ -43,7 +43,8 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
 }
 
 STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                              const tflite::TensorT *tflite_tensor, schema::TensorT *tensor) {
+                                              const tflite::TensorT *tflite_tensor,
+                                              schema::TensorT *tensor) {
   auto count = 1;
   std::for_each(tflite_tensor->shape.begin(), tflite_tensor->shape.end(), [&](int32_t sha) { count *= sha; });
   auto data_size = count * GetDataTypeSize(TypeId(tensor->dataType));
@@ -91,7 +92,8 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
 
 STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                    const QuantType &quant_type, schema::MetaGraphT *sub_graph) {
+                                    const QuantType &quant_type,
+                                    schema::MetaGraphT *sub_graph) {
   int idx = 0;
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
@@ -293,7 +295,8 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph)
   return RET_OK;
 }
 
-MetaGraphT *TfliteModelParser::Parse(const std::string &model_file, const std::string &weight_file,
+MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
+                                     const std::string &weight_file,
                                      const QuantType &quant_type) {
   std::unique_ptr<schema::MetaGraphT> sub_graph(new schema::MetaGraphT);
   sub_graph->name = "MS_model converted by TF-Lite";

@@ -40,7 +40,7 @@ STATUS TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::CastT> attr(new schema::CastT());
+  std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
 
   const auto &in_tensor = tflite_tensors[tflite_op->inputs[0]];
   if (in_tensor == nullptr) {

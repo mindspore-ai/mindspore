@@ -41,7 +41,7 @@ STATUS TfliteZerosLikeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ZerosLikeT> attr(new schema::ZerosLikeT());
+  std::unique_ptr<schema::ZerosLikeT> attr = std::make_unique<schema::ZerosLikeT>();
 
   op->primitive->value.type = schema::PrimitiveType_ZerosLike;
   op->primitive->value.value = attr.release();

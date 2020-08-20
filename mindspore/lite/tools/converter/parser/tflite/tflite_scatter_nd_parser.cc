@@ -41,7 +41,7 @@ STATUS TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ScatterNDT> attr(new schema::ScatterNDT());
+  std::unique_ptr<schema::ScatterNDT> attr = std::make_unique<schema::ScatterNDT>();
 
   const auto &tflite_attr = tflite_op->builtin_options.AsScatterNdOptions();
   if (tflite_attr == nullptr) {

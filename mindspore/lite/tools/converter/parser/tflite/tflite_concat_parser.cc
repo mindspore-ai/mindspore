@@ -41,7 +41,7 @@ STATUS TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ConcatT> attr(new schema::ConcatT());
+  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
 
   const auto &tfliteAttr = tflite_op->builtin_options.AsConcatenationOptions();
   if (tfliteAttr == nullptr) {

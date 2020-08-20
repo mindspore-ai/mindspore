@@ -41,7 +41,7 @@ STATUS TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::TopKT> attr(new schema::TopKT());
+  std::unique_ptr<schema::TopKT> attr = std::make_unique<schema::TopKT>();
 
   attr->sorted = true;
   std::vector<int32_t> k;

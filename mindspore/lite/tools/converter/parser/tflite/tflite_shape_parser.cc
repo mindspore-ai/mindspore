@@ -40,7 +40,7 @@ STATUS TfliteShapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::ShapeT> attr(new schema::ShapeT());
+  std::unique_ptr<schema::ShapeT> attr = std::make_unique<schema::ShapeT>();
 
   op->primitive->value.type = schema::PrimitiveType_Shape;
   op->primitive->value.value = attr.release();

@@ -40,7 +40,7 @@ STATUS TfliteGatherNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfl
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::GatherNdT> attr(new schema::GatherNdT());
+  std::unique_ptr<schema::GatherNdT> attr = std::make_unique<schema::GatherNdT>();
   attr->batchDims = 0;
 
   op->primitive->value.type = schema::PrimitiveType_GatherNd;

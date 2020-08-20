@@ -42,7 +42,7 @@ STATUS TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::AddNT> attr(new schema::AddNT());
+  std::unique_ptr<schema::AddNT> attr = std::make_unique<schema::AddNT>();
 
   attr->N = tflite_tensors.size() - 1;
   op->primitive->value.type = schema::PrimitiveType_AddN;

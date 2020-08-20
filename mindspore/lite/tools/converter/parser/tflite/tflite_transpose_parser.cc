@@ -39,7 +39,7 @@ STATUS TfliteTransposeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tf
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
+  std::unique_ptr<schema::TransposeT> attr = std::make_unique<schema::TransposeT>();
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->perm)) {
     MS_LOG(ERROR) << "get transpose -> perm failed";
