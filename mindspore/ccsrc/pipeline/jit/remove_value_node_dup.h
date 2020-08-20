@@ -31,7 +31,6 @@ void TryToDoReplace(FuncGraphManager *manager, const AnfNodePtr &node, HashCache
 size_t HashOfGraph(const FuncGraphPtr &fg);
 bool IsCNodeGraph(const AnfNodePtr &node);
 bool MergeDuplicateGraphs(const FuncGraphManagerPtr manager);
-
 }  // namespace pipeline
 }  // namespace mindspore
 
