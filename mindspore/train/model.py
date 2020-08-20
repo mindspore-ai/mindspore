@@ -16,7 +16,6 @@
 from collections.abc import Iterable
 
 import os
-import sys
 import math
 import numpy as np
 
@@ -498,7 +497,7 @@ class Model:
 
                 list_callback.step_end(run_context)
                 if os.getenv("MS_ROLE") == "MS_PSERVER":
-                    sys.exit(0)
+                    os._exit(0)
                 should_stop = should_stop or run_context.get_stop_requested()
                 if should_stop:
                     break
