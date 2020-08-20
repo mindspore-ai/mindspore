@@ -55,7 +55,7 @@ class LinearCalcer : public QuantParamCalcer {
 
 class QuantParamCalcRegister {
  public:
-  virtual ~QuantParamCalcRegister() = default;
+  virtual ~QuantParamCalcRegister();
   QuantParamCalcer *GetQuantParamCalcer(schema::PrimitiveType opType);
   static QuantParamCalcRegister *GetInstance();
 

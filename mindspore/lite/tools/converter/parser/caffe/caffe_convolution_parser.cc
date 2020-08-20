@@ -26,7 +26,7 @@ void CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op, schema::C
   }
   std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
   if (depthwiseConv2DParam == nullptr) {
-    // MS_LOGW("new DepthwiseConv2DT failed");
+    MS_LOG(ERROR) << "new DepthwiseConv2DT failed";
     return;
   }
   depthwiseConv2DParam->format = attr->format;
@@ -53,8 +53,11 @@ void CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op, schema::C
 STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                      schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
-  schema::Conv2DT *attr = new schema::Conv2DT();
-
+  std::unique_ptr<schema::Conv2DT> attr(new (std::nothrow) schema::Conv2DT());
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new Conv2DT failed";
+    return RET_ERROR;
+  }
   attr->format = schema::Format_NCHW;
   const caffe::ConvolutionParameter convParam = proto.convolution_param();
 
@@ -118,9 +121,9 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   attr->padMode = schema::PadMode_CAFFE;
   op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.type = schema::PrimitiveType_Conv2D;
-  op->primitive->value.value = attr;
+  op->primitive->value.value = attr.get();
 
-  ParseGroupConvolution(op, attr);
+  ParseGroupConvolution(op, attr.release());
   status = convParser.ParseWeight(weight, weightVec);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseWeight for " << proto.name().c_str() << " failed";

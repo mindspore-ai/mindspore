@@ -73,7 +73,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   auto abstr = transform_node->abstract();
   int kernel_nums = Get_Kenrnel_nums(conv_node);
   if (kernel_nums <= 0) {
-    MS_LOG(ERROR) << "Unsupported conv node, " << conv_node->DebugString();
+    MS_LOG(INFO) << "Unsupported conv node, " << conv_node->DebugString();
     return node;
   }
   auto trans_scale = new(std::nothrow) float[kernel_nums];
@@ -84,6 +84,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   auto trans_bias = new(std::nothrow) float[kernel_nums];
   if (trans_bias == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
+    delete trans_scale;
     return nullptr;
   }
   GenTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
@@ -164,7 +165,7 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
     bias_flag = true;
   } else {
     bias_data = new(std::nothrow) float[kernel_num];
-    if (trans_scale == nullptr) {
+    if (bias_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       return;
     }

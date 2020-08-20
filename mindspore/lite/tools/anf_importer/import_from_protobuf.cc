@@ -140,6 +140,8 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
     auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), initial_data.data(), initial_data.size());
     if (EOK != ret) {
       MS_LOG(ERROR) << "memcpy_s error";
+      delete tensor_data_buf;
+      delete tensor_info;
       return false;
     }
 

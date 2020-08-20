@@ -23,7 +23,7 @@ namespace mindspore::lite {
 class AnfNodePopulaterRegistry {
  public:
   AnfNodePopulaterRegistry() = default;
-  virtual ~AnfNodePopulaterRegistry() = default;
+  virtual ~AnfNodePopulaterRegistry();
   static AnfNodePopulaterRegistry *GetInstance();
   AnfNodePopulater *GetNodePopulater(const std::string &name);
   void SetNodePopulater(const std::string &name, AnfNodePopulater *populater);
