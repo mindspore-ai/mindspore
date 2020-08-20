@@ -35,21 +35,30 @@ static const std::vector<schema::PrimitiveType> fp32FullOpList = {
   schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
   schema::PrimitiveType_Floor};  // fp32 ops support C4 and nhwc in fp32
 
-static const std::vector<schema::PrimitiveType> uint8NeedNhwcOpList = {};
+static const std::vector<schema::PrimitiveType> int8NeedNhwcOpList = {};
 
-static const std::vector<schema::PrimitiveType> uint8OpList = {
-  schema::PrimitiveType_Nchw2Nhwc,       schema::PrimitiveType_Nhwc2Nchw, schema::PrimitiveType_Conv2D,
-  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
-  schema::PrimitiveType_Concat,          schema::PrimitiveType_SoftMax,   schema::PrimitiveType_Reshape,
-  schema::PrimitiveType_Activation};
+static const std::vector<schema::PrimitiveType> int8OpList = {
+  schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
+  schema::PrimitiveType_Conv2D,    schema::PrimitiveType_DepthwiseConv2D,
+  schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
+  schema::PrimitiveType_Concat,    schema::PrimitiveType_SoftMax,
+  schema::PrimitiveType_Reshape,   schema::PrimitiveType_Activation,
+  schema::PrimitiveType_Resize,    schema::PrimitiveType_FullConnection,
+  schema::PrimitiveType_ArgMax,    schema::PrimitiveType_ArgMin,
+  schema::PrimitiveType_BatchNorm, schema::PrimitiveType_FusedBatchNorm,
+  schema::PrimitiveType_BiasAdd,   schema::PrimitiveType_Div,
+  schema::PrimitiveType_Mul,       schema::PrimitiveType_Slice,
+  schema::PrimitiveType_SoftMax,   schema::PrimitiveType_Split,
+  schema::PrimitiveType_Squeeze,   schema::PrimitiveType_Sub,
+  schema::PrimitiveType_TopK,      schema::PrimitiveType_Unsqueeze};
 
 std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
 
 std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }
 
-std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return uint8NeedNhwcOpList; }
+std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpList; }
 
-std::vector<schema::PrimitiveType> GetUint8OpList() { return uint8OpList; }
+std::vector<schema::PrimitiveType> GetUint8OpList() { return int8OpList; }
 
 STATUS NodeUtils::ConvertDims(mindspore::lite::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::lite::Format dst_format, std::vector<int32_t> *dst_dims) {
