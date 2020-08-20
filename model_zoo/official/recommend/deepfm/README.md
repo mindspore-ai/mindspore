@@ -28,6 +28,7 @@ The overall network architecture of DeepFM is show below:
   ├── README.md                      
   ├── scripts 
   │   ├──run_distribute_train.sh                
+  │   ├──run_distribute_train_gpu.sh
   │   ├──run_standalone_train.sh                    
   │   ├──run_eval.sh                   
   ├── src
@@ -44,18 +45,21 @@ The overall network architecture of DeepFM is show below:
 
 ### Usage
 
-- sh run_train.sh [DEVICE_NUM] [DATASET_PATH] [RANK_TABLE_FILE]
-- python train.py --dataset_path [DATASET_PATH]
+- sh run_distribute_train.sh [DEVICE_NUM] [DATASET_PATH] [RANK_TABLE_FILE]
+- sh run_distribute_train_gpu.sh [DEVICE_NUM] [DATASET_PATH]
+- sh run_standalone_train.sh [DEVICE_ID] [DEVICE_TARGET] [DATASET_PATH]
+- python train.py --dataset_path [DATASET_PATH] --device_target [DEVICE_TARGET]
 
 ### Launch
 
 ``` 
 # distribute training example
   sh scripts/run_distribute_train.sh 8 /opt/dataset/criteo /opt/mindspore_hccl_file.json
+  sh scripts/run_distribute_train_gpu.sh 8 /opt/dataset/criteo
 # standalone training example
-  sh scripts/run_standalone_train.sh 0 /opt/dataset/criteo
+  sh scripts/run_standalone_train.sh 0 Ascend /opt/dataset/criteo
   or
-  python train.py --dataset_path /opt/dataset/criteo > output.log 2>&1 &
+  python train.py --dataset_path /opt/dataset/criteo --device_target Ascend > output.log 2>&1 &
 ```
 
 ### Result
@@ -71,13 +75,13 @@ and eval log will be redirected to `./auc.log` by default.
 
 ### Usage
 
-- sh run_eval.sh [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+- sh run_eval.sh [DEVICE_ID] [DEVICE_TARGET] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
 ``` 
 # infer example
-    sh scripts/run_eval.sh 0 ~/criteo/eval/ ~/train/deepfm-15_41257.ckpt
+    sh scripts/run_eval.sh 0 Ascend ~/criteo/eval/ ~/train/deepfm-15_41257.ckpt
 ```
 
 > checkpoint can be produced in training process. 
@@ -91,6 +95,15 @@ Inference result will be stored in the example path, you can find result like th
 ```
 
 # Model description
+
+## Learning Rate
+
+| Number of Devices      | Learning Rate      |
+| ---------------------- | ------------------ |
+| 1                      | 1e-5               |
+| 8                      | 1e-4               |
+
+> Change the learning rate at src/config.py accordingly.
 
 ## Performance
 
