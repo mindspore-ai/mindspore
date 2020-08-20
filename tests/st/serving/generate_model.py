@@ -26,8 +26,8 @@ from tests.st.networks.models.bert.src.bert_model import BertModel, BertConfig
 bert_net_cfg = BertConfig(
     batch_size=2,
     seq_length=32,
-    vocab_size=21128,
-    hidden_size=768,
+    vocab_size=12,
+    hidden_size=12,
     num_hidden_layers=12,
     num_attention_heads=12,
     intermediate_size=3072,

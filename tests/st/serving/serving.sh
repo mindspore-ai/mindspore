@@ -61,13 +61,15 @@ start_service()
     echo "$2 faile to start."
   fi
 
-  result=`grep -E 'MS Serving grpc listening on 0.0.0.0:5500|MS Serving listening on 0.0.0.0:5501' $2_service.log | wc -l`
+  result=`grep -E -A5 'MS Serving grpc listening on 0.0.0.0:5500' $2_service.log |
+          grep -E 'MS Serving restful listening on 0.0.0.0:5501'|wc -l`
   count=0
   while [[ ${result} -ne 1 && ${count} -lt 150 ]]
   do
     sleep 1
     count=$(($count+1))
-    result=`grep -E 'MS Serving grpc listening on 0.0.0.0:5500|MS Serving listening on 0.0.0.0:5501' $2_service.log | wc -l`
+    result=`grep -E -A5 'MS Serving grpc listening on 0.0.0.0:5500' $2_service.log |
+            grep -E 'MS Serving restful listening on 0.0.0.0:5501'|wc -l`
   done
 
   if [ ${count} -eq 150 ]
