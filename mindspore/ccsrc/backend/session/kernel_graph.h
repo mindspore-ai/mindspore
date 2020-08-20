@@ -174,6 +174,8 @@ class KernelGraph : public FuncGraph {
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge or control depend
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
+  void UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
+                                  const std::vector<AnfNodePtr> &real_depend_nodes);
   // handle control depend
   std::vector<AnfNodePtr> GetOutputNodes(const AnfNodePtr &node);
   bool HandleControlDependNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
@@ -183,6 +185,7 @@ class KernelGraph : public FuncGraph {
   AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);
   AnfNodePtr CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx);
+  std::vector<CNodePtr> SortStartLabelAndEndGoto();
 
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<AnfNodePtr> child_graph_result_;

@@ -379,7 +379,6 @@ void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph
   tensor_loader->EmptyPrevTensor();
 }
 #endif
-
 }  // namespace gpu
 }  // namespace session
 }  // namespace mindspore

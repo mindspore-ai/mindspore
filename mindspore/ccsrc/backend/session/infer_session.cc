@@ -33,7 +33,8 @@ using std::string;
 using std::vector;
 
 namespace py = pybind11;
-namespace mindspore::inference {
+namespace mindspore {
+namespace inference {
 
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::string &device, uint32_t device_id) {
   try {
@@ -153,7 +154,10 @@ Status ServingTensor2MSTensor(size_t index, const InferTensorBase &out_tensor, t
     MSI_LOG_ERROR << "invalid data buffer";
     return FAILED;
   }
-  memcpy_s(ms_tensor->data_c(), ms_tensor->Size(), out_tensor.data(), out_tensor.data_size());
+  auto ret_code = memcpy_s(ms_tensor->data_c(), ms_tensor->Size(), out_tensor.data(), out_tensor.data_size());
+  if (ret_code != 0) {
+    MS_LOG(ERROR) << "Failed to copy data from ms_tensor to out_tensor.";
+  }
   return SUCCESS;
 }
 
@@ -272,6 +276,10 @@ void MSInferSession::RegAllOp() {
     return;
   }
   PyObject *c_expression_dict = PyModule_GetDict(c_expression);
+  if (c_expression_dict == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to get dict from mindspore._c_expression  module.";
+    return;
+  }
 
   PyObject *op_info_loader_class = PyDict_GetItemString(c_expression_dict, "OpInfoLoaderPy");
   if (op_info_loader_class == nullptr) {
@@ -392,4 +400,5 @@ Status MSInferSession::GetModelInputsInfo(uint32_t model_id, std::vector<inferen
   }
   return SUCCESS;
 }
-}  // namespace mindspore::inference
+}  // namespace inference
+}  // namespace mindspore

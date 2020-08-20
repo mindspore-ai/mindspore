@@ -44,6 +44,9 @@ class AscendControlParser {
   class ReferenceCounter;
 
   static void EraseParameter(NotNull<KernelGraphPtr> root_graph, const std::set<KernelGraphPtr> &graph_list);
+  static void EraseAssign(const std::set<CNodePtr> &all_nodes,
+                          const std::map<AnfNodePtr, CNodePtr> &para_to_written_node,
+                          NotNull<KernelGraphPtr> root_graph);
   static void EraseLabel(NotNull<KernelGraphPtr> root_graph);
   static void ChildGraphDataAssign(NotNull<KernelGraphPtr> kg,
                                    const NotNull<std::vector<std::pair<AnfNodePtr, AnfNodePtr>> *> link_list,
@@ -77,6 +80,7 @@ class AscendControlParser {
 class AscendControlParser::ReferenceCounter {
  public:
   explicit ReferenceCounter(std::function<bool(int32_t, int32_t)> func) : predicate_(func), count_() {}
+  ~ReferenceCounter() = default;
   void AddReadCount(const AnfNodePtr &key, int32_t num);
   void AddWriteCount(const AnfNodePtr &key, int32_t num);
   void EraseElem(const AnfNodePtr &key);

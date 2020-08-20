@@ -261,6 +261,15 @@ void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
     }
   }
 
+  EraseAssign(all_nodes, para_to_written_node, root_graph);
+  root_graph->set_execution_order(exec_order);
+}
+
+void AscendControlParser::EraseAssign(const std::set<CNodePtr> &all_nodes,
+                                      const std::map<AnfNodePtr, CNodePtr> &para_to_written_node,
+                                      NotNull<KernelGraphPtr> root_graph) {
+  std::vector<CNodePtr> exec_order = root_graph->execution_order();
+  ReferenceCounter parameter_count([](int32_t read, int32_t write) -> bool { return write == 1; });
   while (parameter_count.HasValidElem()) {
     auto [para, read, written] = parameter_count.GetOneValidElem();
     MS_LOG(INFO) << para->DebugString() << " was read " << read << " times, written " << written << " times.";
@@ -293,7 +302,6 @@ void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
       }
     }
   }
-  root_graph->set_execution_order(exec_order);
 }
 
 void AscendControlParser::EraseLabel(NotNull<KernelGraphPtr> root_graph) {
@@ -740,6 +748,18 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
 
   std::vector<CNodePtr> execution_order;
   uint32_t child_order_index = 0;
+  auto recurse_child_graph = [&](uint32_t index, uint32_t label_index, const CNodePtr &node) {
+    if (!CheckLabelIndex(index, label_index, node)) {
+      MS_LOG(EXCEPTION) << "Check label index fail";
+    }
+    if (child_order_index >= graph->child_graph_order().size()) {
+      MS_LOG(EXCEPTION) << "Index out of range:" << graph->child_graph_order().size();
+    }
+    auto child_graph = graph->child_graph_order()[child_order_index++];
+    auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
+    execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
+  };
+
   for (auto &node : cnodes) {
     uint32_t child_graph_index = 0;
     execution_order.push_back(node);
@@ -749,27 +769,11 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSwitch)) {
       std::vector<uint32_t> label_switch_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
       for (auto iter = label_switch_list.rbegin(); iter != label_switch_list.rend(); ++iter) {
-        if (!CheckLabelIndex(child_graph_index++, *iter, node)) {
-          MS_LOG(EXCEPTION) << "Check label index fail";
-        }
-        if (child_order_index >= graph->child_graph_order().size()) {
-          MS_LOG(EXCEPTION) << "Index out of range:" << graph->child_graph_order().size();
-        }
-        auto child_graph = graph->child_graph_order()[child_order_index++];
-        auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
-        execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
+        recurse_child_graph(child_graph_index++, *iter, node);
       }
     } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
       uint32_t label_index = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
-      if (!CheckLabelIndex(child_graph_index, label_index, node)) {
-        MS_LOG(EXCEPTION) << "Check label index fail";
-      }
-      if (child_order_index >= graph->child_graph_order().size()) {
-        MS_LOG(EXCEPTION) << "Index out of range:" << graph->child_graph_order().size();
-      }
-      auto child_graph = graph->child_graph_order()[child_order_index++];
-      auto child_execution_order = RecurseGraph(NOT_NULL(child_graph), memo);
-      execution_order.insert(execution_order.end(), child_execution_order.begin(), child_execution_order.end());
+      recurse_child_graph(child_graph_index, label_index, node);
     }
   }
   graph->set_execution_order(execution_order);

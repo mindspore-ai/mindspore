@@ -222,12 +222,10 @@ void AscendSession::BuildGraph(GraphId graph_id) {
     auto graph_order = GetGraphOrder(final_graph_id_);
     auto &graph_type = GetGraphOrderType(final_graph_id_);
     for (size_t i = 0; i < graph_order.size(); i++) {
-      if (graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START) {
-        continue;
+      if (!(graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START)) {
+        auto child_graph = GetGraph(graph_order[i]);
+        CompileChildGraph(child_graph);
       }
-      MS_LOG(INFO) << "Start build child  graph " << graph_order[i];
-      auto child_graph = GetGraph(graph_order[i]);
-      CompileChildGraph(child_graph);
     }
     SetSummaryNodes(graph.get());
     // merge child graph
