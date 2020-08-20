@@ -40,6 +40,7 @@ class BatchnormInt8CPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int InitConstTensor();
+  int InitFusedConstTensor();
   int DoExecute(int tid);
 
  private:
