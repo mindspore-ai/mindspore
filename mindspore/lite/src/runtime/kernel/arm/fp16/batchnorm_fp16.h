@@ -14,31 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FUSED_BATCHNORM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FUSED_BATCHNORM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/batchnorm.h"
 
 namespace mindspore::kernel {
-class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
+class BatchnormFp16CPUKernel : public BatchnormCPUKernel {
  public:
-  FusedBatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                          const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
+  BatchnormFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                         const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                         const mindspore::lite::PrimitiveC *primitive)
       : BatchnormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~FusedBatchnormCPUKernel() { FreeScaleAndOffset(); }
+  virtual ~BatchnormFp16CPUKernel() {}
 
-  int ReSize() override;
-
-  int InitConstTensor() override;
-  int DoExecute(int task_id) override;
-
- protected:
-  void FreeScaleAndOffset();
-  void *scale_ = nullptr;
-  void *offset_ = nullptr;
+  virtual int DoExecute(int task_id);
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FUSED_BATCHNORM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_

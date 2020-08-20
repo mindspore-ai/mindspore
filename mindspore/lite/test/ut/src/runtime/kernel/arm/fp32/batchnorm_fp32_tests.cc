@@ -31,40 +31,32 @@ TEST_F(TestBatchnormFp32, BNTest) {
                                 -1.1983503, -6.6790967, 6.383416,  -13.3213005, -8.693595,  9.476344};
   std::vector<float> in_data1 = {12.352293, 5.122387, 14.249514};
   std::vector<float> in_data2 = {14.632595, 0.70900035, 11.179003};
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
 
   BatchNormParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
   op_param.epsilon_ = 0.001f;
 
-  std::vector<int> shape = {1, 2, 2, 3};
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
-  lite::tensor::Tensor input2_tensor;
-  inputs_tensor.push_back(&input0_tensor);
-  inputs_tensor.push_back(&input1_tensor);
-  inputs_tensor.push_back(&input2_tensor);
+  lite::tensor::Tensor input0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
+  lite::tensor::Tensor input1_tensor(kNumberTypeFloat32, {3});
+  lite::tensor::Tensor input2_tensor(kNumberTypeFloat32, {3});
   input0_tensor.SetData(in_data.data());
   input1_tensor.SetData(in_data1.data());
   input2_tensor.SetData(in_data2.data());
-  input0_tensor.set_shape(shape);
-  input1_tensor.set_shape({3});
-  input2_tensor.set_shape({3});
+  std::vector<lite::tensor::Tensor *> inputs_tensor = {&input0_tensor, &input1_tensor, &input2_tensor};
 
   std::vector<float> output(12);
   std::vector<float> corr_out = {-6.1533737, 7.4904885,  -0.8563998, -0.289212,  -9.356432,  0.13245535,
                                  -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
 
-  lite::tensor::Tensor output0_tensor;
-  outputs_tensor.push_back(&output0_tensor);
+  lite::tensor::Tensor output0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
   output0_tensor.SetData(output.data());
-  output0_tensor.set_shape(shape);
+  std::vector<lite::tensor::Tensor *> outputs_tensor = {&output0_tensor};
+
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::Context ctx;
-  ctx.thread_num_ = 1;
+  ctx.thread_num_ = 2;
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
@@ -82,7 +74,6 @@ TEST_F(TestBatchnormFp32, BNTest) {
   input1_tensor.SetData(nullptr);
   input2_tensor.SetData(nullptr);
   output0_tensor.SetData(nullptr);
-  MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
 }
 
 TEST_F(TestBatchnormFp32, FusedBNTest) {
@@ -92,118 +83,102 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   std::vector<float> offset = {27.888096, 24.533648, 15.335093};
   std::vector<float> mean = {11.5127125, 0.47681615, 5.851508};
   std::vector<float> var = {1.270583, 13.005714, 6.089223};
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
 
   BatchNormParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
   op_param.epsilon_ = 0.001f;
 
-  std::vector<int> shape = {1, 2, 2, 3};
-  lite::tensor::Tensor input[5];
-  input[0].SetData(in_data.data());
-  input[1].SetData(scale.data());
-  input[2].SetData(offset.data());
-  input[3].SetData(mean.data());
-  input[4].SetData(var.data());
-
-  input[0].set_shape(shape);
-  for (int i = 1; i < 5; i++) {
-    input[i].set_shape({3});
-  }
-  for (int i = 0; i < 5; i++) {
-    inputs_tensor.push_back(&input[i]);
-  }
+  lite::tensor::Tensor input0(kNumberTypeFloat32, {1, 2, 2, 3});
+  lite::tensor::Tensor input1(kNumberTypeFloat32, {3});
+  lite::tensor::Tensor input2(kNumberTypeFloat32, {3});
+  lite::tensor::Tensor input3(kNumberTypeFloat32, {3});
+  lite::tensor::Tensor input4(kNumberTypeFloat32, {3});
+  input0.SetData(in_data.data());
+  input1.SetData(scale.data());
+  input2.SetData(offset.data());
+  input3.SetData(mean.data());
+  input4.SetData(var.data());
+  std::vector<lite::tensor::Tensor *> inputs_tensor = {&input0, &input1, &input2, &input3, &input4};
 
   std::vector<float> output(12);
   std::vector<float> corr_out = {-195.5765, 67.03745, -4.243883,  -42.028015, 74.37044, 9.075897,
                                  5.1857452, 56.60399, -77.215096, -181.18402, 49.81066, -59.204563};
 
-  lite::tensor::Tensor output0_tensor;
-  outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
-  output0_tensor.set_shape(shape);
+  lite::tensor::Tensor output0(kNumberTypeFloat32, {1, 2, 2, 3});
+  output0.SetData(output.data());
+  std::vector<lite::tensor::Tensor *> outputs_tensor = {&output0};
+
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FusedBatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::Context ctx;
-  ctx.thread_num_ = 1;
+  ctx.thread_num_ = 2;
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
 
   printf("==================output data=================\n");
-  for (int i = 0; i < output0_tensor.ElementsNum(); i++) {
+  for (int i = 0; i < output0.ElementsNum(); i++) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+  CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001);
 
-  for (int i = 1; i < 5; i++) {
-    input[i].SetData(nullptr);
-  }
-  output0_tensor.SetData(nullptr);
-  MS_LOG(INFO) << "TestFusedBathNormFp32 accuracy passed";
+  input0.SetData(nullptr);
+  input1.SetData(nullptr);
+  input2.SetData(nullptr);
+  input3.SetData(nullptr);
+  input4.SetData(nullptr);
+  output0.SetData(nullptr);
 }
 
 TEST_F(TestBatchnormFp32, easyTest) {
   std::vector<float> in_data = {1, 4, 2, 5, 3, 6, -1, -4, -2, -5, -3, -6};
   std::vector<float> in_data1 = {0.1, 0.6};
   std::vector<float> in_data2 = {3, 4};
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
 
   BatchNormParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_BatchNorm;
   op_param.epsilon_ = 0.001f;
 
-  std::vector<int> shape = {1, 1, 6, 2};
-  lite::tensor::Tensor input0_tensor;
-  lite::tensor::Tensor input1_tensor;
-  lite::tensor::Tensor input2_tensor;
-  inputs_tensor.push_back(&input0_tensor);
-  inputs_tensor.push_back(&input1_tensor);
-  inputs_tensor.push_back(&input2_tensor);
-  input0_tensor.SetData(in_data.data());
-  input1_tensor.SetData(in_data1.data());
-  input2_tensor.SetData(in_data2.data());
-  input0_tensor.set_shape(shape);
-  input1_tensor.set_shape({2});
-  input2_tensor.set_shape({2});
+  lite::tensor::Tensor input0(kNumberTypeFloat32, {1, 1, 6, 2});
+  lite::tensor::Tensor input1(kNumberTypeFloat32, {2});
+  lite::tensor::Tensor input2(kNumberTypeFloat32, {2});
+  input0.SetData(in_data.data());
+  input1.SetData(in_data1.data());
+  input2.SetData(in_data2.data());
+  std::vector<lite::tensor::Tensor *> inputs_tensor = {&input0, &input1, &input2};
 
   std::vector<float> output(12);
   std::vector<float> corr_out = {0.519529, 1.69979,  1.09678,  2.19973,  1.67404,  2.69966,
                                  -0.63498, -2.29971, -1.21223, -2.79965, -1.78949, -3.29959};
 
-  lite::tensor::Tensor output0_tensor;
-  outputs_tensor.push_back(&output0_tensor);
-  output0_tensor.SetData(output.data());
-  output0_tensor.set_shape(shape);
+  lite::tensor::Tensor output0(kNumberTypeFloat32, {1, 1, 6, 2});
+  output0.SetData(output.data());
+  std::vector<lite::tensor::Tensor *> outputs_tensor = {&output0};
+
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::Context ctx;
-  ctx.thread_num_ = 1;
+  ctx.thread_num_ = 2;
   kernel::LiteKernel *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
-  auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
 
   printf("==================output data=================\n");
-  for (int i = 0; i < output0_tensor.ElementsNum(); i++) {
+  for (int i = 0; i < output0.ElementsNum(); i++) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+  CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001);
 
-  input0_tensor.SetData(nullptr);
-  input1_tensor.SetData(nullptr);
-  input2_tensor.SetData(nullptr);
-  output0_tensor.SetData(nullptr);
-  MS_LOG(INFO) << "TestBathNormFp32 accuracy passed";
+  input0.SetData(nullptr);
+  input1.SetData(nullptr);
+  input2.SetData(nullptr);
+  output0.SetData(nullptr);
 }
 
 }  // namespace mindspore
