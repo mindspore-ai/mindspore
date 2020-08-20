@@ -95,6 +95,32 @@ void Worker<T>::Run() {
 
 template <typename T>
 void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const std::vector<int> &sizes) {
+  if (keys.size() == 0) {
+    MS_LOG(EXCEPTION) << "key size should be greater than zero";
+  }
+  if (key_to_optimId_.count(keys[0]) == 0) {
+    MS_LOG(EXCEPTION) << "no optim id found for key" << keys[0];
+  }
+  Key key = keys[0];
+  int optim_id = key_to_optimId_[key];
+  bool is_sparse = false;
+  if (optim_id == 1 || optim_id == 2 || optim_id == 3) {
+    is_sparse = true;
+  }
+  int grad_index = -1;
+  int indice_index = -1;
+
+  // Sparse adam gradient
+  if (optim_id == 1 || optim_id == 2) {
+    grad_index = 6;
+    indice_index = 7;
+
+    // Sparse ftrl gradient
+  } else if (optim_id == 3) {
+    grad_index = 0;
+    indice_index = 1;
+  }
+
   size_t total_size = 0;
   for (auto size : sizes) {
     total_size += size;
@@ -109,10 +135,22 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
     }
     offset += sizes[i] * sizeof(T);
   }
+
   while (!kv_worker_->IsReadyForPush(keys[0])) {
     continue;
   }
-  kv_worker_->PushData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes));
+  if (!is_sparse) {
+    kv_worker_->PushData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes));
+  } else {
+    std::vector<int> &var_shape = key_to_optim_shapes_[key][0];
+    int first_dim_size = var_shape[0];
+    int outer_dim_size = 1;
+    for (size_t i = 1; i < var_shape.size(); ++i) {
+      outer_dim_size *= var_shape[i];
+    }
+    kv_worker_->PushSparseData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes), grad_index,
+                               indice_index, first_dim_size, outer_dim_size);
+  }
 }
 
 template <typename T>
