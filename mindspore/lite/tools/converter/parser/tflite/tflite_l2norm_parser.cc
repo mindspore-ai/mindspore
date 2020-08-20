@@ -48,7 +48,7 @@ STATUS TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
   auto data_index = tflite_op->inputs[0];
-  if (tflite_op->inputs.size() <= data_index) {
+  if (static_cast<int>(tflite_op->inputs.size()) <= data_index) {
     MS_LOG(ERROR) << "the size of input should be greater than " << data_index;
     return RET_ERROR;
   }
@@ -61,7 +61,7 @@ STATUS TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   auto ndim = data_tensor->shape.size();
   std::vector<int32_t> axis;
   axis.reserve(ndim);
-  for (int i = 0; i < ndim; i++) {
+  for (size_t i = 0; i < ndim; i++) {
       axis.emplace_back(i);
     }
   attr->axis = axis;

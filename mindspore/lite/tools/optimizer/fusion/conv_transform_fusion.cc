@@ -189,8 +189,8 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
     return;
   }
 
-  for (size_t i = 0; i < kernel_num; i++) {
-    for (size_t j = 0; j < kernel_size; j++) {
+  for (int i = 0; i < kernel_num; i++) {
+    for (int j = 0; j < kernel_size; j++) {
       tmp_weight_data[i * kernel_size + j] = weight_data[i * kernel_size + j] * trans_scale[i];
     }
   }
@@ -214,7 +214,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
     if (EOK != memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float))) {
       MS_LOG(EXCEPTION) << "memset bias data failed";
     }
-    for (size_t i = 0; i < kernel_num; i++) {
+    for (int i = 0; i < kernel_num; i++) {
       tmp_bias_data[i] = bias_data[i] * trans_scale[i] + trans_bias[i];
     }
 

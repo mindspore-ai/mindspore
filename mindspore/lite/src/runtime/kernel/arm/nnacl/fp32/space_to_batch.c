@@ -141,7 +141,7 @@ int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param,
   if (input == NULL || output == NULL) {
     return NNACL_NULL_PTR;
   }
-  auto ret =
+  int ret =
     SpaceToBatchForNHWC(input, output, param.padded_in_shape_, param.n_dims_, param.block_sizes_, h_start, h_end);
   return ret;
 }

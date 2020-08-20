@@ -57,6 +57,7 @@ int PreluInt8CPUKernel::ReSize() {
   quant_prelu_parm_->element_num = in_tensors_[0]->Size();
   quant_prelu_parm_->in_shape_ = input_tensor->shape().data();
   quant_prelu_parm_->out_shape_ = out_tensor->shape().data();
+  return RET_OK;
 }
 
 int PreluInt8CPUKernel::Run() {

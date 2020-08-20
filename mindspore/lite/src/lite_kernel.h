@@ -154,11 +154,11 @@ class LiteKernel {
   KernelKey desc_;
   std::string name_;
   OpParameter *op_parameter_ = nullptr;
-  const mindspore::lite::PrimitiveC *primitive_ = nullptr;
-  const lite::Context *context_ = nullptr;
   // tensor will free in ~lite_session()
   std::vector<lite::tensor::Tensor *> in_tensors_;
   std::vector<lite::tensor::Tensor *> out_tensors_;
+  const mindspore::lite::PrimitiveC *primitive_ = nullptr;
+  const lite::Context *context_ = nullptr;
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;

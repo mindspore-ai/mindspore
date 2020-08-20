@@ -57,7 +57,7 @@ int GatherCPUKernel::DoGather(int task_id) {
   int indices_element_size = indices_tensor->ElementsNum();
 
   const int limit = in_shape[axis_];
-  for (size_t i = 0; i < indices_element_size; ++i) {
+  for (int i = 0; i < indices_element_size; ++i) {
     if (indices_ptr[i] >= limit) {
       MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
       return RET_ERROR;

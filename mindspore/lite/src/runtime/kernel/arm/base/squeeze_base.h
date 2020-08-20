@@ -41,9 +41,9 @@ class SqueezeBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int thread_count_;
   int *axis_;
   const Context *ctx_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 

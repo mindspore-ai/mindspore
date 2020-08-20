@@ -247,7 +247,7 @@ bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std:
   // path is setted and not pointer to this node
   if (target->pathSetted) {
     MS_ASSERT(target->path != nullptr);
-    if (target->path->nodeIdx != nodeIdx) {
+    if (target->path->nodeIdx != static_cast<int>(nodeIdx)) {
       return false;
     }
   }

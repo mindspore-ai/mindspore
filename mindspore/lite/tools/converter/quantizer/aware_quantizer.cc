@@ -29,69 +29,50 @@
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/calc_quant_param.h"
-#include "tools/converter/quantizer/quantize_util.h"
 #include "utils/log_adapter.h"
 
 using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-struct InputArray {
-  std::unique_ptr<QuantParamT> quantParam;
-  float mMin = 0.0f;
-  float mMax = 0.0f;
-  bool narrowRange = false;
-  int numBits = 8;
-  TypeId dataType = TypeId::kTypeUnknown;
-
-  InputArray(float mean, float stdDev,
-             TypeId dataType = TypeId::kNumberTypeFloat) {
-    this->dataType = dataType;
-    constexpr float qmin = 0;
-    constexpr float qmax = 255;
-    mMin = (qmin - mean) / stdDev;
-    mMax = (qmax - mean) / stdDev;
-  }
-
-  STATUS InitQuantParam() {
-    this->quantParam = std::make_unique<schema::QuantParamT>();
-    auto status = CalQuantizationParams(quantParam.get(), mMin, mMax,
-                                        narrowRange, numBits);
-    if (status != RET_OK) {
-      return status;
-    }
-    return RET_OK;
-  }
-
-  STATUS SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensorIdx) {
-    MS_ASSERT(graph != nullptr);
-    auto &tensor = graph->allTensors.at(inputTensorIdx);
-    MS_ASSERT(tensor != nullptr);
-    if (!tensor->quantParams.empty()) {
-      auto param = GetTensorQuantParam(tensor);
-      if (param != nullptr && param->inited) {
-        MS_LOG(DEBUG) << "tensor " << inputTensorIdx
-                      << " already has quantParam";
-        return RET_OK;
-      }
-      tensor->quantParams.clear();
-    }
-    std::unique_ptr<schema::QuantParamT> tmpQuantParam(new QuantParamT());
-    tmpQuantParam->inited = this->quantParam->inited;
-    tmpQuantParam->scale = this->quantParam->scale;
-    tmpQuantParam->zeroPoint = this->quantParam->zeroPoint;
-    tmpQuantParam->min = this->quantParam->min;
-    tmpQuantParam->max = this->quantParam->max;
-    tensor->quantParams.push_back(std::move(tmpQuantParam));
-    return RET_OK;
-  }
-};
-
 const std::array<schema::PrimitiveType, 7> AwareQuantizer::propagatedOps = {
     {schema::PrimitiveType_Concat, schema::PrimitiveType_Resize,
      schema::PrimitiveType_Reshape, schema::PrimitiveType_Squeeze,
      schema::PrimitiveType_RealDiv, schema::PrimitiveType_Activation,
      schema::PrimitiveType_DetectionPostProcess}};
+
+STATUS InputArray::InitQuantParam() {
+  this->quantParam = std::make_unique<schema::QuantParamT>();
+  auto status = CalQuantizationParams(quantParam.get(), mMin, mMax,
+                                      narrowRange, numBits);
+  if (status != RET_OK) {
+    return status;
+  }
+  return RET_OK;
+}
+
+STATUS InputArray::SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensorIdx) {
+  MS_ASSERT(graph != nullptr);
+  auto &tensor = graph->allTensors.at(inputTensorIdx);
+  MS_ASSERT(tensor != nullptr);
+  if (!tensor->quantParams.empty()) {
+    auto param = GetTensorQuantParam(tensor);
+    if (param != nullptr && param->inited) {
+      MS_LOG(DEBUG) << "tensor " << inputTensorIdx
+                    << " already has quantParam";
+      return RET_OK;
+    }
+    tensor->quantParams.clear();
+  }
+  std::unique_ptr<schema::QuantParamT> tmpQuantParam(new QuantParamT());
+  tmpQuantParam->inited = this->quantParam->inited;
+  tmpQuantParam->scale = this->quantParam->scale;
+  tmpQuantParam->zeroPoint = this->quantParam->zeroPoint;
+  tmpQuantParam->min = this->quantParam->min;
+  tmpQuantParam->max = this->quantParam->max;
+  tensor->quantParams.push_back(std::move(tmpQuantParam));
+  return RET_OK;
+}
 
 AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph,
                                const string &inputInferType,
@@ -114,130 +95,6 @@ AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph,
 }
 
 STATUS AwareQuantizer::RemoveFakeQuant() {
-  //  for (auto &subGraph : graphDefT->subgraphs) {
-  //    auto status = GenerateDefaultQuantParam(subGraph.get());
-  //    if (status != RET_OK) {
-  //      MS_LOGE("GenerateDefaultQuantParam failed: %d", status);
-  //      return RET_ERROR;
-  //    }
-  //    for (auto iter = subGraph->nodes.begin(); iter != subGraph->nodes.end();
-  //    iter++) {
-  //      auto *node = (*iter).get();
-  //      if (GetCNodeTType(*node) != OpT_FakeQuantWithMinMaxVars &&
-  //      GetCNodeTType(*node) != OpT_FakeQuantWithMinMax) {
-  //        continue;
-  //      }
-  //      auto inputIndexes = node->inputIndex;
-  //      if (inputIndexes.size() != 3) {
-  //        MS_LOGE("invalid fakequant node's input tensors count!");
-  //        return RET_ERROR;
-  //      }
-  //      bool narrorRange;
-  //      int numBits;
-  //      if (GetCNodeTType(*node) == OpT_FakeQuantWithMinMaxVars) {
-  //        narrorRange = node->attr.AsFakeQuantWithMinMaxVars()->narrowRange;
-  //        numBits = node->attr.AsFakeQuantWithMinMaxVars()->numBits;
-  //      }
-  //      if (GetCNodeTType(*node) == OpT_FakeQuantWithMinMax) {
-  //        narrorRange = false;
-  //        numBits = 8;
-  //      }
-  //
-  //      TensorDefT *tensor0 = subGraph->allTensors.at(inputIndexes[0]).get();
-  //      TensorDefT *tensor1 = subGraph->allTensors.at(inputIndexes[1]).get();
-  //      TensorDefT *tensor2 = subGraph->allTensors.at(inputIndexes[2]).get();
-  //      MS_ASSERT(tensor0 != nullptr);
-  //      MS_ASSERT(tensor1 != nullptr);
-  //      MS_ASSERT(tensor2 != nullptr);
-  //      // calculate quant param
-  //      MS_ASSERT(tensor1->dataType == DataType_DT_FLOAT);
-  //      MS_ASSERT(tensor2->dataType == DataType_DT_FLOAT);
-  //      auto *minData = reinterpret_cast<const float *>(tensor1->data.data());
-  //      auto *maxData = reinterpret_cast<const float *>(tensor2->data.data());
-  //      MS_ASSERT(minData != nullptr);
-  //      MS_ASSERT(maxData != nullptr);
-  //      std::unique_ptr<QuantParamT> quantParam(new (std::nothrow)
-  //      QuantParamT()); if (quantParam == nullptr) {
-  //        MS_LOGE("new quantParam failed");
-  //        return RET_ERROR;
-  //      }
-  //      auto realMin = (double)minData[0];
-  //      auto realMax = (double)maxData[0];
-  //      status = CalQuantizationParams(quantParam.get(), realMin, realMax,
-  //      narrorRange, numBits); if (status != RET_OK) {
-  //        MS_LOGE("in aware quantization run CalQuantizationParams failed,
-  //        node: %s", node->name.c_str()); return RET_ERROR;
-  //      }
-  //      if (tensor0->refCount == MSCONST_WEIGHT_REFCOUNT) {
-  //        CalFakeNode(tensor0, quantParam.get());
-  //      }
-  //      std::unique_ptr<QuantParamArrayT> quantParamArray(new (std::nothrow)
-  //      QuantParamArrayT()); if (quantParamArray == nullptr) {
-  //        MS_LOGE("new quantParamArray failed");
-  //        return RET_ERROR;
-  //      }
-  //      quantParamArray->param.push_back(std::move(quantParam));
-  //      auto quantParamArrayCopy = CopyQuantParamArrayT(quantParamArray);
-  //      if (quantParamArrayCopy == nullptr) {
-  //        MS_LOGE("CopyQuantParamArray %s return nullptr",
-  //        iter->get()->name.c_str()); return RET_ERROR;
-  //      }
-  //      node->quantParam.emplace_back(std::move(quantParamArrayCopy));
-  //      node->quantParam.emplace_back(nullptr);  // secondInTensor and
-  //      thirdInTensor are weightTensors who have no preNode
-  //      node->quantParam.emplace_back(nullptr);
-  //      node->quantParam.emplace_back(std::move(quantParamArray));
-  //
-  //      // BroadCast fakeQuantNode QuantParam
-  //      status = BroadCastQuantParam(subGraph, *iter);
-  //      if (status != RET_OK) {
-  //        MS_LOGE("BroadCastQuantParam %s failed: %d",
-  //        iter->get()->name.c_str(), status); return status;
-  //      }
-  //      // save post node index for SetAttrToConvolution
-  //      auto postNodeIdxes = GetOutputNodeIdx(*subGraph, *node);
-  //      // remove fakequantwithminmax node
-  //      status = IsolateNode(subGraph.get(), node);
-  //      if (status != RET_OK) {
-  //        MS_LOGE("in aware quant IsolateNode failed!");
-  //        return RET_ERROR;
-  //      }
-  //      // set filter param to node
-  //      if (tensor0->refCount == MSCONST_WEIGHT_REFCOUNT &&
-  //      !postNodeIdxes.empty()) {
-  //        auto postNode = subGraph->nodes.at(postNodeIdxes.front()).get();
-  //        if (GetCNodeTType(*postNode) == OpT_Conv2D ||
-  //        GetCNodeTType(*postNode) == OpT_DepthwiseConv2D ||
-  //            GetCNodeTType(*postNode) == OpT_DeConv2D ||
-  //            GetCNodeTType(*postNode) == OpT_DeDepthwiseConv2D) {
-  //          auto status = SetAttrToConvolution(subGraph.get(), postNode);
-  //          if (status != RET_OK) {
-  //            MS_LOGE("in aware quant SetAttrToConvolution failed!");
-  //            return RET_ERROR;
-  //          }
-  //        }
-  //      }
-  //    }
-  //
-  //    // remove IsolatedNode
-  //    for (auto iter = subGraph->nodes.begin(); iter !=
-  //    subGraph->nodes.end();) {
-  //      if ((*iter)->inputIndex.empty() && (*iter)->outputIndex.empty()) {
-  //        iter = subGraph->nodes.erase(iter);
-  //      } else {
-  //        iter++;
-  //      }
-  //    }
-  //    // set graphInputNode inputTensor quantParams
-  //    MS_ASSERT(subGraph->inputIndex.size() == 1);
-  //    for (auto graphInputIndex : subGraph->inputIndex) {
-  //      auto linkedPostIdx = GetLinkedPostIdx(*(subGraph.get()),
-  //      graphInputIndex); for (auto nodeIdx : linkedPostIdx) {
-  //        MS_ASSERT(subGraph->nodes.size() > nodeIdx);
-  //        mInputArray->SetInputArrayQP(subGraph->nodes.at(nodeIdx).get());
-  //      }
-  //    }
-  //  }
   return RET_OK;
 }
 

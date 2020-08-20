@@ -39,8 +39,8 @@ class SplitBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int thread_count_;
   const Context *ctx_;
+  int thread_count_;
   int thread_n_stride_;
   int thread_n_num_;
   int num_unit_;

@@ -65,9 +65,6 @@ int ConcatInt8CPUKernel::ReSize() {
   if (ret != RET_OK) {
     return ret;
   }
-  if (concat_param_->input_shapes_ != nullptr) {
-    //    free(concat_param_->input_shapes_);
-  }
   auto input_num = in_tensors_.size();
   concat_param_->input_num_ = input_num;
   concat_param_->input_shapes_ = reinterpret_cast<const int **>(malloc(sizeof(int *) * input_num));
@@ -82,7 +79,7 @@ int ConcatInt8CPUKernel::ReSize() {
 
   int64_t after_axis_size = 1;
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  int output_dim = output_tensor->shape().size();
+  size_t output_dim = output_tensor->shape().size();
   concat_param_->output_shapes_ = output_tensor->shape().data();
   for (size_t i = axis_ + 1; i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
@@ -102,7 +99,7 @@ int ConcatInt8CPUKernel::Run() {
   count_unit_ = thread_count_ > 1 ? UP_DIV(before_axis_size, thread_count_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;
 
-  for (size_t i = 0; i < input_num; i++) {
+  for (int i = 0; i < input_num; i++) {
     input_data_[i] = static_cast<int8_t *>(in_tensors_.at(i)->Data());
   }
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());

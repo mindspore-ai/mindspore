@@ -57,7 +57,7 @@ STATUS TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
              tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  for (int i = 0; i < tflite_op->outputs.size(); i++) {
+  for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
     AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
                 tflite_op->outputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   }

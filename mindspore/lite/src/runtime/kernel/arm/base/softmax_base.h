@@ -37,8 +37,8 @@ class SoftmaxBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int thread_count_;
   const lite::Context *ctx_;
+  int thread_count_;
   SoftmaxParameter *softmax_param_;
 };
 }  // namespace mindspore::kernel

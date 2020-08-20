@@ -79,7 +79,7 @@ int BatchnormCPUKernel::ReSize() {
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
   batchnorm_param_->unit_ = 1;
-  for (int i = 0; i < n_dim - 1; i++) {
+  for (size_t i = 0; i < n_dim - 1; i++) {
     batchnorm_param_->unit_ *= input_shapes[i];
   }
   batchnorm_param_->op_parameter_.thread_num_ =

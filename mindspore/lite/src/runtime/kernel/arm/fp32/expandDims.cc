@@ -37,13 +37,13 @@ int ExpandDimsCPUKernel::Init() {
 
 int ExpandDimsCPUKernel::ReSize() {
   data_size_ = in_tensors_.at(0)->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  thread_sz_count_ = MSMIN(thread_count_, static_cast<int>(data_size_));
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }
 
 int ExpandDimsCPUKernel::DoExpandDims(int task_id) {
-  size_t size = MSMIN(thread_sz_stride_, data_size_ - task_id * thread_sz_stride_);
+  size_t size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - task_id * thread_sz_stride_));
   if (size == 0) {
     return RET_OK;
   }

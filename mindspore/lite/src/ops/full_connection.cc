@@ -64,7 +64,7 @@ int FullConnection::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
   }
   int new_k = 1;
   if (GetUseAxis()) {
-    for (int i = GetAxis(); i < input0->shape().size(); ++i) {
+    for (size_t i = GetAxis(); i < input0->shape().size(); ++i) {
       new_k *= input0->shape()[i];
     }
     if (new_k != input1->shape()[1]) {
@@ -86,7 +86,7 @@ int FullConnection::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
     out_shape[GetAxis()] = input1->shape()[0];
   } else {
     int total = 1;
-    for (int i = 0; i < input0->shape().size(); ++i) {
+    for (size_t i = 0; i < input0->shape().size(); ++i) {
       total *= input0->shape()[i];
     }
     out_shape.resize(2);

@@ -38,7 +38,7 @@ STATUS CaffeInspector::InspectModel(const caffe::NetParameter &proto) {
 STATUS CaffeInspector::ParseInput() {
   if (net.input_size() > 0) {
     MS_LOG(INFO) << "This net exist input.";
-    for (size_t i = 0; i < net.input_size(); i++) {
+    for (int i = 0; i < net.input_size(); i++) {
       graphInput.insert(net.input(i));
     }
   }

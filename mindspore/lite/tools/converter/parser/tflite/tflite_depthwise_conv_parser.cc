@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {

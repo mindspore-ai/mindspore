@@ -43,7 +43,6 @@ void Pad::SetPaddingMode(int padding_mode) {}
 void Pad::SetConstantValue(float constant_value) {}
 #endif
 namespace {
-const size_t kPaddingsSize = 8;
 const size_t kInputRank = 4;
 }  // namespace
 int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {

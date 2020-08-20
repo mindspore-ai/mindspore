@@ -40,7 +40,7 @@ int TopKInt8CPUKernel::ReSize() {
   lite::tensor::Tensor *input = in_tensors_.at(0);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
-  for (int i = 0; i < input->shape().size() - 1; ++i) {
+  for (size_t i = 0; i < input->shape().size() - 1; ++i) {
     parameter->loop_num_ *= input->shape()[i];
   }
   return RET_OK;

@@ -20,10 +20,9 @@
 #include <string>
 #include "google/protobuf/message.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
-#include "tools/common/node_util.h"
+#include "include/errorcode.h"
+#include "utils/log_adapter.h"
 #include "schema/inner/model_generated.h"
-
-// using namespace std;
 
 namespace mindspore {
 namespace lite {

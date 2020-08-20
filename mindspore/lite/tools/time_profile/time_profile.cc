@@ -231,7 +231,7 @@ int TimeProfile::PrintResult(const std::vector<std::string> &title,
   for (auto &iter : result) {
     char stringBuf[5][100] = {};
     std::vector<std::string> columns;
-    int len;
+    size_t len;
 
     len = iter.first.size();
     if (len > columnLenMax.at(0)) {
@@ -276,7 +276,7 @@ int TimeProfile::PrintResult(const std::vector<std::string> &title,
     printf("%s", printBuf.c_str());
   }
   printf("\n");
-  for (int i = 0; i < rows.size(); i++) {
+  for (size_t i = 0; i < rows.size(); i++) {
     for (int j = 0; j < 5; j++) {
       auto printBuf = rows[i][j];
       printBuf.resize(columnLenMax.at(j), ' ');

@@ -37,11 +37,6 @@ static constexpr int kNHWCDimNumber = 4;
 
 static constexpr int TENSOR_MAX_REFCOUNT = 999;
 
-static const char *DELIM_COLON = ":";
-static const char *DELIM_COMMA = ",";
-static const char *DELIM_SLASH = "/";
-static const char *DELIM_DOUBLE_BACKSLASH = "\\";
-
 // quantization relative
 static const char QUANTIZED_UINT8[] = "QUANTIZED_UINT8";
 static const char QUANTIZED_INT8[] = "QUANTIZED_INT8";

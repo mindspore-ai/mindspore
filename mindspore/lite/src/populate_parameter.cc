@@ -246,7 +246,7 @@ OpParameter *PopulatePreluParameter(const mindspore::lite::PrimitiveC *primitive
   }
   prelu_param->op_parameter_.type_ = primitive->Type();
   auto temp = param->GetSlope();
-  for (int i = 0; i < temp.size(); i++) {
+  for (size_t i = 0; i < temp.size(); i++) {
     prelu_param->slope_[i] = temp[i];
   }
   return reinterpret_cast<OpParameter *>(prelu_param);
@@ -404,7 +404,6 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->stride_h_ = conv_primitive->GetStrideH();
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 
-  auto pad_mode = conv_primitive->GetPadMode();
   auto convdw_lite_primitive = (lite::DepthwiseConv2D *)primitive;
   MS_ASSERT(nullptr != convdw_lite_primitive);
   conv_param->pad_u_ = convdw_lite_primitive->PadUp();
@@ -828,7 +827,7 @@ OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive)
   auto param = dynamic_cast<const mindspore::lite::Tile *>(primitive);
   auto multiples = param->GetMultiples();
   tile_param->in_dim_ = multiples.size();
-  for (size_t i = 0; i < tile_param->in_dim_; ++i) {
+  for (int i = 0; i < tile_param->in_dim_; ++i) {
     tile_param->multiples_[i] = multiples[i];
   }
   return reinterpret_cast<OpParameter *>(tile_param);
@@ -1231,7 +1230,7 @@ OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive)
   crop_param->op_parameter_.type_ = primitive->Type();
   crop_param->axis_ = param->GetAxis();
   crop_param->offset_size_ = param_offset.size();
-  for (int i = 0; i < param_offset.size(); ++i) {
+  for (size_t i = 0; i < param_offset.size(); ++i) {
     crop_param->offset_[i] = param_offset[i];
   }
   return reinterpret_cast<OpParameter *>(crop_param);

@@ -187,8 +187,8 @@ class Tensor : public mindspore::tensor::MetaTensor {
  protected:
   void *data_ = nullptr;
   void *device_data_ = nullptr;
-  schema::NodeType tensorType;
   schema::Format format_;
+  schema::NodeType tensorType;
   size_t refCount = 0;
   std::vector<tensor::QuantArg> quant_params_;
   mindspore::lite::Allocator *allocator_ = nullptr;

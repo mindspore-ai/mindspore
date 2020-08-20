@@ -30,7 +30,6 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "src/common/common.h"
 #include "utils/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
@@ -395,7 +394,7 @@ STATUS Calibrator::CollectImages() {
     return RET_PARAM_INVALID;
   }
   struct dirent *image_dir = readdir(root);
-  int count = 0;
+  size_t count = 0;
   while (image_dir != nullptr) {
     if (image_dir->d_name[0] != '.') {
       const std::string file_name = config_param_.image_path + "/" + image_dir->d_name;
@@ -692,7 +691,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
     auto op_type = primitiveT_value->GetPrimitiveT()->value.type;
     MS_LOG(INFO) << "OpName: " << op_name;
     if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D) {
-      for (auto i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->inputs().size(); i++) {
         auto input_node = cnode->input(i);
         if (!input_node->isa<mindspore::CNode>()) {
           MS_LOG(WARNING) << "node: " << cnode_name << " input " << i << " not a cnode";

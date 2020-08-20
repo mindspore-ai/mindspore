@@ -913,7 +913,7 @@ void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weigh
     int src_oc_offset = o * iC8 * C8NUM * kernel_plane;
     int dst_oc_offset = oc4_block_num * C4NUM * iC8 * C8NUM * input_unit * input_unit + oc4_block_rem;
     for (int i = 0; i < iC8; i++) {
-      int16_t *src_ic8_ptr = weight_data + src_oc_offset + i * kernel_plane * C8NUM;
+      const int16_t *src_ic8_ptr = weight_data + src_oc_offset + i * kernel_plane * C8NUM;
       int16_t *dst_ic8_ptr = trans_weight + dst_oc_offset + i * C4NUM * C8NUM;
 #ifdef ENABLE_ARM
       int16x8_t g00 = vld1q_s16(src_ic8_ptr);
@@ -1107,7 +1107,7 @@ void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weigh
       dst_ic8_ptr[28 + 15 * dst_step] = m33[7];
 #else
       for (int j = 0; j < C8NUM; j++) {
-        int16_t *local_ptr = src_ic8_ptr + j;
+        const int16_t *local_ptr = src_ic8_ptr + j;
         int16_t dst00 = local_ptr[0] * 2;
         int16_t dst01 = (local_ptr + 8)[0] * 2;
         int16_t dst02 = (local_ptr + 16)[0] * 2;

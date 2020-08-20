@@ -33,14 +33,13 @@ int ResizeBilinearInt8(const int8_t *input_data, int8_t *output_data, const int 
 
   int32_t new_height = output_shape[1];
   int32_t new_width = output_shape[2];
-  int32_t height_scale, width_scale;
+  int32_t height_scale = 0, width_scale = 0;
   ComputeScale(in_h, new_height, align_corners, &height_scale);
   ComputeScale(in_w, new_width, align_corners, &width_scale);
 
   int n, h, w, c;
   for (n = 0; n < in_n; n++) {
     for (h = tid; h < new_height; h += thread_num) {
-      //      float actual_y = (float)h * height_scale;
       const int base_offset = 20;
       int scaled_actual_y;
       int bottom, top;
@@ -99,10 +98,10 @@ int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_dat
 
   for (batch = 0; batch < output_shape[0]; batch++) {
     for (y = tid; y < output_shape[1]; y += thread_num) {
-      int input_y;
+      int input_y = 0;
       ComputeNearestNeighborInt(y, in_h, new_height, align_corners, &input_y);
       for (x = 0; x < output_shape[2]; x++) {
-        int input_x;
+        int input_x = 0;
         ComputeNearestNeighborInt(x, in_w, new_width, align_corners, &input_x);
         int in_offset = offset(input_shape, batch, input_y, input_x, 0);
         int out_offset = offset(output_shape, batch, y, x, 0);
@@ -159,10 +158,10 @@ int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, con
 
   for (batch = 0; batch < output_shape[0]; batch++) {
     for (y = tid; y < output_shape[1]; y += thread_num) {
-      int input_y;
+      int input_y = 0;
       ComputeNearestNeighborInt(y, in_h, new_height, align_corners, &input_y);
       for (x = 0; x < output_shape[2]; x++) {
-        int input_x;
+        int input_x = 0;
         ComputeNearestNeighborInt(x, in_w, new_width, align_corners, &input_x);
         for (c = 0; c < output_shape[3]; c++) {
           int in_offset = offset(input_shape, batch, input_y, input_x, c);

@@ -113,7 +113,7 @@ int ReduceCPUKernel::Run() {
   }
   tmp_shape_ = in_tensors_.at(0)->shape();
   src_data_ = static_cast<float *>(in_tensors_.at(0)->Data());
-  for (int i = 0; i < data_buffers_.size(); ++i) {
+  for (size_t i = 0; i < data_buffers_.size(); ++i) {
     dst_data_ = data_buffers_[i];
     int axis = axes_[i];
     outer_size_ = 1;
@@ -167,8 +167,8 @@ int ReduceCPUKernel::MallocTmpBuffer() {
   for (auto i = 0; i < num_axes_ - 1; i++) {
     int axis = axes_[i];
     size_t size = 1;
-    for (auto j = 0; j < input_shape.size(); j++) {
-      if (static_cast<size_t>(axis) != j) {
+    for (size_t j = 0; j < input_shape.size(); j++) {
+      if (axis != static_cast<int>(j)) {
         size *= input_shape[j];
       }
     }

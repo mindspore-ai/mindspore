@@ -39,13 +39,13 @@ class FillCPUKernel : public LiteKernel {
   int DoFill(int task_id);
 
  private:
-  int thread_count_;
   int thread_sz_count_;
   int thread_sz_stride_;
   int data_size_;
   float src_data_;
   float *out_ptr_;
   const Context *ctx_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 

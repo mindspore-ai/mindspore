@@ -29,6 +29,7 @@ int ParallelExecutor::Prepare(std::vector<mindspore::kernel::LiteKernel *> &kern
   for (mindspore::kernel::LiteKernel *kernel : kernels) {
     refCount[kernel] = kernel->out_kernels().size();
   }
+  return RET_OK;
 }
 
 void ParallelExecutor::PrepareReadyKernels(const std::vector<mindspore::kernel::LiteKernel *> &kernels) {

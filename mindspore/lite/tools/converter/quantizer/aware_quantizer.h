@@ -19,12 +19,33 @@
 
 #include <array>
 #include <string>
+#include <memory>
 #include "tools/converter/quantizer/quantizer.h"
 #include "schema/inner/model_generated.h"
 #include "include/errorcode.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite::quant {
-struct InputArray;
+struct InputArray {
+  std::unique_ptr<schema::QuantParamT> quantParam;
+  float mMin = 0.0f;
+  float mMax = 0.0f;
+  bool narrowRange = false;
+  int numBits = 8;
+  TypeId dataType = TypeId::kTypeUnknown;
+
+  InputArray(float mean, float stdDev,
+             TypeId dataType = TypeId::kNumberTypeFloat) {
+    this->dataType = dataType;
+    constexpr float qmin = 0;
+    constexpr float qmax = 255;
+    mMin = (qmin - mean) / stdDev;
+    mMax = (qmax - mean) / stdDev;
+  }
+
+  STATUS InitQuantParam();
+  STATUS SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensorIdx);
+};
 
 class AwareQuantizer : public FbQuantizer {
  public:

@@ -266,7 +266,7 @@ int ReduceMinLastAxis(const int outer_size, const int inner_size, const int axis
       }
       int32_t tmp_scaled =
         RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(
-                              (tmp - quant->in_zp_) * (1 << (unsigned int)quant->in_out_left_shift_ + base_offset),
+                              (tmp - quant->in_zp_) * (1 << ((unsigned int)quant->in_out_left_shift_ + base_offset)),
                               quant->in_out_multiplier_),
                             quant->in_out_right_shift_ + base_offset);
       if (isAddOverflow(tmp_scaled, quant->out_zp_)) {

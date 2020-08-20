@@ -54,7 +54,7 @@ STATUS TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   op->primitive->value.type = schema::PrimitiveType_Concat;
   op->primitive->value.value = attr.release();
 
-  for (int i = 0; i < tflite_op->inputs.size(); i++) {
+  for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
     AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
                tflite_op->inputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   }

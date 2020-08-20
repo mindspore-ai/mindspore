@@ -36,8 +36,8 @@ class EluCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  int thread_count_;
   const lite::Context *ctx_;
+  int thread_count_;
   EluParameter *elu_parameter_;
 
  private:

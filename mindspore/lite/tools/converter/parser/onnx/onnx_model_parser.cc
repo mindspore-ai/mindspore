@@ -432,7 +432,7 @@ STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_v
       } else {
         in_data = onnx_const_value.int64_data().data();
       }
-      for (int i = 0; i < data_count; ++i) {
+      for (size_t i = 0; i < data_count; ++i) {
         if (in_data[i] > static_cast<int64_t>(INT32_MAX) || in_data[i] < static_cast<int64_t>(INT32_MIN)) {
           MS_LOG(ERROR) << "int64 data " << in_data[i] << "too big to fit into int32";
           return RET_ERROR;

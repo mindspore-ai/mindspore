@@ -66,7 +66,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     }
     auto quant_params = srcTensor->quantParams();
     if (quant_params != nullptr) {
-      for (int j = 0; j < quant_params->size(); j++) {
+      for (size_t j = 0; j < quant_params->size(); j++) {
         tensor::QuantArg quant_arg{};
         quant_arg.scale = quant_params->Get(j)->scale();
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
@@ -93,9 +93,7 @@ void LiteSession::InitGraphInputTensors(const lite::Model *model) {
 }
 
 void LiteSession::InitGraphInputMSTensors(const lite::Model *model) {
-  auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->input_vec_.empty());
-  MS_ASSERT(meta_graph != nullptr);
   for (auto &input_tensor : this->inputs_) {
     MS_ASSERT(input_tensor != nullptr);
     this->input_vec_.emplace_back(new lite::tensor::LiteTensor(input_tensor));

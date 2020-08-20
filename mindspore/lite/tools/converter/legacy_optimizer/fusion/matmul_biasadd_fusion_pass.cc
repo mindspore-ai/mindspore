@@ -108,7 +108,6 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
   transA = matMulNode->primitive->value.AsMatMul()->transposeA;
   transB = matMulNode->primitive->value.AsMatMul()->transposeB;
   MS_ASSERT(matMulNode->primitive->value.value != nullptr);
-  delete (matMulNode->primitive->value.value);
   matMulNode->primitive->value.type = schema::PrimitiveType_FullConnection;
   matMulNode->primitive->value.value = fcAttr.release();
 
@@ -135,11 +134,6 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
 STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std::shared_ptr<Path> &matMulPath) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(matMulPath != nullptr);
-  auto &matMulNode = graph->nodes.at(matMulPath->nodeIdx);
-  MS_ASSERT(graph->allTensors.size() > matMulNode->inputIndex.at(0));
-  MS_ASSERT(graph->allTensors.size() > matMulNode->inputIndex.at(2));
-  const auto &tensorA = graph->allTensors.at(matMulNode->inputIndex.at(0));
-  const auto &tensorB = graph->allTensors.at(matMulNode->inputIndex.at(1));
 
   std::vector<size_t> insertNodeIdxList;
   if (transA) {

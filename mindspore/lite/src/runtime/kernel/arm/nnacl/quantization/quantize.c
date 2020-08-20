@@ -30,14 +30,14 @@ void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantiz
   if (quantized_multiplier == NULL || right_shift == NULL) {
     return;
   }
-  int shift;
+  int shift = 0;
   QuantizeMultiplier(double_multiplier, quantized_multiplier, &shift);
   *right_shift = -shift;
 }
 
 void QuantizeRoundParameter(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
                             int *right_shift) {
-  int shift;
+  int shift = 0;
   QuantizeMultiplierSmallerThanOne(double_multiplier, quantized_multiplier, &shift);
   shift = -shift;
   if (shift < 0) {

@@ -37,6 +37,7 @@
 namespace mindspore {
 namespace lite {
 using FmkType = converter::FmkType;
+static const char *DELIM_SLASH = "/";
 Converter::Converter() {
   this->transform = new GraphDefTransform;
   this->anfTransform = new AnfTransform;

@@ -40,12 +40,12 @@ int EmbeddingLookupCPUKernel::ReSize() {
 
   embedding_lookup_parameter_->layer_size_ = 1;
   auto in_shape = in_tensors_.front()->shape();
-  for (int i = 1; i < in_shape.size(); ++i) {
+  for (size_t i = 1; i < in_shape.size(); ++i) {
     embedding_lookup_parameter_->layer_size_ *= in_shape[i];
   }
 
   embedding_lookup_parameter_->layer_num_ = 0;
-  for (int i = 0; i < in_tensors_.size() - 1; ++i) {
+  for (size_t i = 0; i < in_tensors_.size() - 1; ++i) {
     embedding_lookup_parameter_->layer_num_ += in_tensors_[i]->shape()[0];
   }
 
@@ -94,7 +94,7 @@ int EmbeddingLookupCPUKernel::Run() {
   }
 
   int dest_loc = 0;
-  for (int i = 0; i < in_tensors_.size() - 1; i++) {
+  for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
     auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->Data());
     memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
     dest_loc += in_tensors_.at(i)->ElementsNum();

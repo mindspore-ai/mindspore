@@ -184,8 +184,8 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
   for (auto i = 0; i < num_axes_ - 1; i++) {
     int axis = axes_[i];
     size_t size = 1;
-    for (auto j = 0; j < input_shape.size(); j++) {
-      if (static_cast<size_t>(axis) != j) {
+    for (size_t j = 0; j < input_shape.size(); j++) {
+      if (axis != static_cast<int>(j)) {
         size *= input_shape[j];
       }
     }
@@ -258,7 +258,7 @@ int ReduceInt8CPUKernel::Run() {
   tmp_shape_ = in_tensors_.at(0)->shape();
   src_data_ = begin_src_data_;
 
-  for (int i = 0; i < data_buffers_.size(); ++i) {
+  for (size_t i = 0; i < data_buffers_.size(); ++i) {
     if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
       quant_arg_.mean_multiplier_ = mean_multipliers_[i]->multiplier_;
       quant_arg_.mean_left_shift_ = mean_multipliers_[i]->left_shift_;

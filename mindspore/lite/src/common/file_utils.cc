@@ -103,7 +103,7 @@ int WriteToBin(const std::string &file_path, void *data, size_t size) {
 
 int CompareOutputData(float *output_data, float *correct_data, int data_size) {
   float error = 0;
-  for (size_t i = 0; i < data_size; i++) {
+  for (int i = 0; i < data_size; i++) {
     float abs = fabs(output_data[i] - correct_data[i]);
     if (abs > 0.00001) {
       error += abs;

@@ -37,7 +37,7 @@ int FlattenCPUKernel::Init() {
 int FlattenCPUKernel::ReSize() {
   auto output_shape = out_tensors_[0]->shape();
   flatten_param_->size = sizeof(float);
-  for (int i = 0; i < output_shape.size(); i++) {
+  for (size_t i = 0; i < output_shape.size(); i++) {
     flatten_param_->size *= output_shape[i];
   }
   return RET_OK;

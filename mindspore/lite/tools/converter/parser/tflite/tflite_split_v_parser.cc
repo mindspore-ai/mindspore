@@ -68,7 +68,7 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   if (axis < 0) {
     axis += tensor_shape.size();
   }
-  if (axis >= tensor_shape.size()) {
+  if (axis >= static_cast<int>(tensor_shape.size())) {
     MS_LOG(ERROR) << "axis value is too large";
     return RET_ERROR;
   }
@@ -79,7 +79,7 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
              tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  for (int i = 0; i < tflite_op->outputs.size(); i++) {
+  for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
     AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
                 tflite_op->outputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   }

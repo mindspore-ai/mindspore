@@ -339,8 +339,6 @@ class CalcRealDiv : public QuantParamCalcer {
       auto outQuantParam = GetTensorQuantParam(outTensor);
 
       MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
-      auto &tensor0 = graph->allTensors.at(node.inputIndex.at(0));
-      MS_ASSERT(tensor0 != nullptr);
       MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(1));
       auto &tensor1 = graph->allTensors.at(node.inputIndex.at(1));
       MS_ASSERT(tensor1 != nullptr);

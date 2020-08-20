@@ -31,7 +31,7 @@ void Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para)
       Crop3D(input, output, task_id, para);
       break;
     case 4:
-      Crop4D(input, output, task_id, para);
+      Int8Crop4D(input, output, task_id, para);
       break;
   }
 }

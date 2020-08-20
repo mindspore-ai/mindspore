@@ -333,7 +333,7 @@ STATUS BatchNormFoldFusionPass::GenNewWeightTensor() {
   void *miData = muTensor->data.data();
   auto *castedMiData = static_cast<float *>(miData);
   size_t stride = weightShapeSize / channelOut;
-  for (size_t i = 0; i < channelOut; i++) {
+  for (int i = 0; i < channelOut; i++) {
     for (size_t j = 0; j < stride; j++) {
       castedNewWeightData[i * stride + j] = castedOldWeightData[i * stride + j] * castedGammaData[i] / castedMiData[i];
     }
@@ -367,7 +367,7 @@ STATUS BatchNormFoldFusionPass::GenNewBiasTensor() {  // bias has no quant
   MS_ASSERT(sigmaTensor->dataType == DataType_DT_FLOAT);
   void *sigmaData = sigmaTensor->data.data();
   auto *castedSigmaData = static_cast<float *>(sigmaData);
-  for (size_t i = 0; i < channelOut; i++) {
+  for (int i = 0; i < channelOut; i++) {
     castedNewBiasData[i] = castedBetaData[i] - castedGammaData[i] * castedMiData[i] / castedSigmaData[i];
   }
   return RET_OK;

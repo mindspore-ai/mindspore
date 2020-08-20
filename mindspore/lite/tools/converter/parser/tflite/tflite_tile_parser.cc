@@ -48,7 +48,7 @@ STATUS TfliteTileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
     return RET_ERROR;
   }
   std::vector<int> dims(attr->multiples.size(), 0);
-  for (int i = 0; i < dims.size(); ++i) {
+  for (size_t i = 0; i < dims.size(); ++i) {
     dims[i] = i;
   }
   attr->dims = dims;

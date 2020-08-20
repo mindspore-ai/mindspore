@@ -235,17 +235,17 @@ bool ThreadPool::SetThreadPool() {
   } else if (localMaxThreadNums > kDefaultMaxThreadNums) {
     localMaxThreadNums = kDefaultMaxThreadNums;
   }
-  if (configThreadNums > kDefaultMaxThreadNums) {
+  if (configThreadNums > static_cast<int>(kDefaultMaxThreadNums)) {
     configThreadNums = kDefaultMaxThreadNums;
   }
   int addNum = 0;
-  if (configThreadNums > kDefaultMaxThreadNums) {
+  if (configThreadNums > static_cast<int>(kDefaultMaxThreadNums)) {
     addNum = configThreadNums - curThreadRunNums;
-  } else if (localMaxThreadNums > curThreadNums) {
+  } else if (static_cast<int>(localMaxThreadNums) > curThreadNums) {
     addNum = localMaxThreadNums - curThreadNums;
   }
   AddNewThread(addNum);
-  if (curThreadRunNums > localMaxThreadNums) {
+  if (curThreadRunNums > static_cast<int>(localMaxThreadNums)) {
     SubRunThread(localMaxThreadNums);
   } else {
     AddRunThread(localMaxThreadNums);
@@ -376,7 +376,7 @@ bool ThreadPool::DistributeTask(ThreadPoolTask *task, int numTask) {
 
 void ThreadPool::AddRunThread(int num) {
   int activeNums = num - curThreadRunNums;
-  if (activeNums <= 0 || activateList.size() < activeNums) {
+  if (activeNums <= 0 || static_cast<int>(activateList.size()) < activeNums) {
     return;
   }
   for (int i = curThreadRunNums - 1, j = 0; j < activeNums; ++i, ++j) {

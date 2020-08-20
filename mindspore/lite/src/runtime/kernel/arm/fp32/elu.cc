@@ -41,7 +41,10 @@ int EluCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int EluCPUKernel::DoExcute(int task_id) { Elu(input_addr, output_addr, elu_parameter_, task_id); }
+int EluCPUKernel::DoExcute(int task_id) {
+  Elu(input_addr, output_addr, elu_parameter_, task_id);
+  return RET_OK;
+}
 
 int EluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto EluData = reinterpret_cast<EluCPUKernel *>(cdata);

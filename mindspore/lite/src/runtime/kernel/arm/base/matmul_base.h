@@ -41,9 +41,9 @@ class MatmulBaseCPUKernel : public LiteKernel {
 
  protected:
   MatMulParameter *params_;
-  int thread_count_;
   int thread_stride_;
   const Context *ctx_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 

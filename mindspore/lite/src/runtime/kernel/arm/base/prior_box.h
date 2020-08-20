@@ -41,8 +41,8 @@ class PriorBoxCPUKernel : public LiteKernel {
   int PriorBoxImpl(int task_id);
 
  protected:
-  int thread_count_;
   const Context *ctx_;
+  int thread_count_;
 
  private:
   std::vector<float> output_;

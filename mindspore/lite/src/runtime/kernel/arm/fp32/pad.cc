@@ -62,7 +62,7 @@ int PadCPUKernel::ReSize() {
     return RET_ERROR;
   }
 
-  for (int i = 0; i < rank; i++) {
+  for (size_t i = 0; i < rank; i++) {
     in_[DEFAULT_PAD_NDIMS - rank + i] = input->shape()[i];
     out_[DEFAULT_PAD_NDIMS - rank + i] = output->shape()[i];
   }

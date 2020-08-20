@@ -122,7 +122,7 @@ int DeConvInt8CPUKernel::InitParam() {
 
   /* optimize normal -> same data layout */
   input_trans_func_ = RowMajor2Row16x4MajorInt8;
-  size_t oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
+  int oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   thread_count_ = MSMIN(op_parameter_->thread_num_, oc4);
   thread_stride_ = UP_DIV(oc4, thread_count_);
   return RET_OK;

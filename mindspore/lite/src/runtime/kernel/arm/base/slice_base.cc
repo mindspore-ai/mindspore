@@ -45,7 +45,7 @@ int SliceBaseCPUKernel::ReSize() {
       param_->begin_[DIMENSION_4D - j] = param_->begin_[i];
       param_->size_[DIMENSION_4D - j] = param_->size_[i];
     }
-    for (size_t i = 0; i < DIMENSION_4D - param_->param_length_; i++) {
+    for (int i = 0; i < DIMENSION_4D - param_->param_length_; i++) {
       param_->begin_[i] = 0;
       param_->size_[i] = 1;
     }

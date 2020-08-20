@@ -28,6 +28,10 @@
 
 namespace mindspore {
 namespace lite {
+static const char *DELIM_COLON = ":";
+static const char *DELIM_COMMA = ",";
+static const char *DELIM_SLASH = "/";
+
 int Benchmark::GenerateRandomData(size_t size, void *data) {
   MS_ASSERT(data != nullptr);
   char *castedData = static_cast<char *>(data);
@@ -85,7 +89,7 @@ int Benchmark::ReadInputFile() {
     MS_LOG(ERROR) << "Not supported image input";
     return RET_ERROR;
   } else {
-    for (auto i = 0; i < _flags->input_data_list.size(); i++) {
+    for (size_t i = 0; i < _flags->input_data_list.size(); i++) {
       auto cur_tensor = msInputs.at(i);
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;

@@ -237,7 +237,7 @@ std::string Tensor::ToString() const {
       if (data == nullptr) {
         return "Data of tensor is nullptr";
       } else {
-        for (size_t i = 0; i < 40 && i < this->ElementsNum(); i++) {
+        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
           oss << " " << data[i];
         }
       }
@@ -247,7 +247,7 @@ std::string Tensor::ToString() const {
       if (data == nullptr) {
         return "Data of tensor is nullptr";
       } else {
-        for (size_t i = 0; i < 40 && i < this->ElementsNum(); i++) {
+        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
           oss << " " << data[i];
         }
       }
