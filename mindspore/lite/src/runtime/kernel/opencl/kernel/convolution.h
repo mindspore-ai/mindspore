@@ -40,6 +40,12 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
+  int CI;
+  int IH;
+  int IW;
+  int CO;
+  int OH;
+  int OW;
   int CI_SLICES;
   int CO_SLICES;
   float *packed_weight_ = nullptr;
