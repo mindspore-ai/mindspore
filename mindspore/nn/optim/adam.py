@@ -382,7 +382,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
                  beta2=0.999,
                  eps=1e-6,
                  weight_decay=0.0,
-                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
+                 decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()):
         super(AdamWeightDecayDynamicLR, self).__init__(0.0, params)
         if self.is_group:
             raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")

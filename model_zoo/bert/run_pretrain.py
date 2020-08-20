@@ -18,6 +18,7 @@ python run_pretrain.py
 """
 
 import os
+import math
 import argparse
 import numpy
 import mindspore.communication.management as D
@@ -44,15 +45,16 @@ class LossCallBack(Callback):
     Args:
         per_print_times (int): Print loss every times. Default: 1.
     """
-    def __init__(self, per_print_times=1):
+    def __init__(self, data_epoch_size=1):
         super(LossCallBack, self).__init__()
-        if not isinstance(per_print_times, int) or per_print_times < 0:
-            raise ValueError("print_step must be int and >= 0")
-        self._per_print_times = per_print_times
+        if not isinstance(data_epoch_size, int) or data_epoch_size < 0:
+            raise ValueError("data_epoch_size must be int and >= 0")
+        self._data_epoch_size = data_epoch_size
     def step_end(self, run_context):
         cb_params = run_context.original_args()
-        print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                           str(cb_params.net_outputs)))
+        percent, epoch = math.modf(cb_params.cur_epoch_num / self._data_epoch_size)
+        print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
+              .format(epoch, "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
 
 def run_pretrain():
     """pre-train bert_clue"""
@@ -120,6 +122,7 @@ def run_pretrain():
     ds, new_repeat_count = create_bert_dataset(args_opt.epoch_size, device_num, rank, args_opt.do_shuffle,
                                                args_opt.enable_data_sink, args_opt.data_sink_steps,
                                                args_opt.data_dir, args_opt.schema_dir)
+    data_epoch_size = new_repeat_count // args_opt.epoch_size  # Epoch nums in one dataset.
     if args_opt.train_steps > 0:
         new_repeat_count = min(new_repeat_count, args_opt.train_steps // args_opt.data_sink_steps)
     netwithloss = BertNetworkWithLoss(bert_net_cfg, True)
@@ -144,7 +147,7 @@ def run_pretrain():
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecayDynamicLR]".
                          format(cfg.optimizer))
-    callback = [TimeMonitor(ds.get_dataset_size()), LossCallBack()]
+    callback = [TimeMonitor(ds.get_dataset_size()), LossCallBack(data_epoch_size)]
     if args_opt.enable_save_ckpt == "true":
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
                                      keep_checkpoint_max=args_opt.save_checkpoint_num)
