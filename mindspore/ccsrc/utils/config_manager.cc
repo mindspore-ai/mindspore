@@ -43,4 +43,6 @@ void ConfigManager::ResetConfig() noexcept {
   iter_num_ = 1;
 }
 
+void ConfigManager::ResetIterNum() noexcept { iter_num_ = 1; }
+
 }  // namespace mindspore

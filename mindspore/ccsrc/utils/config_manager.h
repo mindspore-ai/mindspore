@@ -102,6 +102,8 @@ class ConfigManager {
 
   void ResetConfig() noexcept;
 
+  void ResetIterNum() noexcept;
+
   std::map<std::string, std::string> ge_initialize_options_;
 
  private:

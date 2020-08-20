@@ -257,6 +257,8 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
 void ExecutorPy::DelNetRes(const std::string &id) {
 #ifdef ENABLE_GE
   FinalizeBackend();
+#else
+  ConfigManager::GetInstance().ResetIterNum();
 #endif
   if (executor_ != nullptr) {
     bool flag = false;
@@ -1043,6 +1045,8 @@ void ClearResAtexit() {
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::OpAdapterMap::get().clear();
+#else
+  ConfigManager::GetInstance().ResetIterNum();
 #endif
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
