@@ -29,6 +29,7 @@
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
+#include "utils/config_manager.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -1260,6 +1261,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
     if (ms_context != nullptr) {
       ms_context->set_enable_pynative_infer(false);
     }
+    ConfigManager::GetInstance().ResetIterNum();
     return;
   }
 
@@ -1272,6 +1274,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
   op_id_map_.clear();
   // node_abs_map_.clear();
   std::stack<FuncGraphPtr>().swap(graph_p_);
+  ConfigManager::GetInstance().ResetIterNum();
 }
 
 void PynativeExecutor::Clean() {
