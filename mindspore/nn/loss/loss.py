@@ -215,8 +215,8 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     Args:
         is_grad (bool): Specifies whether calculate grad only. Default: True.
         sparse (bool): Specifies whether labels use sparse format or not. Default: False.
-        reduction (Union[str, None]): Type of reduction to be applied to loss. Support 'sum' and 'mean'. If None,
-            do not perform reduction. Default: None.
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+            If "none", do not perform reduction. Default: "none".
         smooth_factor (float): Label smoothing factor. It is a optional input which should be in range [0, 1].
             Default: 0.
         num_classes (int): The number of classes in the task. It is a optional input Default: 2.
@@ -240,7 +240,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     def __init__(self,
                  is_grad=True,
                  sparse=False,
-                 reduction=None,
+                 reduction='none',
                  smooth_factor=0,
                  num_classes=2):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
