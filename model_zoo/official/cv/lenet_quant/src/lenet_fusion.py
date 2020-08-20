@@ -36,8 +36,8 @@ class LeNet5(nn.Cell):
         self.num_class = num_class
 
         # change `nn.Conv2d` to `nn.Conv2dBnAct`
-        self.conv1 = nn.Conv2dBnAct(channel, 6, 5, pad_mode='valid', has_bn=True, activation='relu')
-        self.conv2 = nn.Conv2dBnAct(6, 16, 5, pad_mode='valid', has_bn=True, activation='relu')
+        self.conv1 = nn.Conv2dBnAct(channel, 6, 5, pad_mode='valid', activation='relu')
+        self.conv2 = nn.Conv2dBnAct(6, 16, 5, pad_mode='valid', activation='relu')
         # change `nn.Dense` to `nn.DenseBnAct`
         self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
         self.fc2 = nn.DenseBnAct(120, 84, activation='relu')

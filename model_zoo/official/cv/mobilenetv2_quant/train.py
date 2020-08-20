@@ -28,6 +28,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint
 from mindspore.communication.management import init, get_group_size, get_rank
 from mindspore.train.quant import quant
+from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
 import mindspore.dataset.engine as de
 
 from src.dataset import create_dataset
@@ -35,7 +36,6 @@ from src.lr_generator import get_lr
 from src.utils import Monitor, CrossEntropyWithLabelSmooth
 from src.config import config_ascend_quant, config_gpu_quant
 from src.mobilenetV2 import mobilenetV2
-from src.utils import _load_param_into_net
 
 random.seed(1)
 np.random.seed(1)
@@ -101,7 +101,7 @@ def train_on_ascend():
     # load pre trained ckpt
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
-        _load_param_into_net(network, param_dict)
+        load_nonquant_param_into_quant_net(network, param_dict)
     # convert fusion network to quantization aware network
     network = quant.convert_quant_network(network,
                                           bn_fold=True,
@@ -163,7 +163,7 @@ def train_on_gpu():
     # resume
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
-        _load_param_into_net(network, param_dict)
+        load_nonquant_param_into_quant_net(network, param_dict)
 
     # convert fusion network to quantization aware network
     network = quant.convert_quant_network(network,

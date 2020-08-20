@@ -308,6 +308,7 @@ def load_param_into_net(net, parameter_dict):
         logger.debug("%s", param_name)
 
     logger.info("Load parameter into net finish, {} parameters has not been loaded.".format(len(param_not_load)))
+    return param_not_load
 
 
 def _load_dismatch_prefix_params(net, parameter_dict, param_not_load):

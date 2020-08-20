@@ -63,7 +63,9 @@ if __name__ == "__main__":
 
     # load quantization aware network checkpoint
     param_dict = load_checkpoint(args.ckpt_path)
-    load_param_into_net(network, param_dict)
+    not_load_param = load_param_into_net(network, param_dict)
+    if not_load_param:
+        raise ValueError("Load param into net fail!")
 
     print("============== Starting Testing ==============")
     acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
