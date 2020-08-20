@@ -180,7 +180,7 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   if (input_shape.size() != 4) {
     return false;
   }
-  return false;
+  return true;
 }
 
 void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,

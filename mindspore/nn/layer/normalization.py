@@ -86,6 +86,7 @@ class _BatchNorm(Cell):
         self.dtype = P.DType()
         self.reshape = P.Reshape()
         self.is_ascend = context.get_context("device_target") == "Ascend"
+        self.is_gpu = context.get_context("device_target") == "GPU"
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
         self.momentum = 1.0 - momentum
         if context.get_context("enable_ge"):
@@ -96,6 +97,10 @@ class _BatchNorm(Cell):
         if self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
             self.bn_train = P.BatchNorm(is_training=True,
                                         epsilon=self.eps)
+        elif self.is_gpu:
+            self.bn_train = P.FusedBatchNormEx(mode=1,
+                                               epsilon=self.eps,
+                                               momentum=self.momentum)
         else:
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,

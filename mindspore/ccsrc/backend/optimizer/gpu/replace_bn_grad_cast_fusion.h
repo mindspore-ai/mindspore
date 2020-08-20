@@ -33,6 +33,7 @@ class ReplaceBNGradCastFusion : public PatternProcessPass {
     bn_scale_ = std::make_shared<Var>();
     bn_bias_ = std::make_shared<Var>();
     index_ = std::make_shared<Var>();
+    reserve_ = std::make_shared<Var>();
   }
   ~ReplaceBNGradCastFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -48,6 +49,7 @@ class ReplaceBNGradCastFusion : public PatternProcessPass {
   VarPtr bn_scale_;
   VarPtr bn_bias_;
   VarPtr index_;
+  VarPtr reserve_;
 };
 }  // namespace opt
 }  // namespace mindspore
