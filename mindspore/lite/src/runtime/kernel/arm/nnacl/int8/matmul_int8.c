@@ -74,8 +74,8 @@ void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, co
   }
 }
 
-void MatMulOptR4Int8(int32_t *dst, const int8_t *a, const int8_t *b, const int32_t *bias, const int32_t *input_sum,
-                     size_t row_4, size_t col_4, size_t deep_16) {
+void MatMulOptR4Int8(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
+                     const int *input_sum, const int *bias) {
   /*  row4x16-major * row16x4-major => row4x4-major  */
   for (int r = 0; r < row_4; r++) {
     for (int c = 0; c < col_4; c++) {
@@ -96,3 +96,61 @@ void MatMulOptR4Int8(int32_t *dst, const int8_t *a, const int8_t *b, const int32
   }
   return;
 }
+
+#ifdef ENABLE_ARM64
+void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16) {
+  int stride = sizeof(int8_t) * 16 * 4;
+  for (int r = 0; r < row; ++r) {
+    for (int c = 0; c < col; ++c) {
+      int stride_n = r / 4 * (col_16 / 16) + c / 16;
+      int src_idx = r * col + c;
+      dst[stride * stride_n + r % 4 * 16 + c % 16] = src[src_idx];
+    }
+  }
+}
+
+void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_16) {
+  int stride = sizeof(int8_t) * 16 * 4;
+  for (int r = 0; r < row; ++r) {
+    for (int c = 0; c < col; ++c) {
+      int stride_n = c / 4 * (row_16 / 16) + r / 16;
+      int src_idx = r * col + c;
+      dst[stride * stride_n + c % 4 * 16 + r % 16] = src[src_idx];
+    }
+  }
+}
+
+void RowMajor2Asums(int8_t *a, int row, int col, int b_zp, int *dst) {
+  for (int r = 0; r < row; ++r) {
+    for (int c = 0; c < col; ++c) {
+      int src_idx = r * col + c;
+      dst[r] += a[src_idx];
+    }
+    dst[r] *= b_zp;
+  }
+}
+
+void RowMajor2Bbias(int8_t *b, int row, int col, int a_zp, int b_zp, int *bias, int *dst) {
+  for (int c = 0; c < col; ++c) {
+    for (int r = 0; r < row; ++r) {
+      int src_idx = r * col + c;
+      dst[c] += b[src_idx];
+    }
+    dst[c] = row * a_zp * b_zp - a_zp * dst[c];
+    if (bias) {
+      dst[c] += bias[c];
+    }
+  }
+}
+
+void Row4x4Major2RowMajor(int8_t *src, int row4, int8_t *dst, int row, int cow) {
+  int stride = sizeof(int8_t) * 4 * 4;
+  for (int r = 0; r < row; ++r) {
+    for (int c = 0; c < cow; ++c) {
+      int sride_n = c / 4 * (row4 / 4) + r / 4;
+      int dst_idx = r * cow + c;
+      dst[dst_idx] = src[stride * sride_n + r % 4 * 4 + c % 4];
+    }
+  }
+}
+#endif

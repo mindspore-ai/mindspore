@@ -26,9 +26,7 @@ const double dNormalizer = 0x1p54;
 const int dNormalizerBias = 54;
 const int iMantissaBits = 31;
 
-
-void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier,
-                                      int *right_shift) {
+void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int *right_shift) {
   if (quantized_multiplier == NULL || right_shift == NULL) {
     return;
   }
@@ -55,10 +53,9 @@ uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp) { return roun
 
 int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
 
-void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini,
-                                       int *maxi) {
-  int32_t min = CHAR_MIN;
-  int32_t max = CHAR_MAX;
+void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini, int *maxi) {
+  int32_t min = INT8_MIN;
+  int32_t max = INT8_MAX;
   int32_t quantized_zero = QuantizeToInt8(0, scale, zp);
   int32_t quantized_six = QuantizeToInt8(6, scale, zp);
   if (is_relu) {
@@ -77,8 +74,8 @@ void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, 
 void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data) {
   for (int i = 0; i < length; ++i) {
     int q = (int)round(input_data[i] / scale + zero_point);
-    q = q > CHAR_MAX ? CHAR_MAX : q;
-    q = q < CHAR_MIN ? CHAR_MIN : q;
+    q = q > SCHAR_MAX ? SCHAR_MAX : q;
+    q = q < SCHAR_MIN ? SCHAR_MIN : q;
     output_data[i] = (int8_t)q;
   }
 }

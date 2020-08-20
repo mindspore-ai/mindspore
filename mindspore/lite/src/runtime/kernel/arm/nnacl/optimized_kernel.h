@@ -64,7 +64,7 @@ class OptimizeModule {
     optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
 #endif
     if (optimized_op_handler_ == nullptr) {
-      printf("Open optimize shared library failed.\n");
+      printf("Open optimize shared library failed: %s\n", dlerror());
     }
   }
 

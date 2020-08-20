@@ -23,6 +23,10 @@ extern void IndirectGemmInt8_24x4_dp(int8_t *dst, const int8_t *src, const int8_
                                      size_t ksize, size_t ic4, size_t output_channel, size_t offset,
                                      const int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,
                                      size_t out_multiplier, size_t shift_before, size_t shift_after);
+
+extern void MatMulOptR4Int8Neon64(const int8_t *a, const int8_t *b, int *dst, int row4, int col4, int deep16,
+                                  const int *input_sum, const int *bias);
+
 #ifdef __cplusplus
 }
 #endif
@@ -34,5 +38,10 @@ void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int
                                        size_t out_multiplier, size_t shift_before, size_t shift_after) {
   return IndirectGemmInt8_24x4_dp(dst, src, weight, bias, ksize, ic4, output_channel, offset, input_sum, act_min,
                                   act_max, out_zp, out_multiplier, shift_before, shift_after);
+}
+
+void MatMulR4Int8_optimize_handler(const int8_t *a, const int8_t *b, int *dst, int row4, int col4, int deep16,
+                                   const int *input_sum, const int *bias) {
+  return MatMulOptR4Int8Neon64(a, b, dst, row4, col4, deep16, input_sum, bias);
 }
 #endif

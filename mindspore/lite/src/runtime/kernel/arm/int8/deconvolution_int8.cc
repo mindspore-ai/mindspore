@@ -18,6 +18,7 @@
 #include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -89,14 +90,24 @@ int DeConvInt8CPUKernel::Init() {
 
 void DeConvInt8CPUKernel::CheckSupportOptimize() {
   matmul_func_ = nullptr;
-  support_optimize_ = false;
+  support_optimize_ = true;
 
 #ifdef ENABLE_ARM64
-  /* todo */
+  void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
+  if (optimize_op_handler != nullptr) {
+    dlerror();
+    *(reinterpret_cast<void **>(&matmul_func_)) = dlsym(optimize_op_handler, "MatMulR4Int8_optimize_handler");
+    auto dlopen_error = dlerror();
+    if (dlopen_error != nullptr) {
+      MS_LOG(ERROR) << "load matmul func failed! " << dlopen_error << ".";
+      support_optimize_ = false;
+      matmul_func_ = nullptr;
+    }
+  } else {
+    support_optimize_ = false;
+    matmul_func_ = nullptr;
+  }
 #endif
-
-  support_optimize_ = true;
-  matmul_func_ = MatMulOptR4Int8;
 }
 
 int DeConvInt8CPUKernel::InitParam() {
@@ -109,15 +120,10 @@ int DeConvInt8CPUKernel::InitParam() {
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
-  if (support_optimize_) {
-    input_trans_func_ = RowMajor2Row16x4MajorInt8;
-    size_t oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-    thread_count_ = MSMIN(op_parameter_->thread_num_, oc4);
-    thread_stride_ = UP_DIV(oc4, thread_count_);
-  } else {
-    /*todo */
-  }
-
+  input_trans_func_ = RowMajor2Row16x4MajorInt8;
+  size_t oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
+  thread_count_ = MSMIN(op_parameter_->thread_num_, oc4);
+  thread_stride_ = UP_DIV(oc4, thread_count_);
   return RET_OK;
 }
 

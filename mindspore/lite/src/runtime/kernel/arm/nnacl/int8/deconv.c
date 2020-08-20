@@ -197,7 +197,7 @@ int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, int32
                size_t act_row, size_t act_col, size_t act_deep, ConvParameter *conv_param,
                MATMUL_OPT_R4_FUNC matmul_func) {
   if (matmul_func != NULL) {
-    matmul_func(output, input, weight, weight_sum, input_sum, act_row, act_col, act_deep);
+    matmul_func(input, weight, output, act_row, act_col, act_deep, input_sum, weight_sum);
   } else {
     /* todo normal int8 deconv */
   }

@@ -116,7 +116,6 @@ TEST_F(TestMatmulInt8, mmint8) {
   Dequantize(reinterpret_cast<int8_t *>(outputs_[0]->Data()), outputs_[0]->ElementsNum(), output_scale, output_zp,
              fout);
   CompareOutputData(fout, correct, 6, 0.3);
-  delete matmul_param;
   delete mm;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;

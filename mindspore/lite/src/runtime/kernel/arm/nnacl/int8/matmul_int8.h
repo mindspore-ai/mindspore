@@ -23,14 +23,29 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, const int col8, const int deep,
-                const int32_t a_zp, const int32_t b_zp);
-void MatMulOptR4Int8(int32_t *dst, const int8_t *a, const int8_t *b, const int32_t *bias, const int32_t *input_sum,
-                     size_t row_4, size_t col_4, size_t deep_16);
-
+void MatMulInt8(const int8_t *a, const int8_t *b, int *c, const int row8, const int col8, const int deep,
+                const int a_zp, const int b_zp);
+void MatMulOptR4Int8(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
+                     const int *input_sum, const int *bias);
 void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Col8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col);
+
+#ifdef ENABLE_ARM64
+void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16);
+void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_16);
+void RowMajor2Asums(int8_t *a, int row, int col, int b_zp, int *dst);
+void RowMajor2Bbias(int8_t *b, int row, int col, int a_zp, int b_zp, int *bias, int *dst);
+void Row4x4Major2RowMajor(int8_t *src, int row4, int8_t *dst, int row, int cow);
+
+// bias = bias + depth * a_zp * b_zp - a_zp * b_sums
+void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, const int *a_sums,
+                      const int *bias, int act_min, int act_max, int out_zp, int multiplier, int left_shift,
+                      int right_shift);
+
+void MatMulR4Int8Neon64(const int8_t *a, const int8_t *b, int32_t *dst, int row4, int col4, int deep16,
+                        const int *input_sum, const int *bias);
+#endif
 #ifdef __cplusplus
 }
 #endif
