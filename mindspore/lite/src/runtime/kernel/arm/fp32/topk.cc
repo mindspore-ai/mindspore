@@ -34,22 +34,12 @@ int TopKCPUKernel::Init() {
 }
 
 int TopKCPUKernel::ReSize() {
-  TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   lite::tensor::Tensor *input = in_tensors_.at(0);
+  TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
   for (int i = 0; i < input->shape().size() - 1; ++i) {
     parameter->loop_num_ *= input->shape()[i];
-  }
-
-  if (parameter->topk_node_list_ != nullptr) {
-    free(parameter->topk_node_list_);
-    parameter->topk_node_list_ = nullptr;
-  }
-  parameter->topk_node_list_ = malloc(sizeof(TopkNode) * parameter->last_dim_size_);
-  if (parameter->topk_node_list_ == nullptr) {
-    MS_LOG(ERROR) << "malloc fail.";
-    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -64,7 +54,15 @@ int TopKCPUKernel::Run() {
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->Data());
 
+  MS_ASSERT(context_->allocator != nullptr);
+  TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  parameter->topk_node_list_ = context_->allocator->Malloc(sizeof(TopkNode) * parameter->last_dim_size_);
+  if (parameter->topk_node_list_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
   Topk(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(op_parameter_));
+  context_->allocator->Free(parameter->topk_node_list_);
   return RET_OK;
 }
 

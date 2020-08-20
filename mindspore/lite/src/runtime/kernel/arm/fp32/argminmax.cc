@@ -43,7 +43,6 @@ int ArgMinMaxCPUKernel::Init() {
 }
 
 int ArgMinMaxCPUKernel::ReSize() {
-  ArgMinMaxBaseCPUKernel::FreeTmpMemory();
   return ArgMinMaxBaseCPUKernel::ReSize();
 }
 

@@ -61,19 +61,6 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
     return RET_PARAM_INVALID;
   }
   param->topk_ = MSMIN(param->topk_, in_shape[axis]);
-  if (param->topk_ > 1 || param->keep_dims_) {
-    if (context_ != nullptr && context_->allocator != nullptr) {
-      param->arg_elements_ =
-        reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * in_shape[axis]));
-      data_from_allocator_ = true;
-    } else {
-      param->arg_elements_ = reinterpret_cast<ArgElement *>(malloc(sizeof(ArgElement) * in_shape[axis]));
-    }
-    if (param->arg_elements_ == nullptr) {
-      MS_LOG(ERROR) << "malloc memroy fail!";
-      return RET_ERROR;
-    }
-  }
   ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
   auto out_shape = out_tensors_.at(0)->shape();
   ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());
@@ -81,28 +68,24 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
 }
 
 int ArgMinMaxBaseCPUKernel::Run() {
-  auto input = in_tensors_.at(0);
-
-  auto input_data = reinterpret_cast<const void *>(in_tensors_.at(0)->Data());
+  auto input_data = in_tensors_.at(0)->Data();
   auto output_data = out_tensors_.at(0)->Data();
 
-  auto shape = input->shape().data();
+  auto shape = in_tensors_.at(0)->shape().data();
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  MS_ASSERT(context_->allocator != nullptr);
+  if (param->topk_ > 1 || param->keep_dims_) {
+    param->arg_elements_ =
+      reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * shape[param->axis_]));
+    if (param->arg_elements_ == nullptr) {
+      MS_LOG(ERROR) << "malloc memroy fail!";
+      return RET_ERROR;
+    }
+  }
   ArgMinMax(input_data, output_data, reinterpret_cast<const int *>(shape), param);
-  return RET_OK;
-}
-
-void ArgMinMaxBaseCPUKernel::FreeTmpMemory() {
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
-  if (param->arg_elements_ == nullptr) {
-    return;
-  }
-  if (data_from_allocator_) {
-    context_->allocator->Free(param->arg_elements_);
-  } else {
-    free(param->arg_elements_);
-  }
+  context_->allocator->Free(param->arg_elements_);
   param->arg_elements_ = nullptr;
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
