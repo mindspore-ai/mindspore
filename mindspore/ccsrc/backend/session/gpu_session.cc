@@ -30,6 +30,8 @@
 #include "backend/optimizer/gpu/replace_bn_grad_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
+#include "backend/optimizer/gpu/insert_format_transform_op.h"
+#include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/ms_utils.h"
 #include "common/trans.h"
@@ -76,6 +78,8 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
+  pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   optimizer->AddPassManager(pm);
@@ -203,7 +207,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   }
   // Assign CUDA streams
   AssignStream(graph);
-  // Hide NoOp from execution graph
+  // Hide NopOp from execution graph
   opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
   BuildKernel(graph);
@@ -213,7 +217,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   graph->set_execution_order(execution_order);
   // Get summary nodes.
   SetSummaryNodes(graph.get());
-  // Remove NoOp from execution graph
+  // Remove NopOp from execution graph
   opt::RemoveNopNode(graph.get());
   // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);
@@ -272,7 +276,7 @@ void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_in
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
   StartKernelRT();
-  // Hide NoOp from execution graph
+  // Hide NopOp from execution graph
   opt::HideNopNode(kernel_graph.get());
   BuildKernel(kernel_graph);
   run_op_graphs_[graph_info] = kernel_graph;
@@ -282,7 +286,7 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
                             const std::vector<tensor::TensorPtr> &input_tensors) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  // Remove NoOp from execution graph
+  // Remove NopOp from execution graph
   opt::RemoveNopNode(kernel_graph.get());
   RunOpAllocateMemory(op_run_info.value, input_tensors, kernel_graph.get());
   // Execute the computation

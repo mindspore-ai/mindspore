@@ -506,6 +506,45 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   return output_node_list;
 }
 
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
+                                                                                        const AnfNodePtr &node,
+                                                                                        size_t output_index) {
+  auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    MS_LOG(EXCEPTION) << "node has no output in manager";
+  }
+  auto output_info_list = iter->second;
+  for (const auto &output_info : output_info_list) {
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimControlDepend->name()) {
+      continue;
+    }
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
+        output_info.second == kDependAttachNodeIndex) {
+      continue;
+    }
+    size_t used_output_index;
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimTupleGetItem->name()) {
+      used_output_index = AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(output_info.first));
+    } else if (AnfAlgo::GetCNodeName(node) == prim::kPrimTupleGetItem->name()) {
+      used_output_index = output_index;
+    } else {
+      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(output_info.first, output_info.second - 1);
+      if (kernel_with_index.first.get() != node.get()) {
+        MS_LOG(EXCEPTION) << "Get used node failed for op[" << AnfAlgo::GetCNodeName(node) << "]";
+      }
+      used_output_index = kernel_with_index.second;
+    }
+    if (used_output_index == output_index) {
+      output_node_list->push_back(output_info);
+    }
+  }
+  return output_node_list;
+}
+
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);

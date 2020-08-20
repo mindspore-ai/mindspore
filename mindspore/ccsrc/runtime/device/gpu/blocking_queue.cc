@@ -96,10 +96,10 @@ BlockQueueStatus_T BlockingQueue::Create(void *addr, const std::vector<size_t> &
 
 void BlockingQueue::RegisterRelease(const std::function<void(void *)> &func) { queue_->RegisterRelease(func); }
 
-BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataItemGpu> &data, unsigned int timeout_in_sec) {
+BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataItemGpu> &data, unsigned int) {
   std::unique_lock<std::mutex> locker(mutex_);
   if (queue_->IsFull()) {
-    if (not_full_cond_.wait_for(locker, std::chrono::seconds(timeout_in_sec)) == std::cv_status::timeout) {
+    if (not_full_cond_.wait_for(locker, std::chrono::microseconds(100)) == std::cv_status::timeout) {
       return TIMEOUT;
     }
   }

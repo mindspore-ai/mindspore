@@ -52,6 +52,8 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
   return outputs_device_type_[output_index];
 }
 
+const std::string &KernelBuildInfo::GetOriginDataFormat() const { return origin_data_format_; }
+
 const std::vector<std::string> &KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }
 
 const std::vector<std::string> &KernelBuildInfo::GetAllOutputFormats() const { return outputs_format_; }
@@ -130,6 +132,11 @@ bool KernelBuildInfo::operator!=(const KernelBuildInfo &other) const { return !(
 void KernelBuildInfo::KernelBuildInfoBuilder::SetKernelType(const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->kernel_type_ = kernel_type;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOriginDataFormat(const std::string &origin_data_format) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->origin_data_format_ = origin_data_format;
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsFormat(const std::vector<std::string> &inputs_format) {

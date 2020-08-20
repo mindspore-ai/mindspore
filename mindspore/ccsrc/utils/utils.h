@@ -189,6 +189,9 @@ constexpr auto kPullOpName = "Pull";
 constexpr auto kEmbeddingLookupOpName = "EmbeddingLookup";
 constexpr auto kEmbeddingLookupProxyOpName = "EmbeddingLookupProxy";
 constexpr auto kPaddingOpName = "Padding";
+constexpr auto kAvgPoolOpName = "AvgPool";
+constexpr auto kAvgPoolGradGpuOpName = "AvgPoolGradGpu";
+constexpr auto kTensorAddOpName = "TensorAdd";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";

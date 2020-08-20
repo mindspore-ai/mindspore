@@ -353,6 +353,48 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
   }
 }
 
+std::vector<std::string> AnfRuntimeAlgorithm::GetAllOutputFormats(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsRealKernel(node)) {
+    MS_LOG(EXCEPTION) << "Not real kernel:"
+                      << "#node [" << node->DebugString() << "]";
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto format = build_info->GetAllOutputFormats();
+  return format;
+}
+
+std::vector<std::string> AnfRuntimeAlgorithm::GetAllInputFormats(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsRealKernel(node)) {
+    MS_LOG(EXCEPTION) << "Not real kernel:"
+                      << "#node [" << node->DebugString() << "]";
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto format = build_info->GetAllInputFormats();
+  return format;
+}
+
+std::string AnfRuntimeAlgorithm::GetOriginDataFormat(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsRealKernel(node)) {
+    MS_LOG(EXCEPTION) << "Not real kernel:"
+                      << "#node [" << node->DebugString() << "]";
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto format = build_info->GetOriginDataFormat();
+  return format;
+}
+
 std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   if (output_idx > GetOutputTensorNum(node)) {
@@ -829,7 +871,7 @@ void AnfRuntimeAlgorithm::SetKernelMod(const KernelModPtr &kernel_mod, AnfNode *
 
 bool AnfRuntimeAlgorithm::IsRealKernel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  // parameter and value node is not a real kernel too
+  // parameter and value node is a real kernel too
   if (!node->isa<CNode>()) {
     return true;
   }
