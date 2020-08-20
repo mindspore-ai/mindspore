@@ -62,7 +62,7 @@ PYBIND_REGISTER(
   ShardSample, 0, ([](const py::module *m) {
     (void)py::class_<mindrecord::ShardSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardSample>>(
       *m, "MindrecordSubsetRandomSampler")
-      .def(py::init<std::vector<int64_t>, uint32_t>(), py::arg("indices"), py::arg("seed") = GetSeed());
+      .def(py::init<std::vector<int64_t>, uint32_t>());
   }));
 
 PYBIND_REGISTER(ShardSequentialSample, 0, ([](const py::module *m) {

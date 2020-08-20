@@ -362,7 +362,7 @@ class RandomCrop(cde.RandomCropOp):
             padding = (0, 0, 0, 0)
         else:
             padding = parse_padding(padding)
-        if isinstance(fill_value, int):  # temporary fix
+        if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         border_type = DE_C_BORDER_TYPE[padding_mode]
 
@@ -417,7 +417,7 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
         else:
             padding = parse_padding(padding)
 
-        if isinstance(fill_value, int):  # temporary fix
+        if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         border_type = DE_C_BORDER_TYPE[padding_mode]
 
@@ -549,9 +549,8 @@ class Resize(cde.ResizeOp):
         self.interpolation = interpolation
         interpoltn = DE_C_INTER_MODE[interpolation]
         if isinstance(size, int):
-            super().__init__(size, interpolation=interpoltn)
-        else:
-            super().__init__(*size, interpoltn)
+            size = (size, 0)
+        super().__init__(*size, interpoltn)
 
 
 class ResizeWithBBox(cde.ResizeWithBBoxOp):
@@ -579,9 +578,8 @@ class ResizeWithBBox(cde.ResizeWithBBoxOp):
         self.interpolation = interpolation
         interpoltn = DE_C_INTER_MODE[interpolation]
         if isinstance(size, int):
-            super().__init__(size, interpolation=interpoltn)
-        else:
-            super().__init__(*size, interpoltn)
+            size = (size, 0)
+        super().__init__(*size, interpoltn)
 
 
 class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
@@ -779,7 +777,7 @@ class RandomRotation(cde.RandomRotationOp):
             degrees = (-degrees, degrees)
         if center is None:
             center = (-1, -1)
-        if isinstance(fill_value, int):  # temporary fix
+        if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         interpolation = DE_C_INTER_MODE[resample]
         super().__init__(*degrees, *center, interpolation, expand, *fill_value)
@@ -816,9 +814,8 @@ class RandomResize(cde.RandomResizeOp):
     def __init__(self, size):
         self.size = size
         if isinstance(size, int):
-            super().__init__(size)
-        else:
-            super().__init__(*size)
+            size = (size, 0)
+        super().__init__(*size)
 
 
 class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
@@ -837,9 +834,8 @@ class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
     def __init__(self, size):
         self.size = size
         if isinstance(size, int):
-            super().__init__(size)
-        else:
-            super().__init__(*size)
+            size = (size, 0)
+        super().__init__(*size)
 
 
 class HWC2CHW(cde.ChannelSwapOp):
@@ -918,7 +914,7 @@ class Pad(cde.PadOp):
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
         padding = parse_padding(padding)
-        if isinstance(fill_value, int):  # temporary fix
+        if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         padding_mode = DE_C_BORDER_TYPE[padding_mode]
 

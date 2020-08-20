@@ -37,7 +37,6 @@ add_library(kernels-image OBJECT
     random_vertical_flip_with_bbox_op.cc
     random_sharpness_op.cc
     rescale_op.cc
-    resize_bilinear_op.cc
     resize_op.cc
     rgba_to_bgr_op.cc
     rgba_to_rgb_op.cc

@@ -1200,4 +1200,8 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeFail) {
   threshold = {1};
   random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
   EXPECT_EQ(random_solarize, nullptr);
+
+  threshold = {};
+  random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  EXPECT_EQ(random_solarize, nullptr);
 }
