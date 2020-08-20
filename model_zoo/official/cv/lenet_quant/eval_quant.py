@@ -45,7 +45,6 @@ args = parser.parse_args()
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     ds_eval = create_dataset(os.path.join(args.data_path, "test"), cfg.batch_size, 1)
-    step_size = ds_eval.get_dataset_size()
 
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
