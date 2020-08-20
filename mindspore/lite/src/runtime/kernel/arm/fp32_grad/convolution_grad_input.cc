@@ -63,7 +63,11 @@ int ConvolutionGradInputCPUKernel::Init() {
   int ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
                 conv_param->input_channel_ / conv_param->group_;
 
-  workspace = new float[ws_size];
+  workspace = new (std::nothrow) float[ws_size];
+  if (workspace == nullptr) {
+    MS_LOG(ERROR) << "new workspace fail!";
+    return RET_ERROR;
+  }
   return 0;
 }
 
@@ -121,7 +125,10 @@ kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::te
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DGradInput);
 
   auto *kernel = new (std::nothrow) ConvolutionGradInputCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new kernel fail!";
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (0 != ret) {

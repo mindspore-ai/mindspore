@@ -204,14 +204,6 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
   kernel::LiteKernel *kernel;
   kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  //  auto param = reinterpret_cast<ConvParameter *>(opParameter);
-  //  if (param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
-  //      param->dilation_h_ == 1 && param->dilation_w_ == 1) {
-  //    kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx,
-  //    primitive);
-  //  } else {
-  //    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  //  }
 
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";

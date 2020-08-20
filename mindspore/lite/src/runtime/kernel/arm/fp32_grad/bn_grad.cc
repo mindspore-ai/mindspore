@@ -99,7 +99,10 @@ kernel::LiteKernel *CpuBNGradInputFp32KernelCreator(const std::vector<lite::tens
   //  parameter->name = opDef.name()->str().data();
   //  parameter->type = opDef.attr_type();
   auto *kernel = new (std::nothrow) BNGradInputCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new BNGradInputCPUKernel fail!";
+    return nullptr;
+  }
   auto ret = kernel->Init();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "

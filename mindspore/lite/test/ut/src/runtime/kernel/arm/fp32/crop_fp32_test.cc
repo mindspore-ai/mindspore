@@ -319,6 +319,4 @@ TEST_F(CropTestFp32, CropTest11) {
   std::cout << "\n";
   CompareOutputData(output, expect_out, kOutSize, 0.000001);
 }
-
 }  // namespace mindspore
-

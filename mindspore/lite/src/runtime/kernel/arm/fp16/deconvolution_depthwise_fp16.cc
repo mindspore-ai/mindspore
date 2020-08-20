@@ -130,7 +130,11 @@ int DeconvolutionDepthwiseFp16CPUKernel::Init() {
 int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
   FreeTmpBuffer();
 
-  sliding_ = new SlidingWindowParam;
+  sliding_ = new (std::nothrow) SlidingWindowParam;
+  if (sliding_ == nullptr) {
+    MS_LOG(ERROR) << "new SlidingWindowParam fail!";
+    return RET_ERROR;
+  }
   InitSlideParam();
   // conv base init
   auto ret = ConvolutionBaseCPUKernel::Init();

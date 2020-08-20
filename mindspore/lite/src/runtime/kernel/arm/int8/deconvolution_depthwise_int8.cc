@@ -151,7 +151,12 @@ int DeconvolutionDepthwiseInt8CPUKernel::Init() {
 int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
   FreeTmpBuffer();
 
-  sliding = new SlidingWindowParam;
+  sliding = new (std::nothrow) SlidingWindowParam;
+  if (sliding == nullptr) {
+    MS_LOG(ERROR) << "new SlidingWindowParam fail!";
+    return RET_ERROR;
+  }
+
   InitSlideParam();
 
   // conv base init

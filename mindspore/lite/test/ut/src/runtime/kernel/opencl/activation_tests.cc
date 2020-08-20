@@ -90,6 +90,7 @@ kernel::ActivationOpenClKernel *create_kernel(lite::opencl::OpenCLAllocator *all
   if (kernel == nullptr) {
     delete param;
     MS_LOG(ERROR) << "Kernel:" << test_name << " create fail.";
+    delete param;
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -97,6 +98,8 @@ kernel::ActivationOpenClKernel *create_kernel(lite::opencl::OpenCLAllocator *all
     delete param;
     delete kernel;
     MS_LOG(ERROR) << "Init " << test_name << " fail.";
+    delete kernel;
+    delete param;
     return nullptr;
   }
   MS_LOG(INFO) << "Initialize input data";

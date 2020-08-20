@@ -141,7 +141,10 @@ kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::t
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DGradFilter);
 
   auto *kernel = new (std::nothrow) ConvolutionGradFilterCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new kernel fail!";
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (RET_OK != ret) {
