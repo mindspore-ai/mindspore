@@ -108,48 +108,9 @@ def test_cache_map_basic2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_basic3():
     """
-    Test a repeat under mappable cache
-
-        Cache
-          |
-      Map(decode)
-          |
-        Repeat
-          |
-      ImageFolder
-    """
-
-    logger.info("Test cache basic 3")
-    if "SESSION_ID" in os.environ:
-        session_id = int(os.environ['SESSION_ID'])
-    else:
-        raise RuntimeError("Testcase requires SESSION_ID environment variable")
-
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
-
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
-    decode_op = c_vision.Decode()
-    ds1 = ds1.repeat(4)
-    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
-    logger.info("ds1.dataset_size is ", ds1.get_dataset_size())
-
-    num_iter = 0
-    for _ in ds1.create_dict_iterator(num_epochs=1):
-        logger.info("get data from dataset")
-        num_iter += 1
-
-    logger.info("Number of data in ds1: {} ".format(num_iter))
-    assert num_iter == 8
-    logger.info('test_cache_basic3 Ended.\n')
-
-
-@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_map_basic4():
-    """
     Test different rows result in core dump
     """
-    logger.info("Test cache basic 4")
+    logger.info("Test cache basic 3")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
@@ -171,11 +132,11 @@ def test_cache_map_basic4():
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 8
-    logger.info('test_cache_basic4 Ended.\n')
+    logger.info('test_cache_basic3 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_map_basic5():
+def test_cache_map_basic4():
     """
     Test Map with non-deterministic TensorOps above cache
 
@@ -188,7 +149,7 @@ def test_cache_map_basic5():
              ImageFolder
 
     """
-    logger.info("Test cache failure 5")
+    logger.info("Test cache basic 4")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
@@ -211,11 +172,11 @@ def test_cache_map_basic5():
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 8
-    logger.info('test_cache_failure5 Ended.\n')
+    logger.info('test_cache_basic4 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_map_basic6():
+def test_cache_map_basic5():
     """
     Test cache as root node
 
@@ -223,7 +184,7 @@ def test_cache_map_basic6():
          |
       ImageFolder
     """
-    logger.info("Test cache basic 6")
+    logger.info("Test cache basic 5")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
@@ -239,7 +200,7 @@ def test_cache_map_basic6():
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 2
-    logger.info('test_cache_basic6 Ended.\n')
+    logger.info('test_cache_basic5 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -502,6 +463,7 @@ def test_cache_map_failure7():
               Generator
 
     """
+
     def generator_1d():
         for i in range(64):
             yield (np.array(i),)
@@ -526,6 +488,44 @@ def test_cache_map_failure7():
 
     assert num_iter == 0
     logger.info('test_cache_failure7 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_failure8():
+    """
+    Test a repeat under mappable cache (failure)
+
+        Cache
+          |
+      Map(decode)
+          |
+        Repeat
+          |
+      ImageFolder
+    """
+
+    logger.info("Test cache failure 8")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    decode_op = c_vision.Decode()
+    ds1 = ds1.repeat(4)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator(num_epochs=1):
+            num_iter += 1
+    assert "Repeat is not supported as a descendant operator under a mappable cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_failure8 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -1700,6 +1700,125 @@ def test_cache_map_voc2():
     assert epoch_count == num_epoch
 
     logger.info("test_cache_map_voc2 Ended.\n")
+
+
+class ReverseSampler(ds.Sampler):
+    def __iter__(self):
+        for i in range(self.dataset_size - 1, -1, -1):
+            yield i
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_python_sampler1():
+    """
+    Test using a python sampler, and cache after leaf
+
+        Repeat
+         |
+     Map(decode)
+         |
+       cache
+         |
+      ImageFolder
+    """
+
+    logger.info("Test cache map python sampler1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, sampler=ReverseSampler(), cache=some_cache)
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.repeat(4)
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == 8
+    logger.info("test_cache_map_python_sampler1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_python_sampler2():
+    """
+    Test using a python sampler, and cache after map
+
+       Repeat
+         |
+       cache
+         |
+     Map(decode)
+         |
+      ImageFolder
+    """
+
+    logger.info("Test cache map python sampler2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, sampler=ReverseSampler())
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == 8
+    logger.info("test_cache_map_python_sampler2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_nested_repeat():
+    """
+    Test cache on pipeline with nested repeat ops
+
+        Repeat
+          |
+      Map(decode)
+          |
+        Repeat
+          |
+        Cache
+          |
+      ImageFolder
+    """
+
+    logger.info("Test cache map nested repeat")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
+    decode_op = c_vision.Decode()
+    ds1 = ds1.repeat(4)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
+    ds1 = ds1.repeat(2)
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator(num_epochs=1):
+        logger.info("get data from dataset")
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == 16
+    logger.info('test_cache_map_nested_repeat Ended.\n')
 
 
 if __name__ == '__main__':

@@ -16,6 +16,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_TASK_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_TASK_H_
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#include <pthread.h>
+#endif
 #include <chrono>
 #include <exception>
 #include <functional>
@@ -84,7 +87,7 @@ class Task : public IntrpResource {
 
   std::thread::id get_id() { return id_; }
 
-  std::string MyName() { return my_name_; }
+  std::string MyName() const { return my_name_; }
 
   // An operator used by std::find
   bool operator==(const Task &other) const { return (this == &other); }
@@ -96,6 +99,10 @@ class Task : public IntrpResource {
   Status Wait() { return (wp_.Wait()); }
 
   static Status OverrideInterruptRc(const Status &rc);
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+  pthread_t GetNativeHandle() const;
+#endif
 
  private:
   mutable std::mutex mux_;
@@ -112,6 +119,12 @@ class Task : public IntrpResource {
   bool is_master_;
   volatile bool running_;
   volatile bool caught_severe_exception_;
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+  pthread_t native_handle_;
+#else
+  uint64_t native_handle_;
+#endif
 
   void ShutdownGroup();
   TaskGroup *MyTaskGroup();

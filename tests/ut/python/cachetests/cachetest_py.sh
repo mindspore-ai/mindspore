@@ -31,7 +31,7 @@ HandleRcExit $? 1 1
 export RUN_CACHE_TEST=TRUE
 
 # Each of these tests will create session, use it, then destroy it after the test
-for i in $(seq 1 6)
+for i in $(seq 1 5)
 do
    test_name="test_cache_map_basic${i}"
    GetSession
@@ -119,6 +119,12 @@ PytestCmd "test_cache_map.py" "test_cache_map_cifar" 1
 HandleRcExit $? 0 0
 
 PytestCmd "test_cache_map.py" "test_cache_map_voc" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_python_sampler" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_map.py" "test_cache_map_nested_repeat"
 HandleRcExit $? 0 0
 
 # Run two parallel pipelines (sharing cache)
@@ -307,6 +313,9 @@ PytestCmd "test_cache_nomap.py" "test_cache_nomap_csv" 1
 HandleRcExit $? 0 0
 
 PytestCmd "test_cache_nomap.py" "test_cache_nomap_textfile" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_nested_repeat"
 HandleRcExit $? 0 0
 
 for i in $(seq 1 3)

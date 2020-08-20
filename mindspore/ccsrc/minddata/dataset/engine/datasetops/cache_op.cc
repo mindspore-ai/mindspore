@@ -153,7 +153,7 @@ Status CacheOp::WaitForCachingAllRows() {
   bool BuildPhaseDone = true;
   do {
     RETURN_IF_NOT_OK(cache_client_->GetStat(&stat));
-    BuildPhaseDone = stat.cache_service_state == static_cast<uint8_t>(CacheService::State::kFetchPhase);
+    BuildPhaseDone = stat.cache_service_state == static_cast<uint8_t>(CacheServiceState::kFetchPhase);
     if (!BuildPhaseDone) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/util/storage_manager.h"
+#include "minddata/dataset/engine/cache/storage_manager.h"
 
 #include <iomanip>
 #include <sstream>

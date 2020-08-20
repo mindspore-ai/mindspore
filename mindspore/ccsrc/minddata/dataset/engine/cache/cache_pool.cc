@@ -15,18 +15,14 @@
  */
 #include <algorithm>
 #include "utils/ms_utils.h"
-#include "minddata/dataset/util/cache_pool.h"
+#include "minddata/dataset/engine/cache/cache_pool.h"
+#include "minddata/dataset/engine/cache/cache_server.h"
 #include "minddata/dataset/util/services.h"
 
 namespace mindspore {
 namespace dataset {
-CachePool::CachePool(const value_allocator &alloc, bool ourOwnArena, const std::string &root)
-    : alloc_(alloc),
-      root_(root),
-      subfolder_(Services::GetUniqueID()),
-      sm_(nullptr),
-      tree_(nullptr),
-      custom_arena_(ourOwnArena) {}
+CachePool::CachePool(std::shared_ptr<NumaMemoryPool> mp, const std::string &root)
+    : mp_(std::move(mp)), root_(root), subfolder_(Services::GetUniqueID()), sm_(nullptr), tree_(nullptr) {}
 
 Status CachePool::DoServiceStart() {
   tree_ = std::make_shared<data_index>();
@@ -36,10 +32,11 @@ Status CachePool::DoServiceStart() {
     RETURN_IF_NOT_OK(spill.CreateDirectories());
     sm_ = std::make_shared<StorageManager>(spill);
     RETURN_IF_NOT_OK(sm_->ServiceStart());
-    MS_LOG(INFO) << "CachePool will use disk folder: " << common::SafeCStr(spill.toString());
+    MS_LOG(INFO) << "CachePool will use disk folder: " << spill.toString();
   }
   return Status::OK();
 }
+
 Status CachePool::DoServiceStop() {
   Status rc;
   Status rc2;
@@ -50,14 +47,14 @@ Status CachePool::DoServiceStop() {
     }
   }
   sm_.reset();
-  // If it is our own arena, skip freeing individual pieces.
-  if (!custom_arena_) {
-    for (auto &bl : *tree_) {
-      if (bl.ptr != nullptr) {
-        alloc_.deallocate(bl.ptr, bl.sz);
-      }
+
+  value_allocator alloc(mp_);
+  for (auto &bl : *tree_) {
+    if (bl.ptr != nullptr) {
+      alloc.deallocate(bl.ptr, bl.sz);
     }
   }
+
   tree_.reset();
   if (!root_.toString().empty()) {
     Path spill = GetSpillPath();
@@ -75,8 +72,10 @@ Status CachePool::DoServiceStop() {
   }
   return rc2;
 }
+
 CachePool::~CachePool() noexcept { (void)ServiceStop(); }
-Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlice> &buf, bool writeToDiskDirectly) {
+
+Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlice> &buf) {
   DataLocator bl;
   Status rc;
   size_t sz = 0;
@@ -85,26 +84,35 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
     sz += v.GetSize();
   }
   bl.sz = sz;
-  try {
-    if (!writeToDiskDirectly) {
-      bl.ptr = alloc_.allocate(sz);
-      // We will do a piecewise copy.
-      WritableSlice dest(bl.ptr, bl.sz);
-      size_t pos = 0;
-      for (auto &v : buf) {
-        WritableSlice out(dest, pos);
-        rc = WritableSlice::Copy(&out, v);
-        if (rc.IsError()) {
-          break;
-        }
-        pos += v.GetSize();
-      }
+  rc = mp_->Allocate(sz, reinterpret_cast<void **>(&bl.ptr));
+  if (rc.IsOk()) {
+    // Write down which numa node where we allocate from. It only make sense if the policy is kOnNode.
+    if (CacheServerHW::numa_enabled()) {
+      auto &cs = CacheServer::GetInstance();
+      auto node_id = cs.GetHWControl()->GetMyNode();
+      bl.node_id = mp_->FindNode(bl.ptr);
+      CHECK_FAIL_RETURN_UNEXPECTED(bl.node_id != -1, "Allocator is not from numa memory pool");
+      bl.node_hit = (bl.node_id == node_id);
+    }
+    // We will do a piecewise copy.
+    WritableSlice dest(bl.ptr, bl.sz);
+    size_t pos = 0;
+    for (auto &v : buf) {
+      WritableSlice out(dest, pos);
+      rc = WritableSlice::Copy(&out, v);
       if (rc.IsError()) {
-        alloc_.deallocate(bl.ptr, sz);
-        bl.ptr = nullptr;
-        return rc;
+        break;
       }
-    } else if (sm_ != nullptr) {
+      pos += v.GetSize();
+    }
+    if (rc.IsError()) {
+      mp_->Deallocate(bl.ptr);
+      bl.ptr = nullptr;
+      return rc;
+    }
+  } else if (rc.IsOutofMemory()) {
+    // If no memory, write to disk.
+    if (sm_ != nullptr) {
       MS_LOG(DEBUG) << "Spill to disk directly ... " << bl.sz << " bytes.";
       RETURN_IF_NOT_OK(sm_->Write(&bl.storage_key, buf));
     } else {
@@ -112,12 +120,8 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
       // instead.
       return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
     }
-  } catch (std::bad_alloc &e) {
-    if (sm_ != nullptr) {
-      RETURN_IF_NOT_OK(sm_->Write(&bl.storage_key, buf));
-    } else {
-      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
-    }
+  } else {
+    return rc;
   }
   // Insert into the B+ tree. We may still get out of memory error. So need to catch it.
   try {
@@ -127,10 +131,13 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
   }
   // Duplicate key is treated as error and we will also free the memory.
   if (rc.IsError() && bl.ptr != nullptr) {
-    alloc_.deallocate(bl.ptr, sz);
+    mp_->Deallocate(bl.ptr);
+    bl.ptr = nullptr;
+    return rc;
   }
   return rc;
 }
+
 Status CachePool::Read(CachePool::key_type key, WritableSlice *dest, size_t *bytesRead) const {
   RETURN_UNEXPECTED_IF_NULL(dest);
   auto r = tree_->Search(key);
@@ -156,13 +163,14 @@ Status CachePool::Read(CachePool::key_type key, WritableSlice *dest, size_t *byt
   }
   return Status::OK();
 }
-const CachePool::value_allocator &CachePool::get_allocator() const { return alloc_; }
+
 Path CachePool::GetSpillPath() const {
   auto spill = Path(root_) / subfolder_;
   return spill;
 }
+
 CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
-  CacheStat cs{-1, -1, 0, 0, 0};
+  CacheStat cs{-1, -1, 0, 0, 0, 0};
   int64_t total_sz = 0;
   if (tree_->begin() != tree_->end()) {
     cs.min_key = tree_->begin().key();
@@ -173,6 +181,9 @@ CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
         ++cs.num_mem_cached;
       } else {
         ++cs.num_disk_cached;
+      }
+      if (it.value().node_hit) {
+        ++cs.num_numa_hit;
       }
       auto cur_key = it.key();
       if (GetMissingKeys) {
@@ -192,49 +203,26 @@ CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
   }
   return cs;
 }
-Status CachePool::Spill(CachePool::DataLocator *dl) {
-  if (sm_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("No disk storage to spill");
-  }
-  RETURN_UNEXPECTED_IF_NULL(dl);
-  RETURN_UNEXPECTED_IF_NULL(dl->ptr);
-  if (dl->storage_key == 0) {
-    ReadableSlice data(dl->ptr, dl->sz);
-    RETURN_IF_NOT_OK(sm_->Write(&dl->storage_key, {data}));
-  }
-  alloc_.deallocate(dl->ptr, dl->sz);
-  dl->ptr = nullptr;
-  return Status::OK();
-}
-Status CachePool::Locate(CachePool::DataLocator *dl) {
-  RETURN_UNEXPECTED_IF_NULL(dl);
-  if (dl->ptr == nullptr) {
-    if (sm_ == nullptr) {
-      RETURN_STATUS_UNEXPECTED("No disk storage to locate the data");
-    }
-    try {
-      dl->ptr = alloc_.allocate(dl->sz);
-      WritableSlice dest(dl->ptr, dl->sz);
-      Status rc = Read(dl->storage_key, &dest);
-      if (rc.IsError()) {
-        alloc_.deallocate(dl->ptr, dl->sz);
-        dl->ptr = nullptr;
-        return rc;
-      }
-    } catch (const std::bad_alloc &e) {
-      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
-    }
-  }
-  return Status::OK();
-}
-size_t CachePool::GetSize(CachePool::key_type key) const {
+
+Status CachePool::GetDataLocator(key_type key, const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb,
+                                 flatbuffers::Offset<DataLocatorMsg> *out) const {
+  RETURN_UNEXPECTED_IF_NULL(out);
   auto r = tree_->Search(key);
   if (r.second) {
     auto &it = r.first;
-    return it->sz;
+    DataLocatorMsgBuilder bld(*fbb);
+    bld.add_key(key);
+    bld.add_size(it->sz);
+    bld.add_node_id(it->node_id);
+    bld.add_addr(reinterpret_cast<int64_t>(it->ptr));
+    auto offset = bld.Finish();
+    *out = offset;
   } else {
-    return 0;
+    // Key not in the cache.
+    auto offset = CreateDataLocatorMsg(*fbb, key, 0, 0, 0);
+    *out = offset;
   }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

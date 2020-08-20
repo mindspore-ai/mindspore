@@ -271,29 +271,18 @@ Status CacheBase::PrefetchRows(const std::vector<row_id_type> &keys, std::vector
   }
   // Get the rows from the server
   TensorTable ttbl;
-  Status rc = cache_client_->GetRows(prefetch_keys, &ttbl);
-  if (rc.IsOk()) {
-    auto row_it = ttbl.begin();
-    for (auto row_id : prefetch_keys) {
-      auto &row = *row_it;
-      if (row.empty()) {
-        cache_miss->push_back(row_id);
-      }
-      // Put the prefetch row into the pool and wake up any WorkerEntry to wait for the row
-      RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
-      ++row_it;
-    }
-  } else {
-    // In case any thread is waiting for the rows to come back and blocked on a semaphore,
-    // we will put an empty row in the local cache.
-    for (auto row_id : prefetch_keys) {
-      TensorRow row;
-      row.setId(row_id);
-      RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
+  RETURN_IF_NOT_OK(cache_client_->GetRows(prefetch_keys, &ttbl));
+  auto row_it = ttbl.begin();
+  for (auto row_id : prefetch_keys) {
+    auto &row = *row_it;
+    if (row.empty()) {
       cache_miss->push_back(row_id);
     }
+    // Put the prefetch row into the pool and wake up any WorkerEntry to wait for the row
+    RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
+    ++row_it;
   }
-  return rc;
+  return Status::OK();
 }
 
 Status CacheBase::Prefetcher(int32_t worker_id) {
@@ -322,6 +311,16 @@ Status CacheBase::Prefetcher(int32_t worker_id) {
           return rc;
         }
       } while (rc.IsNetWorkError());
+      // In case any thread is waiting for the rows to come back and blocked on a semaphore,
+      // we will put an empty row in the local cache.
+      if (rc.IsError() && AllowCacheMiss()) {
+        for (auto row_id : prefetch_keys) {
+          TensorRow row;
+          row.setId(row_id);
+          RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
+          cache_miss.push_back(row_id);
+        }
+      }
     } else {
       if (AllowCacheMiss()) {
         // This code path is for CacheLookupOp acting as a sampler. If we get a eoe from

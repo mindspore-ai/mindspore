@@ -24,7 +24,6 @@
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
-#include "minddata/dataset/util/storage_container.h"  // lint !e322
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/data_schema.h"
 

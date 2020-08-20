@@ -1,9 +1,22 @@
+add_subdirectory(perf EXCLUDE_FROM_ALL)
 include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 set(MD_FLATBUFFER_OU "${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 ms_build_flatbuffers("de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engine_files ${MD_FLATBUFFER_OU})
 
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
+
+# Try to find numa header file and its library
+find_file(NUMA_HDR NAMES "numa.h")
+
+if (EXISTS ${NUMA_HDR})
+  ADD_DEFINITIONS(-DNUMA_ENABLED)
+  MESSAGE("Numa package found")
+endif ()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  ADD_DEFINITIONS(-DCACHE_LOCAL_CLIENT)
+endif ()
 
 add_library(engine-cache-client OBJECT
     cache_client.cc
@@ -20,8 +33,13 @@ if (ENABLE_CACHE)
       ${CACHE_GRPC_SRCS}
       cache_grpc_server.cc
       cache_arena.cc
+      cache_hw.cc
+      cache_numa.cc
+      cache_pool.cc
       cache_service.cc
-      cache_server.cc)
+      cache_server.cc
+      storage_manager.cc
+      storage_container.cc)
 
   add_executable(cache_server cache_main.cc)
   target_link_libraries(cache_server
@@ -39,6 +57,10 @@ if (ENABLE_CACHE)
     target_link_libraries(cache_server mindspore::glog)
   endif ()
 
+  if (EXISTS ${NUMA_HDR})
+    target_link_libraries(cache_server numa)
+  endif ()
+
   add_executable(cache_admin cache_admin.cc cache_admin_arg.cc)
   target_link_libraries(cache_admin _c_dataengine _c_mindrecord ${PYTHON_LIBRARIES})
 
@@ -49,7 +71,7 @@ if (ENABLE_CACHE)
   add_dependencies(engine-cache-server generated_engine_files)
 
 else ()
-  ms_protobuf_generate(CACHE_PROTO_SRCS CACHE_PRTO_HDRS cache_grpc.proto)
+  ms_protobuf_generate(CACHE_PROTO_SRCS CACHE_PROTO_HDRS cache_grpc.proto)
   target_sources(engine-cache-client PUBLIC ${CACHE_PROTO_SRCS})
 endif ()
 

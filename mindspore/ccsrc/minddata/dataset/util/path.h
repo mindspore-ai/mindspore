@@ -78,6 +78,18 @@ class Path {
 
   Path operator/(const char *);
 
+  bool operator==(const Path &rhs) const { return (path_ == rhs.path_); }
+
+  bool operator!=(const Path &rhs) const { return (path_ != rhs.path_); }
+
+  bool operator<(const Path &rhs) const { return (path_ < rhs.path_); }
+
+  bool operator>(const Path &rhs) const { return (path_ > rhs.path_); }
+
+  bool operator<=(const Path &rhs) const { return (path_ <= rhs.path_); }
+
+  bool operator>=(const Path &rhs) const { return (path_ >= rhs.path_); }
+
   bool Exists();
 
   bool IsDirectory();

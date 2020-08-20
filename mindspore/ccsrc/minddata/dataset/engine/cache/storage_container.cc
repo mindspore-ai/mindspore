@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/util/storage_container.h"
+#include "minddata/dataset/engine/cache/storage_container.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>

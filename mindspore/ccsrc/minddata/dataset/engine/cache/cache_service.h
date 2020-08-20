@@ -29,24 +29,20 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
+#include "minddata/dataset/engine/cache/cache_pool.h"
 #include "minddata/dataset/util/arena.h"
 #include "minddata/dataset/util/btree.h"
-#include "minddata/dataset/util/cache_pool.h"
 #include "minddata/dataset/util/service.h"
 #include "minddata/dataset/util/services.h"
 #include "minddata/dataset/util/system_pool.h"
 
 namespace mindspore {
 namespace dataset {
-/// Some typedef used for BatchFetch
-using key_size_pair = std::pair<CachePool::key_type, size_t>;
 /// \brief A cache service for storing/fetching buffers to in memory cache and may spill to disk the cache service is
 /// created to support spilling
 class CacheService : public Service {
  public:
   friend class CacheServer;
-
-  enum class State : uint8_t { kNone = 0, kBuildPhase, kFetchPhase, kNoLocking };
 
   /// \brief Constructor
   /// \param mem_sz Memory size to be set aside for the in memory cache. 0 means unlimited
@@ -54,11 +50,7 @@ class CacheService : public Service {
   /// \param generate_id If the cache service should generate row id for buffer that is cached.
   /// For non-mappable dataset, this should be set to true.
   CacheService(uint64_t mem_sz, const std::string &root, bool generate_id);
-  ~CacheService();
-
-  /// \brief For fixed size memory, we will create an Arena.
-  /// \return false if unlimited memory.
-  bool UseArena();
+  ~CacheService() override;
 
   Status DoServiceStart() override;
   Status DoServiceStop() override;
@@ -77,18 +69,18 @@ class CacheService : public Service {
   Status FastCacheRow(const ReadableSlice &src, row_id_type *row_id_generated);
 
   /// \brief This function is used in preparation for batch fetching.
-  /// It calculates how much memory we should allocate and which row id are present.
-  /// \param[in/out] Pointer to vector of <CachePool::key_type, size_t>
-  /// \param[in/out] mem_sz how much memory is required to batch fetch
+  /// It calculates how much memory we should allocate and which row id are present, etc.
+  /// All needed results are stored in the flat buffer.
   /// \return Status object
-  Status PreBatchFetch(const std::vector<row_id_type> &v, std::vector<key_size_pair> *, int64_t *mem_sz);
+  Status PreBatchFetch(connection_id_type connection_id, const std::vector<row_id_type> &v,
+                       const std::shared_ptr<flatbuffers::FlatBufferBuilder> &);
 
   /// \brief Main function to fetch rows in batch. The output is a contiguous memory which will be decoded
   /// by the CacheClient. Cache miss is not an error, and will be coded in the output to mark an empty row.
   /// \param[in] v A vector of row id.
   /// \param[out] out A contiguous memory buffer that holds the requested rows.
   /// \return Status object
-  Status BatchFetch(const std::vector<row_id_type> &v, const std::vector<key_size_pair> &, WritableSlice *out) const;
+  Status BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &, WritableSlice *out) const;
 
   /// \brief Getter function
   /// \return Spilling path
@@ -96,7 +88,7 @@ class CacheService : public Service {
   /// \brief A structure returned from the cache server for statistics request.
   class ServiceStat {
    public:
-    using state_type = std::underlying_type<State>::type;
+    using state_type = std::underlying_type<CacheServiceState>::type;
     ServiceStat() : state_(0) {}
     ~ServiceStat() = default;
     CachePool::CacheStat stat_{};
@@ -134,10 +126,6 @@ class CacheService : public Service {
   /// \brief Change from write phase to read phase. Only the creator of this service is allowed to make this call.
   /// \return Status object
   Status BuildPhaseDone();
-  /// \brief Find out the current memory usage
-  int64_t GetMemoryUsage() { return cur_mem_usage_; }
-  /// \brief Find out the current disk usage
-  int64_t GetDiskUsage() { return cur_disk_usage_; }
   /// \brief For kToggleWriteMode request
   Status ToggleWriteMode(bool on_off);
 
@@ -149,14 +137,10 @@ class CacheService : public Service {
   std::atomic<row_id_type> next_id_;
   bool generate_id_;
   std::string cookie_;
-  State st_;
+  std::atomic<int32_t> num_clients_;
+  CacheServiceState st_;
   std::string schema_;
-  // If we use an Arena, cur_disk_usage is always 0 as we don't know how CachePool manages it.
-  // Otherwise we track how much is in memory and how much is on disk (if root_ is not empty).
-  // We use them to control when we should stop caching in memory in the case when there is no
-  // Arena.
-  std::atomic<int64_t> cur_mem_usage_;
-  std::atomic<int64_t> cur_disk_usage_;
+  std::shared_ptr<NumaMemoryPool> numa_pool_;
   // We also cache the result from calling FindKeysMiss because it is expensive. Besides user make
   // this request after we hit memory full or disk full. So the result is unlikely to change.
   std::mutex get_key_miss_mux_;
@@ -164,6 +148,8 @@ class CacheService : public Service {
   /// \brief Private function to generate a row id
   /// \return Row id assigned.
   row_id_type GetNextRowId() { return next_id_.fetch_add(1); }
+
+  Status InternalFetchRow(const FetchRowMsg *p);
 };
 }  // namespace dataset
 }  // namespace mindspore

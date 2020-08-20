@@ -14,6 +14,11 @@
  * limitations under the License.
 */
 #include "minddata/dataset/engine/cache/cache_request.h"
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#include <sched.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 #include <cstdlib>
 #include <thread>
 #include "minddata/dataset/core/constants.h"
@@ -106,6 +111,7 @@ Status CacheRowRequest::PostReply() {
   }
   return Status::OK();
 }
+
 Status CacheRowRequest::Prepare() {
   if (BitTest(rq_.flag(), kDataIsInSharedMemory)) {
     // First one is cookie, followed by address and then size.
@@ -118,10 +124,21 @@ Status CacheRowRequest::Prepare() {
   return Status::OK();
 }
 
-BatchFetchRequest::BatchFetchRequest(connection_id_type connection_id, const std::vector<row_id_type> &row_id,
-                                     bool local_bypass)
-    : BaseRequest(RequestType::kBatchFetchRows), support_local_bypass_(local_bypass), row_id_(row_id) {
-  rq_.set_connection_id(connection_id);
+CacheRowRequest::CacheRowRequest(const CacheClient *cc)
+    : BaseRequest(RequestType::kCacheRow),
+      support_local_bypass_(cc->local_bypass_),
+      addr_(-1),
+      sz_(0),
+      row_id_from_server_(-1) {
+  rq_.set_connection_id(cc->server_connection_id_);
+  rq_.set_client_id(cc->client_id_);
+  rq_.add_buf_data(cc->cookie_);
+}
+
+BatchFetchRequest::BatchFetchRequest(const CacheClient *cc, const std::vector<row_id_type> &row_id)
+    : BaseRequest(RequestType::kBatchFetchRows), support_local_bypass_(cc->local_bypass_), row_id_(row_id) {
+  rq_.set_connection_id(cc->server_connection_id_);
+  rq_.set_client_id(cc->client_id_);
   rq_.set_flag(support_local_bypass_ ? kLocalClientSupport : 0);
   // Convert the row id into a flatbuffer
   flatbuffers::FlatBufferBuilder fbb;
@@ -186,9 +203,9 @@ Status BatchFetchRequest::RestoreRows(TensorTable *out, const void *baseAddr, in
   return Status::OK();
 }
 
-CreateCacheRequest::CreateCacheRequest(const CacheClientInfo &cinfo, uint64_t cache_mem_sz,
+CreateCacheRequest::CreateCacheRequest(CacheClient *cc, const CacheClientInfo &cinfo, uint64_t cache_mem_sz,
                                        CreateCacheRequest::CreateCacheFlag flag)
-    : BaseRequest(RequestType::kCreateCache), cache_mem_sz_(cache_mem_sz), flag_(flag) {
+    : BaseRequest(RequestType::kCreateCache), cache_mem_sz_(cache_mem_sz), flag_(flag), cc_(cc) {
   // Type has been set already in the base constructor. So we need to fill in the connection info.
   // On successful return, we will get the connection id
   rq_.mutable_connection_info()->operator=(cinfo);
@@ -207,6 +224,41 @@ Status CreateCacheRequest::Prepare() {
   } catch (const std::bad_alloc &e) {
     return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
   }
+}
+
+Status CreateCacheRequest::PostReply() {
+  auto p = flatbuffers::GetRoot<CreateCacheReplyMsg>(reply_.result().data());
+  cc_->server_connection_id_ = p->connection_id();
+  cc_->cookie_ = p->cookie()->str();
+  cc_->client_id_ = p->client_id();
+  // Next is a set of cpu id that we should re-adjust ourselves for better affinity.
+  auto sz = p->cpu_id()->size();
+  cc_->cpu_list_.reserve(sz);
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+  std::string c_list;
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+#endif
+  for (auto i = 0; i < sz; ++i) {
+    auto cpu_id = p->cpu_id()->Get(i);
+    cc_->cpu_list_.push_back(cpu_id);
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+    c_list += std::to_string(cpu_id) + " ";
+    CPU_SET(cpu_id, &cpu_set);
+#endif
+  }
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+  if (sz > 0) {
+    auto err = sched_setaffinity(getpid(), sizeof(cpu_set), &cpu_set);
+    if (err == -1) {
+      RETURN_STATUS_UNEXPECTED("Unable to set affinity. Errno = " + std::to_string(errno));
+    }
+    MS_LOG(WARNING) << "Changing cpu affinity to the following list of cpu id: " + c_list;
+  }
+#endif
+
+  return Status::OK();
 }
 
 Status CacheSchemaRequest::SerializeCacheSchemaRequest(const std::unordered_map<std::string, int32_t> &map) {
@@ -245,6 +297,7 @@ Status GetStatRequest::PostReply() {
   stat_.num_disk_cached = msg->num_disk_cached();
   stat_.num_mem_cached = msg->num_mem_cached();
   stat_.avg_cache_sz = msg->avg_cache_sz();
+  stat_.num_numa_hit = msg->num_numa_hit();
   stat_.max_row_id = msg->max_row_id();
   stat_.min_row_id = msg->min_row_id();
   stat_.cache_service_state = msg->state();
@@ -255,14 +308,15 @@ Status ListSessionsRequest::PostReply() {
   auto *msg = flatbuffers::GetRoot<ListSessionsMsg>(reply_.result().data());
   auto session_vector = msg->sessions();
   for (auto i = 0; i < session_vector->size(); ++i) {
-    SessionCacheInfo current_info;
-    CacheServiceStat stats;
+    SessionCacheInfo current_info{};
+    CacheServiceStat stats{};
     auto current_session_info = session_vector->Get(i);
     current_info.session_id = current_session_info->session_id();
     current_info.connection_id = current_session_info->connection_id();
     stats.num_mem_cached = current_session_info->stats()->num_mem_cached();
     stats.num_disk_cached = current_session_info->stats()->num_disk_cached();
     stats.avg_cache_sz = current_session_info->stats()->avg_cache_sz();
+    stats.num_numa_hit = current_session_info->stats()->num_numa_hit();
     stats.min_row_id = current_session_info->stats()->min_row_id();
     stats.max_row_id = current_session_info->stats()->max_row_id();
     stats.cache_service_state = current_session_info->stats()->state();

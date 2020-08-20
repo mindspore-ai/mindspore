@@ -19,11 +19,14 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
+#include "minddata/dataset/engine/cache/cache_common.h"
+#include "minddata/dataset/engine/cache/cache_numa.h"
+#include "minddata/dataset/engine/cache/storage_manager.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/service.h"
 #include "minddata/dataset/util/slice.h"
-#include "minddata/dataset/util/storage_manager.h"
 #include "minddata/dataset/util/auto_index.h"
 #include "minddata/dataset/util/btree.h"
 
@@ -45,13 +48,15 @@ class CachePool : public Service {
   // An internal class to locate the whereabouts of a backed up buffer which can be either in
   class DataLocator {
    public:
-    DataLocator() : ptr(nullptr), sz(0), storage_key(0) {}
+    DataLocator() : ptr(nullptr), sz(0), node_id(0), node_hit(false), storage_key(0) {}
     ~DataLocator() = default;
     DataLocator(const DataLocator &other) = default;
     DataLocator &operator=(const DataLocator &other) = default;
     DataLocator(DataLocator &&other) noexcept {
       ptr = other.ptr;
       sz = other.sz;
+      node_id = other.node_id;
+      node_hit = other.node_hit;
       storage_key = other.storage_key;
       other.ptr = nullptr;
       other.sz = 0;
@@ -61,6 +66,8 @@ class CachePool : public Service {
       if (&other != this) {
         ptr = other.ptr;
         sz = other.sz;
+        node_id = other.node_id;
+        node_hit = other.node_hit;
         storage_key = other.storage_key;
         other.ptr = nullptr;
         other.sz = 0;
@@ -70,6 +77,8 @@ class CachePool : public Service {
     }
     pointer ptr;
     size_t sz;
+    numa_id_t node_id;  // where the numa node the memory is allocated to
+    bool node_hit;      // we can allocate to the preferred node
     StorageManager::key_type storage_key;
   };
 
@@ -85,19 +94,20 @@ class CachePool : public Service {
     int64_t num_mem_cached;
     int64_t num_disk_cached;
     int64_t average_cache_sz;
+    int64_t num_numa_hit;
     std::vector<key_type> gap;
   };
 
   /// \brief Constructor
   /// \param alloc Allocator to allocate memory from
   /// \param root Optional disk folder to spill
-  explicit CachePool(const value_allocator &alloc, bool customArena, const std::string &root = "");
+  explicit CachePool(std::shared_ptr<NumaMemoryPool> mp, const std::string &root = "");
 
   CachePool(const CachePool &) = delete;
   CachePool(CachePool &&) = delete;
   CachePool &operator=(const CachePool &) = delete;
   CachePool &operator=(CachePool &&) = delete;
-  ~CachePool() noexcept;
+  ~CachePool() noexcept override;
 
   Status DoServiceStart() override;
   Status DoServiceStop() override;
@@ -110,7 +120,8 @@ class CachePool : public Service {
   /// \param[in] buf A sequence of ReadableSlice objects.
   /// \param[in] writeToDiskDirectly If true, no spill to disk if spill is enabled, or return no memory
   /// \return Error code
-  Status Insert(key_type key, const std::vector<ReadableSlice> &buf, bool writeToDiskDirectly);
+  Status Insert(CachePool::key_type key, const std::vector<ReadableSlice> &buf);
+
   /// \brief Restore a cached buffer (from memory or disk)
   /// \param[in] key A previous key returned from Insert
   /// \param[out] dest The cached buffer will be copied to this destination represented by a WritableSlice
@@ -118,17 +129,13 @@ class CachePool : public Service {
   /// \return Error code
   Status Read(key_type key, WritableSlice *dest, size_t *bytesRead = nullptr) const;
 
-  Status Spill(DataLocator *dl);
-
-  Status Locate(DataLocator *dl);
-
-  size_t GetSize(key_type key) const;
+  /// \brief Serialize a DataLocator
+  Status GetDataLocator(key_type, const std::shared_ptr<flatbuffers::FlatBufferBuilder> &,
+                        flatbuffers::Offset<DataLocatorMsg> *) const;
 
   /// \brief Get statistics.
   /// \return CacheStat object
   CacheStat GetStat(bool GetMissingKeys = false) const;
-
-  const value_allocator &get_allocator() const;
 
   std::string MyName() const { return subfolder_; }
 
@@ -137,12 +144,11 @@ class CachePool : public Service {
   void SetLocking(bool on_off) { tree_->SetLocking(on_off); }
 
  private:
-  value_allocator alloc_;
+  std::shared_ptr<NumaMemoryPool> mp_;
   Path root_;
   const std::string subfolder_;
   std::shared_ptr<StorageManager> sm_;
   std::shared_ptr<data_index> tree_;
-  bool custom_arena_;
 };
 }  // namespace dataset
 }  // namespace mindspore
