@@ -314,7 +314,7 @@ template <typename T>
 void ParameterServer<T>::ServerHandler::HandleEmbeddingLookup(const ::ps::KVMeta &req_meta,
                                                               const ::ps::KVPairs<T> &req_data, ::ps::KVPairs<T> *res) {
   const Key &key = req_data.keys[0];
-  for (size_t i = 0; i < req_data.keys.size(); i++) {
+  for (size_t i = 1; i < req_data.keys.size(); i++) {
     res->keys.push_back(req_data.keys[i]);
   }
   ps_->DoEmbeddingLookup(key, req_data.keys.segment(1, req_data.keys.size()), res);
