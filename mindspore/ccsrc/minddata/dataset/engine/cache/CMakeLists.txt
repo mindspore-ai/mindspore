@@ -24,9 +24,8 @@ if (ENABLE_CACHE)
   add_executable(cache_server cache_main.cc)
   target_link_libraries(cache_server
       engine-cache-server
-      $<TARGET_OBJECTS:utils>
-      mindspore
-      mindspore::glog
+      _c_dataengine
+      _c_mindrecord
       mindspore::protobuf
       mindspore::grpc++
       mindspore_gvar
@@ -34,8 +33,16 @@ if (ENABLE_CACHE)
       ${SECUREC_LIBRARY}
       pthread)
 
+  if (USE_GLOG)
+    target_link_libraries(cache_server mindspore::glog)
+  endif ()
+
   add_executable(cache_admin cache_admin.cc cache_admin_arg.cc)
-  target_link_libraries(cache_admin _c_dataengine _c_mindrecord ${PYTHON_LIBRARIES} mindspore::glog)
+  target_link_libraries(cache_admin _c_dataengine _c_mindrecord ${PYTHON_LIBRARIES})
+
+  if (USE_GLOG)
+    target_link_libraries(cache_admin mindspore::glog)
+  endif ()
 
   add_dependencies(engine-cache-server generated_engine_files)
 
