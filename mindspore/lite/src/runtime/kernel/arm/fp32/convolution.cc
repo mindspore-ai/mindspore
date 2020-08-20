@@ -68,6 +68,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "malloc bias failed.";
     return RET_ERROR;
   }
+  memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
 
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());

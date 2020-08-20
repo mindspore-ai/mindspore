@@ -297,7 +297,7 @@ int ConvolutionInt8CPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-  /*=============================nhwc4_input_============================*/
+
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_;
   nhwc4_input_ = malloc(nhwc4_input_size);
