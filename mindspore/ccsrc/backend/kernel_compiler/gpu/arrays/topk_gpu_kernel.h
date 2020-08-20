@@ -72,7 +72,7 @@ class TopKGpuKernel : public GpuKernel {
     size_t buffer_size = ceil_power2_ * (sizeof(T) + sizeof(S));
     if (buffer_size > SHARED_MEM_PER_BLOCK) {
       use_share_mem_ = false;
-      MS_LOG(WARNING) << "CUDA share memory not enough, sort with RAM";
+      MS_LOG(INFO) << "CUDA share memory not enough, sort with RAM";
     }
 
     InitSizeLists();
