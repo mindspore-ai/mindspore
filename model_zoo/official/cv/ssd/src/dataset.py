@@ -233,13 +233,14 @@ def create_voc_label(is_training):
                      'id': img_id}
             json_dict['images'].append(image)
 
-            for cls_name, cid in cls_map.items():
-                cat = {'supercategory': 'none', 'id': cid, 'name': cls_name}
-                json_dict['categories'].append(cat)
-            json_fp = open(json_file, 'w')
-            json_str = json.dumps(json_dict)
-            json_fp.write(json_str)
-            json_fp.close()
+    if not is_training:
+        for cls_name, cid in cls_map.items():
+            cat = {'supercategory': 'none', 'id': cid, 'name': cls_name}
+            json_dict['categories'].append(cat)
+        json_fp = open(json_file, 'w')
+        json_str = json.dumps(json_dict)
+        json_fp.write(json_str)
+        json_fp.close()
 
     return images, image_files_dict, image_anno_dict
 
