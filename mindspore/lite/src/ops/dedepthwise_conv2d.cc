@@ -141,8 +141,8 @@ int DeDepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
   pad_u_ = GetPadUp();
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
-  output_h = GetStrideH() * (input_h - 1) * GetKernelH() - pad_u_ - pad_d_;
-  output_w = GetStrideW() * (input_w - 1) * GetKernelW() - pad_l_ - pad_r_;
+  output_h = GetStrideH() * (input_h - 1) + GetKernelH() - pad_u_ - pad_d_;
+  output_w = GetStrideW() * (input_w - 1) + GetKernelW() - pad_l_ - pad_r_;
   if ((output_h + GetPadUp() + GetPadDown() - GetKernelH()) % GetStrideH() != 0) {
     output_h += (output_h + GetPadLeft() + GetPadRight() - GetKernelH()) % GetStrideH();
   }
