@@ -23,7 +23,7 @@
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "utils/ms_context.h"

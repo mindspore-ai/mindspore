@@ -24,7 +24,7 @@
 #include "ir/func_graph.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/parse.h"
-#include "./common.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace UT {
 

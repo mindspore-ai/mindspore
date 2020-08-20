@@ -19,7 +19,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
 

@@ -19,7 +19,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace opt {

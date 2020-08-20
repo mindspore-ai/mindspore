@@ -23,7 +23,7 @@
 
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace opt {

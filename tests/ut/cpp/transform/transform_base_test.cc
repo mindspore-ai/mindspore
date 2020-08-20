@@ -17,6 +17,7 @@
 #include "common/common_test.h"
 #include "transform/transform_base_test.h"
 #include "pybind_api/ir/tensor_py.h"
+#include "pipeline/jit/parse/resolve.h"
 
 using mindspore::tensor::TensorPy;
 

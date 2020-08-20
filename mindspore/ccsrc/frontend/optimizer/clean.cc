@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include "./common.h"
 #include "debug/trace.h"
 #include "frontend/operator/composite/composite.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 /* namespace to support opt */

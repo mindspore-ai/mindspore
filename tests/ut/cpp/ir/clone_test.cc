@@ -24,7 +24,6 @@
 #include "pipeline/jit/parse/parse.h"
 #include "ir/graph_utils.h"
 #include "debug/draw.h"
-#include "./common.h"
 
 namespace mindspore {
 class TestCloner : public UT::Common {

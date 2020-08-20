@@ -21,7 +21,7 @@
 #include <unordered_map>
 
 #include "ir/graph_utils.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel_build_info.h"

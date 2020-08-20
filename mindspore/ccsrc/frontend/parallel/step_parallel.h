@@ -26,7 +26,6 @@
 #include <utility>
 #include <set>
 
-#include "./common.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"

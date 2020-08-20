@@ -20,7 +20,7 @@
 #include <set>
 #include <string>
 #include <list>
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
 #include "common/trans.h"

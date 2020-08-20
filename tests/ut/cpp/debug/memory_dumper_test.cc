@@ -17,7 +17,6 @@
 #include <iostream>
 #include <memory>
 #include "common/common_test.h"
-#include "./common.h"
 #include "utils/system/file_system.h"
 #include "utils/system/env.h"
 #define private public

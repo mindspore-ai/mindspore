@@ -25,7 +25,7 @@
 #include "utils/utils.h"
 #include "base/base_ref.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"

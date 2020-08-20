@@ -27,7 +27,6 @@
 #include "utils/symbolic.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
-#include "./common.h"
 #include "utils/ms_context.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "ops/state_ops.h"

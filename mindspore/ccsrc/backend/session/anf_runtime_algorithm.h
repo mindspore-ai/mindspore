@@ -31,7 +31,7 @@
 #include "runtime/device/device_address.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
-#include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 #include "utils/contract.h"
 #include "backend/session/kernel_graph.h"
 

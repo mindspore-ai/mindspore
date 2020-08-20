@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 
+#include "pipeline/jit/parse/python_adapter.h"
+
 using mindspore::tensor::Tensor;
 
 namespace mindspore {
