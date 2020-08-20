@@ -211,8 +211,11 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       start_index = end_index + 1;
       continue;
     }
+    auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    auto graph_id = kernel_graph->graph_id();
     AnfNodePtr new_communication_op =
       CreateFusedCommunicationOp(func_graph, communication_op_info, start_index, end_index);
+    AnfAlgo::SetGraphId(graph_id, new_communication_op.get());
     // replace old communication op with new communication op
     for (auto idx = start_index; idx <= end_index; ++idx) {
       std::vector<AnfNodePtr> tuple_getitem_input;
