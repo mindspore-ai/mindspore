@@ -50,13 +50,12 @@ int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto fill_prim = this->primitive->value_as_Fill();
-  if (fill_prim == nullptr) {
-    MS_LOG(ERROR) << "Fill primitive is null!";
-    return RET_ERROR;
-  }
+
   std::vector<int> output_shape;
-  (void)output_shape.insert(output_shape.begin(), fill_prim->dims()->begin(), fill_prim->dims()->end());
+  for (int i = 0; i < GetDims().size(); i++) {
+    output_shape.push_back(GetDims()[i]);
+  }
+//  (void)output_shape.insert(output_shape.begin(), GetDims().begin(), GetDims().end());
   output->set_shape(output_shape);
   return RET_OK;
 }

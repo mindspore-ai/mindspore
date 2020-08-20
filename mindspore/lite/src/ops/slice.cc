@@ -30,7 +30,7 @@ int SliceOp::GetFormat() const { return this->primitive->value.AsSlice()->format
 std::vector<int> SliceOp::GetBegin() const { return this->primitive->value.AsSlice()->begin; }
 std::vector<int> SliceOp::GetSize() const { return this->primitive->value.AsSlice()->size; }
 
-void SliceOp::SetFormat(int format) { this->primitive->value.AsSlice()->format = format; }
+void SliceOp::SetFormat(int format) { this->primitive->value.AsSlice()->format = (schema::Format)format; }
 void SliceOp::SetBegin(const std::vector<int> &begin) { this->primitive->value.AsSlice()->begin = begin; }
 void SliceOp::SetSize(const std::vector<int> &size) { this->primitive->value.AsSlice()->size = size; }
 

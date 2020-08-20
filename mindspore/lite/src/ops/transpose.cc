@@ -52,14 +52,17 @@ int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   }
   MS_ASSERT(inputs_.size() == kSingleNum);
   MS_ASSERT(outputs_.size() == kSingleNum);
-  auto transpore_prim = this->primitive->value_as_Transpose();
-  int conjugate = transpore_prim->conjugate();
+
+  int conjugate = GetConjugate();
   if (conjugate) {
     MS_LOG(ERROR) << "Transpose conjugate is not support currently";
     return RET_ERROR;
   }
   std::vector<int> perm;
-  perm.insert(perm.begin(), transpore_prim->perm()->begin(), transpore_prim->perm()->end());
+  for (int i = 0; i < GetPerm().size(); i++) {
+    perm.push_back(GetPerm()[i]);
+  }
+//  perm.insert(perm.begin(), GetPerm().begin(), GetPerm().end());
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
   out_shape.resize(perm.size());

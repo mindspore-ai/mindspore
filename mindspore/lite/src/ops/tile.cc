@@ -24,6 +24,10 @@ std::vector<int> Tile::GetMultiples() const { return this->primitive->value.AsTi
 
 void Tile::SetMultiples(const std::vector<int> &multiples) { this->primitive->value.AsTile()->multiples = multiples; }
 
+std::vector<int> Tile::GetDims() const { return this->primitive->value.AsTile()->multiples; }
+
+void Tile::SetDims(const std::vector<int> &dims) { this->primitive->value.AsTile()->dims = dims; }
+
 #else
 
 std::vector<int> Tile::GetMultiples() const {
@@ -32,6 +36,13 @@ std::vector<int> Tile::GetMultiples() const {
 }
 
 void Tile::SetMultiples(const std::vector<int> &multiples) {}
+
+std::vector<int> Tile::GetDims() const {
+  auto fb_vector = this->primitive->value_as_Tile()->dims();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+
+void Tile::SetDims(const std::vector<int> &dims) {}
 #endif
 
 int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
@@ -45,11 +56,14 @@ int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto tile_prim = this->primitive->value_as_Tile();
+
   MS_ASSERT(tile_prim != nullptr);
   std::vector<int> out_shape;
   std::vector<int> multiples;
-  std::copy(tile_prim->multiples()->begin(), tile_prim->multiples()->end(), std::back_inserter(multiples));
+  for (int i = 0; i < GetMultiples().size(); ++i) {
+    multiples.push_back(GetMultiples()[i]);
+  }
+//  std::copy(GetMultiples().begin(), GetMultiples().end(), std::back_inserter(multiples));
   for (size_t i = 0; i < input->shape().size(); ++i) {
     int tmp = input->shape()[i] * multiples[i];
     out_shape.push_back(tmp);

@@ -24,7 +24,7 @@ int SpaceToDepth::GetBlockSize() const { return this->primitive->value.AsSpaceTo
 int SpaceToDepth::GetFormat() const { return this->primitive->value.AsSpaceToDepth()->format; }
 
 void SpaceToDepth::SetBlockSize(int block_size) { this->primitive->value.AsSpaceToDepth()->blockSize = block_size; }
-void SpaceToDepth::SetFormat(int format) { this->primitive->value.AsSpaceToDepth()->format = format; }
+void SpaceToDepth::SetFormat(int format) { this->primitive->value.AsSpaceToDepth()->format = (schema::Format)format; }
 
 #else
 

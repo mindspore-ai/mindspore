@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include "src/ops/constant_of_shape.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
-#include "src/ops/constant_of_shape.h"
 
 namespace mindspore::lite {
 namespace {
@@ -25,9 +25,9 @@ constexpr int kShapeInputNum = 1;
 constexpr int kShapeOutputNum = 1;
 }  // namespace
 #ifdef PRIMITIVE_WRITEABLE
-int ConstantOfShape::GetValue() const { return this->primitive->value.AsConstantOfShape()->Value; }
+float ConstantOfShape::GetValue() const { return this->primitive->value.AsConstantOfShape()->value; }
 
-void ConstantOfShape::SetValue(float value) { this->primitive->value.AsConstantOfShape()->Value = value; }
+void ConstantOfShape::SetValue(float value) { this->primitive->value.AsConstantOfShape()->value = value; }
 
 #else
 
