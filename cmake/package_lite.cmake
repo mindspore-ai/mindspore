@@ -7,15 +7,9 @@ set(OPENCV_DIR ${MAIN_DIR}/third_party/opencv)
 set(PROTOBF_DIR ${MAIN_DIR}/third_party/protobuf)
 set(FLATBF_DIR ${MAIN_DIR}/third_party/flatbuffers)
 
-install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${INC_DIR} COMPONENT ${COMPONENT_NAME} PATTERN "*.h")
-install(DIRECTORY ${TOP_DIR}/mindspore/lite/schema/ DESTINATION ${INC_DIR}/schema COMPONENT ${COMPONENT_NAME} PATTERN "*.h")
-install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${INC_DIR}/ir/dtype COMPONENT ${COMPONENT_NAME})
-
 install(FILES ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so DESTINATION ${LIB_DIR} COMPONENT ${COMPONENT_NAME})
-
-
 if (BUILD_MINDDATA)
-    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${INC_DIR} COMPONENT ${COMPONENT_NAME} PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
  	install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${LIB_DIR} COMPONENT ${COMPONENT_NAME})
 
     install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so DESTINATION ${TURBO_DIR}/lib COMPONENT ${COMPONENT_NAME})
@@ -36,13 +30,20 @@ if (BUILD_MINDDATA)
 endif ()
 
 if (PLATFORM_ARM64)
+    install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${INC_DIR}/ir/dtype COMPONENT ${COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/schema/ DESTINATION ${INC_DIR}/schema COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "inner" EXCLUDE)
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/runtime/kernel/arm/nnacl/liboptimize.so DESTINATION ${LIB_DIR} COMPONENT ${COMPONENT_NAME})
-elseif (NOT PLATFORM_ARM32)
-    install(DIRECTORY ${TOP_DIR}/third_party/protobuf/build/include DESTINATION ${PROTOBF_DIR} COMPONENT ${COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/third_party/flatbuffers/include DESTINATION ${FLATBF_DIR} COMPONENT ${COMPONENT_NAME})
+elseif (PLATFORM_ARM32)
+    install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${INC_DIR}/ir/dtype COMPONENT ${COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/schema/ DESTINATION ${INC_DIR}/schema COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "inner" EXCLUDE)
+    install(DIRECTORY ${TOP_DIR}/third_party/flatbuffers/include DESTINATION ${FLATBF_DIR} COMPONENT ${COMPONENT_NAME})
+else ()
     install(FILES ${TOP_DIR}/third_party/protobuf/build/lib/libprotobuf.so.19.0.0 DESTINATION ${PROTOBF_DIR}/lib RENAME libprotobuf.so.19 COMPONENT ${COMPONENT_NAME})
-endif ()
 
-install(DIRECTORY ${TOP_DIR}/third_party/flatbuffers/include DESTINATION ${FLATBF_DIR} COMPONENT ${COMPONENT_NAME})
+endif ()
 
 set(CPACK_GENERATOR TGZ)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
