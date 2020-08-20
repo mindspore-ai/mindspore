@@ -112,7 +112,6 @@ int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
-  // attribute
   int slices = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   cl_int4 input_shape = {in_tensors_[0]->Height(), in_tensors_[0]->Width(), in_tensors_[0]->Channel(), slices};
   cl_int4 output_shape = {out_tensors_[0]->Height(), out_tensors_[0]->Width(), out_tensors_[0]->Channel(), slices};
@@ -120,7 +119,6 @@ int PoolingOpenCLKernel::Run() {
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
 
-  // binding parameters
   int arg_idx = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
@@ -130,14 +128,12 @@ int PoolingOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, padding);
 
-  // set work group size
   std::vector<size_t> local_size;
   std::vector<size_t> global_size = InitGlobalSize();
   int max_work_group_size = ocl_runtime->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime->Device())());
   local_size = GetCommonLocalSize(global_size, max_work_group_size);
   global_size = GetCommonGlobalSize(local_size, global_size);
 
-  // run opengl kernel
   ocl_runtime->RunKernel(kernel_, global_size, local_size, nullptr);
   return RET_OK;
 }

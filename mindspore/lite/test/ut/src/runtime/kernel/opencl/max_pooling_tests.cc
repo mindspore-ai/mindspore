@@ -46,7 +46,7 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
   auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "PoolingParameter";
-  auto param = new PoolingParameter;
+  auto param = new (std::nothrow) PoolingParameter;
   InitParameter(param);
 
   // define tensor
@@ -56,21 +56,39 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
   auto data_type = kNumberTypeFloat32;
   auto tensorType = schema::NodeType_ValueNode;
   MS_LOG(INFO) << "define tensor2";
-  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensorType);
-  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensorType);
+  auto input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensorType);
+  auto output_tensor =
+    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensorType);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "input_tensor null";
+    return;
+  }
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "output_tensor null";
+    return;
+  }
   MS_LOG(INFO) << "define input";
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
 
   // run
   MS_LOG(INFO) << "pooling_kernel";
-  auto *pooling_kernel = new kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto *pooling_kernel =
+    new (std::nothrow) kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (pooling_kernel == nullptr) {
+    MS_LOG(ERROR) << "pooling_kernel null";
+    return;
+  }
   MS_LOG(INFO) << "pooling_kernel init";
   pooling_kernel->Init();
 
   std::vector<kernel::LiteKernel *> kernels{pooling_kernel};
   inputs[0]->MallocData(allocator);
-  auto *pGraph = new kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *pGraph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (pGraph == nullptr) {
+    MS_LOG(ERROR) << "pGraph null";
+    return;
+  }
   MS_LOG(INFO) << "pGraph init";
   pGraph->Init();
 
