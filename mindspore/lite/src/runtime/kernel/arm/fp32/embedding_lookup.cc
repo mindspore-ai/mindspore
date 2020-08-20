@@ -49,40 +49,6 @@ int EmbeddingLookupCPUKernel::ReSize() {
     embedding_lookup_parameter_->layer_num_ += in_tensors_[i]->shape()[0];
   }
 
-  if (input_addr_ != nullptr) {
-    free(input_addr_);
-  }
-  if (context_ != nullptr && context_->allocator != nullptr) {
-    input_addr_ = reinterpret_cast<float *>(context_->allocator->Malloc(
-      sizeof(float) * embedding_lookup_parameter_->layer_size_ * embedding_lookup_parameter_->layer_num_));
-  } else {
-    input_addr_ = reinterpret_cast<float *>(
-      malloc(sizeof(float) * embedding_lookup_parameter_->layer_size_ * embedding_lookup_parameter_->layer_num_));
-  }
-  if (input_addr_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed";
-    return RET_ERROR;
-  }
-
-  if (embedding_lookup_parameter_->is_regulated_ != nullptr) {
-    free(embedding_lookup_parameter_->is_regulated_);
-  }
-  if (context_ != nullptr && context_->allocator != nullptr) {
-    embedding_lookup_parameter_->is_regulated_ =
-      reinterpret_cast<bool *>(context_->allocator->Malloc(sizeof(bool) * embedding_lookup_parameter_->layer_num_));
-  } else {
-    embedding_lookup_parameter_->is_regulated_ =
-      reinterpret_cast<bool *>(malloc(sizeof(bool) * embedding_lookup_parameter_->layer_num_));
-  }
-  if (embedding_lookup_parameter_->is_regulated_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed";
-    return RET_ERROR;
-  }
-
-  for (int i = 0; i < embedding_lookup_parameter_->layer_num_; ++i) {
-    embedding_lookup_parameter_->is_regulated_[i] = embedding_lookup_parameter_->max_norm_ == 0;
-  }
-
   return RET_OK;
 }
 
@@ -111,6 +77,22 @@ int EmbeddingLookupCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
+
+  MS_ASSERT(context_->allocator != nullptr);
+  input_addr_ = reinterpret_cast<float *>(context_->allocator->Malloc(
+    sizeof(float) * embedding_lookup_parameter_->layer_size_ * embedding_lookup_parameter_->layer_num_));
+  embedding_lookup_parameter_->is_regulated_ =
+    reinterpret_cast<bool *>(context_->allocator->Malloc(sizeof(bool) * embedding_lookup_parameter_->layer_num_));
+  if (input_addr_ == nullptr || embedding_lookup_parameter_->is_regulated_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    context_->allocator->Free(input_addr_);
+    context_->allocator->Free(embedding_lookup_parameter_->is_regulated_);
+    return RET_ERROR;
+  }
+  for (int i = 0; i < embedding_lookup_parameter_->layer_num_; ++i) {
+    embedding_lookup_parameter_->is_regulated_[i] = embedding_lookup_parameter_->max_norm_ == 0;
+  }
+
   int dest_loc = 0;
   for (int i = 0; i < in_tensors_.size() - 1; i++) {
     auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->Data());
@@ -121,11 +103,12 @@ int EmbeddingLookupCPUKernel::Run() {
   ids_addr_ = reinterpret_cast<int *>(in_tensors_.back()->Data());
 
   auto ret = LiteBackendParallelLaunch(EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
+  context_->allocator->Free(input_addr_);
+  context_->allocator->Free(embedding_lookup_parameter_->is_regulated_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "EmbeddingLookup error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
-  return RET_OK;
+  return ret;
 }
 
 kernel::LiteKernel *CpuEmbeddingLookupFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

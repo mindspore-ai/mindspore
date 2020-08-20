@@ -29,19 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-void ArithmeticCPUKernel::FreeTileData() {
-  if (tile_data0_ != nullptr) {
-    delete[](tile_data0_);
-    tile_data0_ = nullptr;
-  }
-  if (tile_data1_ != nullptr) {
-    delete[](tile_data1_);
-    tile_data1_ = nullptr;
-  }
-}
-
-ArithmeticCPUKernel::~ArithmeticCPUKernel() { FreeTileData(); }
-
 int ArithmeticCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -50,7 +37,6 @@ int ArithmeticCPUKernel::Init() {
 }
 
 int ArithmeticCPUKernel::ReSize() {
-  FreeTileData();
   arithmeticParameter_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
   arithmeticParameter_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();
@@ -75,12 +61,6 @@ int ArithmeticCPUKernel::ReSize() {
       }
     }
   }
-
-  if (arithmeticParameter_->broadcasting_) {
-    tile_data0_ = new float[arithmeticParameter_->out_elements_num_];
-    tile_data1_ = new float[arithmeticParameter_->out_elements_num_];
-  }
-
   return RET_OK;
 }
 
@@ -144,14 +124,27 @@ int ArithmeticCPUKernel::Run() {
   if (arithmeticParameter_->broadcasting_) {
     auto input_data0 = reinterpret_cast<float *>(in_tensors_[0]->Data());
     auto input_data1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
+    auto length = arithmeticParameter_->out_elements_num_ * sizeof(float);
+    MS_ASSERT(context_->allocator != nullptr);
+    tile_data0_ = reinterpret_cast<float *>(context_->allocator->Malloc(length));
+    tile_data1_ = reinterpret_cast<float *>(context_->allocator->Malloc(length));
+    if (tile_data0_ == nullptr || tile_data1_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      context_->allocator->Free(tile_data0_);
+      context_->allocator->Free(tile_data1_);
+      return RET_ERROR;
+    }
     TileDimensions(input_data0, input_data1, tile_data0_, tile_data1_, arithmeticParameter_);
   }
-  int error_code = LiteBackendParallelLaunch(ArithmeticsRun, this, thread_count_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Arithmetic function error error_code[" << error_code << "]";
-    return RET_ERROR;
+  ret = LiteBackendParallelLaunch(ArithmeticsRun, this, thread_count_);
+  if (arithmeticParameter_->broadcasting_) {
+    context_->allocator->Free(tile_data0_);
+    context_->allocator->Free(tile_data1_);
   }
-  return RET_OK;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Arithmetic function error error_code[" << ret << "]";
+  }
+  return ret;
 }
 
 kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

@@ -51,11 +51,18 @@ int BiasCPUKernel::Run() {
   auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  auto tile_in = new float[data_size];
-  auto tile_bias = new float[data_size];
+  MS_ASSERT(context_->allocator != nullptr);
+  float *tile_in = reinterpret_cast<float *>(context_->allocator->Malloc(data_size * sizeof(float)));
+  float *tile_bias = reinterpret_cast<float *>(context_->allocator->Malloc(data_size * sizeof(float)));
+  if (tile_in == nullptr || tile_bias == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    context_->allocator->Free(tile_in);
+    context_->allocator->Free(tile_bias);
+    return RET_ERROR;
+  }
   BroadcastAdd(in, bias, tile_in, tile_bias, out, data_size, bias_param_);
-  delete[] tile_in;
-  delete[] tile_bias;
+  context_->allocator->Free(tile_in);
+  context_->allocator->Free(tile_bias);
   return RET_OK;
 }
 

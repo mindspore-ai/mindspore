@@ -81,35 +81,6 @@ int SubInt8CPUKernel::Init() {
 }
 
 int SubInt8CPUKernel::ReSize() {
-  if (broadcast_) {
-    if (tile0_data_ != nullptr) {
-      if (context_ != nullptr && context_->allocator != nullptr) {
-        context_->allocator->Free(tile0_data_);
-      } else {
-        free(tile0_data_);
-      }
-    }
-    if (tile1_data_ != nullptr) {
-      if (context_ != nullptr && context_->allocator != nullptr) {
-        context_->allocator->Free(tile1_data_);
-      } else {
-        free(tile1_data_);
-      }
-    }
-
-    if (context_ != nullptr && context_->allocator != nullptr) {
-      tile0_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
-      tile1_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
-    } else {
-      tile0_data_ = static_cast<int8_t *>(malloc(sizeof(int8_t) * out_tensors_.at(0)->Size()));
-      tile1_data_ = static_cast<int8_t *>(malloc(sizeof(int8_t) * out_tensors_.at(0)->Size()));
-    }
-
-    if (tile0_data_ == nullptr || tile1_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc memroy fail!";
-      return RET_ERROR;
-    }
-  }
   return RET_OK;
 }
 
@@ -164,17 +135,27 @@ int SubInt8CPUKernel::Run() {
       tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
       tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
+    tile0_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    tile1_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    if (tile0_data_ == nullptr || tile1_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc memroy fail!";
+      context_->allocator->Free(tile0_data_);
+      context_->allocator->Free(tile1_data_);
+      return RET_ERROR;
+    }
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->Data()),
                         static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(tile0_data_),
                         reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
   }
   ret = LiteBackendParallelLaunch(SubInt8Run, this, op_parameter_->thread_num_);
-
+  if (broadcast_) {
+    context_->allocator->Free(tile0_data_);
+    context_->allocator->Free(tile1_data_);
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SubInt8Run function error error_code[" << ret << "]";
-    return RET_ERROR;
   }
-  return RET_OK;
+  return ret;
 }
 
 kernel::LiteKernel *CpuSubInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

@@ -166,7 +166,7 @@ class ArithmeticCPUKernel : public LiteKernel {
         break;
     }
   }
-  ~ArithmeticCPUKernel() override;
+  ~ArithmeticCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
@@ -174,7 +174,6 @@ class ArithmeticCPUKernel : public LiteKernel {
   int DoArithmetic(int task_id);
 
  private:
-  void FreeTileData();
   int thread_count_;
   float *tile_data0_ = nullptr;
   float *tile_data1_ = nullptr;

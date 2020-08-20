@@ -62,30 +62,8 @@ int SoftmaxInt8CPUKernel::Init() {
   return ReSize();
 }
 
-void SoftmaxInt8CPUKernel::FreeTmpBuffer() {
-  if (exp_data_ != nullptr) {
-    free(exp_data_);
-    exp_data_ = nullptr;
-  }
-  if (sum_data_ != nullptr) {
-    free(sum_data_);
-    sum_data_ = nullptr;
-  }
-}
-
 int SoftmaxInt8CPUKernel::ReSize() {
-  auto ret = SoftmaxBaseCPUKernel::ReSize();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  FreeTmpBuffer();
-  exp_data_ = reinterpret_cast<int *>(malloc(softmax_param_->element_size_ * sizeof(int)));
-  int inner_size = 1;
-  for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
-    inner_size *= softmax_param_->input_shape_[i];
-  }
-  sum_data_ = reinterpret_cast<int *>(malloc(inner_size * sizeof(int)));
-  return RET_OK;
+  return SoftmaxBaseCPUKernel::ReSize();
 }
 
 int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
@@ -132,12 +110,24 @@ int SoftmaxInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
-
-  int error_code = LiteBackendParallelLaunch(SoftmaxRun, this, thread_count_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Softmax function error error_code[" << error_code << "]";
+  exp_data_ = reinterpret_cast<int *>(context_->allocator->Malloc(softmax_param_->element_size_ * sizeof(int)));
+  int inner_size = 1;
+  for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
+    inner_size *= softmax_param_->input_shape_[i];
+  }
+  sum_data_ = reinterpret_cast<int *>(context_->allocator->Malloc(inner_size * sizeof(int)));
+  if (exp_data_ == nullptr || sum_data_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    context_->allocator->Free(exp_data_);
+    context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  return RET_OK;
+  ret = LiteBackendParallelLaunch(SoftmaxRun, this, thread_count_);
+  context_->allocator->Free(exp_data_);
+  context_->allocator->Free(sum_data_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Softmax function error error_code[" << ret << "]";
+  }
+  return ret;
 }
 }  // namespace mindspore::kernel

@@ -47,32 +47,6 @@ int ArithmeticsInt8Launch(int thread_id, LiteParallelGroupEnv *penv, void *cdata
 }
 }  // namespace
 
-void ArithmeticInt8CPUKernel::FreeTileData() {
-  auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
-  if (!param->broadcasting_) {
-    return;
-  }
-  if (context_->allocator != nullptr) {
-    if (tile_data0_ != nullptr) {
-      context_->allocator->Free(tile_data0_);
-    }
-    if (tile_data1_ != nullptr) {
-      context_->allocator->Free(tile_data1_);
-    }
-  } else {
-    if (tile_data0_ != nullptr) {
-      free(tile_data0_);
-    }
-    if (tile_data1_ != nullptr) {
-      free(tile_data1_);
-    }
-  }
-  tile_data0_ = nullptr;
-  tile_data1_ = nullptr;
-}
-
-ArithmeticInt8CPUKernel::~ArithmeticInt8CPUKernel() { FreeTileData(); }
-
 int ArithmeticInt8CPUKernel::Init() {
   switch (op_parameter_->type_) {
     case PrimitiveType_Equal:
@@ -121,21 +95,6 @@ int ArithmeticInt8CPUKernel::Init() {
 }
 
 int ArithmeticInt8CPUKernel::ReSize() {
-  FreeTileData();
-  auto data_size = out_tensors_[0]->Size();
-  auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
-  if (param->broadcasting_) {
-    if (context_->allocator != nullptr) {
-      tile_data0_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(data_size));
-      tile_data1_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(data_size));
-    } else {
-      tile_data0_ = reinterpret_cast<int8_t *>(malloc(data_size));
-      tile_data1_ = reinterpret_cast<int8_t *>(malloc(data_size));
-    }
-  } else {
-    tile_data0_ = nullptr;
-    tile_data1_ = nullptr;
-  }
   return RET_OK;
 }
 
@@ -182,14 +141,25 @@ int ArithmeticInt8CPUKernel::Run() {
   if (param->broadcasting_) {
     auto input_data0 = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
     auto input_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
+    tile_data0_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(out_tensors_[0]->Size()));
+    tile_data1_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(out_tensors_[0]->Size()));
+    if (tile_data0_ == nullptr || tile_data1_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      context_->allocator->Free(tile_data0_);
+      context_->allocator->Free(tile_data1_);
+      return RET_ERROR;
+    }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  int error_code = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Arithmetic launch function fail! ret: " << error_code;
-    return RET_ERROR;
+  ret = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
+  if (param->broadcasting_) {
+    context_->allocator->Free(tile_data0_);
+    context_->allocator->Free(tile_data1_);
   }
-  return RET_OK;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Arithmetic launch function fail! ret: " << ret;
+  }
+  return ret;
 }
 
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
