@@ -123,7 +123,11 @@ int ConvolutionDepthwiseCPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
 
   // init sliding window param
-  sliding_ = new SlidingWindowParam;
+  sliding_ = new (std::nothrow) SlidingWindowParam;
+  if (sliding_ == nullptr) {
+    MS_LOG(ERROR) << "new sliding window param failed.";
+    return RET_ERROR;
+  }
   InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
 
   auto ret = InitWeightBias();

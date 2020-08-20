@@ -54,7 +54,6 @@ int ConvolutionCPUKernel::InitWeightBias() {
   // #endif
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
-  // =====================init weight==========================//
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->Data());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
@@ -64,7 +63,6 @@ int ConvolutionCPUKernel::InitWeightBias() {
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   PackWeightFp32(origin_weight, conv_param_, packed_weight_, oc_block, oc_block_num);
 
-  // =======================init bias==========================//
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias failed.";
@@ -84,7 +82,6 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   int out_channel = conv_param_->output_channel_;
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  /*=============================tmp_output_block_============================*/
   tmp_output_block_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(TILE_NUM * out_channel * sizeof(float)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp output block failed.";
@@ -125,7 +122,6 @@ int ConvolutionCPUKernel::ReSize() {
     return ret;
   }
 
-  FreeTmpBuffer();
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
@@ -140,7 +136,6 @@ int ConvolutionCPUKernel::ReSize() {
     return RET_ERROR;
   }
 
-  /*=============================nhwc4_input_============================*/
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   size_t nhwc4_input_size =
     ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
@@ -151,7 +146,6 @@ int ConvolutionCPUKernel::ReSize() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  /*=============================packed_input============================*/
   int output_count = conv_param_->output_h_ * conv_param_->output_w_;
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
   int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * ic4 * C4NUM;
@@ -192,7 +186,7 @@ int ConvolutionCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  // ============Init buffer using memory pool allocator=============//
+
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
@@ -264,8 +258,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
     kernel =
       new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
   } else if (use_sw) {
-    // kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-    kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   }

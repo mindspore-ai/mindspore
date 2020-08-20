@@ -96,7 +96,6 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   int unit_size = kernel_plane * channel_block * C4NUM;
   int packed_input_size = output_tile_count * cal_num * unit_size;
 
-  /*=============================packed_input_============================*/
   packed_input_ = reinterpret_cast<float16_t *>(malloc(in_batch * packed_input_size * sizeof(float16_t)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_input_ failed.";
@@ -104,7 +103,6 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   }
   memset(packed_input_, 0, in_batch * packed_input_size * sizeof(float16_t));
 
-  /*=============================nhwc4_input_============================*/
   size_t nhwc4_input_size = channel_block * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ *
                             conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = malloc(nhwc4_input_size);
@@ -114,7 +112,6 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  /*=============================tmp_output_block_============================*/
   tmp_output_block_ = reinterpret_cast<float16_t *>(malloc(cal_num * out_channel * sizeof(float16_t)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_output_block_ failed.";

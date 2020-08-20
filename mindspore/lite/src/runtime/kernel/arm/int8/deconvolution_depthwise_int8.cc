@@ -28,7 +28,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
-DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() { FreeTmpBuffer(); }
+DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
+  FreeTmpBuffer();
+  FreeQuantParam();
+}
 
 void DeconvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
   if (sliding != nullptr) {

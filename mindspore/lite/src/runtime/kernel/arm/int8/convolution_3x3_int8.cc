@@ -117,7 +117,6 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   int output_h = conv_param_->output_h_;
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  /*=============================block_unit_buffer_============================*/
   size_t block_unit_buffer_size = thread_count_ * 4 * 4 * C8NUM * sizeof(int16_t);
   block_unit_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
@@ -125,7 +124,6 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  /*=============================tmp_dst_buffer_============================*/
   size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * 16 * oc4 * C4NUM * sizeof(int32_t);
   tmp_dst_buffer_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
@@ -133,7 +131,6 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  /*=============================tmp_out_============================*/
   size_t tmp_out_size = oc4 * C4NUM * output_batch * output_w * output_h * sizeof(uint8_t);
   tmp_out_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(tmp_out_size));
   if (tmp_out_ == nullptr) {
@@ -174,7 +171,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
     return ret;
   }
 
-  FreeTmpBuffer();
   if (input_data_ != nullptr) {
     free(input_data_);
     input_data_ = nullptr;
@@ -190,7 +186,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
     return RET_ERROR;
   }
 
-  /*=============================input_data_============================*/
   int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   size_t c8_input_size =
     conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * ic8 * C8NUM * sizeof(int16_t);
@@ -201,7 +196,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
   }
   memset(input_data_, 0, c8_input_size);
 
-  /*=============================tile_buffer_============================*/
   size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * ic8 * C8NUM * sizeof(int16_t);
   tile_buffer_ = reinterpret_cast<int16_t *>(malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {

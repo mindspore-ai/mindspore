@@ -20,8 +20,12 @@
 namespace mindspore::kernel {
 Matrix *TransformMatrixGenerator(int m, int k) {
   auto matrix = new Matrix;
-  auto aa = malloc(m * k * sizeof(float));
-  matrix->SetData(aa);
+  auto data = malloc(m * k * sizeof(float));
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Malloc matrix data failed.";
+    return nullptr;
+  }
+  matrix->SetData(data);
   matrix->SetNum(m, k);
   return matrix;
 }

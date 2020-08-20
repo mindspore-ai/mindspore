@@ -43,7 +43,6 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
   int oc_block_num = UP_DIV(output_channel, C4NUM);
   int pack_weight_size = oc_block_num * oc_block * ic4 * C4NUM * kernel_plane;
 
-  // ==================================init weight======================================//
   auto origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->Data());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
@@ -61,7 +60,6 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
     }
   }
 
-  // ====================================init bias====================================== //
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias failed.";
@@ -82,7 +80,6 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
   int oc4 = UP_DIV(out_channel, C4NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  /*=============================tmp_output_block_============================*/
   tmp_output_block_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(
     conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc4 * C4NUM * sizeof(float)));
   if (tmp_output_block_ == nullptr) {
@@ -119,10 +116,13 @@ int ConvolutionSWCPUKernel::ReSize() {
     return ret;
   }
 
-  FreeTmpBuffer();
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
+  }
+  if (slidingWindow_param_ != nullptr) {
+    delete slidingWindow_param_;
+    slidingWindow_param_ = nullptr;
   }
 
   ret = ConvolutionBaseCPUKernel::Init();
@@ -130,7 +130,7 @@ int ConvolutionSWCPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-  /*=============================nhwc4_input_============================*/
+
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   size_t nhwc4_input_size =
     ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);

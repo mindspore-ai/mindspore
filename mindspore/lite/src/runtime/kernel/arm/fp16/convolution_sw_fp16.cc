@@ -71,7 +71,6 @@ int ConvolutionSWFP16CPUKernel::InitWeightBias() {
   int kernel_plane = kernel_h * kernel_w;
   int pack_weight_size = oc4 * ic4 * C4NUM * C4NUM * kernel_plane;
 
-  // ========================init weight==================== //
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -84,7 +83,6 @@ int ConvolutionSWFP16CPUKernel::InitWeightBias() {
     return ret;
   }
 
-  // =======================init bias====================== //
   bias_data_ = malloc(oc4 * C4NUM * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
@@ -107,7 +105,6 @@ int ConvolutionSWFP16CPUKernel::InitTmpBuffer() {
   int out_channel = conv_param_->output_channel_;
   int oc4 = UP_DIV(out_channel, C4NUM);
 
-  /*=============================tmp_output_block_============================*/
   tmp_output_block_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(
     conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc4 * C4NUM * sizeof(float16_t)));
   if (tmp_output_block_ == nullptr) {
@@ -148,10 +145,13 @@ int ConvolutionSWFP16CPUKernel::ReSize() {
     return ret;
   }
 
-  FreeTmpBuffer();
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
+  }
+  if (slidingWindow_param_ != nullptr) {
+    delete slidingWindow_param_;
+    slidingWindow_param_ = nullptr;
   }
 
   ret = ConvolutionBaseCPUKernel::Init();
@@ -160,10 +160,9 @@ int ConvolutionSWFP16CPUKernel::ReSize() {
     return ret;
   }
 
-  /*=============================nhwc4_input_============================*/
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  size_t nhwc4_input_size = ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ *
-                            conv_param_->input_w_ * sizeof(float16_t);
+  size_t nhwc4_input_size =
+    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = malloc(nhwc4_input_size);
   if (nhwc4_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
