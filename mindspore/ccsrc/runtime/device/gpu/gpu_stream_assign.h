@@ -41,7 +41,8 @@ struct StreamSwitchNode {
     if (offset < n.offset) {
       return true;
     } else if (offset == n.offset) {
-      return AnfAlgo::GetCNodeName(cnode) == kSendOpName ? true : false;
+      return (AnfAlgo::GetCNodeName(cnode) == kRecvOpName && AnfAlgo::GetCNodeName(n.cnode) == kSendOpName) ? false
+                                                                                                            : true;
     } else {
       return false;
     }
