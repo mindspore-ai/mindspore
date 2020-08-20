@@ -160,6 +160,9 @@ class SharedMemory : public BaseIPC {
   /// \brief Set the public key
   void SetPublicKey(key_t public_key) { shm_key_ = public_key; }
 
+  /// \brief Retrieve the key
+  shm_key_t GetKey() const { return shm_key_; }
+
   /// \brief This returns where we attach to the shared memory.
   /// \return Base address of the shared memory.
   const void *SharedMemoryBaseAddr() const { return shmat_addr_; }

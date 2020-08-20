@@ -20,6 +20,7 @@
 #include <unistd.h>
 #endif
 #include <cstdlib>
+#include <cstring>
 #include <thread>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
@@ -326,5 +327,11 @@ Status ListSessionsRequest::PostReply() {
 
   return Status::OK();
 }
+
+Status ServerStopRequest::PostReply() {
+  CHECK_FAIL_RETURN_UNEXPECTED(strcmp(reply_.result().data(), "OK") == 0, "Not the right response");
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

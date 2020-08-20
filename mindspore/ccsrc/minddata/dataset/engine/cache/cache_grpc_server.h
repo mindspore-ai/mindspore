@@ -87,6 +87,9 @@ class CacheServerGreeterImpl final {
   /// \return Return the shared memory pool
   CachedSharedMemoryArena *GetSharedMemoryPool() { return shm_pool_.get(); }
 
+  /// \brief Montor the status of the unix socket in case it is gone.
+  Status MonitorUnixSocket();
+
   void Shutdown();
 
  private:
@@ -97,6 +100,7 @@ class CacheServerGreeterImpl final {
   std::unique_ptr<grpc::ServerCompletionQueue> cq_;
   std::unique_ptr<grpc::Server> server_;
   std::unique_ptr<CachedSharedMemoryArena> shm_pool_;
+  SharedMemory::shm_key_t shm_key_;
 };
 }  // namespace dataset
 }  // namespace mindspore

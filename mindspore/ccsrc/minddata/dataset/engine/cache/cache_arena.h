@@ -72,6 +72,9 @@ class CachedSharedMemoryArena : public MemoryPool {
     return os;
   }
 
+  /// \brief Get the shared memory key of the shared memory
+  SharedMemory::shm_key_t GetKey() const { return shm_.GetKey(); }
+
  private:
   mutable std::mutex mux_;
   int32_t val_in_GB_;

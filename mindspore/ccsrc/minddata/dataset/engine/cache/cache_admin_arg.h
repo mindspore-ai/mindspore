@@ -78,7 +78,7 @@ class CacheAdminArgHandler {
     kArgNumArgs = 14  // Must be the last position to provide a count
   };
 
-  Status StartStopServer(CommandId);
+  Status StartServer(CommandId command_id);
 
   Status AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);

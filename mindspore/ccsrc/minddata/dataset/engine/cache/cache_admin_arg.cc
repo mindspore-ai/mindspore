@@ -27,6 +27,8 @@
 #include <vector>
 #include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
+#include "minddata/dataset/engine/cache/cache_server.h"
+#include "minddata/dataset/engine/cache/cache_ipc.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/core/constants.h"
 
@@ -325,9 +327,33 @@ Status CacheAdminArgHandler::RunCommand() {
       Help();
       break;
     }
-    case CommandId::kCmdStart:
+    case CommandId::kCmdStart: {
+      RETURN_IF_NOT_OK(StartServer(command_id_));
+      break;
+    }
     case CommandId::kCmdStop: {
-      RETURN_IF_NOT_OK(StartStopServer(command_id_));
+      CacheClientGreeter comm(hostname_, port_, 1);
+      RETURN_IF_NOT_OK(comm.ServiceStart());
+      SharedMessage msg;
+      RETURN_IF_NOT_OK(msg.Create());
+      auto rq = std::make_shared<ServerStopRequest>(msg.GetMsgQueueId());
+      RETURN_IF_NOT_OK(comm.HandleRequest(rq));
+      Status rc = rq->Wait();
+      if (rc.IsError()) {
+        msg.RemoveResourcesOnExit();
+        if (rc.IsNetWorkError()) {
+          std::string errMsg = "Server is not up or has been shutdown already.";
+          return Status(StatusCode::kNetWorkError, errMsg);
+        }
+        return rc;
+      }
+      // OK return code only means the server acknowledge our request but we still
+      // have to wait for its complete shutdown because the server will shutdown
+      // the comm layer as soon as the request is received, and we need to wait
+      // on the message queue instead.
+      // The server will remove the queue and we will then wake up.
+      Status dummy_rc;
+      (void)msg.ReceiveStatus(&dummy_rc);
       break;
     }
     case CommandId::kCmdGenerateSession: {
@@ -396,7 +422,7 @@ Status CacheAdminArgHandler::RunCommand() {
   return Status::OK();
 }
 
-Status CacheAdminArgHandler::StartStopServer(CommandId command_id) {
+Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   // There currently does not exist any "install path" or method to identify which path the installed binaries will
   // exist in. As a temporary approach, we will assume that the server binary shall exist in the same path as the
   // cache_admin binary (this process).
@@ -477,23 +503,15 @@ Status CacheAdminArgHandler::StartStopServer(CommandId command_id) {
     std::string memory_cap_ratio_string = std::to_string(memory_cap_ratio_);
 
     char *argv[9];
-    if (command_id == CommandId::kCmdStart) {
-      argv[0] = cache_server_binary.data();
-      argv[1] = spill_dir_.data();
-      argv[2] = workers_string.data();
-      argv[3] = port_string.data();
-      argv[4] = shared_memory_string.data();
-      argv[5] = minloglevel_string.data();
-      argv[6] = daemonize_string.data();
-      argv[7] = memory_cap_ratio_string.data();
-      argv[8] = nullptr;
-    } else {
-      // We are doing a --stop. Change the name to '-' and we also need the port number.
-      // The rest we don't need.
-      argv[0] = std::string("-").data();
-      argv[1] = port_string.data();
-      argv[2] = nullptr;
-    }
+    argv[0] = cache_server_binary.data();
+    argv[1] = spill_dir_.data();
+    argv[2] = workers_string.data();
+    argv[3] = port_string.data();
+    argv[4] = shared_memory_string.data();
+    argv[5] = minloglevel_string.data();
+    argv[6] = daemonize_string.data();
+    argv[7] = memory_cap_ratio_string.data();
+    argv[8] = nullptr;
 
     // Now exec the binary
     execv(cache_server_binary.data(), argv);
@@ -509,17 +527,27 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "Syntax:\n";
   std::cerr << "   cache_admin [--start | --stop]\n";
   std::cerr << "               [ [-h | --hostname] <hostname> ]\n";
+  std::cerr << "                     Default is " << kCfgDefaultCacheHost << ".\n";
   std::cerr << "               [ [-p | --port] <port number> ]\n";
+  std::cerr << "                     Possible values are in range [1025..65535].\n";
+  std::cerr << "                     Default is " << kCfgDefaultCachePort << ".\n";
   std::cerr << "               [ [-g | --generate_session] ]\n";
   std::cerr << "               [ [-d | --destroy_session] <session id> ]\n";
   std::cerr << "               [ [-w | --workers] <number of workers> ]\n";
+  std::cerr << "                     Possible values are in range [1...max(100, Number of CPU)].\n";
+  std::cerr << "                     Default is " << kDefaultNumWorkers << ".\n";
   std::cerr << "               [ [-s | --spilldir] <spilling directory> ]\n";
+  std::cerr << "                     Default is " << kDefaultSpillDir << ".\n";
   std::cerr << "               [ [-l | --minloglevel] <log level> ]\n";
+  std::cerr << "                     Possible values are 0, 1, 2 and 3.\n";
+  std::cerr << "                     Default is 1 (info level).\n";
   std::cerr << "               [ --list_sessions ]\n";
   // Do not expose these option to the user via help or documentation, but the options do exist to aid with
   // development and tuning.
   // std::cerr << "               [ [-m | --shared_memory_size] <shared memory size> ]\n";
+  // std::cerr << "                     Default is " << kDefaultSharedMemorySizeInGB << " (Gb in unit).\n";
   // std::cerr << "               [ [-r | --memory_cap_ratio] <float percent value>]\n";
+  // std::cerr << "                     Default is " << kMemoryCapRatio << ".\n";
   std::cerr << "               [--help]" << std::endl;
 }
 }  // namespace dataset

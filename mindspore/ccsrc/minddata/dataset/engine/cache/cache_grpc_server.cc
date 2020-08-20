@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+#include <chrono>
 #include <limits>
 #include "minddata/dataset/engine/cache/cache_grpc_server.h"
 #include "minddata/dataset/engine/cache/cache_server.h"
 #include "minddata/dataset/util/path.h"
+#include "minddata/dataset/util/task_manager.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
 #else
@@ -25,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 CacheServerGreeterImpl::CacheServerGreeterImpl(int32_t port, int32_t shared_memory_sz_in_gb)
-    : port_(port), shm_pool_sz_in_gb_(shared_memory_sz_in_gb) {
+    : port_(port), shm_pool_sz_in_gb_(shared_memory_sz_in_gb), shm_key_(-1) {
   // Setup a path for unix socket.
   unix_socket_ = PortToUnixSocketPath(port);
   // We can't generate the ftok key yet until the unix_socket_ is created
@@ -73,7 +75,8 @@ Status CacheServerGreeterImpl::Run() {
     MS_LOG(INFO) << "Server listening on " << server_address;
 #if CACHE_LOCAL_CLIENT
     RETURN_IF_NOT_OK(CachedSharedMemoryArena::CreateArena(&shm_pool_, port_, shm_pool_sz_in_gb_));
-    MS_LOG(INFO) << "Creation of local socket and shared memory successful";
+    shm_key_ = shm_pool_->GetKey();
+    MS_LOG(INFO) << "Creation of local socket and shared memory successful. Shared memory key " << shm_key_;
     auto cs = CacheServer::GetInstance().GetHWControl();
     // This shared memory is a hot memory and we will interleave among all the numa nodes.
     cs->InterleaveMemory(const_cast<void *>(shm_pool_->SharedMemoryBaseAddr()), shm_pool_sz_in_gb_ * 1073741824L);
@@ -180,6 +183,33 @@ void CacheServerRequest::Print(std::ostream &out) const {
   }
   out << " ";
   BaseRequest::Print(out);
+}
+
+Status CacheServerGreeterImpl::MonitorUnixSocket() {
+  TaskManager::FindMe()->Post();
+#if CACHE_LOCAL_CLIENT
+  Path p(unix_socket_);
+  do {
+    RETURN_IF_INTERRUPTED();
+    // If the unix socket is recreated for whatever reason, this server instance will be stale and
+    // no other process and communicate with us. In this case we need to shutdown ourselves.
+    if (p.Exists()) {
+      SharedMemory::shm_key_t key;
+      RETURN_IF_NOT_OK(PortToFtok(port_, &key));
+      if (key != shm_key_) {
+        std::string errMsg = "Detecting unix socket has changed. Previous key " + std::to_string(shm_key_) +
+                             ". New key " + std::to_string(key) + ". Shutting down server";
+        MS_LOG(ERROR) << errMsg;
+        RETURN_STATUS_UNEXPECTED(errMsg);
+      }
+    } else {
+      MS_LOG(WARNING) << "Unix socket is removed.";
+      TaskManager::WakeUpWatchDog();
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+  } while (true);
+#endif
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -87,6 +87,7 @@ class WritableSlice : public ReadableSlice {
  public:
   friend class StorageContainer;
   friend class CacheService;
+  friend class CacheServer;
   /// \brief Default constructor
   WritableSlice() : ReadableSlice(), mutable_data_(nullptr) {}
   /// \brief This form of a constructor takes a pointer and its size.

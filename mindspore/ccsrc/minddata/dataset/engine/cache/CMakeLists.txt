@@ -62,7 +62,7 @@ if (ENABLE_CACHE)
   endif ()
 
   add_executable(cache_admin cache_admin.cc cache_admin_arg.cc)
-  target_link_libraries(cache_admin _c_dataengine _c_mindrecord ${PYTHON_LIBRARIES})
+  target_link_libraries(cache_admin _c_dataengine _c_mindrecord mindspore::protobuf ${PYTHON_LIBRARIES} pthread)
 
   if (USE_GLOG)
     target_link_libraries(cache_admin mindspore::glog)

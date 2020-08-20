@@ -75,13 +75,6 @@ class CacheService : public Service {
   Status PreBatchFetch(connection_id_type connection_id, const std::vector<row_id_type> &v,
                        const std::shared_ptr<flatbuffers::FlatBufferBuilder> &);
 
-  /// \brief Main function to fetch rows in batch. The output is a contiguous memory which will be decoded
-  /// by the CacheClient. Cache miss is not an error, and will be coded in the output to mark an empty row.
-  /// \param[in] v A vector of row id.
-  /// \param[out] out A contiguous memory buffer that holds the requested rows.
-  /// \return Status object
-  Status BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &, WritableSlice *out) const;
-
   /// \brief Getter function
   /// \return Spilling path
   Path GetSpillPath() const;
