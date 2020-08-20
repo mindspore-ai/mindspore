@@ -26,6 +26,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint
 from mindspore.train.quant import quant
+from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
 from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
@@ -35,7 +36,6 @@ from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_quant
 from src.crossentropy import CrossEntropy
-from src.utils import _load_param_into_net
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     # weight init and load checkpoint file
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
-        _load_param_into_net(net, param_dict)
+        load_nonquant_param_into_quant_net(net, param_dict)
         epoch_size = config.epoch_size - config.pretrained_epoch_size
     else:
         for _, cell in net.cells_and_names():

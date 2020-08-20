@@ -22,11 +22,12 @@ import os
 import argparse
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train.serialization import load_checkpoint
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.quant import quant
+from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
 from src.dataset import create_dataset
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion
@@ -54,10 +55,11 @@ if __name__ == "__main__":
 
     # load quantization aware network checkpoint
     param_dict = load_checkpoint(args.ckpt_path)
-    load_param_into_net(network, param_dict)
+    load_nonquant_param_into_quant_net(network, param_dict)
 
     # convert fusion network to quantization aware network
-    network = quant.convert_quant_network(network, quant_delay=900, per_channel=[True, False], symmetric=[False, False])
+    network = quant.convert_quant_network(network, quant_delay=900, bn_fold=False, per_channel=[True, False],
+                                          symmetric=[False, False])
 
     # define network loss
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")

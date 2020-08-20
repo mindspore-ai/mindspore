@@ -20,12 +20,11 @@ import argparse
 from src.config import quant_set, config_quant, config_noquant
 from src.dataset import create_dataset
 from src.crossentropy import CrossEntropy
-from src.utils import _load_param_into_net
 from models.resnet_quant import resnet50_quant
 
 from mindspore import context
 from mindspore.train.model import Model
-from mindspore.train.serialization import load_checkpoint
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.quant import quant
 
 parser = argparse.ArgumentParser(description='Image classification')
@@ -66,7 +65,9 @@ if __name__ == '__main__':
     # load checkpoint
     if args_opt.checkpoint_path:
         param_dict = load_checkpoint(args_opt.checkpoint_path)
-        _load_param_into_net(net, param_dict)
+        not_load_param = load_param_into_net(net, param_dict)
+        if not_load_param:
+            raise ValueError("Load param into net fail!")
     net.set_train(False)
 
     # define model

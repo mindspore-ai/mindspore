@@ -93,65 +93,6 @@ Get the MNIST from scratch dataset.
 ds_train = create_dataset(os.path.join(args.data_path, "train"), 
                           cfg.batch_size, cfg.epoch_size)
 step_size = ds_train.get_dataset_size()
-```
-
-### Train model
-
-Load the Lenet fusion network, training network using loss `nn.SoftmaxCrossEntropyWithLogits` with optimization `nn.Momentum`.
-
-```Python
-# Define the network
-network = LeNet5Fusion(cfg.num_classes)
-# Define the loss
-net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
-# Define optimization
-net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
-
-# Define model using loss and optimization.
-time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
-config_ck = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                             keep_checkpoint_max=cfg.keep_checkpoint_max)
-ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
-model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
-```
-
-Now we can start training.
-
-```Python
-model.train(cfg['epoch_size'], ds_train, 
-            callbacks=[time_cb, ckpoint_cb, LossMonitor()],
-            dataset_sink_mode=args.dataset_sink_mode)
-```
-
-After all the following we will get the loss value of each step as following:
-
-```bash
->>> Epoch: [  1/ 10] step: [  1/ 900], loss: [2.3040/2.5234], time: [1.300234]
->>> ...
->>> Epoch: [ 9/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
->>> Epoch: [ 9/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
->>> Epoch: [ 9/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
-```
-
-Also, you can just run this command instead.
-
-```python
-python train.py --data_path MNIST_Data --device_target Ascend
-```
-
-### Evaluate fusion model
-
-After training epoch stop. We can get the fusion model checkpoint file like `checkpoint_lenet.ckpt`. Meanwhile, we can evaluate this fusion model.
-
-```python
-python eval.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
-```
-
-The top1 accuracy would display on shell.
-
-```bash
->>> Accuracy: 98.53.
-```
 
 ## Train quantization aware model
 

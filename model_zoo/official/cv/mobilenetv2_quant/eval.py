@@ -68,7 +68,9 @@ if __name__ == '__main__':
     # load checkpoint
     if args_opt.checkpoint_path:
         param_dict = load_checkpoint(args_opt.checkpoint_path)
-        load_param_into_net(network, param_dict)
+        not_load_param = load_param_into_net(network, param_dict)
+        if not_load_param:
+            raise ValueError("Load param into net fail!")
     network.set_train(False)
 
     # define model
