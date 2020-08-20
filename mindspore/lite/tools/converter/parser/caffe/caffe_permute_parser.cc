@@ -24,7 +24,7 @@ STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
-  std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
+  std::unique_ptr<schema::TransposeT> attr = std::make_unique<schema::TransposeT>();
   const caffe::PermuteParameter permuteParam = proto.permute_param();
 
   const int num_order_dims = permuteParam.order_size();

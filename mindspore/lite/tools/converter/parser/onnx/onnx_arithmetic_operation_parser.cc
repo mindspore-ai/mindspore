@@ -22,7 +22,7 @@ namespace lite {
 STATUS OnnxAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx AddParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::AddT> attr(new schema::AddT());
+    std::unique_ptr<schema::AddT> attr = std::make_unique<schema::AddT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Add;
     op->primitive->value.value = attr.release();
@@ -33,7 +33,7 @@ STATUS OnnxAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SubParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::SubT> attr(new schema::SubT());
+    std::unique_ptr<schema::SubT> attr = std::make_unique<schema::SubT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Sub;
     op->primitive->value.value = attr.release();
@@ -44,7 +44,7 @@ STATUS OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxMulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx MulParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::MulT> attr(new schema::MulT());
+    std::unique_ptr<schema::MulT> attr = std::make_unique<schema::MulT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Mul;
     op->primitive->value.value = attr.release();
@@ -55,7 +55,7 @@ STATUS OnnxMulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DivParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::DivT> attr(new schema::DivT());
+    std::unique_ptr<schema::DivT> attr = std::make_unique<schema::DivT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Div;
     op->primitive->value.value = attr.release();
@@ -67,7 +67,7 @@ STATUS OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
   MS_LOG(DEBUG) << "onnx PowParser";
   if (op != nullptr) {
     // TODO(wangzhe) attr power need populate
-    std::unique_ptr<schema::PowerT> attr(new schema::PowerT());
+    std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Power;
     op->primitive->value.value = attr.release();
@@ -78,7 +78,7 @@ STATUS OnnxEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx EqualParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::EqualT> attr(new schema::EqualT());
+    std::unique_ptr<schema::EqualT> attr = std::make_unique<schema::EqualT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Equal;
     op->primitive->value.value = attr.release();
@@ -89,7 +89,7 @@ STATUS OnnxEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
 STATUS OnnxLessParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx LessParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::LessT> attr(new schema::LessT());
+    std::unique_ptr<schema::LessT> attr = std::make_unique<schema::LessT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Less;
     op->primitive->value.value = attr.release();
@@ -100,7 +100,7 @@ STATUS OnnxGreaterParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx GreaterParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::GreaterT> attr(new schema::GreaterT());
+    std::unique_ptr<schema::GreaterT> attr = std::make_unique<schema::GreaterT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Greater;
     op->primitive->value.value = attr.release();
@@ -111,7 +111,7 @@ STATUS OnnxGreaterParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
 STATUS OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx MinParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::MinT> attr(new schema::MinT());
+    std::unique_ptr<schema::MinT> attr = std::make_unique<schema::MinT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Min;
     op->primitive->value.value = attr.release();
@@ -122,7 +122,7 @@ STATUS OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx EltwiseParser";
-  std::unique_ptr<schema::EltwiseT> attr(new schema::EltwiseT());
+  std::unique_ptr<schema::EltwiseT> attr = std::make_unique<schema::EltwiseT>();
   // there is no Prod in onnx
   if (onnx_node.op_type() == "Sum") {
     attr->mode = schema::EltwiseMode_SUM;
@@ -142,7 +142,7 @@ STATUS OnnxFloorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx FloorParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::FloorT> attr(new schema::FloorT());
+    std::unique_ptr<schema::FloorT> attr = std::make_unique<schema::FloorT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Floor;
     op->primitive->value.value = attr.release();
@@ -152,7 +152,7 @@ STATUS OnnxFloorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
 STATUS OnnxAbsParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx AbsParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::AbsT> attr(new schema::AbsT());
+    std::unique_ptr<schema::AbsT> attr = std::make_unique<schema::AbsT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Abs;
     op->primitive->value.value = attr.release();
@@ -162,7 +162,7 @@ STATUS OnnxAbsParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx NegParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::NegT> attr(new schema::NegT());
+    std::unique_ptr<schema::NegT> attr = std::make_unique<schema::NegT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Neg;
     op->primitive->value.value = attr.release();
@@ -172,7 +172,7 @@ STATUS OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ExpParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::ExpT> attr(new schema::ExpT());
+    std::unique_ptr<schema::ExpT> attr = std::make_unique<schema::ExpT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Exp;
     op->primitive->value.value = attr.release();
@@ -182,7 +182,7 @@ STATUS OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx CosParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::CosT> attr(new schema::CosT());
+    std::unique_ptr<schema::CosT> attr = std::make_unique<schema::CosT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Cos;
     op->primitive->value.value = attr.release();
@@ -192,7 +192,7 @@ STATUS OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SinParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::SinT> attr(new schema::SinT());
+    std::unique_ptr<schema::SinT> attr = std::make_unique<schema::SinT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Sin;
     op->primitive->value.value = attr.release();
@@ -202,7 +202,7 @@ STATUS OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxSqrtParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SqrtParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::SqrtT> attr(new schema::SqrtT());
+    std::unique_ptr<schema::SqrtT> attr = std::make_unique<schema::SqrtT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Sqrt;
     op->primitive->value.value = attr.release();
@@ -212,7 +212,7 @@ STATUS OnnxSqrtParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 STATUS OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx CeilParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::CeilT> attr(new schema::CeilT());
+    std::unique_ptr<schema::CeilT> attr = std::make_unique<schema::CeilT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Ceil;
     op->primitive->value.value = attr.release();
@@ -222,7 +222,7 @@ STATUS OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 STATUS OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx LogParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::LogT> attr(new schema::LogT());
+    std::unique_ptr<schema::LogT> attr = std::make_unique<schema::LogT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Log;
     op->primitive->value.value = attr.release();
@@ -232,7 +232,7 @@ STATUS OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx TanParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::TanT> attr(new schema::TanT());
+    std::unique_ptr<schema::TanT> attr = std::make_unique<schema::TanT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Tan;
     op->primitive->value.value = attr.release();
@@ -242,7 +242,7 @@ STATUS OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 STATUS OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx AtanParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::AtanT> attr(new schema::AtanT());
+    std::unique_ptr<schema::AtanT> attr = std::make_unique<schema::AtanT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Atan;
     op->primitive->value.value = attr.release();
@@ -252,7 +252,7 @@ STATUS OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 STATUS OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx AsinParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::AsinT> attr(new schema::AsinT());
+    std::unique_ptr<schema::AsinT> attr = std::make_unique<schema::AsinT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Asin;
     op->primitive->value.value = attr.release();

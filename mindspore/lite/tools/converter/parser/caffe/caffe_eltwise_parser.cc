@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                  schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::EltwiseT> attr(new schema::EltwiseT());
+  std::unique_ptr<schema::EltwiseT> attr = std::make_unique<schema::EltwiseT>();
   if (proto.bottom_size() < ELTWISE_MIN_INPUT_SIZE) {
     MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
                   << proto.bottom_size();

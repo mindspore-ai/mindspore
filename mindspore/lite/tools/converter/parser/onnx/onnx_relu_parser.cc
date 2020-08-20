@@ -22,7 +22,7 @@ namespace mindspore {
 namespace lite {
 STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReluParser";
-  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
   const auto &relu_type = onnx_node.op_type();
   if (relu_type == "Relu") {
     attr->type = schema::ActivationType_RELU;
@@ -45,7 +45,7 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     MS_LOG(ERROR) << "input num is not 2";
     return RET_PARAM_INVALID;
   }
-  std::unique_ptr<schema::CaffePReLUT> attr(new schema::CaffePReLUT());
+  std::unique_ptr<schema::CaffePReLUT> attr = std::make_unique<schema::CaffePReLUT>();
   std::vector<onnx::TensorProto> params;
   const auto &input_name = onnx_node.input(1);
   for (const auto &it : onnx_graph.initializer()) {

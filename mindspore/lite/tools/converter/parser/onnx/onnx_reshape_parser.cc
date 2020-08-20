@@ -23,7 +23,7 @@ namespace lite {
 STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReshapeParser";
-  std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
+  std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
   attr->format = schema::Format_NCHW;
   std::vector<onnx::TensorProto> params;
   // TODO(wangzhe) shape may also come from other op, there need refactor to introduce tensor_cache

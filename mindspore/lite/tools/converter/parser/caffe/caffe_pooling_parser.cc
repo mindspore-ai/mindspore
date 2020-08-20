@@ -27,7 +27,7 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
+  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
   attr->format = schema::Format_NCHW;
 
   const caffe::PoolingParameter poolingParam = proto.pooling_param();

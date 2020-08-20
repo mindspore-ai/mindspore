@@ -24,7 +24,7 @@ STATUS OnnxShapeParser::Parse(const onnx::GraphProto &onnx_graph,
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ShapeParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::ShapeT> attr(new schema::ShapeT());
+    std::unique_ptr<schema::ShapeT> attr = std::make_unique<schema::ShapeT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Shape;
     op->primitive->value.value = attr.release();

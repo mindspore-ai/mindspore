@@ -26,7 +26,7 @@ STATUS OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx BiasAddParser";
-  std::unique_ptr<schema::BiasAddT> attr(new schema::BiasAddT());
+  std::unique_ptr<schema::BiasAddT> attr = std::make_unique<schema::BiasAddT>();
   // use channel dim as axis
   attr->axis = {1};
   if (op != nullptr) {

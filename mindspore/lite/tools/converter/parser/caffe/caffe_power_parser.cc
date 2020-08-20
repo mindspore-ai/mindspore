@@ -27,7 +27,7 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto,
                                const caffe::LayerParameter &weight,
                                schema::CNodeT *op,
                                std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::PowerT> attr(new schema::PowerT());
+  std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
   const caffe::PowerParameter powerParam = proto.power_param();
   if (proto.has_power_param()) {
     attr->power = powerParam.has_power() ? powerParam.power() : CAFFE_POWER_DEFAULT_POWER;

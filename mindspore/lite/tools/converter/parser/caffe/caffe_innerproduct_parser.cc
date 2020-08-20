@@ -22,7 +22,7 @@ namespace lite {
 STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                       schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   const caffe::InnerProductParameter innerProductParam = proto.inner_product_param();
-  std::unique_ptr<schema::FullConnectionT> attr(new schema::FullConnectionT());
+  std::unique_ptr<schema::FullConnectionT> attr = std::make_unique<schema::FullConnectionT>();
 
   if (!innerProductParam.has_num_output()) {
     // MS_LOGE("InnerProduct Parse num_output for %s failed.", proto.name().c_str());

@@ -23,7 +23,7 @@ STATUS OnnxSigmoidParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SigmoidParser";
-  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
   attr->type = schema::ActivationType_SIGMOID;
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();

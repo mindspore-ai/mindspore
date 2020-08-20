@@ -26,7 +26,7 @@ schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_
   } else if (onnx_node_attr.s() == "VALID") {
     return schema::PadMode_VALID;
   } else {
-    // MS_LOGE("unsupported padMode");
+    MS_LOG(ERROR) << "unsupported padMode";
     return schema::PadMode_NOTSET;
   }
 }

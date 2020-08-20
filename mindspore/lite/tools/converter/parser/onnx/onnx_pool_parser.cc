@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PoolParser";
-  std::unique_ptr<schema::PoolingT> attr(new schema::PoolingT());
+  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
 
   attr->format = schema::Format_NCHW;
   const auto &pool_type = onnx_node.op_type();

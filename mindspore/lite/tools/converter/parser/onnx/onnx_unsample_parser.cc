@@ -23,7 +23,7 @@ STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph,
                                  const onnx::NodeProto &onnx_node,
                                  schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx UpsampleParser";
-  std::unique_ptr<schema::UpsampleT> attr(new schema::UpsampleT());
+  std::unique_ptr<schema::UpsampleT> attr = std::make_unique<schema::UpsampleT>();
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {

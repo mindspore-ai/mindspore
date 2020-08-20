@@ -23,7 +23,7 @@ STATUS OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph,
                                const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx GatherParser";
-  std::unique_ptr<schema::GatherT> attr(new schema::GatherT());
+  std::unique_ptr<schema::GatherT> attr = std::make_unique<schema::GatherT>();
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto& attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {

@@ -32,7 +32,7 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
                                    schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
   // caffe batch norm attr
-  std::unique_ptr<schema::BatchNormT> attr(new schema::BatchNormT());
+  std::unique_ptr<schema::BatchNormT> attr = std::make_unique<schema::BatchNormT>();
   const caffe::BatchNormParameter batchNormParam = proto.batch_norm_param();
 
   // check bottom size

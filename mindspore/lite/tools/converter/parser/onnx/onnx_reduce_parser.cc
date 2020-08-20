@@ -23,7 +23,7 @@ STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph,
                                const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReduceParser";
-  std::unique_ptr<schema::ReduceT> attr(new schema::ReduceT());
+  std::unique_ptr<schema::ReduceT> attr = std::make_unique<schema::ReduceT>();
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {

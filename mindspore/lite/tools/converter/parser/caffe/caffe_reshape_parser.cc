@@ -23,7 +23,7 @@ STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::ReshapeT> attr(new schema::ReshapeT());
+  std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
   attr->format = schema::Format_NCHW;
 
   const caffe::ReshapeParameter reshapeParam = proto.reshape_param();

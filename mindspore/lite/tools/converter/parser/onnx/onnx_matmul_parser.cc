@@ -22,7 +22,7 @@ namespace lite {
 STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx MatMulParser";
-  std::unique_ptr<schema::MatMulT> attr(new schema::MatMulT());
+  std::unique_ptr<schema::MatMulT> attr = std::make_unique<schema::MatMulT>();
   float alpha = 1.0f;
   float beta = 1.0f;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {

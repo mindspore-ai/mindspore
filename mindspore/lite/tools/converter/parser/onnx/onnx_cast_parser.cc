@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 STATUS OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx CastParser";
-  std::unique_ptr<schema::CastT> attr(new schema::CastT());
+  std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "to") {

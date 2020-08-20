@@ -24,7 +24,7 @@ void CaffeConvolutionParser::ParseGroupConvolution(schema::CNodeT *op, schema::C
   if (attr == nullptr || attr->group == 1) {
     return;
   }
-  std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam(new schema::DepthwiseConv2DT());
+  std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
   if (depthwiseConv2DParam == nullptr) {
     // MS_LOGW("new DepthwiseConv2DT failed");
     return;
@@ -125,6 +125,7 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const c
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseWeight for " << proto.name().c_str() << " failed";
   }
+
   return status;
 }
 

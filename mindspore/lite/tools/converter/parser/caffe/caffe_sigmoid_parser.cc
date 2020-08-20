@@ -23,7 +23,7 @@ STATUS CaffeSigmoidParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
   attr->type = schema::ActivationType_SIGMOID;
   op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.value = attr.release();

@@ -23,7 +23,7 @@ STATUS OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph,
                                   const onnx::NodeProto &onnx_node,
                                   schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx TransposeParser";
-  std::unique_ptr<schema::TransposeT> attr(new schema::TransposeT());
+  std::unique_ptr<schema::TransposeT> attr = std::make_unique<schema::TransposeT>();
   attr->conjugate = false;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();

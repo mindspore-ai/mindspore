@@ -24,7 +24,7 @@ STATUS OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph,
                                  schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ConstantParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::ConstantT> attr(new schema::ConstantT());
+    std::unique_ptr<schema::ConstantT> attr = std::make_unique<schema::ConstantT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Constant;
     op->primitive->value.value = attr.release();

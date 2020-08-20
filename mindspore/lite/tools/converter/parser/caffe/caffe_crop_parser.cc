@@ -25,7 +25,7 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
                               const caffe::LayerParameter &weight,
                               schema::CNodeT *op,
                               std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::CropT> attr(new schema::CropT());
+  std::unique_ptr<schema::CropT> attr = std::make_unique<schema::CropT>();
   if (!proto.has_crop_param()) {
     attr->axis = CROP_AXIS;
     std::vector<int64_t> offsets(2, 0);
