@@ -26,7 +26,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from .._utils import get_broadcast_shape
-from ..primitive import PrimitiveWithInfer, prim_attr_register, _run_op
+from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -1257,7 +1257,7 @@ class Rsqrt(PrimitiveWithInfer):
         return None
 
 
-class Sqrt(PrimitiveWithInfer):
+class Sqrt(PrimitiveWithCheck):
     """
     Returns square root of a tensor element-wise.
 
@@ -1279,12 +1279,8 @@ class Sqrt(PrimitiveWithInfer):
         """init Sqrt"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
+    def check_dtype(self, x_type):
         validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.name)
-        return x_type
 
     def infer_value(self, x):
         if x is not None:

@@ -62,6 +62,8 @@ class PrimitivePy : public Primitive {
   const bool parse_info_ = true;
   const py::object &GetPyObj() const { return python_obj_; }
   py::dict RunInfer(const py::tuple &args);
+  void RunCheck(const py::tuple &args);
+  py::object RunInferValue(const py::tuple &args);
   bool ObjHasAttr(const char *attr_name) { return py::hasattr(python_obj_, attr_name); }
   bool HasPyObj() { return python_obj_.operator bool(); }
   PrimitivePtr Clone() override;

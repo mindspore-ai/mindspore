@@ -42,6 +42,8 @@ class StandardPrimEvaluator : public TrivialPrimEvaluator {
   std::string ToString() const override { return identifier_ + prim_->name(); }
 
  private:
+  EvalResultPtr EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args);
+
   PrimitivePtr prim_;
   const StandardPrimitiveEvalImpl eval_impl_;
 };

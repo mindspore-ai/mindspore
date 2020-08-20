@@ -49,22 +49,6 @@ using mindspore::parse::PyObjectWrapper;
 std::unordered_set<std::string> prims_to_skip_undetermined_infer{"make_tuple", "make_list", "switch", "env_setitem",
                                                                  "env_getitem"};
 
-EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
-  if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
-    auto ret_abstract = AbstractEval(args);
-    if (ret_abstract != nullptr) {
-      MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
-      return ret_abstract;
-    }
-  }
-  prim_->BeginRecordAddAttr();
-  AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
-  prim_->EndRecordAddAttr();
-  auto added_attrs = prim_->evaluate_added_attrs();
-  auto infer_result = std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
-  return infer_result;
-}
-
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         AnfNodeConfigPtr out_conf) {
   AbstractBasePtrList args_spec_list;
@@ -289,45 +273,45 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
   py::dict dic;
   if (abs_base->isa<AbstractTensor>()) {
     auto arg_tensor = dyn_cast<AbstractTensor>(abs_base);
-    dic["shape"] = arg_tensor->shape()->shape();
+    dic[ATTR_SHAPE] = arg_tensor->shape()->shape();
     if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
       const auto &min_shape = arg_tensor->shape()->min_shape();
       const auto &max_shape = arg_tensor->shape()->max_shape();
       if (!min_shape.empty() && !max_shape.empty()) {
-        dic["min_shape"] = min_shape;
-        dic["max_shape"] = max_shape;
+        dic[ATTR_MIN_SHAPE] = min_shape;
+        dic[ATTR_MAX_SHAPE] = max_shape;
       }
     }
-    dic["dtype"] = arg_tensor->BuildType();
-    dic["value"] = BuildValue(arg_tensor->BuildValue());
+    dic[ATTR_DTYPE] = arg_tensor->BuildType();
+    dic[ATTR_VALUE] = BuildValue(arg_tensor->BuildValue());
   } else if (abs_base->isa<AbstractRowTensor>()) {
     auto arg = dyn_cast<AbstractRowTensor>(abs_base);
-    dic["shape"] = arg->shape()->shape();
-    dic["dtype"] = arg->BuildType();
-    dic["value"] = BuildValue(arg->BuildValue());
+    dic[ATTR_SHAPE] = arg->shape()->shape();
+    dic[ATTR_DTYPE] = arg->BuildType();
+    dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractSparseTensor>()) {
     auto arg = dyn_cast<AbstractSparseTensor>(abs_base);
-    dic["shape"] = arg->shape()->shape();
-    dic["dtype"] = arg->BuildType();
-    dic["value"] = BuildValue(arg->BuildValue());
+    dic[ATTR_SHAPE] = arg->shape()->shape();
+    dic[ATTR_DTYPE] = arg->BuildType();
+    dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
     ShapeVector shape;
-    dic["shape"] = shape;
-    dic["dtype"] = abs_base->BuildType();
-    dic["value"] = BuildValue(abs_base->BuildValue());
+    dic[ATTR_SHAPE] = shape;
+    dic[ATTR_DTYPE] = abs_base->BuildType();
+    dic[ATTR_VALUE] = BuildValue(abs_base->BuildValue());
   } else if (abs_base->isa<AbstractSlice>()) {
     auto arg_slice = dyn_cast<AbstractSlice>(abs_base);
     ShapeVector shape;
-    dic["shape"] = shape;
-    dic["dtype"] = arg_slice->BuildType();
-    dic["value"] = BuildValue(arg_slice->BuildValue());
+    dic[ATTR_SHAPE] = shape;
+    dic[ATTR_DTYPE] = arg_slice->BuildType();
+    dic[ATTR_VALUE] = BuildValue(arg_slice->BuildValue());
   } else if (abs_base->isa<AbstractRef>()) {
     auto value = abs_base->cast<AbstractRefPtr>()->ref();
     dic = ConvertAbstractToPython(value);
   } else if (abs_base->isa<AbstractEllipsis>()) {
-    dic["shape"] = py::none();
-    dic["dtype"] = py::ellipsis();
-    dic["value"] = py::ellipsis();
+    dic[ATTR_SHAPE] = py::none();
+    dic[ATTR_DTYPE] = py::ellipsis();
+    dic[ATTR_VALUE] = py::ellipsis();
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();
@@ -336,12 +320,12 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
 
     for (size_t i = 0; i < len; i++) {
       py::dict out = ConvertAbstractToPython(arg_tuple->elements()[i]);
-      shape_tuple[i] = out["shape"];
-      dtype_tuple[i] = out["dtype"];
+      shape_tuple[i] = out[ATTR_SHAPE];
+      dtype_tuple[i] = out[ATTR_DTYPE];
     }
-    dic["shape"] = shape_tuple;
-    dic["dtype"] = dtype_tuple;
-    dic["value"] = BuildValue(arg_tuple->BuildValue());
+    dic[ATTR_SHAPE] = shape_tuple;
+    dic[ATTR_DTYPE] = dtype_tuple;
+    dic[ATTR_VALUE] = BuildValue(arg_tuple->BuildValue());
   } else if (abs_base->isa<AbstractList>()) {
     auto arg_list = dyn_cast<AbstractList>(abs_base);
     size_t len = arg_list->size();
@@ -350,25 +334,25 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
 
     for (size_t i = 0; i < len; i++) {
       py::dict out = ConvertAbstractToPython(arg_list->elements()[i]);
-      shape_list[i] = out["shape"];
-      dtype_list[i] = out["dtype"];
+      shape_list[i] = out[ATTR_SHAPE];
+      dtype_list[i] = out[ATTR_DTYPE];
     }
-    dic["shape"] = shape_list;
-    dic["dtype"] = dtype_list;
-    dic["value"] = BuildValue(arg_list->BuildValue());
+    dic[ATTR_SHAPE] = shape_list;
+    dic[ATTR_DTYPE] = dtype_list;
+    dic[ATTR_VALUE] = BuildValue(arg_list->BuildValue());
   } else if (abs_base->isa<AbstractNone>()) {
-    dic["shape"] = py::none();
-    dic["dtype"] = py::none();
-    dic["value"] = py::none();
+    dic[ATTR_SHAPE] = py::none();
+    dic[ATTR_DTYPE] = py::none();
+    dic[ATTR_VALUE] = py::none();
   } else if (abs_base->isa<AbstractFunction>()) {
-    dic["shape"] = py::none();
-    dic["dtype"] = abs_base->BuildType();
-    dic["value"] = py::none();
+    dic[ATTR_SHAPE] = py::none();
+    dic[ATTR_DTYPE] = abs_base->BuildType();
+    dic[ATTR_VALUE] = py::none();
   } else if (abs_base->isa<AbstractUndetermined>()) {
     auto arg = dyn_cast<AbstractUndetermined>(abs_base);
-    dic["shape"] = py::none();
-    dic["dtype"] = arg->BuildType();
-    dic["value"] = py::none();
+    dic[ATTR_SHAPE] = py::none();
+    dic[ATTR_DTYPE] = arg->BuildType();
+    dic[ATTR_VALUE] = py::none();
   } else {
     auto value = abs_base->BuildValue();
     if ((*value == *kAnyValue)) {
@@ -409,18 +393,20 @@ py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrLi
 
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output) {
   // Convert to AbstractValue based on type and shape
-  auto out_dtype = output["dtype"];
-  if (output["value"].is_none()) {
-    auto out_shape = output["shape"];
-    py::object min_shape = output.contains("min_shape") ? (py::object)output["min_shape"] : (py::object)py::none();
-    py::object max_shape = output.contains("max_shape") ? (py::object)output["max_shape"] : (py::object)py::none();
+  auto out_dtype = output[ATTR_DTYPE];
+  if (output[ATTR_VALUE].is_none()) {
+    auto out_shape = output[ATTR_SHAPE];
+    py::object min_shape =
+      output.contains(py::str(ATTR_MIN_SHAPE)) ? (py::object)output[ATTR_MIN_SHAPE] : (py::object)py::none();
+    py::object max_shape =
+      output.contains(py::str(ATTR_MAX_SHAPE)) ? (py::object)output[ATTR_MAX_SHAPE] : (py::object)py::none();
 
     return PyListDtype2AbstractTensor(out_shape, out_dtype, min_shape, max_shape);
   }
   // Convert pyobject to Value, then to AbstractValue
   ValuePtr converted_ret = nullptr;
   TypePtr dtype = py::isinstance<Type>(out_dtype) ? out_dtype.cast<TypePtr>() : nullptr;
-  bool converted = parse::ConvertData(output["value"], &converted_ret, false, dtype);
+  bool converted = parse::ConvertData(output[ATTR_VALUE], &converted_ret, false, dtype);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Convert data failed";
   }
@@ -446,6 +432,73 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
   return res_spec;
 }
 }  // end anonymous namespace
+
+EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  auto prim_py = dyn_cast<PrimitivePy>(prim_);
+  if (prim_py == nullptr) {
+    MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyInferCheck' should be a python primitive.";
+  }
+
+  // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'
+  MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
+  auto py_args = PreparePyInputs(prim_py, args);
+  prim_py->RunCheck(py_args);
+
+  prim_->BeginRecordAddAttr();
+  AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
+  prim_->EndRecordAddAttr();
+  auto added_attrs = prim_->evaluate_added_attrs();
+
+  if (!py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
+    return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  }
+
+  // Call method 'infer_value' for primitive with this method for constant propagation
+  py::tuple py_vals(py_args.size());
+  for (size_t i = 0; i < py_args.size(); ++i) {
+    py_vals[i] = py_args[i][ATTR_VALUE];
+  }
+  py::object py_ret = prim_py->RunInferValue(py_vals);
+  if (py::isinstance<py::none>(py_ret)) {
+    return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  }
+
+  // Convert pyobject to Value, then to AbstractValue
+  ValuePtr converted_ret = nullptr;
+  TypePtr dtype = abs_base->BuildType();
+  bool converted = parse::ConvertData(py_ret, &converted_ret, false, dtype);
+  if (!converted) {
+    MS_LOG(EXCEPTION) << "Convert data failed";
+  }
+  auto res_spec = FromValue(converted_ret);
+  MS_EXCEPTION_IF_NULL(res_spec);
+  if (res_spec->isa<AbstractTensor>()) {
+    // Replace to tensor constant node in specialize
+    auto res_tensor = res_spec->cast<AbstractTensorPtr>();
+    res_tensor->set_value(converted_ret);
+  }
+  return std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
+}
+
+EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
+    auto ret_abstract = AbstractEval(args);
+    if (ret_abstract != nullptr) {
+      MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
+      return ret_abstract;
+    }
+  }
+
+  if (prim_->prim_type() == PrimType::kPrimTypePyInferCheck) {
+    return EvalPyCheckPrim(engine, args);
+  }
+
+  prim_->BeginRecordAddAttr();
+  AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
+  prim_->EndRecordAddAttr();
+  auto added_attrs = prim_->evaluate_added_attrs();
+  return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+}
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
   auto ret_abstract = AbstractEval(args);

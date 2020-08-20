@@ -254,8 +254,24 @@ py::dict PrimitivePy::RunInfer(const py::tuple &args) {
   if (!HasPyObj()) {
     MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
   }
-  auto infer_fuc = python_obj_.attr("__infer__");
+  auto infer_fuc = python_obj_.attr(PY_PRIM_METHOD_INFER);
   return infer_fuc(*args);
+}
+
+void PrimitivePy::RunCheck(const py::tuple &args) {
+  if (!HasPyObj()) {
+    MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
+  }
+  auto check_func = python_obj_.attr(PY_PRIM_METHOD_CHECK);
+  (void)check_func(*args);
+}
+
+py::object PrimitivePy::RunInferValue(const py::tuple &args) {
+  if (!HasPyObj()) {
+    MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
+  }
+  auto infer_value = python_obj_.attr(PY_PRIM_METHOD_INFER_VALUE);
+  return infer_value(*args);
 }
 
 REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
@@ -263,7 +279,8 @@ REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                            .value("unknown", PrimType::kPrimTypeUnknown)
                            .value("builtin", PrimType::kPrimTypeBuiltIn)
                            .value("py_infer_shape", PrimType::kPrimTypePyInferShape)
-                           .value("user_custom", PrimType::kPrimTypeUserCustom);
+                           .value("user_custom", PrimType::kPrimTypeUserCustom)
+                           .value("py_infer_check", PrimType::kPrimTypePyInferCheck);
                          (void)py::class_<PrimitivePy, std::shared_ptr<PrimitivePy>>(*m, "Primitive_")
                            .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePy::parse_info_)
                            .def(py::init<py::str &, py::object>())

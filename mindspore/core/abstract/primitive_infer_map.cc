@@ -37,6 +37,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // Maths
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
+    {prim::kPrimSqrt, {InferImplSqrt, true}},
     // Array
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
@@ -44,6 +45,9 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimPack, {InferImplPack, true}},
     {prim::kPrimUnique, {InferImplUnique, true}},
     {prim::kPrimUniqueGrad, {InferImplUniqueGrad, true}},
+    {prim::kPrimGatherV2, {InferImplGatherV2, true}},
+    {prim::kPrimSparseGatherV2, {InferImplGatherV2, true}},
+    {prim::kPrimDynamicShape, {InferImplDynamicShape, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
     {prim::kPrimMakeList, {InferImplMakeList, true}},
@@ -77,6 +81,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
     {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
     {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},
+    {prim::kPrimSparseApplyFtrl, {InferImplSparseApplyFtrl, true}},
+    {prim::kPrimSparseApplyProximalAdagrad, {InferImplSparseApplyProximalAdagrad, true}},
     // Others
     {prim::kPrimIdentity, {InferImplIdentity, true}},
     // Set impl to null as it will use PartialEvaluator;

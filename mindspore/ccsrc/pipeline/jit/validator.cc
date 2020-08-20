@@ -55,6 +55,10 @@ void ValidateOperation(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python evaluator.";
     return;
   }
+  if (prim->prim_type() == PrimType::kPrimTypePyInferCheck) {
+    MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python inference checking method.";
+    return;
+  }
   if (prim->name() == "fake_bprop") {
     MS_LOG(EXCEPTION) << "Illegal primitive: " << GetValue<std::string>(prim->GetAttr("info"));
   }

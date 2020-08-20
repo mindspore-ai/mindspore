@@ -84,6 +84,9 @@ inline const PrimitivePtr kPrimConcat = std::make_shared<Primitive>("Concat");
 inline const PrimitivePtr kPrimSqueeze = std::make_shared<Primitive>("Squeeze");
 inline const PrimitivePtr kPrimTranspose = std::make_shared<Primitive>("Transpose");
 inline const PrimitivePtr kPrimGatherV2 = std::make_shared<Primitive>("GatherV2");
+inline const PrimitivePtr kPrimSparseGatherV2 = std::make_shared<Primitive>("SparseGatherV2");
+inline const PrimitivePtr kPrimShape = std::make_shared<Primitive>("Shape");
+inline const PrimitivePtr kPrimDynamicShape = std::make_shared<Primitive>("DynamicShape");
 inline const PrimitivePtr kPrimEmbeddingLookup = std::make_shared<Primitive>("EmbeddingLookup");
 inline const PrimitivePtr kPrimEmbeddingLookupCommGrad = std::make_shared<Primitive>("EmbeddingLookupCommGrad");
 inline const PrimitivePtr kPrimSize = std::make_shared<Primitive>("Size");
@@ -154,6 +157,8 @@ inline const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut
 inline const PrimitivePtr kPrimFakeQuantPerLayer = std::make_shared<Primitive>("FakeQuantPerLayer");
 inline const PrimitivePtr kPrimFakeQuantPerChannel = std::make_shared<Primitive>("FakeQuantPerChannel");
 inline const PrimitivePtr kPrimApplyRMSProp = std::make_shared<Primitive>("ApplyRMSProp");
+inline const PrimitivePtr kPrimSparseApplyFtrl = std::make_shared<Primitive>("SparseApplyFtrl");
+inline const PrimitivePtr kPrimSparseApplyProximalAdagrad = std::make_shared<Primitive>("SparseApplyProximalAdagrad");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

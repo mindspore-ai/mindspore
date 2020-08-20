@@ -28,7 +28,7 @@ from ..._c_expression import signature_dtype as sig_dtype
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 from ..operations.math_ops import _infer_shape_reduce
 
 
@@ -4354,7 +4354,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         return var_dtype, accum_dtype
 
 
-class SparseApplyProximalAdagrad(PrimitiveWithInfer):
+class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     r"""
     Update relevant entries according to the proximal adagrad algorithm. Compared with ApplyProximalAdagrad,
     an additional index tensor is input.
@@ -4433,11 +4433,10 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
                                 outputs=['var', 'accum'])
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
-    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
+    def check_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
         validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
-        return var_shape, accum_shape
 
-    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
+    def check_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
         validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
         validator.check_scalar_or_tensor_type_same({"lr": lr_dtype}, [mstype.float16, mstype.float32], self.name)
@@ -4446,7 +4445,6 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
         valid_types = [mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint16, mstype.uint32, mstype.uint64]
         validator.check_tensor_type_same({'indices': indices_dtype}, valid_types, self.name)
-        return var_dtype, accum_dtype
 
 
 class ApplyAddSign(PrimitiveWithInfer):
@@ -4978,7 +4976,7 @@ class ApplyFtrl(PrimitiveWithInfer):
         return var_type
 
 
-class SparseApplyFtrl(PrimitiveWithInfer):
+class SparseApplyFtrl(PrimitiveWithCheck):
     """
     Update relevant entries according to the FTRL-proximal scheme.
 
@@ -5053,21 +5051,19 @@ class SparseApplyFtrl(PrimitiveWithInfer):
         self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
-    def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
+    def check_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
         if len(var_shape) > 1:
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
         validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        return var_shape, accum_shape, linear_shape
 
-    def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
+    def check_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
         args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
                 "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
         validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({"indices_dtype": indices_dtype}, [mstype.int32], self.name)
-        return var_dtype, accum_dtype, linear_dtype
 
 
 class SparseApplyFtrlV2(PrimitiveWithInfer):
