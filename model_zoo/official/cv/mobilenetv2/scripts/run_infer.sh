@@ -47,7 +47,7 @@ fi
 mkdir ../eval
 cd ../eval || exit
 
-# luanch
+# launch
 python ${BASEPATH}/../eval.py \
         --device_target=$1 \
         --dataset_path=$2 \

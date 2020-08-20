@@ -53,11 +53,10 @@ parser.add_argument('--device_target', type=str, default=None, help='run device_
 args_opt = parser.parse_args()
 
 if args_opt.device_target == "Ascend":
-    device_id = int(os.getenv('DEVICE_ID'))
-    rank_id = int(os.getenv('RANK_ID'))
-    rank_size = int(os.getenv('RANK_SIZE'))
+    device_id = int(os.getenv('DEVICE_ID', '0'))
+    rank_id = int(os.getenv('RANK_ID', '0'))
+    rank_size = int(os.getenv('RANK_SIZE', '1'))
     run_distribute = rank_size > 1
-    device_id = int(os.getenv('DEVICE_ID'))
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         device_id=device_id, save_graphs=False)

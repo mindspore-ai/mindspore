@@ -35,8 +35,8 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
         dataset
     """
     if device_target == "Ascend":
-        rank_size = int(os.getenv("RANK_SIZE"))
-        rank_id = int(os.getenv("RANK_ID"))
+        rank_size = int(os.getenv("RANK_SIZE", '1'))
+        rank_id = int(os.getenv("RANK_ID", '0'))
         if rank_size == 1:
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
