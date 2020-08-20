@@ -41,7 +41,7 @@ void LoadData(void *dst, size_t dst_size, const std::string &file_path) {
 
 void MyCompareOutput(lite::tensor::Tensor *output_tensor, const std::string &file_path) {
   auto *output_data = reinterpret_cast<float *>(output_tensor->Data());
-  printf("output[0:10]:");
+  printf("\noutput[0:10]:");
   for (int i = 0; i < 10; i++) {
     printf("%d:%.3f ", i, output_data[i]);
   }
@@ -58,15 +58,15 @@ void MyCompareOutput(lite::tensor::Tensor *output_tensor, const std::string &fil
       return;
     }
   }
-  printf("compare success!\n");
-  printf("compare success!\n");
-  printf("compare success!\n\n\n");
+  printf("COMPARE SUCCESS!\n\n\n");
 }
 
 void TEST_MAIN(schema::Format input_format, schema::Format output_format, const std::string &data_path,
                std::string attr_str) {
-  assert(data_format == schema::Format_NHWC || data_format == schema::Format_NHWC4);
-  auto param = new ConvParameter;
+  auto param = new (std::nothrow) ConvParameter;
+  if (param == nullptr) {
+    return;
+  }
   sscanf(attr_str.c_str(),
          "inputNHWC_%dx%dx%dx%d_outputNHWC_%dx%dx%dx%d_kernelHW_%dx%d_strideHW_%dx%d_padTopBottomLeftRight_%dx%dx%dx%d_"
          "dilationHW_%dx%d",
@@ -79,65 +79,79 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   auto weight_file = testcase_path + "weight_OHWI.bin";
   auto bias_file = testcase_path + "bias_C.bin";
   auto expect_file = testcase_path + (output_format == schema::Format_NHWC4 ? "expect_NHWC4.bin" : "expect_NHWC.bin");
-  std::cout << "input_file:" << input_file << std::endl;
-  std::cout << "weight_file:" << weight_file << std::endl;
-  std::cout << "bias_file:" << bias_file << std::endl;
-  std::cout << "expect_file:" << expect_file << std::endl;
+  std::cout << "input_file  :" << input_file << std::endl;
+  std::cout << "weight_file :" << weight_file << std::endl;
+  std::cout << "bias_file   :" << bias_file << std::endl;
+  std::cout << "expect_file :" << expect_file << std::endl;
 
-  std::cout << "initialize OpenCLRuntime";
+  std::cout << "initialize OpenCLRuntime and OpenCLAllocator";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
-  std::cout << "create Tensors(framework will do!!!)";
+  std::cout << "create Tensors";
   std::vector<int> input_shape = {param->input_batch_, param->input_h_, param->input_w_, param->input_channel_};
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
-  auto input_tensor = new lite::tensor::Tensor(data_type, input_shape, input_format, tensor_type);
-  auto weight_tensor = new lite::tensor::Tensor(data_type, weight_shape, schema::Format_KHWC, tensor_type);
-  auto bias_tensor = new lite::tensor::Tensor(data_type, bias_shape, schema::Format_KHWC, tensor_type);
-  auto output_tensor = new lite::tensor::Tensor(data_type, output_shape, output_format, tensor_type);
-  std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor, bias_tensor};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  auto input_tensor = lite::tensor::Tensor(data_type, input_shape, input_format, tensor_type);
+  auto weight_tensor = lite::tensor::Tensor(data_type, weight_shape, schema::Format_KHWC, tensor_type);
+  auto bias_tensor = lite::tensor::Tensor(data_type, bias_shape, schema::Format_KHWC, tensor_type);
+  auto output_tensor = lite::tensor::Tensor(data_type, output_shape, output_format, tensor_type);
+  std::vector<lite::tensor::Tensor *> inputs{&input_tensor, &weight_tensor, &bias_tensor};
+  std::vector<lite::tensor::Tensor *> outputs{&output_tensor};
 
-  std::cout << "allocate and initialize weight/bias memory by hand here(framework will do!!!)";
-  std::vector<float> weight_vec(weight_tensor->ElementsNum());
-  std::vector<float> bias_vec(weight_tensor->ElementsNum());
-  weight_tensor->SetData(weight_vec.data());
-  bias_tensor->SetData(bias_vec.data());
-  LoadData(weight_tensor->Data(), weight_tensor->Size(), weight_file);
-  LoadData(bias_tensor->Data(), bias_tensor->Size(), bias_file);
+  std::cout << "allocate memory and initialize weight/bias";
+  weight_tensor.MallocData();
+  bias_tensor.MallocData();
+  LoadData(weight_tensor.Data(), weight_tensor.Size(), weight_file);
+  LoadData(bias_tensor.Data(), bias_tensor.Size(), bias_file);
 
-  std::cout << "create OpenCL Kernel";  // weight/bias has been allcated by framework
-  auto *conv_kernel = new ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  conv_kernel->Init();
+  std::cout << "create OpenCL Kernel";
+  auto kernel = ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  kernel.Init();
 
-  std::cout << "create SubGraphOpenCLKernel";
-  inputs[0]->MallocData(allocator);  // allocate input memory by hand here, framework will do!!!
-  auto *sub_graph = new SubGraphOpenCLKernel({input_tensor}, outputs, {conv_kernel}, {conv_kernel}, {conv_kernel});
+  std::cout << "create SubGraph";
+  auto sub_graph = new (std::nothrow) SubGraphOpenCLKernel({&input_tensor}, outputs, {&kernel}, {&kernel}, {&kernel});
+  if (sub_graph == nullptr) {
+    return;
+  }
+  input_tensor.MallocData(allocator);  // before MapBuffer()
   sub_graph->Init();
-  LoadData(input_tensor->Data(), input_tensor->Size(), input_file);  // initialize input Tensors data
-  printf("input[0] =%.3f\n", reinterpret_cast<float *>(input_tensor->Data())[0]);
-  printf("weight[0]=%.3f\n", reinterpret_cast<float *>(weight_tensor->Data())[0]);
-  printf("bias[0]  =%.3f\n", reinterpret_cast<float *>(bias_tensor->Data())[0]);
+  LoadData(input_tensor.Data(), input_tensor.Size(), input_file);  // after MapBuffer()
+  printf("input[0-2] =%.3f\n", reinterpret_cast<float *>(input_tensor.Data())[0]);
+  printf("weight[0-2]=%.3f\n", reinterpret_cast<float *>(weight_tensor.Data())[0]);
+  printf("bias[0-2]  =%.3f\n", reinterpret_cast<float *>(bias_tensor.Data())[0]);
   sub_graph->Run();
+  MyCompareOutput(&output_tensor, expect_file);
 
-  std::cout << "compare result";
-  MyCompareOutput(output_tensor, expect_file);
-  //  lite::CompareOutput(reinterpret_cast<float *>(output_tensor->Data()), expect_file);
-
-  for (auto tensor : inputs) {
-    delete tensor;
-  }
-  for (auto tensor : outputs) {
-    delete tensor;
-  }
-  delete conv_kernel;
+  std::cout << "release resources";
+  weight_tensor.FreeData();
+  bias_tensor.FreeData();
+  input_tensor.SetData(nullptr);
+  output_tensor.SetData(nullptr);
+  weight_tensor.SetData(nullptr);
+  bias_tensor.SetData(nullptr);
+  delete param;
   delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestConvolutionOpenCL, in1x1x64x512_out1x1x64x7358_k11_s11_p0000) {
+  // change W/H
+  TEST_MAIN(
+    schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
+    "inputNHWC_1x1x64x512_outputNHWC_1x1x64x7358_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_"
+    "1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x1_outputNHWC_1x32x512x50) {
+  // speed up
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
+            "inputNHWC_1x32x512x1_outputNHWC_1x32x512x50_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+            "dilationHW_1x1");
 }
 
 TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
@@ -146,13 +160,6 @@ TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
     "inputNHWC_1x224x224x3_outputNHWC_1x112x112x32_kernelHW_3x3_strideHW_2x2_padTopBottomLeftRight_0x1x0x1_dilationHW_"
     "1x1");
 }
-
-// TEST_F(TestConvolutionOpenCL, in1x1x64x512_out1x1x64x7358_k11_s11_p0000) {
-//  TEST_MAIN(
-//    schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-//    "inputNHWC_1x1x64x512_outputNHWC_1x1x64x7358_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_"
-//    "1x1");
-//}
 
 TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80) {
   TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
@@ -164,12 +171,6 @@ TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x100_outputNH
             "inputNHWC_1x16x256x100_outputNHWC_1x16x256x96_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
             "dilationHW_1x1");
 }
-
-// TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x1_outputNHWC_1x32x512x50) {
-//  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
-//            "inputNHWC_1x32x512x1_outputNHWC_1x32x512x50_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-//            "dilationHW_1x1");
-//}
 
 TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x50_outputNHWC_1x32x512x48) {
   TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
