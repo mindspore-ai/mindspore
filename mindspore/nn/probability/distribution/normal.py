@@ -114,6 +114,7 @@ class Normal(Distribution):
 
 
         #ops needed for the class
+        self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.erf = P.Erf()
@@ -305,7 +306,14 @@ class Normal(Distribution):
         sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
         if sd is None:
             raise_none_error("sd")
-        batch_shape = self.shape(self.zeroslike(mean) + self.zeroslike(sd))
-        sample_shape = shape + batch_shape
+        batch_shape = self.shape(mean + sd)
+        origin_shape = shape + batch_shape
+        if origin_shape == ():
+            sample_shape = (1,)
+        else:
+            sample_shape = origin_shape
         sample_norm = C.normal(sample_shape, mean, sd, self.seed)
-        return sample_norm
+        value = self.cast(sample_norm, self.dtype)
+        if origin_shape == ():
+            value = self.squeeze(value)
+        return value
