@@ -23,8 +23,8 @@
 
 #include "ir/tensor.h"
 #include "ir/param_info.h"
-#include "debug/anf_ir_utils.h"
-#include "frontend/operator/ops.h"
+#include "ir/func_graph.h"
+#include "base/core_ops.h"
 #include "proto/onnx.pb.h"
 
 namespace mindspore {
