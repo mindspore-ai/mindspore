@@ -50,7 +50,6 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   MS_ASSERT(this->primitive != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
-  auto spilt_prim = this->primitive->value_as_Split();
   MS_ASSERT(spilt_prim != nullptr);
   if (inputs_.size() != kSplitInputNum) {
     MS_LOG(ERROR) << "inputs number is not equal to " << kSplitInputNum;
@@ -61,7 +60,7 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
     MS_LOG(ERROR) << "output null pointer dereferencing.";
     return RET_ERROR;
   }
-  int number_split = spilt_prim->numberSplit();
+  int number_split = GetNumberSplit();
   if (static_cast<int>(outputs_.size()) != number_split) {
     MS_LOG(ERROR) << "outputs number is not equal to " << number_split;
     return RET_ERROR;
@@ -73,10 +72,12 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  int split_dim = spilt_prim->splitDim();
+  int split_dim = GetSplitDim();
   std::vector<int> input_shape = input->shape();
   std::vector<int> size_split;
-  size_split.insert(size_split.begin(), spilt_prim->sizeSplits()->begin(), spilt_prim->sizeSplits()->end());
+  for (int i = 0; i < GetSizeSplits().size(); ++i) {
+    size_split.push_back(GetSizeSplits()[i]);
+  }
   for (int i = 0; i < number_split; ++i) {
     std::vector<int> output_shape;
     output_shape.insert(output_shape.begin(), input_shape.begin(), input_shape.end());

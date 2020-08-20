@@ -37,6 +37,8 @@ class Tile : public PrimitiveC {
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetMultiples() const;
   void SetMultiples(const std::vector<int> &multiples);
+  std::vector<int> GetDims() const;
+  void SetDims(const std::vector<int> &dims);
 };
 }  // namespace lite
 }  // namespace mindspore

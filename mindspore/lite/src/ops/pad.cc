@@ -24,7 +24,9 @@ int Pad::GetPaddingMode() const { return this->primitive->value.AsPad()->padding
 float Pad::GetConstantValue() const { return this->primitive->value.AsPad()->constantValue; }
 
 void Pad::SetPaddings(const std::vector<int> &paddings) { this->primitive->value.AsPad()->paddings = paddings; }
-void Pad::SetPaddingMode(int padding_mode) { this->primitive->value.AsPad()->paddingMode = padding_mode; }
+void Pad::SetPaddingMode(int padding_mode) {
+  this->primitive->value.AsPad()->paddingMode = (schema::PaddingMode) padding_mode;
+}
 void Pad::SetConstantValue(float constant_value) { this->primitive->value.AsPad()->constantValue = constant_value; }
 
 #else

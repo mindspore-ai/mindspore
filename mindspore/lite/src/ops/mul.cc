@@ -21,7 +21,9 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Mul::GetActivationType() const { return this->primitive->value.AsMul()->activationType; }
 
-void Mul::SetActivationType(int activation_type) { this->primitive->value.AsMul()->activationType = activation_type; }
+void Mul::SetActivationType(int activation_type) {
+  this->primitive->value.AsMul()->activationType = (schema::ActivationType) activation_type;
+}
 
 #else
 

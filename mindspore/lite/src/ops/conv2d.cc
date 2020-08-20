@@ -104,19 +104,18 @@ void Conv2D::SetActivationType(int activation_type) {}
 #endif
 void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output_w) {
   MS_ASSERT(this->primitive != nullptr);
-  auto conv2DPrim = this->primitive->value_as_Conv2D();
-  int kernel_w = conv2DPrim->kernelW();
-  int kernel_h = conv2DPrim->kernelH();
-  int stride_w = conv2DPrim->strideW();
-  int stride_h = conv2DPrim->strideH();
-  int dilate_w = conv2DPrim->dilateW();
-  int dilate_h = conv2DPrim->dilateH();
-  pad_l_ = conv2DPrim->padLeft();
-  pad_u_ = conv2DPrim->padUp();
-  pad_d_ = conv2DPrim->padDown();
-  pad_r_ = conv2DPrim->padRight();
+  int kernel_w = GetKernelW();
+  int kernel_h = GetKernelH();
+  int stride_w = GetStrideW();
+  int stride_h = GetStrideH();
+  int dilate_w = GetDilateW();
+  int dilate_h = GetDilateH();
+  pad_l_ = GetPadLeft();
+  pad_u_ = GetPadUp();
+  pad_d_ = GetPadDown();
+  pad_r_ = GetPadRight();
 
-  if (conv2DPrim->padMode() == schema::PadMode_SAME) {
+  if (GetPadMode() == schema::PadMode_SAME) {
     *output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(stride_w));
     *output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(stride_h));
     auto pad_h_all = ((*output_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - input_h);

@@ -34,22 +34,22 @@ int Pooling::GetPadLeft() const { return this->primitive->value.AsPooling()->pad
 int Pooling::GetPadRight() const { return this->primitive->value.AsPooling()->padRight; }
 int Pooling::GetRoundMode() const { return this->primitive->value.AsPooling()->roundMode; }
 
-void Pooling::SetFormat(int format) { this->primitive->value.AsPooling()->format = (schema::Format)format; }
+void Pooling::SetFormat(int format) { this->primitive->value.AsPooling()->format = (schema::Format) format; }
 void Pooling::SetPoolingMode(int pooling_mode) {
-  this->primitive->value.AsPooling()->poolingMode = (schema::PoolMode)pooling_mode;
+  this->primitive->value.AsPooling()->poolingMode = (schema::PoolMode) pooling_mode;
 }
 void Pooling::SetGlobal(bool global) { this->primitive->value.AsPooling()->global = global; }
 void Pooling::SetWindowW(int window_w) { this->primitive->value.AsPooling()->windowW = window_w; }
 void Pooling::SetWindowH(int window_h) { this->primitive->value.AsPooling()->windowH = window_h; }
 void Pooling::SetStrideW(int stride_w) { this->primitive->value.AsPooling()->strideW = stride_w; }
 void Pooling::SetStrideH(int stride_h) { this->primitive->value.AsPooling()->strideH = stride_h; }
-void Pooling::SetPadMode(int pad_mode) { this->primitive->value.AsPooling()->padMode = (schema::PadMode)pad_mode; }
+void Pooling::SetPadMode(int pad_mode) { this->primitive->value.AsPooling()->padMode = (schema::PadMode) pad_mode; }
 void Pooling::SetPadUp(int pad_up) { this->primitive->value.AsPooling()->padUp = pad_up; }
 void Pooling::SetPadDown(int pad_down) { this->primitive->value.AsPooling()->padDown = pad_down; }
 void Pooling::SetPadLeft(int pad_left) { this->primitive->value.AsPooling()->padLeft = pad_left; }
 void Pooling::SetPadRight(int pad_right) { this->primitive->value.AsPooling()->padRight = pad_right; }
 void Pooling::SetRoundMode(int round_mode) {
-  this->primitive->value.AsPooling()->roundMode = (schema::RoundMode)round_mode;
+  this->primitive->value.AsPooling()->roundMode = (schema::RoundMode) round_mode;
 }
 
 #else
@@ -82,12 +82,12 @@ void Pooling::SetPadLeft(int pad_left) {}
 void Pooling::SetPadRight(int pad_right) {}
 void Pooling::SetRoundMode(int round_mode) {}
 
+#endif
+
 int Pooling::PadUp() const { return this->pad_u_; }
 int Pooling::PadDown() const { return this->pad_d_; }
 int Pooling::PadLeft() const { return this->pad_l_; }
 int Pooling::PadRight() const { return this->pad_r_; }
-
-#endif
 
 int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive != nullptr);
@@ -102,37 +102,37 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   }
   int input_h = input->shape().at(1);
   int input_w = input->shape().at(2);
-  auto pooling_prim = this->primitive->value_as_Pooling();
+
   MS_ASSERT(pooling_prim != nullptr);
-  auto window_h = pooling_prim->windowH();
-  auto window_w = pooling_prim->windowW();
-  if (pooling_prim->global()) {
+  auto window_h = GetWindowH();
+  auto window_w = GetWindowW();
+  if (GetGlobal()) {
     window_h = input_h;
     window_w = input_w;
   }
   int output_h = 0;
   int output_w = 0;
-  pad_l_ = pooling_prim->padLeft();
-  pad_u_ = pooling_prim->padUp();
-  pad_d_ = pooling_prim->padDown();
-  pad_r_ = pooling_prim->padRight();
-  if (pooling_prim->padMode() == schema::PadMode_SAME) {
-    output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(pooling_prim->strideW()));
-    output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(pooling_prim->strideH()));
-    auto pad_h_all = ((output_h - 1) * pooling_prim->strideH() + (window_h - 1) + 1 - input_h);
-    auto pad_w_all = ((output_w - 1) * pooling_prim->strideW() + (window_w - 1) + 1 - input_w);
+  pad_l_ = GetPadLeft();
+  pad_u_ = GetPadUp();
+  pad_d_ = GetPadDown();
+  pad_r_ = GetPadRight();
+  if (GetPadMode() == schema::PadMode_SAME) {
+    output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(GetStrideW()));
+    output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
+    auto pad_h_all = ((output_h - 1) * GetStrideH() + (window_h - 1) + 1 - input_h);
+    auto pad_w_all = ((output_w - 1) * GetStrideW() + (window_w - 1) + 1 - input_w);
     pad_u_ = pad_h_all / 2;
     pad_d_ = pad_h_all - pad_u_;
     pad_l_ = pad_w_all / 2;
     pad_r_ = pad_w_all - pad_l_;
   } else {
-    auto round_mode = pooling_prim->roundMode();
+    auto round_mode = (schema::RoundMode) GetRoundMode();
     if (round_mode == schema::RoundMode_FLOOR) {
-      output_h = std::floor(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / pooling_prim->strideH()) + 1;
-      output_w = std::floor(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / pooling_prim->strideW()) + 1;
+      output_h = std::floor(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / GetStrideH()) + 1;
+      output_w = std::floor(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / GetStrideW()) + 1;
     } else if (round_mode == schema::RoundMode_CEIL) {
-      output_h = std::ceil(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / pooling_prim->strideH()) + 1;
-      output_w = std::ceil(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / pooling_prim->strideW()) + 1;
+      output_h = std::ceil(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / GetStrideH()) + 1;
+      output_w = std::ceil(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / GetStrideW()) + 1;
     } else {
       MS_LOG(ERROR) << "unsupported round mode.";
     }

@@ -22,13 +22,13 @@ namespace lite {
 bool FullConnection::GetHasBias() const { return this->primitive->value.AsFullConnection()->hasBias; }
 int FullConnection::GetAxis() const { return this->primitive->value.AsFullConnection()->axis; }
 bool FullConnection::GetUseAxis() const { return this->primitive->value.AsFullConnection()->useAxis; }
-int FullConnection::GetActivationType() const { return this->primitive->value.AsFullConnection()->activationType(); }
+int FullConnection::GetActivationType() const { return this->primitive->value.AsFullConnection()->activationType; }
 
 void FullConnection::SetHasBias(bool has_bias) { this->primitive->value.AsFullConnection()->hasBias = has_bias; }
 void FullConnection::SetAxis(int axis) { this->primitive->value.AsFullConnection()->axis = axis; }
 void FullConnection::SetUseAxis(bool use_axis) { this->primitive->value.AsFullConnection()->useAxis = use_axis; }
 void FullConnection::SetActivationType(int activationType) {
-  his->primitive->value.AsFullConnection()->activationType = (schema::ActivationType)activationType;
+  this->primitive->value.AsFullConnection()->activationType = (schema::ActivationType) activationType;
 }
 #else
 

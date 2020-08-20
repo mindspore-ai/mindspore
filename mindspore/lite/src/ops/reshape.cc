@@ -26,7 +26,7 @@ namespace lite {
 int Reshape::GetFormat() const { return this->primitive->value.AsReshape()->format; }
 std::vector<long> Reshape::GetShape() const { return this->primitive->value.AsReshape()->shape; }
 
-void Reshape::SetFormat(int format) { this->primitive->value.AsReshape()->format = format; }
+void Reshape::SetFormat(int format) { this->primitive->value.AsReshape()->format = (schema::Format) format; }
 void Reshape::SetShape(const std::vector<long> &shape) { this->primitive->value.AsReshape()->shape = shape; }
 
 #else
@@ -75,7 +75,7 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
   }
   return RET_OK;
 }
-template <typename T>
+template<typename T>
 void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::vector<int> *out_shape, int shape_size) {
   int input_count = inputs[0]->ElementsNum();
   int index = 0;
@@ -103,7 +103,7 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  auto reshape_prim = this->primitive->value_as_Reshape();
+
   MS_ASSERT(reshape_prim != nullptr);
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
@@ -117,30 +117,38 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       case kNumberTypeInt8: {
         auto data = reinterpret_cast<int8_t *>(shape_tensor->Data());
         CalShape<int8_t>(data, inputs_, &out_shape, shape_size);
-      } break;
+      }
+        break;
       case kNumberTypeInt32: {
         auto data = reinterpret_cast<int32_t *>(shape_tensor->Data());
         CalShape<int32_t>(data, inputs_, &out_shape, shape_size);
-      } break;
+      }
+        break;
       case kNumberTypeInt64: {
         auto data = reinterpret_cast<int64_t *>(shape_tensor->Data());
         CalShape<int64_t>(data, inputs_, &out_shape, shape_size);
-      } break;
+      }
+        break;
       case kNumberTypeFloat: {
         auto data = reinterpret_cast<float *>(shape_tensor->Data());
         CalShape<float>(data, inputs_, &out_shape, shape_size);
-      } break;
+      }
+        break;
       case kNumberTypeUInt32: {
         auto data = reinterpret_cast<uint32_t *>(shape_tensor->Data());
         CalShape<uint32_t>(data, inputs_, &out_shape, shape_size);
-      } break;
+      }
+        break;
       default: {
         MS_LOG(ERROR) << "Reshape weight tensor has unsupported dataType: " << shape_tensor->data_type();
         return RET_INFER_ERR;
       }
     }
   } else if (inputs_.size() == kSingleNum) {
-    std::copy(reshape_prim->shape()->begin(), reshape_prim->shape()->end(), std::back_inserter(out_shape));
+    for (int i = 0; i < GetShape().size(); ++i) {
+      out_shape.push_back(GetShape()[i]);
+    }
+//    std::copy(GetShape().begin(), GetShape().end(), std::back_inserter(out_shape));
   } else {
     MS_LOG(ERROR) << "inputs tensor size invalid.";
     return RET_INFER_ERR;
