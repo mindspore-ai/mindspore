@@ -38,17 +38,9 @@ void DeConvolutionCPUKernel::FreeTmpBuffer() {
     free(weight_ptr_);
     weight_ptr_ = nullptr;
   }
-  if (tmp_buffer_ != nullptr) {
-    free(tmp_buffer_);
-    tmp_buffer_ = nullptr;
-  }
   if (pack_input_ != nullptr) {
     free(pack_input_);
     pack_input_ = nullptr;
-  }
-  if (pack_output_ != nullptr) {
-    free(pack_output_);
-    pack_output_ = nullptr;
   }
   return;
 }
@@ -114,19 +106,6 @@ int DeConvolutionCPUKernel::InitParam() {
     MS_LOG(ERROR) << "deconv Malloc pack_input_ error!";
     return RET_ERROR;
   }
-
-  pack_output_ =
-    reinterpret_cast<float *>(malloc(UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * sizeof(float)));
-  if (pack_output_ == nullptr) {
-    MS_LOG(ERROR) << "deconv Malloc pack_output_ error!";
-    return RET_NULL_PTR;
-  }
-
-  tmp_buffer_ = reinterpret_cast<float *>(malloc(matmul_param_->row_8_ * matmul_param_->col_8_ * sizeof(float)));
-  if (tmp_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 Malloc tmp_buffer_ error!";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -165,6 +144,35 @@ int DeConvolutionCPUKernel::Init() {
   return ReSize();
 }
 
+void DeConvolutionCPUKernel::FreeRunBuf() {
+  if (pack_output_ != nullptr) {
+    ctx_->allocator->Free(pack_output_);
+    pack_output_ = nullptr;
+  }
+  if (tmp_buffer_ != nullptr) {
+    ctx_->allocator->Free(tmp_buffer_);
+    tmp_buffer_ = nullptr;
+  }
+  return;
+}
+
+int DeConvolutionCPUKernel::InitRunBuf() {
+  pack_output_ = reinterpret_cast<float *>(
+    ctx_->allocator->Malloc(UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * sizeof(float)));
+  if (pack_output_ == nullptr) {
+    MS_LOG(ERROR) << "deconv Malloc pack_output_ error!";
+    return RET_NULL_PTR;
+  }
+
+  tmp_buffer_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_8_ * matmul_param_->col_8_ * sizeof(float)));
+  if (tmp_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "Conv1x1 Malloc tmp_buffer_ error!";
+    return RET_NULL_PTR;
+  }
+  return RET_OK;
+}
+
 int DeConvolutionCPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
@@ -174,18 +182,26 @@ int DeConvolutionCPUKernel::Run() {
   float *src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
   float *src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
 
+  int error_code = InitRunBuf();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv fp32 InitRunBuf error! error_code[" << error_code << "]";
+    return error_code;
+  }
+
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     input_ptr_ = src_in + batch_index * input_plane_ * conv_param_->input_channel_;
     output_ptr_ = src_out + batch_index * output_plane_ * conv_param_->output_channel_;
 
     RowMajor2Col8Major(input_ptr_, pack_input_, input_plane_, conv_param_->input_channel_);
 
-    int error_code = LiteBackendParallelLaunch(DeConvFp32Run, this, thread_count_);
+    error_code = LiteBackendParallelLaunch(DeConvFp32Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
-      return RET_ERROR;
+      return error_code;
     }
   }
+
+  FreeRunBuf();
   return RET_OK;
 }
 

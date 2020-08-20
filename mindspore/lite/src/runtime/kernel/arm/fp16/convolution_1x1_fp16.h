@@ -34,13 +34,7 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {
     matmul_param_ = new MatMulParameter();
   }
-  ~Convolution1x1FP16CPUKernel() override {
-    FreeTmpBuffer();
-    if (matmul_param_ != nullptr) {
-      delete matmul_param_;
-      matmul_param_ = nullptr;
-    }
-  }
+  ~Convolution1x1FP16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;

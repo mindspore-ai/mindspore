@@ -51,6 +51,8 @@ class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int InitParam();
   int InitBiasWeight();
   void CheckSupportOptimize();
+  int InitRunBuf();
+  void FreeRunBuf();
 
  private:
   int32_t *tmp_buffer_ = nullptr; /* record matmul result */

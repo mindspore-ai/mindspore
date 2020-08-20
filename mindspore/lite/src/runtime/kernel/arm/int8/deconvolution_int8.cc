@@ -37,21 +37,13 @@ void DeConvInt8CPUKernel::FreeTmpBuffer() {
     free(weight_ptr_);
     weight_ptr_ = nullptr;
   }
-  if (tmp_buffer_ != nullptr) {
-    free(tmp_buffer_);
-    tmp_buffer_ = nullptr;
-  }
   if (input_ptr_ != nullptr) {
     free(input_ptr_);
     input_ptr_ = nullptr;
   }
-  if (tmp_output_ != nullptr) {
-    free(tmp_output_);
-    tmp_output_ = nullptr;
-  }
-  if (input_sum_ != nullptr) {
-    free(input_sum_);
-    input_sum_ = nullptr;
+  if (weight_sum_ != nullptr) {
+    free(weight_sum_);
+    weight_sum_ = nullptr;
   }
   return;
 }
@@ -171,26 +163,45 @@ int DeConvInt8CPUKernel::InitData() {
   }
   memset(input_ptr_, static_cast<int8_t>(conv_param_->conv_quant_arg_.input_quant_args_[0].zp_), size * sizeof(int8_t));
 
-  size = UP_ROUND(conv_param_->input_h_ * conv_param_->input_w_, C4NUM) *
-         UP_ROUND(conv_param_->output_channel_, C4NUM) * conv_param_->kernel_w_ * conv_param_->kernel_h_;
-  tmp_buffer_ = reinterpret_cast<int32_t *>(malloc(size * sizeof(int32_t)));
+  return RET_OK;
+}
+int DeConvInt8CPUKernel::InitRunBuf() {
+  int size = UP_ROUND(conv_param_->input_h_ * conv_param_->input_w_, C4NUM) *
+             UP_ROUND(conv_param_->output_channel_, C4NUM) * conv_param_->kernel_w_ * conv_param_->kernel_h_;
+  tmp_buffer_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(size * sizeof(int32_t)));
   if (tmp_buffer_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
 
   size = UP_ROUND(conv_param_->output_channel_, C4NUM) * conv_param_->output_h_ * conv_param_->output_w_;
-  tmp_output_ = reinterpret_cast<int32_t *>(malloc(size * sizeof(int32_t)));
+  tmp_output_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(size * sizeof(int32_t)));
   if (tmp_output_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
 
   size = UP_ROUND(matmul_param_->row_, C4NUM);
-  input_sum_ = reinterpret_cast<int32_t *>(malloc(size * sizeof(int32_t)));
+  input_sum_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(size * sizeof(int32_t)));
   if (input_sum_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
 
   return RET_OK;
+}
+
+void DeConvInt8CPUKernel::FreeRunBuf() {
+  if (tmp_buffer_ != nullptr) {
+    ctx_->allocator->Free(tmp_buffer_);
+    tmp_buffer_ = nullptr;
+  }
+  if (tmp_output_ != nullptr) {
+    ctx_->allocator->Free(tmp_output_);
+    tmp_output_ = nullptr;
+  }
+  if (input_sum_ != nullptr) {
+    ctx_->allocator->Free(input_sum_);
+    input_sum_ = nullptr;
+  }
+  return;
 }
 
 int DeConvInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
@@ -235,6 +246,12 @@ int DeConvInt8CPUKernel::Run() {
   int8_t *src_in = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
   int8_t *src_out = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
 
+  int error_code = InitRunBuf();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 InitRunBuf error! error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     input_trans_func_(src_in + batch_index * matmul_param_->row_ * conv_param_->input_channel_, input_ptr_,
                       matmul_param_->row_, matmul_param_->deep_);
@@ -243,13 +260,14 @@ int DeConvInt8CPUKernel::Run() {
     DeConvPackInputSum(input_ptr_, input_sum_, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
                        UP_ROUND(matmul_param_->row_, C4NUM), UP_ROUND(matmul_param_->deep_, C16NUM), support_optimize_);
 
-    int error_code = LiteBackendParallelLaunch(DeConvInt8Run, this, thread_count_);
+    error_code = LiteBackendParallelLaunch(DeConvInt8Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv int8 run error! error_code[" << error_code << "]";
       return RET_ERROR;
     }
   }
 
+  FreeRunBuf();
   return RET_OK;
 }
 
