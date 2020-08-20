@@ -39,4 +39,5 @@ python ${PROJECT_DIR}/../run_general_distill.py  \
     --save_ckpt_path="" \
     --load_teacher_ckpt_path="" \
     --data_dir="" \
-    --schema_dir="" > log.txt 2>&1 &
+    --schema_dir="" \
+    --dataset_type="tfrecord" > log.txt 2>&1 &

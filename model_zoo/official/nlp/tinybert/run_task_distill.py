@@ -27,7 +27,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore import log as logger
-from src.dataset import create_tinybert_dataset
+from src.dataset import create_tinybert_dataset, DataType
 from src.utils import LossCallBack, ModelSaveCkpt, EvalCallBack, BertLearningRate
 from src.assessment_method import Accuracy
 from src.td_config import phase1_cfg, phase2_cfg, td_teacher_net_cfg, td_student_net_cfg
@@ -68,7 +68,7 @@ def parse_args():
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
     parser.add_argument("--task_name", type=str, default="", choices=["SST-2", "QNLI", "MNLI"],
                         help="The name of the task to train.")
-
+    parser.add_argument("--dataset_type", type=str, default="tfrecord", help="dataset type, default is tfrecord")
     args = parser.parse_args()
     return args
 
@@ -119,9 +119,17 @@ def run_predistill():
 
     rank = 0
     device_num = 1
+
+    if arg_opt.dataset_type == "tfrecord":
+        dataset_type = DataType.TFRECORD
+    elif arg_opt.dataset_type == "mindrecord":
+        dataset_type = DataType.MINDRECORD
+    else:
+        raise Exception("dataset format is not supported yet")
     dataset = create_tinybert_dataset('td', td_teacher_net_cfg.batch_size,
                                       device_num, rank, args_opt.do_shuffle,
-                                      args_opt.train_data_dir, args_opt.schema_dir)
+                                      args_opt.train_data_dir, args_opt.schema_dir,
+                                      data_tpye=dataset_type)
 
     dataset_size = dataset.get_dataset_size()
     print('td1 dataset size: ', dataset_size)
