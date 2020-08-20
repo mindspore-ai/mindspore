@@ -57,6 +57,7 @@ struct KernelKey {
 class LiteKernel {
  public:
   LiteKernel() = default;
+  // parameter should be deleted or freed by caller, and should be deleted or freed after LiteKernel is deleted
   LiteKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &in_tensors,
              const std::vector<lite::tensor::Tensor *> &out_tensors, const lite::Context *ctx,
              const mindspore::lite::PrimitiveC *primitive)
@@ -72,12 +73,7 @@ class LiteKernel {
     this->out_kernels_.clear();
   }
 
-  virtual ~LiteKernel() {
-    if (op_parameter_ != nullptr) {
-      delete op_parameter_;
-      op_parameter_ = nullptr;
-    }
-  }
+  virtual ~LiteKernel() = default;
 
   virtual int Prepare() {
     if (!InferShapeDone()) {
