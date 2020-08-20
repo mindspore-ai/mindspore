@@ -36,7 +36,7 @@ class PriorBoxCPUKernel : public LiteKernel {
   ~PriorBoxCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
   int PriorBoxImpl(int task_id);
 

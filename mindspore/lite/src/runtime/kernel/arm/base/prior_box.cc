@@ -40,16 +40,17 @@ int PriorBoxCPUKernel::Init() {
     return RET_NULL_PTR;
   }
 
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    set_need_reinit();
-    return RET_OK;
-  }
   MS_ASSERT(in_tensors_.size() == kInputNum);
   MS_ASSERT(out_tensors_.size() == kOutputNum);
 
-  auto ret = GeneratePriorBox();
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
 
-  return ret;
+int PriorBoxCPUKernel::ReSize() {
+  return GeneratePriorBox();
 }
 
 int PriorBoxCPUKernel::GeneratePriorBox() {
@@ -158,6 +159,11 @@ int RunPriorBox(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int PriorBoxCPUKernel::Run() {
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail! Ret error code[" << prepare_ret << "]";
+    return prepare_ret;
+  }
   int error_code = LiteBackendParallelLaunch(RunPriorBox, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "PriorBox run error, error_code[" << error_code << "]";
@@ -168,18 +174,18 @@ int PriorBoxCPUKernel::Run() {
 
 kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                             OpParameter *opParameter, const Context *ctx,
+                                             OpParameter *op_parameter, const Context *ctx,
                                              const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
   }
   if (desc.type != schema::PrimitiveType_PriorBox) {
     MS_LOG(ERROR) << "PriorBox invalid desc type " << desc.type;
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) PriorBoxCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) PriorBoxCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PriorBoxCPUKernel fail!";
     return nullptr;
@@ -187,8 +193,8 @@ kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::tensor::Ten
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
   return kernel;
