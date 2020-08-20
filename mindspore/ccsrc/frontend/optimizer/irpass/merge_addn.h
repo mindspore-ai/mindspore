@@ -37,11 +37,9 @@ class MergeAddN : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
-    mng_ = optimizer->resource()->manager();
+    optimizer_ = optimizer;
     is_outer_ = true;
     AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(node);
-    // do not hold this manager
-    mng_ = nullptr;
     if (!is_match_ || node->func_graph() == nullptr) {
       return nullptr;
     }
@@ -106,7 +104,8 @@ class MergeAddN : public AnfVisitor {
   }
 
   bool is_unique(const AnfNodePtr &node) {
-    auto &node_users = mng_->node_users();
+    auto mng = optimizer_->resource()->manager();
+    auto &node_users = mng->node_users();
     if (node_users.find(node) == node_users.end()) {
       return false;
     }
@@ -125,7 +124,7 @@ class MergeAddN : public AnfVisitor {
   }
 
  private:
-  FuncGraphManagerPtr mng_{nullptr};
+  OptimizerPtr optimizer_{nullptr};
   std::vector<AnfNodePtr> Xs_{}, Ys_{}, args_{};
   bool is_inner_{false}, is_outer_{false}, is_match_{false};
 };
