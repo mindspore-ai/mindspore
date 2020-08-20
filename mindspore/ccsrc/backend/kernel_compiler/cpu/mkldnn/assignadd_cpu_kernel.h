@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RELU_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RELU_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ASSIGNADD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ASSIGNADD_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ReluCPUKernel : public MKLCPUKernel {
+class AssignAddCPUKernel : public MKLCPUKernel {
  public:
-  ReluCPUKernel() = default;
-  ~ReluCPUKernel() override = default;
+  AssignAddCPUKernel() = default;
+  ~AssignAddCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -33,10 +33,11 @@ class ReluCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), ReluCPUKernel);
-MS_REG_CPU_KERNEL(ReLU6, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReluCPUKernel);
+MS_REG_CPU_KERNEL(
+  AssignAdd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  AssignAddCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RELU_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ASSIGNADD_CPU_KERNEL_H_

@@ -29,6 +29,15 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (src_shape.size() != 4 || weight_shape.size() != 4) {
     MS_LOG(EXCEPTION) << ("conv2d grad filter only support nchw input!");
   }
+  std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
+  size_t group = IntToSize(AnfAlgo::GetNodeAttr<int>(kernel_node, GROUP));
+  if (group != 1) {
+    if (src_shape[1] % group != 0) {
+      MS_LOG(EXCEPTION) << "conv2d channels should be divided by group!";
+    }
+    weight_shape.insert(weight_shape.begin(), group);
+    weight_shape[1] = weight_shape[1] / group;
+  }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc weights_desc = GetDefaultMemDesc(weight_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
@@ -51,7 +60,6 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "get padding failed";

@@ -13,36 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TENSORADD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TENSORADD_CPU_KERNEL_H_
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADDN_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADDN_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class AddNCPUKernel : public CPUKernel {
+class TensorAddCPUKernel : public MKLCPUKernel {
  public:
-  AddNCPUKernel() : input_num_(0) {}
-  ~AddNCPUKernel() override = default;
+  TensorAddCPUKernel() = default;
+  ~TensorAddCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-
- private:
-  void CheckParam(const CNodePtr &kernel_node);
-  size_t input_num_;
-  std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(AddN,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  AddNCPUKernel);
+MS_REG_CPU_KERNEL(
+  TensorAdd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  TensorAddCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADDN_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TENSORADD_CPU_KERNEL_H_

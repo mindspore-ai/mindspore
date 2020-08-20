@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string>
 #include "backend/kernel_compiler/cpu/mkldnn/relu_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -30,6 +31,12 @@ void ReluCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   dnnl::eltwise_forward::desc desc =
     dnnl::eltwise_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::eltwise_relu, src_desc, 0.0);
+  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  if (kernel_name == "ReLU6") {
+    desc =
+      dnnl::eltwise_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::eltwise_clip, src_desc, 0.0, 6.0);
+  }
+
   auto prim_desc = dnnl::eltwise_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
   primitive_ = std::make_shared<dnnl::eltwise_forward>(prim_desc);
 

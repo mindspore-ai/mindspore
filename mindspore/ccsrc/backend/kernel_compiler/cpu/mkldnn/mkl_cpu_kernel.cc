@@ -16,6 +16,7 @@
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 
@@ -32,7 +33,7 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
   weight_height.emplace_back(src_shape[src_shape.size() - 2]);
   weight_height.emplace_back(src_shape[src_shape.size() - 1]);
 
-  MS_LOG(INFO) << "pad mode " << pad_mode;
+  MS_LOG(INFO) << "pad mode: " << pad_mode;
   if (pad_mode == PAD_MODE_LOWER_SAME || pad_mode == PAD_MODE_UPPER_SAME) {
     for (size_t i = 0; i < weight_height.size(); ++i) {
       auto wh = weight_height[i];
@@ -51,21 +52,20 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
     padding_r->emplace_back(0);
     padding_r->emplace_back(0);
   } else {
-    std::vector<int> pad = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, PAD);
-    if (pad.size() != 4) {
-      MS_LOG(EXCEPTION) << "wrong pad size in max pooling " << pad.size();
-    }
-    padding_l->emplace_back(pad[0]);
-    padding_l->emplace_back(pad[1]);
-    padding_r->emplace_back(pad[2]);
-    padding_r->emplace_back(pad[3]);
+    int pad = AnfAlgo::GetNodeAttr<int>(kernel_node, PAD);
+    padding_l->emplace_back(pad);
+    padding_l->emplace_back(pad);
+    padding_r->emplace_back(pad);
+    padding_r->emplace_back(pad);
   }
 }
 
 dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::dims &dims) const {
   dnnl::memory::format_tag mem_tag;
   auto dim_size = dims.size();
-  if (dim_size == 4) {
+  if (dim_size == 5) {
+    mem_tag = dnnl::memory::format_tag::abcde;
+  } else if (dim_size == 4) {
     mem_tag = dnnl::memory::format_tag::abcd;
   } else if (dim_size == 3) {
     mem_tag = dnnl::memory::format_tag::abc;

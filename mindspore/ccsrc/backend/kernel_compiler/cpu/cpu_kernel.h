@@ -50,6 +50,7 @@ const char BEGIN[] = "begin";
 const char END[] = "end";
 const char SIZE[] = "size";
 const char USE_NESTEROV[] = "use_nesterov";
+const char GROUP[] = "group";
 
 class CPUKernel : public kernel::KernelMod {
  public:
