@@ -102,7 +102,6 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
 
   allocator->UnmapBuffer(packed_weight_);
 
-  // init bias
   if (in_tensors_.size() == kInputSize2) {
     bias_data_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(C4NUM * CO4 * sizeof(FLOAT_t)));
     bias_data_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true));

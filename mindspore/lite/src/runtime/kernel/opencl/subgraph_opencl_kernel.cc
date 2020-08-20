@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include <set>
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -92,6 +91,8 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
       MS_LOG(ERROR) << "SubGraphOpenCLKernel new parameter failed!";
+      delete new_tensor;
+      new_tensor = nullptr;
       return RET_ERROR;
     }
     parameter->src_format = src_format;
@@ -109,6 +110,10 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
     MS_ASSERT(in_convert_op);
     if (in_convert_op == nullptr) {
       MS_LOG(ERROR) << "SubGraphOpenCLKernel create op failed!";
+      delete new_tensor;
+      new_tensor = nullptr;
+      delete parameter;
+      parameter = nullptr;
       return RET_ERROR;
     }
     auto in_opencl_op = reinterpret_cast<OpenCLKernel *>(in_convert_op);
@@ -272,14 +277,14 @@ int SubGraphOpenCLKernel::UnInit() {
       delete tensor;
     }
   }
-  for (const auto parameter : in_parameters_) {
-    if (parameter != nullptr) {
-      delete parameter;
-    }
-  }
   for (const auto op : in_convert_ops_) {
     if (op != nullptr) {
       delete op;
+    }
+  }
+  for (const auto parameter : in_parameters_) {
+    if (parameter != nullptr) {
+      delete parameter;
     }
   }
   return RET_OK;
@@ -290,18 +295,15 @@ int SubGraphOpenCLKernel::InferShape() { return RET_OK; }
 int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
 
 int SubGraphOpenCLKernel::Run() {
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   for (auto &tensor : in_tensors_) {
     allocator_->UnmapBuffer(tensor->Data());
   }
 
   lite::opencl::OpenCLExecutor executor;
   executor.Run(in_tensors_, out_tensors_, nodes_, allocator_);
+  ocl_runtime->SyncCommandQueue();
 
-  for (auto &tensor : out_tensors_) {
-    void *data = allocator_->MapBuffer(tensor->Data(), CL_MAP_READ, nullptr, true);
-    tensor->SetData(data);
-  }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel
