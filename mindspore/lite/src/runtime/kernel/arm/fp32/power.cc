@@ -76,27 +76,4 @@ int PowerCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPowerFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *opParameter, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Power);
-  PowerCPUKernel *kernel = new (std::nothrow) PowerCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PowerCPUKernel fail!";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Power, CpuPowerFp32KernelCreator)
 }  // namespace mindspore::kernel

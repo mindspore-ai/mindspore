@@ -251,6 +251,14 @@ typedef struct SliceQuantArg {
   int output_activation_max_;
 } SliceQuantArg;
 
+typedef struct PowerQuantArg {
+  QuantArg in_args_;
+  QuantArg exp_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
+} PowerQuantArg;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

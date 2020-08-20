@@ -20,19 +20,17 @@
 #include "nnacl/errorcode.h"
 
 int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *param) {
-  int input_scale = param->quant_arg_.in_args_.scale_;
-  int input_zp = -param->quant_arg_.in_args_.zp_;
-  int output_scale = param->quant_arg_.in_args_.scale_;
-  int output_zp = -param->quant_arg_.out_args_.zp_;
+  double input_scale = param->quant_arg_.in_args_.scale_;
+  int input_zp = param->quant_arg_.in_args_.zp_;
+  double output_scale = param->quant_arg_.out_args_.scale_;
+  int output_zp = param->quant_arg_.out_args_.zp_;
   int act_min = param->quant_arg_.output_activation_min_;
   int act_max = param->quant_arg_.output_activation_max_;
 
   int equal_quant = 0;
-  double multiplier = 0;
+  double multiplier = input_scale / output_scale;
   if (input_scale == output_scale && input_zp == output_zp) {
     equal_quant = 1;
-  } else {
-    multiplier = input_scale / output_scale;
   }
 
   int32_t end_n = param->begin_[0] + param->size_[0];
@@ -57,7 +55,7 @@ int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *par
           memcpy(output + out_offset, input + in_offset, unit_size);
         } else {
           for (c = 0; c < unit_count; ++c) {
-            int32_t output_val = round(multiplier * (input[in_offset + c] + input_zp)) + output_zp;
+            int32_t output_val = round(multiplier * (input[in_offset + c] - input_zp)) + output_zp;
             output[c + out_offset] = (int8_t)MSMAX(act_min, MSMIN(output_val, act_max));
           }
         }
@@ -69,10 +67,10 @@ int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *par
 }
 
 int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param) {
-  int input_scale = param->quant_arg_.in_args_.scale_;
-  int input_zp = -param->quant_arg_.in_args_.zp_;
-  int output_scale = param->quant_arg_.in_args_.scale_;
-  int output_zp = -param->quant_arg_.out_args_.zp_;
+  double input_scale = param->quant_arg_.in_args_.scale_;
+  int input_zp = param->quant_arg_.in_args_.zp_;
+  double output_scale = param->quant_arg_.out_args_.scale_;
+  int output_zp = param->quant_arg_.out_args_.zp_;
   int act_min = param->quant_arg_.output_activation_min_;
   int act_max = param->quant_arg_.output_activation_max_;
 
@@ -92,11 +90,9 @@ int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param) {
   int n, h, w, c;
 
   int equal_quant = 0;
-  double multiplier = 0;
+  double multiplier = input_scale / output_scale;
   if (input_scale == output_scale && input_zp == output_zp) {
     equal_quant = 1;
-  } else {
-    multiplier = input_scale / output_scale;
   }
 
   for (n = 0; n < param->size_[0]; ++n) {
@@ -116,7 +112,7 @@ int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param) {
           memcpy(output + out_offset, input + in_offset, unit_size);
         } else {
           for (c = 0; c < out_dim3; ++c) {
-            int32_t output_val = round(multiplier * (input[in_offset + c] + input_zp)) + output_zp;
+            int32_t output_val = round(multiplier * (input[in_offset + c] - input_zp)) + output_zp;
             output[c + out_offset] = (int8_t)MSMAX(act_min, MSMIN(output_val, act_max));
           }
         }
