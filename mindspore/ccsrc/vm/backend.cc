@@ -104,9 +104,8 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs)
       auto value_tuple = value->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(value_tuple);
       auto tuple_value = value_tuple->value();
-      for (const auto &v : tuple_value) {
-        PushInputTensor(v, inputs);
-      }
+      (void)std::transform(tuple_value.begin(), tuple_value.end(), std::back_inserter(*inputs),
+                           [](const ValuePtr &v) { return v->cast<tensor::TensorPtr>(); });
     } else if (value->isa<Scalar>()) {
       tensor::TensorPtr scalar_tensor = ScalarToTensor(value->cast<ScalarPtr>());
       inputs->push_back(scalar_tensor);
