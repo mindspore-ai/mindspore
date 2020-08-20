@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "ir/dtype/type_id.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 class ParamValueLite : public Value {
@@ -50,18 +51,20 @@ class ParamValueLite : public Value {
     return size;
   }
 
-  bool operator==(const Value &other) const override {
-    return this == &other;
-  }
+  bool operator==(const Value &other) const override { return this == &other; }
+
+  int format() const { return this->format_; }
+
+  void set_format(int format) { this->format_ = format; }
 
  private:
-  void *tensor_addr_;
-  size_t tensor_size_;
-  std::vector<int> tensor_shape_;
-  TypeId type_id_;
+  void *tensor_addr_ = nullptr;
+  size_t tensor_size_ = 0;
+  int format_ = schema::Format_KCHW;
+  std::vector<int> tensor_shape_{};
+  TypeId type_id_ = TypeId::kNumberTypeFloat32;
 };
 
 using ParamValueLitePtr = std::shared_ptr<ParamValueLite>;
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PARAM_VALUE_LITE_H_
-

@@ -1,8 +1,5 @@
 /**
- * This is the C++ adaptation and derivative work of Myia
- * (https://github.com/mila-iqia/myia/).
- *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +19,12 @@
 #include <vector>
 #include <memory>
 #include "tools/anf_importer/anf_populater/anf_node_populater_registry.h"
-#include "ir/func_graph.h"
-#include "src/ir/tensor.h"
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
 void AnfConvPopulater::PopulaterConv2DMultiGroup(const PrimitivePtr &prim,
-                                                 const std::unique_ptr<schema::PrimitiveT> &primitive,
-                                                 const int &group, const std::vector<AnfNodePtr> &inputs) {
+                                                 const std::unique_ptr<schema::PrimitiveT> &primitive, const int &group,
+                                                 const std::vector<AnfNodePtr> &inputs) {
   auto attr = std::make_unique<schema::DepthwiseConv2DT>();
   auto format = GetValue<std::string>(prim->GetAttr("data_format"));
   if (format == "NCHW") {
@@ -73,19 +68,11 @@ void AnfConvPopulater::PopulaterConv2DMultiGroup(const PrimitivePtr &prim,
   attr->channelMultiplier = channel_mutiplier;
 
   MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
-  auto inputNode = inputs[kAnfPopulaterOne];
-  MS_ASSERT(inputNode != nullptr);
-  if (inputNode->isa<Parameter>()) {
-    auto paramNode = inputNode->cast<ParameterPtr>();
-    auto abstractBase = paramNode->abstract();
-    MS_ASSERT(abstractBase != nullptr);
-    if (utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-      auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-      MS_ASSERT(abstractTensor != nullptr);
-      if (abstractTensor->format() == schema::Format_NCHW) {
-        abstractTensor->set_format(schema::Format_KCHW);
-      }
-    }
+  auto input_node = inputs[kAnfPopulaterOne];
+  MS_ASSERT(input_node != nullptr);
+  if (input_node->isa<Parameter>()) {
+    auto param_node = input_node->cast<ParameterPtr>();
+    ConvertConvWeight<float>(param_node);
   }
 
   primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
@@ -144,10 +131,9 @@ void AnfConvPopulater::CalQuantParam(const double &mean, const double &stdDev, f
   *mMax = static_cast<float>((qmax - mean) / stdDev);
 }
 
-void AnfConvPopulater::PopulaterQuantParam(
-    const PrimitivePtr &prim,
-    std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-    std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
+void AnfConvPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
+                                           std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
   auto narrow_range = prim->GetAttr("narrow_range");
   bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
   auto num_bits = prim->GetAttr("num_bits");
@@ -206,8 +192,7 @@ void AnfConvPopulater::PopulaterQuantParam(
     quantParam.max = 0.0;
     quantParam.zeroPoint = 0;
 
-    quantParam.scale =
-        vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(i).scale;
+    quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(i).scale;
     quants.emplace_back(quantParam);
   }
   vecInputQuantParam->emplace_back(quants);

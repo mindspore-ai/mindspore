@@ -147,6 +147,7 @@ class Tensor : public mindspore::tensor::MetaTensor {
     }
     if (nullptr == allocator_) {
       free(this->data_);
+      this->data_ = nullptr;
     } else {
       allocator_->Free(this->data_);
       this->data_ = nullptr;

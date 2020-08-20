@@ -1,37 +1,30 @@
 set(LITE_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/ms_tensor_utils.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/workspace_pool.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/ir/tensor.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/populate_parameter.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
-    )
-
-if (SUPPORT_GPU)
-  list(APPEND LITE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/subgraph_opencl_kernel.cc)
-  list(APPEND LITE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/utils.cc)
-endif ()
-
-set(LITE_SRC
-    ${LITE_SRC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/ms_tensor_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/workspace_pool.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ir/tensor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/populate_parameter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
     )
 
 if (SUPPORT_GPU)
   set(LITE_SRC
       ${LITE_SRC}
-      ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_executor.cc
-      ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_allocator.cc
-      ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_runtime.cc
-      ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_wrapper.cc
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/subgraph_opencl_kernel.cc
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/utils.cc
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_executor.cc
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_allocator.cc
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_runtime.cc
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_wrapper.cc
       )
 endif ()
 
