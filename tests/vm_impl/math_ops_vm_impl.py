@@ -41,10 +41,12 @@ def vm_impl_tensor_add(self):
 # pylint: disable=used-before-assignment
 @vm_impl_getters.register(P.LogicalNot)
 def vm_impl_logical_not(self):
-    x = x.asnumpy()
-    out = vm.logical_not(x)
-    return Tensor(out)
+    def vm_impl(x):
+        x = x.asnumpy()
+        out = vm.logical_not(x)
+        return Tensor(out)
 
+    return vm_impl
 
 @vm_impl_getters.register(P.MatMul)
 def vm_impl_mat_mul(self):
