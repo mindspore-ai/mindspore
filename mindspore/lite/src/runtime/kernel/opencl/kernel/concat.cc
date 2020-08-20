@@ -191,6 +191,9 @@ int ConcatOpenCLKernel::Run() {
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->Data());
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, input0_shape3_);
     ocl_runtime->SetKernelArg(kernel_, arg_cn++, output_shape_);
+  } else if (in_tensors_.size() < 2) {
+    MS_LOG(ERROR) << " inputs must been >=2";
+    return RET_ERROR;
   } else {
     MS_LOG(ERROR) << "only support inputs<=3";
     return RET_ERROR;
@@ -198,7 +201,7 @@ int ConcatOpenCLKernel::Run() {
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
 
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 
 kernel::LiteKernel *OpenCLConcatKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
