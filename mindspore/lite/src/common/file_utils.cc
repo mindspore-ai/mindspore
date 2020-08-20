@@ -72,7 +72,11 @@ std::string RealPath(const char *path) {
     MS_LOG(ERROR) << "new resolvedPath failed";
     return "";
   }
+#ifdef _WIN32
+  char *real_path = _fullpath(resolvedPath.get(), path, 1024);
+#else
   char *real_path = realpath(path, resolvedPath.get());
+#endif
   if (real_path == nullptr || strlen(real_path) == 0) {
     MS_LOG(ERROR) << "Proto file path is not valid";
     return "";

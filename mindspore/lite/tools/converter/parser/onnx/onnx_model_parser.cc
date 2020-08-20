@@ -56,10 +56,17 @@ std::vector<int32_t> OnnxModelParser::GetDimsFromOnnxValue(const onnx::ValueInfo
 
 STATUS OnnxModelParser::ReadOnnxModelFromBinary(const std::string &modelFile, google::protobuf::Message *onnx_model) {
   std::unique_ptr<char> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
+#ifdef _WIN32
+  if (_fullpath(onnx_file.get(), modelFile.c_str(), 1024) == nullptr) {
+    MS_LOG(ERROR) << "get realpath " << modelFile << " fail";
+    return RET_ERROR;
+  }
+#else
   if (realpath(modelFile.c_str(), onnx_file.get()) == nullptr) {
     MS_LOG(ERROR) << "get realpath " << modelFile << " fail";
     return RET_ERROR;
   }
+#endif
   int fd = open(onnx_file.get(), O_RDONLY);
   google::protobuf::io::FileInputStream input(fd);
   google::protobuf::io::CodedInputStream code_input(&input);

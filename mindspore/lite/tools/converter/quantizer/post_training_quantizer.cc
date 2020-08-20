@@ -426,9 +426,15 @@ STATUS Calibrator::ReadConfig() {
     MS_LOG(ERROR) << "New an object failed.";
     return RET_ERROR;
   }
-  if (nullptr != realpath(config_path_.c_str(), resolved_path)) {
+#ifdef _WIN32
+  if (_fullpath(resolved_path, config_path_.c_str(), 1024) != nullptr) {
     config_path_ = string(resolved_path);
   }
+#else
+  if (realpath(config_path_.c_str(), resolved_path) != nullptr) {
+    config_path_ = string(resolved_path);
+  }
+#endif
   std::ifstream fs(config_path_.c_str(), std::ifstream::in);
   if (!fs.is_open()) {
     MS_LOG(ERROR) << "config proto file %s open failed: " << config_path_;

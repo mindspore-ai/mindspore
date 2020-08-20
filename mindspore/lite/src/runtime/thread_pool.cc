@@ -212,11 +212,13 @@ bool LiteThreadBind::SetCPUBind(pthread_t threadId, cpu_set_t *cpuSet) {
   MS_LOG(ERROR) << "not bind thread to apple's cpu.";
   return false;
 #else
+#ifndef _WIN32
   int ret = pthread_setaffinity_np(threadId, sizeof(cpuSet), cpuSet);
   if (ret != 0) {
     MS_LOG(ERROR) << "bind thread " << threadId << " to cpu failed.ERROR " << ret;
     return false;
   }
+#endif
 #endif  // __APPLE__
 #endif
   return true;
