@@ -49,7 +49,7 @@ int PoolingInt8CPUKernel::ReSize() {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
     return ret;
   }
-  SetQuantParam();
+
   ret = SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set pooling quant param failed.";

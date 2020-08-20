@@ -57,7 +57,7 @@ class Matrix {
   int GetK() { return this->k_; }
 
  protected:
-  void *data_;
+  void *data_ = nullptr;
   std::vector<int> shape_;
   std::vector<int> stride_;
   int m_;

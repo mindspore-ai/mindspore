@@ -84,7 +84,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   OutputTransformUnitFp16Func output_trans_func_;
   TmpBufferAddressFp16 tmp_buffer_address_list_[4];
 };
-void WinogradFilterTransformFp16(const float16_t *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
+int WinogradFilterTransformFp16(const float16_t *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
                                  ConvParameter *conv_param, int oc_block);
 }  // namespace mindspore::kernel
 

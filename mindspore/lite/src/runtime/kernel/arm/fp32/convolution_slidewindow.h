@@ -37,6 +37,10 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
       free(packed_weight_);
       packed_weight_ = nullptr;
     }
+    if (slidingWindow_param_ != nullptr) {
+      delete slidingWindow_param_;
+      slidingWindow_param_ = nullptr;
+    }
   }
 
   int Init() override;
@@ -52,10 +56,6 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
     if (tmp_output_block_ != nullptr) {
       ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;
-    }
-    if (slidingWindow_param_ != nullptr) {
-      delete slidingWindow_param_;
-      slidingWindow_param_ = nullptr;
     }
   }
   float *packed_weight_ = nullptr;

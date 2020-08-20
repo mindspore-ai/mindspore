@@ -61,6 +61,8 @@ int SoftmaxCPUKernel::ReSize() {
   for (int i = axis + 1; i < n_dim; i++) {
     in_plane_size *= in_shape[i];
   }
+  in_plane_size_ = in_plane_size;
+  out_plane_size_ = out_plane_size;
   if (sum_data_ != nullptr) {
     free(sum_data_);
   }
@@ -69,7 +71,6 @@ int SoftmaxCPUKernel::ReSize() {
     MS_LOG(ERROR) << "malloc data for softmax fail!";
     return RET_ERROR;
   }
-  memset(sum_data_, 0, out_plane_size * in_plane_size * sizeof(float));
   return RET_OK;
 }
 
@@ -79,6 +80,7 @@ int SoftmaxCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return RET_ERROR;
   }
+  memset(sum_data_, 0, in_plane_size_ * out_plane_size_ * sizeof(float));
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);

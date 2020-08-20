@@ -262,6 +262,12 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
   int kernel_plane = kernel_h * kernel_w;
   int unit_size = kernel_plane * ic4 * C4NUM;
   int packed_input_size = output_tile_count * tile_n * unit_size;
+  int input_sum_offset;
+  if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
+    input_sum_offset = tile_n * out_channel;
+  } else {
+    input_sum_offset = tile_n;
+  }
 
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
@@ -270,7 +276,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      int32_t *tmp_input_sum = input_sum + task_id * tile_n;
+      int32_t *tmp_input_sum = input_sum + task_id * input_sum_offset;
       int8_t *gemm_input = packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset;
       // clear tmp buffer before compute
       memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);
@@ -317,6 +323,12 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
   int kernel_plane = kernel_h * kernel_w;
   int unit_size = kernel_plane * ic4 * C4NUM;
   int packed_input_size = output_tile_count * tile_n * unit_size;
+  int input_sum_offset;
+  if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
+    input_sum_offset = tile_n * out_channel;
+  } else {
+    input_sum_offset = tile_n;
+  }
 
   for (int b = 0; b < in_batch; b++) {
     int in_batch_offset = b * ic4 * C4NUM * in_h * in_w;
@@ -325,7 +337,7 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
-      int32_t *tmp_input_sum = input_sum + task_id * tile_n;
+      int32_t *tmp_input_sum = input_sum + task_id * input_sum_offset;
       int8_t *gemm_input = packed_input + thread_id * unit_size * tile_n + gemm_in_batch_offset;
       // clear tmp buffer before compute
       memset(gemm_input, (int8_t)input_zp, unit_size * tile_n);

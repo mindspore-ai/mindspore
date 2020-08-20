@@ -35,22 +35,25 @@ void ConvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
   }
 
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
   if (packed_input_ != nullptr) {
-    delete packed_input_;
+    free(packed_input_);
     packed_input_ = nullptr;
   }
   if (need_align_) {
     if (packed_output_ != nullptr) {
-      delete packed_output_;
+      free(packed_output_);
       packed_output_ = nullptr;
     }
   }
 }
 
-ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() { FreeTmpBuffer(); }
+ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
+  FreeTmpBuffer();
+  FreeQuantParam();
+}
 
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
@@ -118,7 +121,11 @@ int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
 
   // init sliding window param
-  sliding = new SlidingWindowParam;
+  sliding = new (std::nothrow) SlidingWindowParam;
+  if (sliding == nullptr) {
+    MS_LOG(ERROR) << "new sliding window param.";
+    return RET_ERROR;
+  }
   InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   // init quant param

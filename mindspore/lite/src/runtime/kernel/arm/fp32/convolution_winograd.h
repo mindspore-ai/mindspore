@@ -80,7 +80,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   TmpBufferAddress tmp_buffer_address_list_[5];
   GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
-void WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
-                             ConvParameter *conv_param, int oc_block);
+int WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
+                            ConvParameter *conv_param, int oc_block);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_WINOGRAD_H_
