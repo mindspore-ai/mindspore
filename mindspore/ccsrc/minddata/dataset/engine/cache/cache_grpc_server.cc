@@ -47,53 +47,10 @@ void CacheServerGreeterImpl::Shutdown() {
 
 CacheServerGreeterImpl::~CacheServerGreeterImpl() { Shutdown(); }
 
-Status CacheServerGreeterImpl::IpcResourceCleanup() {
-#if CACHE_LOCAL_CLIENT
-  int err;
-  auto shm_key = PortToFtok(port_, &err);
-  // We are expecting the unix path doesn't exist.
-  if (shm_key == (key_t)-1) {
-    return Status::OK();
-  }
-  // Attach to the shared memory
-  auto shm_id = shmget(shm_key, 0, 0);
-  if (shm_id == -1) {
-    return Status::OK();
-  }
-  struct shmid_ds ds {};
-  auto inx = shmctl(shm_id, IPC_STAT, &ds);
-  if (inx == -1) {
-    std::string errMsg = "Unable to query shared memory with id " + std::to_string(shm_id);
-    errMsg += "\nPlesae remove it manually using ipcrm -m command";
-    RETURN_STATUS_UNEXPECTED(errMsg);
-  }
-  if (ds.shm_nattch == 0) {
-    // Stale shared memory from last time.
-    // Remove both the memory and the socket path
-    inx = shmctl(shm_id, IPC_RMID, nullptr);
-    if (inx == -1) {
-      std::string errMsg = "Unable to remove shared memory with id " + std::to_string(shm_id);
-      errMsg += ". Errno :" + std::to_string(errno);
-      errMsg += "\nPlesae remove it manually using ipcrm -m command";
-      RETURN_STATUS_UNEXPECTED(errMsg);
-    }
-    Path p(unix_socket_);
-    (void)p.Remove();
-  } else {
-    // Server is already up.
-    MS_LOG(ERROR) << "Cache server is already up and running";
-    // We return a duplicate error. The main() will intercept
-    // and output a proper message
-    return Status(StatusCode::kDuplicateKey);
-  }
-#endif
-  return Status::OK();
-}
-
 Status CacheServerGreeterImpl::Run() {
   // To listen on all interfaces, use 0.0.0.0
-  // Use 127.0.0.1 if just locally on the same machine.
-  std::string host("0.0.0.0");  // listen on all interfaces.
+  // Future, allow the user to choose listening interface.  For now, default to localhost
+  std::string host("127.0.0.1");
   std::string server_address = host + ":" + std::to_string(port_);
   grpc::ServerBuilder builder;
   // Default message size for gRPC is 4MB. Increase it to 2g-1
@@ -101,9 +58,6 @@ Status CacheServerGreeterImpl::Run() {
   int port_tcpip = 0;
 #if CACHE_LOCAL_CLIENT
   int port_local = 0;
-  // Check if we need to do clean up on the shared memory if the server
-  // came down unexpectedly like SEGV
-  RETURN_IF_NOT_OK(IpcResourceCleanup());
   // We also optimize on local clients on the same machine using unix socket
   builder.AddListeningPort("unix://" + unix_socket_, grpc::InsecureServerCredentials(), &port_local);
 #endif

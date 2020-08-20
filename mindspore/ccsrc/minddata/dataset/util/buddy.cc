@@ -69,7 +69,7 @@ Status BuddySpace::Alloc(const uint64_t sz, BSpaceDescriptor *desc, addr_t *p) n
     *p = addr;
     return Status::OK();
   } else {
-    return Status(StatusCode::kNoSpace, "BuddySpace full. Not an error. Please ignore.");
+    return Status(StatusCode::kBuddySpaceFull, "BuddySpace full. Not an error. Please ignore.");
   }
 }
 

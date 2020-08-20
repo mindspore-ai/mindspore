@@ -32,7 +32,10 @@ namespace dataset {
 class RandomSolarizeOp : public SolarizeOp {
  public:
   // Pick a random threshold value to solarize the image with
-  explicit RandomSolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(threshold) { rnd_.seed(GetSeed()); }
+  explicit RandomSolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(threshold) {
+    rnd_.seed(GetSeed());
+    is_deterministic_ = false;
+  }
 
   ~RandomSolarizeOp() = default;
 

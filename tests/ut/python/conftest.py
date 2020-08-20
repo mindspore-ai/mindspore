@@ -29,6 +29,10 @@ def pytest_addoption(parser):
         "--runmode", action="store", default="nosimu",
         help="simu:simulator backend & nosimu for no backend"
     )
+    parser.addoption(
+        "--shard", action="store", default="0",
+        help="shard id for parallel pipeline"
+    )
 
 
 @pytest.fixture
@@ -37,6 +41,14 @@ def test_with_simu(request):
     run PyNative testcases when compiled with simulator
     """
     return request.config.getoption("--runmode") == "simu"
+
+
+@pytest.fixture
+def shard(request):
+    """
+    specify shard id for parallel pipeline testcases
+    """
+    return request.config.getoption("--shard")
 
 
 # https://stackoverflow.com/questions/14121657/how-to-get-test-name-and-test-result-during-run-time-in-pytest

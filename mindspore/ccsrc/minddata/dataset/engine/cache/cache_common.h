@@ -25,13 +25,6 @@
 #define CACHE_LOCAL_CLIENT 1
 #endif
 
-#ifdef CACHE_LOCAL_CLIENT
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#else
-typedef int key_t;
-#endif
 #ifdef ENABLE_CACHE
 #include <grpcpp/grpcpp.h>
 #endif
@@ -54,6 +47,8 @@ constexpr static uint32_t kLocalClientSupport = 1;
 /// \brief A flag used by CacheRow request (client side) and BatchFetch (server side) reply to indicate if the data is
 /// inline in the protobuf. This also implies kLocalClientSupport is also true.
 constexpr static uint32_t kDataIsInSharedMemory = 2;
+/// \brief Size of each message used in message queue.
+constexpr static int32_t kSharedMessageSize = 2048;
 
 /// \brief Convert a Status object into a protobuf
 /// \param rc[in] Status object
@@ -62,29 +57,10 @@ inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
   reply->set_rc(static_cast<int32_t>(rc.get_code()));
   reply->set_msg(rc.ToString());
 }
-
 /// \brief Generate the unix socket file we use on both client/server side given a tcp/ip port number
 /// \param port
 /// \return unix socket url
 inline std::string PortToUnixSocketPath(int port) { return "/tmp/cache_server_p" + std::to_string(port); }
-
-/// \brief Generate a shared memory key using the tcp/ip port.
-/// \note It must be called after the cache server generates the unix socket or ftok will fail.
-/// \note Caller must check the return value. -1 means ftok failed.
-/// \param[in] port
-/// \param[out] err. If not null and ftok fails, this will contain the value of errno
-/// \return key
-inline key_t PortToFtok(int port, int *err) {
-  key_t shmkey = -1;
-#ifdef CACHE_LOCAL_CLIENT
-  const std::string unix_path = PortToUnixSocketPath(port);
-  shmkey = ftok(unix_path.data(), 'a');
-  if (err != nullptr && shmkey == (key_t)-1) {
-    *err = errno;
-  }
-#endif
-  return shmkey;
-}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_COMMON_H_

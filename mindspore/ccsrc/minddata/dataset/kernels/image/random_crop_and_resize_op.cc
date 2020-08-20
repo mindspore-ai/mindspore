@@ -41,6 +41,7 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
       aspect_ub_(aspect_ub),
       max_iter_(max_iter) {
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 Status RandomCropAndResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

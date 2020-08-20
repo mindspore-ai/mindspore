@@ -21,6 +21,7 @@
 #include <string>
 #include "minddata/dataset/util/arena.h"
 #include "minddata/dataset/engine/cache/cache_common.h"
+#include "minddata/dataset/engine/cache/cache_ipc.h"
 namespace mindspore {
 namespace dataset {
 /// This is a derived class of Arena but resides in shared memory
@@ -73,10 +74,9 @@ class CachedSharedMemoryArena : public MemoryPool {
 
  private:
   mutable std::mutex mux_;
-  void *ptr_;
   int32_t val_in_GB_;
   int32_t port_;
-  int shmid_;
+  SharedMemory shm_;
   std::unique_ptr<ArenaImpl> impl_;
   /// Private constructor. Not to be called directly.
   CachedSharedMemoryArena(int32_t port, size_t val_in_GB);

@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <utility>
+#include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/treap.h"
 
@@ -140,7 +141,7 @@ class Arena : public MemoryPool {
  protected:
   mutable std::mutex mux_;
   std::unique_ptr<ArenaImpl> impl_;
-  std::unique_ptr<uint8_t[]> mem_;
+  MemGuard<uint8_t> mem_;
   size_t size_in_MB_;
 
   explicit Arena(size_t val_in_MB = 4096);

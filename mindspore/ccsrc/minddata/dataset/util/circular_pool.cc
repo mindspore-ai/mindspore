@@ -133,12 +133,13 @@ void CircularPool::Deallocate(void *p) {
   // Lock in the chain in shared mode and find out which
   // segment it comes from
   SharedLock lock(&rw_lock_);
-  auto it = std::find_if(mem_segments_.begin(), mem_segments_.end(), [p](std::shared_ptr<Arena> &b) -> bool {
+  auto it = std::find_if(mem_segments_.begin(), mem_segments_.end(), [this, p](std::shared_ptr<Arena> &b) -> bool {
     char *q = reinterpret_cast<char *>(p);
-    char *base = const_cast<char *>(reinterpret_cast<const char *>(b->get_base_addr()));
-    return (q > base && q < base + b->get_max_size());
+    auto *base = reinterpret_cast<const char *>(b->get_base_addr());
+    return (q > base && q < base + arena_size_ * 1048576L);
   });
   lock.Unlock();
+  MS_ASSERT(it != mem_segments_.end());
   it->get()->Deallocate(p);
 }
 
@@ -150,10 +151,10 @@ Status CircularPool::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
   }
   void *p = *pp;
   SharedLock lock(&rw_lock_);
-  auto it = std::find_if(mem_segments_.begin(), mem_segments_.end(), [p](std::shared_ptr<Arena> &b) -> bool {
+  auto it = std::find_if(mem_segments_.begin(), mem_segments_.end(), [this, p](std::shared_ptr<Arena> &b) -> bool {
     char *q = reinterpret_cast<char *>(p);
-    char *base = const_cast<char *>(reinterpret_cast<const char *>(b->get_base_addr()));
-    return (q > base && q < base + b->get_max_size());
+    auto *base = reinterpret_cast<const char *>(b->get_base_addr());
+    return (q > base && q < base + arena_size_ * 1048576L);
   });
   lock.Unlock();
   MS_ASSERT(it != mem_segments_.end());

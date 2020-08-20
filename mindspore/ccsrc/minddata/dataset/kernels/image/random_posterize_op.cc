@@ -29,6 +29,7 @@ const std::vector<uint8_t> RandomPosterizeOp::kBitRange = {4, 8};
 RandomPosterizeOp::RandomPosterizeOp(const std::vector<uint8_t> &bit_range)
     : PosterizeOp(bit_range[0]), bit_range_(bit_range) {
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 Status RandomPosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

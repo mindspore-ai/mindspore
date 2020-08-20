@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <optional>
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 
@@ -22,17 +23,19 @@ namespace dataset {
 
 PYBIND_REGISTER(CacheClient, 0, ([](const py::module *m) {
                   (void)py::class_<CacheClient, std::shared_ptr<CacheClient>>(*m, "CacheClient")
-                    .def(
-                      py::init([](session_id_type id, uint64_t mem_sz, bool spill, std::optional<std::string> hostname,
-                                  std::optional<int32_t> port, int32_t prefetch_sz) {
-                        std::shared_ptr<CacheClient> cc;
-                        CacheClient::Builder builder;
-                        builder.SetSessionId(id).SetCacheMemSz(mem_sz).SetSpill(spill).SetPrefetchSize(prefetch_sz);
-                        if (hostname) builder.SetHostname(hostname.value());
-                        if (port) builder.SetPort(port.value());
-                        THROW_IF_ERROR(builder.Build(&cc));
-                        return cc;
-                      }))
+                    .def(py::init([](session_id_type id, uint64_t mem_sz, bool spill,
+                                     std::optional<std::string> hostname, std::optional<int32_t> port,
+                                     std::optional<int32_t> num_connections, std::optional<int32_t> prefetch_sz) {
+                      std::shared_ptr<CacheClient> cc;
+                      CacheClient::Builder builder;
+                      builder.SetSessionId(id).SetCacheMemSz(mem_sz).SetSpill(spill);
+                      if (hostname) builder.SetHostname(hostname.value());
+                      if (port) builder.SetPort(port.value());
+                      if (num_connections) builder.SetNumConnections(num_connections.value());
+                      if (prefetch_sz) builder.SetPrefetchSize(prefetch_sz.value());
+                      THROW_IF_ERROR(builder.Build(&cc));
+                      return cc;
+                    }))
                     .def("GetStat", [](CacheClient &cc) {
                       CacheServiceStat stat{};
                       THROW_IF_ERROR(cc.GetStat(&stat));

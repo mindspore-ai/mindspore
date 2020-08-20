@@ -413,11 +413,16 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::Locate(RWLo
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
-BPlusTree<K, V, A, C, T>::BPlusTree() : leaf_nodes_(&LeafNode::link_), all_(&BaseNode::lru_), root_(nullptr) {}
+BPlusTree<K, V, A, C, T>::BPlusTree()
+    : leaf_nodes_(&LeafNode::link_), all_(&BaseNode::lru_), root_(nullptr), acquire_lock_(true) {
+  Init();
+}
 
 template <typename K, typename V, typename A, typename C, typename T>
 BPlusTree<K, V, A, C, T>::BPlusTree(const Allocator<V> &alloc)
-    : alloc_(alloc), leaf_nodes_(&LeafNode::link_), all_(&BaseNode::lru_), root_(nullptr) {}
+    : alloc_(alloc), leaf_nodes_(&LeafNode::link_), all_(&BaseNode::lru_), root_(nullptr), acquire_lock_(true) {
+  Init();
+}
 
 template <typename K, typename V, typename A, typename C, typename T>
 BPlusTree<K, V, A, C, T>::~BPlusTree() noexcept {
@@ -446,20 +451,6 @@ BPlusTree<K, V, A, C, T>::~BPlusTree() noexcept {
 template <typename K, typename V, typename A, typename C, typename T>
 Status BPlusTree<K, V, A, C, T>::DoInsert(const key_type &key, std::unique_ptr<value_type> &&value) {
   IndexRc rc;
-  if (root_ == nullptr) {
-    UniqueLock lck(&rw_lock_);
-    // Check again after we get the lock. Other thread may have created the root node already.
-    if (root_ == nullptr) {
-      LeafNode *leaf = nullptr;
-      rc = AllocateLeaf(&leaf);
-      if (rc != IndexRc::kOk) {
-        return IndexRc2Status(rc);
-      }
-      leaf_nodes_.Append(leaf);
-      root_ = leaf;
-    }
-    // lock will be unlocked when it goes out of scope.
-  }
   bool retry = false;
   do {
     // Track all the paths to the target and lock each internal node in S.
@@ -468,7 +459,7 @@ Status BPlusTree<K, V, A, C, T>::DoInsert(const key_type &key, std::unique_ptr<v
     retry = false;
     BaseNode *new_child = nullptr;
     key_type new_key = key_type();
-    rc = InsertKeyValue(&InsCB, root_, key, std::move(value), &new_key, &new_child);
+    rc = InsertKeyValue(acquire_lock_ ? &InsCB : nullptr, root_, key, std::move(value), &new_key, &new_child);
     if (rc == IndexRc::kRetry) {
       retry = true;
     } else if (rc != IndexRc::kOk) {
@@ -511,9 +502,12 @@ std::unique_ptr<V> BPlusTree<K, V, A, C, T>::DoUpdate(const key_type &key, std::
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
     slot_type slot;
-    RWLock *myLock = &this->rw_lock_;
-    // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
-    myLock->LockShared();
+    RWLock *myLock = nullptr;
+    if (acquire_lock_) {
+      myLock = &this->rw_lock_;
+      // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
+      myLock->LockShared();
+    }
     IndexRc rc = Locate(myLock, true, root_, key, &leaf, &slot);
     if (rc == IndexRc::kOk) {
       // All locks from the tree to the parent of leaf are all gone. We still have a X lock
@@ -521,7 +515,9 @@ std::unique_ptr<V> BPlusTree<K, V, A, C, T>::DoUpdate(const key_type &key, std::
       // Swap out the old value and replace it with new value.
       std::unique_ptr<value_type> old = std::move(leaf->data_[leaf->slot_dir_[slot]]);
       leaf->data_[leaf->slot_dir_[slot]] = std::move(new_value);
-      leaf->rw_lock_.Unlock();
+      if (acquire_lock_) {
+        leaf->rw_lock_.Unlock();
+      }
       return old;
     } else {
       MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";

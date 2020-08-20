@@ -24,27 +24,26 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 // For testing purposes, we will make the branching factor very low.
 struct mytraits {
-    using slot_type = uint16_t;
-    static const slot_type kLeafSlots = 6;
-    static const slot_type kInnerSlots = 3;
+  using slot_type = uint16_t;
+  static const slot_type kLeafSlots = 6;
+  static const slot_type kInnerSlots = 3;
 };
-
 
 class MindDataTestBPlusTree : public UT::Common {
  public:
-    MindDataTestBPlusTree() = default;
+  MindDataTestBPlusTree() = default;
 };
 
 // Test serial insert.
 TEST_F(MindDataTestBPlusTree, Test1) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
-  BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<uint64_t>, mytraits> btree(alloc);
+  BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<>, mytraits> btree(alloc);
   Status rc;
   for (int i = 0; i < 100; i++) {
     uint64_t key = 2 * i;
@@ -109,23 +108,24 @@ TEST_F(MindDataTestBPlusTree, Test1) {
 // Test concurrent insert.
 TEST_F(MindDataTestBPlusTree, Test2) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
-  BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<uint64_t>, mytraits> btree(alloc);
+  BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<>, mytraits> btree(alloc);
   TaskGroup vg;
   auto f = [&](int k) -> Status {
     TaskManager::FindMe()->Post();
-      for (int i = 0; i < 100; i++) {
-        uint64_t key = k * 100 + i;
-        std::ostringstream oss;
-        oss << "Hello World. I am " << key;
-        Status rc = btree.DoInsert(key, oss.str());
-        EXPECT_TRUE(rc.IsOk());
-      }
-      return Status::OK();
+    for (int i = 0; i < 100; i++) {
+      uint64_t key = k * 100 + i;
+      std::ostringstream oss;
+      oss << "Hello World. I am " << key;
+      Status rc = btree.DoInsert(key, oss.str());
+      EXPECT_TRUE(rc.IsOk());
+    }
+    return Status::OK();
   };
   auto g = [&](int k) -> Status {
     TaskManager::FindMe()->Post();
     for (int i = 0; i < 1000; i++) {
-      uint64_t key = rand() % 10000;;
+      uint64_t key = rand() % 10000;
+      ;
       auto it = btree.Search(key);
     }
     return Status::OK();
@@ -225,4 +225,23 @@ TEST_F(MindDataTestBPlusTree, Test4) {
     }
     EXPECT_EQ(cnt, 1000);
   }
+}
+
+TEST_F(MindDataTestBPlusTree, TestPerfNoLocking) {
+  AutoIndexObj<int64_t> btree;
+  // No locking test
+  btree.SetLocking(false);
+  // Insert a million entries using the default traits.
+  for (auto i = 0; i < 1000000; ++i) {
+    ASSERT_TRUE(btree.insert(i));
+  }
+  std::cout << "Tree height : " << btree.GetHeight() << std::endl;
+  std::cout << "Tree Order : " << btree.GetOrder() << std::endl;
+  std::cout << "Number of leaves : " << btree.GetNumLeaves() << std::endl;
+  std::cout << "Number of inner nodes : " << btree.GetNumInnerNodes() << std::endl;
+
+  auto r = btree.Search(3);
+  EXPECT_TRUE(r.second);
+  r = btree.Search(999999);
+  EXPECT_TRUE(r.second);
 }

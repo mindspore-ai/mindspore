@@ -53,22 +53,35 @@ CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t row
       num_cache_miss_(0),
       cache_client_(std::move(cache_client)),
       rows_per_buffer_(rows_per_buf),
-      // We can cause deadlock if this internal Connector size is too small.
-      keys_miss_(num_workers_, 1, connector_capacity_),
-      prefetch_size_(cache_client_->getPrefetchSize()) {
+      prefetch_size_(rows_per_buffer_),
+      num_prefetchers_(num_workers_) {
+  // Adjust the prefetch size based on the number of workers.
+  auto prefetch_sz_per_thread = cache_client_->GetPrefetchSize() / num_prefetchers_;
+  if (prefetch_size_ < prefetch_sz_per_thread) {
+    prefetch_size_ = prefetch_sz_per_thread;
+    MS_LOG(DEBUG) << "Per worker prefetch size : " << prefetch_size_;
+  }
   io_block_queues_.Init(num_workers, op_connector_size);
-  prefetch_queues_.Init(num_workers, op_connector_size);
-  sampler_queue_ = std::make_unique<Queue<std::shared_ptr<Tensor>>>(op_connector_size);
+  prefetch_queues_.Init(num_prefetchers_, op_connector_size);
+  // We can cause deadlock if this internal Connector size is too small.
+  keys_miss_ = std::make_unique<Connector<std::vector<row_id_type>>>(num_prefetchers_, 1, connector_capacity_);
 }
 // Common function to fetch samples from the sampler and send them using the io_block_queues to
 // the parallel workers
 Status CacheBase::FetchSamplesToWorkers() {
   int64_t buf_cnt = 0;
   int64_t wait_cnt = 0;
+  int64_t prefetch_cnt = 0;
   // Kick off several threads which will prefetch prefetch_size_ rows in advance. The rows_per_buffers_
   // is too small (1 by default) and won't help performance.
-  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Dispatcher", std::bind(&CacheBase::Dispatcher, this)));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CacheBase::Prefetcher, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_prefetchers_, std::bind(&CacheBase::Prefetcher, this, std::placeholders::_1)));
+  auto send_to_que = [](QueueList<std::unique_ptr<IOBlock>> &qList, int32_t worker_id,
+                        std::vector<row_id_type> &keys) -> Status {
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    RETURN_IF_NOT_OK(qList[worker_id]->Add(std::move(blk)));
+    return Status::OK();
+  };
   // Instead of sending sampler id to WorkerEntry, we send them to the Prefetcher which will redirect them
   // to the WorkerEntry.
   do {
@@ -82,33 +95,54 @@ Status CacheBase::FetchSamplesToWorkers() {
     ++wait_cnt;
     std::vector<row_id_type> keys;
     keys.reserve(rows_per_buffer_);
+    std::vector<row_id_type> prefetch_keys;
+    prefetch_keys.reserve(prefetch_size_);
     std::unique_ptr<DataBuffer> sampler_buffer;
     RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     while (!sampler_buffer->eoe()) {
       TensorRow sample_row;
       RETURN_IF_NOT_OK(sampler_buffer->PopRow(&sample_row));
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
-      // Send the sampler tensor to other thread for prefetching. We are using shared pointer so it
-      // won't go out scope until it is really not in use.
-      RETURN_IF_NOT_OK(sampler_queue_->Add(sample_ids));
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); itr++) {
-        keys.push_back(*itr);
         ++row_cnt_;
-        if (row_cnt_ % rows_per_buffer_ == 0) {
-          auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
-          RETURN_IF_NOT_OK(io_block_queues_[buf_cnt++ % num_workers_]->Add(std::move(blk)));
-          keys.clear();
+        prefetch_keys.push_back(*itr);
+        // Batch enough rows for performance reason.
+        if (row_cnt_ % prefetch_size_ == 0) {
+          RETURN_IF_NOT_OK(send_to_que(prefetch_queues_, prefetch_cnt++ % num_prefetchers_, prefetch_keys));
+          // Now we tell the WorkerEntry to wait for them to come back. If prefetch_size_ is a multiple
+          // of rows_per_buffer_, the keys vector will always be empty. But it can be partially filled.
+          // The only requirement we set up is rows_per_buffer_ is less than or equal to prefetch_size_.
+          for (auto row_id : prefetch_keys) {
+            keys.push_back(row_id);
+            if (keys.size() == rows_per_buffer_) {
+              RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+              keys.clear();
+            }
+          }
+          prefetch_keys.clear();
         }
       }
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
     }
+    // Deal with any partial keys left.
+    if (!prefetch_keys.empty()) {
+      RETURN_IF_NOT_OK(send_to_que(prefetch_queues_, prefetch_cnt++ % num_prefetchers_, prefetch_keys));
+      for (auto row_id : prefetch_keys) {
+        keys.push_back(row_id);
+        if (keys.size() == rows_per_buffer_) {
+          RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+          keys.clear();
+        }
+      }
+    }
     if (!keys.empty()) {
-      auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
-      RETURN_IF_NOT_OK(io_block_queues_[buf_cnt++ % num_workers_]->Add(std::move(blk)));
+      RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
     }
     // send the eoe
     RETURN_IF_NOT_OK(
       io_block_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+    RETURN_IF_NOT_OK(prefetch_queues_[(prefetch_cnt++) % num_prefetchers_]->Add(
+      std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     // If repeat but the not last repeat, wait for reset.
     if (!IsLastIteration()) {
       MS_LOG(DEBUG) << Name() << " Waiting for reset. Count " << wait_cnt << " Buffer sent " << buf_cnt;
@@ -123,8 +157,6 @@ Status CacheBase::FetchSamplesToWorkers() {
   RETURN_IF_NOT_OK(
     io_block_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
   // Shutdown threads
-  std::shared_ptr<Tensor> empty;
-  RETURN_IF_NOT_OK(sampler_queue_->Add(std::move(empty)));
   for (int32_t i = 0; i < num_workers_; i++) {
     RETURN_IF_NOT_OK(
       io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
@@ -145,13 +177,6 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
     if (blk->eof()) {
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
     } else if (blk->eoe()) {
-      if (AllowCacheMiss()) {
-        // This code path is for CacheLookupOp acting as a sampler. If we get a eoe from
-        // a sampler, send a eoe to physical leaf op as well.
-        std::vector<row_id_type> eoe;
-        eoe.push_back(eoe_row_id);
-        RETURN_IF_NOT_OK(keys_miss_.Push(worker_id, eoe));
-      }
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
     } else {
       std::vector<int64_t> keys;
@@ -162,22 +187,21 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
       }
       std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
       std::unique_ptr<TensorQTable> que = std::make_unique<TensorQTable>();
-      std::vector<row_id_type> cache_miss;
-      cache_miss.reserve(keys.size());
       for (auto row_id : keys) {
         TensorRow row;
         // Block until the row shows up in the pool.
-        RETURN_IF_NOT_OK(prefetch_.PopFront(row_id, &row));
+        RETURN_IF_NOT_OK(GetPrefetchRow(row_id, &row));
         if (row.empty()) {
-          cache_miss.push_back(row_id);
+          if (AllowCacheMiss()) {
+            ++num_cache_miss_;
+          } else {
+            std::string errMsg = "Row id " + std::to_string(row_id) + " not found.";
+            RETURN_STATUS_UNEXPECTED(errMsg);
+          }
         }
         que->push_back(std::move(row));
       }
       db->set_tensor_table(std::move(que));
-      if (AllowCacheMiss()) {
-        // Because of the way connector works, we push unconditionally even cache_miss can be empty.
-        RETURN_IF_NOT_OK(keys_miss_.Push(worker_id, cache_miss));
-      }
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
       buffer_id += num_workers_;
     }
@@ -189,7 +213,6 @@ Status CacheBase::RegisterResources() {
   RETURN_IF_NOT_OK(epoch_sync_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(prefetch_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(sampler_queue_->Register(tree_->AllTasks()));
   return Status::OK();
 }
 
@@ -208,73 +231,97 @@ Status CacheBase::UpdateColumnMapFromCache() {
   return rc;
 }
 
-Status CacheBase::Dispatcher() {
-  TaskManager::FindMe()->Post();
-  int64_t buf_cnt = 0;
-  int64_t num_row = 0;
-  std::vector<row_id_type> keys;
-  keys.reserve(prefetch_size_);
-  do {
-    keys.clear();
-    std::shared_ptr<Tensor> sample_ids;
-    RETURN_IF_NOT_OK(sampler_queue_->PopFront(&sample_ids));
-    if (sample_ids == nullptr) {
-      // A null shared pointer signal times to quit.
-      // Also signal all prefetchers to quit.
-      for (int32_t i = 0; i < num_workers_; i++) {
-        RETURN_IF_NOT_OK(
-          prefetch_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      break;
-    }
-    // Now we distribute the sampler ids to each prefetcher according to the prefetch size.
-    for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); itr++) {
-      keys.push_back(*itr);
-      ++num_row;
-      if (num_row % prefetch_size_ == 0) {
-        auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
-        RETURN_IF_NOT_OK(prefetch_queues_[buf_cnt++ % num_workers_]->Add(std::move(blk)));
-        keys.clear();
-      }
-    }
-    // Send the remaining sample id
-    if (!keys.empty()) {
-      auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
-      RETURN_IF_NOT_OK(prefetch_queues_[buf_cnt++ % num_workers_]->Add(std::move(blk)));
-    }
-  } while (true);
+Status CacheBase::GetPrefetchRow(row_id_type row_id, TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  CHECK_FAIL_RETURN_UNEXPECTED(row_id >= 0, "Expect positive row id");
+  RETURN_IF_NOT_OK(prefetch_.PopFront(row_id, out));
   return Status::OK();
+}
+
+Status CacheBase::PrefetchRows(const std::vector<row_id_type> &keys, std::vector<row_id_type> *cache_miss) {
+  RETURN_UNEXPECTED_IF_NULL(cache_miss);
+  std::vector<row_id_type> prefetch_keys;
+  prefetch_keys.reserve(keys.size());
+
+  // Filter out all those keys that unlikely we will find at the server
+  for (auto row_id : keys) {
+    if (cache_client_->KeyIsCacheMiss(row_id)) {
+      // Just put an empty row in the cache.
+      TensorRow row;
+      row.setId(row_id);
+      RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
+      cache_miss->push_back(row_id);
+    } else {
+      prefetch_keys.push_back(row_id);
+    }
+  }
+  // Early exit if nothing to fetch
+  if (prefetch_keys.empty()) {
+    return Status::OK();
+  }
+  // Get the rows from the server
+  TensorTable ttbl;
+  Status rc = cache_client_->GetRows(prefetch_keys, &ttbl);
+  if (rc.IsOk()) {
+    auto row_it = ttbl.begin();
+    for (auto row_id : prefetch_keys) {
+      auto &row = *row_it;
+      if (row.empty()) {
+        cache_miss->push_back(row_id);
+      }
+      // Put the prefetch row into the pool and wake up any WorkerEntry to wait for the row
+      RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
+      ++row_it;
+    }
+  } else {
+    // In case any thread is waiting for the rows to come back and blocked on a semaphore,
+    // we will put an empty row in the local cache.
+    for (auto row_id : prefetch_keys) {
+      TensorRow row;
+      row.setId(row_id);
+      RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
+      cache_miss->push_back(row_id);
+    }
+  }
+  return rc;
 }
 
 Status CacheBase::Prefetcher(int32_t worker_id) {
   TaskManager::FindMe()->Post();
   std::vector<row_id_type> prefetch_keys;
   prefetch_keys.reserve(prefetch_size_);
+  std::vector<row_id_type> cache_miss;
+  cache_miss.reserve(prefetch_size_);
   do {
     prefetch_keys.clear();
+    cache_miss.clear();
     std::unique_ptr<IOBlock> blk;
     RETURN_IF_NOT_OK(prefetch_queues_[worker_id]->PopFront(&blk));
-    RETURN_IF_NOT_OK(blk->GetKeys(&prefetch_keys));
-    if (prefetch_keys.empty()) {
-      // Empty keys mean time to quit.
-      break;
-    }
-    TensorTable ttbl;
-    RETURN_IF_NOT_OK(cache_client_->GetRows(prefetch_keys, &ttbl));
-    auto row_it = ttbl.begin();
-    for (auto row_id : prefetch_keys) {
-      auto &row = *row_it;
-      if (row.empty()) {
-        if (AllowCacheMiss()) {
-          ++num_cache_miss_;
-        } else {
-          std::string errMsg = "Row id " + std::to_string(row_id) + " not found.";
-          RETURN_STATUS_UNEXPECTED(errMsg);
+    CHECK_FAIL_RETURN_UNEXPECTED(!blk->eof(), "Expect eoe or a regular io block");
+    if (!blk->eoe()) {
+      RETURN_IF_NOT_OK(blk->GetKeys(&prefetch_keys));
+      Status rc;
+      const int32_t max_retries = 5;
+      int32_t retry_count = 0;
+      do {
+        rc = PrefetchRows(prefetch_keys, &cache_miss);
+        if (rc.IsNetWorkError() && retry_count < max_retries) {
+          // If we get some network error, we will attempt some retries
+          retry_count++;
+        } else if (rc.IsError()) {
+          return rc;
         }
+      } while (rc.IsNetWorkError());
+    } else {
+      if (AllowCacheMiss()) {
+        // This code path is for CacheLookupOp acting as a sampler. If we get a eoe from
+        // a sampler, send a eoe to physical leaf op as well.
+        cache_miss.push_back(eoe_row_id);
       }
-      // Put the prefetch row into the pool and wake up any WorkerEntry to wait for the row
-      RETURN_IF_NOT_OK(prefetch_.Add(row_id, std::move(row)));
-      ++row_it;
+    }
+    if (AllowCacheMiss()) {
+      // Because of the way connector works, we push unconditionally even cache_miss can be empty.
+      RETURN_IF_NOT_OK(keys_miss_->Push(worker_id, cache_miss));
     }
   } while (true);
   return Status::OK();

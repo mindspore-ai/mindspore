@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_SERVER_H_
 
+#include <string.h>
+#include <unistd.h>
 #include <algorithm>
 #include <atomic>
 #include <memory>
@@ -47,15 +49,16 @@ class CacheServer : public Service {
   using cache_index = std::map<connection_id_type, std::unique_ptr<CacheService>>;
   class Builder {
    public:
-    Builder() : top_("/tmp"), num_workers_(32), port_(50052), shared_memory_sz_in_gb_(4) {}
+    Builder() : top_("/tmp"), num_workers_(32), port_(50052), shared_memory_sz_in_gb_(4), memory_cap_ratio_(0.8) {}
 
     ~Builder() = default;
 
     /// \brief Getter functions
-    const std::string &getTop() const { return top_; }
-    int32_t getNumWorkers() const { return num_workers_; }
-    int32_t getPort() const { return port_; }
-    int32_t getSharedMemorySzInGb() const { return shared_memory_sz_in_gb_; }
+    const std::string &GetTop() const { return top_; }
+    int32_t GetNumWorkers() const { return num_workers_; }
+    int32_t GetPort() const { return port_; }
+    int32_t GetSharedMemorySzInGb() const { return shared_memory_sz_in_gb_; }
+    float GetMemoryCapRatio() const { return memory_cap_ratio_; }
 
     Builder &SetRootDirectory(std::string root) {
       top_ = std::move(root);
@@ -73,15 +76,20 @@ class CacheServer : public Service {
       shared_memory_sz_in_gb_ = sz;
       return *this;
     }
+    Builder &SetMemoryCapRatio(float ratio) {
+      memory_cap_ratio_ = ratio;
+      return *this;
+    }
 
     Status SanityCheck();
 
     void Print(std::ostream &out) const {
       out << "Summary of the cache server configuration\n"
-          << "Spill directory: " << getTop() << "\n"
-          << "Number of parallel workers: " << getNumWorkers() << "\n"
-          << "Tcp/ip port: " << getPort() << "\n"
-          << "Shared memory size (in GB): " << getSharedMemorySzInGb();
+          << "Spill directory: " << GetTop() << "\n"
+          << "Number of parallel workers: " << GetNumWorkers() << "\n"
+          << "Tcp/ip port: " << GetPort() << "\n"
+          << "Shared memory size (in GB): " << GetSharedMemorySzInGb() << "\n"
+          << "Memory cap ratio: " << GetMemoryCapRatio();
     }
 
     friend std::ostream &operator<<(std::ostream &out, const Builder &bld) {
@@ -93,7 +101,8 @@ class CacheServer : public Service {
       RETURN_IF_NOT_OK(SanityCheck());
       // We need to bring up the Task Manager by bringing up the Services singleton.
       RETURN_IF_NOT_OK(Services::CreateInstance());
-      RETURN_IF_NOT_OK(CacheServer::CreateInstance(top_, num_workers_, port_, shared_memory_sz_in_gb_));
+      RETURN_IF_NOT_OK(
+        CacheServer::CreateInstance(top_, num_workers_, port_, shared_memory_sz_in_gb_, memory_cap_ratio_));
       return Status::OK();
     }
 
@@ -102,20 +111,27 @@ class CacheServer : public Service {
     int32_t num_workers_;
     int32_t port_;
     int32_t shared_memory_sz_in_gb_;
+    float memory_cap_ratio_;
+
+    /// \brief Sanity checks on the shared memory.
+    /// \return Status object
+    Status IpcResourceCleanup();
   };
+
   CacheServer(const CacheServer &) = delete;
   CacheServer &operator=(const CacheServer &) = delete;
   CacheServer(CacheServer &&) = delete;
   CacheServer &operator=(CacheServer &) = delete;
   Status DoServiceStart() override;
   Status DoServiceStop() override;
-  ~CacheServer() { (void)ServiceStop(); }
+  ~CacheServer() override { (void)ServiceStop(); }
 
   static Status CreateInstance(const std::string &spill_path, int32_t num_workers, int32_t port,
-                               int32_t shared_memory_sz) {
+                               int32_t shared_memory_sz, float memory_cap_ratio) {
     std::call_once(init_instance_flag_, [&]() -> Status {
-      auto &svcManager = Services::GetInstance();
-      RETURN_IF_NOT_OK(svcManager.AddHook(&instance_, spill_path, num_workers, port, shared_memory_sz));
+      auto &SvcManager = Services::GetInstance();
+      RETURN_IF_NOT_OK(
+        SvcManager.AddHook(&instance_, spill_path, num_workers, port, shared_memory_sz, memory_cap_ratio));
       return Status::OK();
     });
     return Status::OK();
@@ -133,7 +149,7 @@ class CacheServer : public Service {
   }
 
   /// \\brief Kick off server threads. Never return unless error out.
-  Status Run();
+  Status Run(SharedMessage::queue_id_t msg_qid);
 
   /// \brief Get a free tag
   /// \param q[in] pointer to a pointer to a CacheServerRequest
@@ -145,13 +161,35 @@ class CacheServer : public Service {
   /// \return Status object
   static Status ReturnRequestTag(CacheServerRequest *p);
 
+  /// \brief This returns the size (in bytes) of the physical RAM on the machine.
+  /// \return the size (in bytes) of the physical RAM on the machine.
+  static int64_t GetTotalSystemMemory();
+
+  /// \brief Internally this is how much we will try to use without exceeding the limit
+  /// \return Internal cap maximum
+  int64_t GetAvailableSystemMemory() { return memory_cap_; }
+
+  /// \brief Find out the current memory usage
+  int64_t GetMemoryUsage() { return cur_mem_usage_; }
+
+  /// \brief This updates our current memory usage.
+  enum MemUsageOp : int8_t { kAllocate = 1, kFree = 2 };
+  void UpdateMemoryUsage(int64_t sz, MemUsageOp op) {
+    if (op == MemUsageOp::kAllocate) {
+      cur_mem_usage_ += sz;
+    } else {
+      cur_mem_usage_ -= sz;
+    }
+  }
+
  private:
   static std::once_flag init_instance_flag_;
   static CacheServer *instance_;
   mutable RWLock rwLock_;
+  mutable RWLock sessions_lock_;
   std::string top_;
   cache_index all_caches_;
-  std::set<session_id_type> history_sessions_;
+  std::map<session_id_type, std::set<connection_id_type>> active_sessions_;
   std::shared_ptr<QueueList<CacheServerRequest *>> cache_q_;
   std::shared_ptr<QueueList<CacheServerRequest *>> free_list_;
   std::vector<std::unique_ptr<MemGuard<CacheServerRequest, Allocator<CacheServerRequest>>>> tag_;
@@ -162,11 +200,15 @@ class CacheServer : public Service {
   int32_t port_;
   int32_t shared_memory_sz_in_gb_;
   std::atomic<bool> global_shutdown_;
+  float memory_cap_ratio_;
+  int64_t memory_cap_;
+  std::atomic<int64_t> cur_mem_usage_;
 
   /// \brief Constructor
   /// \param spill_path Top directory for spilling buffers to.
   /// \param num_workers Number of threads for handling requests.
-  explicit CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port, int32_t share_memory_sz_in_gb);
+  explicit CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port, int32_t share_memory_sz_in_gb,
+                       float memory_cap_ratio);
 
   /// \brief Locate a cache service from connection id.
   /// \return Pointer to cache service. Null if not found
@@ -179,11 +221,9 @@ class CacheServer : public Service {
   Status CreateService(CacheRequest *rq, CacheReply *reply);
 
   /// \brief Destroy a cache service
-  /// \param cs
   /// \param rq
-  /// \return
-  Status DestroyCache(CacheService *cs, CacheRequest *rq);
-  Status PurgeCache(CacheService *cs);
+  /// \return Status object
+  Status DestroyCache(CacheRequest *rq);
 
   /// \brief Entry point for all internal server threads.
   Status ServerRequest(int32_t worker_id);
@@ -207,7 +247,7 @@ class CacheServer : public Service {
 
   /// \brief Generate a session ID for the client
   /// \return Session ID
-  session_id_type GenerateSessionID() const;
+  session_id_type GenerateSessionID();
 
   /// \brief Handle kAllocateSharedBlock request
   /// \param rq CacheRequest
@@ -220,20 +260,55 @@ class CacheServer : public Service {
   /// \return Status object
   Status FreeSharedMemory(CacheRequest *rq);
 
-  /// \brief Handle kFastCacheRow request
+  /// \brief Handle CacheRow request
+  /// \note There are two different implementation depends if shared memory is used for transportation.
   /// \return Status object
-  Status FastCacheRow(CacheService *cs, CacheRequest *rq, CacheReply *reply);
+  Status FastCacheRow(CacheRequest *rq, CacheReply *reply);
+  Status CacheRow(CacheRequest *rq, CacheReply *reply);
 
   /// \brief Internal function to do row batch fetch
-  /// \param cs CacheService
   /// \param rq Request
   /// \param reply Reply
-  /// \return
-  Status BatchFetchRows(CacheService *cs, CacheRequest *rq, CacheReply *reply);
+  /// \return Status object
+  Status BatchFetchRows(CacheRequest *rq, CacheReply *reply);
+
+  /// \brief Internal function to get statistics
+  /// \param rq
+  /// \param reply
+  /// \return Status object
+  Status GetStat(CacheRequest *rq, CacheReply *reply);
+
+  /// \brief Cache a schema request
+  /// \param rq
+  /// \return Status object
+  Status CacheSchema(CacheRequest *rq);
+
+  /// \brief Fetch a schema request
+  /// \param rq
+  /// \param reply
+  /// \return Status object
+  Status FetchSchema(CacheRequest *rq, CacheReply *reply);
+
+  /// \brief Mark Build phase done (for non-mappable case)
+  /// \param rq
+  /// \return Status object
+  Status BuildPhaseDone(CacheRequest *rq);
 
   /// \brief A proper shutdown of the server
   /// \return Status object
   Status GlobalShutdown();
+
+  /// \brief Find keys that will be cache miss
+  /// \return Status object
+  Status GetCacheMissKeys(CacheRequest *rq, CacheReply *reply);
+
+  /// \brief Toggle write mode for a service
+  Status ToggleWriteMode(CacheRequest *rq);
+
+  /// \brief List the sessions and their caches
+  /// \param reply
+  /// \return Status object
+  Status ListSessions(CacheReply *reply);
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -82,6 +82,8 @@ enum class StatusCode : char {
   kBoundingBoxInvalidShape = 12,
   kSyntaxError = 13,
   kTimeOut = 14,
+  kBuddySpaceFull = 14,
+  kNetWorkError = 15,
   // Make this error code the last one. Add new error code above it.
   kUnexpectedError = 127
 };
@@ -136,6 +138,8 @@ class Status {
   bool IsShapeIncorrect() const { return (get_code() == StatusCode::kShapeMisMatch); }
 
   bool IsNoSpace() const { return (get_code() == StatusCode::kNoSpace); }
+
+  bool IsNetWorkError() const { return (get_code() == StatusCode::kNetWorkError); }
 
  private:
   StatusCode code_;

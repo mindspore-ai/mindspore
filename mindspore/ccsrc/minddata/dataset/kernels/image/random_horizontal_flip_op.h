@@ -33,6 +33,7 @@ class RandomHorizontalFlipOp : public TensorOp {
   static const float kDefProbability;
 
   explicit RandomHorizontalFlipOp(float probability = kDefProbability) : distribution_(probability) {
+    is_deterministic_ = false;
     rnd_.seed(GetSeed());
   }
 

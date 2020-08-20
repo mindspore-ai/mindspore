@@ -51,6 +51,12 @@ std::string CodeAsString(const StatusCode c) {
       case StatusCode::kSyntaxError:
         s = "Syntax error";
         break;
+      case StatusCode::kBuddySpaceFull:
+        s = "BuddySpace full";
+        break;
+      case StatusCode::kNetWorkError:
+        s = "Network error";
+        break;
       case StatusCode::kUnexpectedError:
       default:
         s = "Unexpected error";

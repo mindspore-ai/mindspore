@@ -25,13 +25,13 @@ using namespace mindspore::dataset;
 
 class MindDataTestMemoryPool : public UT::Common {
  public:
-    std::shared_ptr<MemoryPool> mp_;
-    MindDataTestMemoryPool() {}
+  std::shared_ptr<MemoryPool> mp_;
+  MindDataTestMemoryPool() {}
 
-    void SetUp() {
-      Status rc = CircularPool::CreateCircularPool(&mp_, 1, 1, true);
-      ASSERT_TRUE(rc.IsOk());
-    }
+  void SetUp() {
+    Status rc = CircularPool::CreateCircularPool(&mp_, 1, 1, true);
+    ASSERT_TRUE(rc.IsOk());
+  }
 };
 
 TEST_F(MindDataTestMemoryPool, DumpPoolInfo) {
@@ -40,7 +40,7 @@ TEST_F(MindDataTestMemoryPool, DumpPoolInfo) {
 
 TEST_F(MindDataTestMemoryPool, TestOperator1) {
   Status rc;
-  int *p = new(&rc, mp_) int;
+  int *p = new (&rc, mp_) int;
   ASSERT_TRUE(rc.IsOk());
   *p = 2048;
   ::operator delete(p, mp_);
@@ -61,16 +61,28 @@ TEST_F(MindDataTestMemoryPool, TestOperator3) {
 TEST_F(MindDataTestMemoryPool, TestAllocator) {
   class A {
    public:
-      explicit A (int x) : a(x) {}
-      int val_a() const {
-        return a;
-      }
+    explicit A(int x) : a(x) {}
+    int val_a() const { return a; }
+
    private:
-      int a;
+    int a;
   };
   Allocator<A> alloc(mp_);
   std::shared_ptr<A> obj_a = std::allocate_shared<A>(alloc, 3);
   int v = obj_a->val_a();
   ASSERT_EQ(v, 3);
   MS_LOG(DEBUG) << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
+}
+
+TEST_F(MindDataTestMemoryPool, TestMemGuard) {
+  MemGuard<uint8_t> mem;
+  // Try some large value.
+  int64_t sz = 5LL * 1024LL * 1024LL * 1024LL;
+  Status rc = mem.allocate(sz);
+  ASSERT_TRUE(rc.IsOk() || rc.IsOutofMemory());
+  if (rc.IsOk()) {
+    // Try write a character half way.
+    auto *p = mem.GetMutablePointer();
+    p[sz / 2] = 'a';
+  }
 }

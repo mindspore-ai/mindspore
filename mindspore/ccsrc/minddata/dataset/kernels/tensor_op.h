@@ -168,6 +168,10 @@ class TensorOp {
   // @return true/false
   bool OneToOne() { return NumInput() == 1 && NumOutput() == 1; }
 
+  // Returns true oif the TensorOp produces deterministic result.
+  // @return true/false
+  bool Deterministic() { return is_deterministic_; }
+
   // Function to determine the number of inputs the TensorOp can take. 0: means undefined.
   // @return uint32_t
   virtual uint32_t NumInput() { return 1; }
@@ -191,6 +195,9 @@ class TensorOp {
   virtual Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs);
 
   virtual std::string Name() const = 0;
+
+ protected:
+  bool is_deterministic_{true};
 };
 }  // namespace dataset
 }  // namespace mindspore

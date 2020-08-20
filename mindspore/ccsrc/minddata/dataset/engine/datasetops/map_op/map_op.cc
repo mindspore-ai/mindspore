@@ -458,6 +458,12 @@ Status MapOp::Accept(NodePass *p, bool *modified) {
   return p->RunOnNode(shared_from_base<MapOp>(), modified);
 }
 
+// Visitor pre-accept method for NodePass
+Status MapOp::PreAccept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->PreRunOnNode(shared_from_base<MapOp>(), modified);
+}
+
 Status MapOp::WaitForWorkers() {
   // reset num_paused workers to 0
   num_workers_paused_ = 0;

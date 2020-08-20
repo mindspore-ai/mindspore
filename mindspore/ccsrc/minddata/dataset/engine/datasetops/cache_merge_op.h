@@ -202,6 +202,7 @@ class CacheMergeOp : public ParallelOp {
   std::unique_ptr<Queue<row_id_type>> io_que_;
   std::shared_ptr<CacheClient> cache_client_;
   int32_t num_cleaners_;
+  std::atomic<bool> cache_missing_rows_;
 
   /// \brief Locate the cache request from the io_request_ map
   /// \param row_id

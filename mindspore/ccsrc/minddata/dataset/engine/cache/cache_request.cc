@@ -250,5 +250,27 @@ Status GetStatRequest::PostReply() {
   stat_.cache_service_state = msg->state();
   return Status::OK();
 }
+
+Status ListSessionsRequest::PostReply() {
+  auto *msg = flatbuffers::GetRoot<ListSessionsMsg>(reply_.result().data());
+  auto session_vector = msg->sessions();
+  for (auto i = 0; i < session_vector->size(); ++i) {
+    SessionCacheInfo current_info;
+    CacheServiceStat stats;
+    auto current_session_info = session_vector->Get(i);
+    current_info.session_id = current_session_info->session_id();
+    current_info.connection_id = current_session_info->connection_id();
+    stats.num_mem_cached = current_session_info->stats()->num_mem_cached();
+    stats.num_disk_cached = current_session_info->stats()->num_disk_cached();
+    stats.avg_cache_sz = current_session_info->stats()->avg_cache_sz();
+    stats.min_row_id = current_session_info->stats()->min_row_id();
+    stats.max_row_id = current_session_info->stats()->max_row_id();
+    stats.cache_service_state = current_session_info->stats()->state();
+    current_info.stats = stats;  // fixed length struct.  = operator is safe
+    session_info_list_.push_back(current_info);
+  }
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

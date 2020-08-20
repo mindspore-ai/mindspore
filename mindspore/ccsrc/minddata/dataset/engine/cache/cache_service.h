@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -44,9 +45,8 @@ using key_size_pair = std::pair<CachePool::key_type, size_t>;
 class CacheService : public Service {
  public:
   friend class CacheServer;
-  using row_map = BPlusTree<row_id_type, CachePool::key_type>;
 
-  enum class State : uint8_t { kNone = 0, kBuildPhase, kFetchPhase };
+  enum class State : uint8_t { kNone = 0, kBuildPhase, kFetchPhase, kNoLocking };
 
   /// \brief Constructor
   /// \param mem_sz Memory size to be set aside for the in memory cache. 0 means unlimited
@@ -97,11 +97,9 @@ class CacheService : public Service {
   class ServiceStat {
    public:
     using state_type = std::underlying_type<State>::type;
-    ServiceStat() : min_(0), max_(0), state_(0) {}
+    ServiceStat() : state_(0) {}
     ~ServiceStat() = default;
     CachePool::CacheStat stat_{};
-    row_id_type min_;
-    row_id_type max_;
     state_type state_;
   };
   /// \brief Statistics for the current service
@@ -117,9 +115,9 @@ class CacheService : public Service {
   /// \param out A contiguous memory that contains the serialized form of schema.
   /// \return Status object
   Status FetchSchema(std::string *out) const;
-  /// \brief Purge the content of a cache
+  /// \brief Return a set of keys that are definitely cache miss
   /// \return Status object
-  Status Purge();
+  Status FindKeysMiss(std::vector<row_id_type> *out);
   /// \brief Overload the << operator to print a cache service
   /// \param out std::ostream
   /// \param cs A cache service
@@ -136,19 +134,33 @@ class CacheService : public Service {
   /// \brief Change from write phase to read phase. Only the creator of this service is allowed to make this call.
   /// \return Status object
   Status BuildPhaseDone();
+  /// \brief Find out the current memory usage
+  int64_t GetMemoryUsage() { return cur_mem_usage_; }
+  /// \brief Find out the current disk usage
+  int64_t GetDiskUsage() { return cur_disk_usage_; }
+  /// \brief For kToggleWriteMode request
+  Status ToggleWriteMode(bool on_off);
 
  private:
   mutable RWLock rw_lock_;
   std::string root_;
   uint64_t cache_mem_sz_;
   std::shared_ptr<CachePool> cp_;
-  std::shared_ptr<row_map> map_;
   std::atomic<row_id_type> next_id_;
   bool generate_id_;
-  std::atomic<CachePool::key_type> schema_key_;
   std::string cookie_;
   State st_;
-
+  std::string schema_;
+  // If we use an Arena, cur_disk_usage is always 0 as we don't know how CachePool manages it.
+  // Otherwise we track how much is in memory and how much is on disk (if root_ is not empty).
+  // We use them to control when we should stop caching in memory in the case when there is no
+  // Arena.
+  std::atomic<int64_t> cur_mem_usage_;
+  std::atomic<int64_t> cur_disk_usage_;
+  // We also cache the result from calling FindKeysMiss because it is expensive. Besides user make
+  // this request after we hit memory full or disk full. So the result is unlikely to change.
+  std::mutex get_key_miss_mux_;
+  std::shared_ptr<std::vector<row_id_type>> key_miss_results_;
   /// \brief Private function to generate a row id
   /// \return Row id assigned.
   row_id_type GetNextRowId() { return next_id_.fetch_add(1); }

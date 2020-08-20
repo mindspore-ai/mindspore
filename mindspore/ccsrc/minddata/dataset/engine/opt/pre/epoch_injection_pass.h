@@ -54,13 +54,6 @@ class EpochInjectionPass : public TreePass {
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The error code return
     Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified) override;
-
-    /// \brief Temporary code to prevent the injection of epoch control when cache op is present.
-    ///     Remove this code in cache op phase 2
-    /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
-    Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 #endif
 
     /// \brief Register the DeviceQueueOp for further action.

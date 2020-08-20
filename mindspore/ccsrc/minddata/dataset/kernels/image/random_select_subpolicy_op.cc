@@ -90,6 +90,7 @@ RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &p
   if (policy_.empty()) {
     MS_LOG(ERROR) << "policy in RandomSelectSubpolicyOp is empty.";
   }
+  is_deterministic_ = false;
 }
 
 }  // namespace dataset

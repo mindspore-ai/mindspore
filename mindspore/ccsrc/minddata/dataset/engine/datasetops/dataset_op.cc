@@ -243,6 +243,7 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
     out << "\nConnector queue size   : " << oc_queue_size_ << "\nTotal repeats : " << op_total_repeats_
         << "\nNumber repeats per epoch : " << op_num_repeats_per_epoch_;
     if (sampler_) {
+      out << "\nSampler:\n";
       sampler_->Print(out, show_all);
     }
   }

@@ -155,50 +155,77 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ImageFolderOp> n
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for AlbumOp under cache.");
+  }
+  return Status::OK();
 }
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for MnistOp under cache.");
+  }
+  return Status::OK();
 }
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for CifarOp under cache.");
+  }
+  return Status::OK();
 }
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for CocoOp under cache.");
+  }
+  return Status::OK();
 }
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for CelebAOp under cache.");
+  }
+  return Status::OK();
 }
 
 #ifndef ENABLE_ANDROID
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for MindRecordOp under cache.");
+  }
+  return Status::OK();
 }
 #endif
 
 #ifdef ENABLE_PYTHON
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for GeneratorOp under cache.");
+  }
+  return Status::OK();
 }
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for ManifestOp under cache.");
+  }
+  return Status::OK();
 }
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
-  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+  if (is_caching_) {
+    RETURN_STATUS_UNEXPECTED("There is currently no support for VOCOp under cache.");
+  }
+  return Status::OK();
 }
 #endif
 

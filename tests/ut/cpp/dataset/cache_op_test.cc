@@ -35,6 +35,23 @@ using mindspore::dataset::TaskGroup;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
+// Helper function to get the session id from SESSION_ID env variable
+Status GetSessionFromEnv(session_id_type *session_id) {
+  RETURN_UNEXPECTED_IF_NULL(session_id);
+  if (const char *session_env = std::getenv("SESSION_ID")) {
+    std::string session_id_str(session_env);
+    try {
+      *session_id = std::stoul(session_id_str);
+    } catch (const std::exception &e) {
+      std::string err_msg = "Invalid numeric value for session id in env var: " + session_id_str;
+      return Status(StatusCode::kSyntaxError, err_msg);
+    }
+  } else {
+    RETURN_STATUS_UNEXPECTED("Test case requires a session id to be provided via SESSION_ID environment variable.");
+  }
+  return Status::OK();
+}
+
 class MindDataTestCacheOp : public UT::DatasetOpTesting {
  public:
   void SetUp() override {
@@ -46,8 +63,12 @@ class MindDataTestCacheOp : public UT::DatasetOpTesting {
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
   Status rc;
   CacheClient::Builder builder;
+  session_id_type env_session;
+  rc = GetSessionFromEnv(&env_session);
+  ASSERT_TRUE(rc.IsOk());
+
   // use arbitrary session of 1, size of 0, spilling// is true
-  builder.SetSessionId(1).SetCacheMemSz(0).SetSpill(true);
+  builder.SetSessionId(env_session).SetCacheMemSz(0).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
@@ -118,9 +139,6 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
   cmp = (map_out == map);
   ASSERT_TRUE(cmp);
 
-  // Test Purge and Destroy
-  rc = myClient->PurgeCache();
-  ASSERT_TRUE(rc.IsOk());
   rc = myClient->DestroyCache();
   ASSERT_TRUE(rc.IsOk());
 }
@@ -130,10 +148,15 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestConcurrencyRequest) {
   (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;
   Status rc;
+  
+  session_id_type env_session;
+  rc = GetSessionFromEnv(&env_session);
+  ASSERT_TRUE(rc.IsOk());
+  
   // use arbitrary session of 1, size 1, spilling is true
   CacheClient::Builder builder;
   // use arbitrary session of 1, size of 0, spilling// is true
-  builder.SetSessionId(1).SetCacheMemSz(1).SetSpill(true);
+  builder.SetSessionId(env_session).SetCacheMemSz(1).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
@@ -199,8 +222,15 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestConcurrencyRequest) {
 //   RandomDataOp
 //
 TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
+  // Clear the rc of the master thread if any
+  (void)TaskManager::GetMasterThreadRc();
   Status rc;
   int32_t rank = 0;  // not used
+
+  session_id_type env_session;
+  rc = GetSessionFromEnv(&env_session);
+  ASSERT_TRUE(rc.IsOk());
+
   MS_LOG(INFO) << "UT test TestRandomDataCache1";
   // Start with an empty execution tree
   auto myTree = std::make_shared<ExecutionTree>();
@@ -236,8 +266,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   // CacheOp
   // size of 0, spilling is true
   CacheClient::Builder builder;
-  // use arbitrary session of 1, size of 0, spilling// is true
-  builder.SetSessionId(1).SetCacheMemSz(0).SetSpill(true);
+  builder.SetSessionId(env_session).SetCacheMemSz(0).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
@@ -273,7 +302,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
-  rc = myTree->Prepare();
+  rc = myTree->Prepare(1);
   ASSERT_TRUE(rc.IsOk());
 
   // quick check to see what tree looks like
@@ -314,9 +343,16 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
 ////   RandomDataOp
 ////
 TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
+  // Clear the rc of the master thread if any
+  (void)TaskManager::GetMasterThreadRc();
   Status rc;
   int32_t rank = 0;  // not used
   MS_LOG(INFO) << "UT test TestRandomDataCacheSpill";
+
+  session_id_type env_session;
+  rc = GetSessionFromEnv(&env_session);
+  ASSERT_TRUE(rc.IsOk());
+
   // Start with an empty execution tree
   auto myTree = std::make_shared<ExecutionTree>();
 
@@ -353,8 +389,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
   CacheClient::Builder builder;
-  // use arbitrary session of 1, size of 0, spilling// is true
-  builder.SetSessionId(1).SetCacheMemSz(4).SetSpill(true);
+  builder.SetSessionId(env_session).SetCacheMemSz(4).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
@@ -386,7 +421,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
-  rc = myTree->Prepare();
+  rc = myTree->Prepare(1);
   ASSERT_TRUE(rc.IsOk());
 
   std::cout << *myClient << std::endl;
@@ -413,14 +448,20 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
 }
 
 TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
+  // Clear the rc of the master thread if any
+  (void)TaskManager::GetMasterThreadRc();
   Status rc;
   int64_t num_samples = 0;
   int64_t start_index = 0;
+
+  session_id_type env_session;
+  rc = GetSessionFromEnv(&env_session);
+  ASSERT_TRUE(rc.IsOk());
+
   auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
 
   CacheClient::Builder ccbuilder;
-  // use arbitrary session of 1, size of 0, spilling// is true
-  ccbuilder.SetSessionId(1).SetCacheMemSz(0).SetSpill(true);
+  ccbuilder.SetSessionId(env_session).SetCacheMemSz(0).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = ccbuilder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
@@ -468,7 +509,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = myCacheOp->AddChild(so);
   ASSERT_TRUE(rc.IsOk());
 
-  rc = myTree->Prepare();
+  rc = myTree->Prepare(1);
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->Launch();
   ASSERT_TRUE(rc.IsOk());
@@ -507,9 +548,15 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
 ////   RandomDataOp
 ////
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheInheritSampler) {
+  // Clear the rc of the master thread if any
+  (void)TaskManager::GetMasterThreadRc();
   Status rc;
   int32_t rank = 0;  // not used
   MS_LOG(INFO) << "UT test TestCacheInheritSampler";
+
+  session_id_type env_session;
+  rc = GetSessionFromEnv(&env_session);
+  ASSERT_TRUE(rc.IsOk());
 
   int64_t num_samples = 0;
   int64_t start_index = 0;
@@ -550,7 +597,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheInheritSampler) {
   // CacheOp
   CacheClient::Builder ccbuilder;
   // use arbitrary session of 1, size of 0, spilling// is true
-  ccbuilder.SetSessionId(1).SetCacheMemSz(4).SetSpill(true);
+  ccbuilder.SetSessionId(env_session).SetCacheMemSz(4).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = ccbuilder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
@@ -577,7 +624,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheInheritSampler) {
   ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
-  rc = myTree->Prepare();
+  rc = myTree->Prepare(1);
   ASSERT_TRUE(rc.IsOk());
 
   std::cout << *myClient << std::endl;

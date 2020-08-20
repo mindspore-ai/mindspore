@@ -16,11 +16,14 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_MAP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_MAP_H_
 
+#include <atomic>
 #include <deque>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
 #include "minddata/dataset/util/allocator.h"
+#include "minddata/dataset/util/system_pool.h"
 #include "minddata/dataset/util/semaphore.h"
 #include "minddata/dataset/util/services.h"
 namespace mindspore {
@@ -37,7 +40,7 @@ class QueueMap {
   using key_type = K;
   using value_type = T;
 
-  QueueMap() = default;
+  QueueMap() : num_rows_(0) {}
   virtual ~QueueMap() = default;
 
   /// Add an element <key, T> to the map and wake up any consumer that is waiting
@@ -48,6 +51,7 @@ class QueueMap {
     RequestQueue *rq = nullptr;
     RETURN_IF_NOT_OK(GetRq(key, &rq));
     RETURN_IF_NOT_OK(rq->WakeUpAny(std::move(payload)));
+    ++num_rows_;
     return Status::OK();
   }
 
@@ -56,7 +60,33 @@ class QueueMap {
     RequestQueue *rq = nullptr;
     RETURN_IF_NOT_OK(GetRq(key, &rq));
     RETURN_IF_NOT_OK(rq->Wait(out));
+    --num_rows_;
     return Status::OK();
+  }
+
+  /// Get the number of elements in the container
+  /// \return The number of elements in the container
+  int64_t size() const { return num_rows_; }
+
+  /// \return if the container is empty
+  bool empty() const { return num_rows_ == 0; }
+
+  /// Print out some useful information about the container
+  friend std::ostream &operator<<(std::ostream &out, const QueueMap &qm) {
+    std::unique_lock<std::mutex> lck(qm.mux_);
+    out << "Number of elements: " << qm.num_rows_ << "\n";
+    out << "Dumping internal info:\n";
+    int64_t k = 0;
+    for (auto &it : qm.all_) {
+      auto key = it.first;
+      const RequestQueue *rq = it.second.GetPointer();
+      out << "(k:" << key << "," << *rq << ") ";
+      ++k;
+      if (k % 6 == 0) {
+        out << "\n";
+      }
+    }
+    return out;
   }
 
  protected:
@@ -86,8 +116,13 @@ class QueueMap {
       return Status::OK();
     }
 
+    friend std::ostream &operator<<(std::ostream &out, const RequestQueue &rq) {
+      out << "sz:" << rq.row_.size() << ",uc:" << rq.use_count_.Peek();
+      return out;
+    }
+
    private:
-    std::mutex dq_mux_;
+    mutable std::mutex dq_mux_;
     Semaphore use_count_;
     std::deque<T> row_;
   };
@@ -104,7 +139,7 @@ class QueueMap {
       *out = it->second.GetMutablePointer();
     } else {
       // We will create a new one.
-      auto alloc = Services::GetAllocator<RequestQueue>();
+      auto alloc = SystemPool::GetAllocator<RequestQueue>();
       auto r = all_.emplace(key, MemGuard<RequestQueue, Allocator<RequestQueue>>(alloc));
       if (r.second) {
         auto &mem = r.first->second;
@@ -118,8 +153,9 @@ class QueueMap {
   }
 
  private:
-  std::mutex mux_;
+  mutable std::mutex mux_;
   std::map<K, MemGuard<RequestQueue, Allocator<RequestQueue>>> all_;
+  std::atomic<int64_t> num_rows_;
 };
 }  // namespace dataset
 }  // namespace mindspore

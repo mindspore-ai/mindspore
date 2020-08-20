@@ -131,6 +131,23 @@ class BPlusTree {
     tree_stats() : size_(0), leaves_(0), inner_nodes_(0), level_(0) {}
   };
 
+  /// \brief Statistics functions
+  /// \return Return the height of the tree
+  auto GetHeight() const { return empty() ? 0 : stats_.level_ + 1; }
+  /// \return Order of the B+ tree
+  auto GetOrder() const { return traits::kLeafSlots; }
+  /// \return Number of leaves nodes
+  auto GetNumLeaves() const { return stats_.leaves_; }
+  /// \return Number of inner nodes
+  auto GetNumInnerNodes() const { return stats_.inner_nodes_; }
+
+  /// \brief Toggle locking
+  /// \note Once locking is off. It is user's responsibility to ensure concurrency
+  void SetLocking(bool on_off) {
+    UniqueLock lck(&rw_lock_);
+    acquire_lock_ = on_off;
+  }
+
  private:
   // Abstract class of a node (leaf or inner)
   class BaseNode {
@@ -288,6 +305,17 @@ class BPlusTree {
   key_compare key_less_;
   // Stat
   tree_stats stats_;
+  // lock mode
+  bool acquire_lock_;
+
+  void Init() {
+    typename LeafNode::alloc_type alloc(alloc_);
+    auto *p = alloc.allocate(1);
+    root_ = new (p) LeafNode(alloc_);
+    all_.Prepend(p);
+    leaf_nodes_.Append(p);
+    stats_.leaves_++;
+  }
 
   bool LessThan(const key_type &a, const key_type &b) const { return key_less_(a, b); }
 
@@ -350,11 +378,11 @@ class BPlusTree {
 
     ~Iterator();
 
-    explicit Iterator(const Iterator &);
+    Iterator(const Iterator &);
 
     Iterator &operator=(const Iterator &lhs);
 
-    explicit Iterator(Iterator &&);
+    Iterator(Iterator &&) noexcept;
 
     Iterator &operator=(Iterator &&lhs);
 
@@ -399,11 +427,11 @@ class BPlusTree {
     ConstIterator(const LeafNode *leaf, slot_type slot, bool locked = false)
         : cur_(leaf), slot_(slot), locked_(locked) {}
 
-    explicit ConstIterator(const ConstIterator &);
+    ConstIterator(const ConstIterator &);
 
     ConstIterator &operator=(const ConstIterator &lhs);
 
-    explicit ConstIterator(ConstIterator &&);
+    ConstIterator(ConstIterator &&) noexcept;
 
     ConstIterator &operator=(ConstIterator &&lhs);
 

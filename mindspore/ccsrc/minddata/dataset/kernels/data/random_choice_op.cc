@@ -92,6 +92,7 @@ RandomChoiceOp::RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops
   } else if (ops_.size() == 1) {
     MS_LOG(WARNING) << "op_list has only 1 op, this op would be picked every time.";
   }
+  is_deterministic_ = false;
 }
 }  // namespace dataset
 }  // namespace mindspore

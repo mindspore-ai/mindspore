@@ -97,6 +97,14 @@ class ConfigManager {
   // @return The port of cache server
   int32_t cache_port() const { return cache_port_; }
 
+  /// getter function
+  /// \return Number of tcp/ip connection
+  int32_t num_connections() const { return num_connections_; }
+
+  /// getter function
+  /// \return Prefetch size
+  int32_t prefetch_size() const { return prefetch_size_; }
+
   // setter function
   // @param rows_per_buffer - The setting to apply to the config
   void set_rows_per_buffer(int32_t rows_per_buffer);
@@ -120,6 +128,14 @@ class ConfigManager {
   // setter function
   // @param cache_port - The port of cache server
   void set_cache_port(int32_t cache_port);
+
+  /// setter function
+  /// \param num_connections
+  void set_num_connections(int32_t num_connections);
+
+  /// setter function
+  /// \param prefetch_size
+  void set_prefetch_size(int32_t prefetch_size);
 
   uint32_t seed() const;
 
@@ -153,6 +169,8 @@ class ConfigManager {
   uint32_t callback_timout_;
   std::string cache_host_;
   int32_t cache_port_;
+  int32_t num_connections_;
+  int32_t prefetch_size_;
 
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info

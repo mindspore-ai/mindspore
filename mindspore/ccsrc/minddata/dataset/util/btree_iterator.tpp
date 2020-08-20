@@ -109,7 +109,7 @@ BPlusTree<K, V, A, C, T>::Iterator::Iterator(const BPlusTree<K, V, A, C, T>::Ite
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
-BPlusTree<K, V, A, C, T>::Iterator::Iterator(BPlusTree<K, V, A, C, T>::Iterator &&lhs) {
+BPlusTree<K, V, A, C, T>::Iterator::Iterator(BPlusTree<K, V, A, C, T>::Iterator &&lhs) noexcept {
   this->cur_ = lhs.cur_;
   this->slot_ = lhs.slot_;
   this->locked_ = lhs.locked_;
@@ -241,7 +241,7 @@ BPlusTree<K, V, A, C, T>::ConstIterator::ConstIterator(const BPlusTree<K, V, A, 
 }
 
 template <typename K, typename V, typename A, typename C, typename T>
-BPlusTree<K, V, A, C, T>::ConstIterator::ConstIterator(BPlusTree<K, V, A, C, T>::ConstIterator &&lhs) {
+BPlusTree<K, V, A, C, T>::ConstIterator::ConstIterator(BPlusTree<K, V, A, C, T>::ConstIterator &&lhs) noexcept {
   this->cur_ = lhs.cur_;
   this->slot_ = lhs.slot_;
   this->locked_ = lhs.locked_;
@@ -290,9 +290,12 @@ std::pair<typename BPlusTree<K, V, A, C, T>::ConstIterator, bool> BPlusTree<K, V
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
     slot_type slot;
-    RWLock *myLock = &this->rw_lock_;
-    // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
-    myLock->LockShared();
+    RWLock *myLock = nullptr;
+    if (acquire_lock_) {
+      myLock = &this->rw_lock_;
+      // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
+      myLock->LockShared();
+    }
     IndexRc rc = Locate(myLock, false, root_, key, &leaf, &slot);
     bool find = (rc == IndexRc::kOk);
     return std::make_pair(ConstIterator(leaf, slot, find), find);
@@ -306,9 +309,12 @@ std::pair<typename BPlusTree<K, V, A, C, T>::Iterator, bool> BPlusTree<K, V, A, 
   if (root_ != nullptr) {
     LeafNode *leaf = nullptr;
     slot_type slot;
-    RWLock *myLock = &this->rw_lock_;
-    // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
-    myLock->LockShared();
+    RWLock *myLock = nullptr;
+    if (acquire_lock_) {
+      myLock = &this->rw_lock_;
+      // Lock the tree in S, pass the lock to Locate which will unlock it for us underneath.
+      myLock->LockShared();
+    }
     IndexRc rc = Locate(myLock, false, root_, key, &leaf, &slot);
     bool find = (rc == IndexRc::kOk);
     return std::make_pair(Iterator(leaf, slot, find), find);

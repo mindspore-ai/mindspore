@@ -34,6 +34,7 @@ class RandomVerticalFlipOp : public TensorOp {
 
   explicit RandomVerticalFlipOp(float probability = kDefProbability) : distribution_(probability) {
     rnd_.seed(GetSeed());
+    is_deterministic_ = false;
   }
 
   ~RandomVerticalFlipOp() override = default;

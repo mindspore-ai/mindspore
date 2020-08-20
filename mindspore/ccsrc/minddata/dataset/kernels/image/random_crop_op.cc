@@ -46,6 +46,7 @@ RandomCropOp::RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_
       fill_g_(fill_g),
       fill_b_(fill_b) {
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *pad_image,

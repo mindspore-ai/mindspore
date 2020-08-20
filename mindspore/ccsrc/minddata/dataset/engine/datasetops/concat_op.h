@@ -105,6 +105,12 @@ class ConcatOp : public PipelineOp {
   // @return - Status
   Status ComputeColMap() override;
 
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
+
  private:
   Status Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf);
 

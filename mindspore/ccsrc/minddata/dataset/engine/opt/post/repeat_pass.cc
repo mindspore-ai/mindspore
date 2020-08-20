@@ -225,13 +225,17 @@ Status RepeatPass::RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) {
 
 // Turns off the tracking for operations under merge op
 Status RepeatPass::RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
+  // If there was not any repeat in the merge cache miss leg, then the cache_lookup
+  // would not have been consumed yet.  In that case, we need to set its total repeats for it.
+  if (cache_lookup_) {
+    cache_lookup_->set_total_repeats(num_repeats_);
+    cache_lookup_->set_num_repeats_per_epoch(num_repeats_ / num_epochs_);
+  }
   // Setting the flag is needed since we didn't call the base class DatasetOp version
   if (is_repeated_) {
     // If there was not any repeat in the merge cache miss leg, then the cache_lookup
     // would not have been consumed yet.  In that case, we need to assign it to the upper repeat eoe stack
     if (cache_lookup_) {
-      cache_lookup_->set_total_repeats(num_repeats_);
-      node->set_num_repeats_per_epoch(num_repeats_ / num_epochs_);
       AddToEOEOpStack(std::move(cache_lookup_));
     }
   }

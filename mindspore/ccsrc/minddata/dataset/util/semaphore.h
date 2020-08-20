@@ -38,7 +38,7 @@ class Semaphore {
   void V();
   /// \brief Peek the internal value
   /// \return The internal value
-  int Peek();
+  int Peek() const;
   Status Register(TaskGroup *vg);
   Status Deregister();
   void ResetIntrpState();

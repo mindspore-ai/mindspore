@@ -34,6 +34,7 @@ class RandomVerticalFlipWithBBoxOp : public TensorOp {
   // @param probability: Probablity of Image flipping, 0.5 by default
   explicit RandomVerticalFlipWithBBoxOp(float probability = kDefProbability) : distribution_(probability) {
     rnd_.seed(GetSeed());
+    is_deterministic_ = false;
   }
 
   ~RandomVerticalFlipWithBBoxOp() override = default;

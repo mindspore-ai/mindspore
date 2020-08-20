@@ -92,3 +92,13 @@ table CreateCacheReplyMsg {
     connection_id:int64;
     cookie:string;
 }
+
+table ListSessionMsg {
+    session_id:uint32;
+    connection_id:uint64;
+    stats:ServiceStatMsg;
+}
+
+table ListSessionsMsg {
+    sessions:[ListSessionMsg];
+}

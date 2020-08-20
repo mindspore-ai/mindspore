@@ -46,6 +46,7 @@ RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, float c
       fill_g_(fill_g),
       fill_b_(fill_b) {
   rnd_.seed(GetSeed());
+  is_deterministic_ = false;
 }
 
 // main function call for random rotation : Generate the random degrees

@@ -88,21 +88,21 @@ class Allocator {
   std::shared_ptr<MemoryPool> pool_;
 };
 /// \brief It is a wrapper of unique_ptr with a custom Allocator class defined above
-template <typename T, typename... Args>
-Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, Allocator<T> alloc, size_t n, Args &&... args) {
+template <typename T, typename C = std::allocator<T>, typename... Args>
+Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, size_t n, Args &&... args) {
   RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "size must be positive");
   try {
     T *data = alloc.allocate(n);
     if (!std::is_arithmetic<T>::value) {
       for (auto i = 0; i < n; i++) {
-        std::allocator_traits<Allocator<T>>::construct(alloc, &(data[i]), std::forward<Args>(args)...);
+        std::allocator_traits<C>::construct(alloc, &(data[i]), std::forward<Args>(args)...);
       }
     }
-    auto deleter = [](T *p, Allocator<T> f_alloc, size_t f_n) {
+    auto deleter = [](T *p, C f_alloc, size_t f_n) {
       if (!std::is_arithmetic<T>::value && std::is_destructible<T>::value) {
         for (auto i = 0; i < f_n; ++i) {
-          std::allocator_traits<Allocator<T>>::destroy(f_alloc, &p[i]);
+          std::allocator_traits<C>::destroy(f_alloc, &p[i]);
         }
       }
       f_alloc.deallocate(p, f_n);
@@ -129,7 +129,7 @@ class MemGuard {
   MemGuard(const MemGuard &) = delete;
   MemGuard &operator=(const MemGuard &) = delete;
   // On the other hand, We can support move constructor
-  MemGuard(MemGuard &&lhs) noexcept : alloc_(std::move(lhs.alloc_)), ptr_(std::move(lhs.ptr_)), n_(lhs.n_) {}
+  MemGuard(MemGuard &&lhs) noexcept : n_(lhs.n_), alloc_(std::move(lhs.alloc_)), ptr_(std::move(lhs.ptr_)) {}
   MemGuard &operator=(MemGuard &&lhs) noexcept {
     if (this != &lhs) {
       this->deallocate();
