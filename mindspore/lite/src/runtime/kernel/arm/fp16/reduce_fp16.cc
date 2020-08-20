@@ -58,17 +58,7 @@ int ReduceFp16CPUKernel::Init() {
 }
 
 int ReduceFp16CPUKernel::ReSize() {
-  FreeTmpBuffer();
-  auto ret = ReduceBaseCPUKernel::ReSize();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    FreeTmpBuffer();
-    return ret;
-  }
-  return RET_OK;
+  return ReduceBaseCPUKernel::ReSize();
 }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
@@ -92,6 +82,12 @@ int ReduceFp16CPUKernel::Run() {
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
+  }
+
+  auto ret = MallocTmpBuffer();
+  if (ret != RET_OK) {
+    FreeTmpBuffer();
+    return ret;
   }
 
   tmp_shape_ = in_tensors_.at(0)->shape();
