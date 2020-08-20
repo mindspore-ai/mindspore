@@ -54,14 +54,11 @@ class NormalPosterior(Cell):
         shape (list, tuple): Shape of the mean and standard deviation.
         dtype (class `mindspore.dtype`): The argument is used to define the data type of the output tensor.
             Default: mindspore.float32.
-        loc_mean (int, float, array_like of floats): Mean of distribution to initialize trainable parameters.
-            Default: 0.
-        loc_std (int, float, array_like of floats): Standard deviation of distribution to initialize trainable
-            parameters. Default: 0.1.
-        untransformed_scale_mean (int, float, array_like of floats): Mean of distribution to initialize trainable
-            parameters. Default: -5.
-        untransformed_scale_std (int, float, array_like of floats): Standard deviation of distribution to initialize
-            trainable parameters. Default: 0.1.
+        loc_mean (int, float): Mean of distribution to initialize trainable parameters. Default: 0.
+        loc_std (int, float): Standard deviation of distribution to initialize trainable parameters. Default: 0.1.
+        untransformed_scale_mean (int, float): Mean of distribution to initialize trainable parameters. Default: -5.
+        untransformed_scale_std (int, float): Standard deviation of distribution to initialize trainable parameters.
+            Default: 0.1.
 
     Returns:
         Cell, a normal distribution.
@@ -81,25 +78,25 @@ class NormalPosterior(Cell):
         if not isinstance(shape, (tuple, list)):
             raise TypeError('The type of `shape` should be `tuple` or `list`')
 
-        try:
-            mean_arr = np.random.normal(loc_mean, loc_std, shape)
-        except ValueError as msg:
-            raise ValueError(msg)
-        except TypeError as msg:
-            raise TypeError(msg)
+        if not isinstance(loc_mean, (int, float)):
+            raise TypeError('The type of `loc_mean` should be `int` or `float`')
 
-        try:
-            untransformed_scale_arr = np.random.normal(untransformed_scale_mean, untransformed_scale_std, shape)
-        except ValueError as msg:
-            raise ValueError(msg)
-        except TypeError as msg:
-            raise TypeError(msg)
+        if not isinstance(untransformed_scale_mean, (int, float)):
+            raise TypeError('The type of `untransformed_scale_mean` should be `int` or `float`')
+
+        if not (isinstance(loc_std, (int, float)) and loc_std >= 0):
+            raise TypeError('The type of `loc_std` should be `int` or `float` and its value should > 0')
+
+        if not (isinstance(untransformed_scale_std, (int, float)) and untransformed_scale_std >= 0):
+            raise TypeError('The type of `untransformed_scale_std` should be `int` or `float` and '
+                            'its value should > 0')
 
         self.mean = Parameter(
-            Tensor(mean_arr, dtype=dtype), name=name + '_mean')
+            Tensor(np.random.normal(loc_mean, loc_std, shape), dtype=dtype), name=name + '_mean')
 
         self.untransformed_std = Parameter(
-            Tensor(untransformed_scale_arr, dtype=dtype), name=name + '_untransformed_std')
+            Tensor(np.random.normal(untransformed_scale_mean, untransformed_scale_std, shape), dtype=dtype),
+            name=name + '_untransformed_std')
 
         self.normal = Normal()
 

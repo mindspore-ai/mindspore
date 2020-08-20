@@ -72,9 +72,16 @@ class _DenseVariational(Cell):
                 raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
 
         self.activation = activation
-        if isinstance(self.activation, str):
-            self.activation = get_activation(activation)
-        self.activation_flag = self.activation is not None
+        if not self.activation:
+            self.activation_flag = False
+        else:
+            self.activation_flag = True
+            if isinstance(self.activation, str):
+                self.activation = get_activation(activation)
+            elif isinstance(self.activation, Cell):
+                self.activation = activation
+            else:
+                raise ValueError('The type of `activation` is wrong.')
 
         self.matmul = P.MatMul(transpose_b=True)
         self.bias_add = P.BiasAdd()
@@ -145,23 +152,25 @@ class DenseReparam(_DenseVariational):
         in_channels (int): The number of input channel.
         out_channels (int): The number of output channel .
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
+        activation (str, Cell): Regularizer function applied to the output of the layer. The type of activation can
+            be str (eg. 'relu') or Cell (eg. nn.ReLU()). Note that if the type of activation is Cell, it must have been
+            instantiated. Default: None.
         weight_prior_fn: prior distribution for weight.
             It should return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
-            normal distribution).
+            normal distribution). The current version only supports NormalPrior.
         weight_posterior_fn: posterior distribution for sampling weight.
             It should be a function handle which returns a mindspore
-            distribution instance.
-            Default: NormalPosterior.
+            distribution instance. Default: NormalPosterior. The current
+            version only supports NormalPosterior.
         bias_prior_fn: prior distribution for bias vector. It should return
-            a mindspore distribution.
-            Default: NormalPrior(which creates an instance of standard
-            normal distribution).
+            a mindspore distribution. Default: NormalPrior(which creates an
+            instance of standard normal distribution). The current version
+            only supports NormalPrior.
         bias_posterior_fn: posterior distribution for sampling bias vector.
             It should be a function handle which returns a mindspore
-            distribution instance.
-            Default: NormalPosterior.
+            distribution instance. Default: NormalPosterior. The current
+            version only supports NormalPosterior.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
