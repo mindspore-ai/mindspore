@@ -31,7 +31,7 @@ STATUS OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     }
   }
   if (min == 0 && max == 6) {
-    std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+    std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
     attr->type = schema::ActivationType_RELU6;
     if (op != nullptr) {
       op->primitive = std::make_unique<schema::PrimitiveT>();

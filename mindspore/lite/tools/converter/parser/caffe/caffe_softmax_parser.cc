@@ -26,7 +26,7 @@ STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::SoftMaxT> attr(new schema::SoftMaxT());
+  std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
   if (proto.has_softmax_param() && proto.softmax_param().has_axis()) {
     if (proto.softmax_param().axis() == -1) {
       MS_LOG(ERROR) << "axis with -1 may lead to calculation errors when input less than 4 dims.";

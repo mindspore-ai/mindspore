@@ -26,7 +26,7 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeC
   if (attr == nullptr || attr->group != attr->channelOut) {
     return false;
   }
-  std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam(new (std::nothrow) schema::DeDepthwiseConv2DT());
+  std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam = std::make_unique<schema::DeDepthwiseConv2DT>();
   if (deDepthwiseConv2DParam == nullptr) {
     MS_LOG(ERROR) << "new DeDepthwiseConv2DT failed";
     return false;
@@ -58,7 +58,7 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeC
 
 STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
-  std::unique_ptr<schema::DeConv2DT> attr(new (std::nothrow) schema::DeConv2DT());
+  std::unique_ptr<schema::DeConv2DT> attr = std::make_unique<schema::DeConv2DT>();
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {

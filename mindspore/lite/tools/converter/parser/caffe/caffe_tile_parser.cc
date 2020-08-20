@@ -24,7 +24,7 @@ STATUS CaffeTileParser::Parse(const caffe::LayerParameter &proto,
                               const caffe::LayerParameter &weight,
                               schema::CNodeT *op,
                               std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::TileT> attr(new schema::TileT());
+  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
   const caffe::TileParameter tile_param = proto.tile_param();
 
   std::vector<int> dims;

@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::ResizeT> attr(new schema::ResizeT());
+  std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
   const caffe::InterpParameter interpParam = proto.interp_param();
   if (interpParam.has_height()) {
     int64_t height = interpParam.height();

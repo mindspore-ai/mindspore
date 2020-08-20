@@ -23,7 +23,7 @@ STATUS OnnxConcatParser::Parse(const onnx::GraphProto &onnx_graph,
                                const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ConcatParser";
-  std::unique_ptr<schema::ConcatT> attr(new schema::ConcatT());
+  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {

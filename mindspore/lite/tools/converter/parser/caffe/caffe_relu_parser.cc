@@ -23,7 +23,7 @@ STATUS CaffeReluParser::Parse(const caffe::LayerParameter &proto,
                               const caffe::LayerParameter &weight,
                               schema::CNodeT *op,
                               std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
   attr->type = schema::ActivationType_RELU;
   // relu: negative_slope = 0, no parameter;
   // leakyrelu: negative_slope != 0;

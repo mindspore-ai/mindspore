@@ -64,7 +64,7 @@ STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<
 
 void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                             schema::TensorT *tensor) {
-  std::unique_ptr<schema::QuantParamT> quant_param(new QuantParamT());
+  std::unique_ptr<schema::QuantParamT> quant_param = std::make_unique<QuantParamT>();
   if (!tflite_tensor->quantization->scale.empty()) {
     quant_param->scale = tflite_tensor->quantization->scale[0];
   }
@@ -104,7 +104,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       return RET_ERROR;
     }
 
-    std::unique_ptr<schema::CNodeT> op(new schema::CNodeT);
+    std::unique_ptr<schema::CNodeT> op = std::make_unique<schema::CNodeT>();
     op->name = op_type + "-" + std::to_string(idx++);
     op->quantType = quant_type;
     MS_LOG(INFO) << "parse op: " << op->name.c_str();
@@ -138,7 +138,7 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
       idx += tflite_subgraph->tensors.size();
     }
     const auto &tflite_tensor = tflite_subgraph->tensors[idx];
-    std::unique_ptr<schema::TensorT> tensor(new schema::TensorT());
+    std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
 
     tensor->format = tensorsFormat[i];
     tensor->dataType = GetTfliteDataType(tflite_tensor->type);
@@ -231,7 +231,7 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph)
     if (op->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
       auto attr = op->primitive->value.AsDepthwiseConv2D();
       if (attr->channelMultiplier > 1) {
-        std::unique_ptr<schema::Conv2DT> conv_attr(new schema::Conv2DT);
+        std::unique_ptr<schema::Conv2DT> conv_attr = std::make_unique<schema::Conv2DT>();
         // get channel attr
         if (op->inputIndex.empty()) {
           MS_LOG(ERROR) << "the input of DepthwiseConv2D is null";
@@ -298,7 +298,7 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph)
 MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
                                      const std::string &weight_file,
                                      const QuantType &quant_type) {
-  std::unique_ptr<schema::MetaGraphT> sub_graph(new schema::MetaGraphT);
+  std::unique_ptr<schema::MetaGraphT> sub_graph = std::make_unique<schema::MetaGraphT>();
   sub_graph->name = "MS_model converted by TF-Lite";
 
   // load graph

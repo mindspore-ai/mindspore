@@ -26,7 +26,7 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto,
                                 schema::CNodeT *op,
                                 std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
-  std::unique_ptr<schema::ConcatT> attr(new schema::ConcatT());
+  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
   const caffe::ConcatParameter concatParam = proto.concat_param();
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
     // MS_LOGE("Concat param in caffe have concat_dim and axis simultaneously,return fail");

@@ -24,7 +24,7 @@ STATUS CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto,
                                 schema::CNodeT *op,
                                 std::vector<schema::TensorT *> *weightVec) {
   op->name = proto.name();
-  std::unique_ptr<schema::ArgMaxT> attr(new schema::ArgMaxT());
+  std::unique_ptr<schema::ArgMaxT> attr = std::make_unique<schema::ArgMaxT>();
   const caffe::ArgMaxParameter argmaxParam = proto.argmax_param();
 
   int32_t axisType = 0;

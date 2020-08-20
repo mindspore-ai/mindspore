@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace lite {
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
-  std::unique_ptr<schema::TensorT> weight(new schema::TensorT());
+  std::unique_ptr<schema::TensorT> weight = std::make_unique<schema::TensorT>();
   weight->format = schema::Format_NCHW;
   std::vector<int32_t> shapeVec;
   ConvertShape(proto, &shapeVec);
@@ -46,7 +46,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   }
 
   // get weight
-  std::unique_ptr<float[]> buf(new (std::nothrow) float[count]());
+  std::unique_ptr<float[]> buf = std::make_unique<float[]>(count);
   if (buf == nullptr) {
     return nullptr;
   }

@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx EluParser";
-  std::unique_ptr<schema::EluT> attr(new schema::EluT());
+  std::unique_ptr<schema::EluT> attr = std::make_unique<schema::EluT>();
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto& attribute_name = onnx_node_attr.name();
     if (attribute_name == "alpha") {

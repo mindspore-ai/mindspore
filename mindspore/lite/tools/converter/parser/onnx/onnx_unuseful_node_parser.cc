@@ -27,10 +27,10 @@ STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph,
     op->primitive = std::make_unique<schema::PrimitiveT>();
     if (onnx_node.op_type() == "Int8Quantize") {
       op->primitive->value.type = schema::PrimitiveType_OnnxInt8Quantize;
-      op->primitive->value.value = new (std::nothrow) schema::OnnxInt8QuantizeT;
+      op->primitive->value.value = std::make_unique<schema::OnnxInt8QuantizeT>().release();
     } else if (onnx_node.op_type() == "Int8Dequantize") {
       op->primitive->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
-      op->primitive->value.value = new (std::nothrow) schema::OnnxInt8DequantizeT;
+      op->primitive->value.value = std::make_unique<schema::OnnxInt8DequantizeT>().release();
     } else {
       // MS_LOGE("Unsupported nodeType: %s", onnx_node.op_type().c_str());
       return RET_ERROR;

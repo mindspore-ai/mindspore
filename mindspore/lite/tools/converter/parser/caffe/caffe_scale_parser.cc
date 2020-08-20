@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::ScaleT> attr(new schema::ScaleT());
+  std::unique_ptr<schema::ScaleT> attr = std::make_unique<schema::ScaleT>();
 
   if (weight.blobs_size() + weight.bottom_size() < 2) {
     // MS_LOGE("Scale bottom size:%d, blobs size:%d invalid in layer %s", weight.bottom_size(), weight.blobs_size(),

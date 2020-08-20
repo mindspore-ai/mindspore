@@ -70,6 +70,7 @@ STATUS OnnxModelParser::ReadOnnxModelFromBinary(const std::string &modelFile, go
     return RET_ERROR;
   }
   (void)close(fd);
+  onnx_file.release();
   return RET_OK;
 }
 
@@ -117,7 +118,7 @@ STATUS OnnxModelParser::AddValueInfo(const onnx::ValueInfoProto &proto, const st
                   << static_cast<onnx::TensorProto_DataType>(proto.type().tensor_type().elem_type());
     return RET_ERROR;
   }
-  std::unique_ptr<schema::TensorT> tensor(new schema::TensorT);
+  std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "new tensor failed";
     return RET_ERROR;
@@ -137,7 +138,7 @@ STATUS OnnxModelParser::AddTensorProto(const onnx::TensorProto &proto, const std
     return RET_ERROR;
   }
 
-  std::unique_ptr<schema::TensorT> tensor(new (std::nothrow) schema::TensorT);
+  std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "new tensor failed";
     return RET_ERROR;
@@ -190,7 +191,7 @@ STATUS OnnxModelParser::SetGraphOutputTensor(const onnx::GraphProto &onnx_graph,
 
 void OnnxModelParser::ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                         schema::MetaGraphT *graph, TensorCache *tensor_cache) {
-  std::unique_ptr<schema::CNodeT> dst_op_1(new schema::CNodeT);
+  std::unique_ptr<schema::CNodeT> dst_op_1 = std::make_unique<schema::CNodeT>();
   dst_op_1->name = "Gemm_MatMul_" + onnx_node.output(0);
   ParseOnnxNodeAttr(onnx_graph, onnx_node, "MatMul", dst_op_1.get());
   auto matmul_output_id = "Gemm_MatMul_" + onnx_node.output(0);
@@ -200,7 +201,7 @@ void OnnxModelParser::ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, cons
   SetOpOutputIndex(matmul_outputs, dst_op_1.get(), tensor_cache);
   graph->nodes.emplace_back(std::move(dst_op_1));
 
-  std::unique_ptr<schema::CNodeT> dst_op_2(new schema::CNodeT);
+  std::unique_ptr<schema::CNodeT> dst_op_2 = std::make_unique<schema::CNodeT>();
   dst_op_2->name = "Gemm_BiasAdd_" + onnx_node.output(0);
   ParseOnnxNodeAttr(onnx_graph, onnx_node, "BiasAdd", dst_op_2.get());
   std::vector<string> biasadd_inputs{matmul_output_id, onnx_node.input(2)};
@@ -214,7 +215,7 @@ STATUS OnnxModelParser::ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node,
   // convert GivenTensorFill node to a weight/bias tensor
   auto ret = tensor_cache->FindTensor(onnx_node.output(0));
   if (ret < 0) {
-    std::unique_ptr<schema::TensorT> tensor(new schema::TensorT);
+    std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
     std::vector<int> shape;
     auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                              [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });
@@ -322,7 +323,7 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
   }
   size_t findQuantParams = 0;
   for (const auto &node : quant_node) {
-    std::unique_ptr<schema::QuantParamT> quant_param(new (std::nothrow) schema::QuantParamT());
+    std::unique_ptr<schema::QuantParamT> quant_param = std::make_unique<schema::QuantParamT>();
     if (quant_param == nullptr) {
       MS_LOG(ERROR) << "new QuantParamT failed, node: " << dst_op->name;
       return;
@@ -385,7 +386,7 @@ STATUS OnnxModelParser::SetOpOutputIndex(const std::vector<string> &node_outputs
   for (const auto &onnx_node_output : node_outputs) {
     auto index = tensor_cache->FindTensor(onnx_node_output);
     if (index < 0) {  // when index >= 0, it's graph's output
-      std::unique_ptr<schema::TensorT> tensor(new schema::TensorT);
+      std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
       tensor->nodeType = schema::NodeType_Parameter;
       index = tensor_cache->AddTensor(onnx_node_output, tensor.release(), OP_OUTPUT);
     }
@@ -482,7 +483,7 @@ MetaGraphT *OnnxModelParser::Parse(const std::string &modelFile, const std::stri
     MS_LOG(ERROR) << "Input illegal: modelFile must be *.onnx";
     return nullptr;
   }
-  std::unique_ptr<schema::MetaGraphT> dst_graph(new schema::MetaGraphT());
+  std::unique_ptr<schema::MetaGraphT> dst_graph = std::make_unique<schema::MetaGraphT>();
   onnx::ModelProto onnx_model;
   if (ReadOnnxModelFromBinary(modelFile, &onnx_model) != RET_OK) {
     MS_LOG(ERROR) << "read onnx model fail";
@@ -526,8 +527,8 @@ MetaGraphT *OnnxModelParser::Parse(const std::string &modelFile, const std::stri
       continue;
     }
 
-    std::unique_ptr<schema::CNodeT> dst_op(new schema::CNodeT);
-    std::unique_ptr<schema::TensorT> dst_tensor(new schema::TensorT);
+    std::unique_ptr<schema::CNodeT> dst_op = std::make_unique<schema::CNodeT>();
+    std::unique_ptr<schema::TensorT> dst_tensor = std::make_unique<schema::TensorT>();
     auto status = ParseOnnxNodeToDstOp(onnx_graph, onnx_node, dst_op.get(), dst_tensor.get(), &tensor_cache);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed";

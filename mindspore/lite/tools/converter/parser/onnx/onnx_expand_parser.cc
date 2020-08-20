@@ -23,7 +23,7 @@ STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ExpandParser";
   if (op != nullptr) {
-    std::unique_ptr<schema::BroadcastT> attr(new schema::BroadcastT());
+    std::unique_ptr<schema::BroadcastT> attr = std::make_unique<schema::BroadcastT>();
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Broadcast;
     op->primitive->value.value = attr.release();
