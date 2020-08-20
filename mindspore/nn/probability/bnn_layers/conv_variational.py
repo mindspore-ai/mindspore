@@ -222,22 +222,22 @@ class ConvReparam(_ConvVariational):
             Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector.
             Default: False.
-        weight_prior_fn: prior distribution for convolution kernel.
+        weight_prior_fn: prior distribution for weight.
             It should return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
-            normal distribution).
-        weight_posterior_fn: posterior distribution for sampling convolution
-            kernel. It should be a function handle which returns a mindspore
-            distribution instance.
-            Default: NormalPosterior.
+            normal distribution). The current version only supports NormalPrior.
+        weight_posterior_fn: posterior distribution for sampling weight.
+            It should be a function handle which returns a mindspore
+            distribution instance. Default: NormalPosterior. The current
+            version only supports NormalPosterior.
         bias_prior_fn: prior distribution for bias vector. It should return
-            a mindspore distribution.
-            Default: NormalPrior(which creates an instance of standard
-            normal distribution).
+            a mindspore distribution. Default: NormalPrior(which creates an
+            instance of standard normal distribution). The current version
+            only supports NormalPrior.
         bias_posterior_fn: posterior distribution for sampling bias vector.
             It should be a function handle which returns a mindspore
-            distribution instance.
-            Default: NormalPosterior.
+            distribution instance. Default: NormalPosterior. The current
+            version only supports NormalPosterior.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
