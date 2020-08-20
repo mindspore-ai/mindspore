@@ -21,7 +21,7 @@
 This is an example of training Bert with MLPerf v0.7 dataset by second-order optimizer THOR. THOR is a novel approximate seond-order optimization method in MindSpore. With fewer iterations, THOR can finish Bert-Large training in 14 minutes to a masked lm accuracy of 71.3% using 8 Ascend 910, which is much faster than SGD with Momentum. 
 
 ## Model Architecture
-The architecture of Bert contains 3 embedding layers which are used to look up token embeddings, position embeddings and segmentation embeddings; Then BERT basically consists of a stack of Transformer encoder blocks; finally bert are trained for two tasks: Masked Language Model and Next Sentence Prediction.
+The architecture of Bert contains 3 embedding layers which are used to look up token embeddings, position embeddings and segmentation embeddings; Then BERT basically consists of a stack of Transformer encoder blocks; finally bert is trained for two tasks: Masked Language Model and Next Sentence Prediction.
 
 ## Dataset
 Dataset used: MLPerf v0.7 dataset for BERT
@@ -32,7 +32,7 @@ Dataset used: MLPerf v0.7 dataset for BERT
 - Data format：tfrecord
   
 - Download and preporcess datasets
-  - Note：Data will be processed using scripts in https://github.com/mlperf/training/tree/master/language_model/tensorflow/bert
+  - Note：Data will be processed using scripts in [pretraining data creation](https://github.com/mlperf/training/tree/master/language_model/tensorflow/bert),
   with the help of this link users could make the data files step by step.
 
 > The generated tfrecord has 500 parts:
@@ -193,7 +193,7 @@ step:  3000 Accuracy:  [0.71377236]
 | -------------------------- | -------------------------------------- |
 | Model Version              | BERT-LARGE                                              |
 | Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  |
-| uploaded Date              | 06/01/2020 (month/day/year)                         |
+| uploaded Date              | 08/20/2020 (month/day/year)                         |
 | MindSpore Version          | 0.6.0-alpha                                                       |
 | Dataset                    | MLPerf v0.7 dataset                                                   | 
 | Training Parameters        | total steps=3000, batch_size = 12             |
