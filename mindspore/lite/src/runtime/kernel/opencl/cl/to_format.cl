@@ -1,22 +1,3 @@
-#define FLT float
-#define FLT4 float4
-#define READ_IMAGE read_imagef
-#define WRITE_IMAGE write_imagef
-// enum Format {
-//  Format_NCHW = 0,
-//  Format_NHWC = 1,
-//  Format_NHWC4 = 2,
-//  Format_HWKC = 3,
-//  Format_HWCK = 4,
-//  Format_KCHW = 5,
-//  Format_CKHW = 6,
-//  Format_KHWC = 7,
-//  Format_CHWK = 8,
-//  Format_NC4HW4 = 100,
-//  Format_NUM_OF_FORMAT = 101,
-//  Format_MIN = Format_NCHW,
-//  Format_MAX = Format_NUM_OF_FORMAT
-//};
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void to_format_NCHW_to_NHWC4_IMG(__global FLT4 *src_data, __write_only image2d_t dst_data, int4 size,
                                           int4 shape) {

@@ -24,7 +24,7 @@
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/kernel/caffe_prelu.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/cl/fp32/caffe_prelu.cl.inc"
+#include "src/runtime/kernel/opencl/cl/caffe_prelu.cl.inc"
 #include "src/runtime/kernel/arm/nnacl/caffeprelu.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -57,7 +57,7 @@ int CaffePReluOpenCLKernel::Init() {
   }
   CaffeWeight();
   std::set<std::string> build_options;
-  std::string source = caffe_prelu_source_fp32;
+  std::string source = caffe_prelu_source;
   std::string program_name = "CaffePRelu";
   std::string kernel_name = "CaffePRelu";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();

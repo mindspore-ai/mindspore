@@ -26,8 +26,7 @@
 
 #ifndef PROGRAM_WITH_IL
 
-#include "src/runtime/kernel/opencl/cl/fp16/depthwise_conv2d.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/depthwise_conv2d.cl.inc"
+#include "src/runtime/kernel/opencl/cl/depthwise_conv2d.cl.inc"
 
 #endif
 
@@ -68,11 +67,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
 #else
   std::string program_name = "DepthwiseConv2d";
   std::set<std::string> build_options;
-#ifdef ENABLE_FP16
-  std::string source = depthwise_conv2d_source_fp16;
-#else
-  std::string source = depthwise_conv2d_source_fp32;
-#endif
+  std::string source = depthwise_conv2d_source;
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif

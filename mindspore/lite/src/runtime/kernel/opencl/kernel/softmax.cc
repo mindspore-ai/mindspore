@@ -22,8 +22,8 @@
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp32/softmax.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/softmax1x1.cl.inc"
+#include "src/runtime/kernel/opencl/cl/softmax.cl.inc"
+#include "src/runtime/kernel/opencl/cl/softmax1x1.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -88,7 +88,7 @@ int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
 int SoftmaxOpenCLKernel::Init() {
   std::string kernel_name = "SoftMax";
   std::string program_name = "SoftMax";
-  std::string source = softmax_source_fp32;
+  std::string source = softmax_source;
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   // framework not set this param yet! just use default.
   if (parameter_->axis_ == -1) {
@@ -101,7 +101,7 @@ int SoftmaxOpenCLKernel::Init() {
     // support 2d tensor
     kernel_name += "1x1";
     program_name += "1x1";
-    source = softmax1x1_source_fp32;
+    source = softmax1x1_source;
     onexone_flag_ = true;
   } else {
     MS_LOG(EXCEPTION) << "Init `Softmax` kernel failed: Unsupported axis: " << parameter_->axis_;

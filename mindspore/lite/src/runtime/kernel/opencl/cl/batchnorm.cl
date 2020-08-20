@@ -1,4 +1,3 @@
-#define FLT4 float4
 #define INT4 int4
 #define INT2 int2
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;

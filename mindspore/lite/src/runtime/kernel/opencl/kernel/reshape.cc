@@ -20,8 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/reshape.h"
-#include "src/runtime/kernel/opencl/cl/fp16/reshape.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/reshape.cl.inc"
+#include "src/runtime/kernel/opencl/cl/reshape.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -39,11 +38,7 @@ int ReshapeOpenCLKernel::Init() {
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::set<std::string> build_options;
-#ifdef ENABLE_FP16
-  std::string source = reshape_source_fp16;
-#else
-  std::string source = reshape_source_fp32;
-#endif
+  std::string source = reshape_source;
   std::string program_name = "reshape";
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);

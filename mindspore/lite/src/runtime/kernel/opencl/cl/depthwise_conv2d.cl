@@ -1,12 +1,3 @@
-#ifdef ENABLE_FP16
-#define FLT half
-#define FLT4 half4
-#define TO_FLT4 convert_half4
-#else
-#define FLT float
-#define FLT4 float4
-#define TO_FLT4 convert_float4
-#endif
 __constant sampler_t sampler_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void DepthwiseConv2d_IMG_NC4HW4(__read_only image2d_t src_data, __global FLT4 *filter, __global FLT4 *bias,
                                          float relu_clip1, __write_only image2d_t dst_data, int2 kernel_size,

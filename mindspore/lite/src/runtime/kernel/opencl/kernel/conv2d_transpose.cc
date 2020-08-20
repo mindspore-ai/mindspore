@@ -20,8 +20,7 @@
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/conv2d_transpose.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp16/conv2d_transpose2x2.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/conv2d_transpose2x2.cl.inc"
+#include "src/runtime/kernel/opencl/cl/conv2d_transpose2x2.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -45,11 +44,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
-#ifdef ENABLE_FP16
-  std::string source = conv2d_transpose2x2_source_fp16;
-#else
-  std::string source = conv2d_transpose2x2_source_fp32;
-#endif
+  std::string source = conv2d_transpose2x2_source;
   std::set<std::string> build_options;
   std::string program_name = "conv2d_transpose2x2";
   ocl_runtime->LoadSource(program_name, source);

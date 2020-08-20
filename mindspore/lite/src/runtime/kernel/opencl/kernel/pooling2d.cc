@@ -24,8 +24,8 @@
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/image_format.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp32/max_pool2d.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/avg_pool2d.cl.inc"
+#include "src/runtime/kernel/opencl/cl/avg_pool2d.cl.inc"
+#include "src/runtime/kernel/opencl/cl/max_pool2d.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -46,13 +46,13 @@ int PoolingOpenCLKernel::Init() {
   if (parameter_->max_pooling_) {
     kernel_name = "MaxPooling2d";
 #ifndef PROGRAM_WITH_IL
-    source = max_pool2d_source_fp32;
+    source = max_pool2d_source;
     program_name = "MaxPooling2d";
 #endif
   } else if (parameter_->avg_pooling_) {
     kernel_name = "AvgPooling2d";
 #ifndef PROGRAM_WITH_IL
-    source = avg_pool2d_source_fp32;
+    source = avg_pool2d_source;
     program_name = "AvgPooling2d";
 #endif
   } else {

@@ -1,7 +1,3 @@
-#define FLT half
-#define FLT4 half4
-#define READ_IMAGE read_imageh
-#define WRITE_IMAGE write_imageh
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void reshape(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
   int X = get_global_id(0);

@@ -22,8 +22,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #ifndef PROGRAM_WITH_IL
-#include "src/runtime/kernel/opencl/cl/fp32/arithmetic_buffer.cl.inc"
-#include "src/runtime/kernel/opencl/cl/fp32/arithmetic_image2d.cl.inc"
+#include "src/runtime/kernel/opencl/cl/arithmetic.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -109,9 +108,14 @@ int ArithmeticOpenCLKernel::Init() {
     error_code = RET_ERROR;
   }
 #else
+  if (out_mem_type_ == OpenCLMemType::IMG) {
+    kernel_name += "_IMG";
+  } else {
+    kernel_name += "_BUF";
+  }
   std::string program_name = "Arithmetic";
   std::set<std::string> build_options;
-  std::string source = arithmetic_image2d_source_fp32;
+  std::string source = arithmetic_source;
   runtime_->LoadSource(program_name, source);
   error_code = runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
