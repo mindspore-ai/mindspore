@@ -27,7 +27,7 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def test_random_posterize_op_c(plot=False, run_golden=True):
+def skip_test_random_posterize_op_c(plot=False, run_golden=True):
     """
     Test RandomPosterize in C transformations
     """
@@ -70,7 +70,7 @@ def test_random_posterize_op_c(plot=False, run_golden=True):
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
+def skip_test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
     """
     Test RandomPosterize in C transformations with fixed point
     """
@@ -144,6 +144,6 @@ def test_random_posterize_exception_bit():
 
 
 if __name__ == "__main__":
-    test_random_posterize_op_c(plot=True)
-    test_random_posterize_op_fixed_point_c(plot=True)
+    skip_test_random_posterize_op_c(plot=True)
+    skip_test_random_posterize_op_fixed_point_c(plot=True)
     test_random_posterize_exception_bit()
