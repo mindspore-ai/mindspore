@@ -2310,6 +2310,7 @@ class ConcatDataset(DatasetOp):
 
     Raises:
         TypeError: If dataset is not an instance of Dataset.
+        ValueError: If there is no samples in the one of the datasets.
     """
 
     def __init__(self, datasets):
@@ -2324,15 +2325,19 @@ class ConcatDataset(DatasetOp):
             data.parent.append(self)
 
         self.children_sizes_ = [c.get_dataset_size() for c in self.children]
-        """
-        _children_flag_and_nums: A list of pair<int ,int>.The first element of pair is flag that characterizes
-        whether the data set is mappable. The second element of pair is length of the dataset
-        """
+        child_index = 0
+        for item in self.children_sizes_:
+            if item == 0:
+                raise ValueError("There is no samples in the %dth dataset. Please make sure there are "
+                                 "valid samples in the dataset" % child_index)
+            child_index += 1
+
+        # _children_flag_and_nums: A list of pair<int ,int>.The first element of pair is flag that characterizes
+        # whether the data set is mappable. The second element of pair is length of the dataset
         self._children_flag_and_nums = []
-        """
-         _children_start_end_index_: A list of pair<int ,int>.The elements of pair are used to characterize
-        the valid position of the dataset corresponding to the subscript when sampling
-        """
+
+        # _children_start_end_index_: A list of pair<int ,int>.The elements of pair are used to characterize
+        # the valid position of the dataset corresponding to the subscript when sampling
         self._children_start_end_index_ = []
         for index, child in enumerate(self.children):
             tem_list = [-1, -1]
