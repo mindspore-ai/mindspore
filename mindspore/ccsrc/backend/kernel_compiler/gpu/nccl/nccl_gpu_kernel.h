@@ -130,8 +130,9 @@ class NcclGpuKernel : public GpuKernel {
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
       }
-      input_size_list_.push_back(size);
-      input_size_ += size;
+      size_t aligned_size = AlignMemorySize(size);
+      input_size_list_.push_back(aligned_size);
+      input_size_ += aligned_size;
     }
     for (size_t i = 0; i < output_num; ++i) {
       auto shape = AnfAlgo::GetOutputInferShape(kernel_node, i);
@@ -139,8 +140,9 @@ class NcclGpuKernel : public GpuKernel {
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
       }
-      output_size_list_.push_back(size);
-      output_size_ += size;
+      size_t aligned_size = AlignMemorySize(size);
+      output_size_list_.push_back(aligned_size);
+      output_size_ += aligned_size;
     }
 
     InferCommType(kernel_node);
@@ -193,6 +195,13 @@ class NcclGpuKernel : public GpuKernel {
     return;
   }
 
+  size_t AlignMemorySize(size_t size) const {
+    if (size == 0) {
+      return COMMUNICATION_MEM_ALIGN_SIZE;
+    }
+    return ((size + COMMUNICATION_MEM_ALIGN_SIZE - 1) / COMMUNICATION_MEM_ALIGN_SIZE) * COMMUNICATION_MEM_ALIGN_SIZE;
+  }
+
   NcclKernelType nccl_kernel_type_;
   ncclRedOp_t nccl_reduce_type_;
   ncclDataType_t nccl_data_type_;
@@ -205,6 +214,8 @@ class NcclGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
   const void *collective_handle_;
   cudaStream_t comm_stream_;
+
+  static const size_t COMMUNICATION_MEM_ALIGN_SIZE = 16;
 };
 }  // namespace kernel
 }  // namespace mindspore

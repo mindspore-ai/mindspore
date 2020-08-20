@@ -28,7 +28,7 @@ namespace mindspore {
 namespace opt {
 const BaseRef ReplaceBNGradCastFusion::DefinePattern() const {
   VectorRef dy_cast = VectorRef({prim::kPrimCast, dy_});
-  VectorRef fbn2g = VectorRef({prim::kPrimFusedBatchNormGrad, dy_cast, x_, scale_, mean_, var_});
+  VectorRef fbn2g = VectorRef({prim::kPrimFusedBatchNormGradEx, dy_cast, x_, scale_, mean_, var_, reserve_});
   VectorRef tupleget = VectorRef({prim::kPrimTupleGetItem, fbn2g, index_});
   return tupleget;
 }

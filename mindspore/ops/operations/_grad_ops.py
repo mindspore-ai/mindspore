@@ -491,6 +491,22 @@ class FusedBatchNormGrad(Primitive):
         raise NotImplementedError
 
 
+class FusedBatchNormGradEx(PrimitiveWithInfer):
+    """Gradients of FusedBatchNormEx operation."""
+
+    @prim_attr_register
+    def __init__(self, epsilon=0.0, momentum=0.1):
+        self.init_prim_io_names(inputs=['dy', 'x', 'scale', 'save_mean', 'save_inv_variance', 'reserve'],
+                                outputs=['dx', 'bn_scale', 'bn_bias'])
+        self.add_prim_attr('data_format', "NCHW")
+
+    def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape, reserve_shape):
+        return (x_shape, scale_shape, scale_shape)
+
+    def infer_dtype(self, y_backprop_type, x_type, scale_type, save_mean_type, save_variance_type, reserve_type):
+        return (x_type, scale_type, scale_type)
+
+
 class UniqueGrad(Primitive):
     """Gradients of Unique operation."""
 

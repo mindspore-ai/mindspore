@@ -1001,7 +1001,10 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
   size_t total_size = 0;
   std::vector<size_t> size_list;
   DeviceAddressPtrList addr_list;
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto intput_sizes = kernel_mod->GetInputSizeList();
+  for (size_t i = 0; i < intput_sizes.size(); ++i) {
     DeviceAddressPtr device_address;
     if (mem_reuse_util_->is_all_nop_node()) {
       // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
@@ -1016,8 +1019,8 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
     } else {
       is_need_free_memory = true;
     }
-    total_size += device_address->size_;
-    size_list.emplace_back(device_address->size_);
+    total_size += intput_sizes[i];
+    size_list.emplace_back(intput_sizes[i]);
     addr_list.emplace_back(device_address);
   }
   AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);

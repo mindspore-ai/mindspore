@@ -28,6 +28,9 @@
 #include "backend/optimizer/gpu/adam_fusion.h"
 #include "backend/optimizer/gpu/replace_bn_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_bn_grad_cast_fusion.h"
+#include "backend/optimizer/gpu/batch_norm_relu_fusion.h"
+#include "backend/optimizer/gpu/batch_norm_relu_grad_fusion.h"
+#include "backend/optimizer/gpu/batch_norm_add_relu_fusion.h"
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "backend/optimizer/gpu/insert_format_transform_op.h"
@@ -70,6 +73,9 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
