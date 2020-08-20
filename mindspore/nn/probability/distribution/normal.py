@@ -20,6 +20,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
+from ._utils.utils import CheckTensor, CheckTuple
 
 class Normal(Distribution):
     """
@@ -112,7 +113,6 @@ class Normal(Distribution):
             self._mean_value = mean
             self._sd_value = sd
 
-
         #ops needed for the class
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
@@ -127,6 +127,9 @@ class Normal(Distribution):
         self.sqrt = P.Sqrt()
         self.zeroslike = P.ZerosLike()
 
+        self.checktensor = CheckTensor()
+        self.checktuple = CheckTuple()
+
     def extend_repr(self):
         if self.is_scalar_batch:
             str_info = f'mean = {self._mean_value}, standard deviation = {self._sd_value}'
@@ -140,40 +143,44 @@ class Normal(Distribution):
         """
         return self.exp(x) - 1.0
 
+    def _check_param(self, mean, sd):
+        """
+        Check availablity of distribution specific args mean and sd.
+        """
+        if mean is not None:
+            self.checktensor(mean, 'mean')
+            mean = self.cast(mean, self.parameter_type)
+        else:
+            mean = self._mean_value if self._mean_value is not None else raise_none_error('mean')
+        if sd is not None:
+            self.checktensor(sd, 'sd')
+            sd = self.cast(sd, self.parameter_type)
+        else:
+            sd = self._sd_value if self._sd_value is not None else raise_none_error('sd')
+        batch_shape = self.shape(mean + sd)
+        mean = mean * self.fill(self.dtype, batch_shape, 1.0)
+        sd = sd * self.fill(self.dtype, batch_shape, 1.0)
+        return mean, sd
+
     def _mean(self, mean=None, sd=None):
         """
         Mean of the distribution.
         """
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        mean, sd = self._check_param(mean, sd)
         return mean
 
     def _mode(self, mean=None, sd=None):
         """
         Mode of the distribution.
         """
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        mean, sd = self._check_param(mean, sd)
         return mean
 
     def _sd(self, mean=None, sd=None):
         """
         Standard deviation of the distribution.
         """
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        mean, sd = self._check_param(mean, sd)
         return sd
 
     def _entropy(self, mean=None, sd=None):
@@ -183,15 +190,10 @@ class Normal(Distribution):
         .. math::
             H(X) = \log(\sqrt(numpy.e * 2. * numpy.pi * \sq(\sigma)))
         """
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        mean, sd = self._check_param(mean, sd)
         return self.log(self.sqrt(self.const(np.e * 2. * np.pi))) + self.log(sd)
 
-    def _cross_entropy(self, dist, mean_b, sd_b, mean_a=None, sd_a=None):
+    def _cross_entropy(self, dist, mean_b, sd_b, mean=None, sd=None):
         r"""
         Evaluate cross_entropy between normal distributions.
 
@@ -203,7 +205,7 @@ class Normal(Distribution):
             sd_a (Tensor): standard deviation distribution a. Default: self._sd_value.
         """
         check_distribution_name(dist, 'Normal')
-        return self._entropy(mean=mean_a, sd=sd_a) + self._kl_loss(dist, mean_b, sd_b, mean_a, sd_a)
+        return self._entropy(mean, sd) + self._kl_loss(dist, mean_b, sd_b, mean, sd)
 
     def _log_prob(self, value, mean=None, sd=None):
         r"""
@@ -217,15 +219,9 @@ class Normal(Distribution):
         .. math::
             L(x) = -1* \frac{(x - \mu)^2}{2. * \sigma^2} - \log(\sqrt(2* \pi * \sigma^2))
         """
-        if value is None:
-            raise_none_error("value")
+        self.checktensor(value, 'value')
         value = self.cast(value, self.dtype)
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        mean, sd = self._check_param(mean, sd)
         unnormalized_log_prob = -1. * (self.sq(value - mean)) / (2. * self.sq(sd))
         neg_normalization = -1. * self.log(self.const(2. * np.pi)) / 2. - self.log(sd)
         return unnormalized_log_prob + neg_normalization
@@ -242,20 +238,14 @@ class Normal(Distribution):
         .. math::
             cdf(x) = 0.5 * (1+ Erf((x - \mu) / ( \sigma * \sqrt(2))))
         """
-        if value is None:
-            raise_none_error("value")
+        self.checktensor(value, 'value')
         value = self.cast(value, self.dtype)
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        mean, sd = self._check_param(mean, sd)
         sqrt2 = self.sqrt(self.const(2.0))
         adjusted = (value - mean) / (sd * sqrt2)
         return 0.5 * (1.0 + self.erf(adjusted))
 
-    def _kl_loss(self, dist, mean_b, sd_b, mean_a=None, sd_a=None):
+    def _kl_loss(self, dist, mean_b, sd_b, mean=None, sd=None):
         r"""
         Evaluate Normal-Normal kl divergence, i.e. KL(a||b).
 
@@ -271,22 +261,14 @@ class Normal(Distribution):
                        0.5 * EXPM1(2 * (\log(STD(a)) - \log(STD(b))) - (\log(STD(a)) - \log(STD(b)))
         """
         check_distribution_name(dist, 'Normal')
-        if mean_b is None:
-            raise_none_error("mean_b")
-        if sd_b is None:
-            raise_none_error("sd_b")
+        self.checktensor(mean_b, 'mean_b')
+        self.checktensor(sd_b, 'sd_b')
         mean_b = self.cast(mean_b, self.parameter_type)
         sd_b = self.cast(sd_b, self.parameter_type)
-        mean_a = self.cast(mean_a, self.parameter_type) if mean_a is not None else self._mean_value
-        sd_a = self.cast(sd_a, self.parameter_type) if sd_a is not None else self._sd_value
-        if mean_a is None:
-            raise_none_error("mean_a")
-        if sd_a is None:
-            raise_none_error("sd_a")
+        mean_a, sd_a = self._check_param(mean, sd)
         diff_log_scale = self.log(sd_a) - self.log(sd_b)
         squared_diff = self.sq(mean_a / sd_b - mean_b / sd_b)
         return 0.5 * squared_diff + 0.5 * self.expm1(2 * diff_log_scale) - diff_log_scale
-
 
     def _sample(self, shape=(), mean=None, sd=None):
         """
@@ -300,12 +282,8 @@ class Normal(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        mean = self.cast(mean, self.parameter_type) if mean is not None else self._mean_value
-        if mean is None:
-            raise_none_error("mean")
-        sd = self.cast(sd, self.parameter_type) if sd is not None else self._sd_value
-        if sd is None:
-            raise_none_error("sd")
+        self.checktuple(shape, 'shape')
+        mean, sd = self._check_param(mean, sd)
         batch_shape = self.shape(mean + sd)
         origin_shape = shape + batch_shape
         if origin_shape == ():

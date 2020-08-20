@@ -75,7 +75,7 @@ def test_forward_jacobian():
     forward_jacobian = Net2()
     x = Tensor([2.0, 3.0, 4.0, 5.0], dtype=dtype.float32)
     ans = forward_jacobian(x)
-    expected = np.log([2.0, 2.0, 2.0, 2.0])
+    expected = np.log([2.0])
     tol = 1e-6
     assert (np.abs(ans.asnumpy() - expected) < tol).all()
 
@@ -94,6 +94,6 @@ def test_backward_jacobian():
     backward_jacobian = Net3()
     x = Tensor([2.0, 3.0, 4.0, 5.0], dtype=dtype.float32)
     ans = backward_jacobian(x)
-    expected = np.log([0.5, 0.5, 0.5, 0.5])
+    expected = np.log([0.5])
     tol = 1e-6
     assert (np.abs(ans.asnumpy() - expected) < tol).all()

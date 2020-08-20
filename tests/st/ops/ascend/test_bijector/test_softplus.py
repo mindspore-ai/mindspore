@@ -20,7 +20,7 @@ import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
 from mindspore import dtype
 
-context.set_context(device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class Net(nn.Cell):
     """

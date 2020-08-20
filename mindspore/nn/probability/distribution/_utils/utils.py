@@ -15,7 +15,8 @@
 """Utitly functions to help distribution class."""
 import numpy as np
 from mindspore.ops import _utils as utils
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
+from mindspore._checkparam import Validator as validator
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
@@ -53,7 +54,9 @@ def cast_to_tensor(t, hint_type=mstype.float32):
         raise TypeError(f'Input cannot be Type Bool')
     if isinstance(t, (int, float)):
         return Tensor(t, dtype=t_type)
-    raise TypeError("Input type is not supported.")
+    invalid_type = type(t)
+    raise TypeError(f"Unable to convert input of type {invalid_type} to a Tensor of type {t_type}")
+
 
 def convert_to_batch(t, batch_shape, required_type):
     """
@@ -274,5 +277,51 @@ def raise_none_error(name):
 
 @constexpr
 def check_distribution_name(name, expected_name):
+    if name is None:
+        raise ValueError(f"Distribution should be a constant which is not None.")
     if name != expected_name:
-        raise ValueError(f"Distribution should be {expected_name}.")
+        raise ValueError(f"Expected distribution name is {expected_name}, but got {name}.")
+
+class CheckTuple(PrimitiveWithInfer):
+    """
+    Check if input is a tuple.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init Cast"""
+        super(CheckTuple, self).__init__("CheckTuple")
+        self.init_prim_io_names(inputs=['x'], outputs=['dummy_output'])
+
+    def __infer__(self, x, name):
+        if not isinstance(x['dtype'], tuple):
+            raise TypeError("Input type should be a tuple: " + name["value"])
+
+        out = {'shape': None,
+               'dtype': None,
+               'value': None}
+        return out
+
+    def __call__(self, *args):
+        return
+
+class CheckTensor(PrimitiveWithInfer):
+    """
+    Check if input is a Tensor.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init Cast"""
+        super(CheckTensor, self).__init__("CheckTensor")
+        self.init_prim_io_names(inputs=['x'], outputs=['dummy_output'])
+
+    def __infer__(self, x, name):
+        src_type = x['dtype']
+        validator.check_subclass("input", src_type, [mstype.tensor], name["value"])
+
+        out = {'shape': None,
+               'dtype': None,
+               'value': None}
+        return out
+
+    def __call__(self, *args):
+        return

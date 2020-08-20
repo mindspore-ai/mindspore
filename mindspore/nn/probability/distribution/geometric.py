@@ -20,6 +20,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name,\
                           raise_none_error
+from ._utils.utils import CheckTensor, CheckTuple
 
 class Geometric(Distribution):
     """
@@ -129,6 +130,9 @@ class Geometric(Distribution):
         self.sqrt = P.Sqrt()
         self.uniform = C.uniform
 
+        self.checktensor = CheckTensor()
+        self.checktuple = CheckTuple()
+
     def extend_repr(self):
         if self.is_scalar_batch:
             str_info = f'probs = {self.probs}'
@@ -143,14 +147,21 @@ class Geometric(Distribution):
         """
         return self._probs
 
+    def _check_param(self, probs1):
+        """
+        Check availablity of distribution specific args probs1.
+        """
+        if probs1 is not None:
+            self.checktensor(probs1, 'probs1')
+            return self.cast(probs1, self.parameter_type)
+        return self.probs if self.probs is not None else raise_none_error('probs1')
+
     def _mean(self, probs1=None):
         r"""
         .. math::
             MEAN(Geo) = \fratc{1 - probs1}{probs1}
         """
-        probs1 = self.cast(probs1, self.parameter_type) if probs1 is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs1")
+        probs1 = self._check_param(probs1)
         return (1. - probs1) / probs1
 
     def _mode(self, probs1=None):
@@ -158,9 +169,7 @@ class Geometric(Distribution):
         .. math::
             MODE(Geo) = 0
         """
-        probs1 = self.cast(probs1, self.parameter_type) if probs1 is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs1")
+        probs1 = self._check_param(probs1)
         return self.fill(self.dtypeop(probs1), self.shape(probs1), 0.)
 
     def _var(self, probs1=None):
@@ -168,23 +177,19 @@ class Geometric(Distribution):
         .. math::
             VAR(Geo) = \frac{1 - probs1}{probs1 ^ {2}}
         """
-        probs1 = self.cast(probs1, self.parameter_type) if probs1 is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs1")
+        probs1 = self._check_param(probs1)
         return (1.0 - probs1) / self.sq(probs1)
 
-    def _entropy(self, probs=None):
+    def _entropy(self, probs1=None):
         r"""
         .. math::
             H(Geo) = \frac{-1 * probs0 \log_2 (1-probs0)\ - prob1 * \log_2 (1-probs1)\ }{probs1}
         """
-        probs1 = self.cast(probs, self.parameter_type) if probs is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs")
+        probs1 = self._check_param(probs1)
         probs0 = 1.0 - probs1
         return (-probs0 * self.log(probs0) - probs1 * self.log(probs1)) / probs1
 
-    def _cross_entropy(self, dist, probs1_b, probs1_a=None):
+    def _cross_entropy(self, dist, probs1_b, probs1=None):
         r"""
         Evaluate cross_entropy between Geometric distributions.
 
@@ -194,9 +199,9 @@ class Geometric(Distribution):
             probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
         """
         check_distribution_name(dist, 'Geometric')
-        return self._entropy(probs=probs1_a) + self._kl_loss(dist, probs1_b, probs1_a)
+        return self._entropy(probs1) + self._kl_loss(dist, probs1_b, probs1)
 
-    def _prob(self, value, probs=None):
+    def _prob(self, value, probs1=None):
         r"""
         pmf of Geometric distribution.
 
@@ -208,19 +213,16 @@ class Geometric(Distribution):
             pmf(k) = probs0 ^k * probs1 if k >= 0;
             pmf(k) = 0 if k < 0.
         """
-        if value is None:
-            raise_none_error("value")
+        self.checktensor(value, 'value')
         value = self.cast(value, mstype.float32)
         value = self.floor(value)
-        probs1 = self.cast(probs, self.parameter_type) if probs is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs")
+        probs1 = self._check_param(probs1)
         pmf = self.exp(self.log(1.0 - probs1) * value + self.log(probs1))
         zeros = self.fill(self.dtypeop(probs1), self.shape(pmf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, pmf)
 
-    def _cdf(self, value, probs=None):
+    def _cdf(self, value, probs1=None):
         r"""
         cdf of Geometric distribution.
 
@@ -233,13 +235,10 @@ class Geometric(Distribution):
             cdf(k) = 0 if k < 0.
 
         """
-        if value is None:
-            raise_none_error("value")
+        self.checktensor(value, 'value')
         value = self.cast(value, mstype.float32)
         value = self.floor(value)
-        probs1 = self.cast(probs, self.parameter_type) if probs is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs")
+        probs1 = self._check_param(probs1)
         probs0 = 1.0 - probs1
         cdf = 1.0 - self.pow(probs0, value + 1.0)
         zeros = self.fill(self.dtypeop(probs1), self.shape(cdf), 0.0)
@@ -247,7 +246,7 @@ class Geometric(Distribution):
         return self.select(comp, zeros, cdf)
 
 
-    def _kl_loss(self, dist, probs1_b, probs1_a=None):
+    def _kl_loss(self, dist, probs1_b, probs1=None):
         r"""
         Evaluate Geometric-Geometric kl divergence, i.e. KL(a||b).
 
@@ -260,17 +259,14 @@ class Geometric(Distribution):
             KL(a||b) = \log(\frac{probs1_a}{probs1_b}) + \frac{probs0_a}{probs1_a} * \log(\frac{probs0_a}{probs0_b})
         """
         check_distribution_name(dist, 'Geometric')
-        if probs1_b is None:
-            raise_none_error("probs1_b")
+        self.checktensor(probs1_b, 'probs1_b')
         probs1_b = self.cast(probs1_b, self.parameter_type)
-        probs1_a = self.cast(probs1_a, self.parameter_type) if probs1_a is not None else self.probs
-        if probs1_a is None:
-            raise_none_error("probs1_a")
+        probs1_a = self._check_param(probs1)
         probs0_a = 1.0 - probs1_a
         probs0_b = 1.0 - probs1_b
         return self.log(probs1_a / probs1_b) + (probs0_a / probs1_a) * self.log(probs0_a / probs0_b)
 
-    def _sample(self, shape=(), probs=None):
+    def _sample(self, shape=(), probs1=None):
         """
         Sampling.
 
@@ -281,9 +277,8 @@ class Geometric(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        probs1 = self.cast(probs, self.parameter_type) if probs is not None else self.probs
-        if probs1 is None:
-            raise_none_error("probs")
+        self.checktuple(shape, 'shape')
+        probs1 = self._check_param(probs1)
         origin_shape = shape + self.shape(probs1)
         if origin_shape == ():
             sample_shape = (1,)
