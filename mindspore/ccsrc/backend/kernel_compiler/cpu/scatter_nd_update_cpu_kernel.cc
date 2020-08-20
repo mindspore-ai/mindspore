@@ -25,9 +25,6 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  if (indices_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "Indices' dimension less than 2";
-  }
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
@@ -66,11 +63,11 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+                                      const std::vector<kernel::AddressPtr> & /*outputs*/) {
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
+    LaunchKernel<float16>(inputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    LaunchKernel<float>(inputs);
   } else {
     MS_LOG(ERROR) << "Only support float16, float32";
     return false;
@@ -79,30 +76,26 @@ bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs) {
   auto x = reinterpret_cast<T *>(inputs[0]->addr);
   auto indices = reinterpret_cast<int *>(inputs[1]->addr);
   auto updates = reinterpret_cast<T *>(inputs[2]->addr);
-  auto y = reinterpret_cast<T *>(outputs[0]->addr);
 
   for (int i = 0; i < num_units_; ++i) {
     int offset = 0;
     for (int j = 0; j < indices_unit_rank_; ++j) {
-      offset += indices[i * indices_unit_rank_ + j] * out_strides_[j] * unit_size_;
+      auto index = indices[i * indices_unit_rank_ + j];
+      if (index < 0) {
+        MS_LOG(EXCEPTION) << "Error, Indices exist element which less than 0. element=" << index;
+      }
+      offset += index * out_strides_[j] * unit_size_;
     }
     output_unit_offsets_[i] = offset;
   }
 
-  auto mem_bits = outputs[0]->size;
-  auto ret = memcpy_s(y, mem_bits, x, mem_bits);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
-  }
-
   for (int i = 0; i < num_units_; i++) {
-    ret =
-      memcpy_s(y + output_unit_offsets_[i], unit_size_ * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
+    auto ret =
+      memcpy_s(x + output_unit_offsets_[i], unit_size_ * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
     }

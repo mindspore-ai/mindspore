@@ -224,6 +224,14 @@ std::string GetMaketupleNodeTarget(const CNodePtr &cnode) {
   std::string default_target = context_ptr->device_target();
   return default_target;
 }
+
+std::string GetTupleGetItemTarget(const CNodePtr &cnode, const PrimitivePtr &primitive) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto input_target = GetCNodeTarget(cnode->input(1));
+  primitive->set_attr("primitive_target", MakeValue(input_target));
+  return input_target;
+}
 }  // namespace
 
 std::string GetCNodeTarget(const AnfNodePtr &node) {
@@ -256,8 +264,8 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     if (IsPrimitive(attr_input, prim::kPrimImageSummary) || IsPrimitive(attr_input, prim::kPrimScalarSummary) ||
         IsPrimitive(attr_input, prim::kPrimTensorSummary) || IsPrimitive(attr_input, prim::kPrimHistogramSummary) ||
         IsPrimitive(attr_input, prim::kPrimStateSetItem) || IsPrimitive(attr_input, prim::kPrimDepend) ||
-        IsPrimitive(attr_input, prim::kPrimTupleGetItem) || IsPrimitive(attr_input, prim::kPrimControlDepend) ||
-        IsPrimitive(attr_input, prim::kPrimReturn) || IsPrimitive(attr_input, prim::kPrimPartial)) {
+        IsPrimitive(attr_input, prim::kPrimControlDepend) || IsPrimitive(attr_input, prim::kPrimReturn) ||
+        IsPrimitive(attr_input, prim::kPrimPartial)) {
       primitive->EraseAttr("primitive_target");
       return default_target;
     }
@@ -272,6 +280,9 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   }
   if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     return GetMaketupleNodeTarget(cnode);
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return GetTupleGetItemTarget(cnode, primitive);
   }
   return default_target;
 }
