@@ -36,25 +36,61 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   int co = 1001;
   std::string input_path = "./test_data/matmul/matmul_fp32_input.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data load error.";
+    return;
+  }
   size_t weight_size;
   std::string weight_path = "./test_data/matmul/matmul_fp32_weight.bin";
   auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
-
-  lite::tensor::Tensor *tensor_x = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, 1, 1, ci});
+  if (weight_data == nullptr) {
+    MS_LOG(ERROR) << "weight_data load error.";
+    return;
+  }
+  std::vector<int> input_shape = {1, 1, 1, ci};
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape);
+  auto tensor_x = tensor_x_ptr.get();
+  if (tensor_x == nullptr) {
+    MS_LOG(ERROR) << "tensor_x create error.";
+    return;
+  }
   tensor_x->SetData(input_data);
 
-  lite::tensor::Tensor *tensor_w = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co, 1, 1, ci});
+  std::vector<int> w_shape = {co, 1, 1, ci};
+  auto tensor_w_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), w_shape);
+  auto tensor_w = tensor_w_ptr.get();
+  if (tensor_w == nullptr) {
+    MS_LOG(ERROR) << "tensor_w create error.";
+    return;
+  }
   tensor_w->SetData(weight_data);
 
-  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, 1, 1, co});
+  std::vector<int> out_shape = {1, 1, 1, co};
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
+  auto tensor_out = tensor_out_ptr.get();
+  if (tensor_out == nullptr) {
+    MS_LOG(ERROR) << "tensor_out create error.";
+    return;
+  }
   std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
-  auto *arith_kernel = new kernel::MatMulOpenCLKernel(nullptr, inputs, outputs, false);
+  auto arith_kernel_ptr = std::make_unique<kernel::MatMulOpenCLKernel>(nullptr, inputs, outputs, false);
+  auto arith_kernel = arith_kernel_ptr.get();
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "arith_kernel create error.";
+    return;
+  }
   arith_kernel->Init();
 
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto *pGraph = new kernel::SubGraphOpenCLKernel({tensor_x}, outputs, kernels, kernels, kernels);
+
+  std::vector<lite::tensor::Tensor *> inputs_g{tensor_x};
+  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_g, outputs, kernels, kernels, kernels);
+  auto pGraph = pGraph_ptr.get();
+  if (pGraph == nullptr) {
+    MS_LOG(ERROR) << "pGraph create error.";
+    return;
+  }
   pGraph->Init();
   pGraph->Run();
 
@@ -71,19 +107,10 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   }
   std::cout << std::endl;
 
-
   // compare
   CompareOutputData(output_data, correct_data, co, 0.00001);
 
   MS_LOG(INFO) << "TestMatMulFp32 passed";
-  for (auto tensor : inputs) {
-    delete tensor;
-  }
-  for (auto tensor : outputs) {
-    delete tensor;
-  }
-  delete arith_kernel;
-  delete pGraph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

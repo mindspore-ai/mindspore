@@ -30,7 +30,6 @@ class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
 };
 
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
-  // setbuf(stdout, NULL);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
@@ -48,27 +47,67 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   size_t input_size;
   std::string input_path = "./test_data/conv2d_transpose/conv2d_transpose_fp32_input.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data load error.";
+    return;
+  }
 
   size_t weight_size;
   std::string weight_path = "./test_data/conv2d_transpose/conv2d_transpose_fp32_weight.bin";
   auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
+  if (weight_data == nullptr) {
+    MS_LOG(ERROR) << "weight_data load error.";
+    return;
+  }
 
   size_t bias_size;
   std::string bias_path = "./test_data/conv2d_transpose/conv2d_transpose_fp32_bias.bin";
   auto bias_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(bias_path.c_str(), &bias_size));
+  if (bias_data == nullptr) {
+    MS_LOG(ERROR) << "bias_data load error.";
+    return;
+  }
+  std::vector<int> input_shape = {n, h, w, ci};
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape);
+  auto tensor_x = tensor_x_ptr.get();
+  if (tensor_x == nullptr) {
+    MS_LOG(ERROR) << "tensor_x create error.";
+    return;
+  }
 
-  lite::tensor::Tensor *tensor_x = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, h, w, ci});
-
-  lite::tensor::Tensor *tensor_w = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co, kh, kw, ci});
+  std::vector<int> weight_shape = {co, kh, kw, ci};
+  auto tensor_w_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), weight_shape);
+  auto tensor_w = tensor_w_ptr.get();
+  if (tensor_w == nullptr) {
+    MS_LOG(ERROR) << "tensor_w create error.";
+    return;
+  }
   tensor_w->SetData(weight_data);
 
-  lite::tensor::Tensor *tensor_bias = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {co});
+  std::vector<int> bias_shape = {co};
+  auto tensor_bias_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), bias_shape);
+  auto tensor_bias = tensor_bias_ptr.get();
+  if (tensor_bias == nullptr) {
+    MS_LOG(ERROR) << "tensor_bias create error.";
+    return;
+  }
   tensor_bias->SetData(bias_data);
 
-  lite::tensor::Tensor *tensor_out = new lite::tensor::Tensor(TypeId(kNumberTypeFloat32), {1, oh, ow, co});
+  std::vector<int> out_shape = {1, oh, ow, co};
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
+  auto tensor_out = tensor_out_ptr.get();
+  if (tensor_out == nullptr) {
+    MS_LOG(ERROR) << "tensor_out create error.";
+    return;
+  }
   std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w, tensor_bias};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
-  ConvParameter *opParameter = new ConvParameter();
+  auto opParameter_ptr = std::make_unique<ConvParameter>();
+  auto opParameter = opParameter_ptr.get();
+  if (opParameter == nullptr) {
+    MS_LOG(ERROR) << "opParameter create error.";
+    return;
+  }
   opParameter->kernel_h_ = kh;
   opParameter->kernel_w_ = kw;
   opParameter->stride_h_ = 2;
@@ -77,23 +116,39 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   opParameter->pad_w_ = pad;
   opParameter->input_channel_ = ci;
   opParameter->output_channel_ = co;
-  auto *arith_kernel =
-    new kernel::Conv2dTransposeOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  auto arith_kernel_ptr = std::make_unique<kernel::Conv2dTransposeOpenCLKernel>(
+    reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  auto arith_kernel = arith_kernel_ptr.get();
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "arith_kernel create error.";
+    return;
+  }
   arith_kernel->Init();
 
   inputs[0]->MallocData(allocator);
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto *pGraph = new kernel::SubGraphOpenCLKernel({tensor_x}, outputs, kernels, kernels, kernels);
+  std::vector<lite::tensor::Tensor *> inputs_g{tensor_x};
+  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_g, outputs, kernels, kernels, kernels);
+  auto pGraph = pGraph_ptr.get();
+  if (pGraph == nullptr) {
+    MS_LOG(ERROR) << "pGraph create error.";
+    return;
+  }
+
   pGraph->Init();
   memcpy(inputs[0]->Data(), input_data, input_size);
   pGraph->Run();
 
-  printf("==================output data=================\n");
+  std::cout << "==================output data=================" << std::endl;
   float *output_data = reinterpret_cast<float *>(tensor_out->Data());
   std::cout << std::endl;
   size_t output_size;
   std::string output_path = "./test_data/conv2d_transpose/conv2d_transpose_fp32_output.bin";
   auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
+  if (correct_data == nullptr) {
+    MS_LOG(ERROR) << "correct_data create error.";
+    return;
+  }
   int size_n = oh * ow * co;
   size_n = size_n > 100 ? 100 : size_n;
   for (int i = 0; i < size_n; i++) {
@@ -108,14 +163,6 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   CompareOutputData(output_data, correct_data, oh * ow * co, 0.00001);
 
   MS_LOG(INFO) << "Test Conv2dTransposeFp32 passed";
-  for (auto tensor : inputs) {
-    delete tensor;
-  }
-  for (auto tensor : outputs) {
-    delete tensor;
-  }
-  delete arith_kernel;
-  delete pGraph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

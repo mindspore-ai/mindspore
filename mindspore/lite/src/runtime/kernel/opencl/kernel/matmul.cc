@@ -40,7 +40,6 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
   std::set<std::string> build_options;
-// build_options.emplace("-DPOOL_AVG");
 #ifdef ENABLE_FP16
   std::string source = matmul_source_fp16;
 #else
@@ -169,9 +168,7 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::tensor::Te
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
-    // MS_LOG(ERROR) << "Init kernel failed, name: " << opDef.name()->str()
-    //               << ", type: " << lite::EnumNameOpT(opDef.attr_type());
+  if (ret != RET_OK) {
     delete kernel;
     return nullptr;
   }

@@ -64,7 +64,6 @@ int TransposeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
     return RET_ERROR;
   }
-  // Transpose::InferShape just set output->SetFormat(input->GetFormat()); -^-!
   ori_format_ = schema::Format_NCHW;
   out_tensors_[0]->SetFormat(schema::Format_NCHW);
   if (!is_image_out_) {
@@ -100,7 +99,6 @@ int TransposeOpenCLKernel::Run() {
   int c4 = UP_DIV(c, 4);
   int hw4 = UP_DIV(h * w, 4);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 16};
   std::vector<size_t> global = {UP_ROUND(hw4, local[0]), UP_ROUND(c4, local[1])};
 
@@ -126,7 +124,7 @@ kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::tensor:
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     delete kernel;
     return nullptr;
   }

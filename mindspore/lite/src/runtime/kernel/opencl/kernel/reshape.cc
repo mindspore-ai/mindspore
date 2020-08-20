@@ -83,7 +83,6 @@ int ReshapeOpenCLKernel::Run() {
   int c = shapex[3];
   int c4 = UP_DIV(c, C4NUM);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {};
   std::vector<size_t> global = {(size_t)h, (size_t)w, (size_t)c4};
   cl_int4 size = {h, w, c4, 1};

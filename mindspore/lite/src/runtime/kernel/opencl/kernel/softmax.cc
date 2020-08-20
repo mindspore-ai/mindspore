@@ -91,7 +91,9 @@ int SoftmaxOpenCLKernel::Init() {
   std::string source = softmax_source_fp32;
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   // framework not set this param yet! just use default.
-  parameter_->axis_ = 1;
+  if (parameter_->axis_ == -1) {
+    parameter_->axis_ = 1;
+  }
   if (in_tensors_[0]->shape().size() == 4 && parameter_->axis_ == 3) {
     // support 4d tensor
     onexone_flag_ = false;
@@ -180,7 +182,7 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::T
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init `Softmax` kernel failed!";
     delete kernel;
     return nullptr;

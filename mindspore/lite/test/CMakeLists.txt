@@ -152,6 +152,7 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/caffe_prelu.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/prelu.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
             )
 endif()
 ### minddata lite
