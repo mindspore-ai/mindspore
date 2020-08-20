@@ -97,10 +97,14 @@ __global__ void KLDivLossGradKernel(const int input_size, const int reduction, c
       dy[i] = (logf(denominator) + 1 - input_x[i]) * dloss[i];
     }
   } else {
+    T dloss1 = dloss[0];
+    if (reduction == 1) {
+      dloss1 = dloss[0] / input_size;
+    }
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T denominator = max(input_y[i], epsilon);
-      dx[i] = -input_y[i] * dloss[0];
-      dy[i] = (logf(denominator) + 1 - input_x[i]) * dloss[0];
+      dx[i] = -input_y[i] * dloss1;
+      dy[i] = (logf(denominator) + 1 - input_x[i]) * dloss1;
     }
   }
 }
@@ -169,10 +173,14 @@ __global__ void BinaryCrossEntropyLossGradKernel(const int input_size, const int
       dx[i] = value * dloss[i];
     }
   } else {
+    T dloss1 = dloss[0];
+    if (reduction == 1) {
+      dloss1 = dloss[0] / input_size;
+    }
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T denominator = max(input_x[i] * (1 - input_x[i]), epsilon);
       T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss[0];
+      dx[i] = value * dloss1;
     }
   }
 }
