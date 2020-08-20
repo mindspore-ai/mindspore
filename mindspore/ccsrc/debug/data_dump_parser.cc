@@ -216,8 +216,10 @@ std::string DataDumpParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t dev
   std::string bin_path = "/var/log/npu/ide_daemon/dump";
 
   const char *dump_data_path = std::getenv("DATA_DUMP_PATH");
-  bin_path.append(dump_data_path);
-  bin_path.append("_");
+  if (dump_data_path != nullptr) {
+    bin_path.append(dump_data_path);
+    bin_path.append("_");
+  }
   bin_path.append(std::to_string(device_id));
   bin_path.append("/");
   bin_path.append(net_name_);

@@ -473,12 +473,12 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   }
   return false;
 }
-
+namespace {
 // Isomorphism
-static bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
-                     NodeMapEquiv *const equiv_node);
-static bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
-                            NodeMapEquiv *const equiv_node) {
+bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+              NodeMapEquiv *const equiv_node);
+bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+                     NodeMapEquiv *const equiv_node) {
   if (equiv_node == nullptr) {
     MS_LOG(ERROR) << "Invalid equiv_node";
     return false;
@@ -534,8 +534,8 @@ bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMap
   return SameNodeShallow(node1, node2, equiv_func_graph, equiv_node);
 }
 
-static bool SameSubgraph(AnfNodePtr root1, AnfNodePtr root2, FuncGraphPairMapEquiv *equiv_func_graph,
-                         NodeMapEquiv *const equiv_node) {
+bool SameSubgraph(AnfNodePtr root1, AnfNodePtr root2, FuncGraphPairMapEquiv *equiv_func_graph,
+                  NodeMapEquiv *const equiv_node) {
   std::unordered_set<AnfNodePtr> done;
   std::stack<std::pair<AnfNodePtr, AnfNodePtr>> todo;
 
@@ -576,6 +576,7 @@ static bool SameSubgraph(AnfNodePtr root1, AnfNodePtr root2, FuncGraphPairMapEqu
   }
   return true;
 }
+}  // namespace
 
 bool Isomorphic(FuncGraphPtr fg1, FuncGraphPtr fg2, FuncGraphPairMapEquiv *equiv_func_graph,
                 NodeMapEquiv *const equiv_node) {

@@ -173,6 +173,5 @@ bool MergeDuplicateGraphs(const FuncGraphManagerPtr manager) {
   }
   return true;
 }
-
 }  // namespace pipeline
 }  // namespace mindspore

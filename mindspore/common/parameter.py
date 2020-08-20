@@ -40,19 +40,18 @@ class Parameter(MetaTensor):
     After initialized `Parameter` is a subtype of `Tensor`.
 
     In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
-    a `Initializer`, the type of Parameter will be a `MetaTensor` not a `Tensor`. `MetaTensor`
-    only save the shape type info of a tensor with no memory usage. The shape can be change while
+    an `Initializer`, the type of Parameter will be `MetaTensor` not `Tensor`. `MetaTensor`
+    only saves the shape and type info of a tensor with no memory usage. The shape can be changed while
     compile for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
 
     Note:
         Each parameter of Cell is represented by Parameter class.
 
     Args:
-        default_input (Union[Tensor, Initializer]): Parameter data, when `default_input` is` Initializer`,
-            the data stored by Parameter is `MetaTensor`, otherwise it is `Tensor`.
+        default_input (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
         name (str): Name of the child parameter.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
-        layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
+        layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in parallel mode,
             broadcast and gradients communication would not be applied to parameters. Default: False.
 
     Example:

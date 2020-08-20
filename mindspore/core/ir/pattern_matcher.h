@@ -580,7 +580,6 @@ class PConstant : public PBase<PConstant<T> > {
       return nullptr;
     }
     auto value = node->cast<ValueNodePtr>()->value();
-
     if (!value->isa<tensor::Tensor>()) {
       return nullptr;
     }
@@ -747,7 +746,6 @@ class PConstant : public PBase<PConstant<T> > {
 
     std::vector<int> tensor_out_shape = tensor_3_abstract->shape()->shape();
     int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
-
     if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
       return nullptr;
     }
