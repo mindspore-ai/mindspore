@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_SoftMax;
 namespace mindspore::kernel {
 
 std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
-  std::vector<float> mask{4, 0.0f};
+  std::vector<float> mask{0.0f, 0.0f, 0.0f, 0.0f};
   const int reminder = channels % 4 == 0 ? 4 : channels % 4;
   for (int i = 0; i < reminder; ++i) {
     mask[i] = 1.0f;

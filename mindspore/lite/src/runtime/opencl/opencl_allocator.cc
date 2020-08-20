@@ -109,8 +109,9 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
       cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime->Context(), image_format, *buffer, img_size[0],
                                                           img_size[1], img_pitch * sizeof(cl_float4), &ret);
       if (image == nullptr || ret != CL_SUCCESS) {
-        MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
+        delete buffer;
         UnLock();
+        MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
         return nullptr;
       }
       MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size[0] << ", height=" << img_size[1];
