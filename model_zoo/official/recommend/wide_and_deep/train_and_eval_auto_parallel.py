@@ -32,13 +32,6 @@ from src.metrics import AUCMetric
 from src.config import WideDeepConfig
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
-context.set_context(variable_memory_max_size="24GB")
-context.set_context(enable_sparse=True)
-cost_model_context.set_cost_model_context(multi_subgraphs=True)
-init()
-
-
 
 def get_WideDeep_net(config):
     """
@@ -131,6 +124,14 @@ def train_and_eval(config):
 if __name__ == "__main__":
     wide_deep_config = WideDeepConfig()
     wide_deep_config.argparse_init()
+    context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
+    context.set_context(variable_memory_max_size="24GB")
+    context.set_context(enable_sparse=True)
+    cost_model_context.set_cost_model_context(multi_subgraphs=True)
+    if wide_deep_config.device_target == "Ascend":
+        init("hccl")
+    elif wide_deep_config.device_target == "GPU":
+        init("nccl")
     if wide_deep_config.host_device_mix == 1:
         context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, mirror_mean=True)
     else:
