@@ -108,11 +108,19 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *
                   << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
     return nullptr;
   }
+  this->op_parameters_.emplace_back(parameter);
   auto creator = GetCreator(key);
   if (creator != nullptr) {
     auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key, primitive);
     return kernel;
   }
   return nullptr;
+}
+
+KernelRegistry::~KernelRegistry() {
+  for (auto op_parameter : op_parameters_) {
+    delete(op_parameter);
+  }
+  op_parameters_.clear();
 }
 }  // namespace mindspore::lite
