@@ -610,6 +610,15 @@ Status MatMulBase::CheckForTensorSliceValid() const {
   return SUCCESS;
 }
 
+std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
+  CheckGlobalDeviceManager();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  Dimensions batch_strategy(inputs_shape_[1].size() - 1, 1);
+  batch_strategy.insert(batch_strategy.begin(), SizeToLong(dev_num));
+  Strategys strategy_v = {batch_strategy, batch_strategy};
+  return std::make_shared<Strategys>(strategy_v);
+}
+
 Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (InitForCostModel(strategy) == FAILED) {
     if (is_auto_parallel_) {

@@ -162,6 +162,7 @@ constexpr char SIGMOID_CROSS_ENTROPY_WITH_LOGITS[] = "SigmoidCrossEntropyWithLog
 constexpr char MATMUL[] = "MatMul";
 constexpr char GELU[] = "Gelu";
 constexpr char TANH[] = "Tanh";
+constexpr char SHAPE_OP[] = "Shape";
 constexpr char SOFTMAX[] = "Softmax";
 constexpr char LOG_SOFTMAX[] = "LogSoftmax";
 constexpr char ACTIVATION[] = "Activation";

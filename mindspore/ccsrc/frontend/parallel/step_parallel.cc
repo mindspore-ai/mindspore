@@ -1673,6 +1673,41 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
   return std::make_shared<TensorLayout>(input_tensor_layout);
 }
 
+RedistributionOpListPtr InferSensRedistribution(const AnfNodePtr &node, const TensorLayout &loss_layout) {
+  MS_EXCEPTION_IF_NULL(node);
+  TensorRedistribution tensor_redistribution;
+  // create stand alone layout:TensorMap:[all -1],dev_matrix:[dev_num].
+  CheckGlobalDeviceManager();
+  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+  TensorLayout stand_alone_layout;
+  Shapes inputs_shape = GetNodeShape(node);
+  if (inputs_shape.empty()) {
+    MS_LOG(EXCEPTION) << "InferSensRedistribution failed cause inputs shape is empty.";
+  }
+  Shape input_shape_array = inputs_shape[0];
+  if (input_shape_array.empty()) {
+    MS_LOG(INFO) << "No need to redistribution for sens.";
+    return nullptr;
+  }
+  // TensorMap
+  TensorMap stand_alone_tensor_map_array(SizeToInt(input_shape_array.size()), -1);
+  // Dev_matrix
+  Shape dev_matrix_array = {dev_num};
+  if (stand_alone_layout.InitFromVector(dev_matrix_array, stand_alone_tensor_map_array, input_shape_array) == FAILED) {
+    MS_LOG(EXCEPTION) << "Create tensor layout for Sens failed.";
+  }
+
+  // Infer Redistribution op list for stand alone and loss layout.
+  RankList dev_list = g_device_manager->GetDeviceListByStageId(0);
+  if (tensor_redistribution.Init(stand_alone_layout, loss_layout, dev_list) == FAILED) {
+    MS_LOG(EXCEPTION) << "Redistribution for Sens init failed.";
+  }
+  RedistributionOpListPtr sens_redistribution_list = tensor_redistribution.InferTensorRedistributionOperatorList();
+  MS_EXCEPTION_IF_NULL(sens_redistribution_list);
+
+  return sens_redistribution_list;
+}
+
 std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (node->isa<Parameter>()) {
     return CreateParameterLayout(node);
@@ -1897,7 +1932,18 @@ void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_grad_lay
       sens_tensor_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(loss_grad_layout));
       return;
     }
-    MS_LOG(EXCEPTION) << "The type of sens node is not Tensor or Parameter, it is unsupported now.";
+    if (sens_tensor_node->isa<CNode>()) {
+      auto op_list_ptr = InferSensRedistribution(sens_tensor_node, loss_grad_layout);
+      if (op_list_ptr == nullptr) {
+        return;
+      }
+      auto sens_tensor_cnode = sens_tensor_node->cast<CNodePtr>();
+      auto func_graph = grad_sens_node->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      InsertRedistribution(op_list_ptr, grad_sens_node, func_graph, 1, sens_tensor_cnode);
+      return;
+    }
+    MS_LOG(EXCEPTION) << "The type of sens node is not Tensor or Parameter or CNode, it is unsupported now.";
   }
 
   // Use _GetTensorSlice operator to split the sens tensor
@@ -2305,6 +2351,41 @@ std::vector<AnfNodePtr> FindRootForwardCNode(const FuncGraphPtr &graph, const An
   return root_forward_nodes;
 }
 
+void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncGraphPtr &root) {
+  // shape op doesn't have params and attrs.
+  OperatorParams params;
+  OperatorAttrs attrs;
+  OperatorArgs args = std::make_pair(attrs, params);
+  Operator op = std::make_pair(SHAPE_OP, args);
+  InsertNode(op, node, 2, pre_node, root, "shape");
+}
+
+void HandleRootReshape(const std::vector<AnfNodePtr> &all_nodes) {
+  // If root graph has reshape op. Find the corresponding parameter.
+  // Reshape's shape is the shape of the parameter.
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!IsValueNode<Primitive>(cnode->input(0)) || cnode->in_forward_flag()) {
+      continue;
+    }
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim->name() != RESHAPE) {
+      continue;
+    }
+    auto root = node->func_graph();
+    auto all_dfs_nodes = DeepLinkedGraphSearch(node);
+    for (auto r_iter = all_dfs_nodes.rbegin(); r_iter != all_dfs_nodes.rend(); ++r_iter) {
+      if ((*r_iter)->isa<Parameter>()) {
+        InsertShapeOp(cnode, *r_iter, root);
+        break;
+      }
+    }
+  }
+}
+
 void MarkForwardCNode(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto all_nodes = root->nodes();
@@ -2456,6 +2537,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
     // mark the forward cnodes, parallel only care these nodes
     MarkForwardCNode(root);
+    HandleRootReshape(all_nodes);
 
     if (FindCommunicationOp(all_nodes)) {
       MS_LOG(EXCEPTION) << "The graph contain communication op";
