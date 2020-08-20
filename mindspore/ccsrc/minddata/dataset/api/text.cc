@@ -37,16 +37,16 @@ LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std:
 
 bool LookupOperation::ValidateParams() {
   if (vocab_ == nullptr) {
-    LOG(ERROR) << "Lookup: vocab object type is incorrect or null.";
+    MS_LOG(ERROR) << "Lookup: vocab object type is incorrect or null.";
     return false;
   }
   if (unknown_token_.empty()) {
-    LOG(ERROR) << "Lookup: no unknown token is specified.";
+    MS_LOG(ERROR) << "Lookup: no unknown token is specified.";
     return false;
   } else {
     default_id_ = vocab_->Lookup(unknown_token_);
     if (default_id_ == Vocab::kNoTokenExists) {
-      LOG(ERROR) << "Lookup: unknown_token: [" + unknown_token_ + "], does not exist in vocab.";
+      MS_LOG(ERROR) << "Lookup: unknown_token: [" + unknown_token_ + "], does not exist in vocab.";
       return false;
     }
   }
