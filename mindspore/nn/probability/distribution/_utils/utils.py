@@ -273,6 +273,10 @@ def raise_none_error(name):
     raise ValueError(f"{name} should be specified. Value cannot be None")
 
 @constexpr
+def raise_not_impl_error(name):
+    raise ValueError(f"{name} function should be implemented for non-linear transformation")
+
+@constexpr
 def check_distribution_name(name, expected_name):
     if name != expected_name:
         raise ValueError(f"Distribution should be {expected_name}.")
