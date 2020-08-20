@@ -77,7 +77,7 @@ MindSpore提供跨多个后端的构建选项：
 1. 请从[MindSpore下载页面](https://www.mindspore.cn/versions)下载并安装whl包。
 
     ```
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.6.0-beta/MindSpore/cpu/ubuntu_x86/mindspore-0.6.0-cp37-cp37m-linux_x86_64.whl
+    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.7.0-beta/MindSpore/cpu/ubuntu_x86/mindspore-0.7.0-cp37-cp37m-linux_x86_64.whl
     ```
 
 2. 执行以下命令，验证安装结果。
@@ -133,8 +133,8 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 
     对于`CPU`后端，可以直接使用以下命令获取并运行最新的稳定镜像：
     ```
-    docker pull mindspore/mindspore-cpu:0.6.0-beta
-    docker run -it mindspore/mindspore-cpu:0.6.0-beta /bin/bash
+    docker pull mindspore/mindspore-cpu:0.7.0-beta
+    docker run -it mindspore/mindspore-cpu:0.7.0-beta /bin/bash
     ```
 
 * GPU
@@ -151,8 +151,8 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 
     使用以下命令获取并运行最新的稳定镜像：
     ```
-    docker pull mindspore/mindspore-gpu:0.6.0-beta
-    docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:0.6.0-beta /bin/bash
+    docker pull mindspore/mindspore-gpu:0.7.0-beta
+    docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:0.7.0-beta /bin/bash
     ```
 
     要测试Docker是否正常工作，请运行下面的Python代码并检查输出：
