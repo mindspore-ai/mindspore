@@ -201,6 +201,7 @@ class WideDeepModel(nn.Cell):
         self.cast = P.Cast()
         if is_auto_parallel and host_device_mix:
             self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
+            self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
                                                            slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_COLUMN_SLICE)

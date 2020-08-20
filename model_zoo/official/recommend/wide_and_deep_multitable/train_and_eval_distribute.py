@@ -16,6 +16,7 @@
 
 import os
 import sys
+import numpy as np
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.callback import TimeMonitor
@@ -68,6 +69,7 @@ def train_and_eval(config):
     """
     train_and_eval
     """
+    np.random.seed(1000)
     data_path = config.data_path
     epochs = config.epochs
     print("epochs is {}".format(epochs))
