@@ -111,6 +111,8 @@ int ElementLessEqual(float16_t *input0, float16_t *input1, float16_t *output, in
 int ElementGreaterFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 
+void TileDimensionsFp16(float16_t *data0, float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
+                    ArithmeticParameter *param);
 #ifdef __cplusplus
 }
 #endif

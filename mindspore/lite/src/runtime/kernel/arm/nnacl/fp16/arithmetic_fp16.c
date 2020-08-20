@@ -18,6 +18,33 @@
 #include <math.h>
 #include "nnacl/arithmetic_common.h"
 
+void TileOneDimensionFp16(float16_t *inData, float16_t *outData, int dim, size_t ndim, int *inShape, int *inStrides,
+                          int *outStrides, int *multiple) {
+  int srcDimSize = inShape[dim];
+  if (dim == ndim - 1) {
+    for (int i = 0; i < multiple[dim]; i++) {
+      memcpy(outData, inData, srcDimSize * sizeof(float16_t));
+      outData += srcDimSize;
+    }
+    return;
+  }
+  for (size_t i = 0; i < srcDimSize; i++) {
+    for (size_t j = 0; j < multiple[dim]; j++) {
+      TileOneDimensionFp16(inData + inStrides[dim] * i, outData + outStrides[dim] * (i + j * srcDimSize), dim + 1, ndim,
+                           inShape, inStrides, outStrides, multiple);
+    }
+  }
+}
+
+void TileDimensionsFp16(float16_t *data0, float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
+                        ArithmeticParameter *param) {
+  CalcMultiplesAndStrides(param);
+  TileOneDimensionFp16(data0, tile_data0, 0, param->ndim_, param->in_shape0_, param->in_strides0_, param->out_strides_,
+                       param->multiples0_);
+  TileOneDimensionFp16(data1, tile_data1, 0, param->ndim_, param->in_shape1_, param->in_strides1_, param->out_strides_,
+                       param->multiples1_);
+}
+
 int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
   int block_mod = element_size % C8NUM;
   int block_c8 = element_size - block_mod;
