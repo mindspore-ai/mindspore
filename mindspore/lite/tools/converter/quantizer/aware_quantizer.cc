@@ -103,11 +103,13 @@ AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph,
   const float stdValue = std::stof(stdValues, &sz);
   sz = 0;
   const float mean = std::stof(meanValues, &sz);
+  std::unique_ptr<InputArray> inArr = nullptr;
   if (inputInferType == "FLOAT") {
-    mInputArray = new InputArray(mean, stdValue);
+    inArr.reset(new (std::nothrow) InputArray(mean, stdValue));
   } else {
-    mInputArray = new InputArray(mean, stdValue, TypeId::kNumberTypeUInt8);
+    inArr.reset(new (std::nothrow) InputArray(mean, stdValue, TypeId::kNumberTypeUInt8));
   }
+  mInputArray = inArr.get();
   mInputArray->InitQuantParam();
 }
 
@@ -527,9 +529,9 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
 
   // quant bias data
   auto bShapeSize = GetShapeSize(*(biasTensor.get()));
-  auto *qDatas = new (std::nothrow) int32_t[bShapeSize];
+  std::unique_ptr<int32_t[]> qDatas(new (std::nothrow) int32_t[bShapeSize]);
   if (qDatas == nullptr) {
-    //    MS_LOGE("new qDatas failed");
+    MS_LOG(ERROR) << "new qDatas failed";
     return RET_ERROR;
   }
   void *biasData = biasTensor->data.data();
@@ -541,13 +543,11 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
   biasTensor->data.clear();
   biasTensor->data.resize(bShapeSize * sizeof(int32_t));
   auto ret = memcpy_s(biasTensor->data.data(), bShapeSize * sizeof(int32_t),
-                      qDatas, bShapeSize * sizeof(int32_t));
+                      qDatas.get(), bShapeSize * sizeof(int32_t));
   if (ret != EOK) {
-    //    MS_LOGE("memcpy_s failed: %d", ret);
-    delete[] qDatas;
+    MS_LOG(ERROR) << "memcpy_s failed: " << ret;
     return RET_ERROR;
   }
-  delete[] qDatas;
   return RET_OK;
 }
 

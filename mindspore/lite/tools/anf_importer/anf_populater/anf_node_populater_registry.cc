@@ -18,6 +18,14 @@
 #include <string>
 namespace mindspore {
 namespace lite {
+AnfNodePopulaterRegistry::~AnfNodePopulaterRegistry() {
+  for (auto ite : populaters) {
+    if (ite.second != nullptr) {
+      delete ite.second;
+      ite.second = nullptr;
+    }
+  }
+}
 AnfNodePopulaterRegistry *AnfNodePopulaterRegistry::GetInstance() {
   static AnfNodePopulaterRegistry instance;
   return &instance;

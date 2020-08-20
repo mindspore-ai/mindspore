@@ -43,18 +43,10 @@ Converter::Converter() {
 }
 
 Converter::~Converter() {
-  if (nullptr != modelParser) {
-    delete modelParser;
-  }
-  if (nullptr != modelImporter) {
-    delete modelImporter;
-  }
-  if (nullptr != transform) {
-    delete transform;
-  }
-  if (nullptr != anfTransform) {
-    delete anfTransform;
-  }
+  delete modelParser;
+  delete modelImporter;
+  delete transform;
+  delete anfTransform;
 }
 
 class MindsporeImporter : public Converter {
@@ -154,7 +146,11 @@ void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *
   }
 }
 int RunConverter(int argc, const char **argv) {
-  auto flags = new converter::Flags;
+  std::unique_ptr<converter::Flags> flags(new (std::nothrow) converter::Flags);
+  if (flags == nullptr) {
+    MS_LOG(ERROR) << "new flags error ";
+    return RET_ERROR;
+  }
   auto status = flags->Init(argc, argv);
   if (status == RET_SUCCESS_EXIT) {
     return 0;
@@ -173,20 +169,20 @@ int RunConverter(int argc, const char **argv) {
       auto graph = std::make_shared<FuncGraph>();
       auto onnx_graph = AnfImporterFromProtobuf::ReadOnnxFromBinary(flags->modelFile);
       MindsporeImporter mindsporeImporter(onnx_graph, graph);
-      fb_graph = mindsporeImporter.Convert(flags);
+      fb_graph = mindsporeImporter.Convert(flags.get());
       break;
     }
     case FmkType::FmkType_CAFFE: {
       CaffeConverter caffeConverter;
-      fb_graph = caffeConverter.Convert(flags);
+      fb_graph = caffeConverter.Convert(flags.get());
     } break;
     case FmkType::FmkType_TFLITE: {
       TfliteConverter tfLiteConverter;
-      fb_graph = tfLiteConverter.Convert(flags);
+      fb_graph = tfLiteConverter.Convert(flags.get());
     } break;
     case FmkType::FmkType_ONNX: {
       OnnxConverter onnxConverter;
-      fb_graph = onnxConverter.Convert(flags);
+      fb_graph = onnxConverter.Convert(flags.get());
     } break;
     default: {
       MS_LOG(ERROR) << "Unsupported fmkType: " << flags->fmk;
