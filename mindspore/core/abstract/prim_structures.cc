@@ -55,7 +55,7 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     if (!keyPtr->isa<StringImm>()) {
       MS_LOG(EXCEPTION) << op_name << " evaluator keys should be string, but got " << keyPtr->ToString();
     }
-    std::string key_string = GetValue<std::string>(keyPtr);
+    auto key_string = GetValue<std::string>(keyPtr);
     key_value.emplace_back(key_string, value_list[index]);
   }
   return std::make_shared<AbstractDictionary>(key_value);
@@ -72,7 +72,7 @@ AbstractBasePtr InferImplMakeKwarg(const AnalysisEnginePtr &, const PrimitivePtr
   if (!keyPtr->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << keyPtr->ToString();
   }
-  std::string key_string = GetValue<std::string>(keyPtr);
+  auto key_string = GetValue<std::string>(keyPtr);
   return std::make_shared<AbstractKeywordArg>(key_string, args_spec_list[1]);
 }
 
@@ -88,7 +88,7 @@ AbstractBasePtr InferImplExtractKwarg(const AnalysisEnginePtr &, const Primitive
   if (!key_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
-  std::string key_input = GetValue<std::string>(key_value);
+  auto key_input = GetValue<std::string>(key_value);
   std::string key_actual = kwarg->get_key();
   if (key_actual != key_input) {
     MS_LOG(EXCEPTION) << op_name << " evaluator input key should be same as AbstractKeywordArg' key, but input is "
@@ -216,7 +216,7 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
   auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
                          [key_str](const AbstractAttribute &item) { return item.first == key_str; });
   if (it == dict_elems.end()) {
-    MS_LOG(EXCEPTION) << "The key " << key_str << " does not exist in the dict:" << args_spec_list[0]->ToString();
+    MS_EXCEPTION(KeyError) << "The key " << key_str << " does not exist in the dict:" << args_spec_list[0]->ToString();
   }
   return it->second;
 }
@@ -233,7 +233,7 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
   if (!key_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
-  std::string key_str = GetValue<std::string>(key_value);
+  auto key_str = GetValue<std::string>(key_value);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
                          [key_str](const AbstractAttribute &item) { return item.first == key_str; });

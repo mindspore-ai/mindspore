@@ -446,7 +446,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   GetGeBackendPolicy();
 #endif
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
-  std::string phase_s = py::cast<std::string>(phase);
+  auto phase_s = py::cast<std::string>(phase);
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
 
@@ -541,6 +541,9 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::index_error &ex) {
     ReleaseResource(phase);
     throw py::index_error(ex);
+  } catch (const py::key_error &ex) {
+    ReleaseResource(phase);
+    throw py::key_error(ex);
   } catch (const py::attribute_error &ex) {
     ReleaseResource(phase);
     throw py::attribute_error(ex);

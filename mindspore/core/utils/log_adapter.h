@@ -60,6 +60,7 @@ enum ExceptionType {
   IndexError,
   ValueError,
   TypeError,
+  KeyError,
   AttributeError,
 };
 

@@ -143,7 +143,7 @@ TypeId GetMaxTypeId(const abstract::AbstractBasePtrList &args_spec_list, std::ve
     }
   }
 
-  if (max_type_id == kNumberTypeUInt8 && has_int8 == true) {
+  if (max_type_id == kNumberTypeUInt8 && has_int8) {
     max_type_id = kNumberTypeInt16;
   }
   // if bool is the max type, see if there is scalar input

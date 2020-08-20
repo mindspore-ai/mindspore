@@ -147,6 +147,7 @@ static std::string ExceptionTypeToString(ExceptionType type) {
       _TO_STRING(IndexError),
       _TO_STRING(ValueError),
       _TO_STRING(TypeError),
+      _TO_STRING(KeyError),
       _TO_STRING(AttributeError),
   };
   // clang-format on
@@ -236,7 +237,7 @@ void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
   if (exception_type_ != NoExceptionType && exception_type_ != IndexError && exception_type_ != TypeError &&
-      exception_type_ != ValueError && exception_type_ != AttributeError) {
+      exception_type_ != ValueError && exception_type_ != KeyError && exception_type_ != AttributeError) {
     oss << ExceptionTypeToString(exception_type_) << " ";
   }
   oss << msg.str();

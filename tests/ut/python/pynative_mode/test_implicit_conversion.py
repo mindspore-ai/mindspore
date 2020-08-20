@@ -88,6 +88,16 @@ def test_float_tensor_and_bool_tensors_add():
     y = Tensor(np.array([[True, True, True], [False, False, False]], dtype=np.bool_))
     ret_actual = x + y
     ret_expect = Tensor(np.array([[1.1, 1.2, 1.3], [0.4, 0.5, 0.6]], dtype=np.float32))
+    assert ret_actual.dtype == ret_expect.dtype
+    assert (ret_actual.asnumpy() == ret_expect.asnumpy()).all()
+
+
+def test_int8_tensor_and_uint8_tensors_add():
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int8))
+    y = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8))
+    ret_actual = x + y
+    ret_expect = Tensor(np.array([[2, 4, 6], [8, 10, 12]], dtype=np.int16))
+    assert ret_actual.dtype == ret_expect.dtype
     assert (ret_actual.asnumpy() == ret_expect.asnumpy()).all()
 
 
@@ -165,7 +175,6 @@ def test_float_tensor_and_int_tensors_sub_grad():
     net = Net()
     grad_net = GradNet(net)
     ret = grad_net(x, y, sens)
-    print(ret)
     assert ret[0].dtype == x.dtype
     assert ret[1].dtype == y.dtype
     assert (ret[0].asnumpy() == sens.asnumpy()).all()
@@ -194,7 +203,6 @@ def test_float16_tensor_and_float32_tensors_sub_grad():
     net = Net()
     grad_net = GradNet(net)
     ret = grad_net(x, y, sens)
-    print(ret)
     assert ret[0].dtype == x.dtype
     assert ret[1].dtype == y.dtype
     assert (ret[0].asnumpy() == sens.asnumpy()).all()
@@ -224,3 +232,31 @@ def test_float_tensor_and_int_add_grad():
     ret = grad_net(x, sens)
     assert ret[0].dtype == x.dtype
     assert (ret[0].asnumpy() == sens.asnumpy()).all()
+
+
+def test_int8_tensor_and_uint8_tensors_add_grad():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x, y):
+            return x + y
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y, sens):
+            return C.grad_all_with_sens(self.net)(x, y, sens)
+
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int8))
+    y = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8))
+    sens = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int16))
+    net = Net()
+    grad_net = GradNet(net)
+    ret = grad_net(x, y, sens)
+    assert ret[0].dtype == x.dtype
+    assert ret[1].dtype == y.dtype
+    assert (ret[0].asnumpy() == sens.asnumpy()).all()
+    assert (ret[1].asnumpy() == sens.asnumpy()).all()
