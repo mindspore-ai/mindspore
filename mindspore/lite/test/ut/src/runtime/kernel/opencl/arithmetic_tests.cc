@@ -179,13 +179,13 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
 
   memcpy(data_c_ocl, outputs[0]->Data(), sizeof(float) * element_num);
 
-  // ocl_runtime->SyncCommandQueue();
   LogData(data_a, 10, "Data A : ");
   LogData(data_b, tensor_b->shape().empty() ? 1 : 10, "Data B : ");
   LogData(data_c_cpu, 10, "Expect compute : ");
   LogData(outputs[0]->Data(), 10, "OpenCL compute : ");
   bool cmp = DataCompare(data_c_cpu, data_c_ocl, element_num);
   MS_LOG(INFO) << "Compare " << (cmp ? "success!" : "failed!");
+  EXPECT_EQ(true, cmp);
 
   // free
   delete[] data_a;

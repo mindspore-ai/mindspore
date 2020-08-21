@@ -64,7 +64,7 @@ int TransposeOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int TransposeOpenCLKernel::ReSize() { return 0; }
+int TransposeOpenCLKernel::ReSize() { return RET_OK; }
 
 int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
@@ -100,7 +100,7 @@ int TransposeOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, 2, HW);
   ocl_runtime->SetKernelArg(kernel_, 3, C);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
-  return 0;
+  return RET_OK;
 }
 
 kernel::LiteKernel *OpenCLTransposeKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

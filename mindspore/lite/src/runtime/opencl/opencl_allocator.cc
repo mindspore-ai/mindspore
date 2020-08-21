@@ -91,15 +91,15 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
     cl::Buffer *buffer = new (std::nothrow)
       cl::Buffer(*ocl_runtime->Context(), CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, size, NULL, &ret);
     if (buffer == nullptr || ret != CL_SUCCESS) {
-      MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
       UnLock();
+      MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
       return nullptr;
     }
     device_ptr = static_cast<void *>(buffer);
     host_ptr = ocl_runtime->MapBuffer(*buffer, CL_MAP_READ | CL_MAP_WRITE, size);
     if (host_ptr == nullptr) {
-      MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
       UnLock();
+      MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
       return nullptr;
     }
     cl::Memory *mem = buffer;
@@ -199,12 +199,15 @@ void OpenCLAllocator::Free(void *buf) {
   Lock();
   auto iter = allocated_list_.find(buf);
   if (iter != allocated_list_.end()) {
+    if (iter->second->map_flags) {
+      UnmapBuffer(buf);
+      iter->second->map_flags = false;
+    }
     auto mem_buf = iter->second;
     allocated_list_.erase(iter);
     free_list_.insert(std::make_pair(mem_buf->size_, mem_buf));
     UnLock();
-    buf = nullptr;
-    MS_LOG(DEBUG) << "Free a new Image2D. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
+    MS_LOG(DEBUG) << "Free device buffer. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
                   << ", device addr: " << mem_buf->device_ptr_ << ", image addr: " << mem_buf->image_ptr_
                   << ", free list size: " << free_list_.size();
     return;
@@ -291,9 +294,15 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
   Lock();
   auto it = allocated_list_.find(host_ptr);
   if (it == allocated_list_.end()) {
-    MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << host_ptr;
     UnLock();
+    MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << host_ptr;
     return nullptr;
+  }
+
+  if (it->second->map_flags) {
+    UnLock();
+    MS_LOG(WARNING) << "Host ptr " << host_ptr << " has mapped";
+    return host_ptr;
   }
   MemBuf *mem_buf = it->second;
   void *new_host_ptr{nullptr};
@@ -307,11 +316,13 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
     new_host_ptr = ocl_runtime->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
   }
   if (new_host_ptr == nullptr) {
+    UnLock();
     MS_LOG(WARNING) << "Map buffer failed, can not found buffer or already mapped, dev_ptr=" << mem_buf->device_ptr_
                     << ", host_ptr=" << host_ptr;
-    UnLock();
     return nullptr;
   }
+
+  mem_buf->map_flags = true;
   mem_buf->host_ptr_ = new_host_ptr;
   allocated_list_.erase(it);
   allocated_list_[new_host_ptr] = mem_buf;
@@ -327,16 +338,22 @@ int OpenCLAllocator::UnmapBuffer(void *host_ptr, void *command_queue) {
     if (!(svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
       return ocl_runtime->UnmapBuffer(host_ptr);
     }
-    return 0;
+    return RET_OK;
   }
   auto it = allocated_list_.find(host_ptr);
   if (it == allocated_list_.end()) {
     MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << host_ptr;
-    return 1;
+    return RET_ERROR;
   }
-  cl::Memory *mem =
-    static_cast<cl::Memory *>(it->second->img_size.empty() ? it->second->device_ptr_ : it->second->image_ptr_);
-  return ocl_runtime->UnmapBuffer(*mem, it->second->host_ptr_, static_cast<cl::CommandQueue *>(command_queue));
+  if (it->second->map_flags) {
+    it->second->map_flags = false;
+    cl::Memory *mem =
+      static_cast<cl::Memory *>(it->second->img_size.empty() ? it->second->device_ptr_ : it->second->image_ptr_);
+    return ocl_runtime->UnmapBuffer(*mem, it->second->host_ptr_, static_cast<cl::CommandQueue *>(command_queue));
+  } else {
+    MS_LOG(WARNING) << "Host ptr " << host_ptr << " do not mapped";
+    return RET_OK;
+  }
 }
 
 MEM_TYPE OpenCLAllocator::GetMemType(void *host_ptr) {
@@ -344,8 +361,8 @@ MEM_TYPE OpenCLAllocator::GetMemType(void *host_ptr) {
   Lock();
   auto it = allocated_list_.find(host_ptr);
   if (it == allocated_list_.end()) {
-    MS_LOG(ERROR) << "Can not found buffer :" << host_ptr;
     UnLock();
+    MS_LOG(ERROR) << "Can not found buffer :" << host_ptr;
     return mem_type;
   }
   MemBuf *mem_buf = it->second;
@@ -362,8 +379,8 @@ int OpenCLAllocator::GetImageSize(void *host_ptr, std::vector<size_t> *img_size)
   Lock();
   auto it = allocated_list_.find(host_ptr);
   if (it == allocated_list_.end()) {
-    MS_LOG(ERROR) << "Can not found buffer :" << host_ptr;
     UnLock();
+    MS_LOG(ERROR) << "Can not found buffer :" << host_ptr;
     return RET_OK;
   }
   MemBuf *mem_buf = it->second;

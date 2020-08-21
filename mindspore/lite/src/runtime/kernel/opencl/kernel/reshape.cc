@@ -63,7 +63,7 @@ int ReshapeOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int ReshapeOpenCLKernel::ReSize() { return 0; }
+int ReshapeOpenCLKernel::ReSize() { return RET_OK; }
 
 int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;

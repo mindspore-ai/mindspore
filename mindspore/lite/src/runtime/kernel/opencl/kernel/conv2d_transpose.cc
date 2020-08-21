@@ -59,7 +59,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int Conv2dTransposeOpenCLKernel::ReSize() { return 0; }
+int Conv2dTransposeOpenCLKernel::ReSize() { return RET_OK; }
 
 void Conv2dTransposeOpenCLKernel::PadWeight() {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);

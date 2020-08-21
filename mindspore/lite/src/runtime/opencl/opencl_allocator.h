@@ -76,6 +76,7 @@ class OpenCLAllocator : public Allocator {
     void *host_ptr_;
     void *image_ptr_;
     std::vector<size_t> img_size;
+    bool map_flags{false};
   };
 
   std::mutex lock;
