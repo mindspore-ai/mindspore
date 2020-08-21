@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include "nnacl/prelu_parameter.h"
-#include "nnacl/int8/prelu_int8.h"
+#include "nnacl/int8/leaky_relu_int8.h"
 
-void prelu(int8_t *inputs, int8_t *output_ptr, PreluParameter *quant_prelu_parm, int task_id) {
+void DoLeakReluInt8(int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_prelu_parm, int task_id) {
   float output_scale = quant_prelu_parm->quant_arg.out_args_.scale_;
   int output_zp = quant_prelu_parm->quant_arg.out_args_.zp_;
   const float output_inverse_scale = 1.f / output_scale;
@@ -34,7 +33,7 @@ void prelu(int8_t *inputs, int8_t *output_ptr, PreluParameter *quant_prelu_parm,
     float bias = -input_quant[i].zp_ * scale;
     for (int j = task_id; j < quant_prelu_parm->element_num; j += quant_prelu_parm->op_parameter_.thread_num_) {
       if (inputs[j] <= 0) {
-        int32_t output_tmp = round(inputs[j] * quant_prelu_parm->alpha_ * scale + bias) + output_zp;
+        int32_t output_tmp = round(inputs[j] * quant_prelu_parm->slope_[0] * scale + bias) + output_zp;
         if (output_tmp > 127) {
           output_ptr[j] = 127;
         } else if (output_tmp < -128) {

@@ -18,12 +18,12 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_PRELU_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/prelu_parameter.h"
+#include "nnacl/quantization/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void prelu(int8_t *inputs, int8_t *output_ptr, PreluParameter *quant_Prelu_parm, int task_id);
+void DoLeakReluInt8(int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_Prelu_parm, int task_id);
 #ifdef __cplusplus
 }
 #endif

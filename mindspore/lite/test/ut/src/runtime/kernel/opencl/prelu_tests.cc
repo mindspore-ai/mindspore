@@ -110,7 +110,7 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   auto *input_data = reinterpret_cast<float *>(inputs[0]->Data());
   PrintData("PRelu input data", input_data, inputs[0]->ElementsC4Num());
 
-  auto param = new (std::nothrow) PreluParameter();
+  auto param = new (std::nothrow) PReluParameter();
   if (param == nullptr) {
     MS_LOG(ERROR) << "new PreluParameter error";
     delete input_tensor;

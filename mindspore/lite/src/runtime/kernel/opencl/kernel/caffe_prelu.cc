@@ -25,7 +25,6 @@
 #include "src/runtime/kernel/opencl/kernel/caffe_prelu.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/cl/caffe_prelu.cl.inc"
-#include "src/runtime/kernel/arm/nnacl/caffeprelu.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;

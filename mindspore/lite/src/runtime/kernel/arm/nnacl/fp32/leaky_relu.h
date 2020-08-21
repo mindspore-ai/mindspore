@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-
-typedef struct CaffePReluParameter {
-  OpParameter op_parameter_;
-  float *negtive_slope_;
-  bool channeShared;
-  int channel_num_;
-  int input_num_;
-  int thread_num_;
-} CaffePReluParameter;
+#include "nnacl/op_base.h"
+#include "nnacl/leaky_relu_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void CaffePRelu(float *input, float *output, CaffePReluParameter *prelu_param_, int task_id);
+void DoLeakyRelu(float *input, float *output, LeakyReluParameter *prelu_param_, int task_id);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_

@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_PRELU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_PRELU_H_
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_PARAMETER_H_
+#include "nnacl/op_base.h"
+#include "nnacl/prelu_parameter.h"
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
-#define CAFFEPRELU_OFFSET_MAX_SIZE 4
+#ifdef __cplusplus
+extern "C" {
+#endif
+void DoPRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id);
+#ifdef __cplusplus
+}
+#endif
 
-struct CaffePreluParameter {
-  OpParameter op_parameter_;
-  bool channelShared;
-  double alpha_;
-  int64_t offset_[CAFFEPRELU_OFFSET_MAX_SIZE];
-  int64_t in_offset_[CAFFEPRELU_OFFSET_MAX_SIZE];
-  int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
-  int input_dim_;
-};
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_CAFFEPRELU_PARAMETER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP32_PRELU_H_

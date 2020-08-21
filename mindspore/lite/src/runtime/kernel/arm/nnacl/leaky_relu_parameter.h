@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LEAKYRELU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LEAKYRELU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LEAKY_RELU_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LEAKY_RELU_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
 typedef struct LeakyReluParameter {
   OpParameter op_parameter_;
-  float alpha;
+  float *slope_;
+  size_t slope_num_;
+  int input_num_;
 } LeakyReluParameter;
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LEAKYRELU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_LEAKY_RELU_PARAMETER_H_

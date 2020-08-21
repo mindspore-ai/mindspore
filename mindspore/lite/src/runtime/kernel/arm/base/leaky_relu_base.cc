@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/base/caffeprelu_base.h"
+#include "src/runtime/kernel/arm/base/leaky_relu_base.h"
 #include <vector>
+#include "src/runtime/kernel/arm/int8/leaky_relu_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -23,22 +24,22 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_CaffePReLU;
+using mindspore::schema::PrimitiveType_LeakyReLU;
 
 namespace mindspore::kernel {
-int CaffePreluBaseCPUKernel::Init() { return RET_OK; }
+int LeakyReluBaseCPUKernel::Init() { return RET_OK; }
 
-kernel::LiteKernel *CpuCaffePreluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                                   const std::vector<lite::tensor::Tensor *> &outputs,
-                                                   OpParameter *opParameter, const Context *ctx,
-                                                   const kernel::KernelKey &desc,
-                                                   const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                              const std::vector<lite::tensor::Tensor *> &outputs,
+                                              OpParameter *opParameter, const Context *ctx,
+                                              const kernel::KernelKey &desc,
+                                              const mindspore::lite::PrimitiveC *primitive) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Input opParameter is nullptr!";
     return nullptr;
   }
-  MS_ASSERT(desc.type == schema::PrimitiveType_CaffePrelu);
-  auto *kernel = new (std::nothrow) CaffePreluBaseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  MS_ASSERT(desc.type == schema::PrimitiveType_LeakyRelu);
+  auto *kernel = new (std::nothrow) LeakyReluInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PreluCPUKernel fail!";
     return nullptr;
@@ -53,5 +54,5 @@ kernel::LiteKernel *CpuCaffePreluFp32KernelCreator(const std::vector<lite::tenso
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CaffePReLU, CpuCaffePreluFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, CpuPreluInt8KernelCreator)
 }  // namespace mindspore::kernel
