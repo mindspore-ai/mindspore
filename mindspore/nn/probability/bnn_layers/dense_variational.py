@@ -132,8 +132,7 @@ class DenseReparam(_DenseVariational):
     r"""
     Dense variational layers with Reparameterization.
 
-    See more details in paper `Auto-Encoding Variational Bayes
-    <https://arxiv.org/abs/1312.6114>`
+    See more details in paper `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
 
     Applies dense-connected layer for the input. This layer implements the operation as:
 

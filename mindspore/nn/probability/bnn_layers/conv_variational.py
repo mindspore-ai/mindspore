@@ -173,13 +173,12 @@ class ConvReparam(_ConvVariational):
     r"""
     Convolutional variational layers with Reparameterization.
 
-    See more details in paper `Auto-Encoding Variational Bayes
-    <https://arxiv.org/abs/1312.6114>`
+    See more details in paper `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-            kernel_size (Union[int, tuple[int]]): The data type is int or
+        kernel_size (Union[int, tuple[int]]): The data type is int or
             tuple with 2 integers. Specifies the height and width of the 2D
             convolution window. Single int means the value if for both
             height and width of the kernel. A tuple of 2 ints means the
