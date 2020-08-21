@@ -336,6 +336,9 @@ Status CifarOp::GetCifarFiles() {
     std::string err_msg = "Unable to open directory " + dataset_directory.toString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  if (cifar_files_.size() == 0) {
+    RETURN_STATUS_UNEXPECTED("No .bin files found under " + folder_path_);
+  }
   std::sort(cifar_files_.begin(), cifar_files_.end());
   return Status::OK();
 }
