@@ -113,7 +113,7 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
   output_ptr_ = src_output;
 
   if (pre_trans_input_) {
-    Conv1x1InputPackFp32(src_input, input_ptr_, conv_param_);
+    Conv1x1InputPack(src_input, input_ptr_, conv_param_, sizeof(float));
   } else {
     input_ptr_ = src_input;
   }

@@ -153,22 +153,24 @@ void PackWeightInt8Opt(int8_t *weight_data, ConvParameter *conv_param, int8_t *p
   }        // kernel plane loop
 }
 
-void Conv1x1InputPackFp32(const float *src, float *dst, ConvParameter *conv_param) {
+void Conv1x1InputPack(const void *src_ptr, void *dst_ptr, ConvParameter *conv_param, int data_size) {
   /* support nhwc */
+  char *src = (char *)src_ptr;
+  char *dst = (char *)dst_ptr;
   for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
     int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
     if (src_h < 0 || src_h >= conv_param->input_h_) {
       continue;
     }
-    const float *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_;
-    float *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_;
+    const char *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_ * data_size;
+    char *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_ * data_size;
     for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
       int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
       if (src_w < 0 || src_w >= conv_param->input_w_) {
         continue;
       }
-      memcpy(dst_h_ptr + dst_w * conv_param->input_channel_, src_h_ptr + src_w * conv_param->input_channel_,
-             conv_param->input_channel_ * sizeof(float));
+      memcpy(dst_h_ptr + dst_w * conv_param->input_channel_ * data_size,
+             src_h_ptr + src_w * conv_param->input_channel_ * data_size, conv_param->input_channel_ * data_size);
     }
   }
   return;
@@ -183,6 +185,105 @@ void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParam
       int dst_index = oc4div * c4 * C4NUM + ic * C4NUM + oc4mod;
       int src_index = oc * conv_param->input_channel_ + ic;
       packed_weight[dst_index] = weight_data[src_index];
+    }
+  }
+  return;
+}
+
+void PackInputSum16x4PerLater(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16) {
+  /* optimize normal -> same layout */
+#ifdef ENABLE_ARM64
+  asm volatile(
+    "mov x10, %[src] \n"
+    "mov x11, %[dst] \n"
+    "dup v15.4s, %w[filter_zp]  \n"
+
+    "mov x0, #0 \n"
+    "1: \n"
+    "cmp x0, %[row4] \n"
+    "beq 4f \n"
+    "add x0, x0, #4\n"
+    "dup v10.4s, wzr \n"
+    "mov x2, #0 \n"
+
+    "2: \n"
+    "cmp x2, %[col16] \n"
+    "beq 3f \n"
+    "add x2, x2, #16\n"
+
+    "ld1 {v0.16b}, [x10], #16\n"
+    "ld1 {v1.16b}, [x10], #16\n"
+    "ld1 {v2.16b}, [x10], #16\n"
+    "ld1 {v3.16b}, [x10], #16\n"
+
+    "saddlp v4.8h, v0.16b \n"
+    "saddlp v5.8h, v1.16b \n"
+    "saddlp v6.8h, v2.16b \n"
+    "saddlp v7.8h, v3.16b \n"
+
+    "saddlp v0.4S, v4.8h \n"
+    "saddlp v1.4S, v5.8h \n"
+    "saddlp v2.4S, v6.8h \n"
+    "saddlp v3.4S, v7.8h \n"
+
+    "addv s4, v0.4S \n"
+    "addv s5, v1.4S \n"
+    "addv s6, v2.4S \n"
+    "addv s7, v3.4S \n"
+
+    "mov v0.s[0], v4.s[0] \n"
+    "mov v0.s[1], v5.s[0] \n"
+    "mov v0.s[2], v6.s[0] \n"
+    "mov v0.s[3], v7.s[0] \n"
+
+    "add v10.4s, v10.4s, v0.4s \n"
+    "b 2b\n"
+
+    "3: \n"
+    "mul v10.4s, v10.4s, v15.4s \n"
+    "st1 {v10.4s}, [x11], #16 \n"
+    "beq 1b \n"
+
+    "4: \n"
+
+    :
+    : [ dst ] "r"(dst), [ src ] "r"(src), [ row4 ] "r"(row4), [ col16 ] "r"(col16), [ filter_zp ] "r"(filter_zp)
+    : "x0", "x1", "x2", "x3", "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v15");
+#else
+  for (int r = 0; r < row4; r++) {
+    int32_t tmp_value = 0;
+    for (int c = 0; c < col16; c++) {
+      int r4div = r / C4NUM, r4mod = r % C4NUM, c16div = c / C16NUM, c16mod = c % C16NUM;
+      int src_index = r4div * C4NUM * col16 + c16div * C16NUM * C4NUM + r4mod * C16NUM + c16mod;
+      tmp_value += src[src_index];
+    }
+    dst[r] = tmp_value * filter_zp;
+  }
+#endif
+  return;
+}
+
+void PackInputSum16x4Int8(int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
+                          size_t plane_size, ConvParameter *conv_param) {
+  size_t hw4 = UP_ROUND(plane_size, C4NUM);
+  size_t ic16 = UP_ROUND(input_channel, C16NUM);
+  if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
+    PackInputSum16x4PerLater(input_value, input_sum, conv_param->conv_quant_arg_.filter_quant_args_[0].zp_, hw4, ic16);
+  } else {
+    for (int ri = 0; ri < plane_size; ri++) {
+      int ri4div = ri / C4NUM, ri4mod = ri % C4NUM;
+      for (int ci = 0; ci < output_channel; ci++) {
+        int32_t tmp_sum_value = 0;
+        int ci4div = ci / C4NUM, ci4mod = ci % C4NUM;
+        int32_t filter_zp = conv_param->conv_quant_arg_.filter_quant_args_[ci].zp_;
+        for (int di = 0; di < input_channel; di++) {
+          size_t di16div = di / C16NUM, di16mod = di % C16NUM;
+          int src_index = ri4div * C4NUM * ic16 + di16div * C16NUM * C4NUM + ri4mod * C16NUM + di16mod;
+          tmp_sum_value += input_value[src_index];
+        }
+        int dst_index = ci4div * C4NUM * hw4 + ri * C4NUM + ci4mod;
+        input_sum[dst_index] = tmp_sum_value * filter_zp;
+      }
     }
   }
   return;

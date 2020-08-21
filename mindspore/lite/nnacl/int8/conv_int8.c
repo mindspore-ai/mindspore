@@ -367,6 +367,26 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
   }
 }
 
+void Conv1x1Int8(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
+                 const int32_t *bias, int row, int col, int deep16, ConvParameter *conv_param,
+                 MATMUL_OPT_R_FUNC matmul_func) {
+  if (matmul_func != NULL) {
+    matmul_func(packed_input, packed_weight, dst, row, col, deep16, conv_param->output_channel_, input_sum, bias,
+                conv_param->conv_quant_arg_.left_shift_, conv_param->conv_quant_arg_.right_shift_,
+                conv_param->conv_quant_arg_.quant_multiplier_, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+                conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+                (conv_param->conv_quant_arg_.filter_arg_num_ > 1));
+  } else {
+    MatMulInt8_16x4_r(packed_input, packed_weight, dst, row, col, deep16, conv_param->output_channel_, input_sum, bias,
+                      conv_param->conv_quant_arg_.left_shift_, conv_param->conv_quant_arg_.right_shift_,
+                      conv_param->conv_quant_arg_.quant_multiplier_,
+                      conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+                      conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+                      (conv_param->conv_quant_arg_.filter_arg_num_ > 1));
+  }
+  return;
+}
+
 // int8 convolution 3x3
 void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
                  int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,

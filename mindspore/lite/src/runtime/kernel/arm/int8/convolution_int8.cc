@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/convolution_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
+#include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
 #include "nnacl/int8/conv_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
@@ -400,6 +401,9 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Ten
   kernel::LiteKernel *kernel;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else if (kernel_h == 1 && kernel_w == 1) {
+    /* Convolution1x1Int8CPUKernel */
+    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }

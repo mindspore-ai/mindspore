@@ -28,6 +28,19 @@ void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) 
   }
 }
 
+void RowMajor2Row4x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+  int col16 = UP_ROUND(col, C16NUM);
+  for (int r = 0; r < row; r++) {
+    int rd4 = r / C4NUM;
+    int rm4 = r % C4NUM;
+    for (int c = 0; c < col; c++) {
+      int cd16 = c / C16NUM;
+      int cm16 = c % C16NUM;
+      dst_ptr[cd16 * col16 * C4NUM + rd4 * C4NUM * C16NUM + rm4 * C16NUM + cm16] = src_ptr[r * col16 + c];
+    }
+  }
+}
+
 void MatrixPack4x16UnitInt8(int8_t *src, int8_t *dst, int row, int col, int stride) {
   for (int r = 0; r < row; r++) {
     int8_t *src_r = src + r * stride;
@@ -145,7 +158,38 @@ void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int 
   return;
 }
 
-#ifdef ENABLE_ARM64
+void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
+                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
+                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
+                       bool per_channel) {
+  /*  row4x16-major * row16x4-major => (int8)row-major  : per-channel */
+  for (int r = 0; r < row; r++) {
+    for (int c = 0; c < col; c++) {
+      int r4div = r / C4NUM, r4mod = r % C4NUM;
+      int c4div = c / C4NUM, c4mod = c % C4NUM;
+      size_t ci = r * stride + c;
+      int32_t value = 0;
+      for (int d = 0; d < deep_16; d++) {
+        int d16div = d / C16NUM, d16mod = d % C16NUM;
+        size_t ai = r4div * deep_16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
+        size_t bi = c4div * deep_16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
+        value = value + a[ai] * b[bi];
+      }
+      int32_t cur_input_sum = per_channel ? input_sum[c4div * UP_ROUND(row, C4NUM) + r * C4NUM + c4mod] : input_sum[r];
+      value -= cur_input_sum;
+      value += bias[c];
+      int32_t cur_left_shift = per_channel ? left_shift[c] : left_shift[0];
+      int32_t cur_right_shift = per_channel ? right_shift[c] : right_shift[0];
+      int32_t cur_multiplier = per_channel ? multiplier[c] : multiplier[0];
+      value = MultiplyByQuantizedMultiplier(value, cur_multiplier, cur_left_shift, cur_right_shift) + output_zp;
+      value = MSMIN(maxi, value);
+      value = MSMAX(mini, value);
+      dst[ci] = (int8_t)value;
+    }
+  }
+  return;
+}
+
 void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16) {
   int stride = sizeof(int8_t) * 16 * 4;
   for (int r = 0; r < row; ++r) {
@@ -201,4 +245,3 @@ void Row4x4Major2RowMajor(int8_t *src, int row4, int8_t *dst, int row, int cow) 
     }
   }
 }
-#endif
