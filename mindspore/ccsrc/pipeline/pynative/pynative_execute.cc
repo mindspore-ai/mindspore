@@ -1252,9 +1252,14 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
 void PynativeExecutor::Clear(const std::string &flag) {
   if (!flag.empty()) {
     MS_LOG(DEBUG) << "Clear res";
-    (void)graph_map_.erase(flag);
-    (void)cell_graph_map_.erase(flag);
-    (void)cell_resource_map_.erase(flag);
+    auto key_value = std::find_if(graph_map_.begin(), graph_map_.end(),
+                                  [&flag](const auto &item) { return item.first.find(flag) != std::string::npos; });
+    if (key_value != graph_map_.end()) {
+      std::string key = key_value->first;
+      (void)graph_map_.erase(key);
+      (void)cell_graph_map_.erase(key);
+      (void)cell_resource_map_.erase(key);
+    }
     Clean();
     // Maybe exit in the pynative runing op, so need reset pynative flag.
     auto ms_context = MsContext::GetInstance();
