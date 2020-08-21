@@ -56,6 +56,7 @@ class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   float16_t *packed_weight_ = nullptr;
   float16_t *packed_input_ = nullptr;
   float16_t *packed_output_ = nullptr;
+  bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
 

@@ -30,13 +30,7 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
                                    const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ConvolutionDepthwise3x3CPUKernel() override {
-    FreeTmpBufer();
-    if (block_buffer_ != nullptr) {
-      free(block_buffer_);
-      block_buffer_ = nullptr;
-    }
-  };
+  ~ConvolutionDepthwise3x3CPUKernel() override;
 
   int Init() override;
   int ReSize() override;

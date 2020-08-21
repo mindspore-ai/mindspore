@@ -1035,18 +1035,18 @@ void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter
   }
 }
 
-void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, const ConvParameter *conv_param) {
-  int weight_zp = conv_param->conv_quant_arg_.filter_quant_args_[0].zp_;
-  int unit = conv_param->kernel_h_ * conv_param->kernel_w_;
-  for (int c = 0; c < conv_param->output_channel_; c++) {
-    if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
-      weight_zp = conv_param->conv_quant_arg_.filter_quant_args_[c].zp_;
+void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
+                             ConvQuantArg *quant_qrg) {
+  int weight_zp = quant_qrg->filter_quant_args_[0].zp_;
+  for (int c = 0; c < channel; c++) {
+    if (quant_qrg->per_channel_ & FILTER_PER_CHANNEL) {
+      weight_zp = quant_qrg->filter_quant_args_[c].zp_;
     }
     int c4_block_num = c / C4NUM;
     int c4_block_rem = c % C4NUM;
-    const int8_t *src_c = origin_weight + c * unit;
-    int16_t *dst_c = packed_weight_ + c4_block_num * unit * C4NUM;
-    for (int k = 0; k < unit; k++) {
+    const int8_t *src_c = origin_weight + c * plane;
+    int16_t *dst_c = packed_weight_ + c4_block_num * plane * C4NUM;
+    for (int k = 0; k < plane; k++) {
       const int8_t *src_kernel = src_c + k;
       int16_t *dst_kernel = dst_c + C4NUM * k + c4_block_rem;
       *dst_kernel = (int16_t)(src_kernel[0] - weight_zp);
