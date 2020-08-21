@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_L2_NORM_H_
+#define LITE_MINDSPORE_LITE_C_OPS_L2_NORM_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_L2_NORM_H_
-#define LITE_MINDSPORE_LITE_C_OPS_L2_NORM_H_
 
 namespace mindspore {
 namespace lite {
 class L2Norm : public PrimitiveC {
  public:
-  explicit L2Norm(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit L2Norm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit L2Norm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   std::vector<int> GetAxis() const;
   float GetEpsilon() const;

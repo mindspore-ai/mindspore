@@ -15,6 +15,7 @@
  */
 #include <iostream>
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/base/quant_dtype_cast.h"

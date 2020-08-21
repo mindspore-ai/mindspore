@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_NCHW_2_NHWC_H_
+#define LITE_MINDSPORE_LITE_C_OPS_NCHW_2_NHWC_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_NCHW_2_NHWC_H_
-#define LITE_MINDSPORE_LITE_C_OPS_NCHW_2_NHWC_H_
 
 namespace mindspore {
 namespace lite {
 class Nchw2Nhwc : public PrimitiveC {
  public:
-  explicit Nchw2Nhwc(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Nchw2Nhwc(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit Nchw2Nhwc(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

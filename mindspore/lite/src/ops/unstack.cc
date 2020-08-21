@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Unstack::GetNum() const { return this->primitive->value.AsUnstack()->num; }
-int Unstack::GetAxis() const { return this->primitive->value.AsUnstack()->axis; }
+int Unstack::GetNum() const { return this->primitive_->value.AsUnstack()->num; }
+int Unstack::GetAxis() const { return this->primitive_->value.AsUnstack()->axis; }
 
-void Unstack::SetNum(int num) { this->primitive->value.AsUnstack()->num = num; }
-void Unstack::SetAxis(int axis) { this->primitive->value.AsUnstack()->axis = axis; }
+void Unstack::SetNum(int num) { this->primitive_->value.AsUnstack()->num = num; }
+void Unstack::SetAxis(int axis) { this->primitive_->value.AsUnstack()->axis = axis; }
 
 #else
 
-int Unstack::GetNum() const { return this->primitive->value_as_Unstack()->num(); }
-int Unstack::GetAxis() const { return this->primitive->value_as_Unstack()->axis(); }
+int Unstack::GetNum() const { return this->primitive_->value_as_Unstack()->num(); }
+int Unstack::GetAxis() const { return this->primitive_->value_as_Unstack()->axis(); }
 
 void Unstack::SetNum(int num) {}
 void Unstack::SetAxis(int axis) {}

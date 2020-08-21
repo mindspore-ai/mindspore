@@ -15,10 +15,10 @@
  */
 
 #include <vector>
+#include "src/runtime/kernel/arm/base/resize_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/base/resize_base.h"
 #include "src/runtime/kernel/arm/fp32/resize.h"
 #include "src/runtime/kernel/arm/int8/resize_int8.h"
 using mindspore::lite::KernelRegistrar;

@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_DROPOUT_H_
+#define LITE_MINDSPORE_LITE_C_OPS_DROPOUT_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_DROPOUT_H_
-#define LITE_MINDSPORE_LITE_C_OPS_DROPOUT_H_
 
 namespace mindspore {
 namespace lite {
 class Dropout : public PrimitiveC {
  public:
-  explicit Dropout(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Dropout(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit Dropout(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   float GetRatio() const;
   void SetRatio(float ratio);

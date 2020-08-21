@@ -22,14 +22,14 @@
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-int AnfDequantPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfDequantPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                   const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::OnnxInt8DequantizeT>();
   primitive->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
   primitive->value.value = attr.release();
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
+  MS_ASSERT(primitiveCPtr != nullptr);
+  primitiveCPtr->SetPrimitiveT(primitive.release());
   return 0;
 }
 AnfNodePopulaterRegistrar anfDequantPopulater("Dequant", new AnfDequantPopulater());

@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-#include <string>
+#ifndef LITE_MINDSPORE_LITE_C_OPS_UPSAMPLE_H_
+#define LITE_MINDSPORE_LITE_C_OPS_UPSAMPLE_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
+#include <string>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_UPSAMPLE_H_
-#define LITE_MINDSPORE_LITE_C_OPS_UPSAMPLE_H_
 
 namespace mindspore {
 namespace lite {
 class Upsample : public PrimitiveC {
  public:
-  explicit Upsample(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Upsample(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit Upsample(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   std::string GetMode() const;
   std::vector<float> GetScales() const;

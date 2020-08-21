@@ -19,22 +19,22 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float Lrn::GetAlpha() const { return this->primitive->value.AsLrn()->alpha; }
-float Lrn::GetBeta() const { return this->primitive->value.AsLrn()->beta; }
-float Lrn::GetBias() const { return this->primitive->value.AsLrn()->bias; }
-int Lrn::GetSize() const { return this->primitive->value.AsLrn()->size; }
+float Lrn::GetAlpha() const { return this->primitive_->value.AsLrn()->alpha; }
+float Lrn::GetBeta() const { return this->primitive_->value.AsLrn()->beta; }
+float Lrn::GetBias() const { return this->primitive_->value.AsLrn()->bias; }
+int Lrn::GetSize() const { return this->primitive_->value.AsLrn()->size; }
 
-void Lrn::SetAlpha(float alpha) { this->primitive->value.AsLrn()->alpha = alpha; }
-void Lrn::SetBeta(float beta) { this->primitive->value.AsLrn()->beta = beta; }
-void Lrn::SetBias(float bias) { this->primitive->value.AsLrn()->bias = bias; }
-void Lrn::SetSize(int size) { this->primitive->value.AsLrn()->size = size; }
+void Lrn::SetAlpha(float alpha) { this->primitive_->value.AsLrn()->alpha = alpha; }
+void Lrn::SetBeta(float beta) { this->primitive_->value.AsLrn()->beta = beta; }
+void Lrn::SetBias(float bias) { this->primitive_->value.AsLrn()->bias = bias; }
+void Lrn::SetSize(int size) { this->primitive_->value.AsLrn()->size = size; }
 
 #else
 
-float Lrn::GetAlpha() const { return this->primitive->value_as_Lrn()->alpha(); }
-float Lrn::GetBeta() const { return this->primitive->value_as_Lrn()->beta(); }
-float Lrn::GetBias() const { return this->primitive->value_as_Lrn()->bias(); }
-int Lrn::GetSize() const { return this->primitive->value_as_Lrn()->size(); }
+float Lrn::GetAlpha() const { return this->primitive_->value_as_Lrn()->alpha(); }
+float Lrn::GetBeta() const { return this->primitive_->value_as_Lrn()->beta(); }
+float Lrn::GetBias() const { return this->primitive_->value_as_Lrn()->bias(); }
+int Lrn::GetSize() const { return this->primitive_->value_as_Lrn()->size(); }
 
 void Lrn::SetAlpha(float alpha) {}
 void Lrn::SetBeta(float beta) {}

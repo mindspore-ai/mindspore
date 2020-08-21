@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/kernel_registry.h"

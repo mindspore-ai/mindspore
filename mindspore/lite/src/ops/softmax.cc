@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int SoftMax::GetAxis() const { return this->primitive->value.AsSoftMax()->axis; }
+int SoftMax::GetAxis() const { return this->primitive_->value.AsSoftMax()->axis; }
 
-void SoftMax::SetAxis(int axis) { this->primitive->value.AsSoftMax()->axis = axis; }
+void SoftMax::SetAxis(int axis) { this->primitive_->value.AsSoftMax()->axis = axis; }
 
 #else
 
-int SoftMax::GetAxis() const { return this->primitive->value_as_SoftMax()->axis(); }
+int SoftMax::GetAxis() const { return this->primitive_->value_as_SoftMax()->axis(); }
 
 void SoftMax::SetAxis(int axis) {}
 #endif
 
 int SoftMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

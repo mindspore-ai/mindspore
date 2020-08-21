@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float BNGradInput::GetEps() const { return this->primitive->value.AsBNGradInput()->eps; }
-int BNGradInput::GetChannels() const { return this->primitive->value.AsBNGradInput()->channels; }
+float BNGradInput::GetEps() const { return this->primitive_->value.AsBNGradInput()->eps; }
+int BNGradInput::GetChannels() const { return this->primitive_->value.AsBNGradInput()->channels; }
 
-void BNGradInput::SetEps(float eps) { this->primitive->value.AsBNGradInput()->eps = eps; }
-void BNGradInput::SetChannels(int channels) { this->primitive->value.AsBNGradInput()->channels = channels; }
+void BNGradInput::SetEps(float eps) { this->primitive_->value.AsBNGradInput()->eps = eps; }
+void BNGradInput::SetChannels(int channels) { this->primitive_->value.AsBNGradInput()->channels = channels; }
 
 #else
 
-float BNGradInput::GetEps() const { return this->primitive->value_as_BNGradInput()->eps(); }
-int BNGradInput::GetChannels() const { return this->primitive->value_as_BNGradInput()->channels(); }
+float BNGradInput::GetEps() const { return this->primitive_->value_as_BNGradInput()->eps(); }
+int BNGradInput::GetChannels() const { return this->primitive_->value_as_BNGradInput()->channels(); }
 
 void BNGradInput::SetEps(float eps) {}
 void BNGradInput::SetChannels(int channels) {}

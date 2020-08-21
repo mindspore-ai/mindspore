@@ -19,22 +19,22 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Range::GetDType() const { return this->primitive->value.AsRange()->dType; }
-int Range::GetStart() const { return this->primitive->value.AsRange()->start; }
-int Range::GetLimit() const { return this->primitive->value.AsRange()->limit; }
-int Range::GetDelta() const { return this->primitive->value.AsRange()->delta; }
+int Range::GetDType() const { return this->primitive_->value.AsRange()->dType; }
+int Range::GetStart() const { return this->primitive_->value.AsRange()->start; }
+int Range::GetLimit() const { return this->primitive_->value.AsRange()->limit; }
+int Range::GetDelta() const { return this->primitive_->value.AsRange()->delta; }
 
-void Range::SetDType(int d_type) { this->primitive->value.AsRange()->dType = d_type; }
-void Range::SetStart(int start) { this->primitive->value.AsRange()->start = start; }
-void Range::SetLimit(int limit) { this->primitive->value.AsRange()->limit = limit; }
-void Range::SetDelta(int delta) { this->primitive->value.AsRange()->delta = delta; }
+void Range::SetDType(int d_type) { this->primitive_->value.AsRange()->dType = d_type; }
+void Range::SetStart(int start) { this->primitive_->value.AsRange()->start = start; }
+void Range::SetLimit(int limit) { this->primitive_->value.AsRange()->limit = limit; }
+void Range::SetDelta(int delta) { this->primitive_->value.AsRange()->delta = delta; }
 
 #else
 
-int Range::GetDType() const { return this->primitive->value_as_Range()->dType(); }
-int Range::GetStart() const { return this->primitive->value_as_Range()->start(); }
-int Range::GetLimit() const { return this->primitive->value_as_Range()->limit(); }
-int Range::GetDelta() const { return this->primitive->value_as_Range()->delta(); }
+int Range::GetDType() const { return this->primitive_->value_as_Range()->dType(); }
+int Range::GetStart() const { return this->primitive_->value_as_Range()->start(); }
+int Range::GetLimit() const { return this->primitive_->value_as_Range()->limit(); }
+int Range::GetDelta() const { return this->primitive_->value_as_Range()->delta(); }
 
 void Range::SetDType(int d_type) {}
 void Range::SetStart(int start) {}
@@ -43,7 +43,7 @@ void Range::SetDelta(int delta) {}
 #endif
 
 int Range::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

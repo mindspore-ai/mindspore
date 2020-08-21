@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float FusedBatchNorm::GetEpsilon() const { return this->primitive->value.AsFusedBatchNorm()->epsilon; }
-float FusedBatchNorm::GetMomentum() const { return this->primitive->value.AsFusedBatchNorm()->momentum; }
-int FusedBatchNorm::GetSpatial() const { return this->primitive->value.AsFusedBatchNorm()->spatial; }
+float FusedBatchNorm::GetEpsilon() const { return this->primitive_->value.AsFusedBatchNorm()->epsilon; }
+float FusedBatchNorm::GetMomentum() const { return this->primitive_->value.AsFusedBatchNorm()->momentum; }
+int FusedBatchNorm::GetSpatial() const { return this->primitive_->value.AsFusedBatchNorm()->spatial; }
 
-void FusedBatchNorm::SetEpsilon(float epsilon) { this->primitive->value.AsFusedBatchNorm()->epsilon = epsilon; }
-void FusedBatchNorm::SetMomentum(float momentum) { this->primitive->value.AsFusedBatchNorm()->momentum = momentum; }
-void FusedBatchNorm::SetSpatial(int spatial) { this->primitive->value.AsFusedBatchNorm()->spatial = spatial; }
+void FusedBatchNorm::SetEpsilon(float epsilon) { this->primitive_->value.AsFusedBatchNorm()->epsilon = epsilon; }
+void FusedBatchNorm::SetMomentum(float momentum) { this->primitive_->value.AsFusedBatchNorm()->momentum = momentum; }
+void FusedBatchNorm::SetSpatial(int spatial) { this->primitive_->value.AsFusedBatchNorm()->spatial = spatial; }
 
 #else
 
-float FusedBatchNorm::GetEpsilon() const { return this->primitive->value_as_FusedBatchNorm()->epsilon(); }
-float FusedBatchNorm::GetMomentum() const { return this->primitive->value_as_FusedBatchNorm()->momentum(); }
-int FusedBatchNorm::GetSpatial() const { return this->primitive->value_as_FusedBatchNorm()->spatial(); }
+float FusedBatchNorm::GetEpsilon() const { return this->primitive_->value_as_FusedBatchNorm()->epsilon(); }
+float FusedBatchNorm::GetMomentum() const { return this->primitive_->value_as_FusedBatchNorm()->momentum(); }
+int FusedBatchNorm::GetSpatial() const { return this->primitive_->value_as_FusedBatchNorm()->spatial(); }
 
 void FusedBatchNorm::SetEpsilon(float epsilon) {}
 void FusedBatchNorm::SetMomentum(float momentum) {}

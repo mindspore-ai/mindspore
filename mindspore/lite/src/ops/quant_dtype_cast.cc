@@ -19,23 +19,23 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int QuantDTypeCast::GetSrcT() const { return this->primitive->value.AsQuantDTypeCast()->srcT; }
-int QuantDTypeCast::GetDstT() const { return this->primitive->value.AsQuantDTypeCast()->dstT; }
+int QuantDTypeCast::GetSrcT() const { return this->primitive_->value.AsQuantDTypeCast()->srcT; }
+int QuantDTypeCast::GetDstT() const { return this->primitive_->value.AsQuantDTypeCast()->dstT; }
 
-void QuantDTypeCast::SetSrcT(int src_t) { this->primitive->value.AsQuantDTypeCast()->srcT = src_t; }
-void QuantDTypeCast::SetDstT(int dst_t) { this->primitive->value.AsQuantDTypeCast()->dstT = dst_t; }
+void QuantDTypeCast::SetSrcT(int src_t) { this->primitive_->value.AsQuantDTypeCast()->srcT = src_t; }
+void QuantDTypeCast::SetDstT(int dst_t) { this->primitive_->value.AsQuantDTypeCast()->dstT = dst_t; }
 
 #else
 
-int QuantDTypeCast::GetSrcT() const { return this->primitive->value_as_QuantDTypeCast()->srcT(); }
-int QuantDTypeCast::GetDstT() const { return this->primitive->value_as_QuantDTypeCast()->dstT(); }
+int QuantDTypeCast::GetSrcT() const { return this->primitive_->value_as_QuantDTypeCast()->srcT(); }
+int QuantDTypeCast::GetDstT() const { return this->primitive_->value_as_QuantDTypeCast()->dstT(); }
 
 void QuantDTypeCast::SetSrcT(int src_t) {}
 void QuantDTypeCast::SetDstT(int dst_t) {}
 #endif
 
 int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

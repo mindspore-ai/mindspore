@@ -19,77 +19,77 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int DeDepthwiseConv2D::GetFormat() const { return this->primitive->value.AsDeDepthwiseConv2D()->format; }
-int DeDepthwiseConv2D::GetChannelIn() const { return this->primitive->value.AsDeDepthwiseConv2D()->channelIn; }
+int DeDepthwiseConv2D::GetFormat() const { return this->primitive_->value.AsDeDepthwiseConv2D()->format; }
+int DeDepthwiseConv2D::GetChannelIn() const { return this->primitive_->value.AsDeDepthwiseConv2D()->channelIn; }
 int DeDepthwiseConv2D::GetChannelMultiplier() const {
-  return this->primitive->value.AsDeDepthwiseConv2D()->channelMultiplier;
+  return this->primitive_->value.AsDeDepthwiseConv2D()->channelMultiplier;
 }
-int DeDepthwiseConv2D::GetKernelW() const { return this->primitive->value.AsDeDepthwiseConv2D()->kernelW; }
-int DeDepthwiseConv2D::GetKernelH() const { return this->primitive->value.AsDeDepthwiseConv2D()->kernelH; }
-int DeDepthwiseConv2D::GetStrideW() const { return this->primitive->value.AsDeDepthwiseConv2D()->strideW; }
-int DeDepthwiseConv2D::GetStrideH() const { return this->primitive->value.AsDeDepthwiseConv2D()->strideH; }
-int DeDepthwiseConv2D::GetPadMode() const { return this->primitive->value.AsDeDepthwiseConv2D()->padMode; }
-int DeDepthwiseConv2D::GetPadUp() const { return this->primitive->value.AsDeDepthwiseConv2D()->padUp; }
-int DeDepthwiseConv2D::GetPadDown() const { return this->primitive->value.AsDeDepthwiseConv2D()->padDown; }
-int DeDepthwiseConv2D::GetPadLeft() const { return this->primitive->value.AsDeDepthwiseConv2D()->padLeft; }
-int DeDepthwiseConv2D::GetPadRight() const { return this->primitive->value.AsDeDepthwiseConv2D()->padRight; }
-int DeDepthwiseConv2D::GetDilateW() const { return this->primitive->value.AsDeDepthwiseConv2D()->dilateW; }
-int DeDepthwiseConv2D::GetDilateH() const { return this->primitive->value.AsDeDepthwiseConv2D()->dilateH; }
-bool DeDepthwiseConv2D::GetHasBias() const { return this->primitive->value.AsDeDepthwiseConv2D()->hasBias; }
+int DeDepthwiseConv2D::GetKernelW() const { return this->primitive_->value.AsDeDepthwiseConv2D()->kernelW; }
+int DeDepthwiseConv2D::GetKernelH() const { return this->primitive_->value.AsDeDepthwiseConv2D()->kernelH; }
+int DeDepthwiseConv2D::GetStrideW() const { return this->primitive_->value.AsDeDepthwiseConv2D()->strideW; }
+int DeDepthwiseConv2D::GetStrideH() const { return this->primitive_->value.AsDeDepthwiseConv2D()->strideH; }
+int DeDepthwiseConv2D::GetPadMode() const { return this->primitive_->value.AsDeDepthwiseConv2D()->padMode; }
+int DeDepthwiseConv2D::GetPadUp() const { return this->primitive_->value.AsDeDepthwiseConv2D()->padUp; }
+int DeDepthwiseConv2D::GetPadDown() const { return this->primitive_->value.AsDeDepthwiseConv2D()->padDown; }
+int DeDepthwiseConv2D::GetPadLeft() const { return this->primitive_->value.AsDeDepthwiseConv2D()->padLeft; }
+int DeDepthwiseConv2D::GetPadRight() const { return this->primitive_->value.AsDeDepthwiseConv2D()->padRight; }
+int DeDepthwiseConv2D::GetDilateW() const { return this->primitive_->value.AsDeDepthwiseConv2D()->dilateW; }
+int DeDepthwiseConv2D::GetDilateH() const { return this->primitive_->value.AsDeDepthwiseConv2D()->dilateH; }
+bool DeDepthwiseConv2D::GetHasBias() const { return this->primitive_->value.AsDeDepthwiseConv2D()->hasBias; }
 int DeDepthwiseConv2D::GetActivationType() const {
-  return this->primitive->value.AsDeDepthwiseConv2D()->activationType;
+  return this->primitive_->value.AsDeDepthwiseConv2D()->activationType;
 }
 
 void DeDepthwiseConv2D::SetFormat(int format) {
-  this->primitive->value.AsDeDepthwiseConv2D()->format = (schema::Format)format;
+  this->primitive_->value.AsDeDepthwiseConv2D()->format = (schema::Format)format;
 }
 void DeDepthwiseConv2D::SetChannelIn(int channel_in) {
-  this->primitive->value.AsDeDepthwiseConv2D()->channelIn = channel_in;
+  this->primitive_->value.AsDeDepthwiseConv2D()->channelIn = channel_in;
 }
 void DeDepthwiseConv2D::SetChannelMultiplier(int channel_multiplier) {
-  this->primitive->value.AsDeDepthwiseConv2D()->channelMultiplier = channel_multiplier;
+  this->primitive_->value.AsDeDepthwiseConv2D()->channelMultiplier = channel_multiplier;
 }
-void DeDepthwiseConv2D::SetKernelW(int kernel_w) { this->primitive->value.AsDeDepthwiseConv2D()->kernelW = kernel_w; }
-void DeDepthwiseConv2D::SetKernelH(int kernel_h) { this->primitive->value.AsDeDepthwiseConv2D()->kernelH = kernel_h; }
-void DeDepthwiseConv2D::SetStrideW(int stride_w) { this->primitive->value.AsDeDepthwiseConv2D()->strideW = stride_w; }
-void DeDepthwiseConv2D::SetStrideH(int stride_h) { this->primitive->value.AsDeDepthwiseConv2D()->strideH = stride_h; }
+void DeDepthwiseConv2D::SetKernelW(int kernel_w) { this->primitive_->value.AsDeDepthwiseConv2D()->kernelW = kernel_w; }
+void DeDepthwiseConv2D::SetKernelH(int kernel_h) { this->primitive_->value.AsDeDepthwiseConv2D()->kernelH = kernel_h; }
+void DeDepthwiseConv2D::SetStrideW(int stride_w) { this->primitive_->value.AsDeDepthwiseConv2D()->strideW = stride_w; }
+void DeDepthwiseConv2D::SetStrideH(int stride_h) { this->primitive_->value.AsDeDepthwiseConv2D()->strideH = stride_h; }
 void DeDepthwiseConv2D::SetPadMode(int pad_mode) {
-  this->primitive->value.AsDeDepthwiseConv2D()->padMode = (schema::PadMode)pad_mode;
+  this->primitive_->value.AsDeDepthwiseConv2D()->padMode = (schema::PadMode)pad_mode;
 }
-void DeDepthwiseConv2D::SetPadUp(int pad_up) { this->primitive->value.AsDeDepthwiseConv2D()->padUp = pad_up; }
-void DeDepthwiseConv2D::SetPadDown(int pad_down) { this->primitive->value.AsDeDepthwiseConv2D()->padDown = pad_down; }
-void DeDepthwiseConv2D::SetPadLeft(int pad_left) { this->primitive->value.AsDeDepthwiseConv2D()->padLeft = pad_left; }
+void DeDepthwiseConv2D::SetPadUp(int pad_up) { this->primitive_->value.AsDeDepthwiseConv2D()->padUp = pad_up; }
+void DeDepthwiseConv2D::SetPadDown(int pad_down) { this->primitive_->value.AsDeDepthwiseConv2D()->padDown = pad_down; }
+void DeDepthwiseConv2D::SetPadLeft(int pad_left) { this->primitive_->value.AsDeDepthwiseConv2D()->padLeft = pad_left; }
 void DeDepthwiseConv2D::SetPadRight(int pad_right) {
-  this->primitive->value.AsDeDepthwiseConv2D()->padRight = pad_right;
+  this->primitive_->value.AsDeDepthwiseConv2D()->padRight = pad_right;
 }
-void DeDepthwiseConv2D::SetDilateW(int dilate_w) { this->primitive->value.AsDeDepthwiseConv2D()->dilateW = dilate_w; }
-void DeDepthwiseConv2D::SetDilateH(int dilate_h) { this->primitive->value.AsDeDepthwiseConv2D()->dilateH = dilate_h; }
-void DeDepthwiseConv2D::SetHasBias(bool has_bias) { this->primitive->value.AsDeDepthwiseConv2D()->hasBias = has_bias; }
+void DeDepthwiseConv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsDeDepthwiseConv2D()->dilateW = dilate_w; }
+void DeDepthwiseConv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsDeDepthwiseConv2D()->dilateH = dilate_h; }
+void DeDepthwiseConv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsDeDepthwiseConv2D()->hasBias = has_bias; }
 void DeDepthwiseConv2D::SetActivationType(int activation_type) {
-  this->primitive->value.AsDeDepthwiseConv2D()->activationType = (schema::ActivationType)activation_type;
+  this->primitive_->value.AsDeDepthwiseConv2D()->activationType = (schema::ActivationType)activation_type;
 }
 
 #else
 
-int DeDepthwiseConv2D::GetFormat() const { return this->primitive->value_as_DeDepthwiseConv2D()->format(); }
-int DeDepthwiseConv2D::GetChannelIn() const { return this->primitive->value_as_DeDepthwiseConv2D()->channelIn(); }
+int DeDepthwiseConv2D::GetFormat() const { return this->primitive_->value_as_DeDepthwiseConv2D()->format(); }
+int DeDepthwiseConv2D::GetChannelIn() const { return this->primitive_->value_as_DeDepthwiseConv2D()->channelIn(); }
 int DeDepthwiseConv2D::GetChannelMultiplier() const {
-  return this->primitive->value_as_DeDepthwiseConv2D()->channelMultiplier();
+  return this->primitive_->value_as_DeDepthwiseConv2D()->channelMultiplier();
 }
-int DeDepthwiseConv2D::GetKernelW() const { return this->primitive->value_as_DeDepthwiseConv2D()->kernelW(); }
-int DeDepthwiseConv2D::GetKernelH() const { return this->primitive->value_as_DeDepthwiseConv2D()->kernelH(); }
-int DeDepthwiseConv2D::GetStrideW() const { return this->primitive->value_as_DeDepthwiseConv2D()->strideW(); }
-int DeDepthwiseConv2D::GetStrideH() const { return this->primitive->value_as_DeDepthwiseConv2D()->strideH(); }
-int DeDepthwiseConv2D::GetPadMode() const { return this->primitive->value_as_DeDepthwiseConv2D()->padMode(); }
-int DeDepthwiseConv2D::GetPadUp() const { return this->primitive->value_as_DeDepthwiseConv2D()->padUp(); }
-int DeDepthwiseConv2D::GetPadDown() const { return this->primitive->value_as_DeDepthwiseConv2D()->padDown(); }
-int DeDepthwiseConv2D::GetPadLeft() const { return this->primitive->value_as_DeDepthwiseConv2D()->padLeft(); }
-int DeDepthwiseConv2D::GetPadRight() const { return this->primitive->value_as_DeDepthwiseConv2D()->padRight(); }
-int DeDepthwiseConv2D::GetDilateW() const { return this->primitive->value_as_DeDepthwiseConv2D()->dilateW(); }
-int DeDepthwiseConv2D::GetDilateH() const { return this->primitive->value_as_DeDepthwiseConv2D()->dilateH(); }
-bool DeDepthwiseConv2D::GetHasBias() const { return this->primitive->value_as_DeDepthwiseConv2D()->hasBias(); }
+int DeDepthwiseConv2D::GetKernelW() const { return this->primitive_->value_as_DeDepthwiseConv2D()->kernelW(); }
+int DeDepthwiseConv2D::GetKernelH() const { return this->primitive_->value_as_DeDepthwiseConv2D()->kernelH(); }
+int DeDepthwiseConv2D::GetStrideW() const { return this->primitive_->value_as_DeDepthwiseConv2D()->strideW(); }
+int DeDepthwiseConv2D::GetStrideH() const { return this->primitive_->value_as_DeDepthwiseConv2D()->strideH(); }
+int DeDepthwiseConv2D::GetPadMode() const { return this->primitive_->value_as_DeDepthwiseConv2D()->padMode(); }
+int DeDepthwiseConv2D::GetPadUp() const { return this->primitive_->value_as_DeDepthwiseConv2D()->padUp(); }
+int DeDepthwiseConv2D::GetPadDown() const { return this->primitive_->value_as_DeDepthwiseConv2D()->padDown(); }
+int DeDepthwiseConv2D::GetPadLeft() const { return this->primitive_->value_as_DeDepthwiseConv2D()->padLeft(); }
+int DeDepthwiseConv2D::GetPadRight() const { return this->primitive_->value_as_DeDepthwiseConv2D()->padRight(); }
+int DeDepthwiseConv2D::GetDilateW() const { return this->primitive_->value_as_DeDepthwiseConv2D()->dilateW(); }
+int DeDepthwiseConv2D::GetDilateH() const { return this->primitive_->value_as_DeDepthwiseConv2D()->dilateH(); }
+bool DeDepthwiseConv2D::GetHasBias() const { return this->primitive_->value_as_DeDepthwiseConv2D()->hasBias(); }
 int DeDepthwiseConv2D::GetActivationType() const {
-  return this->primitive->value_as_DeDepthwiseConv2D()->activationType();
+  return this->primitive_->value_as_DeDepthwiseConv2D()->activationType();
 }
 
 void DeDepthwiseConv2D::SetFormat(int format) {}
@@ -119,7 +119,7 @@ int DeDepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
     MS_LOG(ERROR) << "output number is invalid";
     return 1;
   }
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto weight = inputs_.at(1);

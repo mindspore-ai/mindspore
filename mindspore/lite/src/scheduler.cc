@@ -16,7 +16,6 @@
 
 #include "src/scheduler.h"
 #include <vector>
-#include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/common/graph_util.h"
@@ -116,6 +115,7 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
       return RET_INFER_ERR;
     }
   }
+
   return RET_OK;
 }
 
@@ -151,6 +151,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
     kernel->set_is_model_output(IsContain(graph_output_node_indexes, size_t(i)));
     kernels->emplace_back(kernel);
   }
+
   return RET_OK;
 }
 

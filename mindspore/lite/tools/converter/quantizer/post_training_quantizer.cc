@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "tools/converter/quantizer/post_training_quantizer.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <map>
@@ -28,7 +29,6 @@
 #include "schema/inner/model_generated.h"
 #include "src/ir/tensor.h"
 #include "tools/anf_exporter/anf_exporter.h"
-#include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "utils/log_adapter.h"
 #include "securec/include/securec.h"
@@ -208,9 +208,8 @@ struct DivergInfo {
       }
     }
     this->best_T = (static_cast<float>(threshold) + 0.5f) * this->interval;
-    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " Best threshold bin index: " << threshold
-                                                  << " T: " << best_T
-                                                  << " max: " << std::max(fabs(this->max), fabs(this->min));
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " Best threshold bin index: " << threshold << " T: " << best_T
+                  << " max: " << std::max(fabs(this->max), fabs(this->min));
     return RET_OK;
   }
 
@@ -466,10 +465,10 @@ STATUS Calibrator::ReadConfig() {
       MS_LOG(WARNING) << "unsupported parameter";
     }
   }
-  MS_LOG(DEBUG) << "image_path: "   << config_param_.image_path    << "  "
-                << "batch_count: "  << config_param_.batch_count   << "  "
-                << "mothod_x: "     << config_param_.method_x      << "  "
-                << "thread_num: "   << config_param_.thread_num;
+  MS_LOG(DEBUG) << "image_path: " << config_param_.image_path << "  "
+                << "batch_count: " << config_param_.batch_count << "  "
+                << "mothod_x: " << config_param_.method_x << "  "
+                << "thread_num: " << config_param_.thread_num;
 
   delete[] resolved_path;
   fs.close();
@@ -502,7 +501,7 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
 }
 
 STATUS PostTrainingQuantizer::DoQuantInput(double scale, int zeropoint, struct MaxMin *max_min,
-                                           std::shared_ptr<PrimitiveTValue> lite_primitive) {
+                                           std::shared_ptr<PrimitiveC> lite_primitive) {
   if (!lite_primitive->GetInputQuantParams().empty()) {
     return RET_OK;
   }
@@ -519,7 +518,7 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int zeropoint, struct M
 }
 
 STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct MaxMin *max_min,
-                                            std::shared_ptr<PrimitiveTValue> lite_primitive) {
+                                            std::shared_ptr<PrimitiveC> lite_primitive) {
   if (!lite_primitive->GetOutputQuantParams().empty()) {
     return RET_OK;
   }
@@ -535,7 +534,7 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value,
+STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value,
                                             bool perchanel, bool depthwise) {
   // const vector<int> dims = filter->dims;
   // perlayer
@@ -574,7 +573,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveTValue> primitiveT_value) {
+STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitiveT_value) {
   if (primitiveT_value == nullptr || bias == nullptr) {
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
@@ -646,8 +645,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
     auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
     quant_datas[i] = quant_data;
   }
-  auto ret =
-    memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas, shape_size * sizeof(int32_t));
+  auto ret = memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas, shape_size * sizeof(int32_t));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
     delete[] quant_datas;
@@ -685,7 +683,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
       MS_LOG(INFO) << cnode_name << " can not do quant";
       continue;
     }
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     if (primitiveT_value == nullptr) {
       MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
       continue;
@@ -696,7 +694,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
     }
     primitiveT_value->ClearInputOutputQuantParam();
     auto op_name = cnode->fullname_with_scope();
-    auto op_type = primitiveT_value->GetPrimitiveT()->value.type;
+    auto op_type = (schema::PrimitiveType)primitiveT_value->Type();
     MS_LOG(INFO) << "OpName: " << op_name;
     if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D &&
         op_type != PrimitiveType_FullConnection) {
@@ -724,10 +722,10 @@ STATUS PostTrainingQuantizer::QuantNode() {
           continue;
         }
         auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-        auto input_cnode_primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(input_cnode->input(0));
+        auto input_cnode_primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
         if (input_cnode_primitiveT_value == nullptr) {
           MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
-                        << " PrimitiveTValue is null";
+                        << " PrimitiveC is null";
           continue;
         }
         if (!input_cnode_primitiveT_value->GetOutputQuantParams().empty()) {

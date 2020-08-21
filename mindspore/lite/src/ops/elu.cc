@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float Elu::GetAlpha() const { return this->primitive->value.AsElu()->alpha; }
+float Elu::GetAlpha() const { return this->primitive_->value.AsElu()->alpha; }
 
-void Elu::SetAlpha(float alpha) { this->primitive->value.AsElu()->alpha = alpha; }
+void Elu::SetAlpha(float alpha) { this->primitive_->value.AsElu()->alpha = alpha; }
 
 #else
 
-float Elu::GetAlpha() const { return this->primitive->value_as_Elu()->alpha(); }
+float Elu::GetAlpha() const { return this->primitive_->value_as_Elu()->alpha(); }
 
 void Elu::SetAlpha(float alpha) {}
 #endif

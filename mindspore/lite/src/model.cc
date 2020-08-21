@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "include/model.h"
 #include "src/ops/unique.h"
 #include "src/ops/space_to_batch.h"
 #include "src/ops/conv2d.h"
@@ -106,8 +107,6 @@
 #include "src/ops/squared_difference.h"
 #include "src/ops/ceil.h"
 #include "src/ops/round.h"
-#include "src/ops/primitive_c.h"
-#include "include/model.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::lite {

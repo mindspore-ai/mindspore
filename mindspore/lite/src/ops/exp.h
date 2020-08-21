@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_EXP_H_
+#define LITE_MINDSPORE_LITE_C_OPS_EXP_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/arithmetic_self.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_EXP_H_
-#define LITE_MINDSPORE_LITE_C_OPS_EXP_H_
 
 namespace mindspore {
 namespace lite {
 class Exp : public ArithmeticSelf {
  public:
-  explicit Exp(OriginPrimitive *primitive) : ArithmeticSelf(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Exp(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+#endif
+  explicit Exp(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore

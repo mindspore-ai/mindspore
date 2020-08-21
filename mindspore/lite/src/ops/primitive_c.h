@@ -19,17 +19,17 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <memory>
+#ifdef PRIMITIVE_WRITEABLE
+#include "ir/primitive.h"
+#include "schema/inner/model_generated.h"
+#else
+#include "schema/model_generated.h"
+#endif
+
 #include "src/ir/tensor.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-using OriginPrimitive = mindspore::schema::PrimitiveT;
-#else
-#include "schema/model_generated.h"
-using OriginPrimitive = mindspore::schema::Primitive;
-#endif
 
 namespace mindspore {
 namespace lite {
@@ -40,16 +40,93 @@ constexpr uint32_t kDimension_4d = 4;
 
 const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat16};
 
-// #if LITE_OPTIMIZE
+#ifdef PRIMITIVE_WRITEABLE
+class PrimitiveC : public mindspore::Primitive {
+ public:
+  explicit PrimitiveC(schema::Primitive *primitive) : Primitive("") { this->primitive_ = primitive->UnPack(); }
+
+  explicit PrimitiveC(schema::PrimitiveT *primitive) : Primitive(""), primitive_(primitive) {}
+
+  explicit PrimitiveC(const Primitive &prim) : Primitive(prim) {}
+
+  explicit PrimitiveC(const std::string &name, schema::PrimitiveT *primitive)
+      : Primitive(name), primitive_(primitive) {}
+
+  MS_DECLARE_PARENT(PrimitiveC, Primitive);
+
+  ~PrimitiveC() override = default;
+
+  int Type() const;
+
+  //  static PrimitiveC *UnPackFromPrimitive(const Primitive &prim);
+
+  schema::PrimitiveT *GetPrimitiveT() const;
+
+  void SetPrimitiveT(schema::PrimitiveT *prim);
+
+  bool operator==(const Value &rhs) const {
+    if (rhs.isa<PrimitiveC>()) {
+      auto other_prim = static_cast<const PrimitiveC &>(rhs);
+      auto a = this->primitive_->value.type;
+      auto b = other_prim.primitive_->value.type;
+      return a == b;
+    } else {
+      return false;
+    }
+  }
+
+  void SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param);
+
+  void SetOutputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param);
+
+  void ClearInputOutputQuantParam();
+
+  void AddInputQuantParam(std::vector<schema::QuantParamT> quant_param);
+
+  std::vector<std::vector<schema::QuantParamT>> GetInputQuantParams() const;
+
+  void AddOutputQuantParam(std::vector<schema::QuantParamT> quant_param);
+
+  std::vector<std::vector<schema::QuantParamT>> GetOutputQuantParams() const;
+
+  void SetQuantType(schema::QuantType quant_type);
+
+  schema::QuantType GetQuantType() const;
+
+  virtual int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_);
+
+  bool GetInferFlag() const;
+
+  void SetInferFlag(bool flag);
+
+  static PrimitiveC *CreatePrimitive(mindspore::schema::Primitive *primitive);
+
+ protected:
+  //  virutal PrimitiveC *UnPackAttr(const Primitive &prim) = 0;
+
+ protected:
+  schema::PrimitiveT *primitive_ = nullptr;
+  std::vector<std::vector<schema::QuantParamT>> input_quant_param_;
+  std::vector<std::vector<schema::QuantParamT>> output_quant_param_;
+  schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
+  bool infer_flag_ = true;
+};
+std::shared_ptr<PrimitiveC> GetReturnPrim();
+
+std::shared_ptr<PrimitiveC> GetMakeTuplePrim();
+
+std::shared_ptr<PrimitiveC> GetTupleGetItemPrim();
+
+
+
+#else
 class PrimitiveC {
  public:
   PrimitiveC() = default;
 
-  explicit PrimitiveC(OriginPrimitive *primitive) : primitive(primitive) {}
+  explicit PrimitiveC(schema::Primitive *primitive) : primitive_(primitive) {}
 
-  static PrimitiveC *CreatePrimitive(OriginPrimitive *primitive);
-
-  virtual ~PrimitiveC() {}
+  virtual ~PrimitiveC() = default;
 
   bool GetInferFlag() const;
 
@@ -60,9 +137,10 @@ class PrimitiveC {
   int Type() const;
 
  protected:
-  OriginPrimitive *primitive;
+  schema::Primitive *primitive_ = nullptr;
   bool infer_flag_ = true;
 };
+#endif
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_

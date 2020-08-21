@@ -19,24 +19,24 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Split::GetNumberSplit() const { return this->primitive->value.AsSplit()->numberSplit; }
-std::vector<int> Split::GetSizeSplits() const { return this->primitive->value.AsSplit()->sizeSplits; }
-int Split::GetSplitDim() const { return this->primitive->value.AsSplit()->splitDim; }
+int Split::GetNumberSplit() const { return this->primitive_->value.AsSplit()->numberSplit; }
+std::vector<int> Split::GetSizeSplits() const { return this->primitive_->value.AsSplit()->sizeSplits; }
+int Split::GetSplitDim() const { return this->primitive_->value.AsSplit()->splitDim; }
 
-void Split::SetNumberSplit(int number_split) { this->primitive->value.AsSplit()->numberSplit = number_split; }
+void Split::SetNumberSplit(int number_split) { this->primitive_->value.AsSplit()->numberSplit = number_split; }
 void Split::SetSizeSplits(const std::vector<int> &size_splits) {
-  this->primitive->value.AsSplit()->sizeSplits = size_splits;
+  this->primitive_->value.AsSplit()->sizeSplits = size_splits;
 }
-void Split::SetSplitDim(int split_dim) { this->primitive->value.AsSplit()->splitDim = split_dim; }
+void Split::SetSplitDim(int split_dim) { this->primitive_->value.AsSplit()->splitDim = split_dim; }
 
 #else
 
-int Split::GetNumberSplit() const { return this->primitive->value_as_Split()->numberSplit(); }
+int Split::GetNumberSplit() const { return this->primitive_->value_as_Split()->numberSplit(); }
 std::vector<int> Split::GetSizeSplits() const {
-  auto fb_vector = this->primitive->value_as_Split()->sizeSplits();
+  auto fb_vector = this->primitive_->value_as_Split()->sizeSplits();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-int Split::GetSplitDim() const { return this->primitive->value_as_Split()->splitDim(); }
+int Split::GetSplitDim() const { return this->primitive_->value_as_Split()->splitDim(); }
 
 void Split::SetNumberSplit(int number_split) {}
 void Split::SetSizeSplits(const std::vector<int> &size_splits) {}
@@ -47,7 +47,7 @@ namespace {
 constexpr int kSplitInputNum = 1;
 }  // namespace
 int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   MS_ASSERT(spilt_prim != nullptr);

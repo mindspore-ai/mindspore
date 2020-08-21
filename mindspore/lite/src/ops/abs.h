@@ -32,7 +32,10 @@ namespace mindspore {
 namespace lite {
 class Abs : public ArithmeticSelf {
  public:
-  explicit Abs(OriginPrimitive *primitive) : ArithmeticSelf(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Abs(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+#endif
+  explicit Abs(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore

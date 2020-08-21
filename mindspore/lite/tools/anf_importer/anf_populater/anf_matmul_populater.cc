@@ -101,7 +101,7 @@ void AnfMatmulPopulater::PopulaterQuantParam(
   }
 }
 
-int AnfMatmulPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfMatmulPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                  const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::MatMulT>();
@@ -110,14 +110,14 @@ int AnfMatmulPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *prim
 
   primitive->value.type = schema::PrimitiveType_MatMul;
   primitive->value.value = attr.release();
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
-  if (primitiveTValuePtr->GetQuantType() == schema::QuantType_AwareTraining) {
+  MS_ASSERT(primitiveCPtr != nullptr);
+  primitiveCPtr->SetPrimitiveT(primitive.release());
+  if (primitiveCPtr->GetQuantType() == schema::QuantType_AwareTraining) {
     std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
     std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
     PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
-    primitiveTValuePtr->SetInputQuantParam(vecInputQuantParam);
-    primitiveTValuePtr->SetOutputQuantParam(vecOutputQuantParam);
+    primitiveCPtr->SetInputQuantParam(vecInputQuantParam);
+    primitiveCPtr->SetOutputQuantParam(vecOutputQuantParam);
   }
   return 0;
 }

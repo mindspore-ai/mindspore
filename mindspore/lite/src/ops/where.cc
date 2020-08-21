@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<bool> Where::GetCondition() const { return this->primitive->value.AsWhere()->condition; }
+std::vector<bool> Where::GetCondition() const { return this->primitive_->value.AsWhere()->condition; }
 
 void Where::SetCondition(const std::vector<bool> &condition) {
-  this->primitive->value.AsWhere()->condition = condition;
+  this->primitive_->value.AsWhere()->condition = condition;
 }
 
 #else
 
 std::vector<bool> Where::GetCondition() const {
-  auto fb_vector = this->primitive->value_as_Where()->condition();
+  auto fb_vector = this->primitive_->value_as_Where()->condition();
   return std::vector<bool>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -36,7 +36,7 @@ void Where::SetCondition(const std::vector<bool> &condition) {}
 #endif
 
 int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

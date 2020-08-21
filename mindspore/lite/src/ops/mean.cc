@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Mean::GetAxis() const { return this->primitive->value.AsMean()->axis; }
-bool Mean::GetKeepDims() const { return this->primitive->value.AsMean()->keepDims; }
+std::vector<int> Mean::GetAxis() const { return this->primitive_->value.AsMean()->axis; }
+bool Mean::GetKeepDims() const { return this->primitive_->value.AsMean()->keepDims; }
 
-void Mean::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsMean()->axis = axis; }
-void Mean::SetKeepDims(bool keep_dims) { this->primitive->value.AsMean()->keepDims = keep_dims; }
+void Mean::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsMean()->axis = axis; }
+void Mean::SetKeepDims(bool keep_dims) { this->primitive_->value.AsMean()->keepDims = keep_dims; }
 
 #else
 
 std::vector<int> Mean::GetAxis() const {
-  auto fb_vector = this->primitive->value_as_Mean()->axis();
+  auto fb_vector = this->primitive_->value_as_Mean()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-bool Mean::GetKeepDims() const { return this->primitive->value_as_Mean()->keepDims(); }
+bool Mean::GetKeepDims() const { return this->primitive_->value_as_Mean()->keepDims(); }
 
 void Mean::SetAxis(const std::vector<int> &axis) {}
 void Mean::SetKeepDims(bool keep_dims) {}
@@ -55,7 +55,7 @@ int Mean::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  if (this->primitive == nullptr) {
+  if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;
   }
 

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include <algorithm>
+#include "src/runtime/kernel/arm/int8/reduce_int8.h"
 #include "schema/model_generated.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/runtime_api.h"
 #include "nnacl/quantization/quantize.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/int8/reduce_int8.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -83,8 +82,7 @@ int ReduceInt8CPUKernel::Init() {
       last_reducer_ = ReduceSumSquareLastAxis;
       break;
     }
-    default:
-      MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
+    default:MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
       return RET_ERROR;
   }
   if (!InferShapeDone()) {
@@ -117,7 +115,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
     for (auto i = 0; i < num_axes_; i++) {
       auto axis = axes_[i];
       double reciprocal = 1.0 / in_tensors_.at(0)->shape()[axis];
-      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
+      QuantMulArg *qm = new(std::nothrow) QuantMulArg;
       if (qm == nullptr) {
         MS_LOG(ERROR) << "Reduce new QuantMulArg failed.";
         return RET_NULL_PTR;
@@ -135,7 +133,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceProd)) {
     for (auto i = 0; i < num_axes_; i++) {
       int axis_size = in_tensors_.at(0)->shape()[axes_[i]];
-      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
+      QuantMulArg *qm = new(std::nothrow) QuantMulArg;
       if (qm == nullptr) {
         MS_LOG(ERROR) << "ReduceProd new QuantMulArg failed.";
         return RET_NULL_PTR;
@@ -153,7 +151,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   // scale_in * scale_in/scale_out
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
     for (auto i = 0; i < num_axes_ - 1; i++) {
-      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
+      QuantMulArg *qm = new(std::nothrow) QuantMulArg;
       if (qm == nullptr) {
         MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
         return RET_NULL_PTR;
@@ -165,7 +163,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
       sum_square_multipliers_.push_back(qm);
     }
 
-    QuantMulArg *qm = new (std::nothrow) QuantMulArg;
+    QuantMulArg *qm = new(std::nothrow) QuantMulArg;
     if (qm == nullptr) {
       MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
       return RET_NULL_PTR;
@@ -338,7 +336,14 @@ int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
   int ret;
   if (!is_last_axis_) {
     ret =
-      reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id, context_->thread_num_);
+        reducer_(outer_size_,
+                 inner_size_,
+                 axis_size_,
+                 src_data_,
+                 dst_data_,
+                 &quant_arg_,
+                 task_id,
+                 context_->thread_num_);
   } else {
     ret = last_reducer_(outer_size_, inner_size_, axis_size_, src_data_, last_dst_data_, &quant_arg_, task_id,
                         context_->thread_num_);

@@ -19,20 +19,20 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Stack::GetAxis() const { return this->primitive->value.AsStack()->axis; }
-int Stack::GetN() const { return this->primitive->value.AsStack()->n; }
-std::vector<int> Stack::GetIsScale() const { return this->primitive->value.AsStack()->isScale; }
+int Stack::GetAxis() const { return this->primitive_->value.AsStack()->axis; }
+int Stack::GetN() const { return this->primitive_->value.AsStack()->n; }
+std::vector<int> Stack::GetIsScale() const { return this->primitive_->value.AsStack()->isScale; }
 
-void Stack::SetAxis(int axis) { this->primitive->value.AsStack()->axis = axis; }
-void Stack::SetN(int n) { this->primitive->value.AsStack()->n = n; }
-void Stack::SetIsScale(const std::vector<int> &is_scale) { this->primitive->value.AsStack()->isScale = is_scale; }
+void Stack::SetAxis(int axis) { this->primitive_->value.AsStack()->axis = axis; }
+void Stack::SetN(int n) { this->primitive_->value.AsStack()->n = n; }
+void Stack::SetIsScale(const std::vector<int> &is_scale) { this->primitive_->value.AsStack()->isScale = is_scale; }
 
 #else
 
-int Stack::GetAxis() const { return this->primitive->value_as_Stack()->axis(); }
-int Stack::GetN() const { return this->primitive->value_as_Stack()->n(); }
+int Stack::GetAxis() const { return this->primitive_->value_as_Stack()->axis(); }
+int Stack::GetN() const { return this->primitive_->value_as_Stack()->n(); }
 std::vector<int> Stack::GetIsScale() const {
-  auto fb_vector = this->primitive->value_as_Stack()->isScale();
+  auto fb_vector = this->primitive_->value_as_Stack()->isScale();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -46,7 +46,7 @@ constexpr int kStackOutputNum = 1;
 constexpr int kStackMinInputNum = 2;
 }  // namespace
 int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kStackOutputNum) {
     MS_LOG(ERROR) << "Invalid output size:" << outputs.size();
     return RET_PARAM_INVALID;

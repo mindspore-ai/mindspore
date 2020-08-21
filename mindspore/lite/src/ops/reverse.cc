@@ -19,14 +19,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Reverse::GetAxis() const { return this->primitive->value.AsReverse()->axis; }
+std::vector<int> Reverse::GetAxis() const { return this->primitive_->value.AsReverse()->axis; }
 
-void Reverse::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsReverse()->axis = axis; }
+void Reverse::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsReverse()->axis = axis; }
 
 #else
 
 std::vector<int> Reverse::GetAxis() const {
-  auto fb_vector = this->primitive->value_as_Reverse()->axis();
+  auto fb_vector = this->primitive_->value_as_Reverse()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 

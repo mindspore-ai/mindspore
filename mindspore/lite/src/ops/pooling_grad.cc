@@ -19,55 +19,55 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int PoolingGrad::GetFormat() const { return this->primitive->value.AsPoolingGrad()->format; }
-int PoolingGrad::GetPoolingMode() const { return this->primitive->value.AsPoolingGrad()->poolingMode; }
-bool PoolingGrad::GetGlobal() const { return this->primitive->value.AsPoolingGrad()->global; }
-int PoolingGrad::GetWindowW() const { return this->primitive->value.AsPoolingGrad()->windowW; }
-int PoolingGrad::GetWindowH() const { return this->primitive->value.AsPoolingGrad()->windowH; }
-int PoolingGrad::GetStrideW() const { return this->primitive->value.AsPoolingGrad()->strideW; }
-int PoolingGrad::GetStrideH() const { return this->primitive->value.AsPoolingGrad()->strideH; }
-int PoolingGrad::GetPadMode() const { return this->primitive->value.AsPoolingGrad()->padMode; }
-int PoolingGrad::GetPadUp() const { return this->primitive->value.AsPoolingGrad()->padUp; }
-int PoolingGrad::GetPadDown() const { return this->primitive->value.AsPoolingGrad()->padDown; }
-int PoolingGrad::GetPadLeft() const { return this->primitive->value.AsPoolingGrad()->padLeft; }
-int PoolingGrad::GetPadRight() const { return this->primitive->value.AsPoolingGrad()->padRight; }
-int PoolingGrad::GetRoundMode() const { return this->primitive->value.AsPoolingGrad()->roundMode; }
+int PoolingGrad::GetFormat() const { return this->primitive_->value.AsPoolingGrad()->format; }
+int PoolingGrad::GetPoolingMode() const { return this->primitive_->value.AsPoolingGrad()->poolingMode; }
+bool PoolingGrad::GetGlobal() const { return this->primitive_->value.AsPoolingGrad()->global; }
+int PoolingGrad::GetWindowW() const { return this->primitive_->value.AsPoolingGrad()->windowW; }
+int PoolingGrad::GetWindowH() const { return this->primitive_->value.AsPoolingGrad()->windowH; }
+int PoolingGrad::GetStrideW() const { return this->primitive_->value.AsPoolingGrad()->strideW; }
+int PoolingGrad::GetStrideH() const { return this->primitive_->value.AsPoolingGrad()->strideH; }
+int PoolingGrad::GetPadMode() const { return this->primitive_->value.AsPoolingGrad()->padMode; }
+int PoolingGrad::GetPadUp() const { return this->primitive_->value.AsPoolingGrad()->padUp; }
+int PoolingGrad::GetPadDown() const { return this->primitive_->value.AsPoolingGrad()->padDown; }
+int PoolingGrad::GetPadLeft() const { return this->primitive_->value.AsPoolingGrad()->padLeft; }
+int PoolingGrad::GetPadRight() const { return this->primitive_->value.AsPoolingGrad()->padRight; }
+int PoolingGrad::GetRoundMode() const { return this->primitive_->value.AsPoolingGrad()->roundMode; }
 
-void PoolingGrad::SetFormat(int format) { this->primitive->value.AsPoolingGrad()->format = (schema::Format)format; }
+void PoolingGrad::SetFormat(int format) { this->primitive_->value.AsPoolingGrad()->format = (schema::Format)format; }
 void PoolingGrad::SetPoolingMode(int pooling_mode) {
-  this->primitive->value.AsPoolingGrad()->poolingMode = (schema::PoolMode)pooling_mode;
+  this->primitive_->value.AsPoolingGrad()->poolingMode = (schema::PoolMode)pooling_mode;
 }
-void PoolingGrad::SetGlobal(bool global) { this->primitive->value.AsPoolingGrad()->global = global; }
-void PoolingGrad::SetWindowW(int window_w) { this->primitive->value.AsPoolingGrad()->windowW = window_w; }
-void PoolingGrad::SetWindowH(int window_h) { this->primitive->value.AsPoolingGrad()->windowH = window_h; }
-void PoolingGrad::SetStrideW(int stride_w) { this->primitive->value.AsPoolingGrad()->strideW = stride_w; }
-void PoolingGrad::SetStrideH(int stride_h) { this->primitive->value.AsPoolingGrad()->strideH = stride_h; }
+void PoolingGrad::SetGlobal(bool global) { this->primitive_->value.AsPoolingGrad()->global = global; }
+void PoolingGrad::SetWindowW(int window_w) { this->primitive_->value.AsPoolingGrad()->windowW = window_w; }
+void PoolingGrad::SetWindowH(int window_h) { this->primitive_->value.AsPoolingGrad()->windowH = window_h; }
+void PoolingGrad::SetStrideW(int stride_w) { this->primitive_->value.AsPoolingGrad()->strideW = stride_w; }
+void PoolingGrad::SetStrideH(int stride_h) { this->primitive_->value.AsPoolingGrad()->strideH = stride_h; }
 void PoolingGrad::SetPadMode(int pad_mode) {
-  this->primitive->value.AsPoolingGrad()->padMode = (schema::PadMode)pad_mode;
+  this->primitive_->value.AsPoolingGrad()->padMode = (schema::PadMode)pad_mode;
 }
-void PoolingGrad::SetPadUp(int pad_up) { this->primitive->value.AsPoolingGrad()->padUp = pad_up; }
-void PoolingGrad::SetPadDown(int pad_down) { this->primitive->value.AsPoolingGrad()->padDown = pad_down; }
-void PoolingGrad::SetPadLeft(int pad_left) { this->primitive->value.AsPoolingGrad()->padLeft = pad_left; }
-void PoolingGrad::SetPadRight(int pad_right) { this->primitive->value.AsPoolingGrad()->padRight = pad_right; }
+void PoolingGrad::SetPadUp(int pad_up) { this->primitive_->value.AsPoolingGrad()->padUp = pad_up; }
+void PoolingGrad::SetPadDown(int pad_down) { this->primitive_->value.AsPoolingGrad()->padDown = pad_down; }
+void PoolingGrad::SetPadLeft(int pad_left) { this->primitive_->value.AsPoolingGrad()->padLeft = pad_left; }
+void PoolingGrad::SetPadRight(int pad_right) { this->primitive_->value.AsPoolingGrad()->padRight = pad_right; }
 void PoolingGrad::SetRoundMode(int round_mode) {
-  this->primitive->value.AsPoolingGrad()->roundMode = (schema::RoundMode)round_mode;
+  this->primitive_->value.AsPoolingGrad()->roundMode = (schema::RoundMode)round_mode;
 }
 
 #else
 
-int PoolingGrad::GetFormat() const { return this->primitive->value_as_PoolingGrad()->format(); }
-int PoolingGrad::GetPoolingMode() const { return this->primitive->value_as_PoolingGrad()->poolingMode(); }
-bool PoolingGrad::GetGlobal() const { return this->primitive->value_as_PoolingGrad()->global(); }
-int PoolingGrad::GetWindowW() const { return this->primitive->value_as_PoolingGrad()->windowW(); }
-int PoolingGrad::GetWindowH() const { return this->primitive->value_as_PoolingGrad()->windowH(); }
-int PoolingGrad::GetStrideW() const { return this->primitive->value_as_PoolingGrad()->strideW(); }
-int PoolingGrad::GetStrideH() const { return this->primitive->value_as_PoolingGrad()->strideH(); }
-int PoolingGrad::GetPadMode() const { return this->primitive->value_as_PoolingGrad()->padMode(); }
-int PoolingGrad::GetPadUp() const { return this->primitive->value_as_PoolingGrad()->padUp(); }
-int PoolingGrad::GetPadDown() const { return this->primitive->value_as_PoolingGrad()->padDown(); }
-int PoolingGrad::GetPadLeft() const { return this->primitive->value_as_PoolingGrad()->padLeft(); }
-int PoolingGrad::GetPadRight() const { return this->primitive->value_as_PoolingGrad()->padRight(); }
-int PoolingGrad::GetRoundMode() const { return this->primitive->value_as_PoolingGrad()->roundMode(); }
+int PoolingGrad::GetFormat() const { return this->primitive_->value_as_PoolingGrad()->format(); }
+int PoolingGrad::GetPoolingMode() const { return this->primitive_->value_as_PoolingGrad()->poolingMode(); }
+bool PoolingGrad::GetGlobal() const { return this->primitive_->value_as_PoolingGrad()->global(); }
+int PoolingGrad::GetWindowW() const { return this->primitive_->value_as_PoolingGrad()->windowW(); }
+int PoolingGrad::GetWindowH() const { return this->primitive_->value_as_PoolingGrad()->windowH(); }
+int PoolingGrad::GetStrideW() const { return this->primitive_->value_as_PoolingGrad()->strideW(); }
+int PoolingGrad::GetStrideH() const { return this->primitive_->value_as_PoolingGrad()->strideH(); }
+int PoolingGrad::GetPadMode() const { return this->primitive_->value_as_PoolingGrad()->padMode(); }
+int PoolingGrad::GetPadUp() const { return this->primitive_->value_as_PoolingGrad()->padUp(); }
+int PoolingGrad::GetPadDown() const { return this->primitive_->value_as_PoolingGrad()->padDown(); }
+int PoolingGrad::GetPadLeft() const { return this->primitive_->value_as_PoolingGrad()->padLeft(); }
+int PoolingGrad::GetPadRight() const { return this->primitive_->value_as_PoolingGrad()->padRight(); }
+int PoolingGrad::GetRoundMode() const { return this->primitive_->value_as_PoolingGrad()->roundMode(); }
 
 void PoolingGrad::SetFormat(int format) {}
 void PoolingGrad::SetPoolingMode(int pooling_mode) {}

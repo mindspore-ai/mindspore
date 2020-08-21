@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/bias_add_int8.h"
 #include "mindspore/lite/src/kernel_registry.h"

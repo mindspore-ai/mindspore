@@ -21,14 +21,14 @@
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-int AnfTupleGetItemPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfTupleGetItemPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                        const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::TupleGetItemT>();
   primitive->value.type = schema::PrimitiveType_TupleGetItem;
   primitive->value.value = attr.release();
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
+  MS_ASSERT(primitiveCPtr != nullptr);
+  primitiveCPtr->SetPrimitiveT(primitive.release());
   return 0;
 }
 AnfNodePopulaterRegistrar anfTupleGetItemPopulater("tuple_getitem", new AnfTupleGetItemPopulater());

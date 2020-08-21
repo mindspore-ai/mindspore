@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int OneHot::GetAxis() const { return this->primitive->value.AsOneHot()->axis; }
+int OneHot::GetAxis() const { return this->primitive_->value.AsOneHot()->axis; }
 
-void OneHot::SetAxis(int axis) { this->primitive->value.AsOneHot()->axis = axis; }
+void OneHot::SetAxis(int axis) { this->primitive_->value.AsOneHot()->axis = axis; }
 
 #else
 
-int OneHot::GetAxis() const { return this->primitive->value_as_OneHot()->axis(); }
+int OneHot::GetAxis() const { return this->primitive_->value_as_OneHot()->axis(); }
 
 void OneHot::SetAxis(int axis) {}
 #endif
@@ -34,7 +34,7 @@ namespace {
 constexpr size_t kOneHotInputNum = 4;
 }
 int OneHot::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
-  if (this->primitive == nullptr) {
+  if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;
   }
 

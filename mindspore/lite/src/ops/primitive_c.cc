@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/primitive_c.h"
+#include <memory>
 #include "src/ops/space_to_batch.h"
 #include "src/ops/conv2d.h"
 #include "src/ops/roi_pooling.h"
@@ -114,29 +115,60 @@
 
 namespace mindspore {
 namespace lite {
-int PrimitiveC::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
-  auto input = inputs_.front();
-  MS_ASSERT(input != nullptr);
-  auto output = outputs_.front();
-  MS_ASSERT(output != nullptr);
-  output->set_shape(input->shape());
-  output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-  return 0;
-}
-int PrimitiveC::Type() const {
 #ifdef PRIMITIVE_WRITEABLE
-  return this->primitive->value.type;
-#else
-  return this->primitive->value_type();
-#endif
+schema::PrimitiveT *PrimitiveC::GetPrimitiveT() const { return this->primitive_; }
+
+void PrimitiveC::SetPrimitiveT(schema::PrimitiveT *prim) { this->primitive_ = prim; }
+
+void PrimitiveC::SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param) {
+  this->input_quant_param_ = input_quant_param;
 }
 
-bool PrimitiveC::GetInferFlag() const { return this->infer_flag_; }
+void PrimitiveC::SetOutputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param) {
+  this->output_quant_param_ = output_quant_param;
+}
 
-void PrimitiveC::SetInferFlag(bool flag) { this->infer_flag_ = flag; }
+void PrimitiveC::ClearInputOutputQuantParam() {
+  input_quant_param_.clear();
+  output_quant_param_.clear();
+}
 
-PrimitiveC *PrimitiveC::CreatePrimitive(OriginPrimitive *primitive) {
+void PrimitiveC::AddInputQuantParam(std::vector<schema::QuantParamT> quant_param) {
+  this->input_quant_param_.emplace_back(quant_param);
+}
+std::vector<std::vector<schema::QuantParamT>> PrimitiveC::GetInputQuantParams() const { return input_quant_param_; }
+
+void PrimitiveC::AddOutputQuantParam(std::vector<schema::QuantParamT> quant_param) {
+  this->output_quant_param_.emplace_back(quant_param);
+}
+std::vector<std::vector<schema::QuantParamT>> PrimitiveC::GetOutputQuantParams() const { return output_quant_param_; }
+
+void PrimitiveC::SetQuantType(schema::QuantType quant_type) { this->quant_type_ = quant_type; }
+
+schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_; }
+
+std::shared_ptr<PrimitiveC> GetReturnPrim() {
+  auto return_primitiveT = new schema::PrimitiveT;
+  return_primitiveT->value.type = schema::PrimitiveType_Return;
+  return_primitiveT->value.value = new schema::ReturnT;
+  return std::make_shared<PrimitiveC>(return_primitiveT);
+}
+
+std::shared_ptr<PrimitiveC> GetMakeTuplePrim() {
+  auto make_tuple_primitiveT = new schema::PrimitiveT;
+  make_tuple_primitiveT->value.type = schema::PrimitiveType_MakeTuple;
+  make_tuple_primitiveT->value.value = new schema::MakeTupleT;
+  return std::make_shared<PrimitiveC>(make_tuple_primitiveT);
+}
+
+std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
+  auto tuple_get_item_primitiveT = new schema::PrimitiveT();
+  tuple_get_item_primitiveT->value.type = schema::PrimitiveType_TupleGetItem;
+  tuple_get_item_primitiveT->value.value = new schema::TupleGetItemT;
+  return std::make_shared<PrimitiveC>(tuple_get_item_primitiveT);
+}
+
+PrimitiveC *PrimitiveC::CreatePrimitive(mindspore::schema::Primitive *primitive) {
   MS_ASSERT(primitive != nullptr);
   auto op_type = primitive->value_type();
   switch (op_type) {
@@ -267,5 +299,30 @@ PrimitiveC *PrimitiveC::CreatePrimitive(OriginPrimitive *primitive) {
   }
   return nullptr;
 }
+
+#endif
+
+int PrimitiveC::Type() const {
+#ifdef PRIMITIVE_WRITEABLE
+  return this->primitive_->value.type;
+#else
+  return this->primitive_->value_type();
+#endif
+}
+bool PrimitiveC::GetInferFlag() const { return this->infer_flag_; }
+
+void PrimitiveC::SetInferFlag(bool flag) { this->infer_flag_ = flag; }
+
+int PrimitiveC::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
+  auto input = inputs_.front();
+  MS_ASSERT(input != nullptr);
+  auto output = outputs_.front();
+  MS_ASSERT(output != nullptr);
+  output->set_shape(input->shape());
+  output->set_data_type(input->data_type());
+  output->SetFormat(input->GetFormat());
+  return 0;
+}
+
 }  // namespace lite
 }  // namespace mindspore

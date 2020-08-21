@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float BatchNorm::GetEpsilon() const { return this->primitive->value.AsBatchNorm()->epsilon; }
+float BatchNorm::GetEpsilon() const { return this->primitive_->value.AsBatchNorm()->epsilon; }
 
-void BatchNorm::SetEpsilon(float epsilon) { this->primitive->value.AsBatchNorm()->epsilon = epsilon; }
+void BatchNorm::SetEpsilon(float epsilon) { this->primitive_->value.AsBatchNorm()->epsilon = epsilon; }
 
 #else
 
-float BatchNorm::GetEpsilon() const { return this->primitive->value_as_BatchNorm()->epsilon(); }
+float BatchNorm::GetEpsilon() const { return this->primitive_->value_as_BatchNorm()->epsilon(); }
 
 void BatchNorm::SetEpsilon(float epsilon) {}
 #endif

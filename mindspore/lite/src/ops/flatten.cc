@@ -20,7 +20,7 @@ namespace mindspore {
 namespace lite {
 
 int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   auto output = outputs_.front();
   if (input == nullptr || output == nullptr) {

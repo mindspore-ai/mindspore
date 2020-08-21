@@ -26,23 +26,23 @@ constexpr int kSliceInputNum = 1;
 constexpr int kSliceOutputNum = 1;
 }  // namespace
 #ifdef PRIMITIVE_WRITEABLE
-int SliceOp::GetFormat() const { return this->primitive->value.AsSlice()->format; }
-std::vector<int> SliceOp::GetBegin() const { return this->primitive->value.AsSlice()->begin; }
-std::vector<int> SliceOp::GetSize() const { return this->primitive->value.AsSlice()->size; }
+int SliceOp::GetFormat() const { return this->primitive_->value.AsSlice()->format; }
+std::vector<int> SliceOp::GetBegin() const { return this->primitive_->value.AsSlice()->begin; }
+std::vector<int> SliceOp::GetSize() const { return this->primitive_->value.AsSlice()->size; }
 
-void SliceOp::SetFormat(int format) { this->primitive->value.AsSlice()->format = (schema::Format)format; }
-void SliceOp::SetBegin(const std::vector<int> &begin) { this->primitive->value.AsSlice()->begin = begin; }
-void SliceOp::SetSize(const std::vector<int> &size) { this->primitive->value.AsSlice()->size = size; }
+void SliceOp::SetFormat(int format) { this->primitive_->value.AsSlice()->format = (schema::Format)format; }
+void SliceOp::SetBegin(const std::vector<int> &begin) { this->primitive_->value.AsSlice()->begin = begin; }
+void SliceOp::SetSize(const std::vector<int> &size) { this->primitive_->value.AsSlice()->size = size; }
 
 #else
 
-int SliceOp::GetFormat() const { return this->primitive->value_as_Slice()->format(); }
+int SliceOp::GetFormat() const { return this->primitive_->value_as_Slice()->format(); }
 std::vector<int> SliceOp::GetBegin() const {
-  auto fb_vector = this->primitive->value_as_Slice()->begin();
+  auto fb_vector = this->primitive_->value_as_Slice()->begin();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> SliceOp::GetSize() const {
-  auto fb_vector = this->primitive->value_as_Slice()->size();
+  auto fb_vector = this->primitive_->value_as_Slice()->size();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -52,7 +52,7 @@ void SliceOp::SetSize(const std::vector<int> &size) {}
 #endif
 
 int SliceOp::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs.size() != kSliceInputNum || outputs.size() != kSliceOutputNum) {
     MS_LOG(ERROR) << "input size:" << inputs.size() << ",output size:" << outputs.size();
     return RET_PARAM_INVALID;

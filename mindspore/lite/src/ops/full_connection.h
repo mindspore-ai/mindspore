@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_FULL_CONNECTION_H_
+#define LITE_MINDSPORE_LITE_C_OPS_FULL_CONNECTION_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_FULL_CONNECTION_H_
-#define LITE_MINDSPORE_LITE_C_OPS_FULL_CONNECTION_H_
 
 namespace mindspore {
 namespace lite {
 class FullConnection : public PrimitiveC {
  public:
-  explicit FullConnection(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit FullConnection(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit FullConnection(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool GetHasBias() const;

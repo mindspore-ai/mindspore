@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/topk.h"
 #include "mindspore/lite/src/kernel_registry.h"

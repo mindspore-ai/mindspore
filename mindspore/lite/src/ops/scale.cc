@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Scale::GetAxis() const { return this->primitive->value.AsScale()->axis; }
+int Scale::GetAxis() const { return this->primitive_->value.AsScale()->axis; }
 
-void Scale::SetAxis(int axis) { this->primitive->value.AsScale()->axis = axis; }
+void Scale::SetAxis(int axis) { this->primitive_->value.AsScale()->axis = axis; }
 
 #else
 
-int Scale::GetAxis() const { return this->primitive->value_as_Scale()->axis(); }
+int Scale::GetAxis() const { return this->primitive_->value_as_Scale()->axis(); }
 
 void Scale::SetAxis(int axis) {}
 #endif

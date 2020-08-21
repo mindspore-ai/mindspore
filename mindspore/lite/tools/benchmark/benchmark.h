@@ -26,11 +26,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "include/model.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "schema/model_generated.h"
-#include "include/model.h"
 #include "include/lite_session.h"
 #include "include/inference.h"
 

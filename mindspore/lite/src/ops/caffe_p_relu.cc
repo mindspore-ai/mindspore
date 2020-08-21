@@ -19,15 +19,15 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-bool CaffePReLU::GetChannelShared() const { return this->primitive->value.AsCaffePReLU()->channelShared; }
+bool CaffePReLU::GetChannelShared() const { return this->primitive_->value.AsCaffePReLU()->channelShared; }
 
 void CaffePReLU::SetChannelShared(bool channel_shared) {
-  this->primitive->value.AsCaffePReLU()->channelShared = channel_shared;
+  this->primitive_->value.AsCaffePReLU()->channelShared = channel_shared;
 }
 
 #else
 
-bool CaffePReLU::GetChannelShared() const { return this->primitive->value_as_CaffePReLU()->channelShared(); }
+bool CaffePReLU::GetChannelShared() const { return this->primitive_->value_as_CaffePReLU()->channelShared(); }
 
 void CaffePReLU::SetChannelShared(bool channel_shared) {}
 #endif

@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_LOCAL_RESPONSE_NORMALIZATION_H_
+#define LITE_MINDSPORE_LITE_C_OPS_LOCAL_RESPONSE_NORMALIZATION_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_LOCAL_RESPONSE_NORMALIZATION_H_
-#define LITE_MINDSPORE_LITE_C_OPS_LOCAL_RESPONSE_NORMALIZATION_H_
 
 namespace mindspore {
 namespace lite {
 class LocalResponseNormalization : public PrimitiveC {
  public:
-  explicit LocalResponseNormalization(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit LocalResponseNormalization(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit LocalResponseNormalization(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   int GetDepthRadius() const;
   float GetBias() const;

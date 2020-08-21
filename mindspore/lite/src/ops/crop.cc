@@ -19,17 +19,17 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-long Crop::GetAxis() const { return this->primitive->value.AsCrop()->axis; }
-std::vector<long> Crop::GetOffsets() const { return this->primitive->value.AsCrop()->offsets; }
+long Crop::GetAxis() const { return this->primitive_->value.AsCrop()->axis; }
+std::vector<long> Crop::GetOffsets() const { return this->primitive_->value.AsCrop()->offsets; }
 
-void Crop::SetAxis(long axis) { this->primitive->value.AsCrop()->axis = axis; }
-void Crop::SetOffsets(const std::vector<long> &offsets) { this->primitive->value.AsCrop()->offsets = offsets; }
+void Crop::SetAxis(long axis) { this->primitive_->value.AsCrop()->axis = axis; }
+void Crop::SetOffsets(const std::vector<long> &offsets) { this->primitive_->value.AsCrop()->offsets = offsets; }
 
 #else
 
-long Crop::GetAxis() const { return this->primitive->value_as_Crop()->axis(); }
+long Crop::GetAxis() const { return this->primitive_->value_as_Crop()->axis(); }
 std::vector<long> Crop::GetOffsets() const {
-  auto fb_vector = this->primitive->value_as_Crop()->offsets();
+  auto fb_vector = this->primitive_->value_as_Crop()->offsets();
   return std::vector<long>(fb_vector->begin(), fb_vector->end());
 }
 

@@ -20,35 +20,35 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 std::vector<int> EmbeddingLookupSparse::GetSpIds() const {
-  return this->primitive->value.AsEmbeddingLookupSparse()->spIds;
+  return this->primitive_->value.AsEmbeddingLookupSparse()->spIds;
 }
 std::vector<float> EmbeddingLookupSparse::GetSpWeights() const {
-  return this->primitive->value.AsEmbeddingLookupSparse()->spWeights;
+  return this->primitive_->value.AsEmbeddingLookupSparse()->spWeights;
 }
-float EmbeddingLookupSparse::GetMaxNortm() const { return this->primitive->value.AsEmbeddingLookupSparse()->maxNortm; }
+float EmbeddingLookupSparse::GetMaxNortm() const { return this->primitive_->value.AsEmbeddingLookupSparse()->maxNortm; }
 
 void EmbeddingLookupSparse::SetSpIds(const std::vector<int> &sp_ids) {
-  this->primitive->value.AsEmbeddingLookupSparse()->spIds = sp_ids;
+  this->primitive_->value.AsEmbeddingLookupSparse()->spIds = sp_ids;
 }
 void EmbeddingLookupSparse::SetSpWeights(const std::vector<float> &sp_weights) {
-  this->primitive->value.AsEmbeddingLookupSparse()->spWeights = sp_weights;
+  this->primitive_->value.AsEmbeddingLookupSparse()->spWeights = sp_weights;
 }
 void EmbeddingLookupSparse::SetMaxNortm(float max_nortm) {
-  this->primitive->value.AsEmbeddingLookupSparse()->maxNortm = max_nortm;
+  this->primitive_->value.AsEmbeddingLookupSparse()->maxNortm = max_nortm;
 }
 
 #else
 
 std::vector<int> EmbeddingLookupSparse::GetSpIds() const {
-  auto fb_vector = this->primitive->value_as_EmbeddingLookupSparse()->spIds();
+  auto fb_vector = this->primitive_->value_as_EmbeddingLookupSparse()->spIds();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<float> EmbeddingLookupSparse::GetSpWeights() const {
-  auto fb_vector = this->primitive->value_as_EmbeddingLookupSparse()->spWeights();
+  auto fb_vector = this->primitive_->value_as_EmbeddingLookupSparse()->spWeights();
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
 float EmbeddingLookupSparse::GetMaxNortm() const {
-  return this->primitive->value_as_EmbeddingLookupSparse()->maxNortm();
+  return this->primitive_->value_as_EmbeddingLookupSparse()->maxNortm();
 }
 
 void EmbeddingLookupSparse::SetSpIds(const std::vector<int> &sp_ids) {}

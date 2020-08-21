@@ -23,14 +23,11 @@
 #include <string>
 #include <vector>
 #include <utility>
-
+#include "include/lite_session.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "schema/model_generated.h"
 #include "include/model.h"
-#include "include/lite_session.h"
-
 
 namespace mindspore {
 namespace lite {
@@ -70,7 +67,7 @@ class MS_API TimeProfile {
   int ReadInputFile();
   int InitCallbackParameter();
   int InitSession();
-  int PrintResult(const std::vector<std::string>& title, const std::map<std::string, std::pair<int, float>>& result);
+  int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
  private:
   TimeProfileFlags *_flags;

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
 
 #include <memory>
-#include "src/ir/primitive_t_value.h"
+#include "src/ops//primitive_c.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
@@ -26,7 +26,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
 
-using PrimitiveTValuePtr = std::shared_ptr<mindspore::lite::PrimitiveTValue>;
+using PrimitiveCPtr = std::shared_ptr<mindspore::lite::PrimitiveC>;
 namespace mindspore {
 namespace opt {
 bool IsRealCNodeKernel(const AnfNodePtr &node);

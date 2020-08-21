@@ -19,22 +19,22 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Reduce::GetAxes() const { return this->primitive->value.AsReduce()->axes; }
-int Reduce::GetKeepDims() const { return this->primitive->value.AsReduce()->keepDims; }
-int Reduce::GetMode() const { return this->primitive->value.AsReduce()->mode; }
+std::vector<int> Reduce::GetAxes() const { return this->primitive_->value.AsReduce()->axes; }
+int Reduce::GetKeepDims() const { return this->primitive_->value.AsReduce()->keepDims; }
+int Reduce::GetMode() const { return this->primitive_->value.AsReduce()->mode; }
 
-void Reduce::SetAxes(const std::vector<int> &axes) { this->primitive->value.AsReduce()->axes = axes; }
-void Reduce::SetKeepDims(int keep_dims) { this->primitive->value.AsReduce()->keepDims = keep_dims; }
-void Reduce::SetMode(int mode) { this->primitive->value.AsReduce()->mode = (schema::ReduceMode)mode; }
+void Reduce::SetAxes(const std::vector<int> &axes) { this->primitive_->value.AsReduce()->axes = axes; }
+void Reduce::SetKeepDims(int keep_dims) { this->primitive_->value.AsReduce()->keepDims = keep_dims; }
+void Reduce::SetMode(int mode) { this->primitive_->value.AsReduce()->mode = (schema::ReduceMode)mode; }
 
 #else
 
 std::vector<int> Reduce::GetAxes() const {
-  auto fb_vector = this->primitive->value_as_Reduce()->axes();
+  auto fb_vector = this->primitive_->value_as_Reduce()->axes();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-int Reduce::GetKeepDims() const { return this->primitive->value_as_Reduce()->keepDims(); }
-int Reduce::GetMode() const { return this->primitive->value_as_Reduce()->mode(); }
+int Reduce::GetKeepDims() const { return this->primitive_->value_as_Reduce()->keepDims(); }
+int Reduce::GetMode() const { return this->primitive_->value_as_Reduce()->mode(); }
 
 void Reduce::SetAxes(const std::vector<int> &axes) {}
 void Reduce::SetKeepDims(int keep_dims) {}
@@ -59,7 +59,7 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  if (this->primitive == nullptr) {
+  if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;
   }
 

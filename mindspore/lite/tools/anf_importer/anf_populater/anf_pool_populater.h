@@ -22,7 +22,7 @@ class AnfPoolPopulater : public AnfNodePopulater {
  public:
   AnfPoolPopulater() = default;
   ~AnfPoolPopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                const std::vector<AnfNodePtr> &inputs) override;
 };
 }  // namespace mindspore::lite

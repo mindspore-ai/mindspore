@@ -22,14 +22,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Unsqueeze::GetAxis() const { return this->primitive->value.AsUnsqueeze()->axis; }
+std::vector<int> Unsqueeze::GetAxis() const { return this->primitive_->value.AsUnsqueeze()->axis; }
 
-void Unsqueeze::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsUnsqueeze()->axis = axis; }
+void Unsqueeze::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsUnsqueeze()->axis = axis; }
 
 #else
 bool predicate(int n) { return n != 1; }
 std::vector<int> Unsqueeze::GetAxis() const {
-  auto fb_vector = this->primitive->value_as_Unsqueeze()->axis();
+  auto fb_vector = this->primitive_->value_as_Unsqueeze()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -37,7 +37,7 @@ void Unsqueeze::SetAxis(const std::vector<int> &axis) {}
 #endif
 
 int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

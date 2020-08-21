@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "schema/model_generated.h"
+#include "src/runtime/kernel/arm/base/reduce_base.h"
 #include "src/kernel_registry.h"
+#include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-#include "src/runtime/kernel/arm/base/reduce_base.h"
 #include "src/runtime/kernel/arm/fp32/reduce.h"
 #include "src/runtime/kernel/arm/int8/reduce_int8.h"
 

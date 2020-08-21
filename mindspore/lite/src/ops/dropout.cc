@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float Dropout::GetRatio() const { return this->primitive->value.AsDropout()->ratio; }
+float Dropout::GetRatio() const { return this->primitive_->value.AsDropout()->ratio; }
 
-void Dropout::SetRatio(float ratio) { this->primitive->value.AsDropout()->ratio = ratio; }
+void Dropout::SetRatio(float ratio) { this->primitive_->value.AsDropout()->ratio = ratio; }
 
 #else
 
-float Dropout::GetRatio() const { return this->primitive->value_as_Dropout()->ratio(); }
+float Dropout::GetRatio() const { return this->primitive_->value_as_Dropout()->ratio(); }
 
 void Dropout::SetRatio(float ratio) {}
 #endif

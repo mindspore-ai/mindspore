@@ -19,8 +19,9 @@
 
 #include <vector>
 #include "ir/anf.h"
-#include "src/ir/primitive_t_value.h"
 #include "schema/inner/model_generated.h"
+#include "src/ops/primitive_c.h"
+
 namespace mindspore::lite {
 constexpr int kAnfPopulaterOne = 1;
 constexpr int kAnfPopulaterTwo = 2;
@@ -30,7 +31,7 @@ class AnfNodePopulater {
   AnfNodePopulater() = default;
   virtual ~AnfNodePopulater() = default;
 
-  virtual int Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+  virtual int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                        const std::vector<AnfNodePtr> &inputs) = 0;
 };
 

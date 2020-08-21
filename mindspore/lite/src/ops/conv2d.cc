@@ -26,63 +26,63 @@ int Conv2D::PadDown() const { return this->pad_d_; }
 int Conv2D::PadLeft() const { return this->pad_l_; }
 int Conv2D::PadRight() const { return this->pad_r_; }
 #ifdef PRIMITIVE_WRITEABLE
-int Conv2D::GetFormat() const { return this->primitive->value.AsConv2D()->format; }
-int Conv2D::GetGroup() const { return this->primitive->value.AsConv2D()->group; }
-int Conv2D::GetChannelIn() const { return this->primitive->value.AsConv2D()->channelIn; }
-int Conv2D::GetChannelOut() const { return this->primitive->value.AsConv2D()->channelOut; }
-int Conv2D::GetKernelW() const { return this->primitive->value.AsConv2D()->kernelW; }
-int Conv2D::GetKernelH() const { return this->primitive->value.AsConv2D()->kernelH; }
-int Conv2D::GetStrideW() const { return this->primitive->value.AsConv2D()->strideW; }
-int Conv2D::GetStrideH() const { return this->primitive->value.AsConv2D()->strideH; }
-int Conv2D::GetPadMode() const { return this->primitive->value.AsConv2D()->padMode; }
-int Conv2D::GetPadUp() const { return this->primitive->value.AsConv2D()->padUp; }
-int Conv2D::GetPadDown() const { return this->primitive->value.AsConv2D()->padDown; }
-int Conv2D::GetPadLeft() const { return this->primitive->value.AsConv2D()->padLeft; }
-int Conv2D::GetPadRight() const { return this->primitive->value.AsConv2D()->padRight; }
-int Conv2D::GetDilateW() const { return this->primitive->value.AsConv2D()->dilateW; }
-int Conv2D::GetDilateH() const { return this->primitive->value.AsConv2D()->dilateH; }
-bool Conv2D::GetHasBias() const { return this->primitive->value.AsConv2D()->hasBias; }
-int Conv2D::GetActivationType() const { return this->primitive->value.AsConv2D()->activationType; }
+int Conv2D::GetFormat() const { return this->primitive_->value.AsConv2D()->format; }
+int Conv2D::GetGroup() const { return this->primitive_->value.AsConv2D()->group; }
+int Conv2D::GetChannelIn() const { return this->primitive_->value.AsConv2D()->channelIn; }
+int Conv2D::GetChannelOut() const { return this->primitive_->value.AsConv2D()->channelOut; }
+int Conv2D::GetKernelW() const { return this->primitive_->value.AsConv2D()->kernelW; }
+int Conv2D::GetKernelH() const { return this->primitive_->value.AsConv2D()->kernelH; }
+int Conv2D::GetStrideW() const { return this->primitive_->value.AsConv2D()->strideW; }
+int Conv2D::GetStrideH() const { return this->primitive_->value.AsConv2D()->strideH; }
+int Conv2D::GetPadMode() const { return this->primitive_->value.AsConv2D()->padMode; }
+int Conv2D::GetPadUp() const { return this->primitive_->value.AsConv2D()->padUp; }
+int Conv2D::GetPadDown() const { return this->primitive_->value.AsConv2D()->padDown; }
+int Conv2D::GetPadLeft() const { return this->primitive_->value.AsConv2D()->padLeft; }
+int Conv2D::GetPadRight() const { return this->primitive_->value.AsConv2D()->padRight; }
+int Conv2D::GetDilateW() const { return this->primitive_->value.AsConv2D()->dilateW; }
+int Conv2D::GetDilateH() const { return this->primitive_->value.AsConv2D()->dilateH; }
+bool Conv2D::GetHasBias() const { return this->primitive_->value.AsConv2D()->hasBias; }
+int Conv2D::GetActivationType() const { return this->primitive_->value.AsConv2D()->activationType; }
 
-void Conv2D::SetFormat(int format) { this->primitive->value.AsConv2D()->format = (schema::Format)format; }
-void Conv2D::SetGroup(int group) { this->primitive->value.AsConv2D()->group = group; }
-void Conv2D::SetChannelIn(int channel_in) { this->primitive->value.AsConv2D()->channelIn = channel_in; }
-void Conv2D::SetChannelOut(int channel_out) { this->primitive->value.AsConv2D()->channelOut = channel_out; }
-void Conv2D::SetKernelW(int kernel_w) { this->primitive->value.AsConv2D()->kernelW = kernel_w; }
-void Conv2D::SetKernelH(int kernel_h) { this->primitive->value.AsConv2D()->kernelH = kernel_h; }
-void Conv2D::SetStrideW(int stride_w) { this->primitive->value.AsConv2D()->strideW = stride_w; }
-void Conv2D::SetStrideH(int stride_h) { this->primitive->value.AsConv2D()->strideH = stride_h; }
-void Conv2D::SetPadMode(int pad_mode) { this->primitive->value.AsConv2D()->padMode = (schema::PadMode)pad_mode; }
-void Conv2D::SetPadUp(int pad_up) { this->primitive->value.AsConv2D()->padUp = pad_up; }
-void Conv2D::SetPadDown(int pad_down) { this->primitive->value.AsConv2D()->padDown = pad_down; }
-void Conv2D::SetPadLeft(int pad_left) { this->primitive->value.AsConv2D()->padLeft = pad_left; }
-void Conv2D::SetPadRight(int pad_right) { this->primitive->value.AsConv2D()->padRight = pad_right; }
-void Conv2D::SetDilateW(int dilate_w) { this->primitive->value.AsConv2D()->dilateW = dilate_w; }
-void Conv2D::SetDilateH(int dilate_h) { this->primitive->value.AsConv2D()->dilateH = dilate_h; }
-void Conv2D::SetHasBias(bool has_bias) { this->primitive->value.AsConv2D()->hasBias = has_bias; }
+void Conv2D::SetFormat(int format) { this->primitive_->value.AsConv2D()->format = (schema::Format)format; }
+void Conv2D::SetGroup(int group) { this->primitive_->value.AsConv2D()->group = group; }
+void Conv2D::SetChannelIn(int channel_in) { this->primitive_->value.AsConv2D()->channelIn = channel_in; }
+void Conv2D::SetChannelOut(int channel_out) { this->primitive_->value.AsConv2D()->channelOut = channel_out; }
+void Conv2D::SetKernelW(int kernel_w) { this->primitive_->value.AsConv2D()->kernelW = kernel_w; }
+void Conv2D::SetKernelH(int kernel_h) { this->primitive_->value.AsConv2D()->kernelH = kernel_h; }
+void Conv2D::SetStrideW(int stride_w) { this->primitive_->value.AsConv2D()->strideW = stride_w; }
+void Conv2D::SetStrideH(int stride_h) { this->primitive_->value.AsConv2D()->strideH = stride_h; }
+void Conv2D::SetPadMode(int pad_mode) { this->primitive_->value.AsConv2D()->padMode = (schema::PadMode)pad_mode; }
+void Conv2D::SetPadUp(int pad_up) { this->primitive_->value.AsConv2D()->padUp = pad_up; }
+void Conv2D::SetPadDown(int pad_down) { this->primitive_->value.AsConv2D()->padDown = pad_down; }
+void Conv2D::SetPadLeft(int pad_left) { this->primitive_->value.AsConv2D()->padLeft = pad_left; }
+void Conv2D::SetPadRight(int pad_right) { this->primitive_->value.AsConv2D()->padRight = pad_right; }
+void Conv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsConv2D()->dilateW = dilate_w; }
+void Conv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsConv2D()->dilateH = dilate_h; }
+void Conv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsConv2D()->hasBias = has_bias; }
 void Conv2D::SetActivationType(int activation_type) {
-  this->primitive->value.AsConv2D()->activationType = (schema::ActivationType)activation_type;
+  this->primitive_->value.AsConv2D()->activationType = (schema::ActivationType)activation_type;
 }
 
 #else
 
-int Conv2D::GetFormat() const { return this->primitive->value_as_Conv2D()->format(); }
-int Conv2D::GetGroup() const { return this->primitive->value_as_Conv2D()->group(); }
-int Conv2D::GetChannelIn() const { return this->primitive->value_as_Conv2D()->channelIn(); }
-int Conv2D::GetChannelOut() const { return this->primitive->value_as_Conv2D()->channelOut(); }
-int Conv2D::GetKernelW() const { return this->primitive->value_as_Conv2D()->kernelW(); }
-int Conv2D::GetKernelH() const { return this->primitive->value_as_Conv2D()->kernelH(); }
-int Conv2D::GetStrideW() const { return this->primitive->value_as_Conv2D()->strideW(); }
-int Conv2D::GetStrideH() const { return this->primitive->value_as_Conv2D()->strideH(); }
-int Conv2D::GetPadMode() const { return this->primitive->value_as_Conv2D()->padMode(); }
-int Conv2D::GetPadUp() const { return this->primitive->value_as_Conv2D()->padUp(); }
-int Conv2D::GetPadDown() const { return this->primitive->value_as_Conv2D()->padDown(); }
-int Conv2D::GetPadLeft() const { return this->primitive->value_as_Conv2D()->padLeft(); }
-int Conv2D::GetPadRight() const { return this->primitive->value_as_Conv2D()->padRight(); }
-int Conv2D::GetDilateW() const { return this->primitive->value_as_Conv2D()->dilateW(); }
-int Conv2D::GetDilateH() const { return this->primitive->value_as_Conv2D()->dilateH(); }
-bool Conv2D::GetHasBias() const { return this->primitive->value_as_Conv2D()->hasBias(); }
-int Conv2D::GetActivationType() const { return this->primitive->value_as_Conv2D()->activationType(); }
+int Conv2D::GetFormat() const { return this->primitive_->value_as_Conv2D()->format(); }
+int Conv2D::GetGroup() const { return this->primitive_->value_as_Conv2D()->group(); }
+int Conv2D::GetChannelIn() const { return this->primitive_->value_as_Conv2D()->channelIn(); }
+int Conv2D::GetChannelOut() const { return this->primitive_->value_as_Conv2D()->channelOut(); }
+int Conv2D::GetKernelW() const { return this->primitive_->value_as_Conv2D()->kernelW(); }
+int Conv2D::GetKernelH() const { return this->primitive_->value_as_Conv2D()->kernelH(); }
+int Conv2D::GetStrideW() const { return this->primitive_->value_as_Conv2D()->strideW(); }
+int Conv2D::GetStrideH() const { return this->primitive_->value_as_Conv2D()->strideH(); }
+int Conv2D::GetPadMode() const { return this->primitive_->value_as_Conv2D()->padMode(); }
+int Conv2D::GetPadUp() const { return this->primitive_->value_as_Conv2D()->padUp(); }
+int Conv2D::GetPadDown() const { return this->primitive_->value_as_Conv2D()->padDown(); }
+int Conv2D::GetPadLeft() const { return this->primitive_->value_as_Conv2D()->padLeft(); }
+int Conv2D::GetPadRight() const { return this->primitive_->value_as_Conv2D()->padRight(); }
+int Conv2D::GetDilateW() const { return this->primitive_->value_as_Conv2D()->dilateW(); }
+int Conv2D::GetDilateH() const { return this->primitive_->value_as_Conv2D()->dilateH(); }
+bool Conv2D::GetHasBias() const { return this->primitive_->value_as_Conv2D()->hasBias(); }
+int Conv2D::GetActivationType() const { return this->primitive_->value_as_Conv2D()->activationType(); }
 
 void Conv2D::SetFormat(int format) {}
 void Conv2D::SetGroup(int group) {}
@@ -103,7 +103,7 @@ void Conv2D::SetHasBias(bool has_bias) {}
 void Conv2D::SetActivationType(int activation_type) {}
 #endif
 void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output_w) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   int kernel_w = GetKernelW();
   int kernel_h = GetKernelH();
   int stride_w = GetStrideW();

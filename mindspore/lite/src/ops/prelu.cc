@@ -19,14 +19,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<float> Prelu::GetSlope() const { return this->primitive->value.AsPrelu()->slope; }
+std::vector<float> Prelu::GetSlope() const { return this->primitive_->value.AsPrelu()->slope; }
 
-void Prelu::SetSlope(const std::vector<float> &slope) { this->primitive->value.AsPrelu()->slope = slope; }
+void Prelu::SetSlope(const std::vector<float> &slope) { this->primitive_->value.AsPrelu()->slope = slope; }
 
 #else
 
 std::vector<float> Prelu::GetSlope() const {
-  auto fb_vector = this->primitive->value_as_Prelu()->slope();
+  auto fb_vector = this->primitive_->value_as_Prelu()->slope();
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
 

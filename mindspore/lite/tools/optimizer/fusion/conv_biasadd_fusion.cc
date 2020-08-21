@@ -15,9 +15,9 @@
  */
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include <memory>
+#include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
-#include "src/ir/primitive_t_value.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -53,9 +53,9 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   MS_ASSERT(value_node != nullptr);
   auto value = value_node->value();
   MS_ASSERT(value != nullptr);
-  auto primitive = value->cast<PrimitiveTValuePtr>();
+  auto primitive = value->cast<PrimitiveCPtr>();
   MS_ASSERT(primitive != nullptr);
-  auto type = primitive->GetPrimitiveT()->value.type;
+  auto type = (schema::PrimitiveType)primitive->Type();
   if (type == schema::PrimitiveType_Conv2D) {
     return primitive->GetPrimitiveT()->value.AsConv2D()->channelOut;
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
@@ -149,7 +149,7 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   auto conv_node = conv_node_anf->cast<CNodePtr>();
   CheckIfCNodeIsNull(conv_node);
   GenConvNewBias(func_graph, conv_node, add_node);
-  auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
+  auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
   MS_ASSERT(primitiveT_value != nullptr);
   auto type = primitiveT_value->GetPrimitiveT()->value.type;
   if (type == schema::PrimitiveType_Conv2D) {

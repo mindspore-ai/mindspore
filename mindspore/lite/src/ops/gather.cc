@@ -22,23 +22,23 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Gather::GetAxis() const { return this->primitive->value.AsGather()->axis; }
-int Gather::GetBatchDims() const { return this->primitive->value.AsGather()->batchDims; }
+int Gather::GetAxis() const { return this->primitive_->value.AsGather()->axis; }
+int Gather::GetBatchDims() const { return this->primitive_->value.AsGather()->batchDims; }
 
-void Gather::SetAxis(int axis) { this->primitive->value.AsGather()->axis = axis; }
-void Gather::SetBatchDims(int batch_dims) { this->primitive->value.AsGather()->batchDims = batch_dims; }
+void Gather::SetAxis(int axis) { this->primitive_->value.AsGather()->axis = axis; }
+void Gather::SetBatchDims(int batch_dims) { this->primitive_->value.AsGather()->batchDims = batch_dims; }
 
 #else
 
-int Gather::GetAxis() const { return this->primitive->value_as_Gather()->axis(); }
-int Gather::GetBatchDims() const { return this->primitive->value_as_Gather()->batchDims(); }
+int Gather::GetAxis() const { return this->primitive_->value_as_Gather()->axis(); }
+int Gather::GetBatchDims() const { return this->primitive_->value_as_Gather()->batchDims(); }
 
 void Gather::SetAxis(int axis) {}
 void Gather::SetBatchDims(int batch_dims) {}
 #endif
 
 int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "Gather should have two inputs";
     return RET_INPUT_TENSOR_ERROR;

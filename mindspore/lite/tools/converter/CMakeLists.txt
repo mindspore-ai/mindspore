@@ -1,3 +1,4 @@
+add_definitions(-DPRIMITIVE_WRITEABLE)
 set(ANF_SRC
         ${ANF_SRC}
         #core / abstract

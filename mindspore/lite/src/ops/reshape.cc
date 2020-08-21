@@ -23,17 +23,17 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Reshape::GetFormat() const { return this->primitive->value.AsReshape()->format; }
-std::vector<long> Reshape::GetShape() const { return this->primitive->value.AsReshape()->shape; }
+int Reshape::GetFormat() const { return this->primitive_->value.AsReshape()->format; }
+std::vector<long> Reshape::GetShape() const { return this->primitive_->value.AsReshape()->shape; }
 
-void Reshape::SetFormat(int format) { this->primitive->value.AsReshape()->format = (schema::Format) format; }
-void Reshape::SetShape(const std::vector<long> &shape) { this->primitive->value.AsReshape()->shape = shape; }
+void Reshape::SetFormat(int format) { this->primitive_->value.AsReshape()->format = (schema::Format)format; }
+void Reshape::SetShape(const std::vector<long> &shape) { this->primitive_->value.AsReshape()->shape = shape; }
 
 #else
 
-int Reshape::GetFormat() const { return this->primitive->value_as_Reshape()->format(); }
+int Reshape::GetFormat() const { return this->primitive_->value_as_Reshape()->format(); }
 std::vector<long> Reshape::GetShape() const {
-  auto fb_vector = this->primitive->value_as_Reshape()->shape();
+  auto fb_vector = this->primitive_->value_as_Reshape()->shape();
   return std::vector<long>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -75,7 +75,7 @@ int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_
   }
   return RET_OK;
 }
-template<typename T>
+template <typename T>
 void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::vector<int> *out_shape, int shape_size) {
   int input_count = inputs[0]->ElementsNum();
   int index = 0;
@@ -93,7 +93,7 @@ void CalShape(const T *data, const std::vector<tensor::Tensor *> &inputs, std::v
   }
 }
 int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
@@ -117,28 +117,23 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       case kNumberTypeInt8: {
         auto data = reinterpret_cast<int8_t *>(shape_tensor->Data());
         CalShape<int8_t>(data, inputs_, &out_shape, shape_size);
-      }
-        break;
+      } break;
       case kNumberTypeInt32: {
         auto data = reinterpret_cast<int32_t *>(shape_tensor->Data());
         CalShape<int32_t>(data, inputs_, &out_shape, shape_size);
-      }
-        break;
+      } break;
       case kNumberTypeInt64: {
         auto data = reinterpret_cast<int64_t *>(shape_tensor->Data());
         CalShape<int64_t>(data, inputs_, &out_shape, shape_size);
-      }
-        break;
+      } break;
       case kNumberTypeFloat: {
         auto data = reinterpret_cast<float *>(shape_tensor->Data());
         CalShape<float>(data, inputs_, &out_shape, shape_size);
-      }
-        break;
+      } break;
       case kNumberTypeUInt32: {
         auto data = reinterpret_cast<uint32_t *>(shape_tensor->Data());
         CalShape<uint32_t>(data, inputs_, &out_shape, shape_size);
-      }
-        break;
+      } break;
       default: {
         MS_LOG(ERROR) << "Reshape weight tensor has unsupported dataType: " << shape_tensor->data_type();
         return RET_INFER_ERR;

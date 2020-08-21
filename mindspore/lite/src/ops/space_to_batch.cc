@@ -20,24 +20,24 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> SpaceToBatch::GetBlockShape() const { return this->primitive->value.AsSpaceToBatch()->blockShape; }
-std::vector<int> SpaceToBatch::GetPaddings() const { return this->primitive->value.AsSpaceToBatch()->paddings; }
+std::vector<int> SpaceToBatch::GetBlockShape() const { return this->primitive_->value.AsSpaceToBatch()->blockShape; }
+std::vector<int> SpaceToBatch::GetPaddings() const { return this->primitive_->value.AsSpaceToBatch()->paddings; }
 
 void SpaceToBatch::SetBlockShape(const std::vector<int> &block_shape) {
-  this->primitive->value.AsSpaceToBatch()->blockShape = block_shape;
+  this->primitive_->value.AsSpaceToBatch()->blockShape = block_shape;
 }
 void SpaceToBatch::SetPaddings(const std::vector<int> &paddings) {
-  this->primitive->value.AsSpaceToBatch()->paddings = paddings;
+  this->primitive_->value.AsSpaceToBatch()->paddings = paddings;
 }
 
 #else
 
 std::vector<int> SpaceToBatch::GetBlockShape() const {
-  auto fb_vector = this->primitive->value_as_SpaceToBatch()->blockShape();
+  auto fb_vector = this->primitive_->value_as_SpaceToBatch()->blockShape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> SpaceToBatch::GetPaddings() const {
-  auto fb_vector = this->primitive->value_as_SpaceToBatch()->paddings();
+  auto fb_vector = this->primitive_->value_as_SpaceToBatch()->paddings();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -52,7 +52,7 @@ constexpr int kPaddingsSize = 4;
 }  // namespace
 
 int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kSpaceToBatchNDOutputNum || inputs.size() != kSpaceToBatchNDInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
     return 1;

@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_GATHER_ND_H_
+#define LITE_MINDSPORE_LITE_C_OPS_GATHER_ND_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_GATHER_ND_H_
-#define LITE_MINDSPORE_LITE_C_OPS_GATHER_ND_H_
 
 namespace mindspore {
 namespace lite {
 class GatherNd : public PrimitiveC {
  public:
-  explicit GatherNd(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit GatherNd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit GatherNd(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBatchDims() const;

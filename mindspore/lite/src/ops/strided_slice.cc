@@ -19,57 +19,57 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int StridedSlice::GetBeginMask() const { return this->primitive->value.AsStridedSlice()->beginMask; }
-int StridedSlice::GetEndMask() const { return this->primitive->value.AsStridedSlice()->endMask; }
-int StridedSlice::GetEllipsisMask() const { return this->primitive->value.AsStridedSlice()->ellipsisMask; }
-int StridedSlice::GetNewAxisMask() const { return this->primitive->value.AsStridedSlice()->newAxisMask; }
-int StridedSlice::GetShrinkAxisMask() const { return this->primitive->value.AsStridedSlice()->shrinkAxisMask; }
-std::vector<int> StridedSlice::GetBegin() const { return this->primitive->value.AsStridedSlice()->begin; }
-std::vector<int> StridedSlice::GetEnd() const { return this->primitive->value.AsStridedSlice()->end; }
-std::vector<int> StridedSlice::GetStride() const { return this->primitive->value.AsStridedSlice()->stride; }
-std::vector<int> StridedSlice::GetIsScale() const { return this->primitive->value.AsStridedSlice()->isScale; }
+int StridedSlice::GetBeginMask() const { return this->primitive_->value.AsStridedSlice()->beginMask; }
+int StridedSlice::GetEndMask() const { return this->primitive_->value.AsStridedSlice()->endMask; }
+int StridedSlice::GetEllipsisMask() const { return this->primitive_->value.AsStridedSlice()->ellipsisMask; }
+int StridedSlice::GetNewAxisMask() const { return this->primitive_->value.AsStridedSlice()->newAxisMask; }
+int StridedSlice::GetShrinkAxisMask() const { return this->primitive_->value.AsStridedSlice()->shrinkAxisMask; }
+std::vector<int> StridedSlice::GetBegin() const { return this->primitive_->value.AsStridedSlice()->begin; }
+std::vector<int> StridedSlice::GetEnd() const { return this->primitive_->value.AsStridedSlice()->end; }
+std::vector<int> StridedSlice::GetStride() const { return this->primitive_->value.AsStridedSlice()->stride; }
+std::vector<int> StridedSlice::GetIsScale() const { return this->primitive_->value.AsStridedSlice()->isScale; }
 
-void StridedSlice::SetBeginMask(int begin_mask) { this->primitive->value.AsStridedSlice()->beginMask = begin_mask; }
-void StridedSlice::SetEndMask(int end_mask) { this->primitive->value.AsStridedSlice()->endMask = end_mask; }
+void StridedSlice::SetBeginMask(int begin_mask) { this->primitive_->value.AsStridedSlice()->beginMask = begin_mask; }
+void StridedSlice::SetEndMask(int end_mask) { this->primitive_->value.AsStridedSlice()->endMask = end_mask; }
 void StridedSlice::SetEllipsisMask(int ellipsis_mask) {
-  this->primitive->value.AsStridedSlice()->ellipsisMask = ellipsis_mask;
+  this->primitive_->value.AsStridedSlice()->ellipsisMask = ellipsis_mask;
 }
 void StridedSlice::SetNewAxisMask(int new_axis_mask) {
-  this->primitive->value.AsStridedSlice()->newAxisMask = new_axis_mask;
+  this->primitive_->value.AsStridedSlice()->newAxisMask = new_axis_mask;
 }
 void StridedSlice::SetShrinkAxisMask(int shrink_axis_mask) {
-  this->primitive->value.AsStridedSlice()->shrinkAxisMask = shrink_axis_mask;
+  this->primitive_->value.AsStridedSlice()->shrinkAxisMask = shrink_axis_mask;
 }
-void StridedSlice::SetBegin(const std::vector<int> &begin) { this->primitive->value.AsStridedSlice()->begin = begin; }
-void StridedSlice::SetEnd(const std::vector<int> &end) { this->primitive->value.AsStridedSlice()->end = end; }
+void StridedSlice::SetBegin(const std::vector<int> &begin) { this->primitive_->value.AsStridedSlice()->begin = begin; }
+void StridedSlice::SetEnd(const std::vector<int> &end) { this->primitive_->value.AsStridedSlice()->end = end; }
 void StridedSlice::SetStride(const std::vector<int> &stride) {
-  this->primitive->value.AsStridedSlice()->stride = stride;
+  this->primitive_->value.AsStridedSlice()->stride = stride;
 }
 void StridedSlice::SetIsScale(const std::vector<int> &is_scale) {
-  this->primitive->value.AsStridedSlice()->isScale = is_scale;
+  this->primitive_->value.AsStridedSlice()->isScale = is_scale;
 }
 
 #else
 
-int StridedSlice::GetBeginMask() const { return this->primitive->value_as_StridedSlice()->beginMask(); }
-int StridedSlice::GetEndMask() const { return this->primitive->value_as_StridedSlice()->endMask(); }
-int StridedSlice::GetEllipsisMask() const { return this->primitive->value_as_StridedSlice()->ellipsisMask(); }
-int StridedSlice::GetNewAxisMask() const { return this->primitive->value_as_StridedSlice()->newAxisMask(); }
-int StridedSlice::GetShrinkAxisMask() const { return this->primitive->value_as_StridedSlice()->shrinkAxisMask(); }
+int StridedSlice::GetBeginMask() const { return this->primitive_->value_as_StridedSlice()->beginMask(); }
+int StridedSlice::GetEndMask() const { return this->primitive_->value_as_StridedSlice()->endMask(); }
+int StridedSlice::GetEllipsisMask() const { return this->primitive_->value_as_StridedSlice()->ellipsisMask(); }
+int StridedSlice::GetNewAxisMask() const { return this->primitive_->value_as_StridedSlice()->newAxisMask(); }
+int StridedSlice::GetShrinkAxisMask() const { return this->primitive_->value_as_StridedSlice()->shrinkAxisMask(); }
 std::vector<int> StridedSlice::GetBegin() const {
-  auto fb_vector = this->primitive->value_as_StridedSlice()->begin();
+  auto fb_vector = this->primitive_->value_as_StridedSlice()->begin();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> StridedSlice::GetEnd() const {
-  auto fb_vector = this->primitive->value_as_StridedSlice()->end();
+  auto fb_vector = this->primitive_->value_as_StridedSlice()->end();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> StridedSlice::GetStride() const {
-  auto fb_vector = this->primitive->value_as_StridedSlice()->stride();
+  auto fb_vector = this->primitive_->value_as_StridedSlice()->stride();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> StridedSlice::GetIsScale() const {
-  auto fb_vector = this->primitive->value_as_StridedSlice()->isScale();
+  auto fb_vector = this->primitive_->value_as_StridedSlice()->isScale();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -154,7 +154,7 @@ void StridedSlice::ApplyEndMask() {
 }
 
 int StridedSlice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kStridedSliceOutputNum) {
     MS_LOG(ERROR) << "Invalid output size:" << outputs.size();
     return RET_PARAM_INVALID;

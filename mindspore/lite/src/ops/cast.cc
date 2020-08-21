@@ -19,23 +19,23 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Cast::GetSrcT() const { return this->primitive->value.AsCast()->srcT; }
-int Cast::GetDstT() const { return this->primitive->value.AsCast()->dstT; }
+int Cast::GetSrcT() const { return this->primitive_->value.AsCast()->srcT; }
+int Cast::GetDstT() const { return this->primitive_->value.AsCast()->dstT; }
 
-void Cast::SetSrcT(int src_t) { this->primitive->value.AsCast()->srcT = src_t; }
-void Cast::SetDstT(int dst_t) { this->primitive->value.AsCast()->dstT = dst_t; }
+void Cast::SetSrcT(int src_t) { this->primitive_->value.AsCast()->srcT = src_t; }
+void Cast::SetDstT(int dst_t) { this->primitive_->value.AsCast()->dstT = dst_t; }
 
 #else
 
-int Cast::GetSrcT() const { return this->primitive->value_as_Cast()->srcT(); }
-int Cast::GetDstT() const { return this->primitive->value_as_Cast()->dstT(); }
+int Cast::GetSrcT() const { return this->primitive_->value_as_Cast()->srcT(); }
+int Cast::GetDstT() const { return this->primitive_->value_as_Cast()->dstT(); }
 
 void Cast::SetSrcT(int src_t) {}
 void Cast::SetDstT(int dst_t) {}
 #endif
 
 int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

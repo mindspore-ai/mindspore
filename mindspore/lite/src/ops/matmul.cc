@@ -20,23 +20,23 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-bool MatMul::GetTransposeA() const { return this->primitive->value.AsMatMul()->transposeA; }
-bool MatMul::GetTransposeB() const { return this->primitive->value.AsMatMul()->transposeB; }
+bool MatMul::GetTransposeA() const { return this->primitive_->value.AsMatMul()->transposeA; }
+bool MatMul::GetTransposeB() const { return this->primitive_->value.AsMatMul()->transposeB; }
 
-void MatMul::SetTransposeA(bool transpose_a) { this->primitive->value.AsMatMul()->transposeA = transpose_a; }
-void MatMul::SetTransposeB(bool transpose_b) { this->primitive->value.AsMatMul()->transposeB = transpose_b; }
+void MatMul::SetTransposeA(bool transpose_a) { this->primitive_->value.AsMatMul()->transposeA = transpose_a; }
+void MatMul::SetTransposeB(bool transpose_b) { this->primitive_->value.AsMatMul()->transposeB = transpose_b; }
 
 #else
 
-bool MatMul::GetTransposeA() const { return this->primitive->value_as_MatMul()->transposeA(); }
-bool MatMul::GetTransposeB() const { return this->primitive->value_as_MatMul()->transposeB(); }
+bool MatMul::GetTransposeA() const { return this->primitive_->value_as_MatMul()->transposeA(); }
+bool MatMul::GetTransposeB() const { return this->primitive_->value_as_MatMul()->transposeB(); }
 
 void MatMul::SetTransposeA(bool transpose_a) {}
 void MatMul::SetTransposeB(bool transpose_b) {}
 #endif
 
 int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);
   auto input1 = inputs_.at(1);

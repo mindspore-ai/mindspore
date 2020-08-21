@@ -19,100 +19,104 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int DetectionPostProcess::GetFormat() const { return this->primitive->value.AsDetectionPostProcess()->format; }
-int DetectionPostProcess::GetInputSize() const { return this->primitive->value.AsDetectionPostProcess()->inputSize; }
-float DetectionPostProcess::GetHScale() const { return this->primitive->value.AsDetectionPostProcess()->hScale; }
-float DetectionPostProcess::GetWScale() const { return this->primitive->value.AsDetectionPostProcess()->wScale; }
-float DetectionPostProcess::GetXScale() const { return this->primitive->value.AsDetectionPostProcess()->xScale; }
-float DetectionPostProcess::GetYScale() const { return this->primitive->value.AsDetectionPostProcess()->yScale; }
+int DetectionPostProcess::GetFormat() const { return this->primitive_->value.AsDetectionPostProcess()->format; }
+int DetectionPostProcess::GetInputSize() const { return this->primitive_->value.AsDetectionPostProcess()->inputSize; }
+float DetectionPostProcess::GetHScale() const { return this->primitive_->value.AsDetectionPostProcess()->hScale; }
+float DetectionPostProcess::GetWScale() const { return this->primitive_->value.AsDetectionPostProcess()->wScale; }
+float DetectionPostProcess::GetXScale() const { return this->primitive_->value.AsDetectionPostProcess()->xScale; }
+float DetectionPostProcess::GetYScale() const { return this->primitive_->value.AsDetectionPostProcess()->yScale; }
 float DetectionPostProcess::GetNmsIouThreshold() const {
-  return this->primitive->value.AsDetectionPostProcess()->NmsIouThreshold;
+  return this->primitive_->value.AsDetectionPostProcess()->NmsIouThreshold;
 }
 float DetectionPostProcess::GetNmsScoreThreshold() const {
-  return this->primitive->value.AsDetectionPostProcess()->NmsScoreThreshold;
+  return this->primitive_->value.AsDetectionPostProcess()->NmsScoreThreshold;
 }
 long DetectionPostProcess::GetMaxDetections() const {
-  return this->primitive->value.AsDetectionPostProcess()->MaxDetections;
+  return this->primitive_->value.AsDetectionPostProcess()->MaxDetections;
 }
 long DetectionPostProcess::GetDetectionsPreClass() const {
-  return this->primitive->value.AsDetectionPostProcess()->DetectionsPreClass;
+  return this->primitive_->value.AsDetectionPostProcess()->DetectionsPreClass;
 }
 long DetectionPostProcess::GetMaxClassesPreDetection() const {
-  return this->primitive->value.AsDetectionPostProcess()->MaxClassesPreDetection;
+  return this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection;
 }
-long DetectionPostProcess::GetNumClasses() const { return this->primitive->value.AsDetectionPostProcess()->NumClasses; }
+long DetectionPostProcess::GetNumClasses() const {
+  return this->primitive_->value.AsDetectionPostProcess()->NumClasses;
+}
 bool DetectionPostProcess::GetUseRegularNms() const {
-  return this->primitive->value.AsDetectionPostProcess()->UseRegularNms;
+  return this->primitive_->value.AsDetectionPostProcess()->UseRegularNms;
 }
 
 void DetectionPostProcess::SetFormat(int format) {
-  this->primitive->value.AsDetectionPostProcess()->format = (schema::Format)format;
+  this->primitive_->value.AsDetectionPostProcess()->format = (schema::Format)format;
 }
 void DetectionPostProcess::SetInputSize(int input_size) {
-  this->primitive->value.AsDetectionPostProcess()->inputSize = input_size;
+  this->primitive_->value.AsDetectionPostProcess()->inputSize = input_size;
 }
 void DetectionPostProcess::SetHScale(float h_scale) {
-  this->primitive->value.AsDetectionPostProcess()->hScale = h_scale;
+  this->primitive_->value.AsDetectionPostProcess()->hScale = h_scale;
 }
 void DetectionPostProcess::SetWScale(float w_scale) {
-  this->primitive->value.AsDetectionPostProcess()->wScale = w_scale;
+  this->primitive_->value.AsDetectionPostProcess()->wScale = w_scale;
 }
 void DetectionPostProcess::SetXScale(float x_scale) {
-  this->primitive->value.AsDetectionPostProcess()->xScale = x_scale;
+  this->primitive_->value.AsDetectionPostProcess()->xScale = x_scale;
 }
 void DetectionPostProcess::SetYScale(float y_scale) {
-  this->primitive->value.AsDetectionPostProcess()->yScale = y_scale;
+  this->primitive_->value.AsDetectionPostProcess()->yScale = y_scale;
 }
 void DetectionPostProcess::SetNmsIouThreshold(float nms_iou_threshold) {
-  this->primitive->value.AsDetectionPostProcess()->NmsIouThreshold = nms_iou_threshold;
+  this->primitive_->value.AsDetectionPostProcess()->NmsIouThreshold = nms_iou_threshold;
 }
 void DetectionPostProcess::SetNmsScoreThreshold(float nms_score_threshold) {
-  this->primitive->value.AsDetectionPostProcess()->NmsScoreThreshold = nms_score_threshold;
+  this->primitive_->value.AsDetectionPostProcess()->NmsScoreThreshold = nms_score_threshold;
 }
 void DetectionPostProcess::SetMaxDetections(long max_detections) {
-  this->primitive->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_detections;
+  this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_detections;
 }
 void DetectionPostProcess::SetDetectionsPreClass(long detections_pre_class) {
-  this->primitive->value.AsDetectionPostProcess()->DetectionsPreClass = detections_pre_class;
+  this->primitive_->value.AsDetectionPostProcess()->DetectionsPreClass = detections_pre_class;
 }
 void DetectionPostProcess::SetMaxClassesPreDetection(long max_classes_pre_detection) {
-  this->primitive->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_classes_pre_detection;
+  this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_classes_pre_detection;
 }
 void DetectionPostProcess::SetNumClasses(long num_classes) {
-  this->primitive->value.AsDetectionPostProcess()->NumClasses = num_classes;
+  this->primitive_->value.AsDetectionPostProcess()->NumClasses = num_classes;
 }
 void DetectionPostProcess::SetUseRegularNms(bool use_regular_nms) {
-  this->primitive->value.AsDetectionPostProcess()->UseRegularNms = use_regular_nms;
+  this->primitive_->value.AsDetectionPostProcess()->UseRegularNms = use_regular_nms;
 }
 
 #else
 
-int DetectionPostProcess::GetFormat() const { return this->primitive->value_as_DetectionPostProcess()->format(); }
-int DetectionPostProcess::GetInputSize() const { return this->primitive->value_as_DetectionPostProcess()->inputSize(); }
-float DetectionPostProcess::GetHScale() const { return this->primitive->value_as_DetectionPostProcess()->hScale(); }
-float DetectionPostProcess::GetWScale() const { return this->primitive->value_as_DetectionPostProcess()->wScale(); }
-float DetectionPostProcess::GetXScale() const { return this->primitive->value_as_DetectionPostProcess()->xScale(); }
-float DetectionPostProcess::GetYScale() const { return this->primitive->value_as_DetectionPostProcess()->yScale(); }
+int DetectionPostProcess::GetFormat() const { return this->primitive_->value_as_DetectionPostProcess()->format(); }
+int DetectionPostProcess::GetInputSize() const {
+  return this->primitive_->value_as_DetectionPostProcess()->inputSize();
+}
+float DetectionPostProcess::GetHScale() const { return this->primitive_->value_as_DetectionPostProcess()->hScale(); }
+float DetectionPostProcess::GetWScale() const { return this->primitive_->value_as_DetectionPostProcess()->wScale(); }
+float DetectionPostProcess::GetXScale() const { return this->primitive_->value_as_DetectionPostProcess()->xScale(); }
+float DetectionPostProcess::GetYScale() const { return this->primitive_->value_as_DetectionPostProcess()->yScale(); }
 float DetectionPostProcess::GetNmsIouThreshold() const {
-  return this->primitive->value_as_DetectionPostProcess()->NmsIouThreshold();
+  return this->primitive_->value_as_DetectionPostProcess()->NmsIouThreshold();
 }
 float DetectionPostProcess::GetNmsScoreThreshold() const {
-  return this->primitive->value_as_DetectionPostProcess()->NmsScoreThreshold();
+  return this->primitive_->value_as_DetectionPostProcess()->NmsScoreThreshold();
 }
 long DetectionPostProcess::GetMaxDetections() const {
-  return this->primitive->value_as_DetectionPostProcess()->MaxDetections();
+  return this->primitive_->value_as_DetectionPostProcess()->MaxDetections();
 }
 long DetectionPostProcess::GetDetectionsPreClass() const {
-  return this->primitive->value_as_DetectionPostProcess()->DetectionsPreClass();
+  return this->primitive_->value_as_DetectionPostProcess()->DetectionsPreClass();
 }
 long DetectionPostProcess::GetMaxClassesPreDetection() const {
-  return this->primitive->value_as_DetectionPostProcess()->MaxClassesPreDetection();
+  return this->primitive_->value_as_DetectionPostProcess()->MaxClassesPreDetection();
 }
 long DetectionPostProcess::GetNumClasses() const {
-  return this->primitive->value_as_DetectionPostProcess()->NumClasses();
+  return this->primitive_->value_as_DetectionPostProcess()->NumClasses();
 }
 bool DetectionPostProcess::GetUseRegularNms() const {
-  return this->primitive->value_as_DetectionPostProcess()->UseRegularNms();
+  return this->primitive_->value_as_DetectionPostProcess()->UseRegularNms();
 }
 
 void DetectionPostProcess::SetFormat(int format) {}

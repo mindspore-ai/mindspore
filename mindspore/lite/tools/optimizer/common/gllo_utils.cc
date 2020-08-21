@@ -17,7 +17,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
-#include "src/ir/primitive_t_value.h"
+#include "src/ops/primitive_c.h"
 #include "frontend/operator/ops.h"
 #include "backend/optimizer/common/helper.h"
 
@@ -138,7 +138,7 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
       auto b_prim = b_value->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(b_prim);
 
-      return a_prim->name() == b_prim->name();
+      return a_prim->cast<PrimitiveCPtr>()->Type() == b_prim->cast<PrimitiveCPtr>()->Type();
     } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
       auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
       if (a_value_node_ptr == nullptr) {
@@ -158,18 +158,18 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
         MS_LOG(EXCEPTION) << "value ptr is nullptr";
       }
 
-      if (utils::isa<lite::PrimitiveTValue>(a_value_ptr) && utils::isa<lite::PrimitiveTValue>(b_value_ptr)) {
-        auto a_obj = (lite::PrimitiveTValue *) (a_value_ptr.get());
-        auto b_obj = (lite::PrimitiveTValue *) (b_value_ptr.get());
+      if (utils::isa<lite::PrimitiveC>(a_value_ptr) && utils::isa<lite::PrimitiveC>(b_value_ptr)) {
+        auto a_obj = (lite::PrimitiveC *) (a_value_ptr.get());
+        auto b_obj = (lite::PrimitiveC *) (b_value_ptr.get());
         return (*a_obj) == (*b_obj);
       } else {
         return (*a_value_ptr) == (*b_value_ptr);
       }
     }
   }
-  if (a.m_ptr->isa<lite::PrimitiveTValue>() && b.m_ptr->isa<lite::PrimitiveTValue>()) {
-    auto a_value_node_ptr = a.m_ptr->cast<PrimitiveTValuePtr>();
-    auto b_value_node_ptr = b.m_ptr->cast<PrimitiveTValuePtr>();
+  if (a.m_ptr->isa<lite::PrimitiveC>() && b.m_ptr->isa<lite::PrimitiveC>()) {
+    auto a_value_node_ptr = a.m_ptr->cast<PrimitiveCPtr>();
+    auto b_value_node_ptr = b.m_ptr->cast<PrimitiveCPtr>();
     return a_value_node_ptr->GetPrimitiveT()->value.type == b_value_node_ptr->GetPrimitiveT()->value.type;
   }
 
@@ -313,8 +313,8 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
   MS_ASSERT(value != nullptr);
-  if (utils::isa<PrimitiveTValuePtr>(value)) {
-    auto primitive = value->cast<PrimitiveTValuePtr>();
+  if (utils::isa<PrimitiveCPtr>(value)) {
+    auto primitive = value->cast<PrimitiveCPtr>();
     MS_ASSERT(primitive != nullptr);
     return primitive->GetPrimitiveT()->value.type;
   } else if (utils::isa<Primitive>(value)) {

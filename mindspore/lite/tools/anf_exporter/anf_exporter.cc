@@ -110,7 +110,7 @@ bool AnfExporter::AddOutPutIfReturn(const std::unique_ptr<schema::MetaGraphT> &m
 }
 
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                   const std::shared_ptr<PrimitiveTValue> primitive,
+                                   const std::shared_ptr<PrimitiveC> primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
   MS_ASSERT(meta_graph != nullptr);
   MS_ASSERT(primitive != nullptr);
@@ -121,7 +121,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     MS_LOG(DEBUG) << "node: " << dst_node->name << " add QuantParam";
     // activation
     auto input_quant_params = primitive->GetInputQuantParams();
-    auto node_type = primitive->GetPrimitiveT()->value.type;
+    auto node_type = (schema::PrimitiveType) primitive->Type();
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
         MS_LOG(ERROR) << "node: " << dst_node->name << " input has " << input_quant_params.size()
@@ -160,7 +160,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     }
     if (dst_node->quantType != schema::QuantType_AwareTraining &&
         !(node_type == schema::PrimitiveType_QuantDTypeCast &&
-          primitive->GetPrimitiveT()->value.AsQuantDTypeCast()->dstT == kNumberTypeFloat32)) {
+            primitive->GetPrimitiveT()->value.AsQuantDTypeCast()->dstT == kNumberTypeFloat32)) {
       tensor_output->dataType = kNumberTypeInt8;
     }
   }
@@ -186,7 +186,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   for (const auto &cnode : cnodes) {
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     if (primitiveT_value == nullptr) {
       MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
       return nullptr;
@@ -431,15 +431,11 @@ bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType
     return false;
   }
 
-  const auto &prim = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+  const auto &prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
   if (prim == nullptr) {
     return false;
   }
-  auto *primitiveT = prim->GetPrimitiveT();
-  if (primitiveT == nullptr) {
-    return false;
-  }
-  return primitiveT->value.type == type;
+  return (schema::PrimitiveType) prim->Type() == type;
 }
 
 schema::MetaGraphT *Export(const FuncGraphPtr &func_graph) {

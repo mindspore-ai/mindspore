@@ -60,16 +60,16 @@ enum ParseForm : int {
 };
 
 static std::map<std::string, ParseForm> kParseTypeSwitchMap{
-  {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR}};
+    {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR}};
 
 static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
-  {onnx::TensorProto_DataType_BOOL, kNumberTypeBool},     {onnx::TensorProto_DataType_INT8, kNumberTypeInt8},
-  {onnx::TensorProto_DataType_INT16, kNumberTypeInt16},   {onnx::TensorProto_DataType_INT32, kNumberTypeInt32},
-  {onnx::TensorProto_DataType_INT64, kNumberTypeInt64},   {onnx::TensorProto_DataType_UINT8, kNumberTypeUInt8},
-  {onnx::TensorProto_DataType_UINT16, kNumberTypeUInt16}, {onnx::TensorProto_DataType_UINT32, kNumberTypeUInt32},
-  {onnx::TensorProto_DataType_UINT64, kNumberTypeUInt64}, {onnx::TensorProto_DataType_FLOAT16, kNumberTypeFloat16},
-  {onnx::TensorProto_DataType_FLOAT, kNumberTypeFloat32}, {onnx::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
-  {onnx::TensorProto_DataType_STRING, kObjectTypeString},
+    {onnx::TensorProto_DataType_BOOL, kNumberTypeBool}, {onnx::TensorProto_DataType_INT8, kNumberTypeInt8},
+    {onnx::TensorProto_DataType_INT16, kNumberTypeInt16}, {onnx::TensorProto_DataType_INT32, kNumberTypeInt32},
+    {onnx::TensorProto_DataType_INT64, kNumberTypeInt64}, {onnx::TensorProto_DataType_UINT8, kNumberTypeUInt8},
+    {onnx::TensorProto_DataType_UINT16, kNumberTypeUInt16}, {onnx::TensorProto_DataType_UINT32, kNumberTypeUInt32},
+    {onnx::TensorProto_DataType_UINT64, kNumberTypeUInt64}, {onnx::TensorProto_DataType_FLOAT16, kNumberTypeFloat16},
+    {onnx::TensorProto_DataType_FLOAT, kNumberTypeFloat32}, {onnx::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
+    {onnx::TensorProto_DataType_STRING, kObjectTypeString},
 };
 
 #define PARSE_ONNXATTR_IN_SCALAR_FORM(type, valuetype)                                                \
@@ -228,8 +228,7 @@ bool AnfImporterFromProtobuf::ObtainCNodeAttrInScalarForm(const PrimitivePtr &pr
       auto value = prim->GetAttr(attr_name);
       break;
     }
-    default:
-      MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
+    default:MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
       return false;
   }
   return true;
@@ -292,8 +291,7 @@ bool AnfImporterFromProtobuf::GetAttrValueForCNode(const PrimitivePtr &prim, con
     case FORM_PARSE_TENSOR: {
       return ObtainCNodeAttrInTensorForm(prim, attr_name, attr_tensor);
     }
-    default:
-      MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
+    default:MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
       return false;
   }
 }
@@ -357,8 +355,7 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInScalarForm(const std::string &val
       value_ptr = std::make_shared<ValueTuple>(elems);
       break;
     }
-    default:
-      MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
+    default:MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
       return false;
   }
   auto new_value_node = NewValueNode(value_ptr);
@@ -396,8 +393,7 @@ bool AnfImporterFromProtobuf::GetAttrValueForValueNode(const std::string &ref_at
     case FORM_PARSE_TYPE: {
       return ObtainValueNodeInTypeForm(value_node_name, attr_tensor);
     }
-    default:
-      MS_LOG(ERROR) << "parse ValueNode value don't support input of ref_attr_name";
+    default:MS_LOG(ERROR) << "parse ValueNode value don't support input of ref_attr_name";
       return false;
   }
 }
@@ -481,11 +477,11 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
     return nullptr;
   }
   auto primitiveT = std::make_unique<schema::PrimitiveT>();
-  std::shared_ptr<PrimitiveTValue> primitiveTValuePtr = std::make_shared<PrimitiveTValue>(primitiveT.release());
-  primitiveTValuePtr->SetQuantType(quantType);
-  node_parser->Populate(prim, primitiveTValuePtr.get(), inputs);
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  inputs.insert(inputs.begin(), NewValueNode(primitiveTValuePtr));
+  std::shared_ptr<PrimitiveC> primitiveCPtr = std::make_shared<PrimitiveC>(primitiveT.release());
+  primitiveCPtr->SetQuantType(quantType);
+  node_parser->Populate(prim, primitiveCPtr.get(), inputs);
+  MS_ASSERT(primitiveCPtr != nullptr);
+  inputs.insert(inputs.begin(), NewValueNode(primitiveCPtr));
   CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   if (node_type == "LayerNorm") {
@@ -523,9 +519,9 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     auto primitiveT = std::make_unique<schema::PrimitiveT>();
     MS_ASSERT(primitiveT != nullptr);
     primitiveT->value.type = schema::PrimitiveType_MakeTuple;
-    std::shared_ptr<PrimitiveTValue> primitiveTValuePtr = std::make_shared<PrimitiveTValue>(primitiveT.release());
-    MS_ASSERT(primitiveTValuePtr != nullptr);
-    inputs.push_back(NewValueNode(primitiveTValuePtr));
+    std::shared_ptr<PrimitiveC> primitiveCPtr = std::make_shared<PrimitiveC>(primitiveT.release());
+    MS_ASSERT(primitiveCPtr != nullptr);
+    inputs.push_back(NewValueNode(primitiveCPtr));
     AbstractBasePtrList elem;
     for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
       const onnx::ValueInfoProto &output_node = importProto.output(out_size);
@@ -539,7 +535,7 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     auto primReturn = std::make_unique<schema::PrimitiveT>();
     MS_ASSERT(primReturn != nullptr);
     primReturn->value.type = schema::PrimitiveType_Return;
-    std::shared_ptr<PrimitiveTValue> primitiveTReturnValuePtr = std::make_shared<PrimitiveTValue>(primReturn.release());
+    std::shared_ptr<PrimitiveC> primitiveTReturnValuePtr = std::make_shared<PrimitiveC>(primReturn.release());
     MS_ASSERT(primitiveTReturnValuePtr != nullptr);
     inputs.push_back(NewValueNode(primitiveTReturnValuePtr));
     inputs.push_back(maketuple_ptr);
@@ -562,7 +558,7 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     auto primReturn = std::make_unique<schema::PrimitiveT>();
     MS_ASSERT(primReturn != nullptr);
     primReturn->value.type = schema::PrimitiveType_Return;
-    std::shared_ptr<PrimitiveTValue> primitiveTReturnValuePtr = std::make_shared<PrimitiveTValue>(primReturn.release());
+    std::shared_ptr<PrimitiveC> primitiveTReturnValuePtr = std::make_shared<PrimitiveC>(primReturn.release());
     MS_ASSERT(primitiveTReturnValuePtr != nullptr);
     inputs.push_back(NewValueNode(primitiveTReturnValuePtr));
     inputs.push_back(cnode_ptr);
@@ -658,7 +654,7 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 }
 
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
-  std::unique_ptr<char> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
+  std::unique_ptr<char[]> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
 #ifdef _WIN32
   if (_fullpath(onnx_file.get(), model_path.c_str(), 1024) == nullptr) {
     MS_LOG(ERROR) << "open file failed.";
@@ -681,7 +677,7 @@ onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string 
     delete onnx_model;
     return nullptr;
   }
-  (void)close(fd);
+  (void) close(fd);
   MS_LOG(INFO) << "enter ReadProtoFromBinary success!" << std::endl;
   return onnx_model;
 }

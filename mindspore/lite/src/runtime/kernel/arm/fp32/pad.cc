@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include "schema/model_generated.h"
 #include "src/kernel_registry.h"
+#include "schema/model_generated.h"
 #include "src/runtime/kernel/arm/fp32/pad.h"
 #include "include/errorcode.h"
 #include "src/runtime/kernel/arm/nnacl/errorcode.h"

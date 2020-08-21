@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_DIV_H_
+#define LITE_MINDSPORE_LITE_C_OPS_DIV_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/arithmetic.h"
 
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_DIV_H_
-#define LITE_MINDSPORE_LITE_C_OPS_DIV_H_
-
 namespace mindspore {
 namespace lite {
 class Div : public Arithmetic {
  public:
-  explicit Div(OriginPrimitive *primitive) : Arithmetic(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Div(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+#endif
+  explicit Div(schema::Primitive *primitive) : Arithmetic(primitive) {}
 
   int GetActivationType() const;
   void SetActivationType(int activation_type);

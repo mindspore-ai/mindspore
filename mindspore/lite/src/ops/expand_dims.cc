@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int ExpandDims::GetDim() const { return this->primitive->value.AsExpandDims()->dim; }
+int ExpandDims::GetDim() const { return this->primitive_->value.AsExpandDims()->dim; }
 
-void ExpandDims::SetDim(int dim) { this->primitive->value.AsExpandDims()->dim = dim; }
+void ExpandDims::SetDim(int dim) { this->primitive_->value.AsExpandDims()->dim = dim; }
 
 #else
 
-int ExpandDims::GetDim() const { return this->primitive->value_as_ExpandDims()->dim(); }
+int ExpandDims::GetDim() const { return this->primitive_->value_as_ExpandDims()->dim(); }
 
 void ExpandDims::SetDim(int dim) {}
 #endif
 
 int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

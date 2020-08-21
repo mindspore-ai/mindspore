@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float PowerGrad::GetPower() const { return this->primitive->value.AsPowerGrad()->power; }
-float PowerGrad::GetScale() const { return this->primitive->value.AsPowerGrad()->scale; }
-float PowerGrad::GetShift() const { return this->primitive->value.AsPowerGrad()->shift; }
+float PowerGrad::GetPower() const { return this->primitive_->value.AsPowerGrad()->power; }
+float PowerGrad::GetScale() const { return this->primitive_->value.AsPowerGrad()->scale; }
+float PowerGrad::GetShift() const { return this->primitive_->value.AsPowerGrad()->shift; }
 
-void PowerGrad::SetPower(float power) { this->primitive->value.AsPowerGrad()->power = power; }
-void PowerGrad::SetScale(float scale) { this->primitive->value.AsPowerGrad()->scale = scale; }
-void PowerGrad::SetShift(float shift) { this->primitive->value.AsPowerGrad()->shift = shift; }
+void PowerGrad::SetPower(float power) { this->primitive_->value.AsPowerGrad()->power = power; }
+void PowerGrad::SetScale(float scale) { this->primitive_->value.AsPowerGrad()->scale = scale; }
+void PowerGrad::SetShift(float shift) { this->primitive_->value.AsPowerGrad()->shift = shift; }
 
 #else
 
-float PowerGrad::GetPower() const { return this->primitive->value_as_PowerGrad()->power(); }
-float PowerGrad::GetScale() const { return this->primitive->value_as_PowerGrad()->scale(); }
-float PowerGrad::GetShift() const { return this->primitive->value_as_PowerGrad()->shift(); }
+float PowerGrad::GetPower() const { return this->primitive_->value_as_PowerGrad()->power(); }
+float PowerGrad::GetScale() const { return this->primitive_->value_as_PowerGrad()->scale(); }
+float PowerGrad::GetShift() const { return this->primitive_->value_as_PowerGrad()->shift(); }
 
 void PowerGrad::SetPower(float power) {}
 void PowerGrad::SetScale(float scale) {}

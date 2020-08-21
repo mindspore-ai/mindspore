@@ -19,24 +19,24 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Pad::GetPaddings() const { return this->primitive->value.AsPad()->paddings; }
-int Pad::GetPaddingMode() const { return this->primitive->value.AsPad()->paddingMode; }
-float Pad::GetConstantValue() const { return this->primitive->value.AsPad()->constantValue; }
+std::vector<int> Pad::GetPaddings() const { return this->primitive_->value.AsPad()->paddings; }
+int Pad::GetPaddingMode() const { return this->primitive_->value.AsPad()->paddingMode; }
+float Pad::GetConstantValue() const { return this->primitive_->value.AsPad()->constantValue; }
 
-void Pad::SetPaddings(const std::vector<int> &paddings) { this->primitive->value.AsPad()->paddings = paddings; }
+void Pad::SetPaddings(const std::vector<int> &paddings) { this->primitive_->value.AsPad()->paddings = paddings; }
 void Pad::SetPaddingMode(int padding_mode) {
-  this->primitive->value.AsPad()->paddingMode = (schema::PaddingMode) padding_mode;
+  this->primitive_->value.AsPad()->paddingMode = (schema::PaddingMode)padding_mode;
 }
-void Pad::SetConstantValue(float constant_value) { this->primitive->value.AsPad()->constantValue = constant_value; }
+void Pad::SetConstantValue(float constant_value) { this->primitive_->value.AsPad()->constantValue = constant_value; }
 
 #else
 
 std::vector<int> Pad::GetPaddings() const {
-  auto fb_vector = this->primitive->value_as_Pad()->paddings();
+  auto fb_vector = this->primitive_->value_as_Pad()->paddings();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-int Pad::GetPaddingMode() const { return this->primitive->value_as_Pad()->paddingMode(); }
-float Pad::GetConstantValue() const { return this->primitive->value_as_Pad()->constantValue(); }
+int Pad::GetPaddingMode() const { return this->primitive_->value_as_Pad()->paddingMode(); }
+float Pad::GetConstantValue() const { return this->primitive_->value_as_Pad()->constantValue(); }
 
 void Pad::SetPaddings(const std::vector<int> &paddings) {}
 void Pad::SetPaddingMode(int padding_mode) {}
@@ -46,8 +46,8 @@ namespace {
 const size_t kInputRank = 4;
 }  // namespace
 int Pad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
-  if (this->primitive == nullptr) {
+  MS_ASSERT(this->primitive_ != nullptr);
+  if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;
   }
 

@@ -21,7 +21,7 @@
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-int AnfActivationPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfActivationPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                      const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::ActivationT>();
@@ -35,8 +35,8 @@ int AnfActivationPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *
 
   primitive->value.type = schema::PrimitiveType_Activation;
   primitive->value.value = attr.release();
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
+  MS_ASSERT(primitiveCPtr != nullptr);
+  primitiveCPtr->SetPrimitiveT(primitive.release());
   return 0;
 }
 AnfNodePopulaterRegistrar anfReLUPopulater("ReLU", new AnfActivationPopulater());

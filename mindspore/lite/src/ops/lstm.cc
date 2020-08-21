@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-bool Lstm::GetBidirection() const { return this->primitive->value.AsLstm()->bidirection; }
+bool Lstm::GetBidirection() const { return this->primitive_->value.AsLstm()->bidirection; }
 
-void Lstm::SetBidirection(bool bidirection) { this->primitive->value.AsLstm()->bidirection = bidirection; }
+void Lstm::SetBidirection(bool bidirection) { this->primitive_->value.AsLstm()->bidirection = bidirection; }
 
 #else
 
-bool Lstm::GetBidirection() const { return this->primitive->value_as_Lstm()->bidirection(); }
+bool Lstm::GetBidirection() const { return this->primitive_->value_as_Lstm()->bidirection(); }
 
 void Lstm::SetBidirection(bool bidirection) {}
 #endif
@@ -33,7 +33,7 @@ void Lstm::SetBidirection(bool bidirection) {}
 const int kLstmInputNum = 6;
 const int kLstmOutputNum = 3;
 int Lstm::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kLstmInputNum || outputs_.size() != kLstmOutputNum) {
     MS_LOG(ERROR) << "OpLstm inputs or outputs size error.";
     return RET_INPUT_TENSOR_ERROR;

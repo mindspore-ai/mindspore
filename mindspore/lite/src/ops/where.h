@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_WHERE_H_
+#define LITE_MINDSPORE_LITE_C_OPS_WHERE_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_WHERE_H_
-#define LITE_MINDSPORE_LITE_C_OPS_WHERE_H_
 
 namespace mindspore {
 namespace lite {
 class Where : public PrimitiveC {
  public:
-  explicit Where(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Where(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit Where(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<bool> GetCondition() const;
