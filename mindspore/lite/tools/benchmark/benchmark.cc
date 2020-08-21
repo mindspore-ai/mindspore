@@ -396,6 +396,7 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     context->cpu_bind_mode_ = NO_BIND;
   }
   context->thread_num_ = _flags->numThreads;
+  context->float16_priority = _flags->fp16Priority;
   session = session::LiteSession::CreateSession(context);
   delete (context);
   if (session == nullptr) {
@@ -503,6 +504,7 @@ int Benchmark::Init() {
   MS_LOG(INFO) << "AccuracyThreshold = " << this->_flags->accuracyThreshold;
   MS_LOG(INFO) << "WarmUpLoopCount = " << this->_flags->warmUpLoopCount;
   MS_LOG(INFO) << "NumThreads = " << this->_flags->numThreads;
+  MS_LOG(INFO) << "Fp16Priority = " << this->_flags->fp16Priority;
   MS_LOG(INFO) << "calibDataPath = " << this->_flags->calibDataPath;
 
   if (this->_flags->loopCount < 1) {
