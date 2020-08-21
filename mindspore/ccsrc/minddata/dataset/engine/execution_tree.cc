@@ -37,7 +37,6 @@ ExecutionTree::ExecutionTree() : id_count_(0) {
   tg_ = std::make_unique<TaskGroup>();
   tree_state_ = kDeTStateInit;
   prepare_flags_ = kDePrepNone;
-  perf_monitor_ = std::make_unique<Monitor>(this);
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
   optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
 }
@@ -139,7 +138,7 @@ Status ExecutionTree::Launch() {
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->Initialize());
     // Launch Monitor Thread
-    RETURN_IF_NOT_OK(tg_->CreateAsyncTask("Monitor Thread launched", std::ref(*perf_monitor_)));
+    RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
   }
 
   MS_LOG(DEBUG) << "Printing the tree before launch tasks:\n" << ss.str();

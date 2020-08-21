@@ -29,6 +29,11 @@
 namespace mindspore {
 namespace dataset {
 
+// Constructor
+ProfilingManager::ProfilingManager(ExecutionTree *tree) : tree_(tree) {
+  perf_monitor_ = std::make_unique<Monitor>(tree_);
+}
+
 bool ProfilingManager::IsProfilingEnable() const {
   auto profiling = common::GetEnv("PROFILING_MODE");
   if (profiling.empty() || profiling != "true") {
@@ -68,6 +73,7 @@ Status ProfilingManager::Initialize() {
   // device_queue node is used for graph mode
   std::shared_ptr<Tracing> device_queue_tracing = std::make_shared<DeviceQueueTracing>();
   RETURN_IF_NOT_OK(RegisterTracingNode(device_queue_tracing));
+
   // dataset_iterator node is used for graph mode
   std::shared_ptr<Tracing> dataset_iterator_tracing = std::make_shared<DatasetIteratorTracing>();
   RETURN_IF_NOT_OK(RegisterTracingNode(dataset_iterator_tracing));
@@ -77,6 +83,13 @@ Status ProfilingManager::Initialize() {
 
   std::shared_ptr<Sampling> connector_thr_sampling = std::make_shared<ConnectorThroughput>(tree_);
   RETURN_IF_NOT_OK(RegisterSamplingNode(connector_thr_sampling));
+
+  return Status::OK();
+}
+
+// Launch monitoring thread.
+Status ProfilingManager::LaunchMonitor() {
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Monitor Thread launched", std::ref(*perf_monitor_)));
   return Status::OK();
 }
 

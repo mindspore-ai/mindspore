@@ -32,8 +32,8 @@
 namespace mindspore {
 namespace dataset {
 DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                             int32_t op_connector_size, bool send_epoch_end)
-    : PipelineOp(op_connector_size),
+                             bool send_epoch_end)
+    : PipelineOp(1),
       channel_name_(channel_name),
       device_type_(device_type),
       device_id_(device_id),
@@ -55,10 +55,7 @@ DeviceQueueOp::Builder::Builder(int32_t prefetch_size)
     : builder_prefetch_size_(prefetch_size),
       builder_device_id_(0),
       builder_device_type_(DeviceType::CPU),
-      builder_channel_name_("") {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
+      builder_channel_name_("") {}
 
 Status DeviceQueueOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;

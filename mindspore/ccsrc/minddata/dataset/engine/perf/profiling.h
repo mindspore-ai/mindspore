@@ -78,7 +78,7 @@ class Tracing : public Profiling {
 // 4) Manage profiling data serialization process
 class ProfilingManager {
  public:
-  explicit ProfilingManager(ExecutionTree *tree) : tree_(tree) {}
+  explicit ProfilingManager(ExecutionTree *tree);
 
   ~ProfilingManager() = default;
 
@@ -105,7 +105,11 @@ class ProfilingManager {
 
   const std::unordered_map<std::string, std::shared_ptr<Sampling>> &GetSamplingNodes() { return sampling_nodes_; }
 
+  // Launch monitoring thread.
+  Status LaunchMonitor();
+
  private:
+  std::unique_ptr<Monitor> perf_monitor_;
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;
 
   std::unordered_map<std::string, std::shared_ptr<Sampling>> sampling_nodes_;
@@ -138,7 +142,6 @@ class ProfilingTime {
  public:
   static int64_t GetCurMilliSecond();
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif

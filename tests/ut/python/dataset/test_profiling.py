@@ -15,6 +15,7 @@
 """
 Testing profiling support in DE
 """
+import json
 import os
 import numpy as np
 import mindspore.dataset as ds
@@ -23,8 +24,7 @@ FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
 SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
-PIPELINE_FILE_SIZE = "./pipeline_profiling_1.json"
-PIPELINE_FILE_THR = "./pipeline_profiling_Connector_Throughput_Sampling_1.json"
+PIPELINE_FILE = "./pipeline_profiling_1.json"
 DATASET_ITERATOR_FILE = "./dataset_iterator_profiling_1.txt"
 
 
@@ -44,10 +44,8 @@ def test_profiling_simple_pipeline():
     for _ in data1:
         pass
 
-    assert os.path.exists(PIPELINE_FILE_SIZE) is True
-    os.remove(PIPELINE_FILE_SIZE)
-    assert os.path.exists(PIPELINE_FILE_THR) is True
-    os.remove(PIPELINE_FILE_THR)
+    assert os.path.exists(PIPELINE_FILE) is True
+    os.remove(PIPELINE_FILE)
     assert os.path.exists(DATASET_ITERATOR_FILE) is True
     os.remove(DATASET_ITERATOR_FILE)
     del os.environ['PROFILING_MODE']
@@ -57,7 +55,7 @@ def test_profiling_simple_pipeline():
 def test_profiling_complex_pipeline():
     """
     Generator -> Map     ->
-                             -> Zip -> Batch
+                             -> Zip
     TFReader  -> Shuffle ->
     """
     os.environ['PROFILING_MODE'] = 'true'
@@ -77,10 +75,17 @@ def test_profiling_complex_pipeline():
     for _ in data3:
         pass
 
-    assert os.path.exists(PIPELINE_FILE_SIZE) is True
-    os.remove(PIPELINE_FILE_SIZE)
-    assert os.path.exists(PIPELINE_FILE_THR) is True
-    os.remove(PIPELINE_FILE_THR)
+    with open(PIPELINE_FILE) as f:
+        data = json.load(f)
+        op_info = data["op_info"]
+        assert len(op_info) == 5
+        for i in range(5):
+            assert "size" in op_info[i]["metrics"]["output_queue"]
+            assert "length" in op_info[i]["metrics"]["output_queue"]
+            assert "throughput" in op_info[i]["metrics"]["output_queue"]
+
+    assert os.path.exists(PIPELINE_FILE) is True
+    os.remove(PIPELINE_FILE)
     assert os.path.exists(DATASET_ITERATOR_FILE) is True
     os.remove(DATASET_ITERATOR_FILE)
     del os.environ['PROFILING_MODE']
@@ -108,10 +113,8 @@ def test_profiling_sampling_iterval():
     for _ in data1:
         pass
 
-    assert os.path.exists(PIPELINE_FILE_SIZE) is True
-    os.remove(PIPELINE_FILE_SIZE)
-    assert os.path.exists(PIPELINE_FILE_THR) is True
-    os.remove(PIPELINE_FILE_THR)
+    assert os.path.exists(PIPELINE_FILE) is True
+    os.remove(PIPELINE_FILE)
     assert os.path.exists(DATASET_ITERATOR_FILE) is True
     os.remove(DATASET_ITERATOR_FILE)
 
