@@ -27,6 +27,7 @@ namespace mindspore {
 namespace predict {
 constexpr int kDefaultBigCount = 2;
 constexpr int kDefaultMidCount = 2;
+constexpr uint32_t kDefaultSpinCount = 300000;
 constexpr int kSmallCpuNum = 4;
 constexpr int kBigMidCpuNum = 4;
 constexpr int kDefaultThreadNum = 1;
@@ -97,6 +98,11 @@ void LiteThreadBind::InitSortedCpuId() {
 #else
   numCores = static_cast<int>(std::thread::hardware_concurrency());
 #endif  // MS_COMPILE_IOS
+  if (numCores < 0) {
+    MS_LOG(ERROR) << "get numCores return invalid value: " << numCores;
+    sortedCpuIds.clear();
+    return;
+  }
   if (numCores < kBigMidCpuNum) {
     bigCore = 0;
     midCore = numCores;
@@ -259,6 +265,7 @@ void ThreadPool::AddNewThread(int newNums) {
     auto queue = std::make_shared<LiteQueue>();
     threadList.emplace_back([this, i, active, queue]() {
       ThreadPoolTask *task = nullptr;
+      uint32_t spin_count = 0;
       while (!exitRun) {
         while (*active) {
           if (queue->Dequeue(&task)) {
@@ -267,6 +274,15 @@ void ThreadPool::AddNewThread(int newNums) {
               errorInfo.emplace_back(std::make_pair(i + 1, std::make_pair(false, ret)));
             }
             queue->taskSize--;
+            spin_count = 0;
+          } else {
+            ++spin_count;
+          }
+          if (spin_count == kDefaultSpinCount) {
+            *(activateList[i]) = false;
+            --curThreadRunNums;
+            spin_count = 0;
+            break;
           }
           std::this_thread::yield();
         }

@@ -75,6 +75,7 @@ Tensor::~Tensor() {
     } else {
       free(this->data_);
     }
+    this->data_ = nullptr;
   }
 }
 

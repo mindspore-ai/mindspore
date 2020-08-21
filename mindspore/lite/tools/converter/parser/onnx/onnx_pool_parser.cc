@@ -53,6 +53,9 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph,
   } else if (pool_type == "GlobalAveragePool") {
     attr->poolingMode = schema::PoolMode_MEAN_POOLING;
     attr->global = true;
+  } else if (pool_type == "Int8AveragePool") {
+    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+    attr->global = false;
   } else {
     MS_LOG(ERROR) << "Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.";
     return RET_ERROR;
@@ -105,5 +108,6 @@ OnnxNodeRegistrar g_onnxMaxPoolParser("MaxPool", new OnnxPoolParser());
 OnnxNodeRegistrar g_onnxAveragePoolParser("AveragePool", new OnnxPoolParser());
 OnnxNodeRegistrar g_onnxGlobalAveragePoolParser("GlobalAveragePool", new OnnxPoolParser());
 OnnxNodeRegistrar g_onnxGlobalMaxPoolParser("GlobalMaxPool", new OnnxPoolParser());
+OnnxNodeRegistrar g_onnxInt8AveragePoolParser("Int8AveragePool", new OnnxPoolParser());
 }  // namespace lite
 }  // namespace mindspore
