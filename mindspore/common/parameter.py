@@ -313,8 +313,9 @@ class Parameter(MetaTensor):
             Parameter, the parameter after set data.
         """
         def raise_type_error(incoming):
-            raise TypeError(f"Can not change the Parameter dtype. Current dtype is {self.set_dtype}"
-                            f", and incoming is {incoming}. Use .set_dtype(xxx) to change the dtype.")
+            raise TypeError(f"Incoming Parameter dtype can not be converted to current dtype implicitly. "
+                            f"Current dtype is {self.dtype}, and incoming is {incoming}. "
+                            f"Use .set_dtype(xxx) to change the dtype.")
 
         if not isinstance(data, (MetaTensor, Initializer, int, float)):
             raise TypeError(f"Parameter data must be [`Initializer`, `int`, `float`] or a kind of `MetaTensor` "
@@ -338,7 +339,10 @@ class Parameter(MetaTensor):
                 raise ValueError(f"Can not change the shape of Parameter which has been initialized."
                                  f" Current shape is {self.shape}, and incoming is {data.shape}.")
         if self.dtype != data.dtype:
-            raise_type_error(data.dtype)
+            if mstype.implicit_conversion_seq[self.dtype] < mstype.implicit_conversion_seq[data.dtype]:
+                raise_type_error(data.dtype)
+            else:
+                data = Tensor(data, self.dtype)
         if isinstance(data, Initializer):
             # The parameter has been initializered, directly update by the data
             if is_current_tensor:

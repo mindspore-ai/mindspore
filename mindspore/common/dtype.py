@@ -119,6 +119,9 @@ int_type = (int8, int16, int32, int64,)
 uint_type = (uint8, uint16, uint32, uint64)
 float_type = (float16, float32, float64,)
 
+implicit_conversion_seq = {t: idx for idx, t in enumerate((
+    bool_, int8, uint8, int16, int32, int64, float16, float32, float64))}
+
 _simple_types = {
     list: list_,
     tuple: tuple_,

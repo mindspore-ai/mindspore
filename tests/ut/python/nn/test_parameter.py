@@ -157,6 +157,7 @@ def test_parameter_compute():
 
 
 def test_scalar_parameter_update():
+    # float
     fp = Parameter(0.5, 'fp')
     fp.default_input = 0.8
     assert np.array_equal(fp.default_input.asnumpy(), np.array(0.8, np.float32))
@@ -167,6 +168,26 @@ def test_scalar_parameter_update():
     assert np.array_equal(int_.default_input.asnumpy(), np.array(2, np.int32))
     with pytest.raises(TypeError):
         int_.default_input = 1.2
+    # Tensor
+    fp32 = Tensor(0.5, mstype.float32)
+    int32 = Tensor(2, mstype.int32)
+    fp16 = Tensor(0.6, mstype.float16)
+    int16 = Tensor(3, mstype.int16)
+    bool_ = Tensor(np.array(True, dtype=np.bool_))
+    # updata_by_tensor
+    fp32_p = Parameter(fp32, 'fp32')
+    fp32_p.default_input = 0.8
+    fp32_p.default_input = 1
+    fp32_p.default_input = int32
+    fp32_p.default_input = fp32
+    fp32_p.default_input = int16
+    fp32_p.default_input = fp16
+    fp32_p.default_input = bool_
+
+    # updata_by_tensor
+    fp16_p = Parameter(fp16, 'fp16')
+    with pytest.raises(TypeError):
+        fp16_p.default_input = fp32
 
 
 def test_parameter_lazy_init():
