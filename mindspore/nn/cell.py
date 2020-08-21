@@ -853,8 +853,15 @@ class Cell:
         self.add_flags_recursive(**flags)
         return self
 
-    def set_grad(self, mode=True):
-        self.requires_grad = mode
+    def set_grad(self, requires_grad=True):
+        """
+        Sets the cell flag for gradient.
+
+        Args:
+            requires_grad (bool): Specifies if the net need to grad, if it is
+                True, cell will construct backward network in pynative mode. Default: True.
+        """
+        self.requires_grad = requires_grad
         return self
 
     def set_train(self, mode=True):
