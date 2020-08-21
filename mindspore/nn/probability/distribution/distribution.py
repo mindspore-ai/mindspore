@@ -17,6 +17,7 @@ from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param
+from ._utils.utils import CheckTuple, CheckTensor
 
 class Distribution(Cell):
     """
@@ -78,6 +79,9 @@ class Distribution(Cell):
         self._set_log_cdf()
         self._set_log_survival()
         self._set_cross_entropy()
+
+        self.checktuple = CheckTuple()
+        self.checktensor = CheckTensor()
 
     @property
     def name(self):
