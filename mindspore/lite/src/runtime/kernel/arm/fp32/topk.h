@@ -28,8 +28,6 @@ class TopKCPUKernel : public LiteKernel {
                          const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~TopKCPUKernel() override {
-    TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-    free(parameter->topk_node_list_);
   }
 
   int Init() override;

@@ -36,8 +36,6 @@ class AnfExporter {
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      schema::CNodeT *fb_node);
   void RemoveIfMakeTuple(const CNodePtr &cnode);
-  bool RemoveIfTupleGetItem(const CNodePtr &cnode);
-  bool AddOutPutIfReturn(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const CNodePtr &cnode);
 
  protected:
   int ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, schema::CNodeT *output_cnode);
@@ -46,6 +44,8 @@ class AnfExporter {
   int ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
   void SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+  void SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                           schema::CNodeT *return_node);
   bool IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type);
   int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                         const std::shared_ptr<PrimitiveTValue> primitive,
