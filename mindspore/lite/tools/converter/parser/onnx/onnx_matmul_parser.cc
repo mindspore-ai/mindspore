@@ -14,15 +14,31 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_matmul_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph,
+                               const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx MatMulParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::MatMulT> attr = std::make_unique<schema::MatMulT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   float alpha = 1.0f;
   float beta = 1.0f;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -39,14 +55,11 @@ STATUS OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
   }
   if (alpha != 1 || beta != 1) {
     MS_LOG(ERROR) << "not support alpha * A * B + beta * C";
-    return RET_PARAM_INVALID;
+    return RET_ERROR;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_MatMul;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_MatMul;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_ONNX_ARITHMETIC_OPREATION_PARSER_H
-#define MS_ONNX_ARITHMETIC_OPREATION_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARITHMETIC_OPREATION_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARITHMETIC_OPREATION_PARSER_H
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
@@ -167,5 +167,5 @@ class OnnxTanhParser : public OnnxNodeParser {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MS_ONNX_ARITHMETIC_OPREATION_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARITHMETIC_OPREATION_PARSER_H
 

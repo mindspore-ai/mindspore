@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MS_ONNX_CONVERTER_H
-#define MS_ONNX_CONVERTER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONVERTER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONVERTER_H
+
 #include <string>
 #include <memory>
 #include "tools/converter/converter.h"
@@ -27,10 +28,10 @@ class OnnxConverter : public Converter {
  public:
   OnnxConverter();
 
-  ~OnnxConverter() override = default;
+  ~OnnxConverter() = default;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MS_ONNX_CONVERTER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONVERTER_H
 

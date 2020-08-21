@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_ONNX_OP_REGISTRY_H
-#define MS_ONNX_OP_REGISTRY_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_REGISTRY_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_REGISTRY_H
 
 #include <string>
 #include <unordered_map>
@@ -30,6 +30,7 @@ class OnnxNodeParserRegistry {
   virtual ~OnnxNodeParserRegistry();
 
   static OnnxNodeParserRegistry *GetInstance();
+
   OnnxNodeParser *GetNodeParser(const std::string &name);
 
   std::unordered_map<std::string, OnnxNodeParser *> parsers;
@@ -37,12 +38,13 @@ class OnnxNodeParserRegistry {
 
 class OnnxNodeRegistrar {
  public:
-  OnnxNodeRegistrar(const std::string &name, OnnxNodeParser *parser) {
+  OnnxNodeRegistrar(const std::string &name,
+                    OnnxNodeParser *parser) {
     OnnxNodeParserRegistry::GetInstance()->parsers[name] = parser;
   }
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MS_ONNX_OP_REGISTRY_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_REGISTRY_H
 

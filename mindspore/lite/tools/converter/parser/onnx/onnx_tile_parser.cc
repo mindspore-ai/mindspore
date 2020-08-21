@@ -14,19 +14,33 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_tile_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+STATUS OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph,
+                             const onnx::NodeProto &onnx_node,
+                             schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx TileParser";
-  if (op != nullptr) {
-    std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Tile;
-    op->primitive->value.value = attr.release();
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
   }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+  op->primitive->value.type = schema::PrimitiveType_Tile;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

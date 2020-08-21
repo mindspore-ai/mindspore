@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include <vector>
 
 namespace mindspore {
 namespace lite {
@@ -28,6 +29,20 @@ schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_
   } else {
     MS_LOG(ERROR) << "unsupported padMode";
     return schema::PadMode_NOTSET;
+  }
+}
+
+void OnnxNodeParser::Split(const std::string &src_str,
+                           std::vector<std::string> *dst_str,
+                           const std::string &chr) {
+  std::string ::size_type p1 = 0, p2 = src_str.find(chr);
+  while (std::string::npos != p2) {
+    dst_str->push_back(src_str.substr(p1, p2 - p1));
+    p1 = p2 + chr.size();
+    p2 = src_str.find(chr, p1);
+  }
+  if (p1 != src_str.length()) {
+    dst_str->push_back(src_str.substr(p1));
   }
 }
 }  // namespace lite

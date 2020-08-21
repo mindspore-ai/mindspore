@@ -14,36 +14,64 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/onnx/onnx_relu_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/onnx/onnx_relu_parser.h"
 #include "securec/include/securec.h"
+
 namespace mindspore {
 namespace lite {
-STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph,
+                             const onnx::NodeProto &onnx_node,
+                             schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReluParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   const auto &relu_type = onnx_node.op_type();
   if (relu_type == "Relu") {
+    MS_LOG(DEBUG) << "onnx ReluParser";
     attr->type = schema::ActivationType_RELU;
   } else if (relu_type == "LeakyRelu") {
+    MS_LOG(DEBUG) << "onnx LeakyReluParser";
     attr->type = schema::ActivationType_LEAKY_RELU;
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Activation;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Activation;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
 STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PReluParser";
+
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   if (onnx_node.input_size() != 2) {
-    MS_LOG(ERROR) << "input num is not 2";
-    return RET_PARAM_INVALID;
+    MS_LOG(ERROR) << "input num should be 2";
+    return RET_ERROR;
   }
   std::unique_ptr<schema::CaffePReLUT> attr = std::make_unique<schema::CaffePReLUT>();
   std::vector<onnx::TensorProto> params;
@@ -57,8 +85,8 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
 
   const onnx::TensorProto *slope = &params[0];
   if (slope == nullptr) {
-    MS_LOG(ERROR) << "input error";
-    return RET_PARAM_INVALID;
+    MS_LOG(ERROR) << "input error: params[0] is null";
+    return RET_ERROR;
   }
   const auto slope_raw_data = reinterpret_cast<const float *>(slope->raw_data().data());
   const int64_t slope_size = slope->raw_data().size() / sizeof(float);
@@ -74,11 +102,8 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     }
   }
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_CaffePReLU;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_CaffePReLU;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

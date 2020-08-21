@@ -14,14 +14,30 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_pool_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph,
+                             const onnx::NodeProto &onnx_node,
+                             schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PoolParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   attr->format = schema::Format_NCHW;
   const auto &pool_type = onnx_node.op_type();
@@ -79,11 +95,9 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       return RET_ERROR;
     }
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Pooling;
-    op->primitive->value.value = attr.release();
-  }
+
+  op->primitive->value.type = schema::PrimitiveType_Pooling;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

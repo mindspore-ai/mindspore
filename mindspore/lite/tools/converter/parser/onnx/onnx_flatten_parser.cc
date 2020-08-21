@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_flatten_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -23,7 +23,22 @@ STATUS OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph,
                                 const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx FlattenParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   int axis = 1;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
@@ -36,11 +51,8 @@ STATUS OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph,
   }
   attr->shape.emplace_back(-1);
 
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Reshape;
-    op->primitive->value.value = attr.release();
-  }
+  op->primitive->value.type = schema::PrimitiveType_Reshape;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

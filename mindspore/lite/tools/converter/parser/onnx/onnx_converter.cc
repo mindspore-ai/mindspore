@@ -22,6 +22,7 @@ namespace lite {
 OnnxConverter::OnnxConverter() {
   modelParser = new OnnxModelParser();
 }
+
 }  // namespace lite
 }  // namespace mindspore
 

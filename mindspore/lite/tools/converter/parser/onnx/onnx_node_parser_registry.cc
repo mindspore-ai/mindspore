@@ -21,7 +21,14 @@ namespace mindspore {
 namespace lite {
 OnnxNodeParserRegistry::OnnxNodeParserRegistry() = default;
 
-OnnxNodeParserRegistry::~OnnxNodeParserRegistry() = default;
+OnnxNodeParserRegistry::~OnnxNodeParserRegistry() {
+  for (auto ite : parsers) {
+    if (ite.second != nullptr) {
+      delete ite.second;
+      ite.second = nullptr;
+    }
+  }
+}
 
 OnnxNodeParserRegistry *OnnxNodeParserRegistry::GetInstance() {
   static OnnxNodeParserRegistry instance;
