@@ -61,7 +61,7 @@ void PrintMeTensor(MeTensor* tensor) {
   py::array tensor_data = TensorPy::AsNumpy(*tensor);
   std::cout << std::string(py::str(tensor_data)) << std::endl;
 
-  std::cout << "tensor dtype is: " << std::string(tensor_data.dtype().str()) << std::endl;
+  std::cout << "tensor dtype is: " << py::str(tensor_data.dtype()) << std::endl;
 }
 
 FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {

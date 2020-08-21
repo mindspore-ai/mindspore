@@ -285,7 +285,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
 
 Status BatchOp::GetBatchSize(int32_t *batch_size, CBatchInfo info) {
 #ifdef ENABLE_PYTHON
-  if (batch_size_func_ != nullptr) {
+  if (batch_size_func_) {
     RETURN_IF_NOT_OK(InvokeBatchSizeFunc(batch_size, info));
   } else {
     (*batch_size) = start_batch_size_;
