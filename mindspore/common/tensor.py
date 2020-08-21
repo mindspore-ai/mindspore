@@ -74,7 +74,7 @@ class Tensor(Tensor_):
         self._virtual_flag = False
 
     def __repr__(self):
-        return str(Tensor_.__str__(self))
+        return Tensor_.__repr__(self)
 
     def __add__(self, other):
         out = tensor_operator_registry.get('__add__')(self, other)
