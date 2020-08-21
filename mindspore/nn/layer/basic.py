@@ -93,9 +93,7 @@ class Dropout(Cell):
         self.dropout_do_mask = P.DropoutDoMask()
         self.cast = P.Cast()
         self.is_gpu = context.get_context('device_target') in ["GPU"]
-
-        if self.is_gpu:
-            self.dropout = P.Dropout(keep_prob)
+        self.dropout = P.Dropout(keep_prob)
 
     def construct(self, x):
         if not self.training:

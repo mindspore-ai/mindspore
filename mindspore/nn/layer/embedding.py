@@ -128,8 +128,10 @@ class EmbeddingLookup(Cell):
         vocab_size (int): Size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
         param_init (str): The initialize way of embedding table. Default: 'normal'.
-        target (str): Specify the target where the op is executed. Default: 'CPU'.
-        slice_mode (str): The slicing way in semi auto parallel/auto parallel. Default: 'batch_slice'.
+        target (str): Specify the target where the op is executed. The value should in
+        ['DEVICE', 'CPU']. Default: 'CPU'.
+        slice_mode (str): The slicing way in semi auto parallel/auto parallel. The value should get through
+        nn.EmbeddingLookUpSplitMode. Default: 'batch_slice'.
         manual_shapes (tuple): The accompaniment array in field slice mode.
 
     Inputs:
