@@ -98,3 +98,6 @@ mindspore/.commit_id
 
 # lite test file
 mindspore/lite/test/do_test/
+
+# lite opencl compile file
+*.cl.inc

@@ -161,7 +161,8 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
 
   // compare
   CompareOutputData(output_data, correct_data, oh * ow * co, 0.00001);
-
+  inputs[0]->SetData(nullptr);
+  outputs[0]->SetData(nullptr);
   MS_LOG(INFO) << "Test Conv2dTransposeFp32 passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }

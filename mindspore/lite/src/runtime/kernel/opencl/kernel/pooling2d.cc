@@ -73,7 +73,9 @@ int PoolingOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  ori_format_ = out_tensors_[0]->GetFormat();
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 

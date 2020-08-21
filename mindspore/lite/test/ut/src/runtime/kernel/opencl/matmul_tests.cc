@@ -31,6 +31,7 @@ class TestMatMulOpenCL : public mindspore::CommonTest {
 TEST_F(TestMatMulOpenCL, MatMulFp32) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
   size_t input_size;
   int ci = 1280;
   int co = 1001;
@@ -47,16 +48,16 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
     MS_LOG(ERROR) << "weight_data load error.";
     return;
   }
-  std::vector<int> input_shape = {1, 1, 1, ci};
-  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape);
+  std::vector<int> input_shape = {1, ci};
+  auto tensor_x_ptr =
+    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NC);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
-  tensor_x->SetData(input_data);
 
-  std::vector<int> w_shape = {co, 1, 1, ci};
+  std::vector<int> w_shape = {co, ci};
   auto tensor_w_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), w_shape);
   auto tensor_w = tensor_w_ptr.get();
   if (tensor_w == nullptr) {
@@ -65,8 +66,9 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   }
   tensor_w->SetData(weight_data);
 
-  std::vector<int> out_shape = {1, 1, 1, co};
-  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
+  std::vector<int> out_shape = {1, co};
+  auto tensor_out_ptr =
+    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape, schema::Format_NC);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -81,6 +83,7 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
     return;
   }
   arith_kernel->Init();
+  inputs[0]->MallocData(allocator);
 
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
 
@@ -92,6 +95,7 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
     return;
   }
   pGraph->Init();
+  memcpy(inputs[0]->Data(), input_data, input_size);
   pGraph->Run();
 
   size_t output_size;
@@ -108,9 +112,10 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   std::cout << std::endl;
 
   // compare
-  CompareOutputData(output_data, correct_data, co, 0.00001);
-
-  MS_LOG(INFO) << "TestMatMulFp32 passed";
+  CompareOutputData(output_data, correct_data, co, 0.0001);
+  tensor_x->SetData(nullptr);
+  tensor_out->SetData(nullptr);
   lite::opencl::OpenCLRuntime::DeleteInstance();
+  MS_LOG(INFO) << "TestMatMulFp32 passed";
 }
 }  // namespace mindspore

@@ -35,7 +35,7 @@ class OpenCLKernel : public LiteKernel {
  public:
   explicit OpenCLKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs)
-    : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
+      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
 
   virtual int Init() { return -1; }
   virtual int Prepare() { return -1; }
@@ -49,11 +49,13 @@ class OpenCLKernel : public LiteKernel {
   }
   OpenCLMemType GetMemType() { return out_mem_type_; }
   void SetMemType(OpenCLMemType mem_type) { out_mem_type_ = mem_type; }
-  schema::Format GetOriFormat() { return ori_format_;}
+  schema::Format GetInOriFormat() { return in_ori_format_; }
+  schema::Format GetOutOriFormat() { return out_ori_format_; }
 
  protected:
   OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
-  schema::Format ori_format_{schema::Format_NHWC4};
+  schema::Format in_ori_format_{schema::Format_NHWC};
+  schema::Format out_ori_format_{schema::Format_NHWC4};
 };
 }  // namespace mindspore::kernel
 

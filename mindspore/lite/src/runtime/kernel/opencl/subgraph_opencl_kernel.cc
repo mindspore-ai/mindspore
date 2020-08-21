@@ -38,10 +38,10 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
   for (auto &iv : in_kernels) {
     for (auto &jv : iv) {
       OpenCLKernel *cur_opencl_op = reinterpret_cast<OpenCLKernel *>(jv);
-      schema::Format ori_format = cur_opencl_op->GetOriFormat();
+      schema::Format out_ori_format = cur_opencl_op->GetOutOriFormat();
       auto tens = cur_opencl_op->out_tensors();
       if (mem_type == OpenCLMemType::BUF && mem_type == cur_opencl_op->GetMemType() &&
-          tens[0]->GetFormat() == ori_format) {
+          tens[0]->GetFormat() == out_ori_format) {
         continue;
       }
       if (mem_type == OpenCLMemType::IMG) {
@@ -53,14 +53,16 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
   }
   for (size_t i = 0; i < in_tensors.size(); ++i) {
     OpenCLKernel *cur_opencl_op = reinterpret_cast<OpenCLKernel *>(in_kernels[i][0]);
-    schema::Format ori_format = cur_opencl_op->GetOriFormat();
+    schema::Format out_ori_format = cur_opencl_op->GetOutOriFormat();
+    schema::Format in_ori_format = cur_opencl_op->GetInOriFormat();
     if (mem_type == OpenCLMemType::BUF && mem_type == cur_opencl_op->GetMemType() &&
-        in_tensors[i]->GetFormat() == ori_format) {
+        in_tensors[i]->GetFormat() == out_ori_format) {
       continue;
     }
-    auto dst_format = (mem_type == OpenCLMemType::IMG) ? in_kernels[i][0]->out_tensors()[0]->GetFormat() : ori_format;
+    auto dst_format =
+      (mem_type == OpenCLMemType::IMG) ? in_kernels[i][0]->in_tensors()[0]->GetFormat() : out_ori_format;
     auto src_format =
-      (mem_type == OpenCLMemType::IMG) ? in_tensors[i]->GetFormat() : in_kernels[i][0]->out_tensors()[0]->GetFormat();
+      (mem_type == OpenCLMemType::IMG) ? in_ori_format : in_kernels[i][0]->out_tensors()[0]->GetFormat();
     lite::tensor::Tensor *new_tensor = new (std::nothrow) lite::tensor::Tensor();
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
@@ -80,7 +82,14 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
       std::vector<int> dst_shape{shape[0], shape[2], shape[3], shape[1]};
       new_tensor->set_shape(shape);
     }
-    new_tensor->SetFormat(in_kernels[i][0]->out_tensors()[0]->GetFormat());
+    if (mem_type == OpenCLMemType::IMG) {
+      new_tensor->SetFormat(dst_format);
+      in_tensors[i]->SetFormat(src_format);
+    } else {
+      new_tensor->SetFormat(src_format);
+      in_tensors[i]->SetFormat(dst_format);
+    }
+
     out_tensors->emplace_back(new_tensor);
 #ifdef ENABLE_FP16
     KernelKey desc{kGPU, kNumberTypeFloat16, schema::PrimitiveType_ToFormat};

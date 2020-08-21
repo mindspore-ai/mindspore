@@ -44,26 +44,28 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  auto weight_format = in_tensors_[1]->GetFormat();
-  if (weight_format != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "weight format(" << weight_format << ") "
-                  << "format not support!";
-    return 1;
+  int ci, co;
+  if (in_tensors_[1]->shape().size() == 2) {
+    ci = in_tensors_[1]->shape()[1];
+    co = in_tensors_[1]->shape()[0];
+  } else {
+    ci = in_tensors_[1]->shape()[3];
+    co = in_tensors_[1]->shape()[0];
   }
-  int ci = in_tensors_[1]->shape()[3];
-  int co = in_tensors_[1]->shape()[0];
-  sizeCI = {ci, UP_DIV(ci, 4)};
-  sizeCO = {co, UP_DIV(co, 4)};
-  auto allocator = ocl_runtime->GetAllocator();
-  padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * 16 * sizeof(FLOAT_T)));
-  padWeight_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
-  bias_ = reinterpret_cast<FLOAT_T *>(allocator->Malloc(sizeCO.s[1] * 4 * sizeof(FLOAT_T)));
-  bias_ = reinterpret_cast<FLOAT_T *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
+
+  sizeCI = {ci, UP_DIV(ci, C4NUM)};
+  sizeCO = {co, UP_DIV(co, C4NUM)};
   PadWeight();
-  allocator->UnmapBuffer(padWeight_);
-  allocator->UnmapBuffer(bias_);
-  ori_format_ = out_tensors_[0]->GetFormat();
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  if (out_tensors_[0]->shape().size() == 2) {
+    out_ori_format_ = schema::Format_NC;
+    out_tensors_[0]->SetFormat(schema::Format_NC4);
+    in_ori_format_ = schema::Format_NC;
+    in_tensors_[0]->SetFormat(schema::Format_NC4);
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return 0;
 }
@@ -71,16 +73,22 @@ int MatMulOpenCLKernel::Init() {
 int MatMulOpenCLKernel::ReSize() { return 0; }
 
 void MatMulOpenCLKernel::PadWeight() {
-  auto origin_weight = reinterpret_cast<FLOAT_T *>(in_tensors_.at(kWeightIndex)->Data());
+  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  padWeight_ =
+    reinterpret_cast<FLOAT_t *>(allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * sizeof(FLOAT_t)));
+  padWeight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
+
+  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kWeightIndex)->Data());
   int divCI = sizeCI.s[1];
   int divCO = sizeCO.s[1];
+  int co = sizeCO.s[0];
   int index = 0;
   for (int i = 0; i < divCI; ++i) {
     for (int j = 0; j < divCO; ++j) {
-      for (int k = 0; k < 4; ++k) {
-        for (int l = 0; l < 4; ++l) {
-          int src_x = i * 4 + l;
-          int src_y = j * 4 + k;
+      for (int k = 0; k < C4NUM; ++k) {
+        for (int l = 0; l < C4NUM; ++l) {
+          int src_x = i * C4NUM + l;
+          int src_y = j * C4NUM + k;
           if (src_x < sizeCI.s[0] && src_y < sizeCO.s[0]) {
             padWeight_[index++] = origin_weight[src_y * sizeCI.s[0] + src_x];
           } else {
@@ -90,60 +98,55 @@ void MatMulOpenCLKernel::PadWeight() {
       }
     }
   }
-  if (hasBias_) {
-    memcpy(bias_, in_tensors_[2]->Data(), sizeof(FLOAT_T) * sizeCO.s[0]);
-    for (int i = sizeCO.s[0]; i < sizeCO.s[1] * 4; i++) {
-      bias_[i] = 0;
-    }
-  } else {
-    for (int i = 0; i < sizeCO.s[1] * 4; i++) {
-      bias_[i] = 0;
-    }
+
+  size_t im_dst_x, im_dst_y;
+  im_dst_x = divCO;
+  im_dst_y = 1;
+#ifdef ENABLE_FP16
+  size_t img_dtype = CL_HALF_FLOAT;
+#else
+  size_t img_dtype = CL_FLOAT;
+#endif
+  std::vector<size_t> img_size{im_dst_x, im_dst_y, img_dtype};
+  bias_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(im_dst_x * im_dst_y * C4NUM * sizeof(FLOAT_t), img_size));
+  bias_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
+  memset(bias_, 0x00, divCO * C4NUM * sizeof(FLOAT_t));
+  if (in_tensors_.size() >= 3) {
+    memcpy(bias_, in_tensors_[2]->Data(), co * sizeof(FLOAT_t));
   }
+  allocator->UnmapBuffer(bias_);
+}
+
+int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  size_t im_dst_x, im_dst_y;
+  im_dst_x = sizeCO.s[1];
+  im_dst_y = 1;
+#ifdef ENABLE_FP16
+  size_t img_dtype = CL_HALF_FLOAT;
+#else
+  size_t img_dtype = CL_FLOAT;
+#endif
+  img_size->clear();
+  std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
+  *img_size = vec;
+  return RET_OK;
 }
 
 int MatMulOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  std::vector<int> shapex = in_tensors_[0]->shape();
-  int n = shapex[0];
-  if (n > 1) {
-    MS_LOG(ERROR) << "MatMul n > 1 not supported!";
-    return 1;
-  }
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {64, 4};
   std::vector<size_t> global = {UP_ROUND(sizeCO.s[1], local[0]), 4};
-
-  cl::ImageFormat image_format;
-  {
-    image_format.image_channel_order = CL_RGBA;
-#ifdef ENABLE_FP16
-    image_format.image_channel_data_type = CL_HALF_FLOAT;
-#else
-    image_format.image_channel_data_type = CL_FLOAT;
-#endif
-  }
-  cl_int in_error_code, in_error_code_weight, in_error_code_bias, out_error_code;
-  cl::Image2D img_input(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, sizeCI.s[1], 1,
-                        0, in_tensors_[0]->Data(), &in_error_code);
-  cl::Image2D img_bias(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, image_format, sizeCO.s[1], 1,
-                       0, bias_, &in_error_code_bias);
-  cl::Image2D img_out(*ocl_runtime->Context(), CL_MEM_WRITE_ONLY, image_format, sizeCO.s[1], 1, 0, nullptr,
-                      &out_error_code);
-
-  ocl_runtime->SetKernelArg(kernel_, 0, img_input);
-  ocl_runtime->SetKernelArg(kernel_, 1, padWeight_);
-  ocl_runtime->SetKernelArg(kernel_, 2, img_bias);
-  ocl_runtime->SetKernelArg(kernel_, 3, img_out);
-  ocl_runtime->SetKernelArg(kernel_, 4, sizeCI);
-  ocl_runtime->SetKernelArg(kernel_, 5, sizeCO);
-  ocl_runtime->SetKernelArg(kernel_, 6, hasBias_ ? 1 : 0);
+  int arg_count = 0;
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, padWeight_);
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, bias_);
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCI);
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCO);
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, hasBias_ ? 1 : 0);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
-  auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
-  auto region = cl::array<cl::size_type, 3U>{(size_t)(sizeCO.s[1]), 1, 1};
-  ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(img_out, CL_TRUE, origin, region, 0, 0,
-                                                          out_tensors_[0]->Data());
   return 0;
 }
 

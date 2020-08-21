@@ -44,14 +44,15 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
   }
   std::vector<int> input_shape = {1, h, w, c};
   auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC4);
+    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
   std::vector<int> out_shape = {1, c, h, w};
-  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape);
+  auto tensor_out_ptr =
+    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape, schema::Format_NCHW);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -102,7 +103,11 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
 
   // compare
   CompareOutputData(output_data, correct_data, h * w * c, 0.00001);
-  MS_LOG(INFO) << "Test TransposeFp32 passed";
+
+  inputs[0]->SetData(nullptr);
+  outputs[0]->SetData(nullptr);
   lite::opencl::OpenCLRuntime::DeleteInstance();
+
+  MS_LOG(INFO) << "Test TransposeFp32 passed";
 }
 }  // namespace mindspore
