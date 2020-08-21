@@ -187,39 +187,5 @@ bool GpuBufferMgr::CloseNotify() {
 }
 
 void GpuBufferMgr::CloseConfirm() { sema.Signal(); }
-
-size_t GpuBufferMgr::Size(unsigned int handle) {
-  if (handle == HandleMgr::INVALID_HANDLE) {
-    MS_LOG(ERROR) << "handle is invalid";
-    return 0;
-  }
-  return handle_queue_map_.at(handle)->Size();
-}
-
-size_t GpuBufferMgr::Size(unsigned int device_id, const std::string &channel_name) {
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (!name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return 0;
-  }
-  return name_queue_map_.at(name)->Size();
-}
-
-size_t GpuBufferMgr::Capacity(unsigned int handle) {
-  if (handle == HandleMgr::INVALID_HANDLE) {
-    MS_LOG(ERROR) << "handle is invalid";
-    return 0;
-  }
-  return handle_queue_map_.at(handle)->Capacity();
-}
-
-size_t GpuBufferMgr::Capacity(unsigned int device_id, const std::string &channel_name) {
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (!name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return 0;
-  }
-  return name_queue_map_.at(name)->Capacity();
-}
 }  // namespace device
 }  // namespace mindspore
