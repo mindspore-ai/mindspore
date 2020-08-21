@@ -26,6 +26,7 @@
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
 
+using debugger::Chunk;
 using debugger::DataType;
 using debugger::EventReply;
 using debugger::GraphProto;
