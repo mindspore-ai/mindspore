@@ -8,7 +8,7 @@
   - [Script and Sample Code](#script-and-sample-code)
   - [Script Parameters](#script-parameters)
     - [Training Script Parameters](#training-script-parameters)
-    - [Preprocess Scripts Parameters](#preprocess-script-parameters)
+    - [Preprocess Script Parameters](#preprocess-script-parameters)
   - [Dataset Preparation](#dataset-preparation)
     - [Process the Real World Data](#process-the-real-world-data)
     - [Generate and Process the Synthetic Data](#generate-and-process-the-synthetic-data)
@@ -159,7 +159,7 @@ optional arguments:
   --dataset_type                      The data type of the training files, chosen from tfrecord/mindrecord/hd5.(Default:tfrecord)
   --parameter_server                  Open parameter server of not.(Default:0)
 ```
-### [Preprocess Scripts Parameters](#contents)
+### [Preprocess Script Parameters](#contents)
 ```
 usage: generate_synthetic_data.py [-h] [--output_file OUTPUT_FILE]
                                   [--label_dim LABEL_DIM]
@@ -196,9 +196,6 @@ usage: preprocess_data.py [-h]
 ## [Dataset Preparation](#contents)
 
 ### [Process the Real World Data](#content)
-
-
-
 
 1. Download the Dataset and place the raw dataset under a certain path, such as: ./data/origin_data
 ```bash
@@ -318,6 +315,11 @@ Note: The result of GPU is tested under the master version. The parameter server
 | Accuracy          | AUC=0.809                   |
 
 # [Description of Random Situation](#contents)
+
+There are three random situations:
+- Shuffle of the dataset.
+- Initialization of some model weights.
+- Dropout operations.
 
 
 # [ModelZoo Homepage](#contents)
