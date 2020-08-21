@@ -94,7 +94,7 @@ class BuddySpace {
   int num_lvl_;
   uint64_t min_;
   uint64_t max_;
-  void *ptr_;
+  std::unique_ptr<uint8_t[]> mem_;
   std::mutex mutex_;
 
   explicit BuddySpace(int log_min = 15, int num_lvl = 18);

@@ -15,7 +15,9 @@
  */
 
 #include <string>
+#include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/arena.h"
+#include "minddata/dataset/util/system_pool.h"
 #include "common/common.h"
 #include "utils/log_adapter.h"
 
@@ -27,11 +29,10 @@ class MindDataTestArena : public UT::Common {
 };
 
 
-TEST_F(MindDataTestArena, TestALLFunction) {
+TEST_F(MindDataTestArena, Test1) {
   std::shared_ptr<Arena> mp;
   Status rc = Arena::CreateArena(&mp);
   ASSERT_TRUE(rc.IsOk());
-  std::shared_ptr<Arena> arena = std::dynamic_pointer_cast<Arena>(mp);
   std::vector<void *> v;
 
   srand(time(NULL));
@@ -45,4 +46,26 @@ TEST_F(MindDataTestArena, TestALLFunction) {
     mp->Deallocate(v.at(i));
   }
   MS_LOG(DEBUG) << *mp;
+}
+
+TEST_F(MindDataTestArena, Test2) {
+  std::shared_ptr<Arena> arena;
+  Status rc = Arena::CreateArena(&arena);
+  std::shared_ptr<MemoryPool> mp = std::static_pointer_cast<MemoryPool>(arena);
+  auto alloc = Allocator<int>(mp);
+  ASSERT_TRUE(rc.IsOk());
+  std::vector<int, Allocator<int>> v(alloc);
+  v.reserve(1000);
+  for (auto i = 0; i < 1000; ++i) {
+    v.push_back(i);
+  }
+  // Test copy
+  std::vector<int, Allocator<int>> w(v, SystemPool::GetAllocator<int>());
+  auto val = w.at(10);
+  EXPECT_EQ(val, 10);
+  // Test move
+  std::vector<int, Allocator<int>> s(std::move(v), SystemPool::GetAllocator<int>());
+  val = s.at(100);
+  EXPECT_EQ(val, 100);
+  EXPECT_EQ(v.size(), 0);
 }

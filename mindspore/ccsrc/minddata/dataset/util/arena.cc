@@ -33,21 +33,19 @@ struct MemHdr {
     *hdr = *tmp;
   }
 };
-Status Arena::Init() {
-  RETURN_IF_NOT_OK(DeMalloc(size_in_MB_ * 1048576L, &ptr_, false));
+
+ArenaImpl::ArenaImpl(void *ptr, size_t sz) : size_in_bytes_(sz), ptr_(ptr) {
   // Divide the memory into blocks. Ignore the last partial block.
   uint64_t num_blks = size_in_bytes_ / ARENA_BLK_SZ;
   MS_LOG(DEBUG) << "Size of memory pool is " << num_blks << ", number of blocks of size is " << ARENA_BLK_SZ << ".";
   tr_.Insert(0, num_blks);
-  return Status::OK();
 }
 
-Status Arena::Allocate(size_t n, void **p) {
+Status ArenaImpl::Allocate(size_t n, void **p) {
   if (n == 0) {
     *p = nullptr;
     return Status::OK();
   }
-  std::unique_lock<std::mutex> lck(mux_);
   // Round up n to 1K block
   uint64_t req_size = static_cast<uint64_t>(n) + ARENA_WALL_OVERHEAD_SZ;
   if (req_size > this->get_max_size()) {
@@ -64,7 +62,6 @@ Status Arena::Allocate(size_t n, void **p) {
     if (size > reqBlk) {
       tr_.Insert(addr + reqBlk, size - reqBlk);
     }
-    lck.unlock();
     char *q = static_cast<char *>(ptr_) + addr * ARENA_BLK_SZ;
     MemHdr::setHdr(q, addr, reqBlk);
     *p = get_user_addr(q);
@@ -74,14 +71,24 @@ Status Arena::Allocate(size_t n, void **p) {
   return Status::OK();
 }
 
-void Arena::Deallocate(void *p) {
+std::pair<std::pair<uint64_t, uint64_t>, bool> ArenaImpl::FindPrevBlk(uint64_t addr) {
+  for (auto &it : tr_) {
+    if (it.key + it.priority == addr) {
+      return std::make_pair(std::make_pair(it.key, it.priority), true);
+    } else if (it.key > addr) {
+      break;
+    }
+  }
+  return std::make_pair(std::make_pair(0, 0), false);
+}
+
+void ArenaImpl::Deallocate(void *p) {
   auto *q = get_base_addr(p);
   MemHdr hdr(0, 0);
   MemHdr::getHdr(q, &hdr);
   MS_ASSERT(hdr.sig == 0xDEADBEEF);
   // We are going to insert a free block back to the treap. But first, check if we can combine
   // with the free blocks before and after to form a bigger block.
-  std::unique_lock<std::mutex> lck(mux_);
   // Query if we have a free block after us.
   auto nextBlk = tr_.Search(hdr.addr + hdr.blk_size);
   if (nextBlk.second) {
@@ -101,105 +108,7 @@ void Arena::Deallocate(void *p) {
   tr_.Insert(hdr.addr, hdr.blk_size);
 }
 
-Status Arena::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
-  MS_ASSERT(pp);
-  MS_ASSERT(*pp);
-  uint64_t actual_size = static_cast<uint64_t>(new_sz) + ARENA_WALL_OVERHEAD_SZ;
-  if (actual_size > this->get_max_size()) {
-    RETURN_STATUS_UNEXPECTED("Request size too big : " + std::to_string(new_sz));
-  }
-  uint64_t req_blk = SizeToBlk(actual_size);
-  char *oldAddr = reinterpret_cast<char *>(*pp);
-  auto *oldHdr = get_base_addr(oldAddr);
-  MemHdr hdr(0, 0);
-  MemHdr::getHdr(oldHdr, &hdr);
-  MS_ASSERT(hdr.sig == 0xDEADBEEF);
-  std::unique_lock<std::mutex> lck(mux_);
-  if (hdr.blk_size > req_blk) {
-    // Refresh the header with the new smaller size.
-    MemHdr::setHdr(oldHdr, hdr.addr, req_blk);
-    // Return the unused memory back to the tree. Unlike allocate, we we need to merge with the block after us.
-    auto next_blk = tr_.Search(hdr.addr + hdr.blk_size);
-    if (next_blk.second) {
-      hdr.blk_size += next_blk.first.priority;
-      tr_.DeleteKey(next_blk.first.key);
-    }
-    tr_.Insert(hdr.addr + req_blk, hdr.blk_size - req_blk);
-  } else if (hdr.blk_size < req_blk) {
-    uint64_t addr = hdr.addr;
-    // Attempt a block enlarge. No guarantee it is always successful.
-    bool success = BlockEnlarge(&addr, hdr.blk_size, req_blk);
-    if (success) {
-      auto *newHdr = static_cast<char *>(ptr_) + addr * ARENA_BLK_SZ;
-      MemHdr::setHdr(newHdr, addr, req_blk);
-      if (addr != hdr.addr) {
-        errno_t err =
-          memmove_s(get_user_addr(newHdr), (req_blk * ARENA_BLK_SZ) - ARENA_WALL_OVERHEAD_SZ, oldAddr, old_sz);
-        if (err) {
-          RETURN_STATUS_UNEXPECTED("Error from memmove: " + std::to_string(err));
-        }
-      }
-      *pp = get_user_addr(newHdr);
-      return Status::OK();
-    }
-    // If we reach here, allocate a new block and simply move the content from the old to the new place.
-    // Unlock since allocate will grab the lock again.
-    lck.unlock();
-    return FreeAndAlloc(pp, old_sz, new_sz);
-  }
-  return Status::OK();
-}
-
-std::ostream &operator<<(std::ostream &os, const Arena &s) {
-  for (auto &it : s.tr_) {
-    os << "Address : " << it.key << ". Size : " << it.priority << "\n";
-  }
-  return os;
-}
-
-Arena::Arena(size_t val_in_MB) : ptr_(nullptr), size_in_MB_(val_in_MB), size_in_bytes_(val_in_MB * 1048576L) {}
-
-Status Arena::CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB) {
-  if (p_ba == nullptr) {
-    RETURN_STATUS_UNEXPECTED("p_ba is null");
-  }
-  Status rc;
-  auto ba = new (std::nothrow) Arena(val_in_MB);
-  if (ba == nullptr) {
-    return Status(StatusCode::kOutOfMemory);
-  }
-  rc = ba->Init();
-  if (rc.IsOk()) {
-    (*p_ba).reset(ba);
-  } else {
-    delete ba;
-  }
-  return rc;
-}
-
-int Arena::PercentFree() const {
-  uint64_t sz = 0;
-  for (auto &it : tr_) {
-    sz += it.priority;
-  }
-  double ratio = static_cast<double>(sz * ARENA_BLK_SZ) / static_cast<double>(size_in_bytes_);
-  return static_cast<int>(ratio * 100.0);
-}
-
-uint64_t Arena::get_max_size() const { return (size_in_bytes_ - ARENA_WALL_OVERHEAD_SZ); }
-
-std::pair<std::pair<uint64_t, uint64_t>, bool> Arena::FindPrevBlk(uint64_t addr) {
-  for (auto &it : tr_) {
-    if (it.key + it.priority == addr) {
-      return std::make_pair(std::make_pair(it.key, it.priority), true);
-    } else if (it.key > addr) {
-      break;
-    }
-  }
-  return std::make_pair(std::make_pair(0, 0), false);
-}
-
-bool Arena::BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz) {
+bool ArenaImpl::BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz) {
   uint64_t size = old_sz;
   // The logic is very much identical to Deallocate. We will see if we can combine with the blocks before and after.
   auto next_blk = tr_.Search(*addr + old_sz);
@@ -237,7 +146,7 @@ bool Arena::BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz) {
   return false;
 }
 
-Status Arena::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
+Status ArenaImpl::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
   MS_ASSERT(pp);
   MS_ASSERT(*pp);
   void *p = nullptr;
@@ -250,6 +159,99 @@ Status Arena::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
   *pp = p;
   // Free the old one.
   Deallocate(q);
+  return Status::OK();
+}
+
+Status ArenaImpl::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
+  MS_ASSERT(pp);
+  MS_ASSERT(*pp);
+  uint64_t actual_size = static_cast<uint64_t>(new_sz) + ARENA_WALL_OVERHEAD_SZ;
+  if (actual_size > this->get_max_size()) {
+    RETURN_STATUS_UNEXPECTED("Request size too big : " + std::to_string(new_sz));
+  }
+  uint64_t req_blk = SizeToBlk(actual_size);
+  char *oldAddr = reinterpret_cast<char *>(*pp);
+  auto *oldHdr = get_base_addr(oldAddr);
+  MemHdr hdr(0, 0);
+  MemHdr::getHdr(oldHdr, &hdr);
+  MS_ASSERT(hdr.sig == 0xDEADBEEF);
+  if (hdr.blk_size > req_blk) {
+    // Refresh the header with the new smaller size.
+    MemHdr::setHdr(oldHdr, hdr.addr, req_blk);
+    // Return the unused memory back to the tree. Unlike allocate, we we need to merge with the block after us.
+    auto next_blk = tr_.Search(hdr.addr + hdr.blk_size);
+    if (next_blk.second) {
+      hdr.blk_size += next_blk.first.priority;
+      tr_.DeleteKey(next_blk.first.key);
+    }
+    tr_.Insert(hdr.addr + req_blk, hdr.blk_size - req_blk);
+  } else if (hdr.blk_size < req_blk) {
+    uint64_t addr = hdr.addr;
+    // Attempt a block enlarge. No guarantee it is always successful.
+    bool success = BlockEnlarge(&addr, hdr.blk_size, req_blk);
+    if (success) {
+      auto *newHdr = static_cast<char *>(ptr_) + addr * ARENA_BLK_SZ;
+      MemHdr::setHdr(newHdr, addr, req_blk);
+      if (addr != hdr.addr) {
+        errno_t err =
+          memmove_s(get_user_addr(newHdr), (req_blk * ARENA_BLK_SZ) - ARENA_WALL_OVERHEAD_SZ, oldAddr, old_sz);
+        if (err) {
+          RETURN_STATUS_UNEXPECTED("Error from memmove: " + std::to_string(err));
+        }
+      }
+      *pp = get_user_addr(newHdr);
+      return Status::OK();
+    }
+    return FreeAndAlloc(pp, old_sz, new_sz);
+  }
+  return Status::OK();
+}
+
+int ArenaImpl::PercentFree() const {
+  uint64_t sz = 0;
+  for (auto &it : tr_) {
+    sz += it.priority;
+  }
+  double ratio = static_cast<double>(sz * ARENA_BLK_SZ) / static_cast<double>(size_in_bytes_);
+  return static_cast<int>(ratio * 100.0);
+}
+
+uint64_t ArenaImpl::SizeToBlk(uint64_t sz) {
+  uint64_t req_blk = sz / ARENA_BLK_SZ;
+  if (sz % ARENA_BLK_SZ) {
+    ++req_blk;
+  }
+  return req_blk;
+}
+
+std::ostream &operator<<(std::ostream &os, const ArenaImpl &s) {
+  for (auto &it : s.tr_) {
+    os << "Address : " << it.key << ". Size : " << it.priority << "\n";
+  }
+  return os;
+}
+
+Status Arena::Init() {
+  try {
+    auto sz = size_in_MB_ * 1048576L;
+    mem_ = std::make_unique<uint8_t[]>(sz);
+    impl_ = std::make_unique<ArenaImpl>(mem_.get(), sz);
+  } catch (std::bad_alloc &e) {
+    return Status(StatusCode::kOutOfMemory);
+  }
+  return Status::OK();
+}
+
+Arena::Arena(size_t val_in_MB) : size_in_MB_(val_in_MB) {}
+
+Status Arena::CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB) {
+  RETURN_UNEXPECTED_IF_NULL(p_ba);
+  auto ba = new (std::nothrow) Arena(val_in_MB);
+  if (ba == nullptr) {
+    return Status(StatusCode::kOutOfMemory);
+  }
+  (*p_ba).reset(ba);
+  RETURN_IF_NOT_OK(ba->Init());
   return Status::OK();
 }
 }  // namespace dataset
