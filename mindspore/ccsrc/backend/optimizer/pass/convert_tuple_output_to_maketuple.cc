@@ -26,22 +26,19 @@
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNodePtr &tuple_anf,
-                                        std::unordered_map<AnfNodePtr, AnfNodePtr> *transed_nodes) {
+AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNodePtr &tuple_anf) {
   MS_EXCEPTION_IF_NULL(tuple_anf);
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(transed_nodes);
 
   if (!AnfAlgo::IsTupleOutput(tuple_anf)) {
     return tuple_anf;
   }
-  auto transed_node_it = transed_nodes->find(tuple_anf);
-  if (transed_node_it != transed_nodes->end()) {
-    return transed_node_it->second;
-  }
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  if (kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf)) {
+    return kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf);
+  }
   auto make_tuple = kernel_graph->TransTupleToMakeTuple(tuple_anf);
-  (*transed_nodes)[tuple_anf] = make_tuple;
+  kernel_graph->InsertTupleParameterToMakeTupleMap(tuple_anf, make_tuple);
   // replace graph inputs if input is a parameter
   kernel_graph->ReplaceGraphInput(tuple_anf, make_tuple);
   return make_tuple;
@@ -61,7 +58,6 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  std::unordered_map<AnfNodePtr, AnfNodePtr> transed_nodes;
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
     auto real_input = AnfAlgo::GetTupleGetItemRealInput(cnode);
     MS_EXCEPTION_IF_NULL(real_input);
@@ -77,7 +73,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
     const auto &input = cnode->inputs()[i];
     if (input->Type() != nullptr && AnfAlgo::IsRealKernel(input) && AnfAlgo::IsTupleOutput(input) &&
         !AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall)) {
-      cnode->set_input(i, ConvertTupleInputToMakeTuple(func_graph, input, &transed_nodes));
+      cnode->set_input(i, ConvertTupleInputToMakeTuple(func_graph, input));
       cnode_input_changed = true;
     }
   }

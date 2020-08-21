@@ -30,6 +30,10 @@ namespace {
 void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
+  if (AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimCall) ||
+      AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial)) {
+    return;
+  }
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int> dyn_input_sizes;
   plant_inputs.push_back(AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
