@@ -24,5 +24,5 @@ bool PyObjectRef::operator==(const BaseRef &other) const {
   return *this == utils::cast<PyObjectRef>(other);
 }
 
-bool PyObjectRef::operator==(const PyObjectRef &other) const { return object_ == other.object_; }
+bool PyObjectRef::operator==(const PyObjectRef &other) const { return object_.is(other.object_); }
 }  // namespace mindspore

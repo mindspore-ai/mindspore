@@ -36,7 +36,7 @@ namespace parse {
 FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mod_get_parse_method) {
   (void)python_adapter::set_python_scoped();
 
-  if (obj == nullptr || py::isinstance<py::none>(obj)) {
+  if (!obj || py::isinstance<py::none>(obj)) {
     MS_LOG(ERROR) << "Parse the python code failed, obj is nullptr or none";
     return nullptr;
   }
@@ -265,7 +265,7 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
   }
 
   bool set_flag = UpdateFuncGraphFlags(ast_->function(), current_fg);
-  if (ast_->obj() != ast_->function()) {
+  if (!ast_->obj().is(ast_->function())) {
     set_flag = set_flag && UpdateFuncGraphFlags(ast_->obj(), current_fg);
   }
 

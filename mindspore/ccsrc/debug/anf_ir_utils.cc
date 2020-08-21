@@ -1818,7 +1818,7 @@ class IrParser {
 
     py::object tensor_obj = LoadObject(lexer_.GetTokenText());
     py::array tensor_data = py::cast<py::array>(tensor_obj);
-    if (tensor_data == nullptr) {
+    if (!tensor_data) {
       return TOK_ERROR;
     }
     *val_ptr = TensorPy::MakeTensor(tensor_data, TypeIdToType(type));

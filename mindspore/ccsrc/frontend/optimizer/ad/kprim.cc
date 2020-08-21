@@ -50,7 +50,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
                                        grad_op_child_scope_prefix + prim->name());
   ScopeGuard scope_guard(scope);
   py::function fn = prim->is_base() ? GetBpropFunction(prim->name()) : prim->cast<PrimitivePyPtr>()->GetBpropFunction();
-  if (fn == nullptr || py::isinstance<py::none>(fn)) {
+  if (!fn || py::isinstance<py::none>(fn)) {
     MS_LOG(DEBUG) << "Fail to find bprop function for " << prim->name() << ".";
     return nullptr;
   }

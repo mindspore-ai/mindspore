@@ -102,7 +102,7 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args)
         py::object grad_dtype = grads[i].attr("dtype");
         py::tuple arg_shape = py_args[i].attr("shape");
         py::object arg_dtype = py_args[i].attr("dtype");
-        if (!grad_shape.equal(arg_shape) || grad_dtype != arg_dtype) {
+        if (!grad_shape.equal(arg_shape) || !grad_dtype.is(arg_dtype)) {
           MS_EXCEPTION(ValueError) << "For user define net bprop, the gradient of the " << i
                                    << "th arg should have the same shape and dtype as the " << i << "th arg, but the "
                                    << i << "th arg shape: " << py::cast<py::str>(arg_shape)

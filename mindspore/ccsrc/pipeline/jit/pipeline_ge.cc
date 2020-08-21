@@ -190,7 +190,7 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
   ConvertObjectToTensors(init_params, &init_tensors);
   (void)convertor.ConvertAllNode().InitParam(init_tensors).BuildGraph();
 
-  if (broadcast_params != py::none()) {
+  if (!broadcast_params.is_none()) {
     if (!py::isinstance<py::dict>(broadcast_params)) {
       MS_LOG(ERROR) << "Invalid broadcast params, it must be py::dict type";
       return false;
