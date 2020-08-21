@@ -23,9 +23,9 @@ import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.transforms.vision.py_transforms as P
 from mindspore.communication.management import init, get_rank, get_group_size
-from src.config import quant_set, config_quant, config_noquant
+from src.config import config_quant
 
-config = config_quant if quant_set.quantization_aware else config_noquant
+config = config_quant
 
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):

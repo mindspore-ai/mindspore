@@ -17,7 +17,7 @@
 import os
 import argparse
 
-from src.config import quant_set, config_quant, config_noquant
+from src.config import config_quant
 from src.dataset import create_dataset
 from src.crossentropy import CrossEntropy
 from models.resnet_quant import resnet50_quant
@@ -34,7 +34,7 @@ parser.add_argument('--device_target', type=str, default='Ascend', help='Device 
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, save_graphs=False)
-config = config_quant if quant_set.quantization_aware else config_noquant
+config = config_quant
 
 if args_opt.device_target == "Ascend":
     device_id = int(os.getenv('DEVICE_ID'))
@@ -43,12 +43,11 @@ if args_opt.device_target == "Ascend":
 if __name__ == '__main__':
     # define fusion network
     net = resnet50_quant(class_num=config.class_num)
-    if quant_set.quantization_aware:
-        # convert fusion network to quantization aware network
-        net = quant.convert_quant_network(net,
-                                          bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
+    # convert fusion network to quantization aware network
+    net = quant.convert_quant_network(net,
+                                      bn_fold=True,
+                                      per_channel=[True, False],
+                                      symmetric=[True, False])
     # define network loss
     if not config.use_label_smooth:
         config.label_smooth_factor = 0.0
