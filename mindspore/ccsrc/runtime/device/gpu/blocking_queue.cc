@@ -52,7 +52,6 @@ BlockQueueStatus_T GpuQueue::Push(const std::vector<DataItemGpu> &data) {
   CHECK_CUDA_RET_WITH_ERROR(cudaEventCreate(&(*(node_info_[tail_].event_))), "Cuda Create Event Failed");
   node_info_[tail_].data_ = data;
   tail_ = (tail_ + 1) % (capacity_);
-  ++size_;
   return SUCCESS;
 }
 
@@ -70,7 +69,6 @@ BlockQueueStatus_T GpuQueue::Front(void **addr, size_t *len) const {
 
 BlockQueueStatus_T GpuQueue::Pop() {
   head_ = (head_ + 1) % (capacity_);
-  --size_;
   return SUCCESS;
 }
 
