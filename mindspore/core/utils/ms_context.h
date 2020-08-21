@@ -43,6 +43,8 @@ const char kAscendDevice[] = "Ascend";
 const char kDavinciInferenceDevice[] = "AscendInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
+const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
+
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
 const float kDefaultMaxDeviceMemory = 1024;
@@ -79,6 +81,13 @@ class MsContext {
 
   uint32_t device_id() const { return device_id_; }
   bool set_device_id(uint32_t device_id);
+
+  //   uint32_t max_call_depth_
+  uint32_t max_call_depth() const { return max_call_depth_; }
+  inline bool set_max_call_depth(uint32_t max_call_depth) {
+    max_call_depth_ = max_call_depth;
+    return true;
+  }
 
   bool save_graphs_flag() const { return save_graphs_flag_; }
   void set_save_graphs_flag(bool save_graphs_flag) { save_graphs_flag_ = save_graphs_flag; }
@@ -171,6 +180,7 @@ class MsContext {
   MsBackendPolicy backend_policy_;
   std::string device_target_;
   uint32_t device_id_;
+  uint32_t max_call_depth_;
   int execution_mode_;
   bool enable_pynative_infer_;
   bool enable_pynative_hook_;

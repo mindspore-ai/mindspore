@@ -119,6 +119,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   AnalysisContextPtr empty_context = AnalysisContext::DummyContext();
 
   // Running the analyzer.
+  ResetFunctionCallDepth();
   AnalysisContextPtr root_context = Run(func_graph, empty_context, args_conf_list);
   MS_EXCEPTION_IF_NULL(root_context);
   MS_EXCEPTION_IF_NULL(root_context->func_graph());

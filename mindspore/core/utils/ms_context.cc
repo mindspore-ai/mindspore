@@ -47,6 +47,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   } else {
     device_id_ = 0;
   }
+  max_call_depth_ = MAX_CALL_DEPTH_DEFAULT;
   backend_policy_ = policy_map_[policy];
   device_target_ = target;
   execution_mode_ = kPynativeMode;

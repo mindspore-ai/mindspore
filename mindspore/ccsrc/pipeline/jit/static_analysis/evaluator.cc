@@ -114,8 +114,13 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   const AnfNodePtr &func_node = fg->get_return();
 
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg.get() << fg->ToString()
-                << ", context: " << graph_context_->ToString() << ", return node: " << func_node->DebugString();
+                << ", context: " << graph_context_->ToString() << ", return node: " << func_node->DebugString()
+                << ", current function call depth: " << engine->function_call_depth();
   AbstractBasePtr ret_base = nullptr;
+  engine->IncreaseFunctionCallDepth();
+  if (engine->function_call_depth() > MsContext::GetInstance()->max_call_depth()) {
+    MS_LOG(EXCEPTION) << "Exceed function call depth limit " << MsContext::GetInstance()->max_call_depth() << ".";
+  }
   std::vector<AnfNodePtr> nodes = FastShadowSort(func_node);
   for (auto it = nodes.crbegin(); it != nodes.crend(); it++) {
     const auto &node = *it;
@@ -126,6 +131,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
     MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg.get() << fg->ToString()
                   << ", node_conf: " << node_conf->ToString() << ", abstract: " << ret_base->ToString();
   }
+  engine->DecreaseFunctionCallDepth();
 
   MS_EXCEPTION_IF_NULL(ret_base);
   MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " eval end, evaluated abstract: " << ret_base->ToString()
