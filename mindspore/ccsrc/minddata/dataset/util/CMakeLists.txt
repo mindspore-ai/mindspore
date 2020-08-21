@@ -5,6 +5,7 @@ add_library(utils OBJECT
     buddy.cc
     cache_pool.cc
     circular_pool.cc
+    data_helper.cc
     memory_pool.cc
     cond_var.cc
     intrp_service.cc

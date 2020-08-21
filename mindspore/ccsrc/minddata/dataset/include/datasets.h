@@ -146,9 +146,9 @@ std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
 ///     (Default = 0 means all samples.)
 /// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
 ///     Can be any of:
-///     ShuffleMode.kFalse - No shuffling is performed.
-///     ShuffleMode.kFiles - Shuffle files only.
-///     ShuffleMode.kGlobal - Shuffle both the files and samples.
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///     specified only when num_shards is also specified. (Default = 0)
