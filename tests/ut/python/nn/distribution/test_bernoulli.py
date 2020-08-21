@@ -157,30 +157,6 @@ def test_cross_entropy():
     ans = net(probs_b, probs_a)
     assert isinstance(ans, Tensor)
 
-class BernoulliBasics(nn.Cell):
-    """
-    Test class: basic mean/sd/var/mode/entropy function.
-    """
-    def __init__(self):
-        super(BernoulliBasics, self).__init__()
-        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
-
-    def construct(self):
-        mean = self.b.mean()
-        sd = self.b.sd()
-        var = self.b.var()
-        mode = self.b.mode()
-        entropy = self.b.entropy()
-        return mean + sd + var + mode + entropy
-
-def test_bascis():
-    """
-    Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
-    """
-    net = BernoulliBasics()
-    ans = net()
-    assert isinstance(ans, Tensor)
-
 class BernoulliConstruct(nn.Cell):
     """
     Bernoulli distribution: going through construct.
@@ -204,4 +180,104 @@ def test_bernoulli_construct():
     value = Tensor([0, 0, 0, 0, 0], dtype=dtype.float32)
     probs = Tensor([0.5], dtype=dtype.float32)
     ans = net(value, probs)
+    assert isinstance(ans, Tensor)
+
+class BernoulliMean(nn.Cell):
+    """
+    Test class: basic mean/sd/var/mode/entropy function.
+    """
+    def __init__(self):
+        super(BernoulliMean, self).__init__()
+        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
+
+    def construct(self):
+        mean = self.b.mean()
+        return mean
+
+def test_mean():
+    """
+    Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
+    """
+    net = BernoulliMean()
+    ans = net()
+    assert isinstance(ans, Tensor)
+
+class BernoulliSd(nn.Cell):
+    """
+    Test class: basic mean/sd/var/mode/entropy function.
+    """
+    def __init__(self):
+        super(BernoulliSd, self).__init__()
+        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
+
+    def construct(self):
+        sd = self.b.sd()
+        return sd
+
+def test_sd():
+    """
+    Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
+    """
+    net = BernoulliSd()
+    ans = net()
+    assert isinstance(ans, Tensor)
+
+class BernoulliVar(nn.Cell):
+    """
+    Test class: basic mean/sd/var/mode/entropy function.
+    """
+    def __init__(self):
+        super(BernoulliVar, self).__init__()
+        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
+
+    def construct(self):
+        var = self.b.var()
+        return var
+
+def test_var():
+    """
+    Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
+    """
+    net = BernoulliVar()
+    ans = net()
+    assert isinstance(ans, Tensor)
+
+class BernoulliMode(nn.Cell):
+    """
+    Test class: basic mean/sd/var/mode/entropy function.
+    """
+    def __init__(self):
+        super(BernoulliMode, self).__init__()
+        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
+
+    def construct(self):
+        mode = self.b.mode()
+        return mode
+
+def test_mode():
+    """
+    Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
+    """
+    net = BernoulliMode()
+    ans = net()
+    assert isinstance(ans, Tensor)
+
+class BernoulliEntropy(nn.Cell):
+    """
+    Test class: basic mean/sd/var/mode/entropy function.
+    """
+    def __init__(self):
+        super(BernoulliEntropy, self).__init__()
+        self.b = msd.Bernoulli([0.3, 0.5], dtype=dtype.int32)
+
+    def construct(self):
+        entropy = self.b.entropy()
+        return entropy
+
+def test_entropy():
+    """
+    Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
+    """
+    net = BernoulliEntropy()
+    ans = net()
     assert isinstance(ans, Tensor)

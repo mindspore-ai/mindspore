@@ -15,24 +15,30 @@
 """Utitly functions to help distribution class."""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 
 def log_by_step(input_x):
     """
     Log op on Ascend is calculated as log(abs(x)).
     Fix this with putting negative values as nan.
     """
-    select = P.Select()
     log = P.Log()
+    less = P.Less()
     lessequal = P.LessEqual()
     fill = P.Fill()
+    cast = P.Cast()
     dtype = P.DType()
     shape = P.Shape()
+    select = P.Select()
 
+    input_x = cast(input_x, mstype.float32)
+    nan = fill(dtype(input_x), shape(input_x), np.nan)
+    inf = fill(dtype(input_x), shape(input_x), np.inf)
+    neg_x = less(input_x, 0.0)
     nonpos_x = lessequal(input_x, 0.0)
     log_x = log(input_x)
-    nan = fill(dtype(input_x), shape(input_x), np.nan)
-    result = select(nonpos_x, nan, log_x)
-    return result
+    result = select(nonpos_x, -inf, log_x)
+    return select(neg_x, nan, result)
 
 def log1p_by_step(x):
     """
