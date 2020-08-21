@@ -64,7 +64,7 @@ config_ascend = edict({
     'weight_decay': 0.00004,
     'momentum': 0.9,
     'opt_eps': 1.0,
-    'keep_checkpoint_max': 100,
+    'keep_checkpoint_max': 10,
     'ckpt_path': './checkpoint/',
     'is_save_on_master': 0,
     'dropout_keep_prob': 0.8,
