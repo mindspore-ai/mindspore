@@ -113,6 +113,45 @@ add_subdirectory(parser/onnx)
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
 
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
+set(LITE_SRC
+        ${SRC_DIR}/common/graph_util.cc
+        ${SRC_DIR}/common/ms_tensor_utils.cc
+        ${SRC_DIR}/runtime/allocator.cc
+        ${SRC_DIR}/runtime/runtime_api.cc
+        ${SRC_DIR}/runtime/thread_pool.cc
+        ${SRC_DIR}/runtime/workspace_pool.cc
+        ${SRC_DIR}/ir/tensor.cc
+        ${SRC_DIR}/context.cc
+        ${SRC_DIR}/kernel_registry.cc
+        ${SRC_DIR}/lite_kernel.cc
+        ${SRC_DIR}/populate_parameter.cc
+        ${SRC_DIR}/scheduler.cc
+        ${SRC_DIR}/lite_session.cc
+        ${SRC_DIR}/executor.cc
+        ${SRC_DIR}/model.cc
+        )
+
+set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
+file(GLOB KERNEL_SRC
+        ${ARM_DIR}/base/*.cc
+        ${ARM_DIR}/nnacl/*.c
+        ${ARM_DIR}/nnacl/fp32/*.c
+        ${ARM_DIR}/nnacl/int8/*.c
+        ${ARM_DIR}/nnacl/quantization/*.c
+        ${ARM_DIR}/fp32/*.cc
+        ${ARM_DIR}/int8/*.cc
+        )
+list(REMOVE_ITEM KERNEL_SRC ${ARM_DIR}/nnacl/opt_op_handler.c)
+
+if (PLATFORM_ARM64)
+    # assembly
+    file(GLOB ASSEMBLY_SRC nnacl/assembly/arm64/*.s
+            nnacl/assembly/arm64/*.S)
+    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+    set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
+endif ()
+
 if (WIN32)
     set(PROTO_LIBRARY mindspore::protobuf)
 else()
@@ -124,6 +163,7 @@ add_executable(converter_lite
         ${ANF_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
+        ${KERNEL_SRC}
         ${LITE_SRC}
         )
 
@@ -139,7 +179,6 @@ target_link_libraries(converter_lite PRIVATE
         quantizer_mid
         pthread
         ${PROTO_LIBRARY}
-        mindspore-lite
         ${SECUREC_LIBRARY}
         mindspore::json
         mindspore::eigen
