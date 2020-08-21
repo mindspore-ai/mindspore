@@ -337,6 +337,7 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/to_format_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/caffe_prelu_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/prelu_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/reshape_tests.cc
             )
 endif()
 

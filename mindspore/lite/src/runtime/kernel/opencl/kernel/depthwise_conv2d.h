@@ -49,7 +49,6 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
   FLOAT_t *packed_weight_;
   FLOAT_t *bias_data_;
   cl::Kernel kernel_;
-  enum class MEM_TYPE { BUF, IMG } mem_type_{MEM_TYPE::IMG};
 };
 }  // namespace mindspore::kernel
 

@@ -42,7 +42,6 @@ class PoolingOpenCLKernel : public OpenCLKernel {
 
  private:
   std::vector<size_t> InitGlobalSize() const;
-  enum class MEM_TYPE { BUF, IMG } mem_type_{MEM_TYPE::IMG};
   PoolingParameter *parameter_;
   cl::Kernel kernel_;
 };
