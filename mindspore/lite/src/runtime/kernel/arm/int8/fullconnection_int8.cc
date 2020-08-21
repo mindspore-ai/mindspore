@@ -91,8 +91,8 @@ int FullconnectionInt8CPUKernel::ReSize() {
   QuantizeRoundParameter(real_multiplier, &quant_params_.quant_multiplier, &quant_params_.left_shift,
                          &quant_params_.right_shift);
   CalculateActivationRangeQuantized(fc_param_->act_type_ == ActType_Relu, fc_param_->act_type_ == ActType_Relu6,
-                                    quant_params_.output.zp_, quant_params_.output.scale_, &quant_params_.out_act_max,
-                                    &quant_params_.out_act_min);
+                                    quant_params_.output.zp_, quant_params_.output.scale_, &quant_params_.out_act_min,
+                                    &quant_params_.out_act_max);
   return RET_OK;
 }
 
