@@ -3217,12 +3217,14 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eoe, eof):
     while True:
         # Fetch index, block
         try:
-            idx = idx_queue.get(timeout=10)
+            # Index is generated very fast, so the timeout is very short
+            idx = idx_queue.get(timeout=0.01)
         except KeyboardInterrupt:
             raise Exception("Generator worker receives KeyboardInterrupt")
         except queue.Empty:
             if eof.is_set() or eoe.is_set():
-                raise Exception("Generator worker receives queue.Empty")
+                return
+            # If eoe or eof is not set, continue to get data from idx_queue
             continue
         if idx is None:
             # When the queue is out of scope from master process, a None item can be fetched from the queue.
@@ -3234,10 +3236,17 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eoe, eof):
         # Fetch data, any exception from __getitem__ will terminate worker and timeout master process
         result = dataset[idx]
         # Send data, block
-        try:
-            result_queue.put(result)
-        except KeyboardInterrupt:
-            raise Exception("Generator worker receives KeyboardInterrupt")
+        while True:
+            try:
+                result_queue.put(result, timeout=5)
+            except KeyboardInterrupt:
+                raise Exception("Generator worker receives KeyboardInterrupt")
+            except queue.Full:
+                if eof.is_set():
+                    return
+                # If eof is not set, continue to put data to result_queue
+                continue
+            break
         del result, idx
         if eoe.is_set() and idx_queue.empty():
             return

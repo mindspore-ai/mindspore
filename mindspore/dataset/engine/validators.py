@@ -929,10 +929,10 @@ def check_split(method):
 
 
 def check_hostname(hostname):
-    if len(hostname) > 255:
+    if not hostname or len(hostname) > 255:
         return False
     if hostname[-1] == ".":
-        hostname = hostname[:-1] # strip exactly one dot from the right, if present
+        hostname = hostname[:-1]  # strip exactly one dot from the right, if present
     allowed = re.compile("(?!-)[A-Z\\d-]{1,63}(?<!-)$", re.IGNORECASE)
     return all(allowed.match(x) for x in hostname.split("."))
 
@@ -952,7 +952,7 @@ def check_gnn_graphdata(method):
             raise ValueError("The hostname is illegal")
         type_check(working_mode, (str,), "working_mode")
         if working_mode not in {'local', 'client', 'server'}:
-            raise ValueError("Invalid working mode")
+            raise ValueError("Invalid working mode, please enter 'local', 'client' or 'server'")
         type_check(port, (int,), "port")
         check_value(port, (1024, 65535), "port")
         type_check(num_client, (int,), "num_client")
