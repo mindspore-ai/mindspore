@@ -169,9 +169,9 @@ void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *w
       const int32_t *bias = bias_data + oc * C4NUM;
 
       if (per_channel) {
-        out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_ + oc;
-        left_shift = conv_param->conv_quant_arg_.left_shift_ + oc;
-        right_shift = conv_param->conv_quant_arg_.right_shift_ + oc;
+        out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_ + oc * C4NUM;
+        left_shift = conv_param->conv_quant_arg_.left_shift_ + oc * C4NUM;
+        right_shift = conv_param->conv_quant_arg_.right_shift_ + oc * C4NUM;
       }
 
       DepthwiseBorderInt8(dst_data, src_data, weight, bias, 0, sliding->top_, 0, conv_param->output_w_, conv_param,

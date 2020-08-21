@@ -115,7 +115,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
 
   size_t input_sum_size;
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    input_sum_size = conv_param_->output_channel_ * tile_num_ * thread_count_ * sizeof(int32_t);
+    input_sum_size = oc4 * C4NUM * tile_num_ * thread_count_ * sizeof(int32_t);
   } else {
     input_sum_size = tile_num_ * thread_count_ * sizeof(int32_t);
   }
@@ -202,7 +202,7 @@ int ConvolutionInt8CPUKernel::InitWeightBiasOpt() {
 
   size_t input_sum_size;
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    input_sum_size = conv_param_->output_channel_ * tile_num_ * thread_count_ * sizeof(int32_t);
+    input_sum_size = oc4 * C4NUM * tile_num_ * thread_count_ * sizeof(int32_t);
   } else {
     input_sum_size = tile_num_ * thread_count_ * sizeof(int32_t);
   }
