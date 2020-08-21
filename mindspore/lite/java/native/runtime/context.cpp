@@ -25,7 +25,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_context_Context_creat
                                                                                           jint cpu_bind_mode) {
   auto *context = new (std::nothrow) mindspore::lite::Context();
   if (context == nullptr) {
-    MS_LOG(ERROR) << "new Context fail!";
+    MS_LOGE("new Context fail!");
     return (jlong)context;
   }
   switch (device_type) {
