@@ -63,7 +63,7 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
     attr->type = schema::ActivationType_SIGMOID;
   } else if (std::strcmp(node_name,  "HardSwish") == 0) {
     MS_LOG(DEBUG) << "parse TfliteHardSwishParser";
-    attr->type = schema::ActivationType_SIGMOID;
+    attr->type = schema::ActivationType_HSWISH;
   } else if (std::strcmp(node_name,  "LeakyRelu") == 0) {
     const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
     if (tflite_attr == nullptr) {
