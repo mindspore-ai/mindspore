@@ -135,7 +135,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     cudnnTensorDescriptor_t dx_desc_real = nullptr;
     int padA[2];
     int strideA[2] = {stride_[0], stride_[1]};
-    int dilaA[2] = {dilation_[0], dilation_[1]};
+    int dilaA[2] = {dilation_[2], dilation_[3]};
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase || !symmetry_pad) {
       pad_height_ = pad_list[0] + pad_list[1];
       pad_width_ = pad_list[2] + pad_list[3];
