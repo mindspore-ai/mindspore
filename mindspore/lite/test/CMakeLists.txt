@@ -149,6 +149,7 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/softmax.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/concat.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/batchnorm.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/slice.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/activation.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/conv2d_transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/transpose.cc
@@ -322,6 +323,7 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/depthwise_conv2d_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/concat_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/batchnorm_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/slice_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/softmax_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/arithmetic_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/avg_pooling_tests.cc

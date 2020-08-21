@@ -276,7 +276,7 @@ int ConvolutionOpenCLKernel::Run() {
   }
 
   if (use_winograd_) {
-    ocl_runtime->RunKernel(kernel_4x4to36, {size_t(TILES_XY), 6, size_t(CI_SLICES)}, {16, 6, 4}, nullptr);
+    ocl_runtime->RunKernel(kernel_4x4to36, {size_t(TILES_XY), 6, size_t(CI_SLICES)}, {8, 6, 4}, nullptr);
     ocl_runtime->RunKernel(kernel_conv, {size_t(TILES_XY / 2), 36, size_t(CO_SLICES / 2)}, {8, 6, 2}, nullptr);
     ocl_runtime->RunKernel(kernel_36to4x4, {size_t(TILES_XY), 4, size_t(CO_SLICES)}, {32, 4, 2}, nullptr);
   } else {
@@ -677,7 +677,7 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::tenso
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: Convolution";
     delete kernel;
     return nullptr;
