@@ -33,7 +33,17 @@ namespace mindspore::kernel {
 int ReshapeOpenCLKernel::Init() {
   std::string kernel_name = "reshape";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  if (in_ori_format_ != schema::Format_NHWC4 && in_ori_format_ != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "Reshape input format:" << in_ori_format_ << " not support yet.";
+    return RET_ERROR;
+  }
+  if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
+    MS_LOG(ERROR) << "Reshape input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
+                  << out_tensors_[0]->shape().back();
+    return RET_ERROR;
+  }
 #ifdef PROGRAM_WITH_IL
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
@@ -43,9 +53,7 @@ int ReshapeOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  in_ori_format_ = in_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   if (out_tensors_[0]->shape().size() == 2) {
     out_ori_format_ = schema::Format_NC;

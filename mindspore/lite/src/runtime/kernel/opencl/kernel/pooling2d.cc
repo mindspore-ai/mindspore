@@ -64,7 +64,7 @@ int PoolingOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
 #else
-  if (mem_type_ == MEM_TYPE::BUF) {
+  if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";
   } else {
     kernel_name += "_IMG";

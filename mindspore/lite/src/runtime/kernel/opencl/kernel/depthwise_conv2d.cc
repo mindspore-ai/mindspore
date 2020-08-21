@@ -49,7 +49,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
   }
-  if (mem_type_ == MEM_TYPE::BUF) {
+  if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";
   } else {
     kernel_name += "_IMG";
@@ -73,7 +73,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   this->InitBuffer();
-  MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(mem_type_);
+  MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
   return RET_OK;
 }
 
