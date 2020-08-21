@@ -27,6 +27,7 @@ GENERATE_GOLDEN = False
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+MNIST_DATA_DIR = "../data/dataset/testMnistData"
 
 
 def test_random_affine_op(plot=False):
@@ -153,6 +154,24 @@ def test_random_affine_c_md5():
     # Restore configuration
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers((original_num_parallel_workers))
+
+
+def test_random_affine_py_exception_non_pil_images():
+    """
+    Test RandomAffine: input img is ndarray and not PIL, expected to raise TypeError
+    """
+    logger.info("test_random_affine_exception_negative_degrees")
+    dataset = ds.MnistDataset(MNIST_DATA_DIR, num_parallel_workers=3)
+    try:
+        transform = py_vision.ComposeOp([py_vision.ToTensor(),
+                                         py_vision.RandomAffine(degrees=(15, 15))])
+        dataset = dataset.map(input_columns=["image"], operations=transform(), num_parallel_workers=3,
+                              python_multiprocessing=True)
+        for _ in dataset.create_dict_iterator():
+            break
+    except RuntimeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Pillow image" in str(e)
 
 
 def test_random_affine_exception_negative_degrees():
@@ -289,6 +308,7 @@ if __name__ == "__main__":
     test_random_affine_op_c(plot=True)
     test_random_affine_md5()
     test_random_affine_c_md5()
+    test_random_affine_py_exception_non_pil_images()
     test_random_affine_exception_negative_degrees()
     test_random_affine_exception_translation_range()
     test_random_affine_exception_scale_value()

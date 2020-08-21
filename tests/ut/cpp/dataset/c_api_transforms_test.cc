@@ -191,9 +191,35 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail2) {
   ds = ds->Map({one_hot_op},{"label"});
   EXPECT_NE(ds, nullptr);
 
-  std::shared_ptr<TensorOperation> cutmix_batch_op = vision::CutMixBatch(mindspore::dataset::ImageBatchFormat::kNHWC, 1, -0.5);
+  std::shared_ptr<TensorOperation> cutmix_batch_op = vision::CutMixBatch(mindspore::dataset::ImageBatchFormat::kNHWC,
+                                                                         1, -0.5);
   EXPECT_EQ(cutmix_batch_op, nullptr);
 
+}
+
+TEST_F(MindDataTestPipeline, TestCutMixBatchFail3) {
+  // Must fail because alpha can't be zero
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> one_hot_op = vision::OneHot(10);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op},{"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<TensorOperation> cutmix_batch_op = vision::CutMixBatch(mindspore::dataset::ImageBatchFormat::kNHWC,
+                                                                         0.0, 0.5);
+  EXPECT_EQ(cutmix_batch_op, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestCutOut) {
@@ -365,6 +391,30 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
   EXPECT_EQ(mixup_batch_op, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestMixUpBatchFail2) {
+  // This should fail because alpha can't be zero
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> one_hot_op = vision::OneHot(10);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op}, {"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<TensorOperation> mixup_batch_op = vision::MixUpBatch(0.0);
+  EXPECT_EQ(mixup_batch_op, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -384,7 +434,7 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
   ds = ds->Map({one_hot_op}, {"label"});
   EXPECT_NE(ds, nullptr);
 
-  std::shared_ptr<TensorOperation> mixup_batch_op = vision::MixUpBatch(0.5);
+  std::shared_ptr<TensorOperation> mixup_batch_op = vision::MixUpBatch(2.0);
   EXPECT_NE(mixup_batch_op, nullptr);
 
   // Create a Map operation on ds

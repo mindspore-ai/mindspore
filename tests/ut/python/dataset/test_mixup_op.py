@@ -25,6 +25,7 @@ from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_se
     config_get_set_num_parallel_workers
 
 DATA_DIR = "../data/dataset/testCifar10Data"
+DATA_DIR2 = "../data/dataset/testImageNetData2/train/"
 
 GENERATE_GOLDEN = False
 
@@ -72,10 +73,58 @@ def test_mixup_batch_success1(plot=False):
 
 def test_mixup_batch_success2(plot=False):
     """
+    Test MixUpBatch op with specified alpha parameter on ImageFolderDatasetV2
+    """
+    logger.info("test_mixup_batch_success2")
+
+    # Original Images
+    ds_original = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR2, shuffle=False)
+    decode_op = vision.Decode()
+    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
+
+    images_original = None
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = image
+        else:
+            images_original = np.append(images_original, image, axis=0)
+
+    # MixUp Images
+    data1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR2, shuffle=False)
+
+    decode_op = vision.Decode()
+    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+
+    one_hot_op = data_trans.OneHot(num_classes=10)
+    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+
+    mixup_batch_op = vision.MixUpBatch(2.0)
+    data1 = data1.batch(4, pad_info={}, drop_remainder=True)
+    data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+
+    images_mixup = None
+    for idx, (image, _) in enumerate(data1):
+        if idx == 0:
+            images_mixup = image
+        else:
+            images_mixup = np.append(images_mixup, image, axis=0)
+    if plot:
+        visualize_list(images_original, images_mixup)
+
+    num_samples = images_original.shape[0]
+    mse = np.zeros(num_samples)
+    for i in range(num_samples):
+        mse[i] = diff_mse(images_mixup[i], images_original[i])
+    logger.info("MSE= {}".format(str(np.mean(mse))))
+
+
+def test_mixup_batch_success3(plot=False):
+    """
     Test MixUpBatch op without specified alpha parameter.
     Alpha parameter will be selected by default in this case
     """
-    logger.info("test_mixup_batch_success2")
+    logger.info("test_mixup_batch_success3")
 
     # Original Images
     ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
@@ -169,7 +218,7 @@ def test_mixup_batch_fail1():
                 images_mixup = image
             else:
                 images_mixup = np.append(images_mixup, image, axis=0)
-        error_message = "You must batch before calling MixUp"
+        error_message = "You must make sure images are HWC or CHW and batch"
         assert error_message in str(error.value)
 
 
@@ -207,6 +256,7 @@ def test_mixup_batch_fail3():
     Test MixUpBatch op
     We expect this to fail because label column is not passed to mixup_batch
     """
+    logger.info("test_mixup_batch_fail3")
     # Original Images
     ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     ds_original = ds_original.batch(5, drop_remainder=True)
@@ -237,11 +287,41 @@ def test_mixup_batch_fail3():
     error_message = "Both images and labels columns are required"
     assert error_message in str(error.value)
 
+def test_mixup_batch_fail4():
+    """
+    Test MixUpBatch Fail 2
+    We expect this to fail because alpha is zero
+    """
+    logger.info("test_mixup_batch_fail4")
+
+    # Original Images
+    ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
+    ds_original = ds_original.batch(5)
+
+    images_original = np.array([])
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = image
+        else:
+            images_original = np.append(images_original, image, axis=0)
+
+    # MixUp Images
+    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
+
+    one_hot_op = data_trans.OneHot(num_classes=10)
+    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    with pytest.raises(ValueError) as error:
+        vision.MixUpBatch(0.0)
+        error_message = "Input is not within the required interval"
+        assert error_message in str(error.value)
+
 
 if __name__ == "__main__":
     test_mixup_batch_success1(plot=True)
     test_mixup_batch_success2(plot=True)
+    test_mixup_batch_success3(plot=True)
     test_mixup_batch_md5()
     test_mixup_batch_fail1()
     test_mixup_batch_fail2()
     test_mixup_batch_fail3()
+    test_mixup_batch_fail4()

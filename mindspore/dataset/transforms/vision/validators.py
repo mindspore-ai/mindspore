@@ -45,6 +45,7 @@ def check_cut_mix_batch_c(method):
         [image_batch_format, alpha, prob], _ = parse_user_args(method, *args, **kwargs)
         type_check(image_batch_format, (ImageBatchFormat,), "image_batch_format")
         check_pos_float32(alpha)
+        check_positive(alpha, "alpha")
         check_value(prob, [0, 1], "prob")
         return method(self, *args, **kwargs)
 
@@ -68,6 +69,7 @@ def check_mix_up_batch_c(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [alpha], _ = parse_user_args(method, *args, **kwargs)
+        check_positive(alpha, "alpha")
         check_pos_float32(alpha)
 
         return method(self, *args, **kwargs)
