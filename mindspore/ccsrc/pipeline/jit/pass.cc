@@ -33,6 +33,7 @@
 #include "frontend/optimizer/clean.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/control_depend.h"
+#include "frontend/optimizer/graph_transform.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
@@ -166,12 +167,23 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig c_1 = opt::OptPassConfig({
-    // Safe inlining
+    // Safe inlining,
     irpass.inline_,
     irpass.partial_eliminate_,
   });
 
-  OptPassGroupMap map_a({{"c_1", c_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
+  OptPassGroupMap map_a({{"c_1", c_1},
+                         {"cse", opt::OptPassConfig(opt::CSEPass(false))},
+                         {"renormalize", opt::OptPassConfig::Renormalize()}});
+
+  return map_a;
+}
+
+OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig d_1 = opt::OptPassConfig({// Safe inlining
+                                               irpass.call_graph_tuple_transform_, irpass.item_tuple_eliminate_});
+
+  OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
   return map_a;
 }
@@ -262,6 +274,8 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
     g_pass_opts["opt_after_cconv"] =
       Optimizer::MakeOptimizer("opt_after_cconv", res, GetOptPassesAfterCconv(irpass), false, true);
+    g_pass_opts["opt_trans_graph"] =
+      Optimizer::MakeOptimizer("opt_trans_graph", res, GetOptPassesTransformGraph(irpass), true, true);
     g_pass_opts["opt_graph_kernel_a"] =
       Optimizer::MakeOptimizer("opt_graph_kernel_a", res, GetOptPassesGraphKernelA(irpass), true);
     g_pass_opts["opt_graph_kernel_b"] =
@@ -307,6 +321,7 @@ bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
 bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
 bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
 bool OptPassAfterCconvGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_cconv"); }
+bool OptPassTransformGraphGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_trans_graph"); }
 bool OptPassGraphKernelGroupA(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_a"); }
 bool OptPassGraphKernelGroupB(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_b"); }
 bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
@@ -365,6 +380,24 @@ bool CconvPass(const ResourcePtr &res) {
   return true;
 }
 
+bool TransformTopGraphPass(const ResourcePtr &res) {
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "Transform top graph error.";
+  }
+  FuncGraphPtr func_graph = res->func_graph();
+  if (opt::FuncGraphHasTupleInput(func_graph)) {
+    opt::GraphTupleParamTransform graph_trans;
+    func_graph = graph_trans(func_graph, res->manager());
+    res->set_func_graph(func_graph);
+    AbstractBasePtrList abs_spec_list;
+    auto &params = func_graph->parameters();
+    std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
+                   [](AnfNodePtr node) { return node->abstract(); });
+    res->set_args_spec(abs_spec_list);
+  }
+  return true;
+}
+
 bool ValidatePass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
@@ -388,6 +421,7 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"cconv", CconvPass},
                                    {"opt_after_cconv", OptPassAfterCconvGroup},
                                    {"remove_dup_value", RemoveValueNodeDuplicationsPass},
+                                   {"tuple_transform", OptPassTransformGraphGroup},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
                                    {"add_control_depend", AddControlDependPass}};
@@ -401,6 +435,10 @@ std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_prepare", PrepareGroup},
                                    {"cconv", CconvPass}};
 
-std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup}, {"opt_b", OptPassBGroup}, {"cconv", CconvPass}};
+std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
+                                         {"opt_b", OptPassBGroup},
+                                         {"cconv", CconvPass},
+                                         {"transform_top", TransformTopGraphPass},
+                                         {"transform_graph", OptPassTransformGraphGroup}};
 }  // namespace pipeline
 }  // namespace mindspore

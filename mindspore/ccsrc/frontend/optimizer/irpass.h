@@ -103,6 +103,9 @@ class OptimizeIRPassLib {
   SubstitutionPtr unused_parameter_eliminate_;
   SubstitutionPtr unused_output_eliminate_;
 
+  // tuple parameter graph transform
+  SubstitutionPtr call_graph_tuple_transform_;
+
   // AddN eliminate
   SubstitutionPtr addn_eliminate_;
 

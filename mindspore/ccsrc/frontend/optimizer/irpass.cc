@@ -44,6 +44,7 @@
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/switch_layer_defer_inline.h"
+#include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 
 namespace mindspore {
 namespace opt {
@@ -157,6 +158,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<UnusedParasEliminater>(), "unused_parameter_eliminate", IsCNodeGraphKernel);
   unused_output_eliminate_ =
     MakeSubstitution(std::make_shared<UnusedOutputEliminater>(), "unused_output_eliminate", IsCNodeGraphKernel);
+
+  // tuple parameter graph transform
+  call_graph_tuple_transform_ =
+    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transorm", IsCNode);
 
   // AddN eliminate
   addn_eliminate_ = MakeSubstitution(std::make_shared<AddNEliminater>(), "addn_eliminate", IsCNodeGraphKernel);
