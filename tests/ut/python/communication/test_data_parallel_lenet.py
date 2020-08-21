@@ -24,6 +24,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Model, ParallelMode
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from mindspore.parallel._utils import _set_has_initializer
 
 _current_dir = os.path.dirname(os.path.realpath(__file__)) + "/../test_data"
 
@@ -89,3 +90,4 @@ def test_lenet5_train_step_training_pynative():
     Model(network=network, loss_fn=loss_fn, optimizer=optimizer)
     context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
+    _set_has_initializer(False)

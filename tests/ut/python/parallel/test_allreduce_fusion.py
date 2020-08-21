@@ -23,6 +23,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train import Model, ParallelMode
+from mindspore.parallel._utils import _set_has_initializer
 from tests.dataset_mock import MindData
 
 
@@ -105,10 +106,8 @@ def train_common(net):
     momentum = 0.9
     epoch_size = 2
     device_num = 4
-    context.reset_auto_parallel_context()
     auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num,
-                                      parameter_broadcast=False)
+    context.set_auto_parallel_context(device_num=device_num, parameter_broadcast=False)
     context.set_context(mode=context.GRAPH_MODE)
 
     predict = Tensor(np.ones([batch_size, 128]), dtype=ms.float32)
@@ -183,9 +182,12 @@ def test_allreduce_fusion_parameters():
 
 
 def test_allreduce_fusion1():
+    _set_has_initializer(False)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = SimpleDMLNet(DenseNet1(has_bias=False, activation=None), DenseNet2(has_bias=False, activation=None))
     allreduce_fusion_dict = train_common(net)
     expect_dict = {'backbone2.fc8.weight': 2,
@@ -210,6 +212,8 @@ def test_allreduce_fusion2():
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
     cost_model_context.reset_cost_model_context()
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = SimpleDMLNet(DenseNet1(has_bias=False, activation=None), DenseNet2(has_bias=False, activation=None))
     allreduce_fusion_dict = train_common(net)
     expect_dict = {}
@@ -221,6 +225,8 @@ def test_allreduce_fusion3():
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=3)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.3333333)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = SimpleDMLNet(DenseNet1(has_bias=True, activation='relu'), DenseNet2(has_bias=False, activation='relu'))
     allreduce_fusion_dict = train_common(net)
     expect_dict = {'backbone2.fc8.weight': 3,
@@ -247,6 +253,8 @@ def test_allreduce_fusion4():
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = SimpleDMLNet(DenseNet2(has_bias=False, activation=None), DenseNet2(has_bias=False, activation=None))
     allreduce_fusion_dict = train_common(net)
     expect_dict = {'backbone2.fc8.weight': 2,
@@ -276,6 +284,8 @@ def test_allreduce_fusion5():
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.05)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_bandwidth=0.000001)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_computation_time_parameter=0.0000015)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     net = SimpleDMLNet(DenseNet2(has_bias=False, activation=None), DenseNet2(has_bias=False, activation=None))
     allreduce_fusion_dict = train_common(net)
 

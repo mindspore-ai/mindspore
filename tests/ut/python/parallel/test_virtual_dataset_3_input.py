@@ -62,13 +62,13 @@ def test_virtual_dataset_3_input():
             out = self.matmul2(out, b)
             return out
 
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy0 = ((2, 1), (2, 1), (2, 1))
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((2, 2), (2, 2))
     strategy3 = ((2, 4),)
     net = GradWrap(NetWithLoss(Net(strategy0, strategy1, strategy2, strategy3)))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
@@ -89,10 +89,10 @@ def test_virtualdataset_cell_3_inputs():
             out = self.matmul2(out, b)
             return out
 
-    net = GradWrap(VirtualDatasetCellTriple(NetWithLoss(Net(None, None, None))))
     context.set_context(save_graphs=True)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    net = GradWrap(VirtualDatasetCellTriple(NetWithLoss(Net(None, None, None))))
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 2048]), dtype=ms.float32)

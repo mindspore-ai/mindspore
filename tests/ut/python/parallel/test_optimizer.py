@@ -45,6 +45,8 @@ class Net(nn.Cell):
 
 def test_dense_gen_graph():
     context.set_context(mode=context.GRAPH_MODE)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.HYBRID_PARALLEL, mirror_mean=True, device_num=8)
     init()
     network = Net(512, 128)
 
@@ -53,8 +55,6 @@ def test_dense_gen_graph():
                          learning_rate=0.1,
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.HYBRID_PARALLEL, mirror_mean=True, device_num=8)
     network = TrainOneStepCell(network, optimizer)
 
     predict = Tensor(np.ones([64, 512]).astype(np.float32) * 0.01)

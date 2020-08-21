@@ -58,12 +58,12 @@ def test_linear():
             return out
 
     context.set_auto_parallel_context(device_num=16, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy0 = ((2, 4), (2, 4))
     strategy1 = ((2, 4), (4,))
     strategy2 = ((2, 8),)
     strategy3 = ((16, 1), (16, 1))
     net = GradWrap(NetWithLoss(Net(strategy0, strategy1, strategy2), strategy3))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)

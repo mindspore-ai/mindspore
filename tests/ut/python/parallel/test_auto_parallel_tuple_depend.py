@@ -68,9 +68,9 @@ def test_virtual_dataset_3_input():
             out = self.matmul2(out, b)
             return out
 
-    net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
+    net = GradWrap(NetWithLoss(Net()))
     net.set_auto_parallel()
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)

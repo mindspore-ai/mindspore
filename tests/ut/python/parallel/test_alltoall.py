@@ -23,7 +23,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.parallel._utils import _reset_op_id
+from mindspore.parallel._utils import _reset_op_id, _set_has_initializer
 from mindspore.train import Model, ParallelMode
 from tests.dataset_mock import MindData
 
@@ -90,6 +90,7 @@ def all_to_all_common(strategy1):
 
 
 def test_all_to_all():
+    _set_has_initializer(False)
     strategy1 = ((8, 1),)
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     _reset_op_id()

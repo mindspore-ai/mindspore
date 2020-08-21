@@ -88,13 +88,13 @@ def test_get_next_semi_auto_parallel():
             return x
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     network = Net(strategy1=((1, 4),), strategy2=((4, 1), (1,)))
     strategy3 = ((4, 1), (), ())
     strategy4 = ((4, 1), (4, 1))
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32], [[32, 64], [32]], 2, strategy3=strategy3,
                                 strategy4=strategy4)
     net = GradWrap(net_with_loss)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     compile_net(net)
 
 
@@ -112,13 +112,13 @@ def test_get_next_semi_auto_parallel1():
             return x
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     network = Net(strategy1=((1, 4),), strategy2=((4, 1), (1,)))
     strategy3 = ((1, 4), (), ())
     strategy4 = ((4, 1), (4, 1))
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32], [[32, 64], [32]], 2, strategy3=strategy3,
                                 strategy4=strategy4)
     net = GradWrap(net_with_loss)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     compile_net(net)
 
 
@@ -136,10 +136,10 @@ def test_get_next_auto_parallel():
             return x
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
     network = Net()
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32], [[32, 64], [32]], 2)
     net = GradWrap(net_with_loss)
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
     compile_net(net)
 
 
@@ -153,6 +153,6 @@ def test_only_one_get_next():
             return self.get_next()
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    net = Net()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = Net()
     compile_net(net)

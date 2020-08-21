@@ -68,11 +68,11 @@ def test_two_bn():
             out = self.block2(out)
             return out
 
-    net = NetWithLoss(Net())
-    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     context.set_context(save_graphs=True)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net = NetWithLoss(Net())
+    x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     net.set_auto_parallel()
     set_algo_parameters(elementwise_op_strategy_follow=True)
     reset_op_id()

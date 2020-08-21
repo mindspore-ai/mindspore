@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 from mindspore import context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
@@ -22,20 +23,19 @@ import mindspore.common.api as me
 from mindspore.common.initializer import initializer
 from hccl_test.manage.api import Hccl
 
+class Net(nn.Cell):
+    def __init__(self, strategy1, strategy2, weight):
+        super().__init__()
+        self.weight = Parameter(weight, "w1")
+        self.matmul = P.MatMul(transpose_a=False, transpose_b=True).set_strategy(strategy1)
+        self.relu = P.ReLU().set_strategy(strategy2)
+
+    def construct(self, x):
+        out = self.matmul(x, self.weight)
+        out = self.relu(out)
+        return out
 
 def check_initializer_weight_slice(init_name="Uniform"):
-    class Net(nn.Cell):
-        def __init__(self, strategy1, strategy2, weight):
-            super().__init__()
-            self.weight = Parameter(weight, "w1")
-            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).set_strategy(strategy1)
-            self.relu = P.ReLU().set_strategy(strategy2)
-
-        def construct(self, x):
-            out = self.matmul(x, self.weight)
-            out = self.relu(out)
-            return out
-
     def get_slice(rank):
         hccl = Hccl()
         rank_save = hccl.rank_id
@@ -76,6 +76,29 @@ initializers = ["Uniform", "Normal", "TruncatedNormal", "HeUniform", "HeNormal",
 def test_initializer_weight_slice():
     for init_name in initializers:
         check_initializer_weight_slice(init_name)
+
+def test_wrong_order_set_parallel_mode_with_initializer():
+    weight = initializer("Normal", [64, 32], ms.float32)
+    strategy1 = ((2, 1), (4, 1))
+    strategy2 = ((2, 4),)
+    net = Net(strategy1, strategy2, weight)
+    exe = me._executor
+    x = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+        net.set_auto_parallel()
+        exe.compile(net, x, auto_parallel_mode=True, phase='train')
+
+def test_wrong_order_set_parallel_mode_without_initializer():
+    weight = Tensor(np.ones([64, 32]), ms.float32)
+    strategy1 = ((2, 1), (4, 1))
+    strategy2 = ((2, 4),)
+    net = Net(strategy1, strategy2, weight)
+    exe = me._executor
+    x = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    net.set_auto_parallel()
+    exe.compile(net, x, auto_parallel_mode=True, phase='train')
 
 if __name__ == '__main__':
     test_initializer_weight_slice()

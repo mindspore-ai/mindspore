@@ -81,6 +81,8 @@ void ParallelContext::set_mirror_mean(bool mirror_mean) { mirror_mean_ = mirror_
 
 void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
 
+void ParallelContext::set_has_initializer(bool has_initializer) { has_initializer_ = has_initializer; }
+
 void ParallelContext::set_cast_before_mirror(bool cast_before_mirror) { cast_before_mirror_ = cast_before_mirror; }
 
 void ParallelContext::set_loss_repeated_mean(bool loss_repeated_mean) { loss_repeated_mean_ = loss_repeated_mean; }

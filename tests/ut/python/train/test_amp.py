@@ -146,6 +146,10 @@ def test_compile_model_train_O2():
 def test_compile_model_train_O2_parallel():
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
+    context.set_auto_parallel_context(
+        global_rank=0, device_num=8,
+        mirror_mean=True, parameter_broadcast=True,
+        parallel_mode=ParallelMode.DATA_PARALLEL)
 
     dataset = MindDataSet(dataset_types, dataset_shapes)
 
@@ -153,10 +157,6 @@ def test_compile_model_train_O2_parallel():
     loss = nn.MSELoss()
     optimizer = nn.Momentum(net.trainable_params(), 0.1, 0.9, 0.00004, 1024.0)
 
-    context.set_auto_parallel_context(
-        global_rank=0, device_num=8,
-        mirror_mean=True, parameter_broadcast=True,
-        parallel_mode=ParallelMode.DATA_PARALLEL)
     init()
 
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={"acc"}, amp_level="O2")
