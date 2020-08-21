@@ -31,6 +31,8 @@ void SparseApplyAdamPSKernel::InitKernel(
   const std::vector<size_t> &grad_shape = *(shape_vec[9]);
   const std::vector<size_t> &indices_shape = *(shape_vec[10]);
 
+  SetTotalRowCnt(var_shape[0]);
+  CalOffset();
   Shard(&var_shape, 0);
   Shard(&m_shape, 0);
   Shard(&v_shape, 0);
@@ -85,7 +87,7 @@ bool SparseApplyAdamPSKernel::Execute(const std::vector<AddressPtr> &inputs, con
   ReInit(inputs);
   int *indices = reinterpret_cast<int *>(inputs[10]->addr);
   for (size_t i = 0; i < inputs[10]->size / sizeof(int); i++) {
-    indices[i] -= rank_id_ * var_first_dim_size_;
+    indices[i] -= row_offset_;
   }
   return Launch(inputs, workspace, outputs);
 }
