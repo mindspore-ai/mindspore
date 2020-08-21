@@ -20,25 +20,25 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Tile::GetMultiples() const { return this->primitive->value.AsTile()->multiples; }
+std::vector<int> Tile::GetMultiples() const { return this->primitive_->value.AsTile()->multiples; }
 
-void Tile::SetMultiples(const std::vector<int> &multiples) { this->primitive->value.AsTile()->multiples = multiples; }
+void Tile::SetMultiples(const std::vector<int> &multiples) { this->primitive_->value.AsTile()->multiples = multiples; }
 
-std::vector<int> Tile::GetDims() const { return this->primitive->value.AsTile()->multiples; }
+std::vector<int> Tile::GetDims() const { return this->primitive_->value.AsTile()->multiples; }
 
-void Tile::SetDims(const std::vector<int> &dims) { this->primitive->value.AsTile()->dims = dims; }
+void Tile::SetDims(const std::vector<int> &dims) { this->primitive_->value.AsTile()->dims = dims; }
 
 #else
 
 std::vector<int> Tile::GetMultiples() const {
-  auto fb_vector = this->primitive->value_as_Tile()->multiples();
+  auto fb_vector = this->primitive_->value_as_Tile()->multiples();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
 void Tile::SetMultiples(const std::vector<int> &multiples) {}
 
 std::vector<int> Tile::GetDims() const {
-  auto fb_vector = this->primitive->value_as_Tile()->dims();
+  auto fb_vector = this->primitive_->value_as_Tile()->dims();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -46,7 +46,7 @@ void Tile::SetDims(const std::vector<int> &dims) {}
 #endif
 
 int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

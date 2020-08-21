@@ -19,15 +19,15 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float LeakyReLU::GetNegativeSlope() const { return this->primitive->value.AsLeakyReLU()->negativeSlope; }
+float LeakyReLU::GetNegativeSlope() const { return this->primitive_->value.AsLeakyReLU()->negativeSlope; }
 
 void LeakyReLU::SetNegativeSlope(float negative_slope) {
-  this->primitive->value.AsLeakyReLU()->negativeSlope = negative_slope;
+  this->primitive_->value.AsLeakyReLU()->negativeSlope = negative_slope;
 }
 
 #else
 
-float LeakyReLU::GetNegativeSlope() const { return this->primitive->value_as_LeakyReLU()->negativeSlope(); }
+float LeakyReLU::GetNegativeSlope() const { return this->primitive_->value_as_LeakyReLU()->negativeSlope(); }
 
 void LeakyReLU::SetNegativeSlope(float negative_slope) {}
 #endif

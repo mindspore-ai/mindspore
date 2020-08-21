@@ -19,26 +19,26 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int ReverseSequence::GetSeqAxis() const { return this->primitive->value.AsReverseSequence()->seqAxis; }
-int ReverseSequence::GetBatchAxis() const { return this->primitive->value.AsReverseSequence()->batchAxis; }
+int ReverseSequence::GetSeqAxis() const { return this->primitive_->value.AsReverseSequence()->seqAxis; }
+int ReverseSequence::GetBatchAxis() const { return this->primitive_->value.AsReverseSequence()->batchAxis; }
 std::vector<int> ReverseSequence::GetSeqLengths() const {
-  return this->primitive->value.AsReverseSequence()->seqLengths;
+  return this->primitive_->value.AsReverseSequence()->seqLengths;
 }
 
-void ReverseSequence::SetSeqAxis(int seq_axis) { this->primitive->value.AsReverseSequence()->seqAxis = seq_axis; }
+void ReverseSequence::SetSeqAxis(int seq_axis) { this->primitive_->value.AsReverseSequence()->seqAxis = seq_axis; }
 void ReverseSequence::SetBatchAxis(int batch_axis) {
-  this->primitive->value.AsReverseSequence()->batchAxis = batch_axis;
+  this->primitive_->value.AsReverseSequence()->batchAxis = batch_axis;
 }
 void ReverseSequence::SetSeqLengths(const std::vector<int> &seq_lengths) {
-  this->primitive->value.AsReverseSequence()->seqLengths = seq_lengths;
+  this->primitive_->value.AsReverseSequence()->seqLengths = seq_lengths;
 }
 
 #else
 
-int ReverseSequence::GetSeqAxis() const { return this->primitive->value_as_ReverseSequence()->seqAxis(); }
-int ReverseSequence::GetBatchAxis() const { return this->primitive->value_as_ReverseSequence()->batchAxis(); }
+int ReverseSequence::GetSeqAxis() const { return this->primitive_->value_as_ReverseSequence()->seqAxis(); }
+int ReverseSequence::GetBatchAxis() const { return this->primitive_->value_as_ReverseSequence()->batchAxis(); }
 std::vector<int> ReverseSequence::GetSeqLengths() const {
-  auto fb_vector = this->primitive->value_as_ReverseSequence()->seqLengths();
+  auto fb_vector = this->primitive_->value_as_ReverseSequence()->seqLengths();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 

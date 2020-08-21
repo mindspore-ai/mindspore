@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float EmbeddingLookup::GetMaxNorm() const { return this->primitive->value.AsEmbeddingLookup()->maxNorm; }
+float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value.AsEmbeddingLookup()->maxNorm; }
 
-void EmbeddingLookup::SetMaxNorm(float max_norm) { this->primitive->value.AsEmbeddingLookup()->maxNorm = max_norm; }
+void EmbeddingLookup::SetMaxNorm(float max_norm) { this->primitive_->value.AsEmbeddingLookup()->maxNorm = max_norm; }
 
 #else
 
-float EmbeddingLookup::GetMaxNorm() const { return this->primitive->value_as_EmbeddingLookup()->maxNorm(); }
+float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value_as_EmbeddingLookup()->maxNorm(); }
 
 void EmbeddingLookup::SetMaxNorm(float max_norm) {}
 #endif
 
 int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() < kDoubleNum) {
     MS_LOG(ERROR) << "Embedding Lookup should have at least two inputs";
     return RET_INPUT_TENSOR_ERROR;

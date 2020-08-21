@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/ir/tensor.h"

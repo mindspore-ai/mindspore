@@ -170,13 +170,14 @@
 namespace mindspore::kernel {
 
 OpParameter *PopulateROIPoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
-  const auto param = dynamic_cast<const mindspore::lite::ROIPooling *>(primitive);
+  const auto param =
+    reinterpret_cast<mindspore::lite::ROIPooling *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *roi_pooling_param = new (std::nothrow) ROIPoolingParameter();
   if (param == nullptr) {
     MS_LOG(ERROR) << "new PoolingParameter failed.";
     return nullptr;
   }
-  roi_pooling_param->op_parameter_.type_ = param->Type();
+  roi_pooling_param->op_parameter_.type_ = primitive->Type();
   roi_pooling_param->pooledH_ = param->GetPooledW();
   roi_pooling_param->pooledW_ = param->GetPooledW();
   roi_pooling_param->scale_ = param->GetScale();
@@ -184,7 +185,8 @@ OpParameter *PopulateROIPoolingParameter(const mindspore::lite::PrimitiveC *prim
 }
 
 OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
-  const auto param = dynamic_cast<const mindspore::lite::BatchNorm *>(primitive);
+  const auto param =
+    reinterpret_cast<mindspore::lite::BatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *batch_norm_param = new (std::nothrow) BatchNormParameter();
   if (batch_norm_param == nullptr) {
     MS_LOG(ERROR) << "new BatchNormParameter failed.";
@@ -197,7 +199,7 @@ OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
 }
 
 OpParameter *PopulateFillParameter(const mindspore::lite::PrimitiveC *primitive) {
-  const auto param = dynamic_cast<const mindspore::lite::Fill *>(primitive);
+  const auto param = reinterpret_cast<mindspore::lite::Fill *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *fill_param = new (std::nothrow) FillParameter();
   if (fill_param == nullptr) {
     MS_LOG(ERROR) << "new FillParameter failed.";
@@ -214,7 +216,7 @@ OpParameter *PopulateFillParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::ExpandDims *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::ExpandDims *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *expand_dims_param = new (std::nothrow) ExpandDimsParameter();
   if (expand_dims_param == nullptr) {
     MS_LOG(ERROR) << "new ExpandDimsParameter failed.";
@@ -226,7 +228,7 @@ OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *prim
 }
 
 OpParameter *PopulateCaffePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::CaffePReLU *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::CaffePReLU *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *caffePrelu_param = new (std::nothrow) CaffePreluParameter();
   if (caffePrelu_param == nullptr) {
     MS_LOG(ERROR) << "new caffePReluParameter failed.";
@@ -238,7 +240,7 @@ OpParameter *PopulateCaffePReLUParameter(const mindspore::lite::PrimitiveC *prim
 }
 
 OpParameter *PopulatePreluParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::Prelu *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Prelu *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *prelu_param = new (std::nothrow) PreluParameter();
   if (prelu_param == nullptr) {
     MS_LOG(ERROR) << "new caffePReluParameter failed.";
@@ -253,7 +255,8 @@ OpParameter *PopulatePreluParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto pooling_primitive = dynamic_cast<const mindspore::lite::Pooling *>(primitive);
+  auto pooling_primitive =
+    reinterpret_cast<mindspore::lite::Pooling *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *pooling_param = new (std::nothrow) PoolingParameter();
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "new PoolingParameter failed.";
@@ -309,7 +312,8 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
 }
 
 OpParameter *PopulateFullconnectionParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::FullConnection *>(primitive);
+  auto param =
+    reinterpret_cast<mindspore::lite::FullConnection *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *matmul_param = new (std::nothrow) MatMulParameter();
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "new FullconnectionParameter failed.";
@@ -331,7 +335,7 @@ OpParameter *PopulateFullconnectionParameter(const mindspore::lite::PrimitiveC *
 }
 
 OpParameter *PopulateMatMulParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::MatMul *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::MatMul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *matmul_param = new (std::nothrow) MatMulParameter();
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "new FullconnectionParameter failed.";
@@ -352,7 +356,8 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   conv_param->op_parameter_.type_ = primitive->Type();
-  auto conv_primitive = dynamic_cast<const mindspore::lite::Conv2D *>(primitive);
+  auto conv_primitive =
+    reinterpret_cast<mindspore::lite::Conv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
   conv_param->group_ = conv_primitive->GetGroup();
@@ -398,7 +403,8 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   }
   conv_param->op_parameter_.type_ = primitive->Type();
 
-  auto conv_primitive = dynamic_cast<const mindspore::lite::DepthwiseConv2D *>(primitive);
+  auto conv_primitive =
+    reinterpret_cast<mindspore::lite::DepthwiseConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
   conv_param->stride_h_ = conv_primitive->GetStrideH();
@@ -439,7 +445,8 @@ OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primit
     return nullptr;
   }
   conv_param->op_parameter_.type_ = primitive->Type();
-  auto conv_primitive = dynamic_cast<const mindspore::lite::DeDepthwiseConv2D *>(primitive);
+  auto conv_primitive =
+    reinterpret_cast<mindspore::lite::DeDepthwiseConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
   conv_param->stride_h_ = conv_primitive->GetStrideH();
@@ -480,7 +487,8 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   conv_param->op_parameter_.type_ = primitive->Type();
-  auto conv_primitive = dynamic_cast<const mindspore::lite::DeConv2D *>(primitive);
+  auto conv_primitive =
+    reinterpret_cast<mindspore::lite::DeConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   conv_param->kernel_h_ = conv_primitive->GetKernelH();
   conv_param->kernel_w_ = conv_primitive->GetKernelW();
   conv_param->stride_h_ = conv_primitive->GetStrideH();
@@ -533,7 +541,8 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateSoftmaxParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto softmax_primitive = dynamic_cast<const mindspore::lite::SoftMax *>(primitive);
+  auto softmax_primitive =
+    reinterpret_cast<mindspore::lite::SoftMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *softmax_param = new (std::nothrow) SoftmaxParameter();
   if (softmax_param == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxParameter failed.";
@@ -551,7 +560,7 @@ OpParameter *PopulateReduceParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   reduce_param->op_parameter_.type_ = primitive->Type();
-  auto reduce = dynamic_cast<const mindspore::lite::Reduce *>(primitive);
+  auto reduce = reinterpret_cast<mindspore::lite::Reduce *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   reduce_param->keep_dims_ = reduce->GetKeepDims();
   auto axisVector = reduce->GetAxes();
   if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
@@ -575,7 +584,7 @@ OpParameter *PopulateMeanParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   mean_param->op_parameter_.type_ = primitive->Type();
-  auto mean = dynamic_cast<const mindspore::lite::Mean *>(primitive);
+  auto mean = reinterpret_cast<mindspore::lite::Mean *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   mean_param->keep_dims_ = mean->GetKeepDims();
   auto axisVector = mean->GetAxis();
   if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
@@ -599,7 +608,7 @@ OpParameter *PopulatePadParameter(const mindspore::lite::PrimitiveC *primitive) 
     return nullptr;
   }
   pad_param->op_parameter_.type_ = primitive->Type();
-  auto pad_node = dynamic_cast<const mindspore::lite::Pad *>(primitive);
+  auto pad_node = reinterpret_cast<mindspore::lite::Pad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   pad_param->pad_mode_ = pad_node->GetPaddingMode();
   if (pad_param->pad_mode_ == schema::PaddingMode_CONSTANT) {
     pad_param->constant_value_ = pad_node->GetConstantValue();
@@ -628,7 +637,8 @@ OpParameter *PopulateActivationParameter(const mindspore::lite::PrimitiveC *prim
     MS_LOG(ERROR) << "new ActivationParameter failed.";
     return nullptr;
   }
-  auto activation = dynamic_cast<const mindspore::lite::Activation *>(primitive);
+  auto activation =
+    reinterpret_cast<mindspore::lite::Activation *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   act_param->type_ = static_cast<int>(activation->GetType());
   act_param->alpha_ = activation->GetAlpha();
   return reinterpret_cast<OpParameter *>(act_param);
@@ -641,7 +651,8 @@ OpParameter *PopulateFusedBatchNorm(const mindspore::lite::PrimitiveC *primitive
     return nullptr;
   }
   batch_norm_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::FusedBatchNorm *>(primitive);
+  auto param =
+    reinterpret_cast<mindspore::lite::FusedBatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   batch_norm_param->epsilon_ = param->GetEpsilon();
   batch_norm_param->fused_ = true;
   return reinterpret_cast<OpParameter *>(batch_norm_param);
@@ -658,16 +669,24 @@ OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive) {
   arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
   switch (primitive->Type()) {
     case schema::PrimitiveType_Add:
-      arithmetic_param->activation_type_ = dynamic_cast<const mindspore::lite::Add *>(primitive)->GetActivationType();
+      arithmetic_param->activation_type_ =
+        reinterpret_cast<mindspore::lite::Add *>(const_cast<mindspore::lite::PrimitiveC *>(primitive))
+          ->GetActivationType();
       break;
     case schema::PrimitiveType_Sub:
-      arithmetic_param->activation_type_ = dynamic_cast<const mindspore::lite::Sub *>(primitive)->GetActivationType();
+      arithmetic_param->activation_type_ =
+        reinterpret_cast<mindspore::lite::Sub *>(const_cast<mindspore::lite::PrimitiveC *>(primitive))
+          ->GetActivationType();
       break;
     case schema::PrimitiveType_Mul:
-      arithmetic_param->activation_type_ = dynamic_cast<const mindspore::lite::Mul *>(primitive)->GetActivationType();
+      arithmetic_param->activation_type_ =
+        reinterpret_cast<mindspore::lite::Mul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive))
+          ->GetActivationType();
       break;
     case schema::PrimitiveType_Div:
-      arithmetic_param->activation_type_ = dynamic_cast<const mindspore::lite::Div *>(primitive)->GetActivationType();
+      arithmetic_param->activation_type_ =
+        reinterpret_cast<mindspore::lite::Div *>(const_cast<mindspore::lite::PrimitiveC *>(primitive))
+          ->GetActivationType();
       break;
     default:
       arithmetic_param->activation_type_ = 0;
@@ -688,7 +707,7 @@ OpParameter *PopulateEltwiseParameter(const mindspore::lite::PrimitiveC *primiti
     MS_LOG(ERROR) << "new ArithmeticParameter failed.";
     return nullptr;
   }
-  auto eltwise = dynamic_cast<const mindspore::lite::Eltwise *>(primitive);
+  auto eltwise = reinterpret_cast<mindspore::lite::Eltwise *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   switch (eltwise->GetMode()) {
     case schema::EltwiseMode_PROD:
       arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_Mul;
@@ -723,7 +742,7 @@ OpParameter *PopulatePowerParameter(const mindspore::lite::PrimitiveC *primitive
     return nullptr;
   }
   power_param->op_parameter_.type_ = primitive->Type();
-  auto power = dynamic_cast<const mindspore::lite::Power *>(primitive);
+  auto power = reinterpret_cast<mindspore::lite::Power *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   power_param->power_ = power->GetPower();
   power_param->scale_ = power->GetScale();
   power_param->shift_ = power->GetShift();
@@ -737,7 +756,7 @@ OpParameter *PopulateArgMaxParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   arg_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::ArgMax *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::ArgMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   arg_param->axis_ = param->GetAxis();
   arg_param->topk_ = param->GetTopK();
   arg_param->axis_type_ = param->GetAxisType();
@@ -753,7 +772,7 @@ OpParameter *PopulateArgMinParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   arg_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::ArgMin *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::ArgMin *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   arg_param->axis_ = param->GetAxis();
   arg_param->topk_ = param->GetTopK();
   arg_param->axis_type_ = param->GetAxisType();
@@ -769,14 +788,15 @@ OpParameter *PopulateCastParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   cast_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Cast *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Cast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   cast_param->src_type_ = param->GetSrcT();
   cast_param->dst_type_ = param->GetDstT();
   return reinterpret_cast<OpParameter *>(cast_param);
 }
 
 OpParameter *PopulateLocalResponseNormParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto local_response_norm_attr = dynamic_cast<const mindspore::lite::LocalResponseNormalization *>(primitive);
+  auto local_response_norm_attr = reinterpret_cast<mindspore::lite::LocalResponseNormalization *>(
+    const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *lrn_param = new (std::nothrow) LocalResponseNormParameter();
   if (lrn_param == nullptr) {
     MS_LOG(ERROR) << "new LocalResponseNormParameter failed.";
@@ -791,7 +811,7 @@ OpParameter *PopulateLocalResponseNormParameter(const mindspore::lite::Primitive
 }
 
 OpParameter *PopulateRangeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto range_attr = dynamic_cast<const mindspore::lite::Range *>(primitive);
+  auto range_attr = reinterpret_cast<mindspore::lite::Range *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *range_param = new (std::nothrow) RangeParameter();
   if (range_param == nullptr) {
     MS_LOG(ERROR) << "new RangeParameter failed.";
@@ -812,7 +832,7 @@ OpParameter *PopulateConcatParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   concat_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Concat *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Concat *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   concat_param->axis_ = param->GetAxis();
   return reinterpret_cast<OpParameter *>(concat_param);
 }
@@ -824,7 +844,7 @@ OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   tile_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Tile *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Tile *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto multiples = param->GetMultiples();
   tile_param->in_dim_ = multiples.size();
   for (int i = 0; i < tile_param->in_dim_; ++i) {
@@ -840,7 +860,7 @@ OpParameter *PopulateTopKParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   topk_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::TopK *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::TopK *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   topk_param->k_ = param->GetK();
   topk_param->sorted_ = param->GetSorted();
   return reinterpret_cast<OpParameter *>(topk_param);
@@ -872,7 +892,7 @@ OpParameter *PopulateTransposeParameter(const mindspore::lite::PrimitiveC *primi
     MS_LOG(ERROR) << "new TransposeParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::Transpose *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Transpose *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   transpose_param->op_parameter_.type_ = primitive->Type();
   auto perm_vector_ = param->GetPerm();
   int i = 0;
@@ -890,7 +910,7 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
     MS_LOG(ERROR) << "new SplitParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::Split *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Split *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   split_param->op_parameter_.type_ = primitive->Type();
   split_param->num_split_ = param->GetNumberSplit();
   auto split_sizes_vector_ = param->GetSizeSplits();
@@ -924,17 +944,13 @@ OpParameter *PopulateScaleParameter(const mindspore::lite::PrimitiveC *primitive
     return nullptr;
   }
   scale_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Scale *>(primitive);
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "value_as_Scale return nullptr";
-    return nullptr;
-  }
+  auto param = reinterpret_cast<mindspore::lite::Scale *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   scale_param->axis_ = param->GetAxis();
   return reinterpret_cast<OpParameter *>(scale_param);
 }
 
 OpParameter *PopulateGatherParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto gather_attr = dynamic_cast<const mindspore::lite::Gather *>(primitive);
+  auto gather_attr = reinterpret_cast<mindspore::lite::Gather *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *gather_param = new (std::nothrow) GatherParameter();
   if (gather_param == nullptr) {
     MS_LOG(ERROR) << "new GatherParameter failed.";
@@ -953,7 +969,8 @@ OpParameter *PopulateGatherNdParameter(const mindspore::lite::PrimitiveC *primit
     return nullptr;
   }
   gather_nd_param->op_parameter_.type_ = primitive->Type();
-  auto gatherNd_attr = dynamic_cast<const mindspore::lite::GatherNd *>(primitive);
+  auto gatherNd_attr =
+    reinterpret_cast<mindspore::lite::GatherNd *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   gather_nd_param->batchDims_ = gatherNd_attr->GetBatchDims();
   return reinterpret_cast<OpParameter *>(gather_nd_param);
 }
@@ -975,7 +992,7 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
     MS_LOG(ERROR) << "new SliceParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::SliceOp *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::SliceOp *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   slice_param->op_parameter_.type_ = primitive->Type();
   auto param_begin = param->GetBegin();
   auto param_size = param->GetSize();
@@ -997,7 +1014,7 @@ OpParameter *PopulateBroadcastToParameter(const mindspore::lite::PrimitiveC *pri
     MS_LOG(ERROR) << "new BroadcastToParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::BroadcastTo *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::BroadcastTo *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   broadcast_param->op_parameter_.type_ = primitive->Type();
   auto dst_shape = param->GetDstShape();
   broadcast_param->shape_size_ = dst_shape.size();
@@ -1028,7 +1045,8 @@ OpParameter *PopulateShapeParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto attr = dynamic_cast<const mindspore::lite::ConstantOfShape *>(primitive);
+  auto attr =
+    reinterpret_cast<mindspore::lite::ConstantOfShape *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   ConstantOfShapeParameter *param = new (std::nothrow) ConstantOfShapeParameter();
   if (param == nullptr) {
     MS_LOG(ERROR) << "new ConstantOfShapeParameter failed.";
@@ -1040,7 +1058,8 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
 }
 
 OpParameter *PopulateReverseParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto reverse_attr = dynamic_cast<const mindspore::lite::Reverse *>(primitive);
+  auto reverse_attr =
+    reinterpret_cast<mindspore::lite::Reverse *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   ReverseParameter *reverse_param = new (std::nothrow) ReverseParameter();
   if (reverse_param == nullptr) {
     MS_LOG(ERROR) << "new ReverseParameter failed.";
@@ -1057,7 +1076,8 @@ OpParameter *PopulateReverseParameter(const mindspore::lite::PrimitiveC *primiti
 }
 
 OpParameter *PopulateUnsqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto unsqueeze_attr = dynamic_cast<const mindspore::lite::Unsqueeze *>(primitive);
+  auto unsqueeze_attr =
+    reinterpret_cast<mindspore::lite::Unsqueeze *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto *unsqueeze_param = new (std::nothrow) UnsqueezeParameter();
   if (unsqueeze_param == nullptr) {
     MS_LOG(ERROR) << "new ReverseParameter failed.";
@@ -1079,7 +1099,7 @@ OpParameter *PopulateStackParameter(const mindspore::lite::PrimitiveC *primitive
     MS_LOG(ERROR) << "new StackParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::Stack *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Stack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   stack_param->op_parameter_.type_ = primitive->Type();
   stack_param->axis_ = param->GetAxis();
   return reinterpret_cast<OpParameter *>(stack_param);
@@ -1091,7 +1111,7 @@ OpParameter *PopulateUnstackParameter(const mindspore::lite::PrimitiveC *primiti
     MS_LOG(ERROR) << "new UnstackParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::Unstack *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Unstack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   unstack_param->op_parameter_.type_ = primitive->Type();
   unstack_param->num_ = param->GetNum();
   unstack_param->axis_ = param->GetAxis();
@@ -1104,7 +1124,8 @@ OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC 
     MS_LOG(ERROR) << "new ReverseSequenceParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::ReverseSequence *>(primitive);
+  auto param =
+    reinterpret_cast<mindspore::lite::ReverseSequence *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   reverse_sequence_param->op_parameter_.type_ = primitive->Type();
   reverse_sequence_param->seq_axis_ = param->GetSeqAxis();
   reverse_sequence_param->batch_axis_ = param->GetBatchAxis();
@@ -1127,7 +1148,7 @@ OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *pr
     MS_LOG(ERROR) << "new DepthToSpaceParameter failed.";
     return nullptr;
   }
-  auto param = dynamic_cast<const mindspore::lite::DepthToSpace *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::DepthToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   depth_space_param->op_parameter_.type_ = primitive->Type();
   depth_space_param->block_size_ = param->GetBlockSize();
   return reinterpret_cast<OpParameter *>(depth_space_param);
@@ -1140,7 +1161,7 @@ OpParameter *PopulateSpaceToDepthParameter(const mindspore::lite::PrimitiveC *pr
     return nullptr;
   }
   space_depth_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::SpaceToDepth *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::SpaceToDepth *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   space_depth_param->op_parameter_.type_ = primitive->Type();
   space_depth_param->block_size_ = param->GetBlockSize();
   if (param->GetFormat() != schema::Format_NHWC) {
@@ -1176,7 +1197,7 @@ OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   resize_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Resize *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Resize *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   resize_param->method_ = static_cast<int>(param->GetMethod());
   resize_param->new_height_ = param->GetNewHeight();
   resize_param->new_width_ = param->GetNewWidth();
@@ -1192,7 +1213,7 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
     return nullptr;
   }
   batch_space_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::BatchToSpace *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::BatchToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto block_shape = param->GetBlockShape();
   if (block_shape.size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
     MS_LOG(ERROR) << "batch_to_space blockShape size should be " << BATCH_TO_SPACE_BLOCK_SHAPE_SIZE;
@@ -1216,7 +1237,7 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
 }
 
 OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::Crop *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Crop *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto param_offset = param->GetOffsets();
   if (param_offset.size() > CROP_OFFSET_MAX_SIZE) {
     MS_LOG(ERROR) << "crop_param offset size(" << param_offset.size() << ") should <= " << CROP_OFFSET_MAX_SIZE;
@@ -1243,7 +1264,7 @@ OpParameter *PopulateOneHotParameter(const mindspore::lite::PrimitiveC *primitiv
     return nullptr;
   }
   one_hot_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::OneHot *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::OneHot *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   if (param == nullptr) {
     delete (one_hot_param);
     MS_LOG(ERROR) << "get OneHot param nullptr.";
@@ -1270,7 +1291,8 @@ OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *
     return nullptr;
   }
   parameter->op_parameter_.type_ = primitive->Type();
-  auto quant_dtype_cast_param = dynamic_cast<const mindspore::lite::QuantDTypeCast *>(primitive);
+  auto quant_dtype_cast_param =
+    reinterpret_cast<mindspore::lite::QuantDTypeCast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   parameter->srcT = quant_dtype_cast_param->GetSrcT();
   parameter->dstT = quant_dtype_cast_param->GetDstT();
   return reinterpret_cast<OpParameter *>(parameter);
@@ -1313,7 +1335,8 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
     return nullptr;
   }
   prior_box_param->op_parameter_.type_ = primitive->Type();
-  auto prior_box_attr = dynamic_cast<const mindspore::lite::PriorBox *>(primitive);
+  auto prior_box_attr =
+    reinterpret_cast<mindspore::lite::PriorBox *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
 
   if (prior_box_attr->GetMinSizes().size() > PRIOR_BOX_MAX_NUM) {
     MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
@@ -1367,7 +1390,7 @@ OpParameter *PopulateLstmParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   lstm_param->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Lstm *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Lstm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   if (param == nullptr) {
     delete (lstm_param);
     MS_LOG(ERROR) << "get Lstm param nullptr.";
@@ -1384,7 +1407,8 @@ OpParameter *PopulateEmbeddingLookupParameter(const mindspore::lite::PrimitiveC 
     return nullptr;
   }
   embedding_lookup_parameter->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::EmbeddingLookup *>(primitive);
+  auto param =
+    reinterpret_cast<mindspore::lite::EmbeddingLookup *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   embedding_lookup_parameter->max_norm_ = param->GetMaxNorm();
   if (embedding_lookup_parameter->max_norm_ < 0) {
     MS_LOG(ERROR) << "Embedding lookup max norm should be positive number, got "
@@ -1412,7 +1436,7 @@ OpParameter *PopulateEluParameter(const mindspore::lite::PrimitiveC *primitive) 
     return nullptr;
   }
   elu_parameter->op_parameter_.type_ = primitive->Type();
-  auto param = dynamic_cast<const mindspore::lite::Elu *>(primitive);
+  auto param = reinterpret_cast<mindspore::lite::Elu *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   elu_parameter->alpha_ = param->GetAlpha();
   return reinterpret_cast<OpParameter *>(elu_parameter);
 }

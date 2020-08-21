@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> SoftmaxCrossEntropy::GetAxis() const { return this->primitive->value.AsSoftmaxCrossEntropy()->axis; }
+std::vector<int> SoftmaxCrossEntropy::GetAxis() const { return this->primitive_->value.AsSoftmaxCrossEntropy()->axis; }
 
 void SoftmaxCrossEntropy::SetAxis(const std::vector<int> &axis) {
-  this->primitive->value.AsSoftmaxCrossEntropy()->axis = axis;
+  this->primitive_->value.AsSoftmaxCrossEntropy()->axis = axis;
 }
 
 #else
 
 std::vector<int> SoftmaxCrossEntropy::GetAxis() const {
-  auto fb_vector = this->primitive->value_as_SoftmaxCrossEntropy()->axis();
+  auto fb_vector = this->primitive_->value_as_SoftmaxCrossEntropy()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 

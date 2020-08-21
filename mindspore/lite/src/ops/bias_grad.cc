@@ -19,14 +19,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> BiasGrad::GetAxis() const { return this->primitive->value.AsBiasGrad()->axis; }
+std::vector<int> BiasGrad::GetAxis() const { return this->primitive_->value.AsBiasGrad()->axis; }
 
-void BiasGrad::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsBiasGrad()->axis = axis; }
+void BiasGrad::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsBiasGrad()->axis = axis; }
 
 #else
 
 std::vector<int> BiasGrad::GetAxis() const {
-  auto fb_vector = this->primitive->value_as_BiasGrad()->axis();
+  auto fb_vector = this->primitive_->value_as_BiasGrad()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 

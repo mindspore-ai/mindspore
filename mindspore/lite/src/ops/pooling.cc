@@ -20,53 +20,53 @@ namespace mindspore {
 namespace lite {
 
 #ifdef PRIMITIVE_WRITEABLE
-int Pooling::GetFormat() const { return this->primitive->value.AsPooling()->format; }
-int Pooling::GetPoolingMode() const { return this->primitive->value.AsPooling()->poolingMode; }
-bool Pooling::GetGlobal() const { return this->primitive->value.AsPooling()->global; }
-int Pooling::GetWindowW() const { return this->primitive->value.AsPooling()->windowW; }
-int Pooling::GetWindowH() const { return this->primitive->value.AsPooling()->windowH; }
-int Pooling::GetStrideW() const { return this->primitive->value.AsPooling()->strideW; }
-int Pooling::GetStrideH() const { return this->primitive->value.AsPooling()->strideH; }
-int Pooling::GetPadMode() const { return this->primitive->value.AsPooling()->padMode; }
-int Pooling::GetPadUp() const { return this->primitive->value.AsPooling()->padUp; }
-int Pooling::GetPadDown() const { return this->primitive->value.AsPooling()->padDown; }
-int Pooling::GetPadLeft() const { return this->primitive->value.AsPooling()->padLeft; }
-int Pooling::GetPadRight() const { return this->primitive->value.AsPooling()->padRight; }
-int Pooling::GetRoundMode() const { return this->primitive->value.AsPooling()->roundMode; }
+int Pooling::GetFormat() const { return this->primitive_->value.AsPooling()->format; }
+int Pooling::GetPoolingMode() const { return this->primitive_->value.AsPooling()->poolingMode; }
+bool Pooling::GetGlobal() const { return this->primitive_->value.AsPooling()->global; }
+int Pooling::GetWindowW() const { return this->primitive_->value.AsPooling()->windowW; }
+int Pooling::GetWindowH() const { return this->primitive_->value.AsPooling()->windowH; }
+int Pooling::GetStrideW() const { return this->primitive_->value.AsPooling()->strideW; }
+int Pooling::GetStrideH() const { return this->primitive_->value.AsPooling()->strideH; }
+int Pooling::GetPadMode() const { return this->primitive_->value.AsPooling()->padMode; }
+int Pooling::GetPadUp() const { return this->primitive_->value.AsPooling()->padUp; }
+int Pooling::GetPadDown() const { return this->primitive_->value.AsPooling()->padDown; }
+int Pooling::GetPadLeft() const { return this->primitive_->value.AsPooling()->padLeft; }
+int Pooling::GetPadRight() const { return this->primitive_->value.AsPooling()->padRight; }
+int Pooling::GetRoundMode() const { return this->primitive_->value.AsPooling()->roundMode; }
 
-void Pooling::SetFormat(int format) { this->primitive->value.AsPooling()->format = (schema::Format) format; }
+void Pooling::SetFormat(int format) { this->primitive_->value.AsPooling()->format = (schema::Format)format; }
 void Pooling::SetPoolingMode(int pooling_mode) {
-  this->primitive->value.AsPooling()->poolingMode = (schema::PoolMode) pooling_mode;
+  this->primitive_->value.AsPooling()->poolingMode = (schema::PoolMode)pooling_mode;
 }
-void Pooling::SetGlobal(bool global) { this->primitive->value.AsPooling()->global = global; }
-void Pooling::SetWindowW(int window_w) { this->primitive->value.AsPooling()->windowW = window_w; }
-void Pooling::SetWindowH(int window_h) { this->primitive->value.AsPooling()->windowH = window_h; }
-void Pooling::SetStrideW(int stride_w) { this->primitive->value.AsPooling()->strideW = stride_w; }
-void Pooling::SetStrideH(int stride_h) { this->primitive->value.AsPooling()->strideH = stride_h; }
-void Pooling::SetPadMode(int pad_mode) { this->primitive->value.AsPooling()->padMode = (schema::PadMode) pad_mode; }
-void Pooling::SetPadUp(int pad_up) { this->primitive->value.AsPooling()->padUp = pad_up; }
-void Pooling::SetPadDown(int pad_down) { this->primitive->value.AsPooling()->padDown = pad_down; }
-void Pooling::SetPadLeft(int pad_left) { this->primitive->value.AsPooling()->padLeft = pad_left; }
-void Pooling::SetPadRight(int pad_right) { this->primitive->value.AsPooling()->padRight = pad_right; }
+void Pooling::SetGlobal(bool global) { this->primitive_->value.AsPooling()->global = global; }
+void Pooling::SetWindowW(int window_w) { this->primitive_->value.AsPooling()->windowW = window_w; }
+void Pooling::SetWindowH(int window_h) { this->primitive_->value.AsPooling()->windowH = window_h; }
+void Pooling::SetStrideW(int stride_w) { this->primitive_->value.AsPooling()->strideW = stride_w; }
+void Pooling::SetStrideH(int stride_h) { this->primitive_->value.AsPooling()->strideH = stride_h; }
+void Pooling::SetPadMode(int pad_mode) { this->primitive_->value.AsPooling()->padMode = (schema::PadMode)pad_mode; }
+void Pooling::SetPadUp(int pad_up) { this->primitive_->value.AsPooling()->padUp = pad_up; }
+void Pooling::SetPadDown(int pad_down) { this->primitive_->value.AsPooling()->padDown = pad_down; }
+void Pooling::SetPadLeft(int pad_left) { this->primitive_->value.AsPooling()->padLeft = pad_left; }
+void Pooling::SetPadRight(int pad_right) { this->primitive_->value.AsPooling()->padRight = pad_right; }
 void Pooling::SetRoundMode(int round_mode) {
-  this->primitive->value.AsPooling()->roundMode = (schema::RoundMode) round_mode;
+  this->primitive_->value.AsPooling()->roundMode = (schema::RoundMode)round_mode;
 }
 
 #else
 
-int Pooling::GetFormat() const { return this->primitive->value_as_Pooling()->format(); }
-int Pooling::GetPoolingMode() const { return this->primitive->value_as_Pooling()->poolingMode(); }
-bool Pooling::GetGlobal() const { return this->primitive->value_as_Pooling()->global(); }
-int Pooling::GetWindowW() const { return this->primitive->value_as_Pooling()->windowW(); }
-int Pooling::GetWindowH() const { return this->primitive->value_as_Pooling()->windowH(); }
-int Pooling::GetStrideW() const { return this->primitive->value_as_Pooling()->strideW(); }
-int Pooling::GetStrideH() const { return this->primitive->value_as_Pooling()->strideH(); }
-int Pooling::GetPadMode() const { return this->primitive->value_as_Pooling()->padMode(); }
-int Pooling::GetPadUp() const { return this->primitive->value_as_Pooling()->padUp(); }
-int Pooling::GetPadDown() const { return this->primitive->value_as_Pooling()->padDown(); }
-int Pooling::GetPadLeft() const { return this->primitive->value_as_Pooling()->padLeft(); }
-int Pooling::GetPadRight() const { return this->primitive->value_as_Pooling()->padRight(); }
-int Pooling::GetRoundMode() const { return this->primitive->value_as_Pooling()->roundMode(); }
+int Pooling::GetFormat() const { return this->primitive_->value_as_Pooling()->format(); }
+int Pooling::GetPoolingMode() const { return this->primitive_->value_as_Pooling()->poolingMode(); }
+bool Pooling::GetGlobal() const { return this->primitive_->value_as_Pooling()->global(); }
+int Pooling::GetWindowW() const { return this->primitive_->value_as_Pooling()->windowW(); }
+int Pooling::GetWindowH() const { return this->primitive_->value_as_Pooling()->windowH(); }
+int Pooling::GetStrideW() const { return this->primitive_->value_as_Pooling()->strideW(); }
+int Pooling::GetStrideH() const { return this->primitive_->value_as_Pooling()->strideH(); }
+int Pooling::GetPadMode() const { return this->primitive_->value_as_Pooling()->padMode(); }
+int Pooling::GetPadUp() const { return this->primitive_->value_as_Pooling()->padUp(); }
+int Pooling::GetPadDown() const { return this->primitive_->value_as_Pooling()->padDown(); }
+int Pooling::GetPadLeft() const { return this->primitive_->value_as_Pooling()->padLeft(); }
+int Pooling::GetPadRight() const { return this->primitive_->value_as_Pooling()->padRight(); }
+int Pooling::GetRoundMode() const { return this->primitive_->value_as_Pooling()->roundMode(); }
 
 void Pooling::SetFormat(int format) {}
 void Pooling::SetPoolingMode(int pooling_mode) {}
@@ -90,7 +90,7 @@ int Pooling::PadLeft() const { return this->pad_l_; }
 int Pooling::PadRight() const { return this->pad_r_; }
 
 int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
@@ -126,7 +126,7 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     pad_l_ = pad_w_all / 2;
     pad_r_ = pad_w_all - pad_l_;
   } else {
-    auto round_mode = (schema::RoundMode) GetRoundMode();
+    auto round_mode = (schema::RoundMode)GetRoundMode();
     if (round_mode == schema::RoundMode_FLOOR) {
       output_h = std::floor(static_cast<float>(input_h + pad_u_ + pad_d_ - window_h) / GetStrideH()) + 1;
       output_w = std::floor(static_cast<float>(input_w + pad_l_ + pad_r_ - window_w) / GetStrideW()) + 1;

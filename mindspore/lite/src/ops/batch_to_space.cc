@@ -23,22 +23,22 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> BatchToSpace::GetBlockShape() const { return this->primitive->value.AsBatchToSpace()->blockShape; }
-std::vector<int> BatchToSpace::GetCrops() const { return this->primitive->value.AsBatchToSpace()->crops; }
+std::vector<int> BatchToSpace::GetBlockShape() const { return this->primitive_->value.AsBatchToSpace()->blockShape; }
+std::vector<int> BatchToSpace::GetCrops() const { return this->primitive_->value.AsBatchToSpace()->crops; }
 
 void BatchToSpace::SetBlockShape(const std::vector<int> &block_shape) {
-  this->primitive->value.AsBatchToSpace()->blockShape = block_shape;
+  this->primitive_->value.AsBatchToSpace()->blockShape = block_shape;
 }
-void BatchToSpace::SetCrops(const std::vector<int> &crops) { this->primitive->value.AsBatchToSpace()->crops = crops; }
+void BatchToSpace::SetCrops(const std::vector<int> &crops) { this->primitive_->value.AsBatchToSpace()->crops = crops; }
 
 #else
 
 std::vector<int> BatchToSpace::GetBlockShape() const {
-  auto fb_vector = this->primitive->value_as_BatchToSpace()->blockShape();
+  auto fb_vector = this->primitive_->value_as_BatchToSpace()->blockShape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> BatchToSpace::GetCrops() const {
-  auto fb_vector = this->primitive->value_as_BatchToSpace()->crops();
+  auto fb_vector = this->primitive_->value_as_BatchToSpace()->crops();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -53,7 +53,7 @@ constexpr int kCropsSize = 4;
 }  // namespace
 
 int BatchToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kBatchToSpaceOutputNum || inputs.size() != kBatchToSpaceInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
     return RET_PARAM_INVALID;

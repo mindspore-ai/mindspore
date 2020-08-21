@@ -25,12 +25,11 @@
 #include "src/scheduler.h"
 #include "include/context.h"
 #include "src/lite_session.h"
-#include "src/ir/primitive_t_value.h"
 #include "src/populate_parameter.h"
 #include "src/ops/primitive_c.h"
 
 using mindspore::lite::KernelRegistry;
-using mindspore::lite::PrimitiveTValue;
+using mindspore::lite::PrimitiveC;
 using mindspore::lite::tensor::Tensor;
 namespace mindspore::opt {
 namespace {
@@ -45,7 +44,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
     auto tensorT = tmp_meta_graph->allTensors.at(input_index).get();
     auto tensor_shape = tensorT->dims;
     auto lite_tensor =
-        new(std::nothrow)Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
+      new(std::nothrow)Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
       return input_tensors;
@@ -74,7 +73,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
   return input_tensors;
 }
 schema::Primitive *PackPrimitiveT(const CNodePtr &cnode) {
-  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
   if (primitiveT_value == nullptr) {
     MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
     return nullptr;

@@ -20,24 +20,24 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 bool FakeQuantWithMinMaxVars::GetNarrowRange() const {
-  return this->primitive->value.AsFakeQuantWithMinMaxVars()->narrowRange;
+  return this->primitive_->value.AsFakeQuantWithMinMaxVars()->narrowRange;
 }
-int FakeQuantWithMinMaxVars::GetNumBits() const { return this->primitive->value.AsFakeQuantWithMinMaxVars()->numBits; }
+int FakeQuantWithMinMaxVars::GetNumBits() const { return this->primitive_->value.AsFakeQuantWithMinMaxVars()->numBits; }
 
 void FakeQuantWithMinMaxVars::SetNarrowRange(bool narrow_range) {
-  this->primitive->value.AsFakeQuantWithMinMaxVars()->narrowRange = narrow_range;
+  this->primitive_->value.AsFakeQuantWithMinMaxVars()->narrowRange = narrow_range;
 }
 void FakeQuantWithMinMaxVars::SetNumBits(int num_bits) {
-  this->primitive->value.AsFakeQuantWithMinMaxVars()->numBits = num_bits;
+  this->primitive_->value.AsFakeQuantWithMinMaxVars()->numBits = num_bits;
 }
 
 #else
 
 bool FakeQuantWithMinMaxVars::GetNarrowRange() const {
-  return this->primitive->value_as_FakeQuantWithMinMaxVars()->narrowRange();
+  return this->primitive_->value_as_FakeQuantWithMinMaxVars()->narrowRange();
 }
 int FakeQuantWithMinMaxVars::GetNumBits() const {
-  return this->primitive->value_as_FakeQuantWithMinMaxVars()->numBits();
+  return this->primitive_->value_as_FakeQuantWithMinMaxVars()->numBits();
 }
 
 void FakeQuantWithMinMaxVars::SetNarrowRange(bool narrow_range) {}

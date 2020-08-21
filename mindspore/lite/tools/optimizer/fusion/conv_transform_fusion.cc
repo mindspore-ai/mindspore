@@ -16,12 +16,10 @@
 
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 #include <memory>
+#include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
-#include "src/ir/primitive_t_value.h"
-#include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "include/errorcode.h"
 #include "securec/include/securec.h"
 
 namespace mindspore::opt {
@@ -38,14 +36,14 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   MS_ASSERT(value_node != nullptr);
   auto value = value_node->value();
   MS_ASSERT(value != nullptr);
-  auto primitive = value->cast<PrimitiveTValuePtr>();
+  auto primitive = value->cast<PrimitiveCPtr>();
   MS_ASSERT(primitive != nullptr);
   auto type = primitive->GetPrimitiveT()->value.type;
   if (type == schema::PrimitiveType_Conv2D) {
     return primitive->GetPrimitiveT()->value.AsConv2D()->channelOut;
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
     return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier *
-           primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
+        primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
   } else {
     MS_LOG(ERROR) << "Unsupported opType, " << type;
     return 0;
@@ -91,7 +89,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   GenNewConvTensor(func_graph, conv_node, kernel_nums, trans_scale, trans_bias);
   delete[] trans_bias;
   delete[] trans_scale;
-  auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
+  auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
   MS_ASSERT(primitiveT_value != nullptr);
   auto type = primitiveT_value->GetPrimitiveT()->value.type;
   if (type == schema::PrimitiveType_Conv2D) {
@@ -180,7 +178,7 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
 const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kernel_num, int kernel_size,
                                                    const float *trans_scale) const {
   MS_ASSERT(weight_data != nullptr);
-  auto tmp_weight_data = new (std::nothrow) float[kernel_num * kernel_size];
+  auto tmp_weight_data = new(std::nothrow) float[kernel_num * kernel_size];
   MS_ASSERT(new_weight_data != nullptr);
   auto data_size = kernel_num * kernel_size * sizeof(float);
   if (0 != memset_s(tmp_weight_data, data_size, 0, data_size)) {

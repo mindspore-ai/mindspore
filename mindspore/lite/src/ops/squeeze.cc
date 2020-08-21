@@ -19,14 +19,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Squeeze::GetAxis() const { return this->primitive->value.AsSqueeze()->axis; }
+std::vector<int> Squeeze::GetAxis() const { return this->primitive_->value.AsSqueeze()->axis; }
 
-void Squeeze::SetAxis(const std::vector<int> &axis) { this->primitive->value.AsSqueeze()->axis = axis; }
+void Squeeze::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsSqueeze()->axis = axis; }
 
 #else
 
 std::vector<int> Squeeze::GetAxis() const {
-  auto fb_vector = this->primitive->value_as_Squeeze()->axis();
+  auto fb_vector = this->primitive_->value_as_Squeeze()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -38,7 +38,7 @@ constexpr int kSqueezeInputNum = 1;
 constexpr int kSqueezeOutputNum = 1;
 }  // namespace
 int Squeeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (kSqueezeInputNum != inputs_.size()) {
     MS_LOG(ERROR) << "Add should has " << kSqueezeInputNum << " inputs";
     return -1;

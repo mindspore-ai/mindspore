@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
-#include "src/ir/primitive_t_value.h"
+#include "src/ops/primitive_c.h"
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 #include "mindspore/lite/tools/converter/quantizer/general_bitpacking.h"
 #include "src/common/utils.h"
@@ -32,7 +32,7 @@ namespace mindspore {
 namespace lite {
 namespace quant {
 const std::array<std::string, 4> QuantStrategy::mConvTypes = {
-  {"Conv2D", "DeConv2D", "DepthwiseConv2D", "DeDepthwiseConv2D"}};
+    {"Conv2D", "DeConv2D", "DepthwiseConv2D", "DeDepthwiseConv2D"}};
 const std::array<std::string, 4> QuantStrategy::mMulTypes = {{"Mul", "MatMul", "BatchMatMul", "FullConnection"}};
 
 QuantStrategy::QuantStrategy(size_t weightSize, size_t convWeightQuantChannelThreshold)
@@ -87,7 +87,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   }
   auto cnode = std::dynamic_pointer_cast<CNode>(node);
 
-  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveTValue>>(cnode->input(0));
+  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
   if (primitiveT_value == nullptr) {
     MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
     return false;
@@ -247,7 +247,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   }
 
   int quantMin = narrowRange ? 1 : 0;
-  int quantMax = (1 << (unsigned int)numBits) - 1;
+  int quantMax = (1 << (unsigned int) numBits) - 1;
   auto quantMinFloat = static_cast<double>(quantMin);
   auto quantMaxFloat = static_cast<double>(quantMax);
   double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
@@ -279,7 +279,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   return RET_OK;
 }
 
-STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, QuantType quantType,
+STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum, bool per_channel, bool depth_wise) {
   auto dims = weight->tensor_shape();
   if (per_channel) {
@@ -360,7 +360,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> pr
       }
 
       weight->set_tensor_size(elem_count * sizeof(int8_t));
-  } else {
+    } else {
       // channel at first
       auto channels = dims[0];
       if (channels == 0) {
@@ -402,7 +402,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> pr
         }
       }
       auto ret =
-        memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
+          memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;

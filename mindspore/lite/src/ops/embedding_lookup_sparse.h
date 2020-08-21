@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_EMBEDDING_LOOKUP_SPARSE_H_
+#define LITE_MINDSPORE_LITE_C_OPS_EMBEDDING_LOOKUP_SPARSE_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_EMBEDDING_LOOKUP_SPARSE_H_
-#define LITE_MINDSPORE_LITE_C_OPS_EMBEDDING_LOOKUP_SPARSE_H_
 
 namespace mindspore {
 namespace lite {
 class EmbeddingLookupSparse : public PrimitiveC {
  public:
-  explicit EmbeddingLookupSparse(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit EmbeddingLookupSparse(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit EmbeddingLookupSparse(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   std::vector<int> GetSpIds() const;
   std::vector<float> GetSpWeights() const;

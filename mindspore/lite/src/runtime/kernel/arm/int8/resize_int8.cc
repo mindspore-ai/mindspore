@@ -15,9 +15,9 @@
  */
 
 #include <vector>
-#include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "nnacl/int8/resize.h"
+#include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/runtime/kernel/arm/int8/resize_int8.h"
 #include "src/runtime/runtime_api.h"
@@ -41,9 +41,9 @@ int ResizeInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  quant_in_ = new (std::nothrow) QuantArg;
+  quant_in_ = new(std::nothrow) QuantArg;
   MS_ASSERT(quant_in_);
-  quant_out_ = new (std::nothrow) QuantArg;
+  quant_out_ = new(std::nothrow) QuantArg;
   MS_ASSERT(quant_out_);
   auto input = in_tensors_.at(0);
   quant_in_->zp_ = input->GetQuantParams().front().zeroPoint;
@@ -52,7 +52,7 @@ int ResizeInt8CPUKernel::Init() {
   quant_out_->zp_ = output->GetQuantParams().front().zeroPoint;
   quant_out_->scale_ = output->GetQuantParams().front().scale;
 
-  multiplier_ = new (std::nothrow) QuantMulArg;
+  multiplier_ = new(std::nothrow) QuantMulArg;
   MS_ASSERT(multiplier_);
   QuantizeRoundParameter(quant_in_->scale_ / quant_out_->scale_, &multiplier_->multiplier_, &multiplier_->left_shift_,
                          &multiplier_->right_shift_);
@@ -101,12 +101,25 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
       if (same_zp && same_scale) {
         ret =
-          ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                          align_corners_, task_id, context_->thread_num_);
+            ResizeNearestNeighborInt8Simple(input_data,
+                                            output_data,
+                                            input_shape.data(),
+                                            out_tensors_[0]->shape().data(),
+                                            align_corners_,
+                                            task_id,
+                                            context_->thread_num_);
       } else {
         ret =
-          ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                    align_corners_, multiplier_, quant_in_, quant_out_, task_id, context_->thread_num_);
+            ResizeNearestNeighborInt8(input_data,
+                                      output_data,
+                                      input_shape.data(),
+                                      out_tensors_[0]->shape().data(),
+                                      align_corners_,
+                                      multiplier_,
+                                      quant_in_,
+                                      quant_out_,
+                                      task_id,
+                                      context_->thread_num_);
       }
       break;
     }

@@ -214,9 +214,9 @@ void AnfConvPopulater::PopulaterQuantParam(const PrimitivePtr &prim,
   }
 }
 
-int AnfConvPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfConvPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                const std::vector<AnfNodePtr> &inputs) {
-  MS_ASSERT(primitiveTValuePtr != nullptr);
+  MS_ASSERT(primitiveCPtr != nullptr);
   auto primitive = std::make_unique<schema::PrimitiveT>();
 
   int group = GetValue<int>(prim->GetAttr("group"));
@@ -225,14 +225,14 @@ int AnfConvPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primit
   } else {
     PopulaterConv2DSingleGroup(prim, primitive, group);
   }
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
+  primitiveCPtr->SetPrimitiveT(primitive.release());
 
-  if (primitiveTValuePtr->GetQuantType() == schema::QuantType_AwareTraining) {
+  if (primitiveCPtr->GetQuantType() == schema::QuantType_AwareTraining) {
     std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
     std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
     PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
-    primitiveTValuePtr->SetInputQuantParam(vecInputQuantParam);
-    primitiveTValuePtr->SetOutputQuantParam(vecOutputQuantParam);
+    primitiveCPtr->SetInputQuantParam(vecInputQuantParam);
+    primitiveCPtr->SetOutputQuantParam(vecOutputQuantParam);
   }
   return 0;
 }

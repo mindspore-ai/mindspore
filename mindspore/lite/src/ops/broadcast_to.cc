@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> BroadcastTo::GetDstShape() const { return this->primitive->value.AsBroadcastTo()->dst_shape; }
+std::vector<int> BroadcastTo::GetDstShape() const { return this->primitive_->value.AsBroadcastTo()->dst_shape; }
 
 void BroadcastTo::SetDstShape(const std::vector<int> &dst_shape) {
-  this->primitive->value.AsBroadcastTo()->dst_shape = dst_shape;
+  this->primitive_->value.AsBroadcastTo()->dst_shape = dst_shape;
 }
 
 #else
 
 std::vector<int> BroadcastTo::GetDstShape() const {
-  auto fb_vector = this->primitive->value_as_BroadcastTo()->dst_shape();
+  auto fb_vector = this->primitive_->value_as_BroadcastTo()->dst_shape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 

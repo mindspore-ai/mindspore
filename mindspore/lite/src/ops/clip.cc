@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float Clip::GetMax() const { return this->primitive->value.AsClip()->max; }
-float Clip::GetMin() const { return this->primitive->value.AsClip()->min; }
+float Clip::GetMax() const { return this->primitive_->value.AsClip()->max; }
+float Clip::GetMin() const { return this->primitive_->value.AsClip()->min; }
 
-void Clip::SetMax(float max) { this->primitive->value.AsClip()->max = max; }
-void Clip::SetMin(float min) { this->primitive->value.AsClip()->min = min; }
+void Clip::SetMax(float max) { this->primitive_->value.AsClip()->max = max; }
+void Clip::SetMin(float min) { this->primitive_->value.AsClip()->min = min; }
 
 #else
 
-float Clip::GetMax() const { return this->primitive->value_as_Clip()->max(); }
-float Clip::GetMin() const { return this->primitive->value_as_Clip()->min(); }
+float Clip::GetMax() const { return this->primitive_->value_as_Clip()->max(); }
+float Clip::GetMin() const { return this->primitive_->value_as_Clip()->min(); }
 
 void Clip::SetMax(float max) {}
 void Clip::SetMin(float min) {}

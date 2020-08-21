@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_ADD_H_
+#define LITE_MINDSPORE_LITE_C_OPS_ADD_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
@@ -24,14 +27,15 @@
 #else
 #include "schema/model_generated.h"
 #endif
-#ifndef LITE_MINDSPORE_LITE_C_OPS_ADD_H_
-#define LITE_MINDSPORE_LITE_C_OPS_ADD_H_
 
 namespace mindspore {
 namespace lite {
 class Add : public Arithmetic {
  public:
-  explicit Add(OriginPrimitive *primitive) : Arithmetic(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Add(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+#endif
+  explicit Add(schema::Primitive *primitive) : Arithmetic(primitive) {}
 
   int GetActivationType() const;
   void SetActivationType(int activation_type);

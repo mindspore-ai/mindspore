@@ -15,6 +15,7 @@
  */
 
 #include <iostream>
+#include "schema/inner/model_generated.h"
 #include "include/context.h"
 #include "src/ir/tensor.h"
 #include "common/common_test.h"

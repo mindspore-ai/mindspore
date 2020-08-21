@@ -19,14 +19,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> Fill::GetDims() const { return this->primitive->value.AsFill()->dims; }
+std::vector<int> Fill::GetDims() const { return this->primitive_->value.AsFill()->dims; }
 
-void Fill::SetDims(const std::vector<int> &dims) { this->primitive->value.AsFill()->dims = dims; }
+void Fill::SetDims(const std::vector<int> &dims) { this->primitive_->value.AsFill()->dims = dims; }
 
 #else
 
 std::vector<int> Fill::GetDims() const {
-  auto fb_vector = this->primitive->value_as_Fill()->dims();
+  auto fb_vector = this->primitive_->value_as_Fill()->dims();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
@@ -34,7 +34,7 @@ void Fill::SetDims(const std::vector<int> &dims) {}
 #endif
 
 int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   auto output = outputs_.front();
   if (input == nullptr || output == nullptr) {

@@ -19,30 +19,30 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Resize::GetFormat() const { return this->primitive->value.AsResize()->format; }
-int Resize::GetMethod() const { return this->primitive->value.AsResize()->method; }
-long Resize::GetNewHeight() const { return this->primitive->value.AsResize()->newHeight; }
-long Resize::GetNewWidth() const { return this->primitive->value.AsResize()->newWidth; }
-bool Resize::GetAlignCorners() const { return this->primitive->value.AsResize()->alignCorners; }
-bool Resize::GetPreserveAspectRatio() const { return this->primitive->value.AsResize()->preserveAspectRatio; }
+int Resize::GetFormat() const { return this->primitive_->value.AsResize()->format; }
+int Resize::GetMethod() const { return this->primitive_->value.AsResize()->method; }
+long Resize::GetNewHeight() const { return this->primitive_->value.AsResize()->newHeight; }
+long Resize::GetNewWidth() const { return this->primitive_->value.AsResize()->newWidth; }
+bool Resize::GetAlignCorners() const { return this->primitive_->value.AsResize()->alignCorners; }
+bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value.AsResize()->preserveAspectRatio; }
 
-void Resize::SetFormat(int format) { this->primitive->value.AsResize()->format = (schema::Format)format; }
-void Resize::SetMethod(int method) { this->primitive->value.AsResize()->method = (schema::ResizeMethod)method; }
-void Resize::SetNewHeight(long new_height) { this->primitive->value.AsResize()->newHeight = new_height; }
-void Resize::SetNewWidth(long new_width) { this->primitive->value.AsResize()->newWidth = new_width; }
-void Resize::SetAlignCorners(bool align_corners) { this->primitive->value.AsResize()->alignCorners = align_corners; }
+void Resize::SetFormat(int format) { this->primitive_->value.AsResize()->format = (schema::Format)format; }
+void Resize::SetMethod(int method) { this->primitive_->value.AsResize()->method = (schema::ResizeMethod)method; }
+void Resize::SetNewHeight(long new_height) { this->primitive_->value.AsResize()->newHeight = new_height; }
+void Resize::SetNewWidth(long new_width) { this->primitive_->value.AsResize()->newWidth = new_width; }
+void Resize::SetAlignCorners(bool align_corners) { this->primitive_->value.AsResize()->alignCorners = align_corners; }
 void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {
-  this->primitive->value.AsResize()->preserveAspectRatio = preserve_aspect_ratio;
+  this->primitive_->value.AsResize()->preserveAspectRatio = preserve_aspect_ratio;
 }
 
 #else
 
-int Resize::GetFormat() const { return this->primitive->value_as_Resize()->format(); }
-int Resize::GetMethod() const { return this->primitive->value_as_Resize()->method(); }
-long Resize::GetNewHeight() const { return this->primitive->value_as_Resize()->newHeight(); }
-long Resize::GetNewWidth() const { return this->primitive->value_as_Resize()->newWidth(); }
-bool Resize::GetAlignCorners() const { return this->primitive->value_as_Resize()->alignCorners(); }
-bool Resize::GetPreserveAspectRatio() const { return this->primitive->value_as_Resize()->preserveAspectRatio(); }
+int Resize::GetFormat() const { return this->primitive_->value_as_Resize()->format(); }
+int Resize::GetMethod() const { return this->primitive_->value_as_Resize()->method(); }
+long Resize::GetNewHeight() const { return this->primitive_->value_as_Resize()->newHeight(); }
+long Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()->newWidth(); }
+bool Resize::GetAlignCorners() const { return this->primitive_->value_as_Resize()->alignCorners(); }
+bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value_as_Resize()->preserveAspectRatio(); }
 
 void Resize::SetFormat(int format) {}
 void Resize::SetMethod(int method) {}
@@ -55,7 +55,7 @@ namespace {
 constexpr int kInputRank = 4;
 }  // namespace
 int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   if (input == nullptr) {
     return 1;

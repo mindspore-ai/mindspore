@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace lite {
 int Arithmetic::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "The number of input must be " << kDoubleNum;
     return RET_INPUT_TENSOR_ERROR;

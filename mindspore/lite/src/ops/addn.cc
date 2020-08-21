@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int AddN::GetN() const { return this->primitive->value.AsAddN()->N; }
+int AddN::GetN() const { return this->primitive_->value.AsAddN()->N; }
 
-void AddN::SetN(int n) { this->primitive->value.AsAddN()->N = n; }
+void AddN::SetN(int n) { this->primitive_->value.AsAddN()->N = n; }
 
 #else
 
-int AddN::GetN() const { return this->primitive->value_as_AddN()->N(); }
+int AddN::GetN() const { return this->primitive_->value_as_AddN()->N(); }
 
 void AddN::SetN(int n) {}
 #endif
@@ -34,7 +34,7 @@ namespace {
 constexpr int kLeastInputNum = 2;
 }
 int AddN::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs.front();

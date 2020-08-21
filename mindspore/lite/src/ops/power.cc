@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-float Power::GetPower() const { return this->primitive->value.AsPower()->power; }
-float Power::GetScale() const { return this->primitive->value.AsPower()->scale; }
-float Power::GetShift() const { return this->primitive->value.AsPower()->shift; }
+float Power::GetPower() const { return this->primitive_->value.AsPower()->power; }
+float Power::GetScale() const { return this->primitive_->value.AsPower()->scale; }
+float Power::GetShift() const { return this->primitive_->value.AsPower()->shift; }
 
-void Power::SetPower(float power) { this->primitive->value.AsPower()->power = power; }
-void Power::SetScale(float scale) { this->primitive->value.AsPower()->scale = scale; }
-void Power::SetShift(float shift) { this->primitive->value.AsPower()->shift = shift; }
+void Power::SetPower(float power) { this->primitive_->value.AsPower()->power = power; }
+void Power::SetScale(float scale) { this->primitive_->value.AsPower()->scale = scale; }
+void Power::SetShift(float shift) { this->primitive_->value.AsPower()->shift = shift; }
 
 #else
 
-float Power::GetPower() const { return this->primitive->value_as_Power()->power(); }
-float Power::GetScale() const { return this->primitive->value_as_Power()->scale(); }
-float Power::GetShift() const { return this->primitive->value_as_Power()->shift(); }
+float Power::GetPower() const { return this->primitive_->value_as_Power()->power(); }
+float Power::GetScale() const { return this->primitive_->value_as_Power()->scale(); }
+float Power::GetShift() const { return this->primitive_->value_as_Power()->shift(); }
 
 void Power::SetPower(float power) {}
 void Power::SetScale(float scale) {}
@@ -39,7 +39,7 @@ void Power::SetShift(float shift) {}
 #endif
 
 int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto x_tensor = inputs[0];
   MS_ASSERT(x_tensor != nullptr);
   tensor::Tensor *exp_tensor = nullptr;

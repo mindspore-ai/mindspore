@@ -16,12 +16,10 @@
 
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include <memory>
+#include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
-#include "src/ir/primitive_t_value.h"
-#include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "include/errorcode.h"
 #include "securec/include/securec.h"
 
 namespace mindspore::opt {

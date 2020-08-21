@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/activation.h"
 #include "mindspore/lite/src/kernel_registry.h"

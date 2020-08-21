@@ -19,63 +19,63 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> PriorBox::GetMinSizes() const { return this->primitive->value.AsPriorBox()->max_sizes; }
-std::vector<int> PriorBox::GetMaxSizes() const { return this->primitive->value.AsPriorBox()->max_sizes; }
-std::vector<float> PriorBox::GetAspectRatios() const { return this->primitive->value.AsPriorBox()->aspect_ratios; }
-std::vector<float> PriorBox::GetVariances() const { return this->primitive->value.AsPriorBox()->variances; }
-int PriorBox::GetImageSizeW() const { return this->primitive->value.AsPriorBox()->image_size_w; }
-int PriorBox::GetImageSizeH() const { return this->primitive->value.AsPriorBox()->image_size_h; }
-float PriorBox::GetStepW() const { return this->primitive->value.AsPriorBox()->step_w; }
-float PriorBox::GetStepH() const { return this->primitive->value.AsPriorBox()->step_h; }
-bool PriorBox::GetClip() const { return this->primitive->value.AsPriorBox()->clip; }
-bool PriorBox::GetFlip() const { return this->primitive->value.AsPriorBox()->flip; }
-float PriorBox::GetOffset() const { return this->primitive->value.AsPriorBox()->offset; }
+std::vector<int> PriorBox::GetMinSizes() const { return this->primitive_->value.AsPriorBox()->max_sizes; }
+std::vector<int> PriorBox::GetMaxSizes() const { return this->primitive_->value.AsPriorBox()->max_sizes; }
+std::vector<float> PriorBox::GetAspectRatios() const { return this->primitive_->value.AsPriorBox()->aspect_ratios; }
+std::vector<float> PriorBox::GetVariances() const { return this->primitive_->value.AsPriorBox()->variances; }
+int PriorBox::GetImageSizeW() const { return this->primitive_->value.AsPriorBox()->image_size_w; }
+int PriorBox::GetImageSizeH() const { return this->primitive_->value.AsPriorBox()->image_size_h; }
+float PriorBox::GetStepW() const { return this->primitive_->value.AsPriorBox()->step_w; }
+float PriorBox::GetStepH() const { return this->primitive_->value.AsPriorBox()->step_h; }
+bool PriorBox::GetClip() const { return this->primitive_->value.AsPriorBox()->clip; }
+bool PriorBox::GetFlip() const { return this->primitive_->value.AsPriorBox()->flip; }
+float PriorBox::GetOffset() const { return this->primitive_->value.AsPriorBox()->offset; }
 
 void PriorBox::SetMinSizes(const std::vector<int> &min_sizes) {
-  this->primitive->value.AsPriorBox()->min_sizes = min_sizes;
+  this->primitive_->value.AsPriorBox()->min_sizes = min_sizes;
 }
 void PriorBox::SetMaxSizes(const std::vector<int> &max_sizes) {
-  this->primitive->value.AsPriorBox()->max_sizes = max_sizes;
+  this->primitive_->value.AsPriorBox()->max_sizes = max_sizes;
 }
 void PriorBox::SetAspectRatios(const std::vector<float> &aspect_ratios) {
-  this->primitive->value.AsPriorBox()->aspect_ratios = aspect_ratios;
+  this->primitive_->value.AsPriorBox()->aspect_ratios = aspect_ratios;
 }
 void PriorBox::SetVariances(const std::vector<float> &variances) {
-  this->primitive->value.AsPriorBox()->variances = variances;
+  this->primitive_->value.AsPriorBox()->variances = variances;
 }
-void PriorBox::SetImageSizeW(int image_size_w) { this->primitive->value.AsPriorBox()->image_size_w = image_size_w; }
-void PriorBox::SetImageSizeH(int image_size_h) { this->primitive->value.AsPriorBox()->image_size_h = image_size_h; }
-void PriorBox::SetStepW(float step_w) { this->primitive->value.AsPriorBox()->step_w = step_w; }
-void PriorBox::SetStepH(float step_h) { this->primitive->value.AsPriorBox()->step_h = step_h; }
-void PriorBox::SetClip(bool clip) { this->primitive->value.AsPriorBox()->clip = clip; }
-void PriorBox::SetFlip(bool flip) { this->primitive->value.AsPriorBox()->flip = flip; }
-void PriorBox::SetOffset(float offset) { this->primitive->value.AsPriorBox()->offset = offset; }
+void PriorBox::SetImageSizeW(int image_size_w) { this->primitive_->value.AsPriorBox()->image_size_w = image_size_w; }
+void PriorBox::SetImageSizeH(int image_size_h) { this->primitive_->value.AsPriorBox()->image_size_h = image_size_h; }
+void PriorBox::SetStepW(float step_w) { this->primitive_->value.AsPriorBox()->step_w = step_w; }
+void PriorBox::SetStepH(float step_h) { this->primitive_->value.AsPriorBox()->step_h = step_h; }
+void PriorBox::SetClip(bool clip) { this->primitive_->value.AsPriorBox()->clip = clip; }
+void PriorBox::SetFlip(bool flip) { this->primitive_->value.AsPriorBox()->flip = flip; }
+void PriorBox::SetOffset(float offset) { this->primitive_->value.AsPriorBox()->offset = offset; }
 
 #else
 
 std::vector<int> PriorBox::GetMinSizes() const {
-  auto fb_vector = this->primitive->value_as_PriorBox()->min_sizes();
+  auto fb_vector = this->primitive_->value_as_PriorBox()->min_sizes();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> PriorBox::GetMaxSizes() const {
-  auto fb_vector = this->primitive->value_as_PriorBox()->max_sizes();
+  auto fb_vector = this->primitive_->value_as_PriorBox()->max_sizes();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<float> PriorBox::GetAspectRatios() const {
-  auto fb_vector = this->primitive->value_as_PriorBox()->aspect_ratios();
+  auto fb_vector = this->primitive_->value_as_PriorBox()->aspect_ratios();
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<float> PriorBox::GetVariances() const {
-  auto fb_vector = this->primitive->value_as_PriorBox()->variances();
+  auto fb_vector = this->primitive_->value_as_PriorBox()->variances();
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
-int PriorBox::GetImageSizeW() const { return this->primitive->value_as_PriorBox()->image_size_w(); }
-int PriorBox::GetImageSizeH() const { return this->primitive->value_as_PriorBox()->image_size_h(); }
-float PriorBox::GetStepW() const { return this->primitive->value_as_PriorBox()->step_w(); }
-float PriorBox::GetStepH() const { return this->primitive->value_as_PriorBox()->step_h(); }
-bool PriorBox::GetClip() const { return this->primitive->value_as_PriorBox()->clip(); }
-bool PriorBox::GetFlip() const { return this->primitive->value_as_PriorBox()->flip(); }
-float PriorBox::GetOffset() const { return this->primitive->value_as_PriorBox()->offset(); }
+int PriorBox::GetImageSizeW() const { return this->primitive_->value_as_PriorBox()->image_size_w(); }
+int PriorBox::GetImageSizeH() const { return this->primitive_->value_as_PriorBox()->image_size_h(); }
+float PriorBox::GetStepW() const { return this->primitive_->value_as_PriorBox()->step_w(); }
+float PriorBox::GetStepH() const { return this->primitive_->value_as_PriorBox()->step_h(); }
+bool PriorBox::GetClip() const { return this->primitive_->value_as_PriorBox()->clip(); }
+bool PriorBox::GetFlip() const { return this->primitive_->value_as_PriorBox()->flip(); }
+float PriorBox::GetOffset() const { return this->primitive_->value_as_PriorBox()->offset(); }
 
 void PriorBox::SetMinSizes(const std::vector<int> &min_sizes) {}
 void PriorBox::SetMaxSizes(const std::vector<int> &max_sizes) {}

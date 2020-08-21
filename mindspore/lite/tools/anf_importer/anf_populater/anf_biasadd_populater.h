@@ -17,12 +17,13 @@
 #define MINDSPORE_ANF_BIASADD_PARSER_H
 #include "tools/anf_importer/anf_populater/anf_node_populater.h"
 #include <vector>
+
 namespace mindspore::lite {
 class AnfBiasAddPopulater : public AnfNodePopulater {
  public:
   AnfBiasAddPopulater() = default;
   ~AnfBiasAddPopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                const std::vector<AnfNodePtr> &inputs) override;
 };
 }  // namespace mindspore::lite

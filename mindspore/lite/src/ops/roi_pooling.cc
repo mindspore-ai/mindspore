@@ -19,19 +19,19 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int ROIPooling::GetPooledH() const { return this->primitive->value.AsROIPooling()->pooledH; }
-int ROIPooling::GetPooledW() const { return this->primitive->value.AsROIPooling()->pooledW; }
-float ROIPooling::GetScale() const { return this->primitive->value.AsROIPooling()->scale; }
+int ROIPooling::GetPooledH() const { return this->primitive_->value.AsROIPooling()->pooledH; }
+int ROIPooling::GetPooledW() const { return this->primitive_->value.AsROIPooling()->pooledW; }
+float ROIPooling::GetScale() const { return this->primitive_->value.AsROIPooling()->scale; }
 
-void ROIPooling::SetPooledH(int pooled_h) { this->primitive->value.AsROIPooling()->pooledH = pooled_h; }
-void ROIPooling::SetPooledW(int pooled_w) { this->primitive->value.AsROIPooling()->pooledW = pooled_w; }
-void ROIPooling::SetScale(float scale) { this->primitive->value.AsROIPooling()->scale = scale; }
+void ROIPooling::SetPooledH(int pooled_h) { this->primitive_->value.AsROIPooling()->pooledH = pooled_h; }
+void ROIPooling::SetPooledW(int pooled_w) { this->primitive_->value.AsROIPooling()->pooledW = pooled_w; }
+void ROIPooling::SetScale(float scale) { this->primitive_->value.AsROIPooling()->scale = scale; }
 
 #else
 
-int ROIPooling::GetPooledH() const { return this->primitive->value_as_ROIPooling()->pooledH(); }
-int ROIPooling::GetPooledW() const { return this->primitive->value_as_ROIPooling()->pooledW(); }
-float ROIPooling::GetScale() const { return this->primitive->value_as_ROIPooling()->scale(); }
+int ROIPooling::GetPooledH() const { return this->primitive_->value_as_ROIPooling()->pooledH(); }
+int ROIPooling::GetPooledW() const { return this->primitive_->value_as_ROIPooling()->pooledW(); }
+float ROIPooling::GetScale() const { return this->primitive_->value_as_ROIPooling()->scale(); }
 
 void ROIPooling::SetPooledH(int pooled_h) {}
 void ROIPooling::SetPooledW(int pooled_w) {}
@@ -39,7 +39,7 @@ void ROIPooling::SetScale(float scale) {}
 #endif
 
 int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "inputs number is not equal to " << kDoubleNum;
     return RET_ERROR;

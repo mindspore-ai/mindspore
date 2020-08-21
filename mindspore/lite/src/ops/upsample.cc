@@ -15,21 +15,22 @@
  */
 
 #include "src/ops/upsample.h"
+#include <string>
 
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::string Upsample::GetMode() const { return this->primitive->value.AsUpsample()->mode; }
-std::vector<float> Upsample::GetScales() const { return this->primitive->value.AsUpsample()->scales; }
+std::string Upsample::GetMode() const { return this->primitive_->value.AsUpsample()->mode; }
+std::vector<float> Upsample::GetScales() const { return this->primitive_->value.AsUpsample()->scales; }
 
-void Upsample::SetMode(std::string mode) { this->primitive->value.AsUpsample()->mode = mode; }
-void Upsample::SetScales(const std::vector<float> &scales) { this->primitive->value.AsUpsample()->scales = scales; }
+void Upsample::SetMode(std::string mode) { this->primitive_->value.AsUpsample()->mode = mode; }
+void Upsample::SetScales(const std::vector<float> &scales) { this->primitive_->value.AsUpsample()->scales = scales; }
 
 #else
 
-std::string Upsample::GetMode() const { return this->primitive->value_as_Upsample()->mode()->str(); }
+std::string Upsample::GetMode() const { return this->primitive_->value_as_Upsample()->mode()->str(); }
 std::vector<float> Upsample::GetScales() const {
-  auto fb_vector = this->primitive->value_as_Upsample()->scales();
+  auto fb_vector = this->primitive_->value_as_Upsample()->scales();
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
 

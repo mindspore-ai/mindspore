@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_H_
+#define LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_H_
-#define LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_H_
 
 namespace mindspore {
 namespace lite {
 class Activation : public PrimitiveC {
  public:
-  explicit Activation(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Activation(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit Activation(schema::Primitive *primitive) : PrimitiveC(primitive) {}
   int GetType() const;
   float GetAlpha() const;
   void SetType(int type);

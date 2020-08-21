@@ -21,11 +21,11 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
+#include "src/ops/primitive_c.h"
 #include "src/runtime/kernel/arm/nnacl/op_base.h"
 #include "include/context.h"
 #include "src/ir/tensor.h"
 #include "include/errorcode.h"
-#include "src/ops/primitive_c.h"
 
 #ifdef ENABLE_FP16
 using FLOAT_t = float16_t;

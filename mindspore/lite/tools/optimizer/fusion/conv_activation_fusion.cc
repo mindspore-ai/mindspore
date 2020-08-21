@@ -16,9 +16,9 @@
 
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
 #include <memory>
+#include "mindspore/lite/src/ops/activation.h"
+#include "src/ops/primitive_c.h"
 #include "schema/inner/model_generated.h"
-#include "src/ir/primitive_t_value.h"
-#include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
@@ -29,7 +29,7 @@ const BaseRef ConvActivationFusion::DefinePattern() const {
   auto conv_var = std::make_shared<CondVar>(IsConvNode);
   auto prim = new schema::PrimitiveT();
   prim->value.type = primitive_type;
-  auto prim_value = std::make_shared<lite::PrimitiveTValue>(prim);
+  auto prim_value = std::make_shared<lite::PrimitiveC>(prim);
 
   return VectorRef({prim_value, conv_var});
 }
@@ -44,7 +44,7 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   CheckIfCNodeIsNull(act_node);
   CheckInputSize(act_node, kActivationInputsLength);
 
-  auto act_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(act_node->input(0));
+  auto act_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(act_node->input(0));
   if (act_primitive->GetPrimitiveT()->value.AsActivation()->type != activation_type) {
     return node;
   }
@@ -56,7 +56,7 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     }
     auto conv_node = pre_node->cast<CNodePtr>();
     auto node_type = GetCNodeType(conv_node);
-    auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveTValue>>(conv_node->input(0));
+    auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
     MS_ASSERT(primitiveT_value);
     if (node_type == schema::PrimitiveType_Conv2D) {
       primitiveT_value->GetPrimitiveT()->value.AsConv2D()->activationType = activation_type;

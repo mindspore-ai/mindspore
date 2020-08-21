@@ -19,23 +19,23 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-bool FullConnection::GetHasBias() const { return this->primitive->value.AsFullConnection()->hasBias; }
-int FullConnection::GetAxis() const { return this->primitive->value.AsFullConnection()->axis; }
-bool FullConnection::GetUseAxis() const { return this->primitive->value.AsFullConnection()->useAxis; }
-int FullConnection::GetActivationType() const { return this->primitive->value.AsFullConnection()->activationType; }
+bool FullConnection::GetHasBias() const { return this->primitive_->value.AsFullConnection()->hasBias; }
+int FullConnection::GetAxis() const { return this->primitive_->value.AsFullConnection()->axis; }
+bool FullConnection::GetUseAxis() const { return this->primitive_->value.AsFullConnection()->useAxis; }
+int FullConnection::GetActivationType() const { return this->primitive_->value.AsFullConnection()->activationType; }
 
-void FullConnection::SetHasBias(bool has_bias) { this->primitive->value.AsFullConnection()->hasBias = has_bias; }
-void FullConnection::SetAxis(int axis) { this->primitive->value.AsFullConnection()->axis = axis; }
-void FullConnection::SetUseAxis(bool use_axis) { this->primitive->value.AsFullConnection()->useAxis = use_axis; }
+void FullConnection::SetHasBias(bool has_bias) { this->primitive_->value.AsFullConnection()->hasBias = has_bias; }
+void FullConnection::SetAxis(int axis) { this->primitive_->value.AsFullConnection()->axis = axis; }
+void FullConnection::SetUseAxis(bool use_axis) { this->primitive_->value.AsFullConnection()->useAxis = use_axis; }
 void FullConnection::SetActivationType(int activationType) {
-  this->primitive->value.AsFullConnection()->activationType = (schema::ActivationType)activationType;
+  this->primitive_->value.AsFullConnection()->activationType = (schema::ActivationType)activationType;
 }
 #else
 
-bool FullConnection::GetHasBias() const { return this->primitive->value_as_FullConnection()->hasBias(); }
-int FullConnection::GetAxis() const { return this->primitive->value_as_FullConnection()->axis(); }
-bool FullConnection::GetUseAxis() const { return this->primitive->value_as_FullConnection()->useAxis(); }
-int FullConnection::GetActivationType() const { return this->primitive->value_as_FullConnection()->activationType(); }
+bool FullConnection::GetHasBias() const { return this->primitive_->value_as_FullConnection()->hasBias(); }
+int FullConnection::GetAxis() const { return this->primitive_->value_as_FullConnection()->axis(); }
+bool FullConnection::GetUseAxis() const { return this->primitive_->value_as_FullConnection()->useAxis(); }
+int FullConnection::GetActivationType() const { return this->primitive_->value_as_FullConnection()->activationType(); }
 
 void FullConnection::SetHasBias(bool has_bias) {}
 void FullConnection::SetAxis(int axis) {}
@@ -44,7 +44,7 @@ void FullConnection::SetActivationType(int activationType) {}
 #endif
 int FullConnection::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
                                std::vector<lite::tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);
   auto input1 = inputs_[1];

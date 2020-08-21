@@ -25,7 +25,6 @@
 #include <map>
 #include "src/lite_session.h"
 #include "tools/converter/quantizer/quantizer.h"
-#include "src/ir/primitive_t_value.h"
 #include "tools/converter/converter.h"
 #include "include/ms_tensor.h"
 
@@ -93,13 +92,13 @@ class PostTrainingQuantizer : public Quantizer {
 
   //    STATUS reformatConvWeight(GraphDefT *graph);
 
-  STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveTValue>);
-  STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveTValue>);
+  STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
+  STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
 
-  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, bool perchannel,
+  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, bool perchannel,
                        bool depthwise);
 
-  STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveTValue> primitiveT_value);
+  STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitiveT_value);
 };
 
 struct DivergInfo;

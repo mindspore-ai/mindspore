@@ -19,23 +19,23 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int TopK::GetK() const { return this->primitive->value.AsTopK()->k; }
-bool TopK::GetSorted() const { return this->primitive->value.AsTopK()->sorted; }
+int TopK::GetK() const { return this->primitive_->value.AsTopK()->k; }
+bool TopK::GetSorted() const { return this->primitive_->value.AsTopK()->sorted; }
 
-void TopK::SetK(int k) { this->primitive->value.AsTopK()->k = k; }
-void TopK::SetSorted(bool sorted) { this->primitive->value.AsTopK()->sorted = sorted; }
+void TopK::SetK(int k) { this->primitive_->value.AsTopK()->k = k; }
+void TopK::SetSorted(bool sorted) { this->primitive_->value.AsTopK()->sorted = sorted; }
 
 #else
 
-int TopK::GetK() const { return this->primitive->value_as_TopK()->k(); }
-bool TopK::GetSorted() const { return this->primitive->value_as_TopK()->sorted(); }
+int TopK::GetK() const { return this->primitive_->value_as_TopK()->k(); }
+bool TopK::GetSorted() const { return this->primitive_->value_as_TopK()->sorted(); }
 
 void TopK::SetK(int k) {}
 void TopK::SetSorted(bool sorted) {}
 #endif
 
 int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kSingleNum || outputs_.size() != kDoubleNum) {
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;

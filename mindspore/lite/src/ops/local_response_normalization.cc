@@ -20,44 +20,44 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int LocalResponseNormalization::GetDepthRadius() const {
-  return this->primitive->value.AsLocalResponseNormalization()->depth_radius;
+  return this->primitive_->value.AsLocalResponseNormalization()->depth_radius;
 }
 float LocalResponseNormalization::GetBias() const {
-  return this->primitive->value.AsLocalResponseNormalization()->bias;
+  return this->primitive_->value.AsLocalResponseNormalization()->bias;
 }
 float LocalResponseNormalization::GetAlpha() const {
-  return this->primitive->value.AsLocalResponseNormalization()->alpha;
+  return this->primitive_->value.AsLocalResponseNormalization()->alpha;
 }
 float LocalResponseNormalization::GetBeta() const {
-  return this->primitive->value.AsLocalResponseNormalization()->beta;
+  return this->primitive_->value.AsLocalResponseNormalization()->beta;
 }
 
 void LocalResponseNormalization::SetDepthRadius(int depth_radius) {
-  this->primitive->value.AsLocalResponseNormalization()->depth_radius = depth_radius;
+  this->primitive_->value.AsLocalResponseNormalization()->depth_radius = depth_radius;
 }
 void LocalResponseNormalization::SetBias(float bias) {
-  this->primitive->value.AsLocalResponseNormalization()->bias = bias;
+  this->primitive_->value.AsLocalResponseNormalization()->bias = bias;
 }
 void LocalResponseNormalization::SetAlpha(float alpha) {
-  this->primitive->value.AsLocalResponseNormalization()->alpha = alpha;
+  this->primitive_->value.AsLocalResponseNormalization()->alpha = alpha;
 }
 void LocalResponseNormalization::SetBeta(float beta) {
-  this->primitive->value.AsLocalResponseNormalization()->beta = beta;
+  this->primitive_->value.AsLocalResponseNormalization()->beta = beta;
 }
 
 #else
 
 int LocalResponseNormalization::GetDepthRadius() const {
-  return this->primitive->value_as_LocalResponseNormalization()->depth_radius();
+  return this->primitive_->value_as_LocalResponseNormalization()->depth_radius();
 }
 float LocalResponseNormalization::GetBias() const {
-  return this->primitive->value_as_LocalResponseNormalization()->bias();
+  return this->primitive_->value_as_LocalResponseNormalization()->bias();
 }
 float LocalResponseNormalization::GetAlpha() const {
-  return this->primitive->value_as_LocalResponseNormalization()->alpha();
+  return this->primitive_->value_as_LocalResponseNormalization()->alpha();
 }
 float LocalResponseNormalization::GetBeta() const {
-  return this->primitive->value_as_LocalResponseNormalization()->beta();
+  return this->primitive_->value_as_LocalResponseNormalization()->beta();
 }
 
 void LocalResponseNormalization::SetDepthRadius(int depth_radius) {}

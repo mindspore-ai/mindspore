@@ -19,24 +19,26 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> SpaceToBatchND::GetBlockShape() const { return this->primitive->value.AsSpaceToBatchND()->blockShape; }
-std::vector<int> SpaceToBatchND::GetPaddings() const { return this->primitive->value.AsSpaceToBatchND()->paddings; }
+std::vector<int> SpaceToBatchND::GetBlockShape() const {
+  return this->primitive_->value.AsSpaceToBatchND()->blockShape;
+}
+std::vector<int> SpaceToBatchND::GetPaddings() const { return this->primitive_->value.AsSpaceToBatchND()->paddings; }
 
 void SpaceToBatchND::SetBlockShape(const std::vector<int> &block_shape) {
-  this->primitive->value.AsSpaceToBatchND()->blockShape = block_shape;
+  this->primitive_->value.AsSpaceToBatchND()->blockShape = block_shape;
 }
 void SpaceToBatchND::SetPaddings(const std::vector<int> &paddings) {
-  this->primitive->value.AsSpaceToBatchND()->paddings = paddings;
+  this->primitive_->value.AsSpaceToBatchND()->paddings = paddings;
 }
 
 #else
 
 std::vector<int> SpaceToBatchND::GetBlockShape() const {
-  auto fb_vector = this->primitive->value_as_SpaceToBatchND()->blockShape();
+  auto fb_vector = this->primitive_->value_as_SpaceToBatchND()->blockShape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 std::vector<int> SpaceToBatchND::GetPaddings() const {
-  auto fb_vector = this->primitive->value_as_SpaceToBatchND()->paddings();
+  auto fb_vector = this->primitive_->value_as_SpaceToBatchND()->paddings();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 

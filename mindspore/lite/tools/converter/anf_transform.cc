@@ -41,9 +41,9 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph) {
   pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
   pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
   pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu", schema::PrimitiveType_Activation,
-                                                         schema::ActivationType_RELU));
+                                                          schema::ActivationType_RELU));
   pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
-                                                         schema::ActivationType_RELU6));
+                                                          schema::ActivationType_RELU6));
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(old_graph);
@@ -51,4 +51,3 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph) {
 }
 }  // namespace lite
 }  // namespace mindspore
-

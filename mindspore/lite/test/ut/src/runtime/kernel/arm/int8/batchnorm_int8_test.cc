@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <iostream>
+#include "schema/inner/model_generated.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/batchnorm_parameter.h"

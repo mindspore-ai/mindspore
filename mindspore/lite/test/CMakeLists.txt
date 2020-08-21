@@ -180,7 +180,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/workspace_pool.cc
         ${LITE_DIR}/src/runtime/parallel_executor.cc
         ${LITE_DIR}/src/ir/tensor.cc
-        ${LITE_DIR}/src/ir/primitive_t_value.cc
+#        ${LITE_DIR}/src/ir/primitive_t_value.cc
         ${LITE_DIR}/src/context.cc
         ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/kernel_registry.cc
@@ -219,6 +219,7 @@ if (SUPPORT_GPU)
 endif()
 ### converter
 if(BUILD_CONVERTER)
+    add_definitions(-DPRIMITIVE_WRITEABLE)
     file(GLOB_RECURSE TEST_CASE_TFLITE_PARSERS_SRC
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
             )

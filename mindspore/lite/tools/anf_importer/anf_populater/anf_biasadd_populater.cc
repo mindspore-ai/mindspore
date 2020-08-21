@@ -21,15 +21,15 @@
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-int AnfBiasAddPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfBiasAddPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                   const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::BiasAddT>();
   attr->axis = {0};
   primitive->value.type = schema::PrimitiveType_BiasAdd;
   primitive->value.value = attr.release();
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
+  MS_ASSERT(primitiveCPtr != nullptr);
+  primitiveCPtr->SetPrimitiveT(primitive.release());
   return 0;
 }
 

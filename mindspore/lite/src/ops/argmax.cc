@@ -19,25 +19,25 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int ArgMax::GetAxis() const { return this->primitive->value.AsArgMax()->axis; }
-bool ArgMax::GetOutMaxValue() const { return this->primitive->value.AsArgMax()->outMaxValue; }
-int ArgMax::GetTopK() const { return this->primitive->value.AsArgMax()->topK; }
-bool ArgMax::GetKeepDims() const { return this->primitive->value.AsArgMax()->keepDims; }
-int ArgMax::GetAxisType() const { return this->primitive->value.AsArgMax()->axisType; }
+int ArgMax::GetAxis() const { return this->primitive_->value.AsArgMax()->axis; }
+bool ArgMax::GetOutMaxValue() const { return this->primitive_->value.AsArgMax()->outMaxValue; }
+int ArgMax::GetTopK() const { return this->primitive_->value.AsArgMax()->topK; }
+bool ArgMax::GetKeepDims() const { return this->primitive_->value.AsArgMax()->keepDims; }
+int ArgMax::GetAxisType() const { return this->primitive_->value.AsArgMax()->axisType; }
 
-void ArgMax::SetAxis(int axis) { this->primitive->value.AsArgMax()->axis = axis; }
-void ArgMax::SetOutMaxValue(bool out_max_value) { this->primitive->value.AsArgMax()->outMaxValue = out_max_value; }
-void ArgMax::SetTopK(int top_k) { this->primitive->value.AsArgMax()->topK = top_k; }
-void ArgMax::SetKeepDims(bool keep_dims) { this->primitive->value.AsArgMax()->keepDims = keep_dims; }
-void ArgMax::SetAxisType(int axis_type) { this->primitive->value.AsArgMax()->axisType = axis_type; }
+void ArgMax::SetAxis(int axis) { this->primitive_->value.AsArgMax()->axis = axis; }
+void ArgMax::SetOutMaxValue(bool out_max_value) { this->primitive_->value.AsArgMax()->outMaxValue = out_max_value; }
+void ArgMax::SetTopK(int top_k) { this->primitive_->value.AsArgMax()->topK = top_k; }
+void ArgMax::SetKeepDims(bool keep_dims) { this->primitive_->value.AsArgMax()->keepDims = keep_dims; }
+void ArgMax::SetAxisType(int axis_type) { this->primitive_->value.AsArgMax()->axisType = axis_type; }
 
 #else
 
-int ArgMax::GetAxis() const { return this->primitive->value_as_ArgMax()->axis(); }
-bool ArgMax::GetOutMaxValue() const { return this->primitive->value_as_ArgMax()->outMaxValue(); }
-int ArgMax::GetTopK() const { return this->primitive->value_as_ArgMax()->topK(); }
-bool ArgMax::GetKeepDims() const { return this->primitive->value_as_ArgMax()->keepDims(); }
-int ArgMax::GetAxisType() const { return this->primitive->value_as_ArgMax()->axisType(); }
+int ArgMax::GetAxis() const { return this->primitive_->value_as_ArgMax()->axis(); }
+bool ArgMax::GetOutMaxValue() const { return this->primitive_->value_as_ArgMax()->outMaxValue(); }
+int ArgMax::GetTopK() const { return this->primitive_->value_as_ArgMax()->topK(); }
+bool ArgMax::GetKeepDims() const { return this->primitive_->value_as_ArgMax()->keepDims(); }
+int ArgMax::GetAxisType() const { return this->primitive_->value_as_ArgMax()->axisType(); }
 
 void ArgMax::SetAxis(int axis) {}
 void ArgMax::SetOutMaxValue(bool out_max_value) {}
@@ -47,7 +47,7 @@ void ArgMax::SetAxisType(int axis_type) {}
 #endif
 
 int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();

@@ -15,6 +15,7 @@
  */
 
 #include <iostream>
+#include "schema/inner/model_generated.h"
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/nnacl/reshape_parameter.h"

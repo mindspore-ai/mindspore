@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <set>
-#include <cmath>
-#include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
 #ifndef LITE_MINDSPORE_LITE_C_OPS_ARITHMETIC_SELF_H_
 #define LITE_MINDSPORE_LITE_C_OPS_ARITHMETIC_SELF_H_
+
+#include <vector>
+#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
 class ArithmeticSelf : public PrimitiveC {
  public:
-  explicit ArithmeticSelf(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit ArithmeticSelf(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit ArithmeticSelf(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

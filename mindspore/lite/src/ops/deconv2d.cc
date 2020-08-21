@@ -19,63 +19,63 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int DeConv2D::GetFormat() const { return this->primitive->value.AsDeConv2D()->format; }
-int DeConv2D::GetGroup() const { return this->primitive->value.AsDeConv2D()->group; }
-int DeConv2D::GetChannelIn() const { return this->primitive->value.AsDeConv2D()->channelIn; }
-int DeConv2D::GetChannelOut() const { return this->primitive->value.AsDeConv2D()->channelOut; }
-int DeConv2D::GetKernelW() const { return this->primitive->value.AsDeConv2D()->kernelW; }
-int DeConv2D::GetKernelH() const { return this->primitive->value.AsDeConv2D()->kernelH; }
-int DeConv2D::GetStrideW() const { return this->primitive->value.AsDeConv2D()->strideW; }
-int DeConv2D::GetStrideH() const { return this->primitive->value.AsDeConv2D()->strideH; }
-int DeConv2D::GetPadMode() const { return this->primitive->value.AsDeConv2D()->padMode; }
-int DeConv2D::GetPadUp() const { return this->primitive->value.AsDeConv2D()->padUp; }
-int DeConv2D::GetPadDown() const { return this->primitive->value.AsDeConv2D()->padDown; }
-int DeConv2D::GetPadLeft() const { return this->primitive->value.AsDeConv2D()->padLeft; }
-int DeConv2D::GetPadRight() const { return this->primitive->value.AsDeConv2D()->padRight; }
-int DeConv2D::GetDilateW() const { return this->primitive->value.AsDeConv2D()->dilateW; }
-int DeConv2D::GetDilateH() const { return this->primitive->value.AsDeConv2D()->dilateH; }
-bool DeConv2D::GetHasBias() const { return this->primitive->value.AsDeConv2D()->hasBias; }
-int DeConv2D::GetActivationType() const { return this->primitive->value.AsDeConv2D()->activationType; }
+int DeConv2D::GetFormat() const { return this->primitive_->value.AsDeConv2D()->format; }
+int DeConv2D::GetGroup() const { return this->primitive_->value.AsDeConv2D()->group; }
+int DeConv2D::GetChannelIn() const { return this->primitive_->value.AsDeConv2D()->channelIn; }
+int DeConv2D::GetChannelOut() const { return this->primitive_->value.AsDeConv2D()->channelOut; }
+int DeConv2D::GetKernelW() const { return this->primitive_->value.AsDeConv2D()->kernelW; }
+int DeConv2D::GetKernelH() const { return this->primitive_->value.AsDeConv2D()->kernelH; }
+int DeConv2D::GetStrideW() const { return this->primitive_->value.AsDeConv2D()->strideW; }
+int DeConv2D::GetStrideH() const { return this->primitive_->value.AsDeConv2D()->strideH; }
+int DeConv2D::GetPadMode() const { return this->primitive_->value.AsDeConv2D()->padMode; }
+int DeConv2D::GetPadUp() const { return this->primitive_->value.AsDeConv2D()->padUp; }
+int DeConv2D::GetPadDown() const { return this->primitive_->value.AsDeConv2D()->padDown; }
+int DeConv2D::GetPadLeft() const { return this->primitive_->value.AsDeConv2D()->padLeft; }
+int DeConv2D::GetPadRight() const { return this->primitive_->value.AsDeConv2D()->padRight; }
+int DeConv2D::GetDilateW() const { return this->primitive_->value.AsDeConv2D()->dilateW; }
+int DeConv2D::GetDilateH() const { return this->primitive_->value.AsDeConv2D()->dilateH; }
+bool DeConv2D::GetHasBias() const { return this->primitive_->value.AsDeConv2D()->hasBias; }
+int DeConv2D::GetActivationType() const { return this->primitive_->value.AsDeConv2D()->activationType; }
 
-void DeConv2D::SetFormat(int format) { this->primitive->value.AsDeConv2D()->format = (schema::Format)format; }
-void DeConv2D::SetGroup(int group) { this->primitive->value.AsDeConv2D()->group = group; }
-void DeConv2D::SetChannelIn(int channel_in) { this->primitive->value.AsDeConv2D()->channelIn = channel_in; }
-void DeConv2D::SetChannelOut(int channel_out) { this->primitive->value.AsDeConv2D()->channelOut = channel_out; }
-void DeConv2D::SetKernelW(int kernel_w) { this->primitive->value.AsDeConv2D()->kernelW = kernel_w; }
-void DeConv2D::SetKernelH(int kernel_h) { this->primitive->value.AsDeConv2D()->kernelH = kernel_h; }
-void DeConv2D::SetStrideW(int stride_w) { this->primitive->value.AsDeConv2D()->strideW = stride_w; }
-void DeConv2D::SetStrideH(int stride_h) { this->primitive->value.AsDeConv2D()->strideH = stride_h; }
-void DeConv2D::SetPadMode(int pad_mode) { this->primitive->value.AsDeConv2D()->padMode = (schema::PadMode)pad_mode; }
-void DeConv2D::SetPadUp(int pad_up) { this->primitive->value.AsDeConv2D()->padUp = pad_up; }
-void DeConv2D::SetPadDown(int pad_down) { this->primitive->value.AsDeConv2D()->padDown = pad_down; }
-void DeConv2D::SetPadLeft(int pad_left) { this->primitive->value.AsDeConv2D()->padLeft = pad_left; }
-void DeConv2D::SetPadRight(int pad_right) { this->primitive->value.AsDeConv2D()->padRight = pad_right; }
-void DeConv2D::SetDilateW(int dilate_w) { this->primitive->value.AsDeConv2D()->dilateW = dilate_w; }
-void DeConv2D::SetDilateH(int dilate_h) { this->primitive->value.AsDeConv2D()->dilateH = dilate_h; }
-void DeConv2D::SetHasBias(bool has_bias) { this->primitive->value.AsDeConv2D()->hasBias = has_bias; }
+void DeConv2D::SetFormat(int format) { this->primitive_->value.AsDeConv2D()->format = (schema::Format)format; }
+void DeConv2D::SetGroup(int group) { this->primitive_->value.AsDeConv2D()->group = group; }
+void DeConv2D::SetChannelIn(int channel_in) { this->primitive_->value.AsDeConv2D()->channelIn = channel_in; }
+void DeConv2D::SetChannelOut(int channel_out) { this->primitive_->value.AsDeConv2D()->channelOut = channel_out; }
+void DeConv2D::SetKernelW(int kernel_w) { this->primitive_->value.AsDeConv2D()->kernelW = kernel_w; }
+void DeConv2D::SetKernelH(int kernel_h) { this->primitive_->value.AsDeConv2D()->kernelH = kernel_h; }
+void DeConv2D::SetStrideW(int stride_w) { this->primitive_->value.AsDeConv2D()->strideW = stride_w; }
+void DeConv2D::SetStrideH(int stride_h) { this->primitive_->value.AsDeConv2D()->strideH = stride_h; }
+void DeConv2D::SetPadMode(int pad_mode) { this->primitive_->value.AsDeConv2D()->padMode = (schema::PadMode)pad_mode; }
+void DeConv2D::SetPadUp(int pad_up) { this->primitive_->value.AsDeConv2D()->padUp = pad_up; }
+void DeConv2D::SetPadDown(int pad_down) { this->primitive_->value.AsDeConv2D()->padDown = pad_down; }
+void DeConv2D::SetPadLeft(int pad_left) { this->primitive_->value.AsDeConv2D()->padLeft = pad_left; }
+void DeConv2D::SetPadRight(int pad_right) { this->primitive_->value.AsDeConv2D()->padRight = pad_right; }
+void DeConv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsDeConv2D()->dilateW = dilate_w; }
+void DeConv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsDeConv2D()->dilateH = dilate_h; }
+void DeConv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsDeConv2D()->hasBias = has_bias; }
 void DeConv2D::SetActivationType(int activation_type) {
-  this->primitive->value.AsDeConv2D()->activationType = (schema::ActivationType)activation_type;
+  this->primitive_->value.AsDeConv2D()->activationType = (schema::ActivationType)activation_type;
 }
 
 #else
 
-int DeConv2D::GetFormat() const { return this->primitive->value_as_DeConv2D()->format(); }
-int DeConv2D::GetGroup() const { return this->primitive->value_as_DeConv2D()->group(); }
-int DeConv2D::GetChannelIn() const { return this->primitive->value_as_DeConv2D()->channelIn(); }
-int DeConv2D::GetChannelOut() const { return this->primitive->value_as_DeConv2D()->channelOut(); }
-int DeConv2D::GetKernelW() const { return this->primitive->value_as_DeConv2D()->kernelW(); }
-int DeConv2D::GetKernelH() const { return this->primitive->value_as_DeConv2D()->kernelH(); }
-int DeConv2D::GetStrideW() const { return this->primitive->value_as_DeConv2D()->strideW(); }
-int DeConv2D::GetStrideH() const { return this->primitive->value_as_DeConv2D()->strideH(); }
-int DeConv2D::GetPadMode() const { return this->primitive->value_as_DeConv2D()->padMode(); }
-int DeConv2D::GetPadUp() const { return this->primitive->value_as_DeConv2D()->padUp(); }
-int DeConv2D::GetPadDown() const { return this->primitive->value_as_DeConv2D()->padDown(); }
-int DeConv2D::GetPadLeft() const { return this->primitive->value_as_DeConv2D()->padLeft(); }
-int DeConv2D::GetPadRight() const { return this->primitive->value_as_DeConv2D()->padRight(); }
-int DeConv2D::GetDilateW() const { return this->primitive->value_as_DeConv2D()->dilateW(); }
-int DeConv2D::GetDilateH() const { return this->primitive->value_as_DeConv2D()->dilateH(); }
-bool DeConv2D::GetHasBias() const { return this->primitive->value_as_DeConv2D()->hasBias(); }
-int DeConv2D::GetActivationType() const { return this->primitive->value_as_DeConv2D()->activationType(); }
+int DeConv2D::GetFormat() const { return this->primitive_->value_as_DeConv2D()->format(); }
+int DeConv2D::GetGroup() const { return this->primitive_->value_as_DeConv2D()->group(); }
+int DeConv2D::GetChannelIn() const { return this->primitive_->value_as_DeConv2D()->channelIn(); }
+int DeConv2D::GetChannelOut() const { return this->primitive_->value_as_DeConv2D()->channelOut(); }
+int DeConv2D::GetKernelW() const { return this->primitive_->value_as_DeConv2D()->kernelW(); }
+int DeConv2D::GetKernelH() const { return this->primitive_->value_as_DeConv2D()->kernelH(); }
+int DeConv2D::GetStrideW() const { return this->primitive_->value_as_DeConv2D()->strideW(); }
+int DeConv2D::GetStrideH() const { return this->primitive_->value_as_DeConv2D()->strideH(); }
+int DeConv2D::GetPadMode() const { return this->primitive_->value_as_DeConv2D()->padMode(); }
+int DeConv2D::GetPadUp() const { return this->primitive_->value_as_DeConv2D()->padUp(); }
+int DeConv2D::GetPadDown() const { return this->primitive_->value_as_DeConv2D()->padDown(); }
+int DeConv2D::GetPadLeft() const { return this->primitive_->value_as_DeConv2D()->padLeft(); }
+int DeConv2D::GetPadRight() const { return this->primitive_->value_as_DeConv2D()->padRight(); }
+int DeConv2D::GetDilateW() const { return this->primitive_->value_as_DeConv2D()->dilateW(); }
+int DeConv2D::GetDilateH() const { return this->primitive_->value_as_DeConv2D()->dilateH(); }
+bool DeConv2D::GetHasBias() const { return this->primitive_->value_as_DeConv2D()->hasBias(); }
+int DeConv2D::GetActivationType() const { return this->primitive_->value_as_DeConv2D()->activationType(); }
 
 void DeConv2D::SetFormat(int format) {}
 void DeConv2D::SetGroup(int group) {}
@@ -96,7 +96,7 @@ void DeConv2D::SetHasBias(bool has_bias) {}
 void DeConv2D::SetActivationType(int activation_type) {}
 #endif
 int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto weight = inputs_.at(1);

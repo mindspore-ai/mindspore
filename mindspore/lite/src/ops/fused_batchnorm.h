@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
+#define LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
-#define LITE_MINDSPORE_LITE_C_OPS_FUSED_BATCH_NORM_H_
 
 namespace mindspore {
 namespace lite {
 class FusedBatchNorm : public PrimitiveC {
  public:
-  explicit FusedBatchNorm(OriginPrimitive *primitive) : PrimitiveC(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit FusedBatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#endif
+  explicit FusedBatchNorm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
   float GetEpsilon() const;
   float GetMomentum() const;

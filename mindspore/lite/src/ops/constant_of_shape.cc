@@ -25,13 +25,13 @@ constexpr int kShapeInputNum = 1;
 constexpr int kShapeOutputNum = 1;
 }  // namespace
 #ifdef PRIMITIVE_WRITEABLE
-float ConstantOfShape::GetValue() const { return this->primitive->value.AsConstantOfShape()->value; }
+float ConstantOfShape::GetValue() const { return this->primitive_->value.AsConstantOfShape()->value; }
 
-void ConstantOfShape::SetValue(float value) { this->primitive->value.AsConstantOfShape()->value = value; }
+void ConstantOfShape::SetValue(float value) { this->primitive_->value.AsConstantOfShape()->value = value; }
 
 #else
 
-float ConstantOfShape::GetValue() const { return this->primitive->value_as_ConstantOfShape()->value(); }
+float ConstantOfShape::GetValue() const { return this->primitive_->value_as_ConstantOfShape()->value(); }
 
 void ConstantOfShape::SetValue(float value) {}
 #endif

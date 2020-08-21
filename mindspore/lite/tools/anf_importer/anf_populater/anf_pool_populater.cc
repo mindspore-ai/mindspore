@@ -22,7 +22,7 @@
 #include "ir/primitive.h"
 
 namespace mindspore::lite {
-int AnfPoolPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtr,
+int AnfPoolPopulater::Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
                                const std::vector<AnfNodePtr> &inputs) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
   auto attr = std::make_unique<schema::PoolingT>();
@@ -60,8 +60,8 @@ int AnfPoolPopulater::Populate(const PrimitivePtr &prim, PrimitiveTValue *primit
 
   primitive->value.type = schema::PrimitiveType_Pooling;
   primitive->value.value = attr.release();
-  MS_ASSERT(primitiveTValuePtr != nullptr);
-  primitiveTValuePtr->SetPrimitiveT(primitive.release());
+  MS_ASSERT(primitiveCPtr != nullptr);
+  primitiveCPtr->SetPrimitiveT(primitive.release());
   return 0;
 }
 AnfNodePopulaterRegistrar anfMaxPoolPopulater("MaxPool", new AnfPoolPopulater());

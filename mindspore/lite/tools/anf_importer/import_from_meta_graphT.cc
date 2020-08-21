@@ -23,7 +23,6 @@
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
 
-
 namespace mindspore::lite {
 int AnfImporterFromMetaGraphT::ConverterConstTensor() {
   MS_ASSERT(nullptr != meta_graph_);
@@ -61,17 +60,17 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
       param_value->set_tensor_addr(tensor_data);
       param_value->set_tensor_size(size);
     }
-//    if (!tensor->quantParams.empty()) {
-//      std::unique_ptr<AnfQuantParam> quantParam = std::make_unique<AnfQuantParam>();
-//      quantParam->scale = tensor->quantParams[0]->scale;
-//      quantParam->zeroPoint = tensor->quantParams[0]->zeroPoint;
-//      quantParam->min = tensor->quantParams[0]->min;
-//      quantParam->max = tensor->quantParams[0]->max;
-//      quantParam->narrowRange = tensor->quantParams[0]->narrowRange;
-//      quantParam->numBits = tensor->quantParams[0]->numBits;
-//      quantParam->inited = tensor->quantParams[0]->inited;
-//      param_value->set_quant_param(quantParam);
-//    }
+    //    if (!tensor->quantParams.empty()) {
+    //      std::unique_ptr<AnfQuantParam> quantParam = std::make_unique<AnfQuantParam>();
+    //      quantParam->scale = tensor->quantParams[0]->scale;
+    //      quantParam->zeroPoint = tensor->quantParams[0]->zeroPoint;
+    //      quantParam->min = tensor->quantParams[0]->min;
+    //      quantParam->max = tensor->quantParams[0]->max;
+    //      quantParam->narrowRange = tensor->quantParams[0]->narrowRange;
+    //      quantParam->numBits = tensor->quantParams[0]->numBits;
+    //      quantParam->inited = tensor->quantParams[0]->inited;
+    //      param_value->set_quant_param(quantParam);
+    //    }
     parameter->set_default_param(param_value);
     AddNode(i, parameter);
   }
@@ -81,25 +80,25 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
 ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<schema::CNodeT> &cNode) {
   MS_ASSERT(nullptr != meta_graph_);
   MS_ASSERT(nullptr != cNode);
-  auto primTValue = std::make_shared<PrimitiveTValue>(cNode->primitive.release());
+  auto primitiveCValue = std::make_shared<PrimitiveC>(cNode->primitive.release());
   cNode->primitive = nullptr;
   // add quant parameter
   if (cNode->quantType == schema::QuantType_AwareTraining) {
-    primTValue->SetQuantType(cNode->quantType);
+    primitiveCValue->SetQuantType(cNode->quantType);
     for (int index : cNode->inputIndex) {
       if (meta_graph_->allTensors[index]->quantParams.size() > 0) {
         std::vector<schema::QuantParamT> quant_params = {*(meta_graph_->allTensors[index]->quantParams[0])};
-        primTValue->AddInputQuantParam(quant_params);
+        primitiveCValue->AddInputQuantParam(quant_params);
       }
     }
     for (int index : cNode->outputIndex) {
       if (meta_graph_->allTensors[index]->quantParams.size() > 0) {
         std::vector<schema::QuantParamT> quant_params = {*(meta_graph_->allTensors[index]->quantParams[0])};
-        primTValue->AddOutputQuantParam(quant_params);
+        primitiveCValue->AddOutputQuantParam(quant_params);
       }
     }
   }
-  auto value_node = NewValueNode(primTValue);
+  auto value_node = NewValueNode(primitiveCValue);
   return value_node;
 }
 

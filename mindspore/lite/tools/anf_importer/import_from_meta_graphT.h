@@ -21,7 +21,7 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "tools/anf_importer/anf_importer.h"
-#include "src/ir/primitive_t_value.h"
+#include "src/ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore::lite {

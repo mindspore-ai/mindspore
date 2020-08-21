@@ -21,11 +21,11 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "src/lite_kernel.h"
 #include "include/ms_tensor.h"
 #include "include/lite_session.h"
 #include "include/model.h"
 #include "include/context.h"
-#include "src/lite_kernel.h"
 #include "schema/model_generated.h"
 #include "src/executor.h"
 

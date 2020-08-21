@@ -19,15 +19,15 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Sub::GetActivationType() const { return this->primitive->value.AsSub()->activationType; }
+int Sub::GetActivationType() const { return this->primitive_->value.AsSub()->activationType; }
 
 void Sub::SetActivationType(int activation_type) {
-  this->primitive->value.AsSub()->activationType = (schema::ActivationType)activation_type;
+  this->primitive_->value.AsSub()->activationType = (schema::ActivationType)activation_type;
 }
 
 #else
 
-int Sub::GetActivationType() const { return this->primitive->value_as_Sub()->activationType(); }
+int Sub::GetActivationType() const { return this->primitive_->value_as_Sub()->activationType(); }
 
 void Sub::SetActivationType(int activation_type) {}
 #endif

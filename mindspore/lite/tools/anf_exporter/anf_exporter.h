@@ -22,7 +22,7 @@
 #include <vector>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "src/ir/primitive_t_value.h"
+#include "src/ops/primitive_c.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::lite {
@@ -48,8 +48,7 @@ class AnfExporter {
   void SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   bool IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type);
   int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                        const std::shared_ptr<PrimitiveTValue> primitive,
-                        const std::unique_ptr<schema::CNodeT> &dst_node);
+                        const std::shared_ptr<PrimitiveC> primitive, const std::unique_ptr<schema::CNodeT> &dst_node);
 
  private:
   std::map<std::string, int> node_id_map_;

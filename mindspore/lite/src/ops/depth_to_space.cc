@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int DepthToSpace::GetBlockSize() const { return this->primitive->value.AsDepthToSpace()->blockSize; }
-int DepthToSpace::GetFormat() const { return this->primitive->value.AsDepthToSpace()->format; }
+int DepthToSpace::GetBlockSize() const { return this->primitive_->value.AsDepthToSpace()->blockSize; }
+int DepthToSpace::GetFormat() const { return this->primitive_->value.AsDepthToSpace()->format; }
 
-void DepthToSpace::SetBlockSize(int block_size) { this->primitive->value.AsDepthToSpace()->blockSize = block_size; }
-void DepthToSpace::SetFormat(int format) { this->primitive->value.AsDepthToSpace()->format = (schema::Format)format; }
+void DepthToSpace::SetBlockSize(int block_size) { this->primitive_->value.AsDepthToSpace()->blockSize = block_size; }
+void DepthToSpace::SetFormat(int format) { this->primitive_->value.AsDepthToSpace()->format = (schema::Format)format; }
 
 #else
 
-int DepthToSpace::GetBlockSize() const { return this->primitive->value_as_DepthToSpace()->blockSize(); }
-int DepthToSpace::GetFormat() const { return this->primitive->value_as_DepthToSpace()->format(); }
+int DepthToSpace::GetBlockSize() const { return this->primitive_->value_as_DepthToSpace()->blockSize(); }
+int DepthToSpace::GetFormat() const { return this->primitive_->value_as_DepthToSpace()->format(); }
 
 void DepthToSpace::SetBlockSize(int block_size) {}
 void DepthToSpace::SetFormat(int format) {}
@@ -39,7 +39,7 @@ constexpr int kDepthToSpaceInputNum = 1;
 }  // namespace
 
 int DepthToSpace::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
-  MS_ASSERT(this->primitive != nullptr);
+  MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kDepthToSpaceOutputNum || inputs.size() != kDepthToSpaceInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
     return RET_PARAM_INVALID;

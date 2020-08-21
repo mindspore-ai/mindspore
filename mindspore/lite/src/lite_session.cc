@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/lite_session.h"
 #include <vector>
 #include "include/errorcode.h"
-#include "src/lite_session.h"
 #include "utils/log_adapter.h"
 #include "src/scheduler.h"
 #include "src/runtime/runtime_api.h"
@@ -76,6 +76,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
 
     this->tensors_.emplace_back(dstTensor);
   }
+
   return RET_OK;
 }
 

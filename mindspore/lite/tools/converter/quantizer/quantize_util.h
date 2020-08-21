@@ -21,6 +21,7 @@
 #include <string>
 #include <cmath>
 #include <array>
+#include "src/ops/primitive_c.h"
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
@@ -29,7 +30,6 @@
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
 #include "mindspore/lite/tools/converter/quantizer/quantizer.h"
-#include "mindspore/lite/src/ir/primitive_t_value.h"
 
 namespace mindspore {
 namespace lite {
@@ -65,7 +65,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
                              bool narrowRange = false, int numBits = UINT8_QUANTIZATION);
 
-template <typename T>
+template<typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);
@@ -73,7 +73,7 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   const auto zeroPoint = quantParam->zeroPoint;
   const auto numBit = quantParam->numBits;
   const auto narrowRange = quantParam->narrowRange;
-  const double maxLimit = static_cast<float>((1 << (unsigned int)numBit) - 1 - zeroPoint) * scale;
+  const double maxLimit = static_cast<float>((1 << (unsigned int) numBit) - 1 - zeroPoint) * scale;
   double minLimit;
   if (narrowRange) {
     minLimit = static_cast<float>(1 - zeroPoint) * scale;
@@ -97,7 +97,7 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   }();
 }
 
-template <typename T>
+template<typename T>
 T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quant_max, int quant_min) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);
@@ -118,7 +118,7 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   }();
 }
 
-STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, QuantType quantType,
+STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false,
                    bool depth_wise = false);
 

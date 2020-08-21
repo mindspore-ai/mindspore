@@ -18,12 +18,13 @@
 #define MINDSPORE_ANF_CONCAT_PARSER_H
 #include "tools/anf_importer/anf_populater/anf_node_populater.h"
 #include <vector>
+
 namespace mindspore::lite {
 class AnfConcatPopulater : public AnfNodePopulater {
  public:
   AnfConcatPopulater() = default;
   ~AnfConcatPopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveTValue *primitiveTValuePtrr,
+  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtrr,
                const std::vector<AnfNodePtr> &inputs) override;
 };
 }  // namespace mindspore::lite

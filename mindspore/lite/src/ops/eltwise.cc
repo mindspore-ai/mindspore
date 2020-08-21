@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Eltwise::GetMode() const { return this->primitive->value.AsEltwise()->mode; }
+int Eltwise::GetMode() const { return this->primitive_->value.AsEltwise()->mode; }
 
-void Eltwise::SetMode(int mode) { this->primitive->value.AsEltwise()->mode = (schema::EltwiseMode)mode; }
+void Eltwise::SetMode(int mode) { this->primitive_->value.AsEltwise()->mode = (schema::EltwiseMode)mode; }
 
 #else
 
-int Eltwise::GetMode() const { return this->primitive->value_as_Eltwise()->mode(); }
+int Eltwise::GetMode() const { return this->primitive_->value_as_Eltwise()->mode(); }
 
 void Eltwise::SetMode(int mode) {}
 #endif

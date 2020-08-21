@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "schema/inner/model_generated.h"
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/matmul_int8.h"

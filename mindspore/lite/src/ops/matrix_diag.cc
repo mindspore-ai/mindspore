@@ -19,24 +19,24 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int MatrixDiag::GetK() const { return this->primitive->value.AsMatrixDiag()->k; }
-int MatrixDiag::GetNumRows() const { return this->primitive->value.AsMatrixDiag()->numRows; }
-int MatrixDiag::GetNumCols() const { return this->primitive->value.AsMatrixDiag()->numCols; }
-float MatrixDiag::GetPaddingValue() const { return this->primitive->value.AsMatrixDiag()->paddingValue; }
+int MatrixDiag::GetK() const { return this->primitive_->value.AsMatrixDiag()->k; }
+int MatrixDiag::GetNumRows() const { return this->primitive_->value.AsMatrixDiag()->numRows; }
+int MatrixDiag::GetNumCols() const { return this->primitive_->value.AsMatrixDiag()->numCols; }
+float MatrixDiag::GetPaddingValue() const { return this->primitive_->value.AsMatrixDiag()->paddingValue; }
 
-void MatrixDiag::SetK(int k) { this->primitive->value.AsMatrixDiag()->k = k; }
-void MatrixDiag::SetNumRows(int num_rows) { this->primitive->value.AsMatrixDiag()->numRows = num_rows; }
-void MatrixDiag::SetNumCols(int num_cols) { this->primitive->value.AsMatrixDiag()->numCols = num_cols; }
+void MatrixDiag::SetK(int k) { this->primitive_->value.AsMatrixDiag()->k = k; }
+void MatrixDiag::SetNumRows(int num_rows) { this->primitive_->value.AsMatrixDiag()->numRows = num_rows; }
+void MatrixDiag::SetNumCols(int num_cols) { this->primitive_->value.AsMatrixDiag()->numCols = num_cols; }
 void MatrixDiag::SetPaddingValue(float padding_value) {
-  this->primitive->value.AsMatrixDiag()->paddingValue = padding_value;
+  this->primitive_->value.AsMatrixDiag()->paddingValue = padding_value;
 }
 
 #else
 
-int MatrixDiag::GetK() const { return this->primitive->value_as_MatrixDiag()->k(); }
-int MatrixDiag::GetNumRows() const { return this->primitive->value_as_MatrixDiag()->numRows(); }
-int MatrixDiag::GetNumCols() const { return this->primitive->value_as_MatrixDiag()->numCols(); }
-float MatrixDiag::GetPaddingValue() const { return this->primitive->value_as_MatrixDiag()->paddingValue(); }
+int MatrixDiag::GetK() const { return this->primitive_->value_as_MatrixDiag()->k(); }
+int MatrixDiag::GetNumRows() const { return this->primitive_->value_as_MatrixDiag()->numRows(); }
+int MatrixDiag::GetNumCols() const { return this->primitive_->value_as_MatrixDiag()->numCols(); }
+float MatrixDiag::GetPaddingValue() const { return this->primitive_->value_as_MatrixDiag()->paddingValue(); }
 
 void MatrixDiag::SetK(int k) {}
 void MatrixDiag::SetNumRows(int num_rows) {}

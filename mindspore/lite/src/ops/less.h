@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_LESS_H_
+#define LITE_MINDSPORE_LITE_C_OPS_LESS_H_
+
 #include <vector>
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/arithmetic.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_LESS_H_
-#define LITE_MINDSPORE_LITE_C_OPS_LESS_H_
 
 namespace mindspore {
 namespace lite {
 class Less : public Arithmetic {
  public:
-  explicit Less(OriginPrimitive *primitive) : Arithmetic(primitive) {}
+#ifdef PRIMITIVE_WRITEABLE
+  explicit Less(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+#endif
+  explicit Less(schema::Primitive *primitive) : Arithmetic(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -21,16 +21,16 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int Concat::GetAxis() const { return this->primitive->value.AsConcat()->axis; }
-int Concat::GetN() const { return this->primitive->value.AsConcat()->n; }
+int Concat::GetAxis() const { return this->primitive_->value.AsConcat()->axis; }
+int Concat::GetN() const { return this->primitive_->value.AsConcat()->n; }
 
-void Concat::SetAxis(int axis) { this->primitive->value.AsConcat()->axis = axis; }
-void Concat::SetN(int n) { this->primitive->value.AsConcat()->n = n; }
+void Concat::SetAxis(int axis) { this->primitive_->value.AsConcat()->axis = axis; }
+void Concat::SetN(int n) { this->primitive_->value.AsConcat()->n = n; }
 
 #else
 
-int Concat::GetAxis() const { return this->primitive->value_as_Concat()->axis(); }
-int Concat::GetN() const { return this->primitive->value_as_Concat()->n(); }
+int Concat::GetAxis() const { return this->primitive_->value_as_Concat()->axis(); }
+int Concat::GetN() const { return this->primitive_->value_as_Concat()->n(); }
 
 void Concat::SetAxis(int axis) {}
 void Concat::SetN(int n) {}
@@ -40,7 +40,7 @@ namespace {
 constexpr int kConcatOutputNum = 1;
 }
 int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  if (this->primitive == nullptr) {
+  if (this->primitive_ == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr!";
     return RET_PARAM_INVALID;
   }
