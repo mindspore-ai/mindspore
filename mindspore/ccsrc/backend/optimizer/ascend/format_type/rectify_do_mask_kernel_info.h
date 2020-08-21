@@ -28,7 +28,8 @@ namespace opt {
 class RectifyDoMaskKernelInfo : public PatternProcessPass {
  public:
   explicit RectifyDoMaskKernelInfo(bool multigraph = true)
-      : PatternProcessPass("batch_norm_bert_fission", multigraph), kernel_selecter(std::make_shared<KernelSelect>()) {}
+      : PatternProcessPass("rectify_do_mask_kernel_info", multigraph),
+        kernel_selecter(std::make_shared<KernelSelect>()) {}
   ~RectifyDoMaskKernelInfo() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

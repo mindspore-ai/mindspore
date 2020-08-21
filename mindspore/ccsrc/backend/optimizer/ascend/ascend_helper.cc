@@ -51,33 +51,19 @@ AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &i
 AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select, size_t insert_index, bool is_insert_input) {
   AnfNodePtr trans_node = nullptr;
-  AnfNodePtr input_node = nullptr;
   CNodePtr trans_data = nullptr;
-  std::string input_format = is_insert_input ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(node, 0);
-  std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, 0) : kOpFormat_DEFAULT;
-  std::vector<Axis> padding_axis;
   MS_EXCEPTION_IF_NULL(node);
-  // if insert transdata for input we need to change the input
-  if (is_insert_input) {
-    if (!node->isa<CNode>()) {
-      MS_LOG(EXCEPTION) << "cannot insert a transdata node to a node's input which the node is not a cnode";
-    }
-    auto cnode = node->cast<CNodePtr>();
-    dst_format = AnfAlgo::GetInputFormat(cnode, insert_index);
-    input_node = AnfAlgo::GetInputNode(cnode, insert_index);
-    padding_axis = AnfAlgo::GetInputReshapeType(node, insert_index);
-  } else {
-    input_node = node;
-    padding_axis = AnfAlgo::GetOutputReshapeType(node, 0);
-  }
+  // Init
+  AnfNodePtr input_node = is_insert_input ? AnfAlgo::GetInputNode(node->cast<CNodePtr>(), insert_index) : node;
+  std::string input_format = is_insert_input ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(node, insert_index);
+  std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, insert_index) : kOpFormat_DEFAULT;
+  std::vector<Axis> padding_axis = is_insert_input ? AnfAlgo::GetInputReshapeType(node, insert_index)
+                                                   : AnfAlgo::GetOutputReshapeType(node, insert_index);
+  auto input_node_out_shape = is_insert_input ? AnfAlgo::GetPrevNodeOutputInferShape(node, insert_index)
+                                              : AnfAlgo::GetOutputInferShape(input_node, insert_index);
+  bool need_padding = is_insert_input ? trans::IsNeedPadding(dst_format, input_node_out_shape.size())
+                                      : trans::IsNeedPadding(input_format, input_node_out_shape.size());
 
-  auto input_node_out_shape = AnfAlgo::GetOutputInferShape(input_node, 0);
-  bool need_padding = false;
-  if (is_insert_input) {
-    need_padding = (trans::IsNeedPadding(dst_format, input_node_out_shape.size()));
-  } else {
-    need_padding = (trans::IsNeedPadding(input_format, input_node_out_shape.size()));
-  }
   if (!need_padding) {
     // don't need padding insert transdata only
     trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::KPrimTransData->name());
@@ -89,6 +75,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
     auto reshape_node = CreateReshapeNode(func_graph, input_node, kernel_select, padding_shape);
     trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, prim::KPrimTransData->name());
     trans_node = trans_data;
+    trans_data->set_abstract(input_node->abstract());
   } else {
     // if need padding & is output need insert a transdata
     // node -> transdata[padding shape] -> reshape[ori_shape]
@@ -303,7 +290,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
     const auto infer_type = AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
     TypeId origin_type(kTypeUnknown);
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
-    auto kernel_with_index = AnfAlgo::VisitKernel(cur_input, 0);
+    auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
     auto real_input_node = kernel_with_index.first;
     if (kernel::IsWeightBoundary(real_input_node) || func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
       // weight
