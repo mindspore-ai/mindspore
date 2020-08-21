@@ -60,7 +60,7 @@ struct ConfigParam {
 class PostTrainingQuantizer : public Quantizer {
  public:
   PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8,
-                        bool per_channel = false);
+                        bool per_channel = true);
 
   STATUS DoQuantize(FuncGraphPtr funcGraph) override;
 
@@ -96,7 +96,8 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveTValue>);
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveTValue>);
 
-  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, bool depthwise);
+  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, bool perchannel,
+                       bool depthwise);
 
   STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveTValue> primitiveT_value);
 };
