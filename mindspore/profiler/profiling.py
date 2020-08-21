@@ -46,17 +46,20 @@ class Profiler:
     Performance profiling API.
 
     Enable MindSpore users to profile the performance of neural network.
+    Profiler support Ascend and GPU, both of them are used in the same way,
+    but only output_path in args works on GPU.
 
     Args:
-        subgraph (str): Define which subgraph to monitor and analyse, can be 'all', 'Default', 'Gradients'.
-        is_detail (bool): Whether to show profiling data for op_instance level, only show optype level if False.
-        is_show_op_path (bool): Whether to save the full path for each op instance.
+        subgraph (str): (Ascend only)Define which subgraph to monitor and analyse, can be 'all', 'Default', 'Gradients'.
+        is_detail (bool): (Ascend only)Whether to show profiling data for op_instance level,
+            only show optype level if False.
+        is_show_op_path (bool): (Ascend only)Whether to save the full path for each op instance.
         output_path (str): Output data path.
-        optypes_to_deal (str): Op type names, the data of which optype should be collected and analysed,
+        optypes_to_deal (str): (Ascend only)Op type names, the data of which optype should be collected and analysed,
             will deal with all op if null; Different op types should be seperated by comma.
-        optypes_not_deal (str): Op type names, the data of which optype will not be collected and analysed;
+        optypes_not_deal (str): (Ascend only)Op type names, the data of which optype will not be collected and analysed;
             Different op types should be seperated by comma.
-        job_id (str): The directory where the parsed profiling files are located;
+        job_id (str): (Ascend only)The directory where the parsed profiling files are located;
             This parameter is used to support offline parsing.
 
     Examples:
@@ -64,7 +67,7 @@ class Profiler:
         >>> import mindspore.context
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
         >>>                     device_id=int(os.environ["DEVICE_ID"]))
-        >>> profiler = Profiler(subgraph='all', is_detail=True, is_show_op_path=False, output_path='./data')
+        >>> profiler = Profiler()
         >>> model = Model()
         >>> model.train()
         >>> profiler.analyse()
