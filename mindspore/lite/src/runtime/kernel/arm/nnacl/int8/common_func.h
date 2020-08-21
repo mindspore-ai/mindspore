@@ -40,8 +40,8 @@ void IndirectGemmInt16to32_8x4(int32_t *dst, const int16_t *src, const int16_t *
                                size_t oc4, size_t offset);
 void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
                           size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
-                          size_t shift_after);
+                          size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
+                          int32_t *shift_after, size_t asymmetric, size_t per_channel);
 void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, size_t height, size_t width,
                         size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                         size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);

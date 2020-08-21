@@ -16,7 +16,7 @@
 
 #include "nnacl/fp32/common_func.h"
 
-#ifndef __aarch64__
+#ifndef ENABLE_ARM64
 void MatrixAdd(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
                size_t row, size_t col) {
   for (int r = 0; r < row; r++) {
