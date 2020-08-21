@@ -89,6 +89,7 @@ class GetItemTransformACrossGraph {
       ss << idx;
 
       auto new_fg_outer = TransformableClone(fg, std::make_shared<TraceTransform>(ss.str()));
+      fg->manager()->AddFuncGraph(new_fg_outer);
       auto output_outer = new_fg_outer->output();
       if (!IsValueNode<FuncGraph>(output_outer)) {
         MS_LOG(WARNING) << "Output of outer graph should be a func_graph";
@@ -486,7 +487,7 @@ class IncorporateGetitemSwitchLayerA : public AnfVisitor {
       switch_layer_ = inputs[0];
       (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args_));
     }
-    if (is_in_switch_ && cnode->size() > 2) {
+    if (is_in_switch_ && cnode->size() >= 2) {
       auto &inputs = cnode->inputs();
       if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) && IsValueNode<FuncGraph>(inputs[1])) {
         (void)std::transform(inputs.begin() + 1, inputs.end(), std::back_inserter(graphs_),
@@ -578,7 +579,7 @@ class IncorporateGetitemSwitchLayerB : public AnfVisitor {
       switch_layer_call_ = inputs[0];
       (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(outer_call_args_));
     }
-    if (is_in_switch_ && cnode->size() > 2) {
+    if (is_in_switch_ && cnode->size() >= 2) {
       auto &inputs = cnode->inputs();
       if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) && IsValueNode<FuncGraph>(inputs[1])) {
         (void)std::transform(inputs.begin() + 1, inputs.end(), std::back_inserter(graphs_),

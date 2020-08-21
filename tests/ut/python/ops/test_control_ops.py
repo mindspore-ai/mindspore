@@ -444,6 +444,86 @@ def test_index_to_switch_layer():
     C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
+def test_parser_switch_layer_switch_in_bprop():
+    class OneInputBprop(nn.Cell):
+        def __init__(self, funcs):
+            super(OneInputBprop, self).__init__()
+            self.op = P.ReLU()
+            self.funcs = funcs
+        def construct(self, i, x):
+            return  self.op(x)
+        def bprop(self, i, x, out, dout):
+            return i, self.funcs[i](x, dout)
+
+    class Add(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.op = P.TensorAdd()
+
+        def construct(self, x, y):
+            return self.op(x, y)
+
+    class Mul(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.op = P.Mul()
+
+        def construct(self, x, y):
+            return self.op(x, y)
+    func1 = Add()
+    func2 = Mul()
+    funcs = (func1, func2)
+    net = OneInputBprop(funcs)
+    input1 = Tensor(np.ones([2, 2]).astype(np.float32))
+    grad = Tensor(np.random.randn(2, 2).astype(np.float32))
+    i = Tensor(1, mstype.int32)
+    grad_net = C.grad_all_with_sens(net)
+    grad_net(i, input1, grad)
+
+
+def test_parser_switch_layer_inputs_tuple():
+    class TwoInputTupleFinalNet(nn.Cell):
+        def __init__(self, funcs):
+            super().__init__()
+            self.funcs = funcs
+
+        def construct(self, i, inputa, inputb):
+            inputs = (inputa, inputb)
+            x = self.funcs[i](inputs)
+            return x
+
+    class Add(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.op = P.TensorAdd()
+
+        def construct(self, x):
+            y = self.op(x[0], x[1])
+            return self.op(x[0], y)
+
+    class Mul(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.op = P.Mul()
+
+        def construct(self, x):
+            y = self.op(x[0], x[1])
+            return self.op(x[0], y)
+
+    func1 = Add()
+    func2 = Mul()
+
+    funcs = (func1, func2)
+    net = TwoInputTupleFinalNet(funcs)
+
+    input1 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    input2 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    i = Tensor(1, mstype.int32)
+    grad = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    back_net = C.grad_all_with_sens(net)
+    back_out = back_net(i, input1, input2, grad)
+
+
 def test_switch_layer_with_single_prim():
     class SwitchLayerCell(nn.Cell):
         def __init__(self):
@@ -471,6 +551,35 @@ def test_switch_layer_env_eliminate():
             self.conv = nn.Conv2d(1, 1, 3, pad_mode='same')
             self.conv2 = nn.Conv2d(1, 1, 5, pad_mode='same')
             self.funs = (self.conv, self.conv2)
+
+        def construct(self, x, index):
+            x = self.funs[index](x)
+            return x
+
+    class NetGrad(nn.Cell):
+        def __init__(self, net):
+            super(NetGrad, self).__init__()
+            self.grad_op = C.GradOperation('grad', get_by_list=True, sens_param=False)
+            self.net = net
+            self.weights = ParameterTuple(self.net.trainable_params())
+
+        def construct(self, x, index):
+            weights = self.weights
+            grad = self.grad_op(self.net, weights)(x, index)
+            return grad
+    net = Net()
+    net2 = NetGrad(net)
+    x = Tensor(np.ones((3, 1, 12, 12)), ms.float32)
+    i = Tensor(1, ms.int32)
+    net2(x, i)
+
+
+def test_switch_layer_single_layer():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.conv = nn.Conv2d(1, 1, 3, pad_mode='same')
+            self.funs = (self.conv,)
 
         def construct(self, x, index):
             x = self.funs[index](x)

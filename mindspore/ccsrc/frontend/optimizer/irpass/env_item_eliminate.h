@@ -462,7 +462,8 @@ class IncorporateEnvGetitemSwitchLayer : public AnfVisitor {
     std::vector<FuncGraphPtr> graphs{};
     auto graphs_cnode = sw->input(2)->cast<CNodePtr>();
     auto &graphs_inputs = graphs_cnode->inputs();
-    if (IsPrimitiveCNode(graphs_cnode, prim::kPrimMakeTuple) && IsValueNode<FuncGraph>(graphs_inputs[1])) {
+    if (IsPrimitiveCNode(graphs_cnode, prim::kPrimMakeTuple) && graphs_inputs.size() >= 2 &&
+        IsValueNode<FuncGraph>(graphs_inputs[1])) {
       (void)std::transform(graphs_inputs.begin() + 1, graphs_inputs.end(), std::back_inserter(graphs),
                            [](const AnfNodePtr &vnode) { return GetValueNode<FuncGraphPtr>(vnode); });
     }

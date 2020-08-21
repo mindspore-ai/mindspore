@@ -16,6 +16,7 @@
 
 #include "abstract/param_validator.h"
 #include "abstract/infer_functions.h"
+#include "abstract/abstract_function.h"
 #include "abstract/utils.h"
 #include "utils/symbolic.h"
 
@@ -121,12 +122,18 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   for (size_t i = 0; i < branches.size(); i++) {
     MS_EXCEPTION_IF_NULL(branches[i]);
     if (!branches[i]->isa<AbstractFunction>()) {
-      MS_LOG(EXCEPTION) << op_name << " requires that the 2th arg be tuple of functions, but got "
-                        << branches[i]->ToString() << " as the " << i << "th element.";
+      MS_EXCEPTION(ValueError) << op_name << " requires that the 2th arg be tuple of functions, but got "
+                               << branches[i]->ToString() << " as the " << i << "th element.";
     }
   }
 
   auto b = branches[0];
+  // Return AbstractFuncUnion, otherwise the switch_layer will be replaced by branches[0]
+  // which will cancel the out of bound checking for index
+  if (branches.size() == 1) {
+    AbstractFuncAtomPtrList func_list{b->cast<AbstractFuncAtomPtr>()};
+    return std::make_shared<AbstractFuncUnion>(func_list);
+  }
   for (size_t i = 1; i < branches.size(); i++) {
     b = b->Join(branches[i]);
   }
