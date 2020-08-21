@@ -16,6 +16,7 @@
 Distribution operation utility functions.
 """
 from .utils import *
+from .custom_ops import *
 
 __all__ = [
     'convert_to_batch',
@@ -27,4 +28,7 @@ __all__ = [
     'check_scalar_from_param',
     'check_prob',
     'check_type',
+    'log_by_step',
+    'log1p_by_step',
+    'expm1_by_step',
 ]

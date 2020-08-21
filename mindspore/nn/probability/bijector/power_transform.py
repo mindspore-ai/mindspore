@@ -17,6 +17,7 @@ from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ..distribution._utils.utils import CheckTensor
+from ..distribution._utils.custom_ops import log_by_step, log1p_by_step, expm1_by_step
 from .bijector import Bijector
 
 class PowerTransform(Bijector):
@@ -59,23 +60,11 @@ class PowerTransform(Bijector):
         self._power = power
         self.pow = P.Pow()
         self.exp = P.Exp()
-        self.log = P.Log()
-        self.log1p = self._log1p_by_step
-        self.expm1 = self._expm1_by_step
+        self.log = log_by_step
+        self.log1p = log1p_by_step
+        self.expm1 = expm1_by_step
 
         self.checktensor = CheckTensor()
-
-    def _log1p_by_step(self, x):
-        """
-        Log1p ops on GPU device or when device_target == GPU.
-        """
-        return self.log(x + 1.0)
-
-    def _expm1_by_step(self, x):
-        """
-        Expm1 ops on GPU device or when device_target == GPU.
-        """
-        return self.exp(x) - 1.0
 
     @property
     def power(self):

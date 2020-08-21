@@ -20,6 +20,7 @@ from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater, check_type, check_distribution_name,\
                           raise_none_error
 from ._utils.utils import CheckTensor, CheckTuple
+from ._utils.custom_ops import log_by_step
 
 class Uniform(Distribution):
     """
@@ -121,7 +122,7 @@ class Uniform(Distribution):
         self.fill = P.Fill()
         self.less = P.Less()
         self.lessequal = P.LessEqual()
-        self.log = P.Log()
+        self.log = log_by_step
         self.logicaland = P.LogicalAnd()
         self.select = P.Select()
         self.shape = P.Shape()

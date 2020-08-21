@@ -21,6 +21,7 @@ from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
 from ._utils.utils import CheckTensor, CheckTuple
+from ._utils.custom_ops import log_by_step
 
 class Exponential(Distribution):
     """
@@ -119,7 +120,7 @@ class Exponential(Distribution):
         self.exp = P.Exp()
         self.fill = P.Fill()
         self.less = P.Less()
-        self.log = P.Log()
+        self.log = log_by_step
         self.select = P.Select()
         self.shape = P.Shape()
         self.sqrt = P.Sqrt()

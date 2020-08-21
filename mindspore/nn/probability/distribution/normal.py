@@ -21,6 +21,7 @@ from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
 from ._utils.utils import CheckTensor, CheckTuple
+from ._utils.custom_ops import log_by_step, expm1_by_step
 
 class Normal(Distribution):
     """
@@ -119,9 +120,9 @@ class Normal(Distribution):
         self.const = P.ScalarToArray()
         self.erf = P.Erf()
         self.exp = P.Exp()
-        self.expm1 = self._expm1_by_step
+        self.expm1 = expm1_by_step
         self.fill = P.Fill()
-        self.log = P.Log()
+        self.log = log_by_step
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
@@ -136,12 +137,6 @@ class Normal(Distribution):
         else:
             str_info = f'batch_shape = {self._broadcast_shape}'
         return str_info
-
-    def _expm1_by_step(self, x):
-        """
-        Expm1 ops under GPU context.
-        """
-        return self.exp(x) - 1.0
 
     def _check_param(self, mean, sd):
         """
