@@ -117,7 +117,7 @@ void GrpcClient::Init(const std::string &host, const std::string &port, const bo
       int dwcaLen = i2d_X509(sk_X509_value(ca, 0), NULL);  // get the length of private key
       unsigned char *cabuf = (unsigned char *)malloc(sizeof(unsigned char) * dwcaLen);
       i2d_X509(sk_X509_value(ca, 0), &cabuf);  // PrivateKey DER code
-      strcat = std::string(reinterpret_cast<char const *>(cabuf), dwcaLen);
+      strca = std::string(reinterpret_cast<char const *>(cabuf), dwcaLen);
 
       free(pribuf);
       free(certbuf);

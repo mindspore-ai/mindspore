@@ -151,35 +151,34 @@ void Debugger::EnableDebugger() {
     MS_LOG(WARNING) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
                        "usage for large models.";
   }
-
-  if (device_target_ == kAscendDevice) {
-    // set operation overflow info
-    overflow_bin_path_ = DataDumpParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
-    // new overflow dump files will have a timestamp greater than last_overflow_bin_
-    last_overflow_bin_ = 0;
-    DIR *d;
-    d = opendir(overflow_bin_path_.c_str());
-    if (d != nullptr) {
-      struct dirent *dir;
-      while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG) {
-          std::string file_path = overflow_bin_path_;
-          file_path.append(dir->d_name);
-          std::size_t found = file_path.find_last_of(".");
-          if (found == std::string::npos) {
-            continue;
-          }
-          std::string overflow_time = file_path.substr(found + 1);
-          if (stod(overflow_time) <= last_overflow_bin_) {
-            MS_LOG(INFO) << "Old op overflow bin folder" << file_path;
-            continue;
-          }
-          last_overflow_bin_ = stod(overflow_time);
+#ifdef ENABLE_D
+  // set operation overflow info
+  overflow_bin_path_ = DataDumpParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
+  // new overflow dump files will have a timestamp greater than last_overflow_bin_
+  last_overflow_bin_ = 0;
+  DIR *d;
+  d = opendir(overflow_bin_path_.c_str());
+  if (d != nullptr) {
+    struct dirent *dir;
+    while ((dir = readdir(d)) != NULL) {
+      if (dir->d_type == DT_REG) {
+        std::string file_path = overflow_bin_path_;
+        file_path.append(dir->d_name);
+        std::size_t found = file_path.find_last_of(".");
+        if (found == std::string::npos) {
+          continue;
         }
+        std::string overflow_time = file_path.substr(found + 1);
+        if (stod(overflow_time) <= last_overflow_bin_) {
+          MS_LOG(INFO) << "Old op overflow bin folder" << file_path;
+          continue;
+        }
+        last_overflow_bin_ = stod(overflow_time);
       }
-      MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
     }
+    MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
   }
+#endif
 
   // initialize grpc client
   if (debugger_enabled_) {
@@ -554,8 +553,9 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints() {
   std::vector<int> condition;
   std::vector<unsigned int> watchpoint_id;
   std::vector<std::string> overflow_ops;
-
+#ifdef ENABLE_D
   overflow_ops = CheckOpOverflow();
+#endif
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, overflow_ops);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {

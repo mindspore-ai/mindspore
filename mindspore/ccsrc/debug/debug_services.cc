@@ -73,6 +73,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
 
   std::string current_tensor_name;
   std::unordered_map<unsigned int, watchpoint_t> watchpoints_to_check_table;
+  const size_t location = 0;
 
   for (std::size_t i = 0; i < tensor_list.size(); i++) {
     current_tensor_name = tensor_list[i]->GetName();
@@ -102,7 +103,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
 
         // check if the current node tensor name is included the watchpoint
         std::string current_node_name = current_tensor_name.substr(0, current_tensor_name.find_first_of(":"));
-        if ((w_type == true && (current_tensor_name.find(w_name) != string::npos || w_name == "*")) ||
+        if ((w_type == true && (current_tensor_name.find(w_name) == location || w_name == "*")) ||
             (w_type == false && current_node_name == w_name)) {
           watchpoints_to_check_table[w_table_item.second.id] = w_table_item.second;
           break;
