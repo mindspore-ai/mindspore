@@ -94,14 +94,16 @@ def train_and_eval(config):
 
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
     callback = LossCallBack(config)
-    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(),
+    # Only save the last checkpoint at the last epoch. For saving epochs at each epoch, please
+    # set save_checkpoint_steps=ds_train.get_dataset_size()
+    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*config.epochs,
                                   keep_checkpoint_max=10)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path, config=ckptconfig)
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
     if int(get_rank()) == 0:
         callback_list.append(ckpoint_cb)
-    model.train(epochs, ds_train, callbacks=callback_list)
+    model.train(epochs, ds_train, callbacks=callback_list, sink_size=ds_train.get_dataset_size())
 
 
 if __name__ == "__main__":

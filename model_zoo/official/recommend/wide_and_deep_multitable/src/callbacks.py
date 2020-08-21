@@ -49,7 +49,7 @@ class LossCallBack(Callback):
                                cb_params.net_outputs[1].asnumpy()
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
         cur_num = cb_params.cur_step_num
-        print("===loss===", cb_params.cur_epoch_num, cur_step_in_epoch, wide_loss, deep_loss, flush=True)
+        print("Status:", cb_params.cur_epoch_num, cur_step_in_epoch, wide_loss, deep_loss, flush=True)
         if self._per_print_times != 0 and cur_num % self._per_print_times == 0:
             loss_file = open(self.config.loss_file_name, "a+")
             loss_file.write(
@@ -91,6 +91,6 @@ class EvalCallBack(Callback):
         end_time = time.time()
         eval_time = int(end_time - start_time)
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        out_str = "{}=====EvalCallBack model.eval(): {} ; eval_time:{}s".format(time_str, out.values(), eval_time)
+        out_str = "{}:EvalCallBack model.eval(): {} ; eval_time:{}s".format(time_str, out.values(), eval_time)
         print(out_str)
         add_write(self.eval_file_name, out_str)
