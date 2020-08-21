@@ -29,11 +29,6 @@ using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
 DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
-  FreeTmpBuffer();
-  FreeQuantParam();
-}
-
-void DeconvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
   if (sliding != nullptr) {
     delete sliding;
     sliding = nullptr;
@@ -42,6 +37,11 @@ void DeconvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
+  FreeTmpBuffer();
+  FreeQuantParam();
+}
+
+void DeconvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
   if (packed_input_ != nullptr) {
     delete packed_input_;
     packed_input_ = nullptr;
@@ -61,18 +61,18 @@ void DeconvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
 int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight: int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
-  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_[kWeightIndex]->Data());
-  int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-  int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->Data());
+  int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
+  int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(packed_weight_, 0, pack_weight_size * sizeof(int16_t));
-  PackDepthwiseInt8Weight(origin_weight, packed_weight_, conv_param_);
+  PackDepthwiseInt8Weight(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
+                          weight_tensor->Batch(), &(conv_param_->conv_quant_arg_));
 
-  // init bias, add output zp
   bias_data_ = reinterpret_cast<int32_t *>(malloc(C4NUM * OC4 * sizeof(int32_t)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -80,9 +80,11 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->Data());
+    memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
+  conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
 }
 
@@ -96,7 +98,6 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
   conv_param_->output_w_ = in_tensors_.front()->shape().at(kNHWC_W);
   conv_param_->output_channel_ = in_tensors_.front()->shape().at(kNHWC_C);
 
-  // init sliding window param
   InitSlidingParamConvDw(sliding, conv_param_, C4NUM);
 
   sliding->in_h_step_ = conv_param_->input_w_ * C4NUM;
@@ -108,11 +109,9 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
-  // malloc packed input buffer
   int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM *
                         UP_DIV(conv_param_->input_channel_, 4);
   packed_input_ = reinterpret_cast<int16_t *>(malloc(pack_input_size * sizeof(int16_t)));
-  memset(packed_input_, 0, pack_input_size * sizeof(int16_t));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -130,7 +129,6 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
     memset(packed_output_, 0, pack_output_size * sizeof(int8_t));
   }
 
-  // malloc tmp buffer for int32 output
   output_buffer_ =
     reinterpret_cast<int32_t *>(malloc(conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * sizeof(int32_t)));
   if (output_buffer_ == nullptr) {
@@ -145,6 +143,21 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::Init() {
+  sliding = new (std::nothrow) SlidingWindowParam;
+  if (sliding == nullptr) {
+    MS_LOG(ERROR) << "new SlidingWindowParam fail!";
+    return RET_ERROR;
+  }
+  auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set quant param failed.";
+    return ret;
+  }
+  ret = InitWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Deconv Depthwise int8 InitWeightBias error!";
+    return ret;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -153,33 +166,10 @@ int DeconvolutionDepthwiseInt8CPUKernel::Init() {
 
 int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
   FreeTmpBuffer();
-
-  sliding = new (std::nothrow) SlidingWindowParam;
-  if (sliding == nullptr) {
-    MS_LOG(ERROR) << "new SlidingWindowParam fail!";
-    return RET_ERROR;
-  }
-
   InitSlideParam();
-
-  // conv base init
   ConvolutionBaseCPUKernel::Init();
 
-  // init quant param
-  auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Set quant param failed.";
-    return ret;
-  }
-
-  // init weight and bias
-  ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Deconv Depthwise int8 InitWeightBias error!";
-    return ret;
-  }
-
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Deconv Depthwise int8 InitBuffer error!";
     return ret;

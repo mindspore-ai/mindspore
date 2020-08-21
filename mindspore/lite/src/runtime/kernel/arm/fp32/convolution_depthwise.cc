@@ -29,18 +29,19 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
-ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() { FreeTmpBuffer(); }
-
-void ConvolutionDepthwiseCPUKernel::FreeTmpBuffer() {
+ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
   if (sliding_ != nullptr) {
     delete sliding_;
     sliding_ = nullptr;
   }
-
   if (packed_weight_ != nullptr) {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
+  FreeTmpBuffer();
+}
+
+void ConvolutionDepthwiseCPUKernel::FreeTmpBuffer() {
   if (need_align_) {
     if (packed_input_ != nullptr) {
       delete packed_input_;
@@ -57,19 +58,17 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
-  int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-  int pack_weight_size = C4NUM * OC4 * conv_param_->kernel_h_ * conv_param_->kernel_w_;
+  int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
+  int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, conv_param_->kernel_h_ * conv_param_->kernel_w_,
-                       conv_param_->output_channel_);
+  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
+                       weight_tensor->Batch());
 
-  // init bias
   bias_data_ = reinterpret_cast<float *>(malloc(C4NUM * OC4 * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -78,16 +77,14 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(float));
+    memcpy(bias_data_, ori_bias, in_tensors_.at(kBiasIndex)->ElementsNum() * sizeof(float));
   }
 
-  // init threadNum;
   conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
 }
 
 int ConvolutionDepthwiseCPUKernel::InitBuffer() {
-  // malloc pack input and output buffer
   if (conv_param_->input_channel_ % C4NUM != 0) {
     need_align_ = true;
     int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
@@ -97,7 +94,6 @@ int ConvolutionDepthwiseCPUKernel::InitBuffer() {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
-    memset(packed_input_, 0, pack_input_size * sizeof(float));
 
     int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
     int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * OC4;
@@ -111,6 +107,17 @@ int ConvolutionDepthwiseCPUKernel::InitBuffer() {
 }
 
 int ConvolutionDepthwiseCPUKernel::Init() {
+  sliding_ = new (std::nothrow) SlidingWindowParam;
+  if (sliding_ == nullptr) {
+    MS_LOG(ERROR) << "new sliding window param failed.";
+    return RET_ERROR;
+  }
+
+  auto ret = InitWeightBias();
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Convolution depthwise fp32 InitWeightBias failed.";
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -119,24 +126,10 @@ int ConvolutionDepthwiseCPUKernel::Init() {
 
 int ConvolutionDepthwiseCPUKernel::ReSize() {
   FreeTmpBuffer();
-  // conv base init
   ConvolutionBaseCPUKernel::Init();
-
-  // init sliding window param
-  sliding_ = new (std::nothrow) SlidingWindowParam;
-  if (sliding_ == nullptr) {
-    MS_LOG(ERROR) << "new sliding window param failed.";
-    return RET_ERROR;
-  }
   InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
 
-  auto ret = InitWeightBias();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitWeightBias failed.";
-    return RET_ERROR;
-  }
-
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
     return RET_ERROR;
@@ -173,7 +166,6 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
 
-  // pack input: to nhwc4
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_addr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);

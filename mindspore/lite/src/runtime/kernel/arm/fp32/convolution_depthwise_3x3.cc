@@ -27,12 +27,41 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
+ConvolutionDepthwise3x3CPUKernel::~ConvolutionDepthwise3x3CPUKernel() {
+  FreeTmpBufer();
+  if (block_buffer_ != nullptr) {
+    free(block_buffer_);
+    block_buffer_ = nullptr;
+  }
+  if (packed_weight_ != nullptr) {
+    free(packed_weight_);
+    packed_weight_ = nullptr;
+  }
+}
+
+void ConvolutionDepthwise3x3CPUKernel::FreeTmpBufer() {
+  if (need_align_) {
+    if (packed_input_ != nullptr) {
+      free(packed_input_);
+      packed_input_ = nullptr;
+    }
+    if (packed_output_ != nullptr) {
+      free(packed_output_);
+      packed_output_ = nullptr;
+    }
+  }
+  if (trans_buffer_ != nullptr) {
+    free(trans_buffer_);
+    trans_buffer_ = nullptr;
+  }
+}
+
 int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
   // o h w 1 -> o/4 h w 1 4
-  int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
+  int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int weight_c4_size = OC4 * C4NUM * 9;
   auto tmp_weight = reinterpret_cast<float *>(malloc(weight_c4_size * sizeof(float)));
   if (tmp_weight == nullptr) {
@@ -40,8 +69,8 @@ int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(tmp_weight, 0, weight_c4_size * sizeof(float));
-  PackNCHWToNC4HW4Fp32(origin_weight, tmp_weight, 1, conv_param_->kernel_h_ * conv_param_->kernel_w_,
-                       conv_param_->output_channel_);
+  PackNCHWToNC4HW4Fp32(origin_weight, tmp_weight, 1, weight_tensor->Height() * weight_tensor->Width(),
+                       weight_tensor->Batch());
 
   // weight transform
   int packed_weight_size = OC4 * C4NUM * 16;
@@ -62,8 +91,9 @@ int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(float));
+    memcpy(bias_data_, ori_bias, in_tensors_.at(kBiasIndex)->ElementsNum() * sizeof(float));
   }
+  conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
 }
 
@@ -106,48 +136,22 @@ int ConvolutionDepthwise3x3CPUKernel::Init() {
     MS_LOG(ERROR) << "malloc block buffer failed.";
     return RET_ERROR;
   }
+  auto ret = InitWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Depthwise3x3 fp32 initWeightBias error!ret: " << ret;
+    return ret;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-void ConvolutionDepthwise3x3CPUKernel::FreeTmpBufer() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      free(packed_output_);
-      packed_output_ = nullptr;
-    }
-  }
-  if (trans_buffer_ != nullptr) {
-    free(trans_buffer_);
-    trans_buffer_ = nullptr;
-  }
-  if (packed_weight_ != nullptr) {
-    free(packed_weight_);
-    packed_weight_ = nullptr;
-  }
-}
-
 int ConvolutionDepthwise3x3CPUKernel::ReSize() {
   FreeTmpBufer();
-
-  // conv base init
   ConvolutionBaseCPUKernel::Init();
 
-  auto ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Depthwise3x3 fp32 initWeightBias error!ret: " << ret;
-    return ret;
-  }
-  // init threadNum;
-  conv_param_->thread_num_ = MSMIN(thread_count_, UP_DIV(conv_param_->output_channel_, C4NUM));
-
-  ret = InitBuffer();
+  auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise3x3 fp32 initBuffer error!ret: " << ret;
     return ret;

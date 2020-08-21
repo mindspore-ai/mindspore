@@ -100,7 +100,8 @@ void PackNCHWToNHWCInt8(const void *src, void *dst, int batch, int plane, int ch
 
 void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter *conv_param);
 
-void PackDepthwiseInt8Weight(const int8_t *src, int16_t *dst, const ConvParameter *conv_param);
+void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
+                             ConvQuantArg *quant_qrg);
 #ifdef __cplusplus
 }
 #endif
