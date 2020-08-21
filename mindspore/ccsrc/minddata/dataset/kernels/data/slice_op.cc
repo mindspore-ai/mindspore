@@ -13,35 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/data/slice_op.h"
 
+#include <functional>
+#include <vector>
+
+#include "minddata/dataset/kernels/data/slice_op.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
+
 Status SliceOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "SliceOp supports 1D Tensors only for now.");
 
-  // if `all` flag is true, output is just the input.
-  if (all_) {
-    *output = input;
-    return Status::OK();
-  }
-
-  // if slice object was provided, indices should be empty. Generate indices from the slice object.
-  if (slice_.valid() && indices_.empty()) {
-    dsize_t len = input->shape()[0];
-    std::vector<dsize_t> indices = slice_.Indices(len);
-    return input->Slice(output, indices);
-  }
-
-  // if indices are not empty, slices should be invalid, use indices_ to slice
-  if (!indices_.empty() && !slice_.valid()) {
-    return input->Slice(output, indices_);
-  }
-  RETURN_STATUS_UNEXPECTED("The indexing parameters are invalid");
+  return input->Slice(output, slice_options_);
 }
+
 }  // namespace dataset
 }  // namespace mindspore

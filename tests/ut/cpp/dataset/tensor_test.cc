@@ -424,12 +424,11 @@ TEST_F(MindDataTestTensorDE, TensorSlice) {
   Tensor::CreateFromVector(std::vector<dsize_t>{0, 1, 2, 3, 4}, &t);
   std::shared_ptr<Tensor> t2;
   auto x = std::vector<dsize_t>{0, 3, 4};
+  std::vector<SliceOption> slice_options = {SliceOption(x)};
   std::shared_ptr<Tensor> expected;
   Tensor::CreateFromVector(x, &expected);
-  t->Slice(&t2, x);
+  t->Slice(&t2, slice_options);
   ASSERT_EQ(*t2, *expected);
-  t->Slice(&t2, std::vector<dsize_t>{0, 1, 2, 3, 4});
-  ASSERT_EQ(*t2, *t);
 }
 
 TEST_F(MindDataTestTensorDE, TensorPartialInsert) {

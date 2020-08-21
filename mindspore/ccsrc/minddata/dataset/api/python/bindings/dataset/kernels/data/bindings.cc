@@ -18,6 +18,7 @@
 #include "pybind11/stl_bind.h"
 
 #include "minddata/dataset/api/python/pybind_register.h"
+#include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/kernels/data/concatenate_op.h"
 #include "minddata/dataset/kernels/data/duplicate_op.h"
 #include "minddata/dataset/kernels/data/fill_op.h"
@@ -61,39 +62,41 @@ PYBIND_REGISTER(PadEndOp, 1, ([](const py::module *m) {
                     .def(py::init<TensorShape, std::shared_ptr<Tensor>>());
                 }));
 
-PYBIND_REGISTER(SliceOp, 1, ([](const py::module *m) {
-                  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp")
-                    .def(py::init<bool>())
-                    .def(py::init([](const py::list &py_list) {
-                      std::vector<dsize_t> c_list;
-                      for (auto l : py_list) {
-                        if (!l.is_none()) {
-                          c_list.push_back(py::reinterpret_borrow<py::int_>(l));
-                        }
-                      }
-                      return std::make_shared<SliceOp>(c_list);
-                    }))
-                    .def(py::init([](const py::tuple &py_slice) {
-                      if (py_slice.size() != 3) {
-                        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
-                      }
+PYBIND_REGISTER(SliceOption, 0, ([](const py::module *m) {
+                  (void)py::class_<SliceOption>(*m, "SliceOption")
+                    .def(py::init([](const py::slice &py_slice) {
                       Slice c_slice;
-                      if (!py_slice[0].is_none() && !py_slice[1].is_none() && !py_slice[2].is_none()) {
-                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice[0]),
-                                        py::reinterpret_borrow<py::int_>(py_slice[1]),
-                                        py::reinterpret_borrow<py::int_>(py_slice[2]));
-                      } else if (py_slice[0].is_none() && py_slice[2].is_none()) {
-                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice[1]));
-                      } else if (!py_slice[0].is_none() && !py_slice[1].is_none()) {
-                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice[0]),
-                                        py::reinterpret_borrow<py::int_>(py_slice[1]));
+                      if (!py_slice.attr("start").is_none() && !py_slice.attr("stop").is_none() &&
+                          !py_slice.attr("step").is_none()) {
+                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice.attr("start")),
+                                        py::reinterpret_borrow<py::int_>(py_slice.attr("stop")),
+                                        py::reinterpret_borrow<py::int_>(py_slice.attr("step")));
+                      } else if (py_slice.attr("start").is_none() && py_slice.attr("step").is_none()) {
+                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice.attr("stop")));
+                      } else if (!py_slice.attr("start").is_none() && !py_slice.attr("stop").is_none()) {
+                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice.attr("start")),
+                                        py::reinterpret_borrow<py::int_>(py_slice.attr("stop")));
                       }
 
                       if (!c_slice.valid()) {
                         THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
                       }
-                      return std::make_shared<SliceOp>(c_slice);
-                    }));
+                      return SliceOption(c_slice);
+                    }))
+                    .def(py::init([](const py::list &py_list) {
+                      std::vector<dsize_t> indices;
+                      for (auto l : py_list) {
+                        indices.push_back(py::reinterpret_borrow<py::int_>(l));
+                      }
+                      return SliceOption(indices);
+                    }))
+                    .def(py::init<bool>())
+                    .def(py::init<SliceOption>());
+                }));
+
+PYBIND_REGISTER(SliceOp, 1, ([](const py::module *m) {
+                  (void)py::class_<SliceOp, TensorOp, std::shared_ptr<SliceOp>>(*m, "SliceOp")
+                    .def(py::init<std::vector<SliceOption>>());
                 }));
 
 PYBIND_REGISTER(ToFloat16Op, 1, ([](const py::module *m) {

@@ -36,6 +36,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"
 #ifndef ENABLE_ANDROID
@@ -369,20 +370,30 @@ class Tensor {
   }
 
   /// Handle negative indices.
+  /// \param[out] out modified index
+  /// \param[in] index
+  /// \param[in] length axis length used to modify index
+  /// \return dsize_t modified index
   static inline dsize_t HandleNeg(dsize_t index, dsize_t length) { return (index < 0) ? (index + length) : index; }
 
-  /// Slice tensor bases on the given indicies. Copy the sliced data into out tensor. Only rank1 tensors are supported.
+  /// Handle negative indices for a vector of indices.
+  /// \param[out] out modified vector of indices
+  /// \param[in] index_vector vector of indices
+  /// \return std::vector<dsize_t> modified vector of indices
+  static inline std::vector<dsize_t> HandleNegIndices(std::vector<dsize_t> index_vector, std::vector<dsize_t> length) {
+    std::vector<dsize_t> indices(index_vector.size(), 0);
+    for (int i = 0; i < index_vector.size(); i++) {
+      indices[i] = HandleNeg(index_vector[i], length[i]);
+    }
+    return indices;
+  }
+
+  /// Slice tensor bases on the given indices. Copy the sliced data into out tensor.
   /// Based on the type of tensor, SliceNumeric or SliceString will be called
   /// \param[out] out Tensor
-  /// \param[in] indices vector of indices
+  /// \param[in] slice_options vector of SliceOption objects
   /// \return Status error code
-  Status Slice(TensorPtr *out, const std::vector<dsize_t> &indices);
-
-  /// Slice numeric tensors.
-  Status SliceNumeric(TensorPtr *out, const std::vector<dsize_t> &indices);
-
-  /// Slice string tensors
-  Status SliceString(TensorPtr *out, const std::vector<dsize_t> &indices);
+  Status Slice(TensorPtr *out, const std::vector<mindspore::dataset::SliceOption> slice_options);
 
 #ifdef ENABLE_PYTHON
   /// Constructs numpy array from input tensor
@@ -662,6 +673,13 @@ class Tensor {
 #ifdef ENABLE_ANDROID
   friend class tensor::DETensor;
 #endif
+
+  /// Slice numeric tensors.
+  Status SliceNumeric(TensorPtr *out, const std::vector<std::vector<dsize_t>> &indices, const TensorShape &shape);
+
+  /// Slice string tensors
+  Status SliceString(TensorPtr *out, const std::vector<std::vector<dsize_t>> &indices, const TensorShape &shape);
+
   /// Copy raw data of a array based on shape and strides to the destination pointer
   /// \param dst [out] Pointer to the destination array where the content is to be copied
   /// \param[in] src Pointer to the source of strided array to be copied
