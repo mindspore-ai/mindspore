@@ -36,6 +36,8 @@ if __name__ == "__main__":
                         help='device where the code will be implemented (default: Ascend)')
     parser.add_argument('--data_path', type=str, default="./Data",
                         help='path where the dataset is saved')
+    parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
+                        path where the trained ckpt file')
     parser.add_argument('--dataset_sink_mode', type=bool, default=True, help='dataset_sink_mode is False or True')
 
     args = parser.parse_args()
@@ -53,7 +55,7 @@ if __name__ == "__main__":
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
+    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", directory=args.ckpt_path, config=config_ck)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     print("============== Starting Training ==============")
