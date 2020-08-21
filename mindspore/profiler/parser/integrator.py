@@ -16,6 +16,7 @@
 import csv
 import json
 import os
+import stat
 from decimal import Decimal
 
 from mindspore import log as logger
@@ -91,6 +92,7 @@ class Integrator:
             self._profiling_dir,
             self._file_name_framework.format(self._device_id)
         )
+        framework_file = validate_and_normalize_path(framework_file)
         if not os.path.isfile(framework_file):
             return
 
@@ -130,6 +132,7 @@ class Integrator:
             self._profiling_dir,
             self._file_name_aicore_detail_time.format(self._device_id)
         )
+        aicore_detail_file = validate_and_normalize_path(aicore_detail_file)
         if not os.path.isfile(aicore_detail_file):
             return
 
@@ -169,6 +172,7 @@ class Integrator:
             self._profiling_dir,
             self._file_name_aicpu_time.format(self._device_id)
         )
+        aicpu_file = validate_and_normalize_path(aicpu_file)
         if not os.path.isfile(aicpu_file):
             return
 
@@ -197,6 +201,7 @@ class Integrator:
             self._profiling_dir,
             self._file_name_aicore_type_time.format(self._device_id)
         )
+        op_type_file_path = validate_and_normalize_path(op_type_file_path)
         if not os.path.isfile(op_type_file_path):
             logger.warning('The file <%s> does not exist.', op_type_file_path)
             return
@@ -217,6 +222,8 @@ class Integrator:
             self._profiling_dir,
             self._file_name_framework.format(self._device_id)
         )
+        op_detail_file_path = validate_and_normalize_path(op_detail_file_path)
+        framework_file_path = validate_and_normalize_path(framework_file_path)
         if not os.path.isfile(op_detail_file_path):
             logger.warning('The file <%s> does not exist.', op_detail_file_path)
             return
@@ -251,6 +258,7 @@ class Integrator:
         if not file_path:
             logger.error("Failed to find parsed trace time file.")
             raise ProfilerFileNotFoundException('parsed step trace time file')
+        file_path = validate_and_normalize_path(file_path)
         with open(file_path, 'r') as handle:
             csv_reader = csv.reader(handle)
             self.__column__ = next(csv_reader)
@@ -261,6 +269,7 @@ class Integrator:
     def _load_point_info(self):
         """Load point info."""
         file_path = os.path.join(self._profiling_dir, 'step_trace_point_info.json')
+        file_path = validate_and_normalize_path(file_path)
         if os.path.isfile(file_path):
             with open(file_path, 'r', encoding='utf-8') as file:
                 try:
@@ -540,6 +549,7 @@ class BaseTimelineGenerator:
                         break
                     json_file.write(',')
                 json_file.write(']')
+                os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error('Error occurred when write timeline display file: %s', err)
             raise ProfilerIOException
@@ -556,6 +566,7 @@ class BaseTimelineGenerator:
         try:
             with open(timeline_summary_file_path, 'w') as json_file:
                 json.dump(self._timeline_summary, json_file)
+            os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error('Error occurred when write timeline summary file: %s', err)
             raise ProfilerIOException

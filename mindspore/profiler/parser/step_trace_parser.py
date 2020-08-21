@@ -25,6 +25,8 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorExc
     JobIdMismatchException, ProfilerIOException
 from mindspore import log
 from mindspore.profiler.common.util import get_summary_for_step_trace
+from mindspore.profiler.common.validator.validate_path import \
+    validate_and_normalize_path
 
 StepTraceStruct = namedtuple(
     'TrainingTraceStruct', ['tag_id', 'task_id', 'stream_id', 'sys_count']
@@ -199,6 +201,7 @@ class StepTraceParser:
         log.info("Start to parse step trace file.")
         event_info = {}
         for source_file in source_files:
+            source_file = validate_and_normalize_path(source_file)
             with open(source_file, 'rb') as handler:
                 content = handler.read()
                 for step_trace in self._get_next_step_trace(content, event_info):

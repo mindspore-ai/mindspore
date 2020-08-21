@@ -18,6 +18,7 @@ import enum
 import json
 import os
 import re
+import stat
 
 from mindspore.profiler.common.exceptions.exceptions import \
     ProfilerPathErrorException, ProfilerDirNotFoundException, \
@@ -447,6 +448,7 @@ class FrameworkParser:
     def _parse_task_files(self):
         """Parse the framework task files."""
         for path in self._framework_path['task']:
+            path = validate_and_normalize_path(path)
             with open(path, 'r') as file:
                 for task_info in file:
                     infos = task_info.strip('\n').split(' ')
@@ -490,6 +492,7 @@ class FrameworkParser:
                 value.append(key)
                 value.extend(none_list)
                 csv_writer.writerow(value)
+        os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _parse_one_row_graph_info(self, row_info):
         """
@@ -591,6 +594,7 @@ class FrameworkParser:
     def _parse_point_files(self):
         """Parse the framework point files."""
         for path in self._framework_path['point']:
+            path = validate_and_normalize_path(path)
             with open(path, 'r') as file:
                 for point_info in file:
                     infos = point_info.strip('\n').split(' ')

@@ -152,11 +152,10 @@ class Profiler:
             # parse hwts.log.data.45.dev file, and get task profiling data
             hwts_output_filename = self._hwts_output_filename_target + self._dev_id + ".txt"
             hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
+            source_path = validate_and_normalize_path(source_path)
+            hwts_output_filename = validate_and_normalize_path(hwts_output_filename)
             hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename)
-            result = hwtslog_parser.execute()
-            if not result:
-                logger.error("Profiling: fail to parse hwts log file.")
-                return
+            _ = hwtslog_parser.execute()
 
             # parse Framework file, and get the relation of op and tasks
             framework_parser = FrameworkParser(job_id, self._dev_id, self._output_path)
@@ -169,6 +168,7 @@ class Profiler:
             # get op compute time from hwts data and framework data, write output_op_compute_time.txt
             opcompute_output_filename = self._opcompute_output_filename_target + self._dev_id + ".txt"
             opcompute_output_filename = os.path.join(self._output_path, opcompute_output_filename)
+            opcompute_output_filename = validate_and_normalize_path(opcompute_output_filename)
             optime_parser = OPComputeTimeParser(
                 hwts_output_filename, opcompute_output_filename,
                 op_task_dict, self._output_path, self._dev_id
@@ -178,6 +178,7 @@ class Profiler:
             # parse DATA_PREPROCESS.dev.AICPU file, write output_data_preprocess_aicpu_x.txt
             output_data_preprocess_aicpu = self._aicpu_op_output_filename_target + self._dev_id + ".txt"
             output_data_preprocess_aicpu = os.path.join(self._output_path, output_data_preprocess_aicpu)
+            output_data_preprocess_aicpu = validate_and_normalize_path(output_data_preprocess_aicpu)
             aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu)
             aicpu_data_parser.execute()
 
@@ -230,10 +231,13 @@ class Profiler:
             self._output_path,
             'step_trace_point_info.json'
         )
+        step_trace_intermediate_file_path = validate_and_normalize_path(step_trace_intermediate_file_path)
+        point_info_file_path = validate_and_normalize_path(point_info_file_path)
         # whether keep the first step
         skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
         point_info = framework_parser.point_info
         # parser the step trace files and save the result to disk
+        source_path = validate_and_normalize_path(source_path)
         parser = StepTraceParser(input_dir=source_path,
                                  output_file_path=step_trace_intermediate_file_path,
                                  job_id=self._job_id_env,
