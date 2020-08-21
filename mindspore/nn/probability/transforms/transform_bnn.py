@@ -61,9 +61,9 @@ class TransformToBNN:
     """
 
     def __init__(self, trainable_dnn, dnn_factor=1, bnn_factor=1):
-        if not isinstance(dnn_factor, (int, float)):
+        if isinstance(dnn_factor, bool) or not isinstance(dnn_factor, (int, float)):
             raise TypeError('The type of `dnn_factor` should be `int` or `float`')
-        if not isinstance(bnn_factor, (int, float)):
+        if isinstance(bnn_factor, bool) or not isinstance(bnn_factor, (int, float)):
             raise TypeError('The type of `bnn_factor` should be `int` or `float`')
 
         net_with_loss = trainable_dnn.network
