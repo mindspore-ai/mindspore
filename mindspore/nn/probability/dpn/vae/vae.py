@@ -22,14 +22,14 @@ from ....layer.basic import Dense
 
 class VAE(Cell):
     r"""
-    Variational auto-encoder (VAE).
+    Variational Auto-Encoder (VAE).
 
     The VAE defines a generative model, `Z` is sampled from the prior, then used to reconstruct `X` by a decoder.
-    see more details in `Auto-Encoding Variational Bayes<https://arxiv.org/abs/1312.6114>`_.
+    see more details in `Auto-Encoding Variational Bayes <https://arxiv.org/abs/1312.6114>`_.
 
     Note:
         When define the encoder and decoder, the shape of the encoder's output tensor and decoder's input tensor
-        should be math:`(N, hidden_size)`.
+        should be :math:`(N, hidden_size)`.
         The latent_size should be less than or equal to the hidden_size.
 
     Args:
@@ -88,13 +88,13 @@ class VAE(Cell):
 
         Args:
             generate_nums (int): The number of samples to generate.
-            shape(tuple): The shape of sample, it should be math:`(generate_nums, C, H, W)` or math:`(-1, C, H, W)`.
+            shape(tuple): The shape of sample, it should be (generate_nums, C, H, W) or (-1, C, H, W).
 
         Returns:
             Tensor, the generated sample.
         """
         generate_nums = check_int_positive(generate_nums)
-        if not isinstance(shape, tuple) or len(shape) != 4 or shape[0] != generate_nums or shape[0] != -1:
+        if not isinstance(shape, tuple) or len(shape) != 4 or (shape[0] != -1 and shape[0] != generate_nums):
             raise ValueError('The shape should be (generate_nums, C, H, W) or (-1, C, H, W).')
         sample_z = self.normal((generate_nums, self.latent_size), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)
         sample = self._decode(sample_z)
