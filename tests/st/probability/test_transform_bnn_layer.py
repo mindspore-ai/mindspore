@@ -142,7 +142,7 @@ if __name__ == "__main__":
     epoch = 100
 
     for i in range(epoch):
-        train_loss, train_acc = train_model(train_bnn_network, network, test_set)
+        train_loss, train_acc = train_model(train_bnn_network, network, train_set)
 
         valid_acc = validate_model(network, test_set)
 
