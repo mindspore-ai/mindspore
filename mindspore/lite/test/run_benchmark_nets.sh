@@ -11,8 +11,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "{run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
 	    run_result='x86: '${model_name}' pass'
 	    echo ${run_result} >> ${run_benchmark_result_file}
@@ -32,8 +32,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
@@ -53,8 +53,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
@@ -74,8 +74,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_posttraining pass'
             echo ${run_result} >> ${run_benchmark_result_file}
@@ -95,8 +95,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1' >> "${run_benchmark_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1 >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_awaretraining pass'
             echo ${run_result} >> ${run_benchmark_result_file}
@@ -116,8 +116,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --accuracyThreshold=1.5 >> "${run_benchmark_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --accuracyThreshold=1.5 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
@@ -498,6 +498,17 @@ rm -rf ${basepath}/benchmark_test
 mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
 cd ${benchmark_test_path} || exit 1
+
+# If build with minddata, copy the minddata related libs
+if [ -f ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/lib/libminddata-lite.so ]; then
+    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_test_path}/libjpeg.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_test_path}/libturbojpeg.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/third_party/opencv/lib/libopencv_core.so ${benchmark_test_path}/libopencv_core.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/third_party/opencv/lib/libopencv_imgcodecs.so ${benchmark_test_path}/libopencv_imgcodecs.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_test_path}/libopencv_imgproc.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+fi
+
 cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
 cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/lib/liboptimize.so ${benchmark_test_path}/liboptimize.so || exit 1
 cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1

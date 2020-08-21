@@ -370,6 +370,7 @@ Status ManifestOp::CountDatasetInfo() {
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status ManifestOp::CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage,
                                   int64_t *count, int64_t *numClasses) {
   // the logic of counting the number of samples is copied from ParseManifestFile()
@@ -412,6 +413,7 @@ Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dic
 
   return Status::OK();
 }
+#endif
 
 // Visitor accept method for NodePass
 Status ManifestOp::Accept(NodePass *p, bool *modified) {

@@ -23,18 +23,23 @@
 #include <vector>
 
 #include "minddata/dataset/util/status.h"
+#ifdef ENABLE_PYTHON
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
+#ifdef ENABLE_PYTHON
 namespace py = pybind11;
+#endif
 
 using WordIdType = int32_t;
 using WordType = std::string;
 
 class Vocab {
  public:
+#ifdef ENABLE_PYTHON
   // Build a vocab from a python dictionary key is each word ,id needs to start from 2, no duplicate and continuous
   // @param const py::dict &words - a dictionary containing word, word id pair.
   // @param std::shared_ptr<Vocab> *vocab - return value, vocab object
@@ -56,6 +61,7 @@ class Vocab {
   // @return error code
   static Status BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
                               const py::list &special_tokens, bool prepend_special, std::shared_ptr<Vocab> *vocab);
+#endif
 
   /// \brief Build a vocab from a c++ map. id needs to start from 2, no duplicate and continuous
   /// \param[in] words An unordered_map containing word, word id pair.

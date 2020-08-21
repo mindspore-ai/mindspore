@@ -59,7 +59,7 @@ add_subdirectory(runtime/kernel/arm)
 if (PLATFORM_ARM32 OR PLATFORM_ARM64)
   target_link_libraries(mindspore-lite log)
 endif ()
-if (BUILD_MINDDATA)
+if (BUILD_MINDDATA STREQUAL "lite")
   target_link_libraries(mindspore-lite minddata-eager minddata-lite)
 endif ()
 

@@ -42,7 +42,7 @@ MSTensor *DETensor::CreateFromMemory(TypeId data_type, const std::vector<int> &s
   std::transform(shape.begin(), shape.end(), std::back_inserter(t_shape),
                  [](int s) -> dataset::dsize_t { return static_cast<dataset::dsize_t>(s); });
 
-  (void)dataset::Tensor::CreateFromMemory(dataset::TensorShape(t_shape), MSTypeToDEType(data_type),
+  (void)dataset::Tensor::CreateFromMemory(dataset::TensorShape(t_shape), dataset::MSTypeToDEType(data_type),
                                           static_cast<uchar *>(data), &t);
   return new DETensor(std::move(t));
 }

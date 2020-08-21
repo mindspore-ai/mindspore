@@ -419,6 +419,7 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                              const py::dict &dict, int64_t *count) {
   if (task_type == "Detection") {
@@ -467,6 +468,8 @@ Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_t
 
   return Status::OK();
 }
+#endif
+
 // Visitor accept method for NodePass
 Status VOCOp::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor

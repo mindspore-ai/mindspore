@@ -78,7 +78,7 @@ class Platform {
 #if defined(SYSTEM_ENV_POSIX)
     platform_ = kPlatformPosix;
 #elif defined(SYSTEM_ENV_POSIX_ANDROID)
-    platform_ = kPlatformPosixAndroid
+    platform_ = kPlatformPosixAndroid;
 #elif defined(SYSTEM_ENV_WINDOWS)
     platform_ = kPlatformWindows;
 #endif

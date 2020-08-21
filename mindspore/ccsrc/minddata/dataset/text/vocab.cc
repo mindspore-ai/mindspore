@@ -31,6 +31,7 @@ WordIdType Vocab::Lookup(const WordType &word) const {
   return itr == word2id_.end() ? kNoTokenExists : itr->second;
 }
 
+#ifdef ENABLE_PYTHON
 Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
                               std::shared_ptr<Vocab> *vocab) {
   // check of duplication on both words and special_tokens will be performed in python
@@ -61,6 +62,7 @@ Status Vocab::BuildFromPyDict(const py::dict &words, std::shared_ptr<Vocab> *voc
   *vocab = std::make_shared<Vocab>(std::move(word2id));
   return Status::OK();
 }
+#endif
 
 void Vocab::append_word(const std::string &word) {
   if (word2id_.find(word) == word2id_.end()) {

@@ -26,7 +26,7 @@ usage()
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
-  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n]"
+  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -50,10 +50,10 @@ usage()
   echo "    -Q Enable dump memory, default off"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
-  echo "    -n Compile minddata lite"
+  echo "    -n Compile minddata with mindspore-lite, available: off, lite, full, default is lite"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
-  echo "    -I Compile lite"
+  echo "    -I Compile mindspore-lite"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
   echo "    -w Enable acl module, default off"
@@ -93,7 +93,7 @@ checkopts()
   ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
   COMPILE_MINDDATA="on"
-  COMPILE_MINDDATA_LITE="off"
+  COMPILE_MINDDATA_LITE="lite"
   ENABLE_MPI="off"
   CUDA_VERSION="10.1"
   COMPILE_LITE="off"
@@ -109,7 +109,7 @@ checkopts()
   ENABLE_GPU="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:EnT:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:Q:D:zM:V:K:swB:En:T:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -117,7 +117,13 @@ checkopts()
         DEBUG_MODE="on"
         ;;
       n)
-        COMPILE_MINDDATA_LITE="on"
+        if [[ "X$OPTARG" == "Xoff" || "X$OPTARG" == "Xlite" || "X$OPTARG" == "Xfull" ]]; then
+          COMPILE_MINDDATA_LITE="$OPTARG"
+        else
+          echo "Invalid value ${OPTARG} for option -n"
+          usage
+          exit 1
+        fi
         ;;
       r)
         DEBUG_MODE="off"
@@ -548,16 +554,16 @@ build_minddata_lite_deps()
 {
   echo "start build minddata lite project"
   if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
-        CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
-              -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang                 \
-              -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-    elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
-        CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
-              -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=armeabi-v7a -DANDROID_TOOLCHAIN_NAME=clang                                     \
-              -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-    else
-        CMAKE_MINDDATA_ARGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-    fi
+      CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
+            -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang                 \
+            -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+  elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
+      CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
+            -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=armeabi-v7a -DANDROID_TOOLCHAIN_NAME=clang                                     \
+            -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+  else
+      CMAKE_MINDDATA_ARGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+  fi
   build_opencv
   build_eigen
   build_jpeg_turbo
@@ -577,7 +583,7 @@ build_lite()
     build_flatbuffer
     build_gtest
 
-    if [ "${COMPILE_MINDDATA_LITE}" == "on" ]; then
+    if [ "${COMPILE_MINDDATA_LITE}" == "lite" ] || [ "${COMPILE_MINDDATA_LITE}" == "full" ]; then
         build_minddata_lite_deps
     fi
 

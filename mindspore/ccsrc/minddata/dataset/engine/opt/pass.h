@@ -63,7 +63,9 @@ class DeviceQueueOp;
 
 class ImageFolderOp;
 
+#ifndef ENABLE_ANDROID
 class CacheOp;
+#endif
 
 class MnistOp;
 
@@ -77,15 +79,19 @@ class CocoOp;
 
 class CelebAOp;
 
+#ifndef ENABLE_ANDROID
 class CacheMergeOp;
 
 class CacheLookupOp;
+#endif
 
 class EpochCtrlOp;
 
 class BuildVocabOp;
 
+#ifndef ENABLE_ANDROID
 class BuildSentencePieceVocabOp;
+#endif
 
 // The base class Pass is the basic unit of tree transformation.
 // The actual implementation of the passes will be derived from here.
@@ -188,7 +194,9 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified);
 
+#ifndef ENABLE_ANDROID
   virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+#endif
 
   virtual Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified);
 
@@ -202,23 +210,31 @@ class NodePass : public Pass {
 
   virtual Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
 
+#ifndef ENABLE_ANDROID
   virtual Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
+#endif
 
   virtual Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
 
+#ifndef ENABLE_ANDROID
   virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
+#endif
 
   virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
 
+#ifndef ENABLE_ANDROID
   virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
+#endif
 
   virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
 
   virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified);
 
+#ifndef ENABLE_ANDROID
   virtual Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified);
+#endif
 
  private:
   // Helper function to perform DFS visit

@@ -124,12 +124,14 @@ TaskManager::TaskManager() try : global_interrupt_(0),
   master_->is_master_ = true;
 #if !defined(_WIN32) && !defined(_WIN64)
   gMyTask = master_.get();
+#if !defined(__ANDROID__) && !defined(ANDROID)
   // Initialize the semaphore for the watchdog
   errno_t rc = sem_init(&sem_, 0, 0);
   if (rc == -1) {
     MS_LOG(ERROR) << "Unable to initialize a semaphore. Errno = " << rc << ".";
     std::terminate();
   }
+#endif
 #endif
 } catch (const std::exception &e) {
   MS_LOG(ERROR) << "MindData initialization failed: " << e.what() << ".";
@@ -145,14 +147,14 @@ TaskManager::~TaskManager() {
     watchdog_grp_ = nullptr;
     watchdog_ = nullptr;
   }
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
   (void)sem_destroy(&sem_);
 #endif
 }
 
 Status TaskManager::DoServiceStart() {
   MS_LOG(INFO) << "Starting Task Manager.";
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
   // Create a watchdog for control-c
   std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
   // A dummy group just for the watchdog. We aren't really using it. But most code assumes a thread must
@@ -181,7 +183,7 @@ Status TaskManager::DoServiceStop() {
 
 Status TaskManager::WatchDog() {
   TaskManager::FindMe()->Post();
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
   errno_t err = sem_wait(&sem_);
   if (err == -1) {
     RETURN_STATUS_UNEXPECTED("Errno = " + std::to_string(errno));

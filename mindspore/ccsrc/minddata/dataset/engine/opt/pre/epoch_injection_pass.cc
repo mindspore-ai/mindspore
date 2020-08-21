@@ -33,6 +33,7 @@ Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildVo
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
 // Performs finder work for BuildSentencePieceVocabOp that has special rules about epoch control injection
 Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node,
                                                          bool *modified) {
@@ -46,6 +47,7 @@ Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<CacheOp
   injection_point_ = nullptr;
   return Status::OK();
 }
+#endif
 
 Status EpochInjectionPass::InjectionFinder::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) {
   // Assumption: There is only one DeviceQueueOp in a pipeline. This assumption is not validated here.

@@ -32,7 +32,9 @@
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
+#endif
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
@@ -200,6 +202,7 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
   return ds->ValidateParams() ? ds : nullptr;
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create a ManifestDataset.
 std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage,
                                           const std::shared_ptr<SamplerObj> &sampler,
@@ -209,6 +212,7 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
+#endif
 
 // Function to create a MnistDataset.
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::shared_ptr<SamplerObj> &sampler) {
@@ -236,6 +240,7 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
   return ds->ValidateParams() ? ds : nullptr;
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create a VOCDataset.
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &mode,
                                 const std::map<std::string, int32_t> &class_indexing, bool decode,
@@ -245,6 +250,7 @@ std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::strin
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
+#endif
 
 // Function to create a ZipDataset.
 std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
@@ -274,6 +280,7 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
   return ds;
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create a Vocab from dataset
 std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &columns,
                                            const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
@@ -304,6 +311,7 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
 
   return vocab;
 }
+#endif
 
 // Function to create a Concat dataset
 std::shared_ptr<ConcatDataset> Dataset::Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
@@ -1266,6 +1274,7 @@ std::vector<std::shared_ptr<DatasetOp>> ImageFolderDataset::Build() {
   return node_ops;
 }
 
+#ifndef ENABLE_ANDROID
 ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::string &usage,
                                  const std::shared_ptr<SamplerObj> &sampler,
                                  const std::map<std::string, int32_t> &class_indexing, bool decode)
@@ -1310,6 +1319,7 @@ std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
   node_ops.push_back(manifest_op);
   return node_ops;
 }
+#endif
 
 MnistDataset::MnistDataset(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), sampler_(sampler) {}
@@ -1465,6 +1475,7 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
   return node_ops;
 }
 
+#ifndef ENABLE_ANDROID
 // Constructor for VOCDataset
 VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &mode,
                        const std::map<std::string, int32_t> &class_indexing, bool decode,
@@ -1542,6 +1553,7 @@ std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
   node_ops.push_back(voc_op);
   return node_ops;
 }
+#endif
 
 // DERIVED DATASET CLASSES LEAF-NODE DATASETS
 // (In alphabetical order)
@@ -1578,6 +1590,7 @@ bool BatchDataset::ValidateParams() {
   return true;
 }
 
+#ifndef ENABLE_ANDROID
 BuildVocabDataset::BuildVocabDataset(std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
                                      const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
                                      const std::vector<std::string> &special_tokens, bool special_first)
@@ -1616,6 +1629,7 @@ bool BuildVocabDataset::ValidateParams() {
   }
   return true;
 }
+#endif
 
 // Function to build ConcatOp
 ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {

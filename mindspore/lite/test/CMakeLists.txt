@@ -163,13 +163,14 @@ if (SUPPORT_GPU)
             )
 endif()
 ### minddata lite
-if (BUILD_MINDDATA)
+if (BUILD_MINDDATA STREQUAL "lite")
     include_directories(${CCSRC_DIR}/minddata)
     set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
     set(TEST_MINDDATA_SRC
                 ${DATASET_TEST_DIR}/de_tensor_test.cc
                 ${DATASET_TEST_DIR}/eager_test.cc
             )
+elseif (BUILD_MINDDATA STREQUAL "full")
 endif()
 ### runtime framework
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
@@ -354,7 +355,7 @@ endif ()
 add_executable(lite-test ${TEST_SRC})
 
 target_link_libraries(lite-test dl ${GTEST_LIBRARY})
-if (BUILD_MINDDATA)
+if (BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(lite-test
            minddata-lite
            minddata-eager
@@ -362,6 +363,10 @@ if (BUILD_MINDDATA)
     if (PLATFORM_ARM32 OR PLATFORM_ARM64)
            target_link_libraries(lite-test log)
     endif()
+elseif(BUILD_MINDDATA STREQUAL "full")
+    if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+           target_link_libraries(lite-test log)
+    endif()     
 endif()
 if (BUILD_CONVERTER)
     target_link_libraries(lite-test
