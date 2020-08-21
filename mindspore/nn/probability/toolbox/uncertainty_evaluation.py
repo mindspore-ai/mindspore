@@ -219,7 +219,7 @@ class EpistemicUncertaintyModel(Cell):
     after Dense layer or Conv layer, then use dropout during train and eval time.
 
     See more details in `Dropout as a Bayesian Approximation: Representing Model uncertainty in Deep Learning
-    <https://arxiv.org/abs/1506.02142>`.
+    <https://arxiv.org/abs/1506.02142>`_.
     """
 
     def __init__(self, epi_model):
@@ -257,7 +257,7 @@ class AleatoricUncertaintyModel(Cell):
     uncertainty, the loss function should be modified in order to add variance into loss.
 
     See more details in `What Uncertainties Do We Need in Bayesian Deep Learning for Computer Vision?
-    <https://arxiv.org/abs/1703.04977>`.
+    <https://arxiv.org/abs/1703.04977>`_.
     """
 
     def __init__(self, ale_model, num_classes, task):
