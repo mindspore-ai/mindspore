@@ -29,7 +29,6 @@ STATUS TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   std::vector<schema::Format> *tensors_format,
                                   std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteReverseParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,6 +40,10 @@ STATUS TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   }
 
   std::unique_ptr<schema::ReverseT> attr = std::make_unique<schema::ReverseT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->axis)) {
     MS_LOG(ERROR) << "get reverse -> axis failed";

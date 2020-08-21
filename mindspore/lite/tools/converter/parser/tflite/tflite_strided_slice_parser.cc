@@ -28,6 +28,7 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
                                        std::vector<int32_t> *tensors_id,
                                        std::vector<schema::Format> *tensors_format,
                                        std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -38,8 +39,12 @@ STATUS TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> 
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
   std::unique_ptr<schema::StridedSliceT> attr = std::make_unique<schema::StridedSliceT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();

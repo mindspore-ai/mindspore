@@ -20,7 +20,14 @@ namespace mindspore {
 namespace lite {
 CaffeNodeParserRegistry::CaffeNodeParserRegistry() {}
 
-CaffeNodeParserRegistry::~CaffeNodeParserRegistry() {}
+CaffeNodeParserRegistry::~CaffeNodeParserRegistry() {
+  for (auto ite : parsers) {
+    if (ite.second != nullptr) {
+      delete ite.second;
+      ite.second = nullptr;
+    }
+  }
+}
 
 CaffeNodeParserRegistry *CaffeNodeParserRegistry::GetInstance() {
   static CaffeNodeParserRegistry instance;

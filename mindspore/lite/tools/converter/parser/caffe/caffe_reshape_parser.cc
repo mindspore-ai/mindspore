@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_reshape_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -23,12 +23,28 @@ STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeReshapeParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   attr->format = schema::Format_NCHW;
 
   const caffe::ReshapeParameter reshapeParam = proto.reshape_param();
   if (!reshapeParam.has_shape()) {
-    // MS_LOGE("Reshape has no shape info, ret fail");
+    MS_LOG(ERROR) << "Reshape has no shape info, ret fail";
     return RET_ERROR;
   }
 
@@ -36,7 +52,8 @@ STATUS CaffeReshapeParser::Parse(const caffe::LayerParameter &proto,
   for (int i = 0; i < blob_shape.dim_size(); i++) {
     attr->shape.push_back(blob_shape.dim(i));
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Reshape;
   op->primitive->value.value = attr.release();
   return RET_OK;

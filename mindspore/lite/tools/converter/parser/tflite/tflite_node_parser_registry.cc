@@ -20,7 +20,14 @@ namespace mindspore {
 namespace lite {
 TfliteNodeParserRegistry::TfliteNodeParserRegistry() {}
 
-TfliteNodeParserRegistry::~TfliteNodeParserRegistry() {}
+TfliteNodeParserRegistry::~TfliteNodeParserRegistry() {
+  for (auto ite : parsers) {
+    if (ite.second != nullptr) {
+      delete ite.second;
+      ite.second = nullptr;
+    }
+  }
+}
 
 TfliteNodeParserRegistry *TfliteNodeParserRegistry::GetInstance() {
   static TfliteNodeParserRegistry instance;

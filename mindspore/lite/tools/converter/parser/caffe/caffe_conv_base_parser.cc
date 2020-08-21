@@ -26,7 +26,8 @@ static const int CAFFE_CONV_BIAS_DIM_NUM = 1;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *pad) {
+STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convParam,
+                                      std::vector<int64_t> *pad) {
   /**
    *  padUp = padH;
    *  padDown = padH;
@@ -35,7 +36,7 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
    */
   if (convParam.has_pad_h() || convParam.has_pad_w()) {
     if (convParam.pad_size() != 0) {
-      MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
+      MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both.";
       return RET_ERROR;
     }
 
@@ -73,7 +74,8 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
   return RET_OK;
 }
 
-STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *stride) {
+STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &convParam,
+                                         std::vector<int64_t> *stride) {
   if (convParam.has_stride_h() || convParam.has_stride_w()) {
     if (convParam.stride_size() != 0) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -117,7 +119,8 @@ STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &co
   return RET_OK;
 }
 
-STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *kernel) {
+STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &convParam,
+                                         std::vector<int64_t> *kernel) {
   if (convParam.has_kernel_h() || convParam.has_kernel_w()) {
     if (convParam.kernel_size_size() != 0) {
       MS_LOG(ERROR) << "Either kernel_size or kernel_h/w should be specified; not both.";
@@ -146,7 +149,8 @@ STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &conv
   return RET_OK;
 }
 
-int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType) {
+int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam,
+                                    const std::string &layerType) {
   // group default 1
   int group = 0;
   if (convParam.has_group()) {

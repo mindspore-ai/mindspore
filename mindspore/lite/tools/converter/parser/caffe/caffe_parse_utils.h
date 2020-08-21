@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
-#define MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
 
 #include <string>
 #include <vector>
 #include "google/protobuf/message.h"
-
 #include "tools/converter/parser/caffe/caffe.pb.h"
 #include "include/errorcode.h"
 #include "mindspore/lite/schema/inner/model_generated.h"
@@ -30,11 +29,13 @@ namespace lite {
 bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded_stream,
                                    google::protobuf::Message *proto);
 
-STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message);
+STATUS ReadProtoFromText(const char *file,
+                         google::protobuf::Message *message);
 
-STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message);
+STATUS ReadProtoFromBinaryFile(const char *file,
+                               google::protobuf::Message *message);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
 

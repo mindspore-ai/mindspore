@@ -30,7 +30,6 @@ STATUS TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &
                                       std::vector<schema::Format> *tensors_format,
                                       std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteBroadcastToParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -42,6 +41,10 @@ STATUS TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &
   }
 
   std::unique_ptr<schema::BroadcastToT> attr = std::make_unique<schema::BroadcastToT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->dst_shape)) {
     MS_LOG(ERROR) << "get broadCastTo -> dst_shape failed";

@@ -23,11 +23,25 @@ STATUS CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto,
                                 const caffe::LayerParameter &weight,
                                 schema::CNodeT *op,
                                 std::vector<schema::TensorT *> *weightVec) {
-  op->name = proto.name();
-  std::unique_ptr<schema::ArgMaxT> attr = std::make_unique<schema::ArgMaxT>();
-  const caffe::ArgMaxParameter argmaxParam = proto.argmax_param();
+  MS_LOG(DEBUG) << "parse CaffeArgMaxParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
 
-  int32_t axisType = 0;
+  std::unique_ptr<schema::ArgMaxT> attr = std::make_unique<schema::ArgMaxT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+  const caffe::ArgMaxParameter argmaxParam = proto.argmax_param();
+  int32_t axisType;
   int32_t axis = 0;
   if (!argmaxParam.has_axis()) {
     axisType = 2;
@@ -35,20 +49,19 @@ STATUS CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto,
     axisType = 1;
     axis = (int64_t)argmaxParam.axis();
     if (axis == -1) {
-      // MS_LOGE("axis with -1 may lead to calculation errors when input less than 4 dims.");
+      MS_LOG(ERROR) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
       return RET_ERROR;
     }
   }
-
   attr->axis = axis;
   attr->axisType = axisType;
   attr->outMaxValue = argmaxParam.out_max_val();
   attr->topK = argmaxParam.top_k();
   attr->keepDims = true;
 
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_ArgMax;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

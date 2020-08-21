@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "mindspore/lite/tools/converter/parser/caffe/caffe_batchnorm_parser.h"
 #include <cmath>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_batchnorm_parser.h"
 #include "tools/common/tensor_util.h"
 
 #define CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT 0.00001
@@ -28,13 +28,29 @@ static const int CAFFE_BATCHNORMAL_TOP_SIZE = 1;
 namespace mindspore {
 namespace lite {
 using STATUS = int;
-STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                   schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  op->name = proto.name();
-  // caffe batch norm attr
-  std::unique_ptr<schema::BatchNormT> attr = std::make_unique<schema::BatchNormT>();
-  const caffe::BatchNormParameter batchNormParam = proto.batch_norm_param();
 
+STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
+                                   const caffe::LayerParameter &weight,
+                                   schema::CNodeT *op,
+                                   std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeBatchNormParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::BatchNormT> attr = std::make_unique<schema::BatchNormT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+  const caffe::BatchNormParameter batchNormParam = proto.batch_norm_param();
   // check bottom size
   if (proto.bottom_size() != CAFFE_BATCHNORMAL_BOTTOM_SIZE) {
     MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "bottom numbers is error, it must be " \
@@ -50,7 +66,8 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
   }
 
   if (batchNormParam.has_eps()) {
-    if (fabs(CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT - batchNormParam.eps()) < CAFFE_BATCH_NORM_ESP_DEFAULT_DIFF_FLOAT) {
+    if (fabs(CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT - batchNormParam.eps())
+        < CAFFE_BATCH_NORM_ESP_DEFAULT_DIFF_FLOAT) {
       attr->epsilon = CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT;
     } else {
       auto tmpAuto = batchNormParam.eps();
@@ -67,7 +84,7 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
   // parse weight gamma
   auto gamma = ConvertWeight(weight.blobs(0));
   if (gamma == nullptr) {
-    // MS_LOGE("Convert blobs(0) for layer %s failed", weight.name().c_str());
+    MS_LOG(ERROR) << "Convert blobs(0) for layer " << weight.name().c_str() << " failed";
     return RET_ERROR;
   }
 
@@ -82,7 +99,7 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
   // parse weight beta
   auto beta = ConvertWeight(weight.blobs(1));
   if (beta == nullptr) {
-    // MS_LOGE("Convert blobs(1) for layer %s failed", weight.name().c_str());
+    MS_LOG(ERROR) << "Convert blobs(1) for layer " << weight.name().c_str() << " failed";
     return RET_ERROR;
   }
 
@@ -94,10 +111,9 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
   estimatedVariance = nullptr;
   weightVec->push_back(beta);
 
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_BatchNorm;
   op->primitive->value.value = attr.release();
-
   return RET_OK;
 }
 

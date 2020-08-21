@@ -40,6 +40,10 @@ STATUS TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
 
   std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   std::vector<std::string> node_name_str;
   Split(op->name.data(), &node_name_str, "-");

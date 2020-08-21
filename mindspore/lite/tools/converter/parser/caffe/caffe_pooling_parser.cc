@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_pooling_parser.h"
-#include "utils/log_adapter.h"
+#include <memory>
 
 const uint32_t INNERPRODUCT_WINDOW_DEFAULT_VALUE = 0;
 const uint32_t INNERPRODUCT_PAD_DEFAULT_VALUE = 0;
@@ -27,32 +26,47 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffePoolingParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   attr->format = schema::Format_NCHW;
 
   const caffe::PoolingParameter poolingParam = proto.pooling_param();
-
   auto status = ParsePads(poolingParam, attr.get());
   if (status != RET_OK) {
-    // MS_LOGE("ParsePads for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
     return RET_ERROR;
   }
 
   status = ParseStrides(poolingParam, attr.get());
   if (status != RET_OK) {
-    // MS_LOGE("ParseStrides for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
     return RET_ERROR;
   }
 
   status = ParseWindows(poolingParam, attr.get());
   if (status != RET_OK) {
-    // MS_LOGE("ParseWindows for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParseWindows for " << proto.name().c_str() << " failed";
     return RET_ERROR;
   }
 
   status = ParsePoolingMode(poolingParam, attr.get());
   if (status != RET_OK) {
-    // MS_LOGE("ParsePoolingMode for %s failed", proto.name().c_str());
+    MS_LOG(ERROR) << "ParsePoolingMode for " << proto.name().c_str() << " failed";
     return RET_ERROR;
   }
 
@@ -67,18 +81,19 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto,
       MS_ASSERT(false);
     }
   }
-
   attr->padMode = schema::PadMode_CAFFE;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Pooling;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam,
+                                     schema::PoolingT *attr) {
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {
-      // MS_LOGE("Either pad or pad_h/w should be specified; not both");
+      MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
       return RET_ERROR;
     }
     attr->padLeft = poolingParam.pad_w();
@@ -94,10 +109,11 @@ STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam,
+                                        schema::PoolingT *attr) {
   if (poolingParam.has_stride_h() && poolingParam.has_stride_w()) {
     if (poolingParam.has_stride()) {
-      // MS_LOGE("Either stride or stride_h/w should be specified; not both");
+      MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
       return RET_ERROR;
     }
     attr->strideH = poolingParam.stride_h();
@@ -109,10 +125,11 @@ STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingPa
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam,
+                                        schema::PoolingT *attr) {
   if (poolingParam.has_global_pooling() && poolingParam.global_pooling()) {
     if (poolingParam.has_kernel_size() || poolingParam.has_kernel_h() || poolingParam.has_kernel_w()) {
-      // MS_LOGE("With Global_pooling: true Filter size cannot specified");
+      MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";
       return RET_ERROR;
     }
     attr->windowH = INNERPRODUCT_WINDOW_DEFAULT_VALUE;
@@ -120,11 +137,11 @@ STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingPa
     attr->global = true;
   } else {
     if (poolingParam.has_kernel_size() == (poolingParam.has_kernel_h() || poolingParam.has_kernel_w())) {
-      // MS_LOGE("Filter size is kernel_size OR kernel_h and kernel_w; not both");
+      MS_LOG(ERROR) << "Filter size is kernel_size OR kernel_h and kernel_w; not both";
       return RET_ERROR;
     }
     if (!poolingParam.has_kernel_size() && !(poolingParam.has_kernel_h() && poolingParam.has_kernel_w())) {
-      // MS_LOGE("For non-square filters both kernel_h and kernel_w are required.");
+      MS_LOG(ERROR) << "For non-square filters both kernel_h and kernel_w are required.";
       return RET_ERROR;
     }
 
@@ -139,13 +156,14 @@ STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingPa
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &poolingParam,
+                                            schema::PoolingT *attr) {
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
     attr->poolingMode = schema::PoolMode_MAX_POOLING;
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
     attr->poolingMode = schema::PoolMode_MEAN_POOLING;
   } else {
-    // MS_LOGE("Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.");
+    MS_LOG(ERROR) << "Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.";
     return RET_ERROR;
   }
   return RET_OK;

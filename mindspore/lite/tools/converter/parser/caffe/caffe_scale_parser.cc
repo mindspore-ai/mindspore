@@ -14,21 +14,38 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_scale_parser.h"
+#include <memory>
 
 const int32_t NCHW_DIM_C = 1;
 const int32_t DIM_DEFAULT_SIZE = 4;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto,
+                               const caffe::LayerParameter &weight,
+                               schema::CNodeT *op,
+                               std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeScaleParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ScaleT> attr = std::make_unique<schema::ScaleT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   if (weight.blobs_size() + weight.bottom_size() < 2) {
-    // MS_LOGE("Scale bottom size:%d, blobs size:%d invalid in layer %s", weight.bottom_size(), weight.blobs_size(),
-    //        weight.name().c_str());
+    MS_LOG(ERROR) << "Scale bottom size:" << weight.bottom_size() << ", blobs size:" << weight.blobs_size()
+                  << " invalid in layer " << weight.name().c_str();
     return RET_ERROR;
   }
 
@@ -37,7 +54,8 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
   if (scaleParam.has_axis()) {
     uint32_t axis_index = NCHW_DIM_C;
     if (GetAxisIndex(scaleParam.axis(), &axis_index)) {
-      // MS_LOGE("scale get axis failed for layer %s.", weight.name().c_str());
+      MS_LOG(ERROR) << "scale get axis failed for layer " << weight.name().c_str();
+      return RET_ERROR;
     }
   }
   attr->axis = axis;
@@ -46,14 +64,14 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
   if (weight.blobs().size() == 1) {
     auto scale = ConvertWeight(weight.blobs(0));
     if (scale == nullptr) {
-      // MS_LOGE("Scale Convert blobs(0) for layer %s failed.", weight.name().c_str());
+      MS_LOG(ERROR) << "Scale Convert blobs(0) for layer " << weight.name().c_str() << " failed.";
       return RET_ERROR;
     }
     weightVec->push_back(scale);
   } else if (weight.blobs().size() >= 2) {
     auto scale = ConvertWeight(weight.blobs(0));
     if (scale == nullptr) {
-      // MS_LOGE("Scale Convert blobs(0) for layer %s failed.", weight.name().c_str());
+      MS_LOG(ERROR) << "Scale Convert blobs(0) for layer " << weight.name().c_str() << " failed.";
       return RET_ERROR;
     }
     weightVec->push_back(scale);
@@ -63,26 +81,27 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
     if (scaleBias) {
       auto bias = ConvertWeight(weight.blobs_size() > 1 ? weight.blobs(1) : weight.blobs(0));
       if (bias == nullptr) {
-        // MS_LOGE("Scale Convert blobs(1) for layer %s failed.", weight.name().c_str());
+        MS_LOG(ERROR) << "Scale Convert blobs(1) for layer " << weight.name().c_str() << " failed.";
         return RET_ERROR;
       }
       weightVec->push_back(bias);
     }
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Scale;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
   if (axis < -DIM_DEFAULT_SIZE || axis >= DIM_DEFAULT_SIZE) {
-    // MS_LOGE("Scale axis value(%d) is not correct, ", axis);
-    return RET_PARAM_INVALID;
+    MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";
+    return RET_ERROR;
   }
 
   if (axis == -1) {
-    // MS_LOGW("axis with -1 may lead to calculation errors when input less than 4 dims.");
+    MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
   }
 
   *axis_index = (axis + DIM_DEFAULT_SIZE) % DIM_DEFAULT_SIZE;

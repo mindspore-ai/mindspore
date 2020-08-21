@@ -14,19 +14,37 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_interp_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto,
+                                const caffe::LayerParameter &weight,
+                                schema::CNodeT *op,
+                                std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeInterpParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   const caffe::InterpParameter interpParam = proto.interp_param();
   if (interpParam.has_height()) {
     int64_t height = interpParam.height();
     if (height < 0) {
-      // MS_LOGE("Interp height must be > 0");
+      MS_LOG(ERROR) << "Interp height must be > 0";
       return RET_ERROR;
     }
     attr->newHeight = height;
@@ -35,17 +53,15 @@ STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe:
   if (interpParam.has_width()) {
     int64_t width = interpParam.width();
     if (width < 0) {
-      // MS_LOGE("Interp width must be > 0");
+      MS_LOG(ERROR) << "Interp width must be > 0";
       return RET_ERROR;
     }
     attr->newWidth = width;
   }
-
   attr->alignCorners = true;
   attr->method = schema::ResizeMethod_BILINEAR;
 
   op->name = proto.name();
-  op->primitive = std::make_unique<schema::PrimitiveT>();
   op->primitive->value.type = schema::PrimitiveType_Resize;
   op->primitive->value.value = attr.release();
   return RET_OK;

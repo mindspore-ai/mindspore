@@ -30,8 +30,6 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
                                           std::vector<schema::Format> *tensors_format,
                                           std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteReverseSequenceParser";
-
-  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -43,6 +41,10 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
   }
 
   std::unique_ptr<schema::ReverseSequenceT> attr = std::make_unique<schema::ReverseSequenceT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsReverseSequenceOptions();
   if (tflite_attr == nullptr) {

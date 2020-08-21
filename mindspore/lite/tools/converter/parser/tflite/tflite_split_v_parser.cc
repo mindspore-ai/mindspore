@@ -28,6 +28,8 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  std::vector<int32_t> *tensors_id,
                                  std::vector<schema::Format> *tensors_format,
                                  std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteSplitVParser";
+
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -38,8 +40,11 @@ STATUS TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
 
-  MS_LOG(DEBUG) << "parse TfliteSplitVParser";
   std::unique_ptr<schema::SplitT> attr = std::make_unique<schema::SplitT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsSplitVOptions();
   if (tflite_attr == nullptr) {

@@ -29,7 +29,6 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
                                   std::vector<schema::Format> *tensors_format,
                                   std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteReshapeParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,6 +40,10 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   }
 
   std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tfliteAttr = tflite_op->builtin_options.AsReshapeOptions();
   if (tfliteAttr == nullptr) {

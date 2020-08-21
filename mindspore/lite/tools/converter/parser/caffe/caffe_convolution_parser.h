@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
-#define MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
 
 #include <vector>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
@@ -28,14 +28,17 @@ class CaffeConvolutionParser : public CaffeNodeParser {
  public:
   CaffeConvolutionParser() : CaffeNodeParser("convolution") {}
 
-  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
+  STATUS Parse(const caffe::LayerParameter &proto,
+               const caffe::LayerParameter &weight,
+               schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
 
  private:
-  void ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *attr);
+  STATUS ParseGroupConvolution(schema::CNodeT *op,
+                               schema::Conv2DT *attr);
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
 

@@ -29,7 +29,6 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
                                      std::vector<schema::Format> *tensors_format,
                                      std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,6 +40,10 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   }
 
   std::unique_ptr<schema::ExpandDimsT> attr = std::make_unique<schema::ExpandDimsT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsExpandDimsOptions();
   if (tflite_attr == nullptr) {
@@ -52,15 +55,6 @@ STATUS TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
 
   MS_LOG(ERROR) << "The attr dim is folded by TFLite.";
   return RET_ERROR;
-
-  /*
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_ExpandDims;
-    op->primitive->value.value = attr.release();
-  }
-  return RET_OK;
-   */
 }
 
 TfliteNodeRegister g_tfliteExpandDimsParser("ExpandDims", new TfliteExpandDimsParser());

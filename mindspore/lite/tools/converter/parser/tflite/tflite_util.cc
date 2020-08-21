@@ -228,7 +228,9 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
   return RET_OK;
 }
 
-void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {
+void Split(const std::string &src_str,
+           std::vector<std::string> *dst_str,
+           const std::string &chr) {
   std::string ::size_type p1 = 0, p2 = src_str.find(chr);
   while (std::string::npos != p2) {
     dst_str->push_back(src_str.substr(p1, p2 - p1));

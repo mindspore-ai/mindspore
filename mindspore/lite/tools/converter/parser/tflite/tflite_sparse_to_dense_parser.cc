@@ -30,7 +30,6 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
                                         std::vector<schema::Format> *tensors_format,
                                         std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteSparseToDenseParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -42,6 +41,10 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
 
   std::unique_ptr<schema::SparseToDenseT> attr = std::make_unique<schema::SparseToDenseT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   attr->validateIndices = false;
 

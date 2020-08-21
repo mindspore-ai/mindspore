@@ -32,6 +32,7 @@ STATUS CaffeInspector::InspectModel(const caffe::NetParameter &proto) {
   SetTopsAndBottoms();
 
   FindInputAndOutput();
+
   return RET_OK;
 }
 

@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_deconvolution_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-void CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, schema::DeConv2DT *attr) {
-  if (attr == nullptr || attr->group == 1) {
-    return;
+STATUS CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op,
+                                                         schema::DeConv2DT *attr) {
+  if (attr->group == 1) {
+    return RET_OK;
   }
 
   std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam
     = std::make_unique<schema::DeDepthwiseConv2DT>();
   if (deDepthwiseConv2DParam == nullptr) {
-    MS_LOG(ERROR) << "new DeDepthwiseConv2DT failed";
-    return;
+    MS_LOG(ERROR) << "new op failed";
+    return RET_ERROR;
   }
   deDepthwiseConv2DParam->format = attr->format;
   deDepthwiseConv2DParam->channelIn = attr->channelOut;
@@ -49,14 +50,30 @@ void CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, schem
   delete attr;
   op->primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
   op->primitive->value.value = deDepthwiseConv2DParam.release();
+  return RET_OK;
 }
-STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                       schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  op->name = proto.name();
-  auto *attr = new schema::DeConv2DT();
-  attr->format = schema::Format_NCHW;
-  const caffe::ConvolutionParameter convParam = proto.convolution_param();
 
+STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
+                                       const caffe::LayerParameter &weight,
+                                       schema::CNodeT *op,
+                                       std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeDeconvolutionParser";
+
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::DeConv2DT> attr(new (std::nothrow) schema::DeConv2DT());
+
+  attr->format = schema::Format_NCHW;
+
+  const caffe::ConvolutionParameter convParam = proto.convolution_param();
   CaffeConvBaseParser convParser;
   // parse pad
   std::vector<int64_t> pad(4, 0);
@@ -118,13 +135,21 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
     attr->channelIn = weightBlob.num() * attr->group;
   }
   attr->padMode = schema::PadMode_CAFFE;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_DeConv2D;
-  op->primitive->value.value = attr;
-  ParseGroupDeconvolution(op, attr);
+  op->primitive->value.value = attr.get();
+
+  status = ParseGroupDeconvolution(op, attr.release());
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Parse group deconvolution failed";
+    return RET_ERROR;
+  }
+
   status = convParser.ParseWeight(weight, weightVec);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseWeight for " << proto.name().c_str() << " failed";
+    return RET_ERROR;
   }
 
   return status;

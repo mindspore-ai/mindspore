@@ -31,10 +31,9 @@ CaffeModelParser::~CaffeModelParser() {}
 
 const std::set<std::string> CaffeModelParser::skipedLayerType = {"Dropout"};
 
-schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile, const std::string &weightFile,
+schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile,
+                                            const std::string &weightFile,
                                             const QuantType &quantType) {
-  // std::unique_ptr<schema::MetaGraphT> graph = std::make_unique<schema::MetaGraphT>();
-
   if (ValidateFileStr(modelFile, ".prototxt") != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.prototxt";
     return nullptr;
@@ -78,38 +77,35 @@ schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile, const 
     return nullptr;
   }
 
-  // set inputTensor index and outputTensor index for the whole graph
   status = SetGraphTensorIndex(proto, &tensorCache, subGraphDef.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Set inputTensor index and outputTensor index for graph failed!";
     return nullptr;
   }
   subGraphDef->name = GetModelName(modelFile);
-  // set all tensors to graph
-  SetAllTensors(tensorCache, subGraphDef.get());
-  // graph = move(subGraphDef);
 
-  // ConvertCaffeBatchNorm(graph.get());
+  SetAllTensors(tensorCache, subGraphDef.get());
 
   return subGraphDef.release();
-  //  return Fb2Anf(graph.release());
 }
 
-STATUS CaffeModelParser::SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op,
+STATUS CaffeModelParser::SetOpInputIdx(const caffe::LayerParameter &layer,
+                                       schema::CNodeT *op,
                                        TensorCache *tensorCache) {
   for (int i = 0; i < layer.bottom_size(); i++) {
     int index = tensorCache->FindTensor(layer.bottom(i));
     if (index >= 0) {
       op->inputIndex.emplace_back(index);
     } else {
-      // MS_LOGE("Can't find input layer for %s.", layer.name().c_str());
+      MS_LOG(ERROR) << "Can't find input layer for " << layer.name().c_str();
       return RET_ERROR;
     }
   }
   return RET_OK;
 }
 
-STATUS CaffeModelParser::SetOpOutputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op,
+STATUS CaffeModelParser::SetOpOutputIdx(const caffe::LayerParameter &layer,
+                                        schema::CNodeT *op,
                                         TensorCache *tensorCache) {
   for (int i = 0; i < layer.top_size(); i++) {
     std::unique_ptr<schema::TensorT> msTensor = std::make_unique<schema::TensorT>();
@@ -118,7 +114,8 @@ STATUS CaffeModelParser::SetOpOutputIdx(const caffe::LayerParameter &layer, sche
   return RET_OK;
 }
 
-STATUS CaffeModelParser::SetWeightTensor(const std::vector<schema::TensorT *> &weightVec, schema::CNodeT *op,
+STATUS CaffeModelParser::SetWeightTensor(const std::vector<schema::TensorT *> &weightVec,
+                                         schema::CNodeT *op,
                                          TensorCache *tensorCache) {
   for (auto iter : weightVec) {
     op->inputIndex.emplace_back(tensorCache->AddTensor("Weight", iter, CONST));
@@ -126,7 +123,8 @@ STATUS CaffeModelParser::SetWeightTensor(const std::vector<schema::TensorT *> &w
   return RET_OK;
 }
 
-STATUS CaffeModelParser::SetAllTensors(const TensorCache &tensorCache, schema::MetaGraphT *subGraphDef) {
+STATUS CaffeModelParser::SetAllTensors(const TensorCache &tensorCache,
+                                       schema::MetaGraphT *subGraphDef) {
   std::vector<schema::TensorT *> tensors = tensorCache.GetCachedTensor();
   for (auto iter : tensors) {
     std::unique_ptr<schema::TensorT> temp(iter);
@@ -135,7 +133,8 @@ STATUS CaffeModelParser::SetAllTensors(const TensorCache &tensorCache, schema::M
   return RET_OK;
 }
 
-STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto, TensorCache *tensorCache,
+STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto,
+                                             TensorCache *tensorCache,
                                              schema::MetaGraphT *subGraphDef) {
   CaffeInspector caffeInspector;
   caffeInspector.InspectModel(proto);
@@ -144,7 +143,7 @@ STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto, T
     if (index >= 0) {
       subGraphDef->inputIndex.emplace_back(index);
     } else {
-      // MS_LOGE("Can't find input tensor layer for graph.");
+      MS_LOG(ERROR) << "Can't find input tensor layer for graph.";
       return RET_ERROR;
     }
   }
@@ -154,15 +153,17 @@ STATUS CaffeModelParser::SetGraphTensorIndex(const caffe::NetParameter &proto, T
     if (index >= 0) {
       subGraphDef->outputIndex.emplace_back(index);
     } else {
-      // MS_LOGE("Can't find output tensor layer for graph.");
+      MS_LOG(ERROR) << "Can't find output tensor layer for graph.";
       return RET_ERROR;
     }
   }
   return RET_OK;
 }
 
-STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caffe::NetParameter &weight,
-                                    TensorCache *tensorCache, schema::MetaGraphT *subGraphDef) {
+STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto,
+                                    const caffe::NetParameter &weight,
+                                    TensorCache *tensorCache,
+                                    schema::MetaGraphT *subGraphDef) {
   for (int i = 0; i < proto.layer_size(); i++) {
     auto layer = proto.layer(i);
 
@@ -192,11 +193,10 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       std::unique_ptr<schema::CNodeT> op = std::make_unique<schema::CNodeT>();
       op->name = layer.name();
 
-      // set op input index
       auto status = SetOpInputIdx(layer, op.get(), tensorCache);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Input Index Failed!";
-        return status;
+        return RET_ERROR;
       }
 
       auto nodeParser = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type().c_str());
@@ -209,16 +209,15 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       status = nodeParser->Parse(layer, layerP, op.get(), &weightVec);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Parse weight for " << layer.name() << " Failed!";
-        return status;
+        return RET_ERROR;
       }
-      // set op weight tensor to tensorcache
+
       SetWeightTensor(weightVec, op.get(), tensorCache);
 
-      // set op output index
       status = SetOpOutputIdx(layer, op.get(), tensorCache);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Output Index Failed!";
-        return status;
+        return RET_ERROR;
       }
 
       // op->fmkType = FmkType_CAFFE;
@@ -228,7 +227,8 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
   return RET_OK;
 }
 
-STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto, TensorCache *tensorCache) {
+STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto,
+                                       TensorCache *tensorCache) {
   for (int i = 0; i < proto.input_size(); i++) {
     if (proto.input_dim_size() <= 0) {
       continue;
@@ -253,52 +253,6 @@ STATUS CaffeModelParser::GetModelInput(const caffe::NetParameter &proto, TensorC
     tensorCache->AddTensor(proto.input(i), msTensor.release(), GRAPH_INPUT);
   }
   return RET_OK;
-}
-
-void CaffeModelParser::ConvertCaffeBatchNorm(schema::MetaGraphT *meta_graph) {
-  MS_ASSERT(meta_graph != nullptr);
-  auto &nodes = meta_graph->nodes;
-  for (auto &node : nodes) {
-    if (node->primitive->value.type != schema::PrimitiveType_FusedBatchNorm) {
-      continue;
-    }
-    MS_ASSERT(node->inputIndex.size() == 2);
-    MS_ASSERT(node->inputIndex.back() < meta_graph->allTensors.size());
-    auto &meanTensor = meta_graph->allTensors.at(node->inputIndex.back());
-    MS_ASSERT(nullptr != meanTensor);
-    auto shape = meanTensor->dims;
-    auto shapeSize = GetShapeSize(shape);
-
-    auto scaleTensor = std::make_unique<schema::TensorT>();
-    scaleTensor->dims = shape;
-    scaleTensor->nodeType = NodeType_ValueNode;
-    scaleTensor->refCount = 1;
-    scaleTensor->format = schema::Format_NUM_OF_FORMAT;
-    scaleTensor->dataType = TypeId::kNumberTypeFloat32;
-    scaleTensor->data.resize(shapeSize * sizeof(float));
-    auto scaleData = reinterpret_cast<float *>(scaleTensor->data.data());
-    for (size_t i = 0; i < shapeSize; i++) {
-      scaleData[i] = 1;
-    }
-
-    auto biasTensor = std::make_unique<schema::TensorT>();
-    biasTensor->dims = shape;
-    biasTensor->nodeType = NodeType_ValueNode;
-    biasTensor->refCount = 1;
-    biasTensor->format = schema::Format_NUM_OF_FORMAT;
-    biasTensor->dataType = TypeId::kNumberTypeInt32;
-    biasTensor->data.resize(shapeSize * sizeof(int32_t));
-    auto biasData = reinterpret_cast<int32_t *>(biasTensor->data.data());
-    for (size_t i = 0; i < shapeSize; i++) {
-      biasData[i] = 0;
-    }
-
-    node->inputIndex.insert(node->inputIndex.begin() + 1, meta_graph->allTensors.size());
-    meta_graph->allTensors.emplace_back(std::move(biasTensor));
-
-    node->inputIndex.insert(node->inputIndex.begin() + 1, meta_graph->allTensors.size());
-    meta_graph->allTensors.emplace_back(std::move(scaleTensor));
-  }
 }
 }  // namespace lite
 }  // namespace mindspore

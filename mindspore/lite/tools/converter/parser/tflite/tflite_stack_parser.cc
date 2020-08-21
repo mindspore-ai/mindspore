@@ -29,7 +29,6 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 std::vector<schema::Format> *tensors_format,
                                 std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteStackParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,6 +40,11 @@ STATUS TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   }
 
   std::unique_ptr<schema::StackT> attr = std::make_unique<schema::StackT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   const auto &tflite_attr = tflite_op->builtin_options.AsPackOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";

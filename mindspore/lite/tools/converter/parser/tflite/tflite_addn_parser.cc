@@ -30,8 +30,6 @@ STATUS TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
                                std::vector<schema::Format> *tensors_format,
                                std::map<int, int>  *tensors_id_map)  {
   MS_LOG(DEBUG) << "parse TfliteAddNParser";
-
-  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -43,12 +41,15 @@ STATUS TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
   }
 
   std::unique_ptr<schema::AddNT> attr = std::make_unique<schema::AddNT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   attr->N = tflite_tensors.size() - 1;
   op->primitive->value.type = schema::PrimitiveType_AddN;
   op->primitive->value.value = attr.release();
 
-  // set input
   for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
     AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
                tflite_op->inputs[i], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);

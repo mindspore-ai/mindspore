@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_concat_parser.h"
+#include <memory>
 
 const int32_t CONCAT_DEFAULT_AXIS = 1;
 
@@ -25,33 +25,48 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto,
                                 const caffe::LayerParameter &weight,
                                 schema::CNodeT *op,
                                 std::vector<schema::TensorT *> *weightVec) {
-  op->name = proto.name();
+  MS_LOG(DEBUG) << "parse CaffeConcatParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   const caffe::ConcatParameter concatParam = proto.concat_param();
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
-    // MS_LOGE("Concat param in caffe have concat_dim and axis simultaneously,return fail");
+    MS_LOG(ERROR) << "Concat param in caffe have concat_dim and axis simultaneously, return fail";
     return RET_ERROR;
   }
 
   if (concatParam.has_concat_dim()) {
-    // MS_LOGD("Concat dim , set axis:%d", concatParam.concat_dim());
+    MS_LOG(DEBUG) << "Concat dim , set axis: " << concatParam.concat_dim();
     int32_t concat_dim_value = (int32_t)concatParam.concat_dim();
     if (concat_dim_value < 0) {
-      // MS_LOGE("concat_dim value in model is smaller than 0:%d", concat_dim_value);
+      MS_LOG(ERROR) << "concat_dim value in model is smaller than 0:" << concat_dim_value;
       return RET_ERROR;
     }
     attr->axis = concat_dim_value;
   } else if (concatParam.has_axis()) {
-    // MS_LOGD("axis , set axis:%d", concatParam.axis());
+    MS_LOG(DEBUG) << "axis , set axis: " << concatParam.axis();
     int32_t tmpInt = (int32_t)concatParam.axis();
     attr->axis = tmpInt;
   } else {
-    // MS_LOGD("default , set axis:%d", CONCAT_DEFAULT_AXIS);
+    MS_LOG(DEBUG) << "default , set axis: " << CONCAT_DEFAULT_AXIS;
     attr->axis = CONCAT_DEFAULT_AXIS;
   }
-
   attr->n = proto.bottom_size();
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Concat;
   op->primitive->value.value = attr.release();
   return RET_OK;
