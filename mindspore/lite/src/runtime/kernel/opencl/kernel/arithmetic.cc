@@ -122,7 +122,9 @@ int ArithmeticOpenCLKernel::Init() {
   if (error_code != RET_OK) {
     return error_code;
   }
-  ori_format_ = out_tensors_[0]->GetFormat();
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_ori_format_ = out_tensors_[0]->GetFormat();
   out_tensors_[0]->SetFormat(schema::Format_NHWC4);
   Image2dGetWorkGroupSize();
   return RET_OK;

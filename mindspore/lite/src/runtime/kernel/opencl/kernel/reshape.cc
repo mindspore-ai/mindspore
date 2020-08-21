@@ -43,8 +43,14 @@ int ReshapeOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC);
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  if (out_tensors_[0]->shape().size() == 2) {
+    out_ori_format_ = schema::Format_NC;
+    out_tensors_[0]->SetFormat(schema::Format_NC4);
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }

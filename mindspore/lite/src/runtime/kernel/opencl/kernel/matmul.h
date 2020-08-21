@@ -23,11 +23,6 @@
 #include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
-#ifdef ENABLE_FP16
-using FLOAT_T = float16_t;
-#else
-using FLOAT_T = float;
-#endif
 
 namespace mindspore::kernel {
 
@@ -44,11 +39,12 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   int ReSize() override;
   int Run() override;
   void PadWeight();
+  int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
   cl::Kernel kernel_;
-  FLOAT_T *padWeight_;
-  FLOAT_T *bias_;
+  FLOAT_t *padWeight_;
+  FLOAT_t *bias_;
   bool hasBias_ = false;
   cl_int2 sizeCI;
   cl_int2 sizeCO;

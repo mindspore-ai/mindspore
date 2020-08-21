@@ -49,17 +49,13 @@ int TransposeOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  auto input_format = in_tensors_[0]->GetFormat();
-  if (input_format != schema::Format_NHWC4) {
-    MS_LOG(ERROR) << "input format(" << input_format << ") "
-                  << "format not support!";
-    return RET_ERROR;
-  }
   if ((in_tensors_[0]->Height() * in_tensors_[0]->Width()) % 4 != 0) {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
     return RET_ERROR;
   }
-  ori_format_ = schema::Format_NCHW;
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_ori_format_ = schema::Format_NCHW;
   out_tensors_[0]->SetFormat(schema::Format_NCHW);
   if (!is_image_out_) {
     out_mem_type_ = OpenCLMemType::BUF;
