@@ -122,6 +122,8 @@ class NcclGpuKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     nccl_data_type_ = kNcclDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    InferCommType(kernel_node);
+
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
@@ -130,7 +132,7 @@ class NcclGpuKernel : public GpuKernel {
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
       }
-      size_t aligned_size = AlignMemorySize(size);
+      size_t aligned_size = (nccl_kernel_type_ != NCCL_ALL_REDUCE) ? size : AlignMemorySize(size);
       input_size_list_.push_back(aligned_size);
       input_size_ += aligned_size;
     }
@@ -140,12 +142,11 @@ class NcclGpuKernel : public GpuKernel {
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
       }
-      size_t aligned_size = AlignMemorySize(size);
+      size_t aligned_size = (nccl_kernel_type_ != NCCL_ALL_REDUCE) ? size : AlignMemorySize(size);
       output_size_list_.push_back(aligned_size);
       output_size_ += aligned_size;
     }
 
-    InferCommType(kernel_node);
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     MS_LOG(INFO) << AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
     auto comm_stream_attr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stream_id");

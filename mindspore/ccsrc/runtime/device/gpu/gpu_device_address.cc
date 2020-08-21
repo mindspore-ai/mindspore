@@ -40,8 +40,8 @@ bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, T
     return ret;
   }
   if (size != size_) {
-    // nccl kernel input and outpu memory size is aligned, may lead to sync memory size is inconformity
-    MS_LOG(INFO) << "Sync memory size is inconformity, host size: " << size << ", device size " << size_;
+    // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
+    MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
   }
   return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, ptr_, size);
 }
@@ -51,8 +51,8 @@ bool GPUDeviceAddress::SyncHostToDevice(const std::vector<int> &, size_t size, T
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   if (size != size_) {
-    // nccl kernel input and outpu memory size is aligned, may lead to sync memory size is inconformity
-    MS_LOG(INFO) << "Sync memory size is inconformity, host size: " << size << ", device size " << size_;
+    // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
+    MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
   }
   if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
     MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
