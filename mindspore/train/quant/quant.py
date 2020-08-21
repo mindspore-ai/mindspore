@@ -314,8 +314,8 @@ class ExportToQuantInferNetwork:
         network = validator.check_isinstance('network', network, (nn.Cell,))
         # quantize for inputs: q = f / scale + zero_point
         # dequantize for outputs: f = (q - zero_point) * scale
-        self.input_scale = round(mean)
-        self.input_zero_point = 1 / std_dev
+        self.input_scale = 1 / std_dev
+        self.input_zero_point = round(mean)
         self.data_type = mstype.int8
         self.network = copy.deepcopy(network)
         self.all_parameters = {p.name: p for p in self.network.get_parameters()}
@@ -351,20 +351,16 @@ class ExportToQuantInferNetwork:
             else:
                 maxq = self.all_parameters[minq_name[:-4] + "maxq"]
                 minq = self.all_parameters[minq_name]
-                scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, maxq, minq, np_type)
+                scale_a_in, zp_a_in = quant_utils.scale_zp_from_data(fack_quant_a_in_op, minq, maxq, np_type)
         else:
             logger.warning(f"Do not find `fake_quant` from input with `fake_quant.minq` {w_minq_name}")
             return None
 
         # Build the `Quant` `Dequant` op.
         # Quant only support perlayer version. Need check here.
-        quant_op = inner.Quant(float(scale_a_in), float(zp_a_in))
-        sqrt_mode = False
+        quant_op = inner.Quant(1 / float(scale_a_in), float(zp_a_in))
         scale_deq = scale_a_out * scale_w
-        if (scale_deq < 2 ** -14).all():
-            scale_deq = np.sqrt(scale_deq)
-            sqrt_mode = True
-        dequant_op = inner.Dequant(sqrt_mode)
+        dequant_op = inner.Dequant()
 
         if isinstance(activation, _AddFakeQuantAfterSubCell):
             activation = activation.subcell
@@ -385,8 +381,19 @@ class ExportToQuantInferNetwork:
         # apply the quant
         weight = quant_utils.weight2int(weight, scale_w, zp_w)
         if bias is not None:
-            bias = Tensor(scale_a_in * scale_w * bias, mstype.int32)
-        scale_deq = Tensor(scale_deq, mstype.float16)
+            bias = Tensor(bias / scale_a_in / scale_w, mstype.int32)
+
+        # fuse parameter
+        # |--------|47:40|--------|39:32|--------|31:0|
+        #         offset_w [8]    shift_N [8]    deq_scale [32]
+        float32_deq_scale = scale_deq.astype(np.float32)
+        uint32_deq_scale = np.frombuffer(float32_deq_scale, np.uint32)
+        scale_length = scale_deq.size  # channel
+        dequant_param = np.zeros(scale_length, dtype=np.uint64)
+        for index in range(scale_length):
+            dequant_param[index] += uint32_deq_scale[index]
+
+        scale_deq = Tensor(dequant_param, mstype.uint64)
         # get op
         if isinstance(cell_core, quant.DenseQuant):
             op_core = P.MatMul()
