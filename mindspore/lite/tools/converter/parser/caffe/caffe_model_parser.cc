@@ -190,6 +190,14 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto,
         continue;
       }
 
+      // here we only process the bn with phase
+      if (layer.type() == "BatchNorm" && layer.include_size() == 1) {
+        if (layer.include(0).phase() == caffe::TRAIN) {
+          MS_LOG(INFO) << "Skip layer " << layer.name();
+          continue;
+        }
+      }
+
       std::unique_ptr<schema::CNodeT> op = std::make_unique<schema::CNodeT>();
       op->name = layer.name();
 
