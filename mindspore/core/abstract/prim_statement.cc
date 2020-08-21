@@ -114,14 +114,14 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
   AbstractBasePtrList branches = branches_abs->elements();
   const size_t maximum_layer_num = 1000;
-  if (branches.size() < 0 || branches.size() > maximum_layer_num) {
+  if (branches.size() < 1 || branches.size() > maximum_layer_num) {
     MS_EXCEPTION(ValueError) << op_name << " support at least 1 and at most " << maximum_layer_num << " but got "
                              << branches.size() << " branches.";
   }
 
   for (size_t i = 0; i < branches.size(); i++) {
     MS_EXCEPTION_IF_NULL(branches[i]);
-    if (!branches[i]->isa<AbstractFunction>()) {
+    if (!branches[i]->isa<FuncGraphAbstractClosure>()) {
       MS_EXCEPTION(ValueError) << op_name << " requires that the 2th arg be tuple of functions, but got "
                                << branches[i]->ToString() << " as the " << i << "th element.";
     }
