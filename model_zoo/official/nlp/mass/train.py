@@ -187,12 +187,12 @@ def _build_training_pipeline(config: TransformerConfig,
         raise ValueError(f"optimizer only support `adam` and `momentum` now.")
 
     # loss scale.
-    if platform == "Ascend":
+    if config.loss_scale_mode == "dynamic":
         scale_manager = DynamicLossScaleManager(init_loss_scale=config.init_loss_scale,
                                                 scale_factor=config.loss_scale_factor,
                                                 scale_window=config.scale_window)
     else:
-        scale_manager = FixedLossScaleManager(loss_scale=1.0, drop_overflow_update=True)
+        scale_manager = FixedLossScaleManager(loss_scale=config.init_loss_scale, drop_overflow_update=True)
     net_with_grads = TransformerTrainOneStepWithLossScaleCell(network=net_with_loss, optimizer=optimizer,
                                                               scale_update_cell=scale_manager.get_update_cell())
     net_with_grads.set_train(True)

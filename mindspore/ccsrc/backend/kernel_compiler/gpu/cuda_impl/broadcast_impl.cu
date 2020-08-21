@@ -78,7 +78,9 @@ struct AddFunc {
 
 template <typename T, typename S>
 struct FloorDivFunc {
-  __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) { return floor(static_cast<float>(lhs / rhs)); }
+  __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) {
+    return floor(static_cast<float>(lhs) / static_cast<float>(rhs));
+  }
 };
 
 template <>

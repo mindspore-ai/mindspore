@@ -2,8 +2,8 @@
 
 <!-- TOC -->
 
-- [MASS: Masked Sequence to Sequence Pre-training for Language Generation Description](#googlenet-description)
-- [Model architecture](#model-architecture)
+- [MASS: Masked Sequence to Sequence Pre-training for Language Generation Description](#mass-description)
+- [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
 - [Script description](#script-description)
@@ -19,11 +19,6 @@
     - [Training & Evaluation process](#Training-&-Evaluation-process)
     - [Weights average](#Weights-average)
     - [Learning rate scheduler](#Learning-rate-scheduler)
-- [Model description](#model-description)
-    - [Performance](#performance)
-        - [Results](#results)
-            - [Training Performance](#training-performance)
-            - [Inference Performance](#inference-performance)
 - [Environment Requirements](#environment-requirements)
     - [Platform](#Platform)
     - [Requirements](#Requirements)
@@ -31,6 +26,10 @@
     - [Pre-training](#Pre-training)
     - [Fine-tuning](#Fine-tuning)
     - [Inference](#Inference)
+- [Performance](#performance)
+    - [Results](#results)
+        - [Training Performance](#training-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of random situation](#description-of-random-situation)
 - [others](#others)
 - [ModelZoo Homepage](#modelzoo-homepage)
@@ -50,12 +49,13 @@ Inspired by BERT, GPT and other language models, MicroSoft addressed [MASS: Mask
 
 [Paper](https://www.microsoft.com/en-us/research/uploads/prod/2019/06/MASS-paper-updated-002.pdf): Song, Kaitao, Xu Tan, Tao Qin, Jianfeng Lu and Tie-Yan Liu. “MASS: Masked Sequence to Sequence Pre-training for Language Generation.” ICML (2019).
 
+# Model Architecture
 
-# Model architecture
-
-The overall network architecture of MASS is shown below, which is Transformer(Vaswani et al., 2017):
-
-MASS is consisted of 6-layer encoder and 6-layer decoder with 1024 embedding/hidden size, and 4096 intermediate size between feed forward network which has two full connection layers.
+The MASS network is implemented by Transformer, which has multi-encoder layers and multi-decoder layers. 
+For pre-training, we use the Adam optimizer and loss-scale to get the pre-trained model. 
+During fine-turning, we fine-tune this pre-trained model with different dataset according to different tasks. 
+During testing, we use the fine-turned model to predict the result, and adopt a beam search algorithm to 
+get the most possible prediction results.
 
 # Dataset
 
@@ -465,86 +465,18 @@ For Inverse square root scheduler, config could be like:
 More detail about LR scheduler could be found in `src/utils/lr_scheduler.py`.
 
 
-# Model description
-
-The MASS network is implemented by Transformer, which has multi-encoder layers and multi-decoder layers. 
-For pre-training, we use the Adam optimizer and loss-scale to get the pre-trained model. 
-During fine-turning, we fine-tune this pre-trained model with different dataset according to different tasks. 
-During testing, we use the fine-turned model to predict the result, and adopt a beam search algorithm to 
-get the most possible prediction results.
-
-
-## Performance
-
-### Results
-
-#### Fine-Tuning on Text Summarization
-The comparisons between MASS and two other pre-training methods in terms of ROUGE score on the text summarization task 
-with 3.8M training data are as follows:
-
-| Method         |  RG-1(F)      | RG-2(F)      | RG-L(F)      |
-|:---------------|:--------------|:-------------|:-------------|
-| MASS           | Ongoing       | Ongoing      | Ongoing      |
-
-#### Fine-Tuning on Conversational ResponseGeneration
-The comparisons between MASS and other baseline methods in terms of PPL on Cornell Movie Dialog corpus are as follows:
-
-| Method             | Data = 10K       |  Data = 110K    |
-|--------------------|------------------|-----------------|
-| MASS               | Ongoing          | Ongoing         |
-
-#### Training Performance
-
-| Parameters                 | Masked Sequence to Sequence Pre-training for Language Generation          |
-|:---------------------------|:--------------------------------------------------------------------------|
-| Model Version              | v1                                                                        |
-| Resource                   | Ascend 910, cpu 2.60GHz, 56cores；memory, 314G                            |
-| uploaded Date              | 05/24/2020                                                                |
-| MindSpore Version          | 0.2.0                                                                     |
-| Dataset                    | News Crawl 2007-2017 English monolingual corpus, Gigaword corpus, Cornell Movie Dialog corpus |
-| Training Parameters        | Epoch=50, steps=XXX, batch_size=192, lr=1e-4                              |
-| Optimizer                  | Adam                                                                      |
-| Loss Function              | Label smoothed cross-entropy criterion                                    |
-| outputs                    | Sentence and probability                                                  |
-| Loss                       | Lower than 2                                                              |
-| Accuracy                   | For conversation response, ppl=23.52, for text summarization, RG-1=29.79. |
-| Speed                      | 611.45 sentences/s                                                        |
-| Total time                 | --/--                                                                     |
-| Params (M)                 | 44.6M                                                                     |
-| Checkpoint for Fine tuning | ---Mb, --, [A link]()                                                     |
-| Model for inference        | ---Mb, --, [A link]()                                                     |
-| Scripts                    | [A link]()                                                                |
-
-
-#### Inference Performance
-
-| Parameters                 | Masked Sequence to Sequence Pre-training for Language Generation |
-|:---------------------------|:-----------------------------------------------------------|
-| Model Version              | V1                                                         |
-| Resource                   | Huawei 910                                                 |
-| uploaded Date              | 05/24/2020                                                 |
-| MindSpore Version          | 0.2.0                                                      |
-| Dataset                    | Gigaword corpus, Cornell Movie Dialog corpus               |
-| batch_size                 | ---                                                        |
-| outputs                    | Sentence and probability                                   |
-| Accuracy                   | ppl=23.52 for conversation response, RG-1=29.79 for text summarization. |
-| Speed                      | ---- sentences/s                                           |
-| Total time                 | --/--                                                      |
-| Model for inference        | ---Mb, --, [A link]()                                      |
-
-
 # Environment Requirements
 
 ## Platform
 
-- Hardware(Ascend)
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you could get the resources for trial. 
+- Hardware（Ascend/GPU）
+  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
 - Framework
   - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
 - For more information, please check the resources below：
   - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
   - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
-
+  
 ## Requirements
 
 ```txt
@@ -629,6 +561,65 @@ You can also run the shell script `run_gpu.sh` on gpu as followed:
 ```gpu
 sh run_gpu.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
 ```
+
+# Performance
+
+## Results
+
+### Fine-Tuning on Text Summarization
+The comparisons between MASS and two other pre-training methods in terms of ROUGE score on the text summarization task 
+with 3.8M training data are as follows:
+
+| Method         |  RG-1(F)      | RG-2(F)      | RG-L(F)      |
+|:---------------|:--------------|:-------------|:-------------|
+| MASS           | Ongoing       | Ongoing      | Ongoing      |
+
+### Fine-Tuning on Conversational ResponseGeneration
+The comparisons between MASS and other baseline methods in terms of PPL on Cornell Movie Dialog corpus are as follows:
+
+| Method             | Data = 10K       |  Data = 110K    |
+|--------------------|------------------|-----------------|
+| MASS               | Ongoing          | Ongoing         |
+
+### Training Performance
+
+| Parameters                 | Masked Sequence to Sequence Pre-training for Language Generation          |
+|:---------------------------|:--------------------------------------------------------------------------|
+| Model Version              | v1                                                                        |
+| Resource                   | Ascend 910, cpu 2.60GHz, 56cores；memory, 314G                            |
+| uploaded Date              | 05/24/2020                                                                |
+| MindSpore Version          | 0.2.0                                                                     |
+| Dataset                    | News Crawl 2007-2017 English monolingual corpus, Gigaword corpus, Cornell Movie Dialog corpus |
+| Training Parameters        | Epoch=50, steps=XXX, batch_size=192, lr=1e-4                              |
+| Optimizer                  | Adam                                                                      |
+| Loss Function              | Label smoothed cross-entropy criterion                                    |
+| outputs                    | Sentence and probability                                                  |
+| Loss                       | Lower than 2                                                              |
+| Accuracy                   | For conversation response, ppl=23.52, for text summarization, RG-1=29.79. |
+| Speed                      | 611.45 sentences/s                                                        |
+| Total time                 | --/--                                                                     |
+| Params (M)                 | 44.6M                                                                     |
+| Checkpoint for Fine tuning | ---Mb, --, [A link]()                                                     |
+| Model for inference        | ---Mb, --, [A link]()                                                     |
+| Scripts                    | [A link]()                                                                |
+
+
+### Inference Performance
+
+| Parameters                 | Masked Sequence to Sequence Pre-training for Language Generation |
+|:---------------------------|:-----------------------------------------------------------|
+| Model Version              | V1                                                         |
+| Resource                   | Huawei 910                                                 |
+| uploaded Date              | 05/24/2020                                                 |
+| MindSpore Version          | 0.2.0                                                      |
+| Dataset                    | Gigaword corpus, Cornell Movie Dialog corpus               |
+| batch_size                 | ---                                                        |
+| outputs                    | Sentence and probability                                   |
+| Accuracy                   | ppl=23.52 for conversation response, RG-1=29.79 for text summarization. |
+| Speed                      | ---- sentences/s                                           |
+| Total time                 | --/--                                                      |
+| Model for inference        | ---Mb, --, [A link]()                                      |
+
 
 # Description of random situation
 

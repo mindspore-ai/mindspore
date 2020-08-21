@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# -ne 1 ]
 then 
-    echo "Usage: sh run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_standalone_train_ascend.sh [PRETRAINED_PATH]"
 exit 1
 fi
 
@@ -27,39 +27,32 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
+
 PATH1=$(get_real_path $1)
-PATH2=$(get_real_path $2)
 echo $PATH1
-echo $PATH2
 
 if [ ! -f $PATH1 ]
 then 
-    echo "error: ANN_FILE=$PATH1 is not a file"
+    echo "error: PRETRAINED_PATH=$PATH1 is not a file"
 exit 1
-fi 
-
-if [ ! -f $PATH2 ]
-then 
-    echo "error: CHECKPOINT_PATH=$PATH2 is not a file"
-exit 1
-fi 
+fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export RANK_SIZE=$DEVICE_NUM
 export DEVICE_ID=0
 export RANK_ID=0
+export RANK_SIZE=1
 
-if [ -d "eval" ];
+if [ -d "train" ];
 then
-    rm -rf ./eval
+    rm -rf ./train
 fi
-mkdir ./eval
-cp ../*.py ./eval
-cp *.sh ./eval
-cp -r ../src ./eval
-cd ./eval || exit
+mkdir ./train
+cp ../*.py ./train
+cp *.sh ./train
+cp -r ../src ./train
+cd ./train || exit
+echo "start training for device $DEVICE_ID"
 env > env.log
-echo "start eval for device $DEVICE_ID"
-python eval.py --device_id=$DEVICE_ID --ann_file=$PATH1 --checkpoint_path=$PATH2 &> log &
+python train.py --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
 cd ..

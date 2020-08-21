@@ -21,7 +21,7 @@
 
 # [Transfomer Description](#contents)
 
-Transformer was proposed in 2017 and designed to process sequential data. It is adopted mainly in the field of natural language processing(NLP), for tasks like machine translation or text summarization. Unlike traditional recurrent neural network(RNN) which processes data in order, Transformer adopts attention mechanism and improve the parallelism, therefore reduced training times and made training on larger datasets possible. Since Transformer model was introduced, it has used to tackle many problems in NLP and derives many network models, such as BERT(Bidirectional Encoder Representations from Transformers) and GPT(Generative Pre-trained Transformer).
+Transformer was proposed in 2017 and designed to process sequential data. It is adopted mainly in the field of natural language processing(NLP), for tasks like machine translation or text summarization. Unlike traditional recurrent neural network(RNN) which processes data in order, Transformer adopts attention mechanism and improve the parallelism, therefore reduced training times and made training on larger datasets possible. Since Transformer model was introduced, it has been used to tackle many problems in NLP and derives many network models, such as BERT(Bidirectional Encoder Representations from Transformers) and GPT(Generative Pre-trained Transformer).
 
 [Paper](https://arxiv.org/abs/1706.03762):  Ashish Vaswani, Noam Shazeer, Niki Parmar, JakobUszkoreit, Llion Jones, Aidan N Gomez, Ł ukaszKaiser, and Illia Polosukhin. 2017. Attention is all you need. In NIPS 2017, pages 5998–6008.
 

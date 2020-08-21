@@ -30,6 +30,7 @@
     "input_mask_from_dataset": true
   },
   "loss_scale_config": {
+    "loss_scale_mode": "dynamic",
     "init_loss_scale": 65536,
     "loss_scale_factor": 2,
     "scale_window": 200
