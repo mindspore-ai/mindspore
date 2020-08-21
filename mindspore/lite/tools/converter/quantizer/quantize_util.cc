@@ -73,7 +73,7 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
     MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
     return false;
   }
-  if (weight_shape[0] <= mConvWeightQuantChannelThreshold) {
+  if (weight_shape[0] <= static_cast<int>(mConvWeightQuantChannelThreshold)) {
     MS_LOG(INFO) << "channel less mConvWeightQuantChannelThreshold!" << weight_shape[0];
     return false;
   }
@@ -162,35 +162,6 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   }
 
   return true;
-}
-
-void CalFakeNode(const AnfNodePtr &inTensor) {
-  // MS_ASSERT(inTensor != nullptr);
-  // MS_ASSERT(inTensor->dataType == DataType_DT_FLOAT);
-  // auto quantParam = GetTensorQuantParams(inTensor);
-  // if (quantParam == nullptr || !quantParam->inited) {
-  //   MS_LOGW("tensor quantParam has not been inited");
-  //   return;
-  // }
-
-  // float quantMin = quantParam->narrowRange ? 1 : 0;
-  // float quantMax = (1 << (unsigned int)(quantParam->numBits)) - 1;
-  // const float scale = quantParam->scale;
-  // const float nudgedMin = (quantMin - quantParam->zeroPoint) * scale;
-  // const float nudgedMax = (quantMax - quantParam->zeroPoint) * scale;
-  // // cal output
-  // float invNudgeScale = 1.0f / scale;
-  // void *inData = inTensor->data.data();
-  // if(inData == nullptr) {
-  //   MS_LOGE("null pointer dereferencing.");
-  //   return;
-  // }
-  // auto *data = static_cast<float *>(inData);
-  // for (size_t i = 0; i < GetShapeSize(*inTensor); i++) {
-  //   float clamped = std::min(nudgedMax, std::max(nudgedMin, data[i]));
-  //   float clampedShifted = clamped - nudgedMin;
-  //   data[i] = std::round(clampedShifted * invNudgeScale) * scale + nudgedMin;
-  // }
 }
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange,
@@ -346,11 +317,11 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> pr
       }
       size_t one_filter_size = elem_count / channels;
 
-      for (uint32_t i = 0; i < channels; i++) {
+      for (int i = 0; i < channels; i++) {
         float min = FLT_MAX;
         float max = -FLT_MAX;
         // find min and max
-        for (uint32_t j = 0; j < one_filter_size; j++) {
+        for (size_t j = 0; j < one_filter_size; j++) {
           auto index = i + j * channels;
           if (index >= elem_count) {
             MS_LOG(ERROR) << "over flow!";
@@ -398,7 +369,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> pr
       }
       size_t one_filter_size = elem_count / channels;
 
-      for (uint32_t i = 0; i < channels; i++) {
+      for (int i = 0; i < channels; i++) {
         float min = FLT_MAX;
         float max = -FLT_MAX;
         // find min and max

@@ -43,8 +43,8 @@ class PReluCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  int thread_count_;
   const Context *ctx_;
+  int thread_count_;
   PReluParameter *prelu_param_;
 
  private:

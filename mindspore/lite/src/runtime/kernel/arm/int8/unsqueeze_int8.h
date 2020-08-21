@@ -44,13 +44,13 @@ class Unsqueezeint8CPUKernel : public LiteKernel {
  private:
   UnSqueezeQuantArg *quant_Unsqueeze_parm_;
   UnSqueezeParameter *Unsq_para_;
-  int thread_count_;
   int thread_sz_count_;
   int thread_sz_stride_;
   int data_size_;
   float *in_ptr_;
   float *out_ptr_;
   const Context *ctx_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 

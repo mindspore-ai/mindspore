@@ -36,7 +36,7 @@ int BiasAddInt8CPUKernel::ReSize() {
   auto bias_param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
-  for (int i = 0; i < bias_param->ndim_; i++) {
+  for (size_t i = 0; i < bias_param->ndim_; i++) {
     bias_param->in_shape0_[i] = dims[i];
     bias_param->in_shape1_[i] = 1;
     bias_param->out_shape_[i] = dims[i];

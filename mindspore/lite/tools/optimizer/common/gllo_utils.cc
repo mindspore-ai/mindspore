@@ -272,13 +272,13 @@ void CheckIfNodeIsParam(const AnfNodePtr &node) {
 }
 
 void CheckInputSize(const CNodePtr &node, const int size) {
-  if (node->inputs().size() != size) {
+  if (static_cast<int>(node->inputs().size()) != size) {
     MS_LOG(EXCEPTION) << "The input size of node must be " << size << ", but it is" << node->inputs().size();
   }
 }
 
 void CheckLeastInputSize(const CNodePtr &node, const int size) {
-  if (node->inputs().size() < size) {
+  if (static_cast<int>(node->inputs().size()) < size) {
     MS_LOG(EXCEPTION) << "The input size of node must be " << size << ", but it is" << node->inputs().size();
   }
 }
@@ -349,7 +349,7 @@ bool IsConvNode(const BaseRef &n) {
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
-    for (auto i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->inputs().size(); i++) {
       if (!utils::isa<Parameter>(cnode->input(i))) {
         return false;
       }

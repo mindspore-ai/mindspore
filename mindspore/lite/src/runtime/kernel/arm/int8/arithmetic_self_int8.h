@@ -93,13 +93,13 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
   int DoArithmeticSelf(int task_id);
 
  private:
-  int thread_count_;
   int thread_sz_count_;
   int thread_sz_stride_;
   size_t data_size_;
   ArithmeticSelfParameter *para_;
   ArithmeticSelfInt8Run arithmeticSelf_run_;
   const Context *ctx_;
+  int thread_count_;
   int8_t *in_ptr_;
   int8_t *out_ptr_;
 };

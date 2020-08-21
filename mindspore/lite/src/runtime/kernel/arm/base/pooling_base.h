@@ -43,8 +43,8 @@ class PoolingBaseCPUKernel : public LiteKernel {
   void FreeQuantParam();
 
  protected:
-  int thread_count_;
   const Context *ctx_;
+  int thread_count_;
   PoolingParameter *pooling_param_;
   QuantArg **pooling_quant_arg_ = nullptr;
 };

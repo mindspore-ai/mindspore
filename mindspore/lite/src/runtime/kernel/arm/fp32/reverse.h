@@ -46,7 +46,6 @@ class ReverseCPUKernel : public LiteKernel {
   int DoReverse(int task_id);
 
  private:
-  int thread_count_;
   int thread_sz_count_;
   int thread_sz_stride_;
   int data_size_;
@@ -54,6 +53,7 @@ class ReverseCPUKernel : public LiteKernel {
   int inCount_[REVERSE_STRIDE_MAX_SIZE];
   int outCount_[REVERSE_STRIDE_MAX_SIZE];
   const Context *ctx_;
+  int thread_count_;
   int *tmp_ = nullptr;
   float *in_ptr_;
   float *out_ptr_;

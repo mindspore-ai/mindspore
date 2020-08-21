@@ -35,16 +35,6 @@ OpDefCopyer GetSimpleOpCopyer() {
     newCNode->quantType = inCNode->quantType;
     newCNode->primitive = std::make_unique<schema::PrimitiveT>();
     newCNode->primitive->value.type = inCNode->primitive->value.type;
-    //    newCNode->quantParam.clear();
-    //    for (size_t i = 0; i < inCNode->quantParam.size(); i++) {
-    //      auto &quantParam = inCNode->quantParam.at(i);
-    //      auto quantParamCopy = CopyQuantParamArrayT(quantParam);
-    //      if (quantParamCopy == nullptr) {
-    //        //MS_LOG(ERROR)("CopyQuantParamArray return nullptr, node: %s", inOpDef->name.c_str());
-    //        return nullptr;
-    //      }
-    //      newCNode->quantParam.emplace_back(std::move(quantParamCopy));
-    //    }
     return std::move(newCNode);
   };
 }
@@ -139,20 +129,18 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
   auto inputTensorIdxes = node->inputIndex;
   auto outputTensorIdxes = node->outputIndex;
   if (inputTensorIdxes.empty()) {
-    // MS_LOG(ERROR)("Node %s should has no inputs", node->name.c_str());
+    MS_LOG(ERROR) << "Node " << node->name.c_str() << "should has no inputs";
     return RET_ERROR;
   }
   if (outputTensorIdxes.size() != 1) {
-    // MS_LOG(ERROR)("FakeQuantNode %s should has 1 output, in fact: %zu", node->name.c_str(),
-    // outputTensorIdxes.size());
+    MS_LOG(ERROR) << "FakeQuantNode " << node->name.c_str() \
+                  << "should has 1 output, in fact: " << outputTensorIdxes.size();
     return RET_ERROR;
   }
   auto inDataTensorIdx = inputTensorIdxes.front();
   auto outDataTensorIdx = outputTensorIdxes.front();
 
   MS_ASSERT(graphT->allTensors.size() > inDataTensorIdx);
-  const auto &inDataTensor = graphT->allTensors.at(inDataTensorIdx);
-  MS_ASSERT(inDataTensor != nullptr);
   auto &gOutTensorIdx = graphT->outputIndex;
   for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
     if (*iter == outDataTensorIdx) {
@@ -186,20 +174,13 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graph, size_t subGraphIdx, size_t nodeIdx, bool removeTensor) {
   MS_ASSERT(graph != nullptr);
-  /*
-  if (graph->subgraphs.size() <= subGraphIdx) {
-    //MS_LOG(ERROR)("subGraphIdx out of range: %zu", subGraphIdx);
-    return RET_PARAM_INVALID;
-  }
-  */
-  // return IsolateOneWayNode(graph->subgraphs.at(subGraphIdx).get(), nodeIdx, removeTensor);
   return IsolateOneWayNode(graph, nodeIdx, removeTensor);
 }
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool removeTensor) {
   MS_ASSERT(graphT != nullptr);
   if (graphT->nodes.size() <= nodeIdx) {
-    // MS_LOG(ERROR)("nodeIdx out of range: %zu", nodeIdx);
+    MS_LOG(ERROR) << "nodeIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
   }
 
@@ -208,11 +189,11 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
   auto outputTensorIdxes = node->outputIndex;
   auto preNodeIdxes = GetInputNodeIdx(*graphT, nodeIdx);
   if (preNodeIdxes.size() > 1 || outputTensorIdxes.size() > 1) {
-    // MS_LOG(ERROR)("Only support node who has no more than one input and one output");
+    MS_LOG(ERROR) << "Only support node who has no more than one input and one output";
     return RET_ERROR;
   }
   if (inputTensorIdxes.empty()) {
-    // MS_LOG(ERROR)("Error, %zuth node has no input tensor", nodeIdx);
+    MS_LOG(ERROR) << "Error, " << nodeIdx << "th node has no input tensor";
     return RET_ERROR;
   }
   auto inDataTensorIdx = inputTensorIdxes.front();
@@ -247,7 +228,7 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
     // remove all node's outputTensors
     auto status = RemoveTensor(graphT, outputTensorIdxes);
     if (status != RET_OK) {
-      // MS_LOG(ERROR)("RemoveOutputTensors of node %s failed", node->name.c_str());
+      MS_LOG(ERROR) << "RemoveOutputTensors of node " << node->name.c_str() << "failed";
       return RET_ERROR;
     }
   }
@@ -270,7 +251,7 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, CNodeT *node, bool removeTe
     }
   }
   if (!isSubNode) {
-    // MS_LOG(ERROR)("Node %s is not in graphT %s", node->name.c_str(), graphT->name.c_str());
+    MS_LOG(ERROR) << "Node " << node->name.c_str() << "is not in graphT " << graphT->name.c_str();
     return RET_PARAM_INVALID;
   } else {
     return IsolateOneWayNode(graphT, nodeIdx, removeTensor);
@@ -343,7 +324,7 @@ STATUS UpdateNodeIndex(CNodeT *node, uint32_t deleteIdx) {
 STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_ptr<TensorT> tensor,
                       InsertPlace place) {
   if (nodeIdx >= graphT->nodes.size()) {
-    // MS_LOG(ERROR)("nodeIdx out of range: %du", nodeIdx);
+    MS_LOG(ERROR) << "nodeIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
   }
   graphT->allTensors.emplace_back(std::move(tensor));
@@ -360,16 +341,16 @@ STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_
 STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_t inTensorIdx,
                            std::unique_ptr<TensorT> tensor) {
   if (nodeIdx >= graphT->nodes.size()) {
-    // MS_LOG(ERROR)("nodeIdx out of range: %du", nodeIdx);
+    MS_LOG(ERROR) << "nodeIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
   }
   auto node = graphT->nodes.at(nodeIdx).get();
   if (inTensorIdx >= graphT->allTensors.size()) {
-    // MS_LOG(ERROR)("inTensorIdx out of range: %du", nodeIdx);
+    MS_LOG(ERROR) << "inTensorIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
   }
   if (!IsContain(node->inputIndex, inTensorIdx)) {
-    // MS_LOG(ERROR)("inTensorIdx(%du) is not a inputIdx of node(%du)", inTensorIdx, nodeIdx);
+    MS_LOG(ERROR) << "inTensorIdx(" << inTensorIdx << ") is not a inputIdx of node(" << nodeIdx << ")";
     return RET_PARAM_INVALID;
   }
   graphT->allTensors.at(inTensorIdx).swap(tensor);
@@ -379,7 +360,7 @@ STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_
 NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPlace place, size_t inoutIndex,
                     std::unique_ptr<CNodeT> toAddNode, STATUS *errorCode, OpDefCopyer opDefCopyer) {
   if (existNodeIdx >= graphT->nodes.size()) {
-    // MS_LOG(ERROR)("nodeIdx out of range: %du", existNodeIdx);
+    MS_LOG(ERROR) << "nodeIdx out of range: " << existNodeIdx;
     return graphT->nodes.end();
   }
   auto nodeIter = graphT->nodes.begin() + existNodeIdx;
@@ -447,17 +428,14 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     existNodeIter++;
   } else {
     std::vector<std::unique_ptr<CNodeT>> toAddNodes;
-    int i = 0;
-    for (size_t preNodeIdx : preNodeIdxes) {
-      MS_ASSERT(graphT->nodes.size() > preNodeIdx);
-      auto &preNode = graphT->nodes.at(preNodeIdx);
-      MS_ASSERT(preNode != nullptr);
+    for (size_t i = 0; i < preNodeIdxes.size(); i++) {
+      MS_ASSERT(graphT->nodes.size() > preNodeIdxes.at(i));
       auto &preTensor = graphT->allTensors.at(preTensorIdx);
       MS_ASSERT(preTensor != nullptr);
       auto toAddTensor = CopyTensorDefT(preTensor);
       if (toAddTensor == nullptr) {
         *errorCode = RET_NULL_PTR;
-        // MS_LOG(ERROR)("Copy TensorT failed");
+        MS_LOG(ERROR) << "Copy TensorT failed";
         return graphT->nodes.end();
       }
       if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
@@ -468,7 +446,7 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
       size_t toAddTensorIdx = graphT->allTensors.size() - 1;
       auto toAddNode = opDefCopyer(toAddNodeIn.get());
       if (toAddNode == nullptr) {
-        // MS_LOG(ERROR)("copy toAddNodeIn failed");
+        MS_LOG(ERROR) << "copy toAddNodeIn failed";
         *errorCode = RET_NULL_PTR;
         return graphT->nodes.end();
       }
@@ -509,7 +487,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     MS_ASSERT(postTensor != nullptr);
     auto toAddTensor = CopyTensorDefT(postTensor);
     if (toAddTensor == nullptr) {
-      // MS_LOG(ERROR)("Copy TensorT failed");
+      MS_LOG(ERROR) << "Copy TensorT failed";
       *errorCode = RET_NULL_PTR;
       return graphT->nodes.end();
     }
@@ -521,7 +499,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
     auto toAddNode = opDefCopyer(toAddNodeIn.get());
     if (toAddNode == nullptr) {
-      // MS_LOG(ERROR)("copy toAddNodeIn failed");
+      MS_LOG(ERROR) << "copy toAddNodeIn failed";
       *errorCode = RET_NULL_PTR;
       return graphT->nodes.end();
     }
@@ -548,7 +526,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       MS_ASSERT(postTensor != nullptr);
       auto toAddTensor = CopyTensorDefT(postTensor);
       if (toAddTensor == nullptr) {
-        // MS_LOG(ERROR)("Copy TensorT failed");
+        MS_LOG(ERROR) << "Copy TensorT failed";
         *errorCode = RET_NULL_PTR;
         return graphT->nodes.end();
       }
@@ -560,7 +538,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       size_t toAddTensorIdx = graphT->allTensors.size() - 1;
       auto toAddNode = opDefCopyer(toAddNodeIn.get());
       if (toAddNode == nullptr) {
-        // MS_LOG(ERROR)("copy toAddNodeIn failed");
+        MS_LOG(ERROR) << "copy toAddNodeIn failed";
         *errorCode = RET_NULL_PTR;
         return graphT->nodes.end();
       }
@@ -612,12 +590,12 @@ std::string GetModelName(const std::string &modelFile) {
 
 OpGraphT *OpGraphT::Build(const schema::MetaGraphT *subGraphDef) {
   if (subGraphDef == nullptr) {
-    // MS_LOG(ERROR)("subGraphDef is nullptr");
+    MS_LOG(ERROR) << "subGraphDef is nullptr";
     return nullptr;
   }
   auto graph = std::unique_ptr<OpGraphT>(new OpGraphT());
   if (graph == nullptr) {
-    // MS_LOG(ERROR)("malloc opgraph failed");
+    MS_LOG(ERROR) << "malloc opgraph failed";
     return nullptr;
   }
 
@@ -626,7 +604,7 @@ OpGraphT *OpGraphT::Build(const schema::MetaGraphT *subGraphDef) {
   for (auto &opDef : opDefs) {
     auto ret = graph->AddEdge(opDef.get(), &opDefs);
     if (ret != RET_OK) {
-      // MS_LOG(ERROR)("%s add edge failed. ret:%d", opDef->name.c_str(), ret);
+      MS_LOG(ERROR) << opDef->name.c_str() << " add edge failed. ret: " << ret;
       return nullptr;
     }
   }
@@ -644,7 +622,7 @@ int OpGraphT::AddEdge(const schema::CNodeT *srcNodeDef, const std::vector<std::u
     for (auto &dstNodeDef : *nodeDefs) {
       bool find = false;
       auto inputIndex = dstNodeDef->inputIndex;
-      if (std::any_of(inputIndex.begin(), inputIndex.end(), [&index](int i) { return i == index; })) {
+      if (std::any_of(inputIndex.begin(), inputIndex.end(), [&index](size_t i) { return i == index; })) {
         find = true;
       }
 
@@ -664,13 +642,13 @@ int OpGraphT::AddEdge(const schema::CNodeT *srcNodeDef, const std::vector<std::u
 int OpGraphT::AddEdge(NODE_ID srcId, NODE_ID dstId) {
   auto srcNode = AddNode(srcId);
   if (srcNode == nullptr) {
-    // MS_LOG(ERROR)("add srcNode failed");
+    MS_LOG(ERROR) << "add srcNode failed";
     return RET_ERROR;
   }
   srcNode->AddOutEdge(dstId);
   auto dstNode = AddNode(dstId);
   if (dstNode == nullptr) {
-    // MS_LOG(ERROR)("add dstNode failed");
+    MS_LOG(ERROR) << "add dstNode failed";
     return RET_ERROR;
   }
   dstNode->AddInEdge(srcId);

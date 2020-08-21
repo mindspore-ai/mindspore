@@ -22,6 +22,7 @@
 #include "tools/common/storage.h"
 #include "flatbuffers/flatbuffers.h"
 #include "src/common/file_utils.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -132,7 +133,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
 STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                         schema::MetaGraphT *sub_graph) {
-  for (int i = 0; i < tensorsId.size(); i++) {
+  for (size_t i = 0; i < tensorsId.size(); i++) {
     auto idx = tensorsId[i];
     if (idx < 0) {
       idx += tflite_subgraph->tensors.size();
@@ -194,7 +195,7 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
 
   // graph input
   std::vector<int> graph_inputs;
-  for (int i = 0; i < tflite_subgraph->inputs.size(); i++) {
+  for (size_t i = 0; i < tflite_subgraph->inputs.size(); i++) {
     const int idx = tflite_subgraph->inputs[i];
     if (idx < 0) {
       id = idx + tflite_subgraph->tensors.size();
@@ -210,7 +211,7 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
 
   // graph output
   std::vector<int> graph_outputs;
-  for (int i = 0; i < tflite_subgraph->outputs.size(); i++) {
+  for (size_t i = 0; i < tflite_subgraph->outputs.size(); i++) {
     const int idx = tflite_subgraph->outputs[i];
     if (idx < 0) {
       id = idx + tflite_subgraph->tensors.size();

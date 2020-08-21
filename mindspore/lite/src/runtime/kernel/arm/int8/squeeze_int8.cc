@@ -133,7 +133,7 @@ int SqueezeInt8CPUKernel::Run() {
     auto input_type = in_tensors_[i]->data_type();
     if (input_type == kNumberTypeUInt8) {
       uint8_t *input_tmp = reinterpret_cast<uint8_t *>(in_tensors_[i]->Data());
-      for (size_t j = 0; j < input_size; j++) {
+      for (int j = 0; j < input_size; j++) {
         inputs_array[i][j] = (int8_t)(input_tmp[j] - 128);
       }
       for (size_t j = 0; j < input_dim; j++) {
@@ -148,12 +148,12 @@ int SqueezeInt8CPUKernel::Run() {
   auto output_type = out_tensors_[0]->data_type();
   if (output_type == kNumberTypeUInt8) {
     auto output_size = quant_Squeeze_parm_->output_size_;
-    for (size_t i = 0; i < output_size; i++) {
+    for (int i = 0; i < output_size; i++) {
       output_addr[i] = (uint8_t)(output_addr[i] + 128);
     }
   }
 
-  for (int i = 0; i < input_dim; i++) {
+  for (size_t i = 0; i < input_dim; i++) {
     free(*(inputs_array + i));
   }
 

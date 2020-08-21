@@ -62,11 +62,11 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   void FreeQuantParam();
 
  protected:
-  int thread_count_;
   int tile_num_;
   void *bias_data_ = nullptr;
   void *nhwc4_input_ = nullptr;
   const Context *ctx_;
+  int thread_count_;
   ConvParameter *conv_param_;
   ConvQuantArg *conv_quant_arg_;
   LayoutConvertor convert_func_;

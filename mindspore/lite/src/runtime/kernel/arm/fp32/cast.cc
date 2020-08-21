@@ -52,7 +52,7 @@ int CastCPUKernel::ReSize() {
   if (data_num_ == 0) {
     return RET_OK;
   }
-  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, data_num_);
+  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, static_cast<int>(data_num_));
   stride_ = UP_DIV(data_num_, op_parameter_->thread_num_);
   return RET_OK;
 }

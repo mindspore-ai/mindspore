@@ -121,7 +121,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
   uint8_t per_channel = 0b0;
   if (conv_quant_arg_->input_arg_num_ != kPerTensor) {
     int in_channel = conv_param_->input_channel_;
-    if (conv_quant_arg_->input_arg_num_ != in_channel) {
+    if (static_cast<int>(conv_quant_arg_->input_arg_num_) != in_channel) {
       MS_LOG(ERROR) << "input per channel quant param length is not equal to input channel.";
       return RET_ERROR;
     }
@@ -130,7 +130,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
 
   if (conv_quant_arg_->filter_arg_num_ != kPerTensor) {
     int filter_num = conv_param_->output_channel_;
-    if (conv_quant_arg_->filter_arg_num_ != filter_num) {
+    if (static_cast<int>(conv_quant_arg_->filter_arg_num_) != filter_num) {
       MS_LOG(ERROR) << "weight per channel quant param length is not equal to filter num.";
       return RET_ERROR;
     }
@@ -139,7 +139,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
 
   if (conv_quant_arg_->output_arg_num_ != kPerTensor) {
     int out_channel = conv_param_->output_channel_;
-    if (conv_quant_arg_->output_arg_num_ != out_channel) {
+    if (static_cast<int>(conv_quant_arg_->output_arg_num_) != out_channel) {
       MS_LOG(ERROR) << "output per channel quant param length is not equal to output channel.";
       return RET_ERROR;
     }
@@ -218,11 +218,6 @@ int ConvolutionBaseCPUKernel::SetInputTensorQuantParam() {
     // per channel
     MS_LOG(ERROR) << "Not Support Per Channel for input now.";
     return RET_ERROR;
-    //    auto input_quant_arg = input_tensor->GetQuantParams();
-    //    for (int i = 0; i < in_arg_num; ++i) {
-    //      conv_quant_arg_->input_quant_args_[i].zp_ = input_quant_arg[i].zeroPoint;
-    //      conv_quant_arg_->input_quant_args_[i].scale_ = input_quant_arg[i].scale;
-    //    }
   }
   return RET_OK;
 }
@@ -236,7 +231,7 @@ int ConvolutionBaseCPUKernel::SetFilterTensorQuantParam() {
     conv_quant_arg_->filter_quant_args_[0].scale_ = weight_quant_arg.scale;
   } else {
     auto weight_quant_arg = weight_tensor->GetQuantParams();
-    for (int i = 0; i < weight_arg_num; ++i) {
+    for (size_t i = 0; i < weight_arg_num; ++i) {
       conv_quant_arg_->filter_quant_args_[i].zp_ = weight_quant_arg[i].zeroPoint;
       conv_quant_arg_->filter_quant_args_[i].scale_ = weight_quant_arg[i].scale;
     }

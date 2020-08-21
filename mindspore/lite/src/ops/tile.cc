@@ -60,10 +60,9 @@ int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::
   MS_ASSERT(tile_prim != nullptr);
   std::vector<int> out_shape;
   std::vector<int> multiples;
-  for (int i = 0; i < GetMultiples().size(); ++i) {
+  for (size_t i = 0; i < GetMultiples().size(); ++i) {
     multiples.push_back(GetMultiples()[i]);
   }
-//  std::copy(GetMultiples().begin(), GetMultiples().end(), std::back_inserter(multiples));
   for (size_t i = 0; i < input->shape().size(); ++i) {
     int tmp = input->shape()[i] * multiples[i];
     out_shape.push_back(tmp);

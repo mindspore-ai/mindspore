@@ -143,7 +143,7 @@ int BatchnormInt8CPUKernel::Init() {
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
   batchnorm_param_->units_ = 1;
-  for (int i = 0; i < n_dim - 1; i++) {
+  for (size_t i = 0; i < n_dim - 1; i++) {
     batchnorm_param_->units_ *= input_shapes[i];
   }
   batchnorm_param_->op_parameter_.thread_num_ =
@@ -169,7 +169,7 @@ int BatchnormInt8CPUKernel::Init() {
 int BatchnormInt8CPUKernel::ReSize() {
   auto input_shapes = in_tensors_[0]->shape();
   batchnorm_param_->unit_ = 1;
-  for (int i = 0; i < input_shapes.size() - 1; i++) {
+  for (size_t i = 0; i < input_shapes.size() - 1; i++) {
     batchnorm_param_->unit_ *= input_shapes[i];
   }
   return RET_OK;

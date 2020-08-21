@@ -50,7 +50,6 @@ void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, i
                          const int *crops, int data_size) {
   int block_h = block[0];
   int block_w = block[1];
-  int in_n = in_shape[0];
   int in_h = in_shape[1];
   int in_w = in_shape[2];
   int in_c = in_shape[3];

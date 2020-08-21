@@ -32,7 +32,7 @@ int BiasCPUKernel::ReSize() {
   auto dims = in_tensors_[0]->shape();
   MS_ASSERT(dims.size() <= 5);
   bias_param_->ndim_ = dims.size();
-  for (int i = 0; i < bias_param_->ndim_; i++) {
+  for (size_t i = 0; i < bias_param_->ndim_; i++) {
     bias_param_->in_shape0_[i] = dims[i];
     bias_param_->in_shape1_[i] = 1;
     bias_param_->out_shape_[i] = dims[i];

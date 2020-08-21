@@ -69,7 +69,7 @@ int DeConvPostFp32C8x8(const float *src, float *tmp, const float *bias, float *d
             int src_index = ih * src_ih_stride + iw * src_iw_stride + kh * src_kh_stride + kw * src_kw_stride;
             int dst_index = oh * dst_oh_stride + ow * dst_ow_stride + kh * dst_kh_stride + kw * dst_kw_stride;
             float *tmp_dst = dst_ptr + dst_index;
-            float *tmp_src = src_ptr + src_index;
+            const float *tmp_src = src_ptr + src_index;
 #ifdef ENABLE_ARM64
             asm volatile(
               "mov x0, %[tmp_src] \n"

@@ -44,7 +44,7 @@ int AddNCPUKernel::ReSize() { return RET_OK; }
 
 int AddNCPUKernel::AddNParallelRun(int thread_id) {
   int count_per_thread = UP_DIV(elements_num_, op_parameter_->thread_num_);
-  int count = MSMIN(count_per_thread, elements_num_ - thread_id * count_per_thread);
+  int count = MSMIN(count_per_thread, static_cast<int>(elements_num_ - thread_id * count_per_thread));
   auto stride = count_per_thread * thread_id;
   auto ret = ElementAdd(in1_addr_ + stride, in2_addr_ + stride, out_addr_ + stride, count);
   if (ret != NNACL_OK) {
@@ -64,9 +64,9 @@ int AddNCPUKernel::Run() {
   auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->Data());
   auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
   auto output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  if (elements_num_ < op_parameter_->thread_num_) {
+  if (static_cast<int>(elements_num_) < op_parameter_->thread_num_) {
     ElementAdd(input0_data, input1_data, output_data, elements_num_);
-    for (int i = 2; i < in_tensors_.size(); ++i) {
+    for (size_t i = 2; i < in_tensors_.size(); ++i) {
       ElementAdd(reinterpret_cast<float *>(in_tensors_[i]->Data()), output_data, output_data, elements_num_);
     }
     return RET_OK;

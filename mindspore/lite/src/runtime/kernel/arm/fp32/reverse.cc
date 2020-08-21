@@ -30,8 +30,8 @@ using mindspore::schema::PrimitiveType_Reverse;
 namespace mindspore::kernel {
 
 int ReverseCPUKernel::Stride(int index) {
-  int i, stride = 1;
-  for (i = index + 1; i < in_tensors_[0]->shape().size(); ++i) {
+  int stride = 1;
+  for (size_t i = index + 1; i < in_tensors_[0]->shape().size(); ++i) {
     stride *= in_tensors_[0]->shape()[i];
   }
   return stride;
@@ -44,7 +44,7 @@ int ReverseCPUKernel::ReSize() {
 
   auto *param = reinterpret_cast<ReverseParameter *>(op_parameter_);
   auto input_shape = in_tensors_[0]->shape();
-  if (param->num_axis_ > input_shape.size()) {
+  if (param->num_axis_ > static_cast<int>(input_shape.size())) {
     MS_LOG(ERROR) << "Reverse dims : " << param->num_axis_
                   << "is greater than input shape size :" << input_shape.size();
     return RET_ERROR;

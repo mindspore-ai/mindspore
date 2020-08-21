@@ -42,8 +42,8 @@ class SparseToDenseCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  int thread_count_;
   const Context *ctx_;
+  int thread_count_;
   SparseToDenseParameter *s2d_param_;
 
  private:

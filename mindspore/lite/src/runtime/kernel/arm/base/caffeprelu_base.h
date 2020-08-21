@@ -43,8 +43,8 @@ class CaffePreluBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int thread_count_;
   const Context *ctx_;
+  int thread_count_;
   CaffePreluParameter *prelu_param_;
 };
 }  // namespace mindspore::kernel

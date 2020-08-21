@@ -59,7 +59,7 @@ int MatmulCPUKernel::ReSize() {
     }
   }
 
-  for (int i = 0; i < a_shape.size() - 2; ++i) {
+  for (size_t i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
   }
   params_->batch = batch;

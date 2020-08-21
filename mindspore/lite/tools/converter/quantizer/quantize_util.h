@@ -118,8 +118,6 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   }();
 }
 
-void CalFakeNode(const AnfNodePtr &inTensor);
-
 STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveTValue> primitiveT_value, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false,
                    bool depth_wise = false);

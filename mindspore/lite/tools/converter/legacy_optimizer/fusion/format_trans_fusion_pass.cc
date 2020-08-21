@@ -19,8 +19,6 @@
 #include <memory>
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
 #include "utils/log_adapter.h"
-#include "securec/include/securec.h"
-// #include "utils/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "mindspore/lite/schema/inner/model_generated.h"
@@ -44,7 +42,7 @@ STATUS FormatTransFusionPass::DefinePattern() {
     std::unique_ptr<FusionPattern> nc2NhAndNh2NcFusionPattern(new (std::nothrow)
                                                                 FusionPattern(kNc2NhAndNh2NcFusionPattern));
     if (nc2NhAndNh2NcFusionPattern == nullptr) {
-      // MS_LOG(ERROR) << "new %s failed", kNc2NhAndNh2NcFusionPattern);
+      MS_LOG(ERROR) << "new " << kNc2NhAndNh2NcFusionPattern << "failed";
       return RET_ERROR;
     }
     nc2NhAndNh2NcFusionPattern->AddPatternOp(nc2nhOp);
@@ -52,7 +50,6 @@ STATUS FormatTransFusionPass::DefinePattern() {
     nc2NhAndNh2NcFusionPattern->Finish();
     this->patterns.emplace_back(nc2NhAndNh2NcFusionPattern.release());
   }
-  // nchw2nhwc + QuantDtypeCast + nhwc2nchw
   {
     auto nc2nhOp = std::make_shared<PatternOp>();
     nc2nhOp->id = kFormatTransNc2NhOp;
@@ -68,7 +65,7 @@ STATUS FormatTransFusionPass::DefinePattern() {
     nh2ncOp->left = passOp;
     std::unique_ptr<FusionPattern> nc2NhAndNh2NcPassFusionPattern(new FusionPattern(kNc2NhAndNh2NcPassFusionPattern));
     if (nc2NhAndNh2NcPassFusionPattern == nullptr) {
-      // MS_LOG(ERROR) << "new %s failed", kNc2NhAndNh2NcPassFusionPattern);
+      MS_LOG(ERROR) << "new " << kNc2NhAndNh2NcPassFusionPattern << "failed";
       return RET_ERROR;
     }
     nc2NhAndNh2NcPassFusionPattern->AddPatternOp(nc2nhOp);
@@ -90,7 +87,7 @@ STATUS FormatTransFusionPass::DefinePattern() {
     std::unique_ptr<FusionPattern> nh2NcAndNc2NhFusionPattern(new (std::nothrow)
                                                                 FusionPattern(kNh2NcAndNc2NhFusionPattern));
     if (nh2NcAndNc2NhFusionPattern == nullptr) {
-      // MS_LOG(ERROR) << "new %s failed", kNh2NcAndNc2NhFusionPattern);
+      MS_LOG(ERROR) << "new " << kNh2NcAndNc2NhFusionPattern << "failed";
       return RET_ERROR;
     }
     nh2NcAndNc2NhFusionPattern->AddPatternOp(nh2ncOp);

@@ -961,7 +961,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
 #endif
       }
       for (; c < channel; c++) {
-        float *src_ptr = src_batch + hw * channel + c;
+        const float *src_ptr = src_batch + hw * channel + c;
         float *dst_ptr = dst_batch + c * plane + hw;
         for (size_t i = 0; i < C8NUM; i++) {
           dst_ptr[i] = src_ptr[i * channel];
@@ -969,7 +969,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
       }
     }
     for (; hw < plane; hw++) {
-      float *src_ptr = src_batch + hw * channel;
+      const float *src_ptr = src_batch + hw * channel;
       float *dst_ptr = dst_batch + hw;
       for (size_t i = 0; i < channel; i++) {
         dst_ptr[i * plane] = src_ptr[i];
@@ -1023,10 +1023,10 @@ void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter
   int unit = conv_param->input_h_ * conv_param->input_w_;
 
   for (int b = 0; b < conv_param->input_batch_; b++) {
-    int8_t *src_b = src + b * unit * conv_param->input_channel_;
+    const int8_t *src_b = src + b * unit * conv_param->input_channel_;
     int16_t *dst_b = dst + b * unit * ic4 * C4NUM;
     for (int k = 0; k < unit; k++) {
-      int8_t *src_k = src_b + k * conv_param->input_channel_;
+      const int8_t *src_k = src_b + k * conv_param->input_channel_;
       int16_t *dst_k = dst_b + k * ic4 * C4NUM;
       for (int c = 0; c < conv_param->input_channel_; c++) {
         dst_k[c] = (int16_t)(src_k[c] - input_zp);
@@ -1044,10 +1044,10 @@ void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight
     }
     int c4_block_num = c / C4NUM;
     int c4_block_rem = c % C4NUM;
-    int8_t *src_c = origin_weight + c * unit;
+    const int8_t *src_c = origin_weight + c * unit;
     int16_t *dst_c = packed_weight_ + c4_block_num * unit * C4NUM;
     for (int k = 0; k < unit; k++) {
-      int8_t *src_kernel = src_c + k;
+      const int8_t *src_kernel = src_c + k;
       int16_t *dst_kernel = dst_c + C4NUM * k + c4_block_rem;
       *dst_kernel = (int16_t)(src_kernel[0] - weight_zp);
     }

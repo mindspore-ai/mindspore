@@ -35,8 +35,6 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingPar
   int scale = param->scale_;
   int pooled_height = param->pooledH_;
   int pooled_width = param->pooledW_;
-  int *in_strides = &(param->in_strides_);
-  int *out_strides = &(param->out_strides_);
   int roi_stride = 5;
   int roi_ind_st = roi_st * roi_stride;
   float *max_c = malloc(channels_ * sizeof(float));
@@ -55,9 +53,8 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingPar
 
     float bin_size_h = (float)roi_height / (float)pooled_height;
     float bin_size_w = (float)roi_width / (float)pooled_width;
-    float *batch_data = in_ptr + in_strides[kNHWC_N] * roi_batch_ind;
+    float *batch_data = in_ptr + param->in_strides_[kNHWC_N] * roi_batch_ind;
 
-    int out_ind = i * out_strides[0];
     for (int ph = 0; ph < pooled_height; ++ph) {
       for (int pw = 0; pw < pooled_width; ++pw) {
         int hstart = (int)floorf(ph * bin_size_h);     // block xi_1
@@ -76,17 +73,17 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingPar
             max_c[j] = 0;
           }
         }
-        int pooled_index = i * out_strides[0] + ph * out_strides[1] + pw * out_strides[2];
-        int bd_index = hstart * in_strides[1];
+        int pooled_index = i * param->out_strides_[0] + ph * param->out_strides_[1] + pw * param->out_strides_[2];
+        int bd_index = hstart * param->in_strides_[1];
         for (int h = hstart; h < hend; ++h) {
-          int wi = bd_index + wstart * in_strides[2];
+          int wi = bd_index + wstart * param->in_strides_[2];
           for (int w = wstart; w < wend; ++w) {
             for (int c = 0; c < channels_; ++c) {
               max_c[c] = MSMAX(batch_data[wi + c], max_c[c]);
             }
-            wi += in_strides[2];
+            wi += param->in_strides_[2];
           }  // in_w end;
-          bd_index += in_strides[1];
+          bd_index += param->in_strides_[1];
         }  // in_h end
         for (int j = 0; j < channels_; ++j) {
           out_ptr[pooled_index + j] = max_c[j];

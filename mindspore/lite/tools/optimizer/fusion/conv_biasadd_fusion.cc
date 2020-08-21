@@ -95,7 +95,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->tensor_addr());
   auto add_weight_shape = add_weight_tensor->tensor_shape();
   if (add_weight_shape.empty() || (add_weight_shape.size() == 1 && add_weight_shape[0] == 1)) {
-    for (size_t i = 0; i < kernel_nums; i++) {
+    for (int i = 0; i < kernel_nums; i++) {
       add_bias_data[i] = *add_weight_data;
     }
   } else {
@@ -111,7 +111,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
       MS_LOG(EXCEPTION) << "conv_bias_node shape error";
     }
     auto conv_bias_data = reinterpret_cast<float *>(conv_bias_tensor->tensor_addr());
-    for (size_t i = 0; i < kernel_nums; i++) {
+    for (int i = 0; i < kernel_nums; i++) {
       conv_bias_data[i] += add_bias_data[i];
     }
     delete[] add_bias_data;

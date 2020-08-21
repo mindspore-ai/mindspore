@@ -43,8 +43,8 @@ class EmbeddingLookupCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  int thread_count_;
   const lite::Context *ctx_;
+  int thread_count_;
   EmbeddingLookupParameter *embedding_lookup_parameter_;
 
  private:

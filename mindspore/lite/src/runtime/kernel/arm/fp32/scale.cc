@@ -91,14 +91,14 @@ int ScaleCPUKernel::InitParameter() {
   for (int i = 0; i < scale_param_->axis_; i++) {
     scale_param_->outer_size_ *= in_shape[i];
   }
-  for (int i = 0; i < scale_shape.size(); i++) {
+  for (size_t i = 0; i < scale_shape.size(); i++) {
     if (in_shape[i + scale_param_->axis_] != scale_shape[i]) {
       MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
       return RET_ERROR;
     }
     scale_param_->axis_size_ *= in_shape[i + scale_param_->axis_];
   }
-  for (int i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
+  for (size_t i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
     scale_param_->inner_size_ *= in_shape[i];
   }
   return RET_OK;

@@ -59,10 +59,9 @@ int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
     return RET_ERROR;
   }
   std::vector<int> perm;
-  for (int i = 0; i < GetPerm().size(); i++) {
+  for (size_t i = 0; i < GetPerm().size(); i++) {
     perm.push_back(GetPerm()[i]);
   }
-//  perm.insert(perm.begin(), GetPerm().begin(), GetPerm().end());
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
   out_shape.resize(perm.size());

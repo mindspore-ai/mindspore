@@ -58,10 +58,6 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
 std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
         const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
 
-std::unique_ptr<schema::QuantParamT> GetInTensorQuantParamArray(const schema::MetaGraphT &graphT, size_t tensorIdx);
-
-std::unique_ptr<schema::QuantParamT> GetOutTensorQuantParamArray(const schema::MetaGraphT &graphT, size_t tensorIdx);
-
 using MSGraphDefTPtr = std::shared_ptr<schema::MetaGraphT>;
 
 enum TensorType { CONST = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };

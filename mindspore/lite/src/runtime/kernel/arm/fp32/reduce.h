@@ -36,7 +36,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
                   const mindspore::lite::PrimitiveC *primitive)
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~ReduceCPUKernel() {
-    for (auto i = 0; i < data_buffers_.size(); i++) {
+    for (size_t i = 0; i < data_buffers_.size(); i++) {
       float *buffer = data_buffers_[i];
       if (buffer != nullptr) {
         free(buffer);

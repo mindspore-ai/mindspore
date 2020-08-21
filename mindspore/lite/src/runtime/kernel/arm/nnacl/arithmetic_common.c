@@ -61,7 +61,7 @@ void ComputeStrides(int *shape, int *strides, int ndim) {
 }
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param) {
-  for (auto i = 0; i < param->ndim_; i++) {
+  for (size_t i = 0; i < param->ndim_; i++) {
     param->multiples0_[i] = param->out_shape_[i] / param->in_shape0_[i];
     param->multiples1_[i] = param->out_shape_[i] / param->in_shape1_[i];
   }

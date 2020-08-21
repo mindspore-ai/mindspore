@@ -66,7 +66,7 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
       continue;
     }
 
-    for (int i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->inputs().size(); i++) {
       auto input_node = cnode->input(i);
       if (!input_node->isa<CNode>()) {
         continue;

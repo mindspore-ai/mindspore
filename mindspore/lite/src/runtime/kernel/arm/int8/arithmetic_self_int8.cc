@@ -60,7 +60,7 @@ int ArithmeticSelfInt8CPUKernel::Init() {
 
 int ArithmeticSelfInt8CPUKernel::ReSize() {
   data_size_ = in_tensors_[0]->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  thread_sz_count_ = MSMIN(thread_count_, static_cast<int>(data_size_));
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }
@@ -76,7 +76,7 @@ int ArithmeticSelfInt8Runs(int task_id, LiteParallelGroupEnv *penv, void *cdata)
 }
 
 int ArithmeticSelfInt8CPUKernel::DoArithmeticSelf(int task_id) {
-  int size = MSMIN(thread_sz_stride_, data_size_ - task_id * thread_sz_stride_);
+  int size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - task_id * thread_sz_stride_));
   if (size <= 0) {
     return RET_OK;
   }

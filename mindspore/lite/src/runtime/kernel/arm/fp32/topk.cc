@@ -38,7 +38,7 @@ int TopKCPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
-  for (int i = 0; i < input->shape().size() - 1; ++i) {
+  for (size_t i = 0; i < input->shape().size() - 1; ++i) {
     parameter->loop_num_ *= input->shape()[i];
   }
   return RET_OK;

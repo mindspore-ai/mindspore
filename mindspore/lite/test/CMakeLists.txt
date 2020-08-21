@@ -6,6 +6,10 @@ include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
 
+string(REPLACE " -Werror " " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+STRING(REPLACE " fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+STRING(REPLACE " fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 ### anf src
 set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/meta_tensor.cc

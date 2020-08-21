@@ -68,7 +68,7 @@ int ScatterNDCPUKernel::ReSize() {
   // check consistency of the shape indices and shape
   auto update_rank = static_cast<int>(update->shape().size());
   auto indices_shape = indices->shape();
-  if (update_rank != indices->shape().size() - 1 + shape_rank - indice_unit_rank) {
+  if (update_rank != static_cast<int>(indices->shape().size() - 1 + shape_rank - indice_unit_rank)) {
     MS_LOG(ERROR) << "Update, shape rank and indices rank inconsistent.";
     return RET_ERROR;
   }

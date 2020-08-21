@@ -50,7 +50,6 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeC
   if (op != nullptr) {
     op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
-    delete (op->primitive->value.value);
     op->primitive->value.value = deDepthwiseConv2DParam.release();
   }
   return true;

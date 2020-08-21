@@ -75,72 +75,10 @@ enum kTransFilterType {
   kKCHW2CKHW  // 20
 };
 
-static STATUS GetFilterDim(std::vector<int32_t> &oriDims, kTransFilterType type, int32_t &filterK, int32_t &filterC,
-                           int32_t &filterH, int32_t &filterW) {
-  MS_ASSERT(oriDims.size() == 4);
-  if (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC || type == kKCHW2CKHW) {
-    filterK = oriDims.at(KCHW_K);
-    filterC = oriDims.at(KCHW_C);
-    filterH = oriDims.at(KCHW_H);
-    filterW = oriDims.at(KCHW_W);
-  } else if (type == kCKHW2HWCK || type == kCKHW2HWKC || type == kCKHW2KHWC) {
-    filterC = oriDims.at(CKHW_C);
-    filterK = oriDims.at(CKHW_K);
-    filterH = oriDims.at(CKHW_H);
-    filterW = oriDims.at(CKHW_W);
-  } else if (type == kHWCK2KCHW || type == kHWCK2CKHW) {
-    filterH = oriDims.at(HWCK_H);
-    filterW = oriDims.at(HWCK_W);
-    filterC = oriDims.at(HWCK_C);
-    filterK = oriDims.at(HWCK_K);
-  } else if (type == kHWKC2KCHW || type == kHWKC2CKHW) {
-    filterH = oriDims.at(HWKC_H);
-    filterW = oriDims.at(HWKC_W);
-    filterK = oriDims.at(HWKC_K);
-    filterC = oriDims.at(HWKC_C);
-  } else if (type == kNHWC2KCHW || type == kNHWC2HWCK || type == kNHWC2CKHW) {
-    filterK = oriDims.at(NHWC_N);
-    filterH = oriDims.at(NHWC_H);
-    filterW = oriDims.at(NHWC_W);
-    filterC = oriDims.at(NHWC_C);
-  } else if (type == kCHWK2HWCK || type == kCHWK2KHWC) {
-    filterC = oriDims.at(CHWK_C);
-    filterH = oriDims.at(CHWK_H);
-    filterW = oriDims.at(CHWK_W);
-    filterK = oriDims.at(CHWK_K);
-  } else if (type == kKHWC2HWCK || type == kKHWC2CHWK) {
-    filterK = oriDims.at(KHWC_K);
-    filterH = oriDims.at(KHWC_H);
-    filterW = oriDims.at(KHWC_W);
-    filterC = oriDims.at(KHWC_C);
-  } else {
-    MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-static STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
-                           int32_t filterH, int32_t filterW) {
-  MS_ASSERT(tensor != nullptr);
-  if (type == kKCHW2HWCK || type == kCKHW2HWCK || type == kNHWC2HWCK || type == kKHWC2HWCK || type == kCHWK2HWCK) {
-    tensor->dims = {filterH, filterW, filterC, filterK};
-  } else if (type == kKCHW2HWKC || type == kCKHW2HWKC) {
-    tensor->dims = {filterH, filterW, filterK, filterC};
-  } else if (type == kHWCK2KCHW || type == kHWKC2KCHW || type == kNHWC2KCHW) {
-    tensor->dims = {filterK, filterC, filterH, filterW};
-  } else if (type == kHWCK2CKHW || type == kHWKC2CKHW || type == kNHWC2CKHW || type == kKCHW2CKHW) {
-    tensor->dims = {filterC, filterK, filterH, filterW};
-  } else if (type == kKHWC2CHWK) {
-    tensor->dims = {filterC, filterH, filterW, filterK};
-  } else if (type == kKCHW2KHWC || type == kCKHW2KHWC || type == kCHWK2KHWC) {
-    tensor->dims = {filterK, filterH, filterW, filterC};
-  } else {
-    MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
+STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t* filterK, int32_t* filterC,
+                    int32_t* filterH, int32_t* filterW);
+STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+                    int32_t filterH, int32_t filterW);
 
 template <typename T>
 static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
@@ -356,7 +294,7 @@ static STATUS TransFilterFormat(schema::TensorT *tensor, kTransFilterType type) 
   int32_t filterW;
   int32_t filterC;
   int32_t filterK;
-  auto status = GetFilterDim(oriDims, type, filterK, filterC, filterH, filterW);
+  auto status = GetFilterDim(oriDims, type, &filterK, &filterC, &filterH, &filterW);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetFilterDim failed: " << status;
     return status;

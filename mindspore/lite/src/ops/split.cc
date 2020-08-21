@@ -75,7 +75,7 @@ int Split::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor:
   int split_dim = GetSplitDim();
   std::vector<int> input_shape = input->shape();
   std::vector<int> size_split;
-  for (int i = 0; i < GetSizeSplits().size(); ++i) {
+  for (size_t i = 0; i < GetSizeSplits().size(); ++i) {
     size_split.push_back(GetSizeSplits()[i]);
   }
   for (int i = 0; i < number_split; ++i) {

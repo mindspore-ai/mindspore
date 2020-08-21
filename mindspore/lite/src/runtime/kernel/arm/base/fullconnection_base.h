@@ -41,9 +41,9 @@ class FullconnectionBaseCPUKernel : public LiteKernel {
 
  protected:
   MatMulParameter *fc_param_;
-  int thread_count_;
   int thread_stride_;
   const Context *ctx_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 

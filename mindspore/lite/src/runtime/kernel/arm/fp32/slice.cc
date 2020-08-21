@@ -42,7 +42,7 @@ int SliceLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
 int SliceCPUKernel::ReSize() {
   auto *param = reinterpret_cast<SliceParameter *>(op_parameter_);
   auto input_shape = in_tensors_[0]->shape();
-  if (input_shape.size() != param->param_length_) {
+  if (static_cast<int>(input_shape.size()) != param->param_length_) {
     MS_LOG(ERROR) << "Input begin's lenth " << param->param_length_ << "is not equal to input shape size "
                   << input_shape.size();
     return RET_ERROR;

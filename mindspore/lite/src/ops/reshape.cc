@@ -145,10 +145,9 @@ int Reshape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
       }
     }
   } else if (inputs_.size() == kSingleNum) {
-    for (int i = 0; i < GetShape().size(); ++i) {
+    for (size_t i = 0; i < GetShape().size(); ++i) {
       out_shape.push_back(GetShape()[i]);
     }
-//    std::copy(GetShape().begin(), GetShape().end(), std::back_inserter(out_shape));
   } else {
     MS_LOG(ERROR) << "inputs tensor size invalid.";
     return RET_INFER_ERR;

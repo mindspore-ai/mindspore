@@ -38,7 +38,7 @@ int MatmulInt8CPUKernel::ReSize() {
   int batch = 1;
   auto x_shape = in_tensors_[0]->shape();
   auto o_shape = out_tensors_[0]->shape();
-  for (int i = 0; i < x_shape.size() - 2; ++i) {
+  for (size_t i = 0; i < x_shape.size() - 2; ++i) {
     batch *= x_shape[i];
   }
   params_->batch = batch;

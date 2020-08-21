@@ -41,13 +41,13 @@ class ExpandDimsCPUKernel : public LiteKernel {
   int DoExpandDims(int task_id);
 
  private:
-  int thread_count_;
   int thread_sz_count_;
   int thread_sz_stride_;
   size_t data_size_;
   float *in_ptr_;
   float *out_ptr_;
   const Context *ctx_;
+  int thread_count_;
 };
 }  // namespace mindspore::kernel
 

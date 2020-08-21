@@ -43,9 +43,9 @@ class ConcatBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int thread_count_;
   int axis_;
   const Context *ctx_;
+  int thread_count_;
   ConcatParameter *concat_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
