@@ -1,0 +1,14 @@
+{
+  "DebuggerSettings": {
+    "ssl_certificate": true,
+    "certificate_path": "/home/maning/sslcertificates/client.pfx",
+    "certificate_passphrase": "12345678"
+  },
+
+  "DebuggerSettingsSpec": {
+    "ssl_certificate": "true, secure_mode enable, default is true",
+    "certificate_path": "path to the certificate file",
+    "certificate_passphrase": "passphrase of the certificate"
+  },
+  "other": {}
+}

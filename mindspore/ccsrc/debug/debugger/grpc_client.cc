@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "debug/debugger/grpc_client.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/pkcs12.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
 
 #include <thread>
 #include <vector>
-#include "debug/debugger/grpc_client.h"
 #include "utils/log_adapter.h"
 
 using debugger::Chunk;
@@ -31,13 +39,96 @@ using debugger::WatchpointHit;
 #define CHUNK_SIZE 1024 * 1024 * 3
 
 namespace mindspore {
-GrpcClient::GrpcClient(const std::string &host, const std::string &port) : stub_(nullptr) { Init(host, port); }
+GrpcClient::GrpcClient(const std::string &host, const std::string &port, const bool &ssl_certificate,
+                       const std::string &certificate_dir, const std::string &certificate_passphrase)
+    : stub_(nullptr) {
+  Init(host, port, ssl_certificate, certificate_dir, certificate_passphrase);
+}
 
-void GrpcClient::Init(const std::string &host, const std::string &port) {
+void GrpcClient::Init(const std::string &host, const std::string &port, const bool &ssl_certificate,
+                      const std::string &certificate_dir, const std::string &certificate_passphrase) {
   std::string target_str = host + ":" + port;
   MS_LOG(INFO) << "GrpcClient connecting to: " << target_str;
 
-  std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials());
+  std::shared_ptr<grpc::Channel> channel;
+  if (ssl_certificate) {
+    FILE *fp;
+    EVP_PKEY *pkey = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+    PKCS12 *p12 = NULL;
+
+    if ((fp = fopen(certificate_dir.c_str(), "rb")) == NULL) {
+      MS_LOG(ERROR) << "Error opening file: " << certificate_dir;
+      exit(EXIT_FAILURE);
+    }
+    p12 = d2i_PKCS12_fp(fp, NULL);
+    fclose(fp);
+    if (p12 == NULL) {
+      MS_LOG(ERROR) << "Error reading PKCS#12 file";
+      X509_free(cert);
+      EVP_PKEY_free(pkey);
+      sk_X509_pop_free(ca, X509_free);
+      exit(EXIT_FAILURE);
+    }
+    if (!PKCS12_parse(p12, certificate_passphrase.c_str(), &pkey, &cert, &ca)) {
+      MS_LOG(ERROR) << "Error parsing PKCS#12 file";
+      X509_free(cert);
+      EVP_PKEY_free(pkey);
+      sk_X509_pop_free(ca, X509_free);
+      exit(EXIT_FAILURE);
+    }
+    std::string strca;
+    std::string strcert;
+    std::string strkey;
+
+    if (pkey == NULL || cert == NULL || ca == NULL) {
+      MS_LOG(ERROR) << "Error private key or cert or CA certificate.";
+      X509_free(cert);
+      EVP_PKEY_free(pkey);
+      sk_X509_pop_free(ca, X509_free);
+      exit(EXIT_FAILURE);
+    } else {
+      ASN1_TIME *validtime = X509_getm_notAfter(cert);
+      if (X509_cmp_current_time(validtime) < 0) {
+        MS_LOG(ERROR) << "This certificate is over its valid time, please use a new certificate.";
+        X509_free(cert);
+        EVP_PKEY_free(pkey);
+        sk_X509_pop_free(ca, X509_free);
+        exit(EXIT_FAILURE);
+      }
+      int nid = X509_get_signature_nid(cert);
+      int keybit = EVP_PKEY_bits(pkey);
+      if (nid == NID_sha1) {
+        MS_LOG(WARNING) << "Signature algrithm is sha1, which maybe not secure enough.";
+      } else if (keybit < 2048) {
+        MS_LOG(WARNING) << "The private key bits is: " << keybit << ", which maybe not secure enough.";
+      }
+      int dwPriKeyLen = i2d_PrivateKey(pkey, NULL);  // get the length of private key
+      unsigned char *pribuf = (unsigned char *)malloc(sizeof(unsigned char) * dwPriKeyLen);
+      i2d_PrivateKey(pkey, &pribuf);  // PrivateKey DER code
+      strkey = std::string(reinterpret_cast<char const *>(pribuf), dwPriKeyLen);
+
+      int dwcertLen = i2d_X509(cert, NULL);  // get the length of private key
+      unsigned char *certbuf = (unsigned char *)malloc(sizeof(unsigned char) * dwcertLen);
+      i2d_X509(cert, &certbuf);  // PrivateKey DER code
+      strcert = std::string(reinterpret_cast<char const *>(certbuf), dwcertLen);
+
+      int dwcaLen = i2d_X509(sk_X509_value(ca, 0), NULL);  // get the length of private key
+      unsigned char *cabuf = (unsigned char *)malloc(sizeof(unsigned char) * dwcaLen);
+      i2d_X509(sk_X509_value(ca, 0), &cabuf);  // PrivateKey DER code
+      strcat = std::string(reinterpret_cast<char const *>(cabuf), dwcaLen);
+
+      free(pribuf);
+      free(certbuf);
+      free(cabuf);
+    }
+
+    grpc::SslCredentialsOptions opts = {strca, strkey, strcert};
+    channel = grpc::CreateChannel(target_str, grpc::SslCredentials(opts));
+  } else {
+    channel = grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials());
+  }
   stub_ = EventListener::NewStub(channel);
 }
 
