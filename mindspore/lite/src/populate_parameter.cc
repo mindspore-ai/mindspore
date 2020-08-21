@@ -144,7 +144,7 @@
 #include "nnacl/transpose.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/squeeze.h"
-#include "nnacl/fp32/gather.h"
+#include "nnacl/gather_parameter.h"
 #include "nnacl/fp32/reverse.h"
 #include "nnacl/reverse_sequence.h"
 #include "nnacl/fp32/unique.h"

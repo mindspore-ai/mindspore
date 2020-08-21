@@ -159,6 +159,12 @@ typedef struct ArithSelfQuantArg {
   int shift_right_;
 } ArithSelfQuantArg;
 
+typedef struct GatherQuantArg {
+  double alpha_;
+  int zp_in_;
+  int zp_out_;
+} GatherQuantArg;
+
 typedef struct SplitQuantArg {
   QuantArg in_args_;
   QuantArg out_args_[20];
