@@ -609,6 +609,7 @@ Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_ro
   }
 
   // get the average per file
+  CHECK_FAIL_RETURN_UNEXPECTED(num_files != 0, "The size of dataset_files must greater than 0.");
   avg_rows_per_file = num_rows / num_files;
 
   *shuffle_size = std::max(avg_rows_per_file * average_files_multiplier, shuffle_max);

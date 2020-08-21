@@ -39,6 +39,8 @@ namespace dataset {
 class RandomColorOp : public TensorOp {
  public:
   RandomColorOp() = default;
+
+  ~RandomColorOp() = default;
   /// \brief Constructor
   /// \param[in] t_lb lower bound for the random weights
   /// \param[in] t_ub upper bound for the random weights
