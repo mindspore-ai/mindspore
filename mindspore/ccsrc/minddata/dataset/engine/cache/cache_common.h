@@ -59,7 +59,7 @@ constexpr static uint32_t kDataIsInSharedMemory = 2;
 /// \param rc[in] Status object
 /// \param reply[in/out] pointer to pre-allocated protobuf object
 inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
-  reply->set_rc(static_cast<google::int32>(rc.get_code()));
+  reply->set_rc(static_cast<int32_t>(rc.get_code()));
   reply->set_msg(rc.ToString());
 }
 

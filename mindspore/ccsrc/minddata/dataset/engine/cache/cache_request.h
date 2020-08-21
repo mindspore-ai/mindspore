@@ -76,7 +76,7 @@ class BaseRequest {
 
   /// \brief Base class of a cache server request
   /// \param type Type of the request
-  explicit BaseRequest(RequestType type) : type_(type) { rq_.set_type(static_cast<google::int32>(type_)); }
+  explicit BaseRequest(RequestType type) : type_(type) { rq_.set_type(static_cast<int16_t>(type_)); }
   virtual ~BaseRequest() = default;
 
   /// \brief A print method for debugging
