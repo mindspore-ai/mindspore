@@ -71,7 +71,7 @@ class Parameter(MetaTensor):
         >>>
         >>>     def construct(self, x):
         >>>         out = self.matmul(self.weight, x)
-        >>>     return out
+        >>>         return out
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> x = Tensor(np.ones((2,1)))
