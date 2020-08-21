@@ -255,6 +255,7 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   int ic4 = UP_DIV(in_channel, C4NUM);
+  int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
   int out_w = conv_param->output_w_;
 
   for (int i = 0; i < real_cal_num; i++) {
@@ -297,7 +298,7 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
       continue;
     } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
                (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-      int cal_num_offset = i * conv_param->output_channel_;
+      int cal_num_offset = i * oc4 * C4NUM;
       for (int l = 0; l < conv_param->output_channel_; ++l) {
         input_sum[cal_num_offset + l] = input_accumulator * filter_arg[l].zp_;
       }
@@ -325,6 +326,7 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   int ic4 = UP_DIV(in_channel, C4NUM);
+  int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
   int out_w = conv_param->output_w_;
   int block_size = kernel_h * kernel_w;
 
@@ -368,7 +370,7 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
       continue;
     } else if ((conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC) &&
                (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-      int cal_num_offset = i * conv_param->output_channel_;
+      int cal_num_offset = i * oc4 * C4NUM;
       for (int l = 0; l < conv_param->output_channel_; ++l) {
         input_sum[cal_num_offset + l] = input_accumulator * filter_arg[l].zp_;
       }
