@@ -61,12 +61,6 @@ class _ConvVariational(_Conv):
             raise ValueError('Attr \'pad_mode\' of \'Conv2d\' Op passed '
                              + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
 
-        if isinstance(stride, bool) or not isinstance(stride, (int, tuple)):
-            raise TypeError('The type of `stride` should be `int` of `tuple`')
-
-        if isinstance(dilation, bool) or not isinstance(dilation, (int, tuple)):
-            raise TypeError('The type of `dilation` should be `int` of `tuple`')
-
         # convolution args
         self.in_channels = in_channels
         self.out_channels = out_channels
