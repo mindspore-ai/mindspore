@@ -19,6 +19,7 @@ from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, raise_none_error
 from ._utils.utils import CheckTensor, CheckTuple
+from ._utils.custom_ops import log_by_step
 
 class Bernoulli(Distribution):
     """
@@ -116,7 +117,7 @@ class Bernoulli(Distribution):
         self.exp = P.Exp()
         self.floor = P.Floor()
         self.fill = P.Fill()
-        self.log = P.Log()
+        self.log = log_by_step
         self.less = P.Less()
         self.shape = P.Shape()
         self.select = P.Select()

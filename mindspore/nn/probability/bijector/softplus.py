@@ -19,6 +19,7 @@ from mindspore.common import dtype as mstype
 from mindspore.nn.layer.activation import LogSigmoid
 from mindspore._checkparam import Validator as validator
 from ..distribution._utils.utils import cast_to_tensor, CheckTensor
+from ..distribution._utils.custom_ops import log_by_step, expm1_by_step
 from .bijector import Bijector
 
 class Softplus(Bijector):
@@ -60,12 +61,12 @@ class Softplus(Bijector):
 
         self.abs = P.Abs()
         self.exp = P.Exp()
-        self.expm1 = self._expm1_by_step
+        self.log = log_by_step
+        self.expm1 = expm1_by_step
         self.fill = P.Fill()
         self.greater = P.Greater()
         self.less = P.Less()
         self.log_sigmoid = LogSigmoid()
-        self.log = P.Log()
         self.logicalor = P.LogicalOr()
         self.select = P.Select()
         self.shape = P.Shape()
@@ -75,12 +76,6 @@ class Softplus(Bijector):
 
         self.checktensor = CheckTensor()
         self.threshold = np.log(np.finfo(np.float32).eps) + 1
-
-    def _expm1_by_step(self, x):
-        """
-        Expm1 ops under GPU context.
-        """
-        return self.exp(x) - 1.0
 
     def _softplus(self, x):
         too_small = self.less(x, self.threshold)
