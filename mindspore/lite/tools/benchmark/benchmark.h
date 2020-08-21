@@ -63,6 +63,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     // MarkPerformance
     AddFlag(&BenchmarkFlags::loopCount, "loopCount", "Run loop count", 10);
     AddFlag(&BenchmarkFlags::numThreads, "numThreads", "Run threads number", 2);
+    AddFlag(&BenchmarkFlags::fp16Priority, "fp16Priority", "Priority float16", false);
     AddFlag(&BenchmarkFlags::warmUpLoopCount, "warmUpLoopCount", "Run warm up loop", 3);
     // MarkAccuracy
     AddFlag(&BenchmarkFlags::calibDataPath, "calibDataPath", "Calibration data file path", "");
@@ -88,6 +89,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   // MarkPerformance
   int loopCount;
   int numThreads;
+  bool fp16Priority;
   int warmUpLoopCount;
   // MarkAccuracy
   std::string calibDataPath;
