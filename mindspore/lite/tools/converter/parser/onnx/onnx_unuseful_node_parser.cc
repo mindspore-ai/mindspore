@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_unuseful_node_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -23,25 +23,35 @@ STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph,
                                      const onnx::NodeProto &onnx_node,
                                      schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx UnusefulNodeParser";
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    if (onnx_node.op_type() == "Int8Quantize") {
-      op->primitive->value.type = schema::PrimitiveType_OnnxInt8Quantize;
-      op->primitive->value.value = std::make_unique<schema::OnnxInt8QuantizeT>().release();
-    } else if (onnx_node.op_type() == "Int8Dequantize") {
-      op->primitive->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
-      op->primitive->value.value = std::make_unique<schema::OnnxInt8DequantizeT>().release();
-    } else {
-      // MS_LOGE("Unsupported nodeType: %s", onnx_node.op_type().c_str());
-      return RET_ERROR;
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  if (onnx_node.op_type() == "Int8Quantize") {
+    std::unique_ptr<schema::OnnxInt8QuantizeT> attr = std::make_unique<schema::OnnxInt8QuantizeT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
     }
-    if (op->primitive->value.value == nullptr) {
-      // MS_LOGE("new %s attr value failed", onnx_node.op_type().c_str());
-      return RET_ERROR;
+    op->primitive->value.type = schema::PrimitiveType_OnnxInt8Quantize;
+    op->primitive->value.value = attr.release();
+  } else if (onnx_node.op_type() == "Int8Dequantize") {
+    std::unique_ptr<schema::OnnxInt8DequantizeT> attr = std::make_unique<schema::OnnxInt8DequantizeT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
     }
+    op->primitive->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
+    op->primitive->value.value = attr.release();
   } else {
-    // MS_LOGE("Input opDef is nullptr");
-    return RET_PARAM_INVALID;
+    MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
+    return RET_ERROR;
   }
   return RET_OK;
 }

@@ -14,31 +14,69 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_lrn_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph,
+                            const onnx::NodeProto &onnx_node,
+                            schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx LrnParser";
-  std::unique_ptr<schema::LrnT> attr = std::make_unique<schema::LrnT>();
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto& attribute_name = onnx_node_attr.name();
-    if (attribute_name == "size") {
-      attr->size = static_cast<int32_t>(onnx_node_attr.i());
-    } else if (attribute_name == "alpha") {
-      attr->alpha = onnx_node_attr.f();
-    } else if (attribute_name == "beta") {
-      attr->beta = onnx_node_attr.f();
-    } else if (attribute_name == "bias") {
-      attr->bias = onnx_node_attr.f();
-    }
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Lrn;
-    op->primitive->value.value = attr.release();
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
   }
+
+  std::unique_ptr<schema::LocalResponseNormalizationT> attr
+    = std::make_unique<schema::LocalResponseNormalizationT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+  auto onnx_node_attr = onnx_node.attribute().at(0);
+  int32_t size = 0;
+  if (onnx_node_attr.name() == "size") {
+    size = static_cast<int32_t>(onnx_node_attr.i());
+    attr->depth_radius = static_cast<int32_t>(size / 2);
+  } else {
+    MS_LOG(ERROR) << "the first attr is not size";
+    return RET_ERROR;
+  }
+
+  onnx_node_attr = onnx_node.attribute().at(1);
+  if (onnx_node_attr.name() == "alpha") {
+    auto alpha = onnx_node_attr.f();
+    attr->alpha = alpha / size;
+  } else {
+    MS_LOG(ERROR) << "the second attr is not alpha";
+    return RET_ERROR;
+  }
+
+  onnx_node_attr = onnx_node.attribute().at(2);
+  if (onnx_node_attr.name() == "beta") {
+    attr->beta = onnx_node_attr.f();
+  } else {
+    MS_LOG(ERROR) << "the third attr is not beta";
+    return RET_ERROR;
+  }
+
+  onnx_node_attr = onnx_node.attribute().at(3);
+  if (onnx_node_attr.name() == "bias") {
+    attr->bias = onnx_node_attr.f();
+  } else {
+    MS_LOG(ERROR) << "the third attr is not bias";
+    return RET_ERROR;
+  }
+
+  op->primitive->value.type = schema::PrimitiveType_LocalResponseNormalization;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

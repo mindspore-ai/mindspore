@@ -14,16 +14,32 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/onnx/onnx_reshape_parser.h"
 #include <vector>
 #include <memory>
-#include "tools/converter/parser/onnx/onnx_reshape_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph,
+                                const onnx::NodeProto &onnx_node,
                                 schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ReshapeParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   attr->format = schema::Format_NCHW;
   std::vector<onnx::TensorProto> params;
   for (int i = 0; i < onnx_node.input_size(); ++i) {
@@ -40,18 +56,16 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
   } else {
     if (params.size() != 1) {
       MS_LOG(ERROR) << "shape param num is " << params.size() << ", not equal to 1";
-      return RET_PARAM_INVALID;
+      return RET_ERROR;
     }
 
     for (int i = 0; i < params[0].int64_data_size(); ++i) {
       attr->shape.emplace_back(params[0].int64_data(i));
     }
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Reshape;
-    op->primitive->value.value = attr.release();
-  }
+
+  op->primitive->value.type = schema::PrimitiveType_Reshape;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

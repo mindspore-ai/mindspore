@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/onnx/onnx_conv_parser.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "tools/converter/parser/onnx/onnx_conv_parser.h"
 
 namespace mindspore {
 namespace lite {
-bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::CNodeT *op) {
+bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr,
+                                           schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DepthwiseConvParser";
   if (attr == nullptr || attr->group != attr->channelIn) {
     return false;
   }
   std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
   if (depthwiseConv2DParam == nullptr) {
-    MS_LOG(ERROR) << "new DepthwiseConv2DT failed";
+    MS_LOG(ERROR) << "new op failed";
     return false;
   }
   depthwiseConv2DParam->format = attr->format;
@@ -47,15 +48,32 @@ bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT
   depthwiseConv2DParam->dilateH = attr->dilateH;
   depthwiseConv2DParam->hasBias = attr->hasBias;
   depthwiseConv2DParam->activationType = attr->activationType;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
   op->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
   op->primitive->value.value = depthwiseConv2DParam.release();
   return true;
 }
 
-STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph,
+                             const onnx::NodeProto &onnx_node,
+                             schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ConvParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::Conv2DT> attr = std::make_unique<schema::Conv2DT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -149,13 +167,13 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   } else {
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
+
   if (attr->group != 1) {
     if (!ParseGroupConvolution(attr, op)) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return RET_ERROR;
     }
   } else {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
     op->primitive->value.type = schema::PrimitiveType_Conv2D;
     op->primitive->value.value = attr.release();
   }

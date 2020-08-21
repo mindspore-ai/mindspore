@@ -14,25 +14,40 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_elu_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+STATUS OnnxEluParser::Parse(const onnx::GraphProto &onnx_graph,
+                            const onnx::NodeProto &onnx_node,
+                            schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx EluParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::EluT> attr = std::make_unique<schema::EluT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto& attribute_name = onnx_node_attr.name();
     if (attribute_name == "alpha") {
       attr->alpha = onnx_node_attr.f();
     }
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Elu;
-    op->primitive->value.value = attr.release();
-  }
+
+  op->primitive->value.type = schema::PrimitiveType_Elu;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

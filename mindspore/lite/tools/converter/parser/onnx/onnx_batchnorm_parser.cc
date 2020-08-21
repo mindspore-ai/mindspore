@@ -19,10 +19,26 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+STATUS OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph,
+                                  const onnx::NodeProto &onnx_node,
                                   schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx BatchNormParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::FusedBatchNormT> attr = std::make_unique<schema::FusedBatchNormT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "epsilon") {
       attr->epsilon = onnx_node_attr.f();
@@ -32,11 +48,9 @@ STATUS OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx
       attr->spatial = static_cast<int32_t>(onnx_node_attr.i());
     }
   }
-  if (op != nullptr) {
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_FusedBatchNorm;
-    op->primitive->value.value = attr.release();
-  }
+
+  op->primitive->value.type = schema::PrimitiveType_FusedBatchNorm;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

@@ -14,20 +14,32 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "tools/converter/parser/onnx/onnx_expand_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx ExpandParser";
-  if (op != nullptr) {
-    std::unique_ptr<schema::BroadcastT> attr = std::make_unique<schema::BroadcastT>();
-    op->primitive = std::make_unique<schema::PrimitiveT>();
-    op->primitive->value.type = schema::PrimitiveType_Broadcast;
-    op->primitive->value.value = attr.release();
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
   }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::BroadcastT> attr = std::make_unique<schema::BroadcastT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+  op->primitive->value.type = schema::PrimitiveType_Broadcast;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

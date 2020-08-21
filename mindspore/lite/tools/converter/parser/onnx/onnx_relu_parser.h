@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MS_ONNX_RELU_PARSER_H
-#define MS_ONNX_RELU_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RELU_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RELU_PARSER_H
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
@@ -25,7 +25,10 @@ namespace lite {
 class OnnxReluParser : public OnnxNodeParser {
  public:
   OnnxReluParser() : OnnxNodeParser("Relu") {}
-  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+
+  STATUS Parse(const onnx::GraphProto &onnx_graph,
+               const onnx::NodeProto &onnx_node,
+               schema::CNodeT *op) override;
 };
 
 class OnnxLeakeyReluParser : public OnnxReluParser {
@@ -36,9 +39,12 @@ class OnnxLeakeyReluParser : public OnnxReluParser {
 class OnnxPReluParser : public OnnxNodeParser {
  public:
   OnnxPReluParser() : OnnxNodeParser("Prelu") {}
-  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+
+  STATUS Parse(const onnx::GraphProto &onnx_graph,
+               const onnx::NodeProto &onnx_node,
+               schema::CNodeT *op) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MS_ONNX_RELU_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RELU_PARSER_H
 

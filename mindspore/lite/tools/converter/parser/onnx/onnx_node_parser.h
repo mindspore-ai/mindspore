@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MS_ONNX_NODE_PARSER_H
-#define MS_ONNX_NODE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_PARSER_H
 
 #include <string>
+#include <vector>
 #include "google/protobuf/message.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "include/errorcode.h"
@@ -29,14 +30,23 @@ namespace lite {
 class OnnxNodeParser {
  public:
   explicit OnnxNodeParser(const std::string &nodeName) : name(nodeName) {}
+
   virtual ~OnnxNodeParser() = default;
-  virtual STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) = 0;
+
+  virtual STATUS Parse(const onnx::GraphProto &onnx_graph,
+                       const onnx::NodeProto &onnx_node,
+                       schema::CNodeT *op) = 0;
 
  protected:
   schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
+
+  void Split(const std::string &src_str,
+             std::vector<std::string> *dst_str,
+             const std::string &chr);
+
   const std::string &name;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MS_ONNX_NODE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_PARSER_H
 
