@@ -29,7 +29,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         ScatterUpdate, ScalarToArray, ScalarToTensor, ScatterNd, ScatterNdUpdate, Select,
                         Shape, Size, Slice, Split, TransShape, ParallelConcat, Padding,
                         ScatterNdAdd, ScatterNdSub, ScatterNonAliasingAdd, ReverseV2, Rint,
-                        Squeeze, StridedSlice, Tile, TensorScatterUpdate,
+                        Squeeze, StridedSlice, Tile, TensorScatterUpdate, EditDistance,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
                         SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup,
@@ -92,6 +92,7 @@ from .sparse_ops import SparseToDense
 
 __all__ = [
     'ReverseSequence',
+    'EditDistance',
     'CropAndResize',
     'TensorAdd',
     'Argmax',

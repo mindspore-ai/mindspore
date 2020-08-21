@@ -3470,6 +3470,93 @@ class ReverseSequence(PrimitiveWithInfer):
         return x
 
 
+class EditDistance(PrimitiveWithInfer):
+    """
+    Computes the Levebshtein Edit Distance. It is used to measure the similarity of two sequences.
+
+    Args:
+        normalize (bool): If True, edit distances are normalized by length of truth. Default: True.
+
+    Inputs:
+        - **hypothesis_indices** (Tensor) - The indices of the hypothesis list SparseTensor. With int64 data type.
+          The shape of tensor is :math:`(N, R)`.
+        - **hypothesis_values** (Tensor) - The values of the hypothesis list SparseTensor.
+          Must be 1-D vector with length of N.
+        - **hypothesis_shape** (Tensor) - The values of the hypothesis list SparseTensor.
+          Must be R-length vector with int64 data type. Only constant value is allowed.
+        - **truth_indices** (Tensor) - The indices of the truth list SparseTensor. With int64 data type.
+          The shape of tensor is :math:`(M, R)`.
+        - **truth_values** (Tensor) - The values of the truth list SparseTensor. Must be 1-D vector with length of M.
+        - **truth_shape** (Tensor) - The values of the truth list SparseTensor.
+          Must be R-length vector with int64 data type. Only constant value is allowed.
+
+    Outputs:
+        Tensor, a dense tensor with rank `R-1` and float32 data type.
+
+    Examples:
+        >>> class EditDistance(nn.Cell):
+        >>>     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
+        >>>         super(EditDistance, self).__init__()
+        >>>         self.edit_distance = P.EditDistance(normalize)
+        >>>         self.hypothesis_shape = hypothesis_shape
+        >>>         self.truth_shape = truth_shape
+        >>>
+        >>>     def construct(self, hypothesis_indices, hypothesis_values, truth_indices, truth_values):
+        >>>         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
+        >>>                                   truth_indices, truth_values, self.truth_shape)
+        >>>
+        >>> hypothesis_indices = Tensor(np.array([[0, 0, 0], [1, 0, 1], [1, 1, 1]]).astype(np.int64))
+        >>> hypothesis_values = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> hypothesis_shape = Tensor(np.array([1, 1, 2]).astype(np.int64))
+        >>> truth_indices = Tensor(np.array([[0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1]]).astype(np.int64))
+        >>> truth_values = Tensor(np.array([1, 3, 2, 1]).astype(np.float32))
+        >>> truth_shape = Tensor(np.array([2, 2, 2]).astype(np.int64))
+        >>> edit_distance = EditDistance(hypothesis_shape, truth_shape)
+        >>> out = edit_distance(hypothesis_indices, hypothesis_values, truth_indices, truth_values)
+        >>> [[1.0, 1.0], [1.0, 1.0]]
+    """
+
+    @prim_attr_register
+    def __init__(self, normalize=True):
+        """init EditDistance"""
+        self.normalize = validator.check_value_type("normalize", normalize, [bool], self.name)
+
+    def __infer__(self, h_indices, h_values, h_shape, truth_indices, truth_values, truth_shape):
+        validator.check_const_input('hypothesis_shape', h_shape['value'], self.name)
+        validator.check_const_input('truth_shape', truth_shape['value'], self.name)
+        args_int = {"hypothesis_indices": h_indices['dtype'], "hypothesis_shape": h_shape['dtype'],
+                    "truth_indices": truth_indices['dtype'], "truth_shape": truth_shape['dtype']}
+        validator.check_tensor_type_same(args_int, [mstype.int64], self.name)
+        args = {"hypothesis_values": h_values['dtype'], "truth_values": truth_values['dtype']}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+
+        hypothesis_indices_shp, truth_indices_shp = h_indices['shape'], truth_indices['shape']
+        validator.check("hypothesis_indices rank", len(hypothesis_indices_shp), "expected", 2, Rel.EQ, self.name)
+        validator.check("truth_indices rank", len(truth_indices_shp), "expected", 2, Rel.EQ, self.name)
+        validator.check("hypothesis_values rank", len(h_values['shape']), "expected", 1, Rel.EQ, self.name)
+        validator.check("hypothesis_shape rank", len(h_shape['shape']), "expected", 1, Rel.EQ, self.name)
+        validator.check("truth_values rank", len(truth_values['shape']), "expected", 1, Rel.EQ, self.name)
+        validator.check("truth_shape rank", len(truth_shape['shape']), "expected", 1, Rel.EQ, self.name)
+        validator.check("hypothesis_values shape", h_values['shape'][0],
+                        "hypothesis_indices shape[0]", hypothesis_indices_shp[0], Rel.EQ, self.name)
+        validator.check("hypothesis_shape", h_shape['shape'][0],
+                        "hypothesis_indices shape[1]", hypothesis_indices_shp[1], Rel.EQ, self.name)
+        validator.check("truth_values shape", truth_values['shape'][0],
+                        "truth_indices shape[0]", truth_indices_shp[0], Rel.EQ, self.name)
+        validator.check("hypothesis_shape", h_shape['shape'][0],
+                        "truth_shape", truth_shape['shape'][0], Rel.EQ, self.name)
+        hypothesis_shape_v = h_shape['value'].asnumpy()
+        truth_shape_v = truth_shape['value'].asnumpy()
+        out_shape_rank = len(hypothesis_shape_v) - 1
+        out_shape = []
+        for i in range(out_shape_rank):
+            out_shape.append(max(hypothesis_shape_v[i], truth_shape_v[i]))
+
+        return {'shape': tuple(out_shape),
+                'dtype': mstype.tensor_type(mstype.float32),
+                'value': None}
+
+
 class TransShape(PrimitiveWithInfer):
     """
     Transform the shape of input tensor to target shape.

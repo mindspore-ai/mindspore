@@ -54,5 +54,8 @@ DECLARE_OP_ADAPTER(Data)
 
 DECLARE_OP_ADAPTER(ReverseSequence)
 DECLARE_OP_USE_OUTPUT(ReverseSequence)
+
+DECLARE_OP_ADAPTER(EditDistance)
+DECLARE_OP_USE_OUTPUT(EditDistance)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

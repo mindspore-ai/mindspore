@@ -684,6 +684,18 @@ class ParallelConcatNet(nn.Cell):
         return self.parallel_concat((x1, x2))
 
 
+class EditDistance(nn.Cell):
+    def __init__(self, hypothesis_shape, truth_shape, normalize=True):
+        super(EditDistance, self).__init__()
+        self.edit_distance = P.EditDistance(normalize)
+        self.hypothesis_shape = hypothesis_shape
+        self.truth_shape =truth_shape
+
+    def construct(self, hypothesis_indices, hypothesis_values, truth_indices, truth_values):
+        return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
+                                  truth_indices, truth_values, self.truth_shape)
+
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -1978,6 +1990,15 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)),
                         Tensor(np.array([1, 2, 3]).astype(np.int32))],
         'desc_bprop': [[3, 3]]}),
+    ('EditDistance', {
+        'block': EditDistance(Tensor(np.array([1, 1, 2]).astype(np.int64)),
+                              Tensor(np.array([2, 2, 2]).astype(np.int64))),
+        'desc_inputs': [Tensor(np.array([[0, 0, 0], [1, 0, 1], [1, 1, 1]]).astype(np.int64)),
+                        Tensor(np.array([1, 2, 3]).astype(np.float32)),
+                        Tensor(np.array([[0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1]]).astype(np.int64)),
+                        Tensor(np.array([1, 3, 2, 1]).astype(np.float32))],
+        'skip': ['backward'],
+    }),
     ('LinSpace', {
         'block': inner.LinSpace(),
         'desc_inputs': [Tensor([5, 5.5], mstype.float32),

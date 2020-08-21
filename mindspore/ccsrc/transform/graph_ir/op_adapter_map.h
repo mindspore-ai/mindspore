@@ -190,6 +190,7 @@ constexpr const char kNameSquareSumAll[] = "SquareSumAll";
 constexpr const char kNameAscendQuant[] = "Quant";
 constexpr const char kNameAscendDequant[] = "Dequant";
 constexpr const char kNameReverseSequence[] = "ReverseSequence";
+constexpr const char kNameEditDistance[] = "EditDistance";
 constexpr const char kNameCase[] = "Case";
 
 class OpAdapterMap {
