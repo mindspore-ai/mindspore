@@ -162,6 +162,19 @@ class KernelGraph : public FuncGraph {
   void set_child_graph_result(const std::vector<AnfNodePtr> &child_graph_result) {
     child_graph_result_ = child_graph_result;
   }
+  void InsertTupleParameterToMakeTupleMap(const AnfNodePtr &param, const AnfNodePtr &make_tuple) {
+    if (tuple_parameter_to_make_tuple_map_.find(param) != tuple_parameter_to_make_tuple_map_.end()) {
+      return;
+    }
+    tuple_parameter_to_make_tuple_map_[param] = make_tuple;
+  }
+  AnfNodePtr FindTupleParameterToMakeTupleMap(const AnfNodePtr &param) {
+    if (tuple_parameter_to_make_tuple_map_.find(param) != tuple_parameter_to_make_tuple_map_.end()) {
+      return tuple_parameter_to_make_tuple_map_[param];
+    } else {
+      return nullptr;
+    }
+  }
 
  private:
   // remove value node form graph
@@ -229,6 +242,7 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
+  std::unordered_map<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
