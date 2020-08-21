@@ -192,6 +192,8 @@ constexpr const char kNameAscendDequant[] = "Dequant";
 constexpr const char kNameReverseSequence[] = "ReverseSequence";
 constexpr const char kNameEditDistance[] = "EditDistance";
 constexpr const char kNameCase[] = "Case";
+constexpr const char kNameAssert[] = "Assert";
+constexpr const char kNameCTCGreedyDecoder[] = "CTCGreedyDecoder";
 
 class OpAdapterMap {
  public:
