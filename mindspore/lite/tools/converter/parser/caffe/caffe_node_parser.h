@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
-#define MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
 
 #include <string>
 #include <vector>
@@ -34,8 +34,10 @@ class CaffeNodeParser {
 
   virtual ~CaffeNodeParser() {}
 
-  virtual int Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
-                       std::vector<schema::TensorT *> *weightVec) = 0;
+  virtual int Parse(const caffe::LayerParameter &proto,
+                    const caffe::LayerParameter &weight,
+                    schema::CNodeT *op,
+                    std::vector<schema::TensorT *> *weightVec) = 0;
 
  protected:
   const std::string &name;
@@ -43,9 +45,10 @@ class CaffeNodeParser {
 
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto);
 
-STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape);
+STATUS ConvertShape(const caffe::BlobProto &proto,
+                    std::vector<int32_t> *shape);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
 

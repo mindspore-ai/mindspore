@@ -110,7 +110,6 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
     op->quantType = quant_type;
     MS_LOG(INFO) << "parse op: " << op->name.c_str();
 
-    // parse tflite op
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
     if (node_parser == nullptr) {
       MS_LOG(ERROR) << "cannot find node parser, opType: " << op_type.c_str();
@@ -122,7 +121,6 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       return RET_ERROR;
     }
 
-    // add
     sub_graph->nodes.emplace_back(op.release());
     opMap[sub_graph->nodes.back()->name] = sub_graph->nodes.back().get();
     tfliteOpMap[tflite_op.get()] = sub_graph->nodes.back().get();
@@ -303,7 +301,6 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
   sub_graph->name = "MS_model converted by TF-Lite";
 
   // load graph
-  //  std::unique_ptr<tflite::ModelT> tflite_model(new tflite::ModelT());
   std::unique_ptr<tflite::ModelT> tflite_model = ReadTfliteModel(model_file.c_str());
 
   if (tflite_model->subgraphs.size() != 1) {

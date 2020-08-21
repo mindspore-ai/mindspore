@@ -20,7 +20,6 @@
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/text_format.h"
 #include "google/protobuf/io/coded_stream.h"
-#include "securec/include/securec.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {
@@ -31,57 +30,58 @@ static const int WARNING_THRESHOLD = 536870912 * 2;
 bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded_stream,
                                    google::protobuf::Message *proto) {
   if (proto == nullptr) {
-    // MS_LOGE("incorrect parameter. nullptr == proto");
+    MS_LOG(ERROR) << "incorrect parameter. nullptr == proto";
     return false;
   }
   coded_stream->SetTotalBytesLimit(PROTO_READ_BYTES_LIMIT, WARNING_THRESHOLD);
   return proto->ParseFromCodedStream(coded_stream);
 }
 
-STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
+STATUS ReadProtoFromText(const char *file,
+                         google::protobuf::Message *message) {
   if (file == nullptr || message == nullptr) {
     return RET_ERROR;
   }
 
   std::string realPath = RealPath(file);
   if (realPath.empty()) {
-    // MS_LOGE("Proto file path is '%s' not valid", file);
+    MS_LOG(ERROR) << "Proto file path " << file <<" is  not valid";
     return RET_ERROR;
   }
 
   std::ifstream fs(realPath.c_str(), std::ifstream::in);
 
   if (!fs.is_open()) {
-    // MS_LOGE("Open proto file '%s' failed.", file);
+    MS_LOG(ERROR) << "Open proto file " << file << " failed.";
     return RET_ERROR;
   }
 
   google::protobuf::io::IstreamInputStream input(&fs);
   bool status = google::protobuf::TextFormat::Parse(&input, message);
-  if (status != true) {
-    // MS_LOGE("call [google::protobuf::TextFormat::Parse] func status fail, please check your text file.");
+  if (!status) {
+    MS_LOG(ERROR) << "call [google::protobuf::TextFormat::Parse] func status fail, please check your text file.";
     return RET_ERROR;
   }
 
   fs.close();
-
   return RET_OK;
 }
 
-STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message) {
+STATUS ReadProtoFromBinaryFile(const char *file,
+                               google::protobuf::Message *message) {
   if (file == nullptr || message == nullptr) {
     return RET_ERROR;
   }
 
   std::string realPath = RealPath(file);
   if (realPath.empty()) {
-    // MS_LOGE("Weight file path is '%s' not valid", file);
+    MS_LOG(ERROR) << "Weight file path " << file << " is not valid";
     return RET_ERROR;
   }
 
   std::ifstream fs(realPath, std::ifstream::in | std::ifstream::binary);
   if (!fs.is_open()) {
-    // MS_LOGE("Open weight file '%s' failed.", file);
+    MS_LOG(ERROR) << "Open weight file " << file << " failed.";
     return RET_ERROR;
   }
 
@@ -92,7 +92,7 @@ STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *mess
   fs.close();
 
   if (!success) {
-    // MS_LOGE("Parse %s failed.", file);
+    MS_LOG(ERROR) << "Parse " << file << " failed.";
     return RET_ERROR;
   }
 

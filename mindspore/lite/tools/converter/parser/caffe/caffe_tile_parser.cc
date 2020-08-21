@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "mindspore/lite/tools/converter/parser/caffe/caffe_tile_parser.h"
 #include <memory>
 #include <vector>
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_tile_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -24,9 +24,24 @@ STATUS CaffeTileParser::Parse(const caffe::LayerParameter &proto,
                               const caffe::LayerParameter &weight,
                               schema::CNodeT *op,
                               std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
-  const caffe::TileParameter tile_param = proto.tile_param();
+  MS_LOG(DEBUG) << "parse CaffeTileParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
 
+  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+  const caffe::TileParameter tile_param = proto.tile_param();
   std::vector<int> dims;
   std::vector<int> multiples;
   dims.clear();
@@ -41,11 +56,12 @@ STATUS CaffeTileParser::Parse(const caffe::LayerParameter &proto,
   } else {
     multiples.push_back(1);
   }
+
   attr->dims = dims;
   attr->multiples = multiples;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+
   op->primitive->value.type = schema::PrimitiveType_Tile;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

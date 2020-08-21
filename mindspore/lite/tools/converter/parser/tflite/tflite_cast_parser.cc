@@ -29,7 +29,6 @@ STATUS TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
                                std::vector<schema::Format> *tensors_format,
                                std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteCastParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,6 +40,10 @@ STATUS TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
   }
 
   std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &in_tensor = tflite_tensors[tflite_op->inputs[0]];
   if (in_tensor == nullptr) {

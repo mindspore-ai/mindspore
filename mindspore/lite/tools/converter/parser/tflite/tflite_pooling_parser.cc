@@ -40,6 +40,10 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   }
 
   std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   std::vector<std::string> node_name_str;
   Split(op->name, &node_name_str, "-");

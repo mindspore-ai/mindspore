@@ -30,7 +30,6 @@ STATUS TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  std::vector<schema::Format> *tensors_format,
                                  std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteTopKV2Parser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -42,6 +41,10 @@ STATUS TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
 
   std::unique_ptr<schema::TopKT> attr = std::make_unique<schema::TopKT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   attr->sorted = true;
   std::vector<int32_t> k;

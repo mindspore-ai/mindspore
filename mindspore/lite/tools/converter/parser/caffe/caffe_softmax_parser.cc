@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_softmax_parser.h"
-#include "utils/log_adapter.h"
+#include <memory>
 
 static const int32_t CAFFE_SOFTMAX_DEFAULT_AXIS = 1;
 
@@ -26,7 +25,23 @@ STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto,
                                  const caffe::LayerParameter &weight,
                                  schema::CNodeT *op,
                                  std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeSoftmaxParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   if (proto.has_softmax_param() && proto.softmax_param().has_axis()) {
     if (proto.softmax_param().axis() == -1) {
       MS_LOG(ERROR) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
@@ -35,9 +50,10 @@ STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto,
   } else {
     attr->axis = CAFFE_SOFTMAX_DEFAULT_AXIS;
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_SoftMax;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

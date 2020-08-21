@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_CONV_BASE_PARSER_H_
-#define MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_CONV_BASE_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONV_BASE_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONV_BASE_PARSER_H_
 
 #include <string>
 #include <vector>
@@ -30,22 +30,28 @@ class CaffeConvBaseParser {
 
   virtual ~CaffeConvBaseParser() {}
 
-  STATUS ParsePads(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *pad);
+  STATUS ParsePads(const caffe::ConvolutionParameter &conv_param,
+                   std::vector<int64_t> *pad);
 
-  STATUS ParseStrides(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *stride);
+  STATUS ParseStrides(const caffe::ConvolutionParameter &conv_param,
+                      std::vector<int64_t> *stride);
 
-  STATUS ParseDilations(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *dilation);
+  STATUS ParseDilations(const caffe::ConvolutionParameter &conv_param,
+                        std::vector<int64_t> *dilation);
 
-  STATUS ParseKernels(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *kernel);
+  STATUS ParseKernels(const caffe::ConvolutionParameter &conv_param,
+                      std::vector<int64_t> *kernel);
 
-  int ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType);
+  int ParseGroup(const caffe::ConvolutionParameter &convParam,
+                 const std::string &layerType);
 
   int ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut);
 
-  STATUS ParseWeight(const caffe::LayerParameter &weight, std::vector<schema::TensorT *> *weightVec);
+  STATUS ParseWeight(const caffe::LayerParameter &weight,
+                     std::vector<schema::TensorT *> *weightVec);
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_CONV_BASE_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONV_BASE_PARSER_H_
 

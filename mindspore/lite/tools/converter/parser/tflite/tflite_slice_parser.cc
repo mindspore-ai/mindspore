@@ -29,8 +29,6 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
                                 std::vector<schema::Format> *tensors_format,
                                 std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteSliceParser";
-
-  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -42,6 +40,10 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
   }
 
   std::unique_ptr<schema::SliceT> attr = std::make_unique<schema::SliceT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   attr->format = schema::Format_NHWC;
 

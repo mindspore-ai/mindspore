@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_prelu_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -23,7 +23,23 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto,
                                const caffe::LayerParameter &weight,
                                schema::CNodeT *op,
                                std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffePReluParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::CaffePReLUT> attr = std::make_unique<schema::CaffePReLUT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   const caffe::PReLUParameter pReluParam = proto.prelu_param();
   if (pReluParam.has_channel_shared()) {
     attr->channelShared = pReluParam.channel_shared();
@@ -32,17 +48,18 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto,
   }
 
   if (weight.blobs_size() == 0) {
-    // MS_LOGE("PRelu No blobs data in layer %s", proto.name().c_str());
+    MS_LOG(ERROR) << "PRelu No blobs data in layer " << proto.name().c_str();
     return RET_ERROR;
   }
 
   auto slope = ConvertWeight(weight.blobs(0));
   if (slope == nullptr) {
-    // MS_LOGE("CaffePRelu convert slope for layer %s failed.", weight.name().c_str());
+    MS_LOG(ERROR) << "CaffePRelu convert slope for layer " << weight.name().c_str() << " failed.";
     return RET_ERROR;
   }
   weightVec->push_back(slope);
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_CaffePReLU;
   op->primitive->value.value = attr.release();
   return RET_OK;

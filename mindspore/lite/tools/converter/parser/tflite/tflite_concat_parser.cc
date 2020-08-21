@@ -29,8 +29,6 @@ STATUS TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  std::vector<schema::Format> *tensors_format,
                                  std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteConcatParser";
-
-  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -42,6 +40,10 @@ STATUS TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
 
   std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tfliteAttr = tflite_op->builtin_options.AsConcatenationOptions();
   if (tfliteAttr == nullptr) {

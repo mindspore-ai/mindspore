@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_crop_parser.h"
+#include <memory>
 
 const int32_t CROP_AXIS = 2;
 
@@ -25,7 +25,23 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
                               const caffe::LayerParameter &weight,
                               schema::CNodeT *op,
                               std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeCropParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::CropT> attr = std::make_unique<schema::CropT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   if (!proto.has_crop_param()) {
     attr->axis = CROP_AXIS;
     std::vector<int64_t> offsets(2, 0);
@@ -34,7 +50,7 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
     const caffe::CropParameter cropParam = proto.crop_param();
     if (cropParam.has_axis()) {
       if (cropParam.axis() == -1) {
-        // MS_LOGW("axis with -1 may lead to calculation errors when input less than 4 dims.");
+        MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
       }
       attr->axis = cropParam.axis();
     } else {
@@ -49,9 +65,10 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto,
       attr->offsets = offsets;
     }
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Crop;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

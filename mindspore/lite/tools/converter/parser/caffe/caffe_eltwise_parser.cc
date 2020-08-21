@@ -14,19 +14,36 @@
  * limitations under the License.
  */
 
+#include "mindspore/lite/tools/converter/parser/caffe/caffe_eltwise_parser.h"
 #include <cmath>
 #include <memory>
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_eltwise_parser.h"
-#include "utils/log_adapter.h"
 
 const int ELTWISE_MIN_INPUT_SIZE = 2;
 const float ELTWISE_SUM_COEFF_EPSILON = 1e-5;
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto,
+                                 const caffe::LayerParameter &weight,
+                                 schema::CNodeT *op,
+                                 std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeEltwiseParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::EltwiseT> attr = std::make_unique<schema::EltwiseT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   if (proto.bottom_size() < ELTWISE_MIN_INPUT_SIZE) {
     MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
                   << proto.bottom_size();
@@ -37,7 +54,7 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
   if (eltwiseParam.coeff_size() != 0 && eltwiseParam.coeff_size() != proto.bottom_size()) {
     MS_LOG(ERROR) << "Coeff size(" << eltwiseParam.coeff_size()
                   << ") check fail, Eltwise Layer takes one coefficient per bottom blob.";
-    return RET_PARAM_INVALID;
+    return RET_ERROR;
   }
 
   if (eltwiseParam.operation() == caffe::EltwiseParameter::PROD && eltwiseParam.coeff_size() != 0) {
@@ -64,12 +81,13 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
         break;
       default:
         MS_LOG(ERROR) << "Eltwise parse params fail, unsupported opration: " << eltwiseParam.operation();
-        return RET_PARAM_INVALID;
+        return RET_ERROR;
     }
   } else {
     attr->mode = schema::EltwiseMode_SUM;
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Eltwise;
   op->primitive->value.value = attr.release();
   return RET_OK;

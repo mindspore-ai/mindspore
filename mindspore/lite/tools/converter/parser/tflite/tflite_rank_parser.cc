@@ -29,7 +29,6 @@ STATUS TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
                                std::vector<schema::Format> *tensors_format,
                                std::map<int, int>  *tensors_id_map) {
   MS_LOG(DEBUG) << "parse TfliteRankParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,6 +40,10 @@ STATUS TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_
   }
 
   std::unique_ptr<schema::RankT> attr = std::make_unique<schema::RankT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   op->primitive->value.type = schema::PrimitiveType_Rank;
   op->primitive->value.value = attr.release();

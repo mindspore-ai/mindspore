@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
-#define MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
 
 #include <string>
 #include <vector>
@@ -37,8 +37,6 @@ class CaffeModelParser : public ModelParser {
                     const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
-  void ConvertCaffeBatchNorm(MetaGraphT *meta_graphT);
-
   STATUS SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op, TensorCache *tensorCache);
 
   STATUS SetOpOutputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op, TensorCache *tensorCache);
@@ -61,5 +59,5 @@ class CaffeModelParser : public ModelParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TOOLS_LITE_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
 

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_power_parser.h"
+#include <memory>
+#include <vector>
 
 static const float CAFFE_POWER_DEFAULT_POWER = 1.0;
 static const float CAFFE_POWER_DEFAULT_SCALE = 1.0;
@@ -27,7 +28,24 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto,
                                const caffe::LayerParameter &weight,
                                schema::CNodeT *op,
                                std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffePowerParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
+
   const caffe::PowerParameter powerParam = proto.power_param();
   if (proto.has_power_param()) {
     attr->power = powerParam.has_power() ? powerParam.power() : CAFFE_POWER_DEFAULT_POWER;
@@ -38,7 +56,8 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto,
     attr->scale = CAFFE_POWER_DEFAULT_SCALE;
     attr->shift = CAFFE_POWER_DEFAULT_SHIFT;
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Power;
   op->primitive->value.value = attr.release();
   return RET_OK;

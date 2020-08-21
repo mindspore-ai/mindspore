@@ -45,16 +45,28 @@ STATUS TfliteLogicalParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
   if (std::strcmp(node_name, "LogicalAnd") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLogicalAndParser";
     std::unique_ptr<schema::LogicalAndT> attr = std::make_unique<schema::LogicalAndT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
     op->primitive->value.type = schema::PrimitiveType_LogicalAnd;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "LogicalNot") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLogicalNotParser";
     std::unique_ptr<schema::LogicalNotT> attr = std::make_unique<schema::LogicalNotT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
     op->primitive->value.type = schema::PrimitiveType_LogicalNot;
     op->primitive->value.value = attr.release();
   } else if (std::strcmp(node_name, "LogicalOr") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLogicalOrParser";
     std::unique_ptr<schema::LogicalOrT> attr = std::make_unique<schema::LogicalOrT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
     op->primitive->value.type = schema::PrimitiveType_LogicalOr;
     op->primitive->value.value = attr.release();
   }

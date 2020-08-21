@@ -29,7 +29,6 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
                                  std::vector<int32_t> *tensors_id,
                                  std::vector<schema::Format> *tensors_format,
                                  std::map<int, int>  *tensors_id_map) {
-  // set attr
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,7 +40,10 @@ STATUS TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   }
 
   std::unique_ptr<schema::ReduceT> attr = std::make_unique<schema::ReduceT>();
-  // auto tflite_tensors = tflite_subgraph->tensors;
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsReducerOptions();
   if (tflite_attr == nullptr) {

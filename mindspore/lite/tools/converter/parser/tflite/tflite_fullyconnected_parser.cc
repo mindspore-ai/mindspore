@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include <string>
 
 namespace mindspore {
 namespace lite {
@@ -29,6 +28,7 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
                                          std::vector<int32_t> *tensors_id,
                                          std::vector<schema::Format> *tensors_format,
                                          std::map<int, int>  *tensors_id_map) {
+  MS_LOG(DEBUG) << "parse TfliteFullyConnectedParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -39,15 +39,11 @@ STATUS TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT
     return RET_NULL_PTR;
   }
 
-  std::vector<std::string> node_name_str;
-  Split(op->name, &node_name_str, "-");
-  const char *node_name = node_name_str.data()->c_str();
-  if (std::strcmp(node_name, "FullyConnected") == 0) {
-    MS_LOG(DEBUG) << "parse TfliteFullyConnectedParser";
-  } else if (std::strcmp(node_name, "FakeQuant") == 0) {
-    MS_LOG(DEBUG) << "parse TfliteFakeQuantParser";
-  }
   std::unique_ptr<schema::FullConnectionT> attr = std::make_unique<schema::FullConnectionT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsFullyConnectedOptions();
   if (tflite_attr == nullptr) {

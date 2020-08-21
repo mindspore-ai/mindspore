@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
+#include <memory>
 #include "securec/include/securec.h"
 #include "ir/dtype/type_id.h"
 
@@ -35,11 +35,11 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   for (size_t i = 0; i < shapeVec.size(); ++i) {
     int dim = shapeVec[i];
     if (dim <= 0) {
-      // MS_LOGE("Convert weight fail, Blob size invalid");
+      MS_LOG(ERROR) << "Convert weight fail, Blob size invalid";
       return nullptr;
     }
     if (dim >= INT_MAX / count) {
-      // MS_LOGE("Convert weight fail, Blob size exceeds INT_MAX, dim:%d, count:%d", dim, count);
+      MS_LOG(ERROR) << "Convert weight fail, Blob size exceeds INT_MAX, dim:" << dim << "count:" << count;
       return nullptr;
     }
     count *= dim;
@@ -53,8 +53,8 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   if (proto.double_data_size() > 0) {
     // datatype double
     if (count != proto.double_data_size()) {
-      // MS_LOGE("Convert weight fail, Blob size does not match shape size, shape size:%d, blob size:%d", count,
-      //        proto.double_data_size());
+      MS_LOG(ERROR) << "Convert weight fail, Blob size does not match shape size, shape size: " << count
+                    << "blob size:" << proto.double_data_size();
       return nullptr;
     }
 
@@ -68,8 +68,8 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   } else {
     // datatype float
     if (count != proto.data_size()) {
-      // MS_LOGE("Convert weight fail, Blob size does not match shape size, shape size:%d, blob.data_size:%d", count,
-      //       proto.data_size());
+      MS_LOG(ERROR) << "Convert weight fail, Blob size does not match shape size, shape size" << count
+                    << "blob.data_size:%d" << proto.data_size();
       return nullptr;
     }
     weight->data.resize(count * sizeof(float));
@@ -81,11 +81,11 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   return weight.release();
 }
 
-STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) {
+STATUS ConvertShape(const caffe::BlobProto &proto,
+                    std::vector<int32_t> *shape) {
   shape->clear();
 
   if (proto.has_num() || proto.has_channels() || proto.has_height() || proto.has_width()) {
-    // num, channels, height, width
     shape->push_back(proto.num());
     shape->push_back(proto.channels());
     shape->push_back(proto.height());
@@ -99,5 +99,4 @@ STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) 
 }
 }  // namespace lite
 }  // namespace mindspore
-//
 
