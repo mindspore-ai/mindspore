@@ -29,6 +29,15 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (src_shape.size() != 4 || weight_shape.size() != 4) {
     MS_LOG(EXCEPTION) << "conv2d only support nchw input!";
   }
+  std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
+  size_t group = IntToSize(AnfAlgo::GetNodeAttr<int>(kernel_node, GROUP));
+  if (group != 1) {
+    if (src_shape[1] % group != 0) {
+      MS_LOG(EXCEPTION) << "conv2d channels should be divided by group!";
+    }
+    weight_shape.insert(weight_shape.begin(), group);
+    weight_shape[1] = weight_shape[1] / group;
+  }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc weights_desc = GetDefaultMemDesc(weight_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
@@ -48,14 +57,11 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   int stride = stride_ori[2];
   int dilation = dilation_ori[2];
-
   dnnl::memory::dims strides{stride, stride};
   dnnl::memory::dims dilates{dilation - 1, dilation - 1};
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
-  std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "get padding failed";
@@ -68,7 +74,6 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   auto prim_desc = dnnl::convolution_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
   primitive_ = std::make_shared<dnnl::convolution_forward>(prim_desc);
-
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
