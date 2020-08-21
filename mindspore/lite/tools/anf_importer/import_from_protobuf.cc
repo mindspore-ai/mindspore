@@ -137,6 +137,7 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
     std::string initial_data = initialize_proto.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->Data());
     MS_EXCEPTION_IF_NULL(tensor_data_buf);
+    tensor_info->SetData(nullptr);
     auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), initial_data.data(), initial_data.size());
     if (EOK != ret) {
       MS_LOG(ERROR) << "memcpy_s error";
@@ -152,6 +153,7 @@ bool AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &nod
     param_value->set_tensor_type(tensor_info->data_type());
     param_value->set_tensor_shape(tensor_info->shape());
     node->set_default_param(param_value);
+    delete tensor_info;
   }
   anfnode_build_map_[value_proto.name()] = node;
   return true;
