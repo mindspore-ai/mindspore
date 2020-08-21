@@ -57,7 +57,7 @@ const AnfNodePtr ReplaceBNCastFusion::Process(const FuncGraphPtr &graph, const A
     if (item_idx == 0) {
       auto cast = GetRealNodeUsedList(graph, outlist->at(i).first);
       if (AnfAlgo::GetCNodeName(cast->at(0).first) != "Cast") {
-        return nullptr;
+        continue;
       }
       manager->Replace(utils::cast<CNodePtr>(cast->at(0).first), utils::cast<CNodePtr>(outlist->at(i).first));
       outputs_type.push_back(kNumberTypeFloat16);
