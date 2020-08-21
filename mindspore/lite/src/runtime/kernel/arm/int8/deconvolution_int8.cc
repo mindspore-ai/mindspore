@@ -15,9 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/fixed_point.h"
 #include "src/runtime/runtime_api.h"
-#include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -89,9 +87,8 @@ int DeConvInt8CPUKernel::Init() {
 }
 
 void DeConvInt8CPUKernel::CheckSupportOptimize() {
-  matmul_func_ = nullptr;
   support_optimize_ = true;
-
+  matmul_func_ = MatMulInt8_16x4;
 #ifdef ENABLE_ARM64
   void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
   if (optimize_op_handler != nullptr) {
@@ -102,12 +99,15 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
       MS_LOG(ERROR) << "load matmul func failed! " << dlopen_error << ".";
       support_optimize_ = false;
       matmul_func_ = nullptr;
+    } else {
+      support_optimize_ = true;
     }
   } else {
     support_optimize_ = false;
     matmul_func_ = nullptr;
   }
 #endif
+  return;
 }
 
 int DeConvInt8CPUKernel::InitParam() {
@@ -120,6 +120,7 @@ int DeConvInt8CPUKernel::InitParam() {
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_ * conv_param_->kernel_h_ * conv_param_->kernel_w_;
 
+  /* optimize normal -> same data layout */
   input_trans_func_ = RowMajor2Row16x4MajorInt8;
   size_t oc4 = UP_DIV(conv_param_->output_channel_, C4NUM);
   thread_count_ = MSMIN(op_parameter_->thread_num_, oc4);

@@ -15,9 +15,10 @@
  */
 
 #include "nnacl/int8/common_func.h"
+#include "nnacl/quantization/fixed_point.h"
 
 void PostConvFuncCommInt8(const int32_t *in, int8_t *out, const int32_t *bias, size_t oc, size_t plane,
-                          size_t out_oc_stride, size_t in_plane_stride, int32_t multiplier, int8_t mini, int8_t maxi,
+                          size_t out_oc_stride, size_t in_plane_stride, int32_t multiplier, int32_t mini, int32_t maxi,
                           int32_t left_shift, int32_t right_shift, int32_t zp, int size) {
   if (size == 0) {
     return;
@@ -40,18 +41,26 @@ void PostConvFuncCommInt8(const int32_t *in, int8_t *out, const int32_t *bias, s
   return;
 }
 
-void PostFuncInt8C8(const int *in, const int *bias, int8_t *out, int oc, int plane, int32_t multiplier,
-                    int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi) {
+void PostFuncInt8C8(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, int32_t multiplier,
+                    int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini, int32_t maxi) {
   /*  ((int32_t)row8x8-major + bias) * multiplier + output_zp  =>  (int8)relu  =>  (int8_t)row-major  */
   PostConvFuncCommInt8(in, out, bias, oc, plane, oc, UP_ROUND(plane, C8NUM) * C8NUM, multiplier, mini, maxi, left_shift,
                        right_shift, zp, C8NUM);
   return;
 }
 
-void PostFuncInt8C4(const int *in, const int *bias, int8_t *out, int oc, int plane, int stride, int32_t multiplier,
-                    int32_t left_shift, int32_t right_shift, int32_t zp, int8_t mini, int8_t maxi) {
-  /*  ((int32_t)row4x4-major + bias) * multiplier + output_zp  =>  (int8)relu  =>  (int8_t)row-major  */
+void PostFuncInt8C4(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, size_t stride,
+                    int32_t multiplier, int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini,
+                    int32_t maxi) {
+/*  ((int32_t)row4x4-major + bias) * multiplier + output_zp  =>  (int8)relu  =>  (int8_t)row-major  */
+#ifndef ENABLE_ARM64
   PostConvFuncCommInt8(in, out, bias, oc, plane, stride, UP_ROUND(plane, C4NUM) * C4NUM, multiplier, mini, maxi,
                        left_shift, right_shift, zp, C4NUM);
+#else
+  size_t oc4div = oc / C4NUM * C4NUM;
+  size_t oc4res = oc % C4NUM;
+  PostFuncInt8C4Neon64(in, bias, out, oc4div, oc4res, plane, stride * sizeof(int8_t), multiplier, left_shift,
+                       right_shift, zp, mini, maxi);
+#endif
   return;
 }

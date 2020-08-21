@@ -136,60 +136,109 @@ int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
 
 void DeConvWeightTransInt8(int8_t *src, int8_t *dst, int input_channel, int output_channel, int plane,
                            bool support_optimize_) {
-  if (support_optimize_) {
-    int ic16 = UP_ROUND(input_channel, C16NUM);
-    int oc4 = UP_ROUND(output_channel, C4NUM);
-    for (int ic = 0; ic < input_channel; ic++) {
-      int ic16div = ic / C16NUM, ic16mod = ic % C16NUM;
-      for (int oc = 0; oc < output_channel; oc++) {
-        int oc4div = oc / C4NUM, oc4mod = oc % C4NUM;
-        for (int hw = 0; hw < plane; hw++) {
-          int src_index = ic * output_channel * plane + hw * output_channel + oc;
-          int dst_index =
-            hw * ic16 * oc4 + oc4div * ic16 * C4NUM + ic16div * C16NUM * C4NUM + oc4mod * C16NUM + ic16mod;
-          dst[dst_index] = src[src_index];
-        }
+  /* optimize normal -> same layout */
+  int ic16 = UP_ROUND(input_channel, C16NUM);
+  int oc4 = UP_ROUND(output_channel, C4NUM);
+  for (int ic = 0; ic < input_channel; ic++) {
+    int ic16div = ic / C16NUM, ic16mod = ic % C16NUM;
+    for (int oc = 0; oc < output_channel; oc++) {
+      int oc4div = oc / C4NUM, oc4mod = oc % C4NUM;
+      for (int hw = 0; hw < plane; hw++) {
+        int src_index = ic * output_channel * plane + hw * output_channel + oc;
+        int dst_index = hw * ic16 * oc4 + oc4div * ic16 * C4NUM + ic16div * C16NUM * C4NUM + oc4mod * C16NUM + ic16mod;
+        dst[dst_index] = src[src_index];
       }
     }
-  } else {
-    /* normal int8 deconv */
   }
   return;
 }
 
 void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep16, int col4,
                          bool suppport_opt) {
-  if (suppport_opt) {
-    for (int c = 0; c < col4; c++) {
-      int c4div = c / C4NUM, c4mod = c % C4NUM;
-      int32_t value = 0;
-      for (int r = 0; r < deep16; r++) {
-        int r16div = r / 16, r16mod = r % 16;
-        int src_index = c4div * deep16 * C4NUM + r16div * C4NUM * C16NUM + c4mod * C16NUM + r16mod;
-        value += weight[src_index];
-      }
-      weight_sum[c] = filter_zp * input_zp * deep16 - value * input_zp;
+  /* optimize normal -> same layout */
+  for (int c = 0; c < col4; c++) {
+    int c4div = c / C4NUM, c4mod = c % C4NUM;
+    int32_t value = 0;
+    for (int r = 0; r < deep16; r++) {
+      int r16div = r / C16NUM, r16mod = r % C16NUM;
+      int src_index = c4div * deep16 * C4NUM + r16div * C4NUM * C16NUM + c4mod * C16NUM + r16mod;
+      value += weight[src_index];
     }
-  } else {
-    /* normal int8 deconv */
+    weight_sum[c] = filter_zp * input_zp * deep16 - value * input_zp;
   }
   return;
 }
 
-void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, int row4, int col16, bool suppport_opt) {
-  if (suppport_opt) {
-    for (int r = 0; r < row4; r++) {
-      int32_t tmp_value = 0;
-      for (int c = 0; c < col16; c++) {
-        int r4div = r / C4NUM, r4mod = r % C4NUM, c16div = c / C16NUM, c16mod = c % C16NUM;
-        int src_index = r4div * C4NUM * col16 + c16div * C16NUM * C4NUM + r4mod * C16NUM + c16mod;
-        tmp_value += src[src_index];
-      }
-      dst[r] = tmp_value * filter_zp;
+void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16,
+                        bool suppport_opt) {
+  /* optimize normal -> same layout */
+#ifdef ENABLE_ARM64
+  asm volatile(
+    "mov x10, %[src] \n"
+    "mov x11, %[dst] \n"
+    "dup v15.4s, %w[filter_zp]  \n"
+
+    "mov x0, #0 \n"
+    "1: \n"
+    "cmp x0, %[row4] \n"
+    "beq 4f \n"
+    "add x0, x0, #4\n"
+    "dup v10.4s, wzr \n"
+    "mov x2, #0 \n"
+
+    "2: \n"
+    "cmp x2, %[col16] \n"
+    "beq 3f \n"
+    "add x2, x2, #16\n"
+
+    "ld1 {v0.16b}, [x10], #16\n"
+    "ld1 {v1.16b}, [x10], #16\n"
+    "ld1 {v2.16b}, [x10], #16\n"
+    "ld1 {v3.16b}, [x10], #16\n"
+
+    "saddlp v4.8h, v0.16b \n"
+    "saddlp v5.8h, v1.16b \n"
+    "saddlp v6.8h, v2.16b \n"
+    "saddlp v7.8h, v3.16b \n"
+
+    "saddlp v0.4S, v4.8h \n"
+    "saddlp v1.4S, v5.8h \n"
+    "saddlp v2.4S, v6.8h \n"
+    "saddlp v3.4S, v7.8h \n"
+
+    "addv s4, v0.4S \n"
+    "addv s5, v1.4S \n"
+    "addv s6, v2.4S \n"
+    "addv s7, v3.4S \n"
+
+    "mov v0.s[0], v4.s[0] \n"
+    "mov v0.s[1], v5.s[0] \n"
+    "mov v0.s[2], v6.s[0] \n"
+    "mov v0.s[3], v7.s[0] \n"
+
+    "add v10.4s, v10.4s, v0.4s \n"
+    "b 2b\n"
+
+    "3: \n"
+    "mul v10.4s, v10.4s, v15.4s \n"
+    "st1 {v10.4s}, [x11], #16 \n"
+    "beq 1b \n"
+
+    "4: \n"
+
+    :
+    : [ dst ] "r"(dst), [ src ] "r"(src), [ row4 ] "r"(row4), [ col16 ] "r"(col16), [ filter_zp ] "r"(filter_zp)
+    : "x0", "x1", "x2", "x3", "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v15");
+#else
+  for (int r = 0; r < row4; r++) {
+    int32_t tmp_value = 0;
+    for (int c = 0; c < col16; c++) {
+      int r4div = r / C4NUM, r4mod = r % C4NUM, c16div = c / C16NUM, c16mod = c % C16NUM;
+      int src_index = r4div * C4NUM * col16 + c16div * C16NUM * C4NUM + r4mod * C16NUM + c16mod;
+      tmp_value += src[src_index];
     }
-  } else {
-    /* normal int8 deconv */
   }
+#endif
   return;
 }
 
@@ -199,18 +248,14 @@ int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, int32
   if (matmul_func != NULL) {
     matmul_func(input, weight, output, act_row, act_col, act_deep, input_sum, weight_sum);
   } else {
-    /* normal int8 deconv */
+    MatMulInt8_16x4(input, weight, output, act_row, act_col, act_deep, input_sum, weight_sum);
   }
   return NNACL_OK;
 }
 
 int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
                    ConvParameter *conv_param, bool support_optimize) {
-  int error_code = NNACL_OK;
-  if (support_optimize) {
-    error_code = DeConvPostInt8C4(src, bias, tmp, out, output_channel, conv_param);
-  } else {
-    /* normal int8 deconv post */
-  }
+  /* optimize normal -> same layout (C4) */
+  int error_code = DeConvPostInt8C4(src, bias, tmp, out, output_channel, conv_param);
   return error_code;
 }

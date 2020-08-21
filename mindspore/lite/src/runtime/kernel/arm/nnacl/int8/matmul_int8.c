@@ -28,18 +28,66 @@ void RowMajor2Row8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) 
   }
 }
 
+void MatrixPack4x16UnitInt8(int8_t *src, int8_t *dst, int row, int col, int stride) {
+  for (int r = 0; r < row; r++) {
+    int8_t *src_r = src + r * stride;
+    int8_t *dst_r = dst + r * C16NUM;
+    memcpy(dst_r, src_r, col * sizeof(int8_t));
+  }
+  return;
+}
+
 void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col) {
   /* Row-major to row16x4-major (block row-major) */
   int col16 = UP_ROUND(col, C16NUM);
-  for (int r = 0; r < row; r++) {
-    int r4div = r / C4NUM;
-    int r4mod = r % C4NUM;
-    for (int c = 0; c < col; c++) {
-      int c16div = c / C16NUM;
-      int c16mod = c % C16NUM;
-      int src_index = r * col + c;
-      int dst_index = r4div * C4NUM * col16 + c16div * C16NUM * C4NUM + r4mod * C16NUM + c16mod;
-      ((int8_t *)dst_ptr)[dst_index] = ((int8_t *)src_ptr)[src_index];
+  size_t row_4div = row / C4NUM * C4NUM;
+  size_t row_4res = row - row_4div;
+  size_t col_16div = col / C16NUM * C16NUM;
+  size_t col_16res = col - col_16div;
+  int8_t *src_r = (int8_t *)src_ptr;
+  int8_t *dst_r = (int8_t *)dst_ptr;
+
+  for (int ri = 0; ri < row_4div; ri += C4NUM) {
+    for (int ci = 0; ci < col_16div; ci += C16NUM) {
+#ifdef ENABLE_ARM64
+      int8_t *src_c = src_r + ci;
+      int8_t *dst_c = dst_r + ci * C4NUM;
+      asm volatile(
+        "mov x10, %[src_c] \n"
+        "mov x11, %[dst_c] \n"
+
+        "ld1 {v0.16b}, [x10], %[col]\n"
+        "ld1 {v1.16b}, [x10], %[col]\n"
+        "ld1 {v2.16b}, [x10], %[col]\n"
+        "ld1 {v3.16b}, [x10], %[col]\n"
+
+        "st1 {v0.16b}, [x11], #16\n"
+        "st1 {v1.16b}, [x11], #16\n"
+        "st1 {v2.16b}, [x11], #16\n"
+        "st1 {v3.16b}, [x11], #16\n"
+
+        :
+        : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ col ] "r"(col)
+        : "x10", "x11", "v0", "v1", "v2", "v3");
+#else
+      MatrixPack4x16UnitInt8(src_r + ci, dst_r + ci * C4NUM, C4NUM, C16NUM, col);
+#endif
+    }
+
+    if (col != col_16div) {
+      MatrixPack4x16UnitInt8(src_r + col_16div, dst_r + col_16div * C4NUM, C4NUM, col_16res, col);
+    }
+    src_r += C4NUM * col;
+    dst_r += C4NUM * col16;
+  }
+
+  if (row != row_4div) {
+    for (int ci = 0; ci < col_16div; ci += C16NUM) {
+      MatrixPack4x16UnitInt8(src_r + ci, dst_r + ci * C4NUM, row_4res, C16NUM, col);
+    }
+
+    if (col != col_16div) {
+      MatrixPack4x16UnitInt8(src_r + col_16div, dst_r + col_16div * C4NUM, row_4res, col_16res, col);
     }
   }
   return;
@@ -74,7 +122,7 @@ void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, co
   }
 }
 
-void MatMulOptR4Int8(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
+void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                      const int *input_sum, const int *bias) {
   /*  row4x16-major * row16x4-major => row4x4-major  */
   for (int r = 0; r < row_4; r++) {
