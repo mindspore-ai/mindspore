@@ -203,7 +203,7 @@ function Run_arm64() {
 	#sleep 1
     done < ${models_caffe_config}
 
-  # Run onnx converted models:
+    # Run onnx converted models:
     while read line; do
         model_name=${line}
         if [[ $model_name == \#* ]]; then
@@ -238,6 +238,42 @@ function Run_arm64() {
         fi
 	#sleep 1
     done < ${models_onnx_config}
+
+    # Run fp16 converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt
+        if [ $? = 0 ]; then
+            run_result='Run_arm64: '${model_name}' pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+        # run benchmark test without clib data
+        echo ${model_name}
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt
+        if [ $? = 0 ]; then
+            run_result='Run_arm64: '${model_name}' pass'
+            echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            echo ${run_result} >> ${run_benchmark_result_file}
+            return 1
+        fi
+	#sleep 1
+    done < ${models_fp16_config}
 }
 
 # Print start msg before run testcase
@@ -311,11 +347,22 @@ models_caffe_config=${basepath}/models_caffe.cfg
 models_tflite_awaretraining_config=${basepath}/models_tflite_awaretraining.cfg
 models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
 models_onnx_config=${basepath}/models_onnx.cfg
+models_fp16_config=${basepath}/models_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 
 rm -rf ${basepath}/ms_models
 mkdir -p ${basepath}/ms_models
 ms_models_path=${basepath}/ms_models
+
+# Copy fp16 ms models:
+while read line; do
+  model_name=${line}
+  if [[ $model_name == \#* ]]; then
+      continue
+  fi
+  echo 'cp '${models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.ms'
+  cp $models_path/${model_name}.ms ${ms_models_path}/${model_name}.ms
+done < ${models_fp16_config}
 
 # Convert tflite models:
 while read line; do
@@ -393,6 +440,7 @@ mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
 cd ${benchmark_test_path} || exit 1
 cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit}/lib/liboptimize.so ${benchmark_test_path}/liboptimize.so || exit 1
 cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
 # Copy the MindSpore models:
