@@ -34,7 +34,7 @@ class Semaphore {
   /// \brief Decrement the internal counter. Will be blocked if the value is 0.
   /// \return Error code. Can get interrupt.
   Status P();
-  /// \brief Increment the internal counter. Wakeup on of the waiters if any.
+  /// \brief Increment the internal counter. Wake up on of the waiters if any.
   void V();
   /// \brief Peek the internal value
   /// \return The internal value

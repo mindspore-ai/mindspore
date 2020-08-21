@@ -116,8 +116,16 @@ class ConfigManager {
   void set_monitor_sampling_interval(uint32_t interval);
 
   // getter function
-  // @return The iterval of monitor sampling
+  // @return The interval of monitor sampling
   int32_t monitor_sampling_interval() const { return monitor_sampling_interval_; }
+
+  // setter function
+  // @param timeout - The setting to apply to the config
+  void set_callback_timeout(uint32_t timeout);
+
+  // getter function
+  // @return The timeout DSWaitedCallback would wait for before raising an error
+  int32_t callback_timeout() const { return callback_timout_; }
 
  private:
   int32_t rows_per_buffer_{kCfgRowsPerBuffer};
@@ -126,8 +134,9 @@ class ConfigManager {
   int32_t op_connector_size_{kCfgOpConnectorSize};
   uint32_t seed_{kCfgDefaultSeed};
   uint32_t monitor_sampling_interval_{kCfgMonitorSamplingInterval};
+  uint32_t callback_timout_{kCfgCallbackTimeout};
 
-  // Private helper function that taks a nlohmann json format and populates the settings
+  // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
   Status FromJson(const nlohmann::json &j);
 };

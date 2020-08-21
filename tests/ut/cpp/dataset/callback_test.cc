@@ -57,7 +57,7 @@ class TestCallback : public DSCallback {
         begin_(true),
         epoch_begin_(true),
         step_begin_(true),
-        end_(true),
+        end_(false),
         epoch_end_(true),
         step_end_(true) {
     all_names_.reserve(32);
@@ -145,7 +145,6 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   Status rc;
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(64);
   std::shared_ptr<DSCallback> cb1 = tst_cb;
-  tst_cb->end_ = false;  // don't do the end for now due to a timing issue
   // config leaf_op, use random_data to avoid I/O
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
@@ -193,7 +192,6 @@ TEST_F(MindDataTestCallback, TestMutiEpochCallback) {
   Status rc;
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(4);
   std::shared_ptr<DSCallback> cb1 = tst_cb;
-  tst_cb->end_ = false;  // don't do the end for now due to a timing issue
   // config leaf_op, use random_data to avoid I/O
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
@@ -247,7 +245,6 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   Status rc;
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(4);
   std::shared_ptr<DSCallback> cb1 = tst_cb;
-  tst_cb->end_ = false;
   // turn off the epochs
   tst_cb->epoch_begin_ = false;
   tst_cb->epoch_end_ = false;

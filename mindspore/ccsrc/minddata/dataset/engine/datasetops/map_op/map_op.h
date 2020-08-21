@@ -228,10 +228,10 @@ class MapOp : public ParallelOp {
   // Indices of the columns to process.
   std::vector<size_t> to_process_indices_;
 
-  // wait post used to perform the pausing logic in MapOp
-  WaitPost master_pause_wp_;
+  // Wait post used to perform the pausing logic in MapOp
+  WaitPost wait_for_workers_post_;
 
-  // count number of workers that have signaled master
+  // Count number of workers that have signaled master
   std::atomic_int num_workers_paused_;
 
   // Private function for worker/thread to loop continuously. It comprises the main
@@ -272,7 +272,7 @@ class MapOp : public ParallelOp {
   // Workers upon receiving the suspension token from master thread, increment an atomic count, the last worker
   // who does the increment wakes up the master.
   // @return - Status
-  Status PauseFromMaster() override;
+  Status WaitForWorkers() override;
 };
 }  // namespace dataset
 }  // namespace mindspore

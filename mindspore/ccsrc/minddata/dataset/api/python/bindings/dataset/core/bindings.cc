@@ -45,6 +45,8 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_op_connector_size", &ConfigManager::op_connector_size)
                     .def("get_seed", &ConfigManager::seed)
                     .def("get_monitor_sampling_interval", &ConfigManager::monitor_sampling_interval)
+                    .def("get_callback_timeout", &ConfigManager::callback_timeout)
+                    .def("set_callback_timeout", &ConfigManager::set_callback_timeout)
                     .def("load", [](ConfigManager &c, std::string s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 

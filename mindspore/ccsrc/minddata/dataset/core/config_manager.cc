@@ -88,5 +88,8 @@ uint32_t ConfigManager::seed() const { return seed_; }
 void ConfigManager::set_seed(uint32_t seed) { seed_ = seed; }
 
 void ConfigManager::set_monitor_sampling_interval(uint32_t interval) { monitor_sampling_interval_ = interval; }
+
+void ConfigManager::set_callback_timeout(uint32_t timeout) { callback_timout_ = timeout; }
+
 }  // namespace dataset
 }  // namespace mindspore
