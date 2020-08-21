@@ -577,8 +577,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   AllocInplaceNodeMemory(graph);
 
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
-  if (!mock) {
-    debugger_->UpdateStepNum();
+  if (!mock && debugger_) {
+    debugger_->UpdateStepNum(graph);
   }
   auto &kernels = graph->execution_order();
   int exec_order = 1;

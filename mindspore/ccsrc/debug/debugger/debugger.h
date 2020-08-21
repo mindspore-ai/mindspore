@@ -68,7 +68,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // enable debugger
   // send graph and wait for command
   // do nothing if graph is set already
-  void PreExecute(const KernelGraphPtr &graph_ptr);
+  void PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum = 1);
 
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
@@ -106,13 +106,17 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadParametersAndConst();
 
-  void UpdateStepNum();
+  void UpdateStepNum(const session::KernelGraph *graph);
 
   void ClearCurrentData();
 
   void LoadGraphOutputs();
 
   void CheckDatasetSinkMode();
+
+  void LoadGraphs(const KernelGraphPtr &graph_ptr);
+
+  uint32_t GetFirstRunGraphId();
 
  private:
   // private constructor for singleton
@@ -138,10 +142,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void CheckDatasetGraph();
 
   // serialize graph and get proto
-  GraphProto GetGraphProto() const;
+  GraphProto GetGraphProto(const KernelGraphPtr &graph_ptr) const;
 
   // send graph and enter command wait loop
   void SendGraphAndSuspend(const GraphProto &graph_proto);
+
+  void SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list, uint32_t graph_sum);
 
   // wait for command and process command
   // send command request and process reply in a loop
@@ -197,9 +203,13 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::string overflow_bin_path_;
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
+  std::list<GraphProto> graph_proto_list_;
+
   // singleton
   static std::mutex instance_lock_;
   static std::shared_ptr<Debugger> debugger_;
+  uint32_t not_dataset_graph_sum_;
+  std::list<uint32_t> rungraph_id_list_;
 };
 
 using DebuggerPtr = std::shared_ptr<Debugger>;
