@@ -521,8 +521,8 @@ def check_random_affine(method):
         check_degrees(degrees)
 
         if translate is not None:
-            if type_check(translate, (list, tuple), "translate"):
-                type_check_list(translate, (int, float), "translate")
+            type_check(translate, (list, tuple), "translate")
+            type_check_list(translate, (int, float), "translate")
             if len(translate) != 2:
                 raise TypeError("translate should be a list or tuple of length 2.")
             for i, t in enumerate(translate):
@@ -530,6 +530,7 @@ def check_random_affine(method):
 
         if scale is not None:
             type_check(scale, (tuple, list), "scale")
+            type_check_list(scale, (int, float), "scale")
             if len(scale) == 2:
                 for i, s in enumerate(scale):
                     check_positive(s, "scale[{}]".format(i))
@@ -543,6 +544,7 @@ def check_random_affine(method):
             if isinstance(shear, numbers.Number):
                 check_positive(shear, "shear")
             else:
+                type_check_list(shear, (int, float), "shear")
                 if len(shear) not in (2, 4):
                     raise TypeError("shear must be of length 2 or 4.")
                 if len(shear) == 2 and shear[0] > shear[1]:
