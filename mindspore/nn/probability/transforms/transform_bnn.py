@@ -63,8 +63,13 @@ class TransformToBNN:
     def __init__(self, trainable_dnn, dnn_factor=1, bnn_factor=1):
         if isinstance(dnn_factor, bool) or not isinstance(dnn_factor, (int, float)):
             raise TypeError('The type of `dnn_factor` should be `int` or `float`')
+        if dnn_factor < 0:
+            raise ValueError('The value of `dnn_factor` should >= 0')
+
         if isinstance(bnn_factor, bool) or not isinstance(bnn_factor, (int, float)):
             raise TypeError('The type of `bnn_factor` should be `int` or `float`')
+        if bnn_factor < 0:
+            raise ValueError('The value of `bnn_factor` should >= 0')
 
         net_with_loss = trainable_dnn.network
         self.optimizer = trainable_dnn.optimizer
@@ -88,9 +93,9 @@ class TransformToBNN:
         Transform the whole DNN model to BNN model, and wrap BNN model by TrainOneStepCell.
 
         Args:
-            get_dense_args (function): The arguments gotten from the DNN full connection layer. Default: lambda dp:
+            get_dense_args (:class:`function`): The arguments gotten from the DNN full connection layer. Default: lambda dp:
                 {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "has_bias": dp.has_bias}.
-            get_conv_args (function): The arguments gotten from the DNN convolutional layer. Default: lambda dp:
+            get_conv_args (:class:`function`): The arguments gotten from the DNN convolutional layer. Default: lambda dp:
                 {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode,
                 "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias}.
             add_dense_args (dict): The new arguments added to BNN full connection layer. Note that the arguments in
@@ -134,10 +139,10 @@ class TransformToBNN:
 
         Args:
             dnn_layer_type (Cell): The type of DNN layer to be transformed to BNN layer. The optional values are
-            nn.Dense, nn.Conv2d.
+                nn.Dense, nn.Conv2d.
             bnn_layer_type (Cell): The type of BNN layer to be transformed to. The optional values are
-                DenseReparameterization, ConvReparameterization.
-            get_args (dict): The arguments gotten from the DNN layer. Default: None.
+                DenseReparam, ConvReparam.
+            get_args (:class:`function`): The arguments gotten from the DNN layer. Default: None.
             add_args (dict): The new arguments added to BNN layer. Note that the arguments in `add_args` should not
                 duplicate arguments in `get_args`. Default: None.
 

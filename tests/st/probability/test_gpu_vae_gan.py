@@ -108,22 +108,22 @@ class VaeGan(nn.Cell):
         return ld_real, ld_fake, ld_p, recon_x, x, mu, std
 
 
-class VaeGanLoss(nn.Cell):
+class VaeGanLoss(ELBO):
     def __init__(self):
         super(VaeGanLoss, self).__init__()
         self.zeros = P.ZerosLike()
         self.mse = nn.MSELoss(reduction='sum')
-        self.elbo = ELBO(latent_prior='Normal', output_prior='Normal')
 
     def construct(self, data, label):
-        ld_real, ld_fake, ld_p, recon_x, x, mean, std = data
+        ld_real, ld_fake, ld_p, recon_x, x, mu, std = data
         y_real = self.zeros(ld_real) + 1
         y_fake = self.zeros(ld_fake)
-        elbo_data = (recon_x, x, mean, std)
         loss_D = self.mse(ld_real, y_real)
         loss_GD = self.mse(ld_p, y_fake)
         loss_G = self.mse(ld_fake, y_real)
-        elbo_loss = self.elbo(elbo_data, label)
+        reconstruct_loss = self.recon_loss(x, recon_x)
+        kl_loss = self.posterior('kl_loss', 'Normal', self.zeros(mu), self.zeros(mu) + 1, mu, std)
+        elbo_loss = reconstruct_loss + self.sum(kl_loss)
         return loss_D + loss_G + loss_GD + elbo_loss
 
 
