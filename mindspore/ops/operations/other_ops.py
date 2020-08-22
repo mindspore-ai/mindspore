@@ -560,3 +560,21 @@ class Pull(PrimitiveWithInfer):
 
     def infer_dtype(self, key_dtype, weight_dtype):
         return mstype.float32
+
+class identity(Primitive):
+    """
+    Make a identify primitive, used for pynative mode.
+
+    Inputs:
+        - **x** (Any) - identity input value.
+
+    Outputs:
+        The same as input.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __call__(self, x):
+        return x
