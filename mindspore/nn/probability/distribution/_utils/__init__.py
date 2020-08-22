@@ -28,7 +28,8 @@ __all__ = [
     'check_scalar_from_param',
     'check_prob',
     'check_type',
+    'exp_by_step',
+    'expm1_by_step',
     'log_by_step',
     'log1p_by_step',
-    'expm1_by_step',
 ]

@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ..distribution._utils.utils import CheckTensor
-from ..distribution._utils.custom_ops import log_by_step, log1p_by_step, expm1_by_step
+from ..distribution._utils.custom_ops import exp_by_step, expm1_by_step, log_by_step, log1p_by_step
 from .bijector import Bijector
 
 class PowerTransform(Bijector):
@@ -59,10 +59,10 @@ class PowerTransform(Bijector):
         validator.check_number("power", power, 0, Rel.GE, self.name)
         self._power = power
         self.pow = P.Pow()
-        self.exp = P.Exp()
+        self.exp = exp_by_step
+        self.expm1 = expm1_by_step
         self.log = log_by_step
         self.log1p = log1p_by_step
-        self.expm1 = expm1_by_step
 
         self.checktensor = CheckTensor()
 
