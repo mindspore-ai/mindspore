@@ -218,7 +218,7 @@ std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &dataset
 }
 
 // Function to create a TextFileDataset.
-std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int32_t num_samples,
+std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples,
                                           ShuffleMode shuffle, int32_t num_shards, int32_t shard_id) {
   auto ds = std::make_shared<TextFileDataset>(dataset_files, num_samples, shuffle, num_shards, shard_id);
 
@@ -1331,7 +1331,7 @@ bool TextFileDataset::ValidateParams() {
     return false;
   }
 
-  if (!ValidateDatasetShardParams("TextfileDataset", num_shards_, shard_id_)) {
+  if (!ValidateDatasetShardParams("TextFileDataset", num_shards_, shard_id_)) {
     return false;
   }
 

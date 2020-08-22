@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_SAMPLERS_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_SAMPLERS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
 
 #include <vector>
 #include <memory>
@@ -70,7 +70,7 @@ std::shared_ptr<PKSamplerObj> PKSampler(int64_t num_val, bool shuffle = false, i
 
 /// Function to create a Random Sampler.
 /// \notes Samples the elements randomly.
-/// \param[in] replacement - If True, put the sample ID back for the next draw.
+/// \param[in] replacement - If true, put the sample ID back for the next draw.
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement = false, int64_t num_samples = 0);
@@ -94,7 +94,7 @@ std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(std::vector<int64_t>
 ///        weights (probabilities).
 /// \param[in] weights - A vector sequence of weights, not necessarily summing up to 1.
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \param[in] replacement - If True, put the sample ID back for the next draw.
+/// \param[in] replacement - If true, put the sample ID back for the next draw.
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0,
                                                                 bool replacement = true);
@@ -199,4 +199,4 @@ class WeightedRandomSamplerObj : public SamplerObj {
 }  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_SAMPLERS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
