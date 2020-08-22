@@ -100,6 +100,14 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
     MS_LOG(EXCEPTION) << "Unsupported opType, " << type;
   }
   pre_node->set_abstract(abstr);
+  const auto &prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(transform_node->input(0));
+  if (prim != nullptr) {
+    auto *prim_t = prim->GetPrimitiveT();
+    if (prim_t != nullptr) {
+      delete prim_t;
+      prim->SetPrimitiveT(nullptr);
+    }
+  }
   return pre_node;
 }
 

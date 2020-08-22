@@ -52,6 +52,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
     auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
     // when tensorT as graph input
     if (lite_tensor_size == 0) {
+      delete lite_tensor;
       return input_tensors;
     }
     auto tensor_data = new (std::nothrow) char[lite_tensor_size / sizeof(char)];

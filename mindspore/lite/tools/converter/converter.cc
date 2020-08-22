@@ -58,7 +58,29 @@ class MindsporeImporter : public Converter {
 
   ~MindsporeImporter() override = default;
 };
-
+void Converter::FreeFuncGraph(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitiveT_value == nullptr) {
+      MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+      return;
+    }
+    auto primT = primitiveT_value->GetPrimitiveT();
+    if (primT == nullptr) {
+      MS_LOG(ERROR) << "PrimitiveT is nullptr";
+      return;
+    }
+    if (primT->value.type == schema::PrimitiveType_TupleGetItem ||
+        primT->value.type == schema::PrimitiveType_MakeTuple ||
+        primT->value.type == schema::PrimitiveType_Return) {
+      delete primT;
+      primitiveT_value->SetPrimitiveT(nullptr);
+    }
+  }
+  return;
+}
 MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   // parse the model and weight file to generate inference data structure
   FuncGraphPtr graph = nullptr;
@@ -116,6 +138,8 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_LOG(ERROR) << "FBTransform model failed " << status;
     return nullptr;
   }
+
+  FreeFuncGraph(graph);
   return meta_graph;
 }
 
@@ -171,6 +195,7 @@ int RunConverter(int argc, const char **argv) {
       auto onnx_graph = AnfImporterFromProtobuf::ReadOnnxFromBinary(flags->modelFile);
       MindsporeImporter mindsporeImporter(onnx_graph, graph);
       fb_graph = mindsporeImporter.Convert(flags.get());
+      delete onnx_graph;
       break;
     }
     case FmkType::FmkType_CAFFE: {
@@ -202,6 +227,8 @@ int RunConverter(int argc, const char **argv) {
     MS_LOG(ERROR) << "Save graph failed";
     return 1;
   }
+
+  delete fb_graph;
   MS_LOG(INFO) << "CONVERT RESULT: SUCCESS!";
 
   return 0;

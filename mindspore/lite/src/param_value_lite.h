@@ -29,7 +29,14 @@ namespace mindspore {
 class ParamValueLite : public Value {
  public:
   ParamValueLite() : tensor_addr_(nullptr), tensor_size_(0) {}
-  virtual ~ParamValueLite() = default;
+  virtual ~ParamValueLite() {
+    if (tensor_addr_ != nullptr) {
+      auto tensor_mem = reinterpret_cast<char*>(tensor_addr_);
+      delete tensor_mem;
+      tensor_addr_ = nullptr;
+      tensor_size_ = 0;
+    }
+  }
 
   size_t tensor_size() const { return tensor_size_; }
   void set_tensor_size(size_t size) { tensor_size_ = size; }
