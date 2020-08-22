@@ -20,7 +20,6 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
-from ._utils.utils import CheckTensor, CheckTuple
 from ._utils.custom_ops import log_by_step, expm1_by_step
 
 class Normal(Distribution):
@@ -127,9 +126,6 @@ class Normal(Distribution):
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
         self.zeroslike = P.ZerosLike()
-
-        self.checktensor = CheckTensor()
-        self.checktuple = CheckTuple()
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -277,7 +273,7 @@ class Normal(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        self.checktuple(shape, 'shape')
+        shape = self.checktuple(shape, 'shape')
         mean, sd = self._check_param(mean, sd)
         batch_shape = self.shape(mean + sd)
         origin_shape = shape + batch_shape

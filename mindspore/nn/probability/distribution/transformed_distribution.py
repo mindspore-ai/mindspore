@@ -116,4 +116,4 @@ class TransformedDistribution(Distribution):
         if not self.is_linear_transformation:
             raise_not_impl_error("mean")
 
-        return self.bijector("forward", self.distribution("mean"))
+        return self.bijector("forward", self.distribution("mean", *args, **kwargs))

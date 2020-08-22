@@ -18,7 +18,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, raise_none_error
-from ._utils.utils import CheckTensor, CheckTuple
 from ._utils.custom_ops import log_by_step
 
 class Bernoulli(Distribution):
@@ -124,9 +123,6 @@ class Bernoulli(Distribution):
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
         self.uniform = C.uniform
-
-        self.checktensor = CheckTensor()
-        self.checktuple = CheckTuple()
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -279,7 +275,7 @@ class Bernoulli(Distribution):
         Returns:
             Tensor, shape is shape + batch_shape.
         """
-        self.checktuple(shape, 'shape')
+        shape = self.checktuple(shape, 'shape')
         probs1 = self._check_param(probs1)
         origin_shape = shape + self.shape(probs1)
         if origin_shape == ():
