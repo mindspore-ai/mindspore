@@ -542,6 +542,11 @@ int Benchmark::Init() {
     return RET_ERROR;
   }
 
+  if (_flags->device != "CPU" && _flags->device != "GPU") {
+    MS_LOG(ERROR) << "Device type:" << _flags->device << " is not supported.";
+    return RET_ERROR;
+  }
+
   return RET_OK;
 }
 
@@ -574,10 +579,13 @@ int RunBenchmark(int argc, const char **argv) {
     return RET_ERROR;
   }
 
-  if (flags.device == "NPU") {
-    status = mBenchmark.RunBenchmark("NPU");
-  } else {
+  if (flags.device == "GPU") {
+    status = mBenchmark.RunBenchmark("GPU");
+  } else if (flags.device == "CPU") {
     status = mBenchmark.RunBenchmark("CPU");
+  } else {
+    MS_LOG(ERROR) << "Device type" << flags.device << " not support.";
+    return RET_ERROR;
   }
 
   if (status != 0) {
