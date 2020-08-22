@@ -109,7 +109,7 @@ int TimeProfile::InitSession() {
   ctx->cpu_bind_mode_ = static_cast<CpuBindMode>(_flags->cpu_bind_mode_);
   ctx->device_ctx_.type = lite::DT_CPU;
   ctx->thread_num_ = _flags->num_threads_;
-
+  ctx->float16_priority = _flags->fp16_priority;
   session_ = session::LiteSession::CreateSession(ctx);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "New session failed while running.";
@@ -175,6 +175,7 @@ int TimeProfile::Init() {
   MS_LOG(INFO) << "InDataPath = " << _flags->in_data_path_;
   MS_LOG(INFO) << "LoopCount = " << _flags->loop_count_;
   MS_LOG(INFO) << "NumThreads = " << _flags->num_threads_;
+  MS_LOG(INFO) << "Fp16Priority = " << _flags->fp16_priority;
 
   if (_flags->num_threads_ < 1) {
     MS_LOG(ERROR) << "NumThreads: " << _flags->num_threads_ << " must greater than or equal 1";

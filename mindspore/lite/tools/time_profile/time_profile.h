@@ -40,6 +40,7 @@ class MS_API TimeProfileFlags : public virtual FlagParser {
             "Input -1 for MID_CPU, 1 for HIGHER_CPU, 0 for NO_BIND, defalut value: 1", 1);
     AddFlag(&TimeProfileFlags::loop_count_, "loopCount", "Run loop count", 10);
     AddFlag(&TimeProfileFlags::num_threads_, "numThreads", "Run threads number", 2);
+    AddFlag(&TimeProfileFlags::fp16_priority, "fp16Priority", "Run fp16 ops prior", false);
   }
 
   ~TimeProfileFlags() override = default;
@@ -50,6 +51,7 @@ class MS_API TimeProfileFlags : public virtual FlagParser {
   int cpu_bind_mode_ = 1;
   int loop_count_;
   int num_threads_;
+  bool fp16_priority;
 };
 
 class MS_API TimeProfile {
