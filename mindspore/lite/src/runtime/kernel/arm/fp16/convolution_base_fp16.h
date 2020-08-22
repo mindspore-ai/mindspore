@@ -30,7 +30,7 @@ class ConvolutionBaseFP16CPUKernel : public ConvolutionBaseCPUKernel {
                                const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                                const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionBaseFP16CPUKernel() override = default;
+  ~ConvolutionBaseFP16CPUKernel() override;
 
   int Init() override { return RET_OK; }
   int ReSize() override { return RET_OK; }

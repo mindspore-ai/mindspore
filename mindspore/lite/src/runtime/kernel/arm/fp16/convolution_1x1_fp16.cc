@@ -74,31 +74,36 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
 }
 
 int Convolution1x1FP16CPUKernel::InitWeightBias() {
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Execute filter failed.";
-    return ret;
-  }
+  auto bias_tensor = in_tensors_.at(kBiasIndex);
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = weight_tensor->Channel();
+  auto output_channel = weight_tensor->Batch();
 
-  bias_data_ = malloc(matmul_param_->col_8_ * sizeof(float16_t));
+  size_t size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+  bias_data_ = malloc(size);
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, matmul_param_->col_8_ * sizeof(float16_t));
+  memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->Data()), reinterpret_cast<float16_t *>(bias_data_),
-                     conv_param_->output_channel_);
+    if (bias_tensor->data_type() == kNumberTypeFloat16) {
+      memcpy(bias_data_, bias_tensor->Data(), output_channel * sizeof(float16_t));
+    } else {
+      Float32ToFloat16(reinterpret_cast<float *>(bias_tensor->Data()), reinterpret_cast<float16_t *>(bias_data_),
+                       output_channel);
+    }
   }
 
-  weight_ptr_ = reinterpret_cast<float16_t *>(malloc(matmul_param_->deep_ * matmul_param_->col_8_ * sizeof(float16_t)));
+  size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
+  weight_ptr_ = reinterpret_cast<float16_t *>(malloc(size));
   if (weight_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, matmul_param_->deep_ * matmul_param_->col_8_ * sizeof(float16_t));
-  ColMajor2Row8MajorFp16(reinterpret_cast<float16_t *>(execute_weight_), weight_ptr_, matmul_param_->deep_,
-                         matmul_param_->col_);
+  memset(weight_ptr_, 0, size);
+  ColMajor2Row8MajorFp16(weight_tensor->Data(), weight_ptr_, input_channel, output_channel,
+                         weight_tensor->data_type() == kNumberTypeFloat16);
   return RET_OK;
 }
 
@@ -106,6 +111,13 @@ int Convolution1x1FP16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
+
+  matmul_param_ = new (std::nothrow) MatMulParameter();
+  if (matmul_param_ == nullptr) {
+    MS_LOG(ERROR) << "Init matmul_param_ failed.";
+    return RET_ERROR;
+  }
+
   int ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
