@@ -1,80 +1,135 @@
-# BERT Example
-## Description
-This example implements pre-training, fine-tuning and evaluation of [BERT-base](https://github.com/google-research/bert) and [BERT-NEZHA](https://github.com/huawei-noah/Pretrained-Language-Model).
+# Contents
+- [BERT Description](#bert-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Dataset Preparation](#dataset-preparation)
+    - [Training Process](#training-process)
+    - [Evaluation Process](#evaluation-process)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
+- [Description of Random Situation](#description-of-random-situation)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
-## Requirements
-- Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
-- Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc.
-- Convert dataset files from json format to tfrecord format, please refer to run_classifier.py which in [BERT](https://github.com/google-research/bert) repository.
->  Notes:
-   If you are running a fine-tuning or evaluation task, prepare a checkpoint from pre-train.
+# [BERT Description](#contents)
+The BERT network was proposed by Google in 2018. The network has made a breakthrough in the field of NLP. The network uses pre-training and fine-tune to achieve a large network structure without modifying the large network structure, and only by adding an output layer to achieve multiple text types tasks. The backbone code of BERT adopts the Encoder structure of Transformer. The attention mechanism is introduced to enable the output layer to capture high-latitude global semantic information. The pre-training uses denosing and self-encoding tasks, namely MLM(Masked Language Model) and NSP(Next Sentence Prediction). No need to label data, pre-training can be performed on massive text data, and a small amount of fine-tune can be used for downstream tasks to obtain better results. The pre-training plus fune-tune mode created by BERT is widely adopted by subsequent NLP networks.
 
-## Running the Example
-### Pre-Training
-- Set options in `config.py`, including lossscale, optimizer and network. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) for more information about dataset and the json schema file.
+[Paper](https://arxiv.org/abs/1810.04805):  Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova. [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding]((https://arxiv.org/abs/1810.04805)). arXiv preprint arXiv:1810.04805. 
 
-- Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model on `Ascend`.
+[Paper](https://arxiv.org/abs/1909.00204):  Junqiu Wei, Xiaozhe Ren, Xiaoguang Li, Wenyong Huang, Yi Liao, Yasheng Wang, Jiashu Lin, Xin Jiang, Xiao Chen, Qun Liu. [NEZHA: Neural Contextualized Representation for Chinese Language Understanding](https://arxiv.org/abs/1909.00204). arXiv preprint arXiv:1909.00204.
 
-    ``` bash   
-    bash scripts/run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
-    ```
+# [Model Architecture](#contents)
+The backbone structure of BERT is transformer. For BERT_base, the transformer contains 12 encoder modules, one encoder contains one selfattention module and one selfattention module contains one attention module; For BERT_NEZHA, the transformer contains 24 encoder modules, one encoder contains one selfattention module and one selfattention module contains one attention module. The difference between BERT_base and BERT_NEZHA is that BERT_base uses absolute position encoding to produce position embedding vector and BERT_NEZHA uses relative position encoding.  
 
-- Run `run_standalone_pretrain_for_gpu.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model on `GPU`.
+# [Dataset](#contents)
+- Download the zhwiki or enwiki dataset for pre-training. Extract and refine texts in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format. Please refer to create_pretraining_data.py file in [BERT](https://github.com/google-research/bert) repository.
+- Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc. Convert dataset files from json format to tfrecord format, please refer to run_classifier.py which in [BERT](https://github.com/google-research/bert) repository.
 
-    ``` bash   
-    bash scripts/run_standalone_pretrain_for_gpu.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
-    ```
+# [Environment Requirements](#contents)
+- Hardware（Ascend）
+  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get access to the resources. 
+- Framework
+  - [MindSpore](https://gitee.com/mindspore/mindspore)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
 
-- Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model on `Ascend`.
+# [Quick Start](#contents)
+After installing MindSpore via the official website, you can start pre-training, fine-tuning and evaluation as follows:
+```bash
+# run standalone pre-training example
+bash scripts/run_standalone_pretrain_ascend.sh 0 1 /path/cn-wiki-128
 
-    ``` bash   
-    bash scripts/run_distribute_pretrain.sh DATA_DIR RANK_TABLE_FILE
-    ```  
+# run distributed pre-training example
+bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.json
 
-- Run `run_distribute_pretrain_for_gpu.sh` for distributed pre-training of BERT-base and BERT-NEZHA model on `GPU`.
-
-    ```bash
-    bash scripts/run_distribute_pretrain_for_gpu.sh RANK_SIZE EPOCH_SIZE DATA_DIR SCHEMA_DIR
-    ```
-
-### Fine-Tuning and Evaluation
-- Including three kinds of task: Classification, NER(Named Entity Recognition) and SQuAD(Stanford Question Answering Dataset)
-
+# run fine-tuning and evaluation example
+- If you are going to run a fine-tuning task, please prepare a checkpoint from pre-training.
 - Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`. 
-
+    
 - Classification task: Set task related hyperparameters in scripts/run_classifier.sh. 
 - Run `bash scripts/run_classifier.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
-    ```bash
-    bash scripts/run_classifier.sh
-    ```
+  bash scripts/run_classifier.sh
   
 - NER task: Set task related hyperparameters in scripts/run_ner.sh.
 - Run `bash scripts/run_ner.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
-    ```bash
-    bash scripts/run_ner.sh
-    ```
-  
+  bash scripts/run_ner.sh
+      
 - SQuAD task: Set task related hyperparameters in scripts/run_squad.sh. 
 - Run `bash scripts/run_squad.py` for fine-tuning of BERT-base and BERT-NEZHA model.
 
-    ```bash
-    bash scripts/run_squad.sh
-    ```
+  bash scripts/run_squad.sh    
+```
 
-## Usage
+For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+Please follow the instructions in the link below:
+https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
+
+# [Script Description](#contents)
+
+## [Script and Sample Code](#contents)
+
+```shell
+.
+└─bert
+  ├─README.md
+  ├─scripts
+    ├─ascend_distributed_launcher
+        ├─__init__.py
+        ├─hyper_parameter_config.ini          # hyper paramter for distributed pretraining 
+        ├─run_distribute_pretrain.py          # script for distributed pretraining
+        ├─README.md    
+    ├─run_classifier.sh                       # shell script for standalone classifier task
+    ├─run_ner.sh                              # shell script for standalone NER task
+    ├─run_squad.sh                            # shell script for standalone SQUAD task  
+    ├─run_standalone_pretrain_ascend.sh       # shell script for standalone pretrain on ascend
+    ├─run_distributed_pretrain_ascend.sh      # shell script for distributed pretrain on ascend
+    └─run_standaloned_pretrain_gpu.sh         # shell script for distributed pretrain on gpu
+  ├─src
+    ├─__init__.py
+    ├─assessment_method.py                    # assessment method for evaluation
+    ├─bert_for_finetune.py                    # backbone code of network
+    ├─bert_for_pre_training.py                # backbone code of network
+    ├─bert_model.py                           # backbone code of network
+    ├─clue_classification_dataset_precess.py  # data preprocessing
+    ├─cluner_evaluation.py                    # evaluation for cluner   
+    ├─config.py                               # parameter configuration for pretraining
+    ├─CRF.py                                  # assessment method for clue dataset 
+    ├─dataset.py                              # data preprocessing
+    ├─finetune_eval_config.py                 # parameter configuration for finetuning
+    ├─finetune_eval_model.py                  # backbone code of network
+    ├─fused_layer_norm.py                     # Layernormal is optimized for Ascend
+    ├─sample_process.py                       # sample processing
+    ├─utils.py                                # util function
+  ├─pretrain_eval.py                          # train and eval net  
+  ├─run_classifier.py                         # finetune and eval net for classifier task
+  ├─run_ner.py                                # finetune and eval net for ner task
+  ├─run_pretrain.py                           # train net for pretraining phase
+  └─run_squad.py                              # finetune and eval net for squad task
+```
+
+## [Script Parameters](#contents)
 ### Pre-Training
 ``` 
 usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
-                        [--enable_save_ckpt ENABLE_SAVE_CKPT]
+                        [--enable_save_ckpt ENABLE_SAVE_CKPT] [--device_target DEVICE_TARGET]
                         [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
-                        [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] [--checkpoint_path CHECKPOINT_PATH]
+                        [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] 
+                        [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
+                        [--load_checkpoint_path LOAD_CHECKPOINT_PATH]
                         [--save_checkpoint_steps N] [--save_checkpoint_num N] 
-                        [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR]
+                        [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [train_steps N]
 
 options:
+    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
     --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
     --epoch_size               epoch size: N, default is 1
     --device_num               number of used devices: N, default is 1
@@ -84,9 +139,11 @@ options:
     --do_shuffle               enable shuffle: "true" | "false", default is "true"
     --enable_data_sink         enable data sink: "true" | "false", default is "true"
     --data_sink_steps          set data sink steps: N, default is 1
-    --checkpoint_path          path to save checkpoint files: PATH, default is ""
+    --save_checkpoint_path     path to save checkpoint files: PATH, default is ""
+    --load_checkpoint_path     path to load checkpoint files: PATH, default is ""
     --save_checkpoint_steps    steps for saving checkpoint files: N, default is 1000
     --save_checkpoint_num      number for saving checkpoint files: N, default is 1
+    --train_steps              Training Steps: N, default is -1
     --data_dir                 path to dataset directory: PATH, default is ""
     --schema_dir               path to schema.json file, PATH, default is ""
 ```
@@ -96,13 +153,15 @@ usage: run_ner.py   [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----d
                     [--assessment_method ASSESSMENT_METHOD] [--use_crf USE_CRF] 
                     [--device_id N] [--epoch_num N] [--vocab_file_path VOCAB_FILE_PATH]
                     [--label2id_file_path LABEL2ID_FILE_PATH] 
+                    [--train_data_shuffle TRAIN_DATA_SHUFFLE] 
+                    [--eval_data_shuffle EVAL_DATA_SHUFFLE] 
                     [--save_finetune_checkpoint_path SAVE_FINETUNE_CHECKPOINT_PATH]
                     [--load_pretrain_checkpoint_path LOAD_PRETRAIN_CHECKPOINT_PATH] 
                     [--train_data_file_path TRAIN_DATA_FILE_PATH] 
                     [--eval_data_file_path EVAL_DATA_FILE_PATH] 
                     [--schema_file_path SCHEMA_FILE_PATH]
 options:
-    --device_target                   targeted device to run task: Ascend | GPU
+    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
     --do_train                        whether to run training on training set: true | false
     --do_eval                         whether to run eval on dev set: true | false
     --assessment_method               assessment method to do evaluation: f1 | clue_benchmark
@@ -110,6 +169,8 @@ options:
     --device_id                       device id to run task
     --epoch_num                       total number of training epochs to perform
     --num_class                       number of classes to do labeling
+    --train_data_shuffle              Enable train data shuffle, default is true
+    --eval_data_shuffle               Enable eval data shuffle, default is true
     --vocab_file_path                 the vocabulary file that the BERT model was trained on
     --label2id_file_path              label to id json file
     --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
@@ -123,6 +184,8 @@ usage: run_squad.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----d
                     [--device_id N] [--epoch_num N] [--num_class N]
                     [--vocab_file_path VOCAB_FILE_PATH]
                     [--eval_json_path EVAL_JSON_PATH] 
+                    [--train_data_shuffle TRAIN_DATA_SHUFFLE] 
+                    [--eval_data_shuffle EVAL_DATA_SHUFFLE] 
                     [--save_finetune_checkpoint_path SAVE_FINETUNE_CHECKPOINT_PATH]
                     [--load_pretrain_checkpoint_path LOAD_PRETRAIN_CHECKPOINT_PATH] 
                     [--load_finetune_checkpoint_path LOAD_FINETUNE_CHECKPOINT_PATH] 
@@ -130,12 +193,14 @@ usage: run_squad.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----d
                     [--eval_data_file_path EVAL_DATA_FILE_PATH] 
                     [--schema_file_path SCHEMA_FILE_PATH]
 options:
-    --device_target                   targeted device to run task: Ascend | GPU
+    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
     --do_train                        whether to run training on training set: true | false
     --do_eval                         whether to run eval on dev set: true | false
     --device_id                       device id to run task
     --epoch_num                       total number of training epochs to perform
     --num_class                       number of classes to classify, usually 2 for squad task
+    --train_data_shuffle              Enable train data shuffle, default is true
+    --eval_data_shuffle               Enable eval data shuffle, default is true
     --vocab_file_path                 the vocabulary file that the BERT model was trained on
     --eval_json_path                  path to squad dev json file
     --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
@@ -150,6 +215,8 @@ usage: run_classifier.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [
                          [--save_finetune_checkpoint_path SAVE_FINETUNE_CHECKPOINT_PATH]
                          [--load_pretrain_checkpoint_path LOAD_PRETRAIN_CHECKPOINT_PATH] 
                          [--load_finetune_checkpoint_path LOAD_FINETUNE_CHECKPOINT_PATH] 
+                         [--train_data_shuffle TRAIN_DATA_SHUFFLE] 
+                         [--eval_data_shuffle EVAL_DATA_SHUFFLE] 
                          [--train_data_file_path TRAIN_DATA_FILE_PATH] 
                          [--eval_data_file_path EVAL_DATA_FILE_PATH] 
                          [--schema_file_path SCHEMA_FILE_PATH]
@@ -161,6 +228,8 @@ options:
     --device_id                       device id to run task
     --epoch_num                       total number of training epochs to perform
     --num_class                       number of classes to do labeling
+    --train_data_shuffle              Enable train data shuffle, default is true
+    --eval_data_shuffle               Enable eval data shuffle, default is true
     --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
     --load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
     --load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
@@ -169,10 +238,10 @@ options:
     --schema_file_path                path to datafile schema file
 ```
 ## Options and Parameters
-It contains of parameters of BERT model and options for training, which is set in file `config.py` and `finetune_eval_config.py` respectively.
+Parameters for training and evaluation can be set in file `config.py` and `finetune_eval_config.py` respectively.
 ### Options:
 ```
-config.py:
+config for lossscale and etc.
     bert_network                    version of BERT model: base | nezha, default is base
     loss_scale_value                initial value of loss scale: N, default is 2^32
     scale_factor                    factor used to update loss scale: N, default is 2
@@ -225,3 +294,133 @@ Parameters for optimizer:
     momentum                        momentum for the moving average: Q
 ```
 
+## [Training Process](#contents)
+### Training
+#### running on Ascend
+```
+bash scripts/run_standalone_pretrain_ascend.sh 0 1 /path/cn-wiki-128
+```
+The command above will run in the background, you can view the results the file pretraining_log.txt. After training, you will get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
+```
+# grep "epoch" pretraining_log.txt
+epoch: 0.0, current epoch percent: 0.000, step: 1, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0821701e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+```
+
+### Distributed Training
+#### running on Ascend
+```
+bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.json
+```
+The command above will run in the background, you can view the results the file pretraining_log.txt. After training, you will get some checkpoint files under the LOG* folder by default. The loss value will be achieved as follows:
+```
+# grep "epoch" LOG*/pretraining_log.txt
+epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07566e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08218e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07770e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+```
+
+## [Evaluation Process](#contents)
+### Evaluation
+#### evaluation on cola dataset when running on Ascend
+Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
+```
+bash scripts/run_classifier.sh
+
+The command above will run in the background, you can view the results the file classfier_log.txt.
+
+If you choose accuracy as assessment method, the result will be as follows:
+acc_num XXX, total_num XXX, accuracy 0.588986
+```
+
+#### evaluation on cluener dataset when running on Ascend    
+```
+bash scripts/ner.sh
+
+The command above will run in the background, you can view the results the file ner_log.txt.
+
+If you choose F1 as assessment method, the result will be as follows:
+Precision 0.920507
+Recall 0.948683
+F1 0.920507
+```
+    
+#### evaluation on squad v1.1 dataset when running on Ascend   
+```
+bash scripts/squad.sh
+
+The command above will run in the background, you can view the results the file squad_log.txt.
+The result will be as follows:
+{"exact_match": 80.3878923040233284, "f1": 87.6902384023850329}
+```
+
+## [Model Description](#contents)
+## [Performance](#contents)
+### Pretraining Performance
+| Parameters                 | BERT                                                       | BERT                      |
+| -------------------------- | ---------------------------------------------------------- | ------------------------- |
+| Model Version              | base                                                       | base                      |
+| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
+| MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
+| Dataset                    | cn-wiki-128                                                | ImageNet                  |
+| Training Parameters        | src/config.py                                              | src/config.py             |
+| Optimizer                  | Lamb                                                       | Momentum                  |
+| Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
+| outputs                    | probability                                                |                           |
+| Loss                       |                                                            | 1.913                     |
+| Speed                      | 116.5 ms/step                                              | 1.913                     |
+| Total time                 |                                                            |                           |
+| Params (M)                 | 110M                                                       |                           |
+| Checkpoint for Fine tuning | 1.2G(.ckpt file)                                           |                           |
+
+
+| Parameters                 | BERT                                                       | BERT                      |
+| -------------------------- | ---------------------------------------------------------- | ------------------------- |
+| Model Version              | NEZHA                                                      | NEZHA                     |
+| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
+| MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
+| Dataset                    | cn-wiki-128                                                | ImageNet                  |
+| Training Parameters        | src/config.py                                              | src/config.py             |
+| Optimizer                  | Lamb                                                       | Momentum                  |
+| Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
+| outputs                    | probability                                                |                           |
+| Loss                       |                                                            | 1.913                     |
+| Speed                      |                                                            | 1.913                     |
+| Total time                 |                                                            |                           |
+| Params (M)                 | 340M                                                       |                           |
+| Checkpoint for Fine tuning | 3.2G(.ckpt file)                                           |                           |             
+
+#### Inference Performance
+
+| Parameters                 |                               |                           |                      |
+| -------------------------- | ----------------------------- | ------------------------- | -------------------- |
+| Model Version              | V1                            |                           |                      |
+| Resource                   | Huawei 910                    | NV SMX2 V100-32G          | Huawei 310           |
+| uploaded Date              | 08/22/2020                    | 05/22/2020                |                      |
+| MindSpore Version          | 0.6.0                         | 0.2.0                     | 0.2.0                | 
+| Dataset                    | cola, 1.2W                    | ImageNet, 1.2W            | ImageNet, 1.2W       |
+| batch_size                 | 32(1P)                        | 130(8P)                   |                      |
+| Accuracy                   | 0.588986                      | ACC1[72.07%] ACC5[90.90%] |                      |
+| Speed                      | 59.25ms/step                  |                           |                      |
+| Total time                 |                               |                           |                      |
+| Model for inference        | 1.2G(.ckpt file)              |                           |                      |
+
+# [Description of Random Situation](#contents)
+
+In run_standalone_pretrain.sh and run_distributed_pretrain.sh, we set do_shuffle to shuffle the dataset. 
+
+In run_classifier.sh, run_ner.sh and run_squad.sh, we set train_data_shuffle and eval_data_shuffle to shuffle the dataset.
+
+In config.py, we set the hidden_dropout_prob and attention_pros_dropout_prob to dropout some network node.
+
+In run_pretrain.py, we set the random seed to make sure distribute training has the same init weight.
+
+# [ModelZoo Homepage](#contents)
+ 
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 

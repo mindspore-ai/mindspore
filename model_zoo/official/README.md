@@ -40,6 +40,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 
     - [Natural Language Processing](#natural-language-processing)
         - [BERT[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert/README.md)
+        - [TinyBERT](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/tinybert/README.md)
         - [MASS](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/mass/README.md)
         - [Transformer](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/transformer/README.md)
     - [Recommendation](#recommendation)

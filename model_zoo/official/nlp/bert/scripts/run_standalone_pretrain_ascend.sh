@@ -43,4 +43,4 @@ python ${PROJECT_DIR}/../run_pretrain.py  \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
     --data_dir=$DATA_DIR \
-    --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+    --schema_dir=$SCHEMA_DIR > pretraining_log.txt 2>&1 &
