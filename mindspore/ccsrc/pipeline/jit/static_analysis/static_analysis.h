@@ -185,7 +185,9 @@ struct PartialAppHasher {
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
-      : cache_(AnalysisCache()), prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {}
+      : cache_(AnalysisCache()), prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
+    function_call_depth_ = 0;
+  }
   ~AnalysisEngine() = default;
 
   // func_graph: The func_graph to analyze.
@@ -231,6 +233,19 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnalysisCache cache_;
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
+  void ResetFunctionCallDepth() { function_call_depth_ = 0; }
+
+  void IncreaseFunctionCallDepth() { function_call_depth_++; }
+
+  void DecreaseFunctionCallDepth() {
+    if (function_call_depth_ == 0) {
+      MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
+    }
+    function_call_depth_--;
+  }
+
+  unsigned int function_call_depth() { return function_call_depth_; }
+
  private:
   void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
@@ -257,6 +272,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                   const ConfigPtrList &args_conf_list);
   EvalResultPtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
                                           const ConfigPtrList &args_conf_list);
+  // record current depth of function call statck
+  unsigned int function_call_depth_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;

@@ -795,9 +795,12 @@ def test_large_for_loop_with_continue_break():
                 x = self.flatten(x + elem1)
             return x
 
+    old_max_call_depth = context.get_context('max_call_depth')
+    context.set_context(max_call_depth=2000)
     t = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Net()
     net(t)
+    context.set_context(max_call_depth=old_max_call_depth)
 
 
 def test_mixed_precision_cast():
@@ -873,3 +876,38 @@ def test_parser_switch_layer_func_primitive():
 
     with pytest.raises(ValueError):
         net(i, input1)
+
+
+def test_recursive_call():
+    class Net(nn.Cell):
+        """ Net definition """
+    
+        def __init__(self):
+            super(Net, self).__init__()
+            self.fc = nn.Dense(10, 10)  # padding=0
+            #self.net2 = Net2()
+    
+        def construct(self, x):
+            net2 = Net2()
+            x = net2(x)
+            out = self.fc(x)
+            return out
+    
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.net = Net()
+            self.fc = nn.Dense(10, 10)
+        def construct(self, x):
+            x = self.net(x)
+            out = self.fc(x)
+            return out
+    
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    old_max_call_depth = context.get_context('max_call_depth')
+    context.set_context(max_call_depth=80)
+    input_data = Tensor(np.identity(10).astype(np.float32))
+    net = Net2()
+    with pytest.raises(RuntimeError):
+        net(input_data)
+    context.set_context(max_call_depth=old_max_call_depth)
