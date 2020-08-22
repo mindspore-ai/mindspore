@@ -1153,6 +1153,34 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
     if not is_pil(img):
         raise ValueError("Input image should be a Pillow image.")
 
+    # rotation
+    angle = random.uniform(angle[0], angle[1])
+
+    # translation
+    if translations is not None:
+        max_dx = translations[0] * img.size[0]
+        max_dy = translations[1] * img.size[1]
+        translations = (np.round(random.uniform(-max_dx, max_dx)),
+                        np.round(random.uniform(-max_dy, max_dy)))
+    else:
+        translations = (0, 0)
+
+    # scale
+    if scale is not None:
+        scale = random.uniform(scale[0], scale[1])
+    else:
+        scale = 1.0
+
+    # shear
+    if shear is not None:
+        if len(shear) == 2:
+            shear = [random.uniform(shear[0], shear[1]), 0.]
+        elif len(shear) == 4:
+            shear = [random.uniform(shear[0], shear[1]),
+                     random.uniform(shear[2], shear[3])]
+    else:
+        shear = 0.0
+
     output_size = img.size
     center = (img.size[0] * 0.5 + 0.5, img.size[1] * 0.5 + 0.5)
 
@@ -1416,7 +1444,6 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
 
 
 def random_color(img, degrees):
-
     """
     Adjust the color of the input PIL image by a random degree.
 
@@ -1437,7 +1464,6 @@ def random_color(img, degrees):
 
 
 def random_sharpness(img, degrees):
-
     """
     Adjust the sharpness of the input PIL image by a random degree.
 
@@ -1458,7 +1484,6 @@ def random_sharpness(img, degrees):
 
 
 def auto_contrast(img, cutoff, ignore):
-
     """
     Automatically maximize the contrast of the input PIL image.
 
@@ -1479,7 +1504,6 @@ def auto_contrast(img, cutoff, ignore):
 
 
 def invert_color(img):
-
     """
     Invert colors of input PIL image.
 
@@ -1498,7 +1522,6 @@ def invert_color(img):
 
 
 def equalize(img):
-
     """
     Equalize the histogram of input PIL image.
 
@@ -1517,7 +1540,6 @@ def equalize(img):
 
 
 def uniform_augment(img, transforms, num_ops):
-
     """
     Uniformly select and apply a number of transforms sequentially from
     a list of transforms. Randomly assigns a probability to each transform for

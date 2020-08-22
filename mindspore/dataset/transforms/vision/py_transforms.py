@@ -1169,39 +1169,12 @@ class RandomAffine:
         Returns:
             img (PIL Image), Randomly affine transformed image.
         """
-        # rotation
-        angle = random.uniform(self.degrees[0], self.degrees[1])
-
-        # translation
-        if self.translate is not None:
-            max_dx = self.translate[0] * img.size[0]
-            max_dy = self.translate[1] * img.size[1]
-            translations = (np.round(random.uniform(-max_dx, max_dx)),
-                            np.round(random.uniform(-max_dy, max_dy)))
-        else:
-            translations = (0, 0)
-
-        # scale
-        if self.scale_ranges is not None:
-            scale = random.uniform(self.scale_ranges[0], self.scale_ranges[1])
-        else:
-            scale = 1.0
-
-        # shear
-        if self.shear is not None:
-            if len(self.shear) == 2:
-                shear = [random.uniform(self.shear[0], self.shear[1]), 0.]
-            elif len(self.shear) == 4:
-                shear = [random.uniform(self.shear[0], self.shear[1]),
-                         random.uniform(self.shear[2], self.shear[3])]
-        else:
-            shear = 0.0
 
         return util.random_affine(img,
-                                  angle,
-                                  translations,
-                                  scale,
-                                  shear,
+                                  self.degrees,
+                                  self.translate,
+                                  self.scale_ranges,
+                                  self.shear,
                                   self.resample,
                                   self.fill_value)
 

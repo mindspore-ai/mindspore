@@ -38,7 +38,7 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED("You must batch before calling MixUpBatch");
+    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batch before calling MixUpBatch");
   }
   if (label_shape.size() != 2) {
     RETURN_STATUS_UNEXPECTED("MixUpBatch: Label's must be in one-hot format and in a batch");
@@ -68,10 +68,17 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), &out_labels, DataType("float32")));
   for (int64_t i = 0; i < label_shape[0]; i++) {
     for (int64_t j = 0; j < label_shape[1]; j++) {
-      uint64_t first_value, second_value;
-      RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
-      RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i], j}));
-      RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, lam * first_value + (1 - lam) * second_value));
+      if (input.at(1)->type().IsSignedInt()) {
+        int64_t first_value, second_value;
+        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
+        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i], j}));
+        RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, lam * first_value + (1 - lam) * second_value));
+      } else {
+        uint64_t first_value, second_value;
+        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
+        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i], j}));
+        RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, lam * first_value + (1 - lam) * second_value));
+      }
     }
   }
 

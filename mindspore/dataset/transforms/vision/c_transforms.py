@@ -231,7 +231,7 @@ class Normalize(cde.NormalizeOp):
 
 class RandomAffine(cde.RandomAffineOp):
     """
-    Apply Random affine transformation to the input PIL image.
+    Apply Random affine transformation to the input image.
 
     Args:
         degrees (int or float or sequence): Range of the rotation degrees.
@@ -681,12 +681,12 @@ class CenterCrop(cde.CenterCropOp):
 class RandomColor(cde.RandomColorOp):
     """
     Adjust the color of the input image by a fixed or random degree.
+    This operation works only with 3-channel color images.
 
     Args:
          degrees (sequence): Range of random color adjustment degrees.
             It should be in (min, max) format. If min=max, then it is a
             single fixed magnitude operation (default=(0.1,1.9)).
-            Works with 3-channel color images.
     """
 
     @check_positive_degrees

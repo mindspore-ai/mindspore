@@ -382,7 +382,7 @@ CutMixBatchOperation::CutMixBatchOperation(ImageBatchFormat image_batch_format, 
     : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {}
 
 bool CutMixBatchOperation::ValidateParams() {
-  if (alpha_ < 0) {
+  if (alpha_ <= 0) {
     MS_LOG(ERROR) << "CutMixBatch: alpha cannot be negative.";
     return false;
   }
@@ -434,7 +434,7 @@ std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<H
 MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}
 
 bool MixUpBatchOperation::ValidateParams() {
-  if (alpha_ < 0) {
+  if (alpha_ <= 0) {
     MS_LOG(ERROR) << "MixUpBatch: alpha must be a positive floating value however it is: " << alpha_;
     return false;
   }

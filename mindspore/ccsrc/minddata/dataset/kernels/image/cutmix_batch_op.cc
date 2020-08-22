@@ -59,7 +59,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED("You must batch before calling CutMixBatch.");
+    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batch before calling CutMixBatch.");
   }
   if (label_shape.size() != 2) {
     RETURN_STATUS_UNEXPECTED("CutMixBatch: Label's must be in one-hot format and in a batch");
@@ -139,10 +139,17 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
       // Compute labels
       for (int j = 0; j < label_shape[1]; j++) {
-        uint64_t first_value, second_value;
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i] % label_shape[0], j}));
-        RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, label_lam * first_value + (1 - label_lam) * second_value));
+        if (input.at(1)->type().IsSignedInt()) {
+          int64_t first_value, second_value;
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i] % label_shape[0], j}));
+          RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, label_lam * first_value + (1 - label_lam) * second_value));
+        } else {
+          uint64_t first_value, second_value;
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i] % label_shape[0], j}));
+          RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, label_lam * first_value + (1 - label_lam) * second_value));
+        }
       }
     }
   }

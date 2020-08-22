@@ -26,6 +26,7 @@ from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_se
     config_get_set_num_parallel_workers
 
 DATA_DIR = "../data/dataset/testCifar10Data"
+DATA_DIR2 = "../data/dataset/testImageNetData2/train/"
 
 GENERATE_GOLDEN = False
 
@@ -96,6 +97,53 @@ def test_cutmix_batch_success2(plot=False):
     data1 = data1.map(input_columns=["label"], operations=one_hot_op)
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
+    data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+
+    images_cutmix = None
+    for idx, (image, _) in enumerate(data1):
+        if idx == 0:
+            images_cutmix = image
+        else:
+            images_cutmix = np.append(images_cutmix, image, axis=0)
+    if plot:
+        visualize_list(images_original, images_cutmix)
+
+    num_samples = images_original.shape[0]
+    mse = np.zeros(num_samples)
+    for i in range(num_samples):
+        mse[i] = diff_mse(images_cutmix[i], images_original[i])
+    logger.info("MSE= {}".format(str(np.mean(mse))))
+
+
+def test_cutmix_batch_success3(plot=False):
+    """
+    Test CutMixBatch op with default values for alpha and prob on a batch of HWC images on ImageFolderDatasetV2
+    """
+    logger.info("test_cutmix_batch_success3")
+
+    ds_original = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR2, shuffle=False)
+    decode_op = vision.Decode()
+    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
+
+    images_original = None
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = image
+        else:
+            images_original = np.append(images_original, image, axis=0)
+
+    # CutMix Images
+    data1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR2, shuffle=False)
+
+    decode_op = vision.Decode()
+    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+
+    one_hot_op = data_trans.OneHot(num_classes=10)
+    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+
+    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    data1 = data1.batch(4, pad_info={}, drop_remainder=True)
     data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
 
     images_cutmix = None
@@ -185,7 +233,7 @@ def test_cutmix_batch_fail1():
                 images_cutmix = image
             else:
                 images_cutmix = np.append(images_cutmix, image, axis=0)
-        error_message = "You must batch before calling CutMixBatch"
+        error_message = "You must make sure images are HWC or CHW and batch "
         assert error_message in str(error.value)
 
 
@@ -322,9 +370,28 @@ def test_cutmix_batch_fail7():
     assert error_message in str(error.value)
 
 
+def test_cutmix_batch_fail8():
+    """
+    Test CutMixBatch Fail 8
+    We expect this to fail because alpha is zero
+    """
+    logger.info("test_cutmix_batch_fail8")
+
+    # CutMixBatch Images
+    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
+
+    one_hot_op = data_trans.OneHot(num_classes=10)
+    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    with pytest.raises(ValueError) as error:
+        vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 0.0)
+        error_message = "Input is not within the required interval"
+        assert error_message in str(error.value)
+
+
 if __name__ == "__main__":
     test_cutmix_batch_success1(plot=True)
     test_cutmix_batch_success2(plot=True)
+    test_cutmix_batch_success3(plot=True)
     test_cutmix_batch_nchw_md5()
     test_cutmix_batch_nhwc_md5()
     test_cutmix_batch_fail1()
@@ -334,3 +401,4 @@ if __name__ == "__main__":
     test_cutmix_batch_fail5()
     test_cutmix_batch_fail6()
     test_cutmix_batch_fail7()
+    test_cutmix_batch_fail8()
