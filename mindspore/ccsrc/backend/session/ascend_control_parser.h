@@ -22,6 +22,7 @@
 #include <tuple>
 #include <utility>
 #include <functional>
+#include <memory>
 #include "backend/session/kernel_graph.h"
 #include "base/base_ref.h"
 #include "utils/contract.h"
@@ -44,7 +45,7 @@ class AscendControlParser {
   class ReferenceCounter;
 
   static void EraseParameter(NotNull<KernelGraphPtr> root_graph, const std::set<KernelGraphPtr> &graph_list);
-  static void EraseAssign(const std::set<CNodePtr> &all_nodes,
+  static void EraseAssign(std::shared_ptr<ReferenceCounter> parameter_count, const std::set<CNodePtr> &all_nodes,
                           const std::map<AnfNodePtr, CNodePtr> &para_to_written_node,
                           NotNull<KernelGraphPtr> root_graph);
   static void EraseLabel(NotNull<KernelGraphPtr> root_graph);
