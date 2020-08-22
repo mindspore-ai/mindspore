@@ -70,7 +70,8 @@ class _Conv(Cell):
             kernel_size[0] < 1 or kernel_size[1] < 1:
             raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
                              + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
-        if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or stride[0] < 1 or stride[1] < 1:
+        if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or \
+            isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
             raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
                              + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
         if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \

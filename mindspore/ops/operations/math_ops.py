@@ -786,7 +786,7 @@ class AddN(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.float32)
         >>> net(input_x, input_y, input_x, input_y)
-        Tensor([10, 14, 18], shape=(3,), dtype=mindspore.int32)
+        [10.0, 14.0, 18.0]
     """
 
     @prim_attr_register
@@ -2064,9 +2064,9 @@ class Xlogy(_MathBinaryOp):
 
     Examples:
         >>> input_x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
-        >>> input_y = Tensor(np.array([2， 2， 2]), mindspore.float32)
+        >>> input_y = Tensor(np.array([2, 2, 2]), mindspore.float32)
         >>> xlogy = P.Xlogy()
-        >>> Xlogy(input_x, input_y)
+        >>> xlogy(input_x, input_y)
         [-3.465736, 0.0, 2.7725887]
     """
 
