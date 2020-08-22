@@ -49,12 +49,21 @@ int StackCPUKernel::Run() {
   }
   size_t inputs_num = in_tensors_.size();
   auto input0_shape = in_tensors_[0]->shape();
-  auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  float *inputs[inputs_num];
-  for (size_t i = 0; i < inputs_num; ++i) {
-    inputs[i] = reinterpret_cast<float *>(in_tensors_[i]->Data());
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat) {
+    auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
+    float *inputs[inputs_num];
+    for (size_t i = 0; i < inputs_num; ++i) {
+      inputs[i] = reinterpret_cast<float *>(in_tensors_[i]->Data());
+    }
+    DoStack(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
+  } else {
+    auto *output_data = reinterpret_cast<int32_t *>(out_tensors_[0]->Data());
+    int32_t *inputs[inputs_num];
+    for (size_t i = 0; i < inputs_num; ++i) {
+      inputs[i] = reinterpret_cast<int32_t *>(in_tensors_[i]->Data());
+    }
+    DoStackInt32(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   }
-  DoStack(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   return RET_OK;
 }
 
@@ -85,4 +94,5 @@ kernel::LiteKernel *CpuStackFp32KernelCreator(const std::vector<lite::tensor::Te
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Stack, CpuStackFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Stack, CpuStackFp32KernelCreator)
 }  // namespace mindspore::kernel

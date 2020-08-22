@@ -56,7 +56,8 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     return RET_PARAM_INVALID;
   }
   auto input = inputs.at(0);
-  outputs[0]->set_data_type(input->data_type());
+  auto input0_data_type = input->data_type();
+  outputs[0]->set_data_type(input0_data_type);
   outputs[0]->SetFormat(input->GetFormat());
   if (!GetInferFlag()) {
     return RET_OK;
@@ -69,12 +70,8 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     MS_LOG(ERROR) << "Invalid axis " << GetAxis();
     return RET_PARAM_INVALID;
   }
-  schema::Format input0_format = input->GetFormat();
+
   for (size_t i = 1; i < inputs.size(); ++i) {
-    if (inputs[i]->GetFormat() != input0_format) {
-      MS_LOG(ERROR) << "All inputs should have the same format!";
-      return RET_PARAM_INVALID;
-    }
     auto input_shape_tmp = inputs[i]->shape();
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";
@@ -85,6 +82,11 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
         MS_LOG(ERROR) << "All input shape should be the same!";
         return RET_PARAM_INVALID;
       }
+    }
+    if (inputs[i]->data_type() != input0_data_type) {
+      MS_LOG(ERROR) << "All input shuld have the same data type!input[" << i << "] data type = "
+                    << inputs[i]->data_type();
+      return RET_PARAM_INVALID;
     }
   }
   output_shape.insert(output_shape.begin() + axis, inputs.size());

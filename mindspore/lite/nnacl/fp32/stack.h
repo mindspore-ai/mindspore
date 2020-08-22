@@ -27,6 +27,8 @@ typedef struct StackParameter {
 extern "C" {
 #endif
 void DoStack(const float *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis, float *output);
+void DoStackInt32(const int32_t *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis,
+                  int32_t *output);
 #ifdef __cplusplus
 }
 #endif
