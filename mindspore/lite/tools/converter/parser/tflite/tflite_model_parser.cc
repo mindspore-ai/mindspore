@@ -158,7 +158,7 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
     auto isConst = (!tensor_buffer->data.empty());
     if (isConst) {
       CopyConstTensorData(tflite_model_buffer, tflite_tensor.get(), tensor.get());
-    } else if (tensor->dataType == TypeId::kNumberTypeUInt8) {
+    } else if (quantType == QuantType_AwareTraining && tensor->dataType == TypeId::kNumberTypeUInt8) {
       // set in/out tensor to int8 to fit ms-lite op
       tensor->dataType = TypeId::kNumberTypeInt8;
     }
@@ -299,6 +299,7 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
                                      const QuantType &quant_type) {
   std::unique_ptr<schema::MetaGraphT> sub_graph = std::make_unique<schema::MetaGraphT>();
   sub_graph->name = "MS_model converted by TF-Lite";
+  quantType = quant_type;
 
   // load graph
   std::unique_ptr<tflite::ModelT> tflite_model = ReadTfliteModel(model_file.c_str());

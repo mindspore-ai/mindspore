@@ -77,6 +77,7 @@ class TfliteModelParser : public ModelParser {
 
   std::map<std::string, schema::CNodeT *> opMap;
   std::map<const tflite::OperatorT *, schema::CNodeT *> tfliteOpMap;
+  QuantType quantType = QuantType_QUANT_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore
