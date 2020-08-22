@@ -21,9 +21,9 @@
 #include <utility>
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/quantizer/quantize_util.h"
 #include "schema/inner/ops_generated.h"
 #include "src/common/utils.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
 STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, QuantParamT *quantParam) {

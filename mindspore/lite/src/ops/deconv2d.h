@@ -28,10 +28,11 @@ namespace lite {
 class DeConv2D : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  DeConv2D() = default;
   explicit DeConv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit DeConv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetGroup() const;

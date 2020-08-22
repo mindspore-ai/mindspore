@@ -21,6 +21,7 @@
 #include <string>
 #include <cmath>
 #include <array>
+#include "tools/converter/quantizer/quantizer.h"
 #include "src/ops/primitive_c.h"
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
@@ -29,7 +30,6 @@
 #include "base/base.h"
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
-#include "mindspore/lite/tools/converter/quantizer/quantizer.h"
 
 namespace mindspore {
 namespace lite {
@@ -59,13 +59,13 @@ class QuantStrategy {
   static const std::array<std::string, 4> mMulTypes;
 };
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
-                             bool narrowRange, int quant_max, int quant_min, int num_bits);
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
+                             int quant_min, int num_bits);
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
-                             bool narrowRange = false, int numBits = UINT8_QUANTIZATION);
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
+                             int numBits = UINT8_QUANTIZATION);
 
-template<typename T>
+template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);
@@ -73,7 +73,7 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   const auto zeroPoint = quantParam->zeroPoint;
   const auto numBit = quantParam->numBits;
   const auto narrowRange = quantParam->narrowRange;
-  const double maxLimit = static_cast<float>((1 << (unsigned int) numBit) - 1 - zeroPoint) * scale;
+  const double maxLimit = static_cast<float>((1 << (unsigned int)numBit) - 1 - zeroPoint) * scale;
   double minLimit;
   if (narrowRange) {
     minLimit = static_cast<float>(1 - zeroPoint) * scale;
@@ -97,7 +97,7 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   }();
 }
 
-template<typename T>
+template <typename T>
 T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quant_max, int quant_min) {
   MS_ASSERT(quantParam != nullptr);
   MS_ASSERT(quantParam->inited);

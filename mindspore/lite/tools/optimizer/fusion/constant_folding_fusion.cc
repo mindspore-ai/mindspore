@@ -44,7 +44,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
     auto tensorT = tmp_meta_graph->allTensors.at(input_index).get();
     auto tensor_shape = tensorT->dims;
     auto lite_tensor =
-      new(std::nothrow)Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
+      new (std::nothrow) Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
       return input_tensors;
@@ -116,8 +116,8 @@ const ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *ten
     auto ret = memcpy_s(tensor_data, size * sizeof(float), tensor->Data(), size * sizeof(float));
     if (ret != EOK) {
       delete tensor_data;
-      MS_LOG(EXCEPTION) << "memcpy error: " << ret;
-      return parameter;
+      MS_LOG(ERROR) << "memcpy error: " << ret;
+      return nullptr;
     }
     param_value->set_tensor_addr(tensor_data);
     param_value->set_tensor_size(size * sizeof(float) / sizeof(uint8_t));
@@ -171,31 +171,37 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       auto input_tensors = GetCNodeInputTensors(input_cnode);
       if (input_tensors.empty() || input_tensors.size() != input_cnode->inputs().size() - 1) {
         FreeInputTensor(&input_tensors);
-        return any_node;
+        continue;
       }
       MS_LOG(INFO) << "Begin fold node:" << input_node->fullname_with_scope();
       auto output_nums = GetOutputTensorNum(input_cnode);
       std::vector<Tensor *> output_tensors{output_nums, new Tensor()};
       auto scheam_primitive = PackPrimitiveT(input_cnode);
-      auto lite_primitive = mindspore::lite::PrimitiveC::CreatePrimitive(scheam_primitive);
+      auto lite_primitive = mindspore::lite::PrimitiveC::UnPackFromSchemaPrimitive(scheam_primitive);
       if (lite_primitive == nullptr) {
-        MS_LOG(DEBUG) << "constant_folding schedule node lite primitive nullptr";
+        MS_LOG(ERROR) << "constant_folding schedule node lite primitive nullptr";
         FreeInputTensor(&input_tensors);
         return nullptr;
       }
       lite_primitive->InferShape(input_tensors, output_tensors);
       auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, lite_primitive);
       if (lite_kernel == nullptr) {
-        MS_LOG(DEBUG) << "constant_folding schedule node lite kernel nullptr";
+        MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
         FreeInputTensor(&input_tensors);
         return nullptr;
       }
       auto ret = lite_kernel->Run();
       if (0 != ret) {
         FreeInputTensor(&input_tensors);
-        MS_LOG(EXCEPTION) << "run kernel failed, name: " << lite_kernel->name();
+        MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
+        return nullptr;
       }
       auto new_parameter = CreateNewParamter(func_graph, output_tensors.front());
+      if (new_parameter == nullptr) {
+        FreeInputTensor(&input_tensors);
+        MS_LOG(ERROR) << "CreateNewParamter failed, name: " << lite_kernel->name();
+        return nullptr;
+      }
       new_parameter->set_name(input_node->fullname_with_scope());
       any_node->set_input(i, new_parameter);
       FreeInputTensor(&input_tensors);

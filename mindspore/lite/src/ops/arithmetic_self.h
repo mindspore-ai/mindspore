@@ -25,10 +25,11 @@ namespace lite {
 class ArithmeticSelf : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ArithmeticSelf() = default;
   explicit ArithmeticSelf(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ArithmeticSelf(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };
 }  // namespace lite

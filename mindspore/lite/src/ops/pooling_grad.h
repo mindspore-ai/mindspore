@@ -28,10 +28,11 @@ namespace lite {
 class PoolingGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  PoolingGrad() = default;
   explicit PoolingGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit PoolingGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetFormat() const;
   int GetPoolingMode() const;
   bool GetGlobal() const;

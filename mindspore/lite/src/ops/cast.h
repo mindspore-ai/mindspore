@@ -28,10 +28,11 @@ namespace lite {
 class Cast : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Cast() = default;
   explicit Cast(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Cast(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetSrcT() const;
   int GetDstT() const;

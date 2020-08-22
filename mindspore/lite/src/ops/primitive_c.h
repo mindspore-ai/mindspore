@@ -41,24 +41,31 @@ constexpr uint32_t kDimension_4d = 4;
 const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat16};
 
 #ifdef PRIMITIVE_WRITEABLE
+constexpr int kAnfPopulaterOne = 1;
+constexpr int kAnfPopulaterTwo = 2;
+constexpr int kAnfPopulaterThree = 3;
 class PrimitiveC : public mindspore::Primitive {
  public:
-  explicit PrimitiveC(schema::Primitive *primitive) : Primitive("") { this->primitive_ = primitive->UnPack(); }
-
+  // Argument primitive is delived into PrimitiveC and will be deleted in ~PrimitiveC(). Caller should not delete
+  // primitive
   explicit PrimitiveC(schema::PrimitiveT *primitive) : Primitive(""), primitive_(primitive) {}
 
   explicit PrimitiveC(const Primitive &prim) : Primitive(prim) {}
 
+  // Argument primitive is delived into PrimitiveC and will be deleted in ~PrimitiveC(). Caller should not delete
+  // primitive
   explicit PrimitiveC(const std::string &name, schema::PrimitiveT *primitive)
       : Primitive(name), primitive_(primitive) {}
 
+  PrimitiveC() : Primitive(""), primitive_(nullptr) {}
+
   MS_DECLARE_PARENT(PrimitiveC, Primitive);
 
-  ~PrimitiveC() override = default;
+  ~PrimitiveC() override {
+    //    delete this->primitive_;
+  }
 
   int Type() const;
-
-  //  static PrimitiveC *UnPackFromPrimitive(const Primitive &prim);
 
   schema::PrimitiveT *GetPrimitiveT() const;
 
@@ -99,10 +106,16 @@ class PrimitiveC : public mindspore::Primitive {
 
   void SetInferFlag(bool flag);
 
-  static PrimitiveC *CreatePrimitive(mindspore::schema::Primitive *primitive);
+  static PrimitiveC *UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive) {
+    return UnPackFromSchemaPrimitiveT(primitive->UnPack());
+  }
+
+  static PrimitiveC *UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT *primitive);
+
+  static std::shared_ptr<PrimitiveC> UnPackFromPrimitive(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 
  protected:
-  //  virutal PrimitiveC *UnPackAttr(const Primitive &prim) = 0;
+  virtual int UnPackAttr(const Primitive &prim) { return RET_ERROR; }
 
  protected:
   schema::PrimitiveT *primitive_ = nullptr;
@@ -117,16 +130,20 @@ std::shared_ptr<PrimitiveC> GetMakeTuplePrim();
 
 std::shared_ptr<PrimitiveC> GetTupleGetItemPrim();
 
-
-
 #else
 class PrimitiveC {
  public:
   PrimitiveC() = default;
 
+  // Argument primitive is delived into PrimitiveC and will be deleted in ~PrimitiveC(). Caller should not delete
+  // primitive
   explicit PrimitiveC(schema::Primitive *primitive) : primitive_(primitive) {}
 
-  virtual ~PrimitiveC() = default;
+  virtual ~PrimitiveC() {
+    //    delete this->primitive_;
+  }
+
+  static PrimitiveC *UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive);
 
   bool GetInferFlag() const;
 

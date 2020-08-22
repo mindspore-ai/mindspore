@@ -28,10 +28,11 @@ namespace lite {
 class Conv2DGradInput : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Conv2DGradInput() = default;
   explicit Conv2DGradInput(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Conv2DGradInput(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetFormat() const;
   int GetGroup() const;
   int GetChannelIn() const;

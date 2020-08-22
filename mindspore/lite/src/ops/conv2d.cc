@@ -15,9 +15,14 @@
  */
 
 #include "src/ops/conv2d.h"
+#include <string>
+#include <memory>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
+#ifdef PRIMITIVE_WRITEABLE
+#include "tools/converter/quantizer/quantize_util.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -62,6 +67,265 @@ void Conv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsConv2D()->dila
 void Conv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsConv2D()->hasBias = has_bias; }
 void Conv2D::SetActivationType(int activation_type) {
   this->primitive_->value.AsConv2D()->activationType = (schema::ActivationType)activation_type;
+}
+template <typename T>
+void ConvertConvWeight(const ParameterPtr &param_node) {
+  MS_ASSERT(param_node != nullptr);
+  auto param = param_node->default_param();
+  auto weight = std::dynamic_pointer_cast<ParamValueLite>(param);
+  MS_ASSERT(weight != nullptr);
+
+  std::unique_ptr<T> buf(new (std::nothrow) T[weight->tensor_shape_size()]);
+  if (buf == nullptr) {
+    MS_LOG(ERROR) << "new buf failed";
+    return;
+  }
+
+  size_t filter_k = weight->tensor_shape()[0];
+  size_t filter_c = weight->tensor_shape()[1];
+  size_t filter_h = weight->tensor_shape()[2];
+  size_t filter_w = weight->tensor_shape()[3];
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (size_t k = 0; k < filter_k; ++k) {
+    for (size_t c = 0; c < filter_c; ++c) {
+      for (size_t h = 0; h < filter_h; ++h) {
+        for (size_t w = 0; w < filter_w; ++w) {
+          p1Buff = reinterpret_cast<float *>(weight->tensor_addr()) +
+                   ((k * filter_c * filter_h * filter_w) + (c * filter_h * filter_w) + (h * filter_w) + (w));
+          p2Buff =
+            buf.get() + ((c * filter_k * filter_h * filter_w) + (k * filter_h * filter_w) + (h * filter_w) + (w));
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+
+  auto ret = ::memcpy_s(weight->tensor_addr(), weight->tensor_shape_size() * sizeof(T), buf.get(),
+                        weight->tensor_shape_size() * sizeof(T));
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+    return;
+  }
+
+  auto abstract_base = param_node->abstract();
+  MS_ASSERT(abstract_base != nullptr);
+  if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[0] = filter_c;
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[1] = filter_k;
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[2] = filter_h;
+    utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape()[3] = filter_w;
+  }
+  return;
+}
+void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
+                                       const std::vector<AnfNodePtr> &inputs) {
+  auto attr = std::make_unique<schema::DepthwiseConv2DT>();
+  auto format = GetValue<std::string>(prim.GetAttr("data_format"));
+  if (format == "NCHW") {
+    attr->format = schema::Format_NCHW;
+  } else if (format == "NHWC") {
+    attr->format = schema::Format_NHWC;
+  } else {
+    attr->format = schema::Format_NUM_OF_FORMAT;
+  }
+  auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
+  attr->padUp = pad_list[0];
+  attr->padDown = pad_list[1];
+  attr->padLeft = pad_list[2];
+  attr->padRight = pad_list[3];
+
+  auto dilation = GetValue<std::vector<int>>(prim.GetAttr("dilation"));
+  attr->dilateH = dilation[0];
+  attr->dilateW = dilation[1];
+
+  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+  attr->kernelH = kernel_size[0];
+  attr->kernelW = kernel_size[1];
+
+  auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
+  attr->strideH = stride[2];
+  attr->strideW = stride[3];
+
+  auto pad_mode = GetValue<std::string>(prim.GetAttr("pad_mode"));
+  if (pad_mode == "valid") {
+    attr->padMode = schema::PadMode_VALID;
+  } else if (pad_mode == "same") {
+    attr->padMode = schema::PadMode_SAME;
+  } else {
+    attr->padMode = schema::PadMode_NOTSET;
+  }
+
+  int channel_mutiplier = 1;
+  if (prim.GetAttr("channel_mutiplier") != nullptr) {
+    channel_mutiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
+  }
+  attr->channelMultiplier = channel_mutiplier;
+
+  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
+  auto input_node = inputs[kAnfPopulaterOne];
+  MS_ASSERT(input_node != nullptr);
+  if (input_node->isa<Parameter>()) {
+    auto param_node = input_node->cast<ParameterPtr>();
+    ConvertConvWeight<float>(param_node);
+  }
+
+  primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
+  primitive->value.value = attr.release();
+}
+
+void Conv2D::PopulaterConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group) {
+  auto attr = std::make_unique<schema::Conv2DT>();
+  attr->group = group;
+  auto format = GetValue<std::string>(prim.GetAttr("data_format"));
+  if (format == "NCHW") {
+    attr->format = schema::Format_NCHW;
+  } else if (format == "NHWC") {
+    attr->format = schema::Format_NHWC;
+  } else {
+    attr->format = schema::Format_NUM_OF_FORMAT;
+  }
+  auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
+  attr->padUp = pad_list[0];
+  attr->padDown = pad_list[1];
+  attr->padLeft = pad_list[2];
+  attr->padRight = pad_list[3];
+
+  auto dilation = GetValue<std::vector<int>>(prim.GetAttr("dilation"));
+  attr->dilateH = dilation[0];
+  attr->dilateW = dilation[1];
+
+  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+  attr->kernelH = kernel_size[0];
+  attr->kernelW = kernel_size[1];
+
+  auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
+  attr->strideH = stride[2];
+  attr->strideW = stride[3];
+
+  attr->channelOut = GetValue<int>(prim.GetAttr("out_channel"));
+
+  auto pad_mode = GetValue<std::string>(prim.GetAttr("pad_mode"));
+  if (pad_mode == "valid") {
+    attr->padMode = schema::PadMode_VALID;
+  } else if (pad_mode == "same") {
+    attr->padMode = schema::PadMode_SAME;
+  } else {
+    attr->padMode = schema::PadMode_NOTSET;
+  }
+  primitive->value.type = schema::PrimitiveType_Conv2D;
+  primitive->value.value = attr.release();
+}
+
+void Conv2D::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
+  constexpr float qmin = 0;
+  constexpr float qmax = 255;
+  *mMin = static_cast<float>((qmin - mean) / stdDev);
+  *mMax = static_cast<float>((qmax - mean) / stdDev);
+}
+
+void Conv2D::PopulaterQuantParam(const Primitive &prim,
+                                 std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                                 std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
+  auto narrow_range = prim.GetAttr("narrow_range");
+  bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
+  auto num_bits = prim.GetAttr("num_bits");
+  int32_t numbitsRangeQuantParam = GetValue<int32_t>(num_bits);
+
+  std::vector<schema::QuantParamT> quants;
+  schema::QuantParamT quantParam;
+  auto mean = prim.GetAttr("mean");
+  auto std_dev = prim.GetAttr("std_dev");
+  if (mean != nullptr && std_dev != nullptr) {
+    auto meanQuantOaram = GetValue<double>(mean);
+    double stddevQuantOaram = GetValue<double>(std_dev);
+    float mMin = 0.0;
+    float mMax = 0.0;
+    CalQuantParam(meanQuantOaram, stddevQuantOaram, &mMin, &mMax);
+    quantParam.min = mMin;
+    quantParam.max = mMax;
+  } else {
+    auto inputMin = prim.GetAttr("input_minq");
+    auto inputMax = prim.GetAttr("input_maxq");
+    auto inputMinPtr = inputMin->cast<lite::tensor::TensorPtr>();
+    auto inputMaxPtr = inputMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(inputMinPtr->Data());
+    float *maxBuf = static_cast<float *>(inputMaxPtr->Data());
+    quantParam.min = *minBuf;
+    quantParam.max = *maxBuf;
+  }
+  quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                               numbitsRangeQuantParam);
+  quants.emplace_back(quantParam);
+  vecInputQuantParam->emplace_back(quants);
+
+  quants.clear();
+  int biasQuantSize = 0;
+  auto filterMin = prim.GetAttr("filter_minq");
+  auto filterMax = prim.GetAttr("filter_maxq");
+  if (filterMin != nullptr && filterMax != nullptr) {
+    auto filterMinPtr = filterMin->cast<lite::tensor::TensorPtr>();
+    auto filterMaxPtr = filterMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(filterMinPtr->Data());
+    float *maxBuf = static_cast<float *>(filterMaxPtr->Data());
+    biasQuantSize = filterMinPtr->DataSize();
+    for (int i = 0; i < biasQuantSize; ++i) {
+      quantParam.min = *(minBuf++);
+      quantParam.max = *(maxBuf++);
+      quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                                   numbitsRangeQuantParam);
+      quants.emplace_back(quantParam);
+    }
+    vecInputQuantParam->emplace_back(quants);
+  }
+
+  quants.clear();
+  for (int i = 0; i < biasQuantSize; ++i) {
+    quantParam.min = 0.0;
+    quantParam.max = 0.0;
+    quantParam.zeroPoint = 0;
+
+    quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(i).scale;
+    quants.emplace_back(quantParam);
+  }
+  vecInputQuantParam->emplace_back(quants);
+
+  quants.clear();
+  auto outputMin = prim.GetAttr("output_minq");
+  auto outputMax = prim.GetAttr("output_maxq");
+  if (outputMin != nullptr && outputMax != nullptr) {
+    auto outputMinPtr = outputMin->cast<lite::tensor::TensorPtr>();
+    auto outputMaxPtr = outputMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(outputMinPtr->Data());
+    float *maxBuf = static_cast<float *>(outputMaxPtr->Data());
+    quantParam.min = *minBuf;
+    quantParam.max = *maxBuf;
+    quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                                 numbitsRangeQuantParam);
+    quants.emplace_back(quantParam);
+    vecOutputQuantParam->emplace_back(quants);
+  }
+}
+
+int Conv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+
+  int group = GetValue<int>(prim.GetAttr("group"));
+  if (group > 1) {
+    PopulaterConv2DMultiGroup(prim, this->primitive_, group, inputs);
+  } else {
+    PopulaterConv2DSingleGroup(prim, this->primitive_, group);
+  }
+
+  if (GetQuantType() == schema::QuantType_AwareTraining) {
+    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
+    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
+    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
+    SetInputQuantParam(vecInputQuantParam);
+    SetOutputQuantParam(vecOutputQuantParam);
+  }
+  return RET_OK;
 }
 
 #else

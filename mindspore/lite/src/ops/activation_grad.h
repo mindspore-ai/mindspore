@@ -28,10 +28,11 @@ namespace lite {
 class ActivationGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ActivationGrad() = default;
   explicit ActivationGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ActivationGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetType() const;
   void SetType(int type);
 };

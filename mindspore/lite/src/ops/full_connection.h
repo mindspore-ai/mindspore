@@ -28,10 +28,11 @@ namespace lite {
 class FullConnection : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  FullConnection() = default;
   explicit FullConnection(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit FullConnection(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool GetHasBias() const;
   int GetAxis() const;

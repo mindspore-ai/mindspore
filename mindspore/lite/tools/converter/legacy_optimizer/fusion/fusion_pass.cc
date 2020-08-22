@@ -316,34 +316,7 @@ FusionPass::~FusionPass() {
 }
 
 void FusionPass::MergeNodeAttrFromPost(std::unique_ptr<schema::CNodeT> &dstOp, std::unique_ptr<schema::CNodeT> &postOp,
-                                       size_t dstOpOutIdx) {
-  //  // merge quantParam
-  //  if (dstOp->quantParam.empty()) {  // not awareing quant
-  //    return;
-  //  }
-  //  MS_ASSERT(postOp->outputIndex.size() == 1);
-  //  if (dstOp->quantParam.size() != dstOp->inputIndex.size() + dstOp->outputIndex.size()) {
-  //    int a = 1;
-  //  }
-  //  MS_ASSERT(dstOp->quantParam.size() == dstOp->inputIndex.size() + dstOp->outputIndex.size());
-  //  auto &dstQuantParamArray = dstOp->quantParam.at(dstOp->inputIndex.size() + dstOpOutIdx);
-  //  auto &postQuantParamArray = postOp->quantParam.back();
-  //  if (!(postQuantParamArray != nullptr && postQuantParamArray->param.size() == 1 &&
-  //        postQuantParamArray->param.front() != nullptr && postQuantParamArray->param.front()->min != FLT_MAX)) {
-  //    return;  // postNode has no quantParam, no need merge
-  //  }
-  //
-  //  if ((dstQuantParamArray != nullptr && dstQuantParamArray->param.size() != 1) ||
-  //      (dstQuantParamArray->param.front() != nullptr && dstQuantParamArray->param.front()->min != FLT_MAX)) {
-  //    return;  // dstNode has quantParam, no need merge
-  //  }
-  //
-  //  dstQuantParamArray->param.front()->min = postQuantParamArray->param.front()->min;
-  //  dstQuantParamArray->param.front()->max = postQuantParamArray->param.front()->max;
-  //  dstQuantParamArray->param.front()->scale = postQuantParamArray->param.front()->scale;
-  //  dstQuantParamArray->param.front()->zeroPoint = postQuantParamArray->param.front()->zeroPoint;
-  // MS_LOGD("merge quantParam from %s to %s", postOp->name.c_str(), dstOp->name.c_str());
-}
+                                       size_t dstOpOutIdx) {}
 }  // namespace lite
 }  // namespace mindspore
 

@@ -28,10 +28,11 @@ namespace lite {
 class DepthToSpace : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  DepthToSpace() = default;
   explicit DepthToSpace(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit DepthToSpace(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBlockSize() const;
   int GetFormat() const;

@@ -28,9 +28,11 @@ namespace lite {
 class FloorMod : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  FloorMod() = default;
   explicit FloorMod(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit FloorMod(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

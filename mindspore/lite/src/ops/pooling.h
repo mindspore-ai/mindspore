@@ -28,10 +28,11 @@ namespace lite {
 class Pooling : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Pooling() = default;
   explicit Pooling(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Pooling(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetPoolingMode() const;
@@ -64,6 +65,8 @@ class Pooling : public PrimitiveC {
   int PadDown() const;
   int PadLeft() const;
   int PadRight() const;
+
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 
  protected:
   int pad_u_ = 0;

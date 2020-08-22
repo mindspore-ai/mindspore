@@ -28,10 +28,11 @@ namespace lite {
 class BNGradInput : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  BNGradInput() = default;
   explicit BNGradInput(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit BNGradInput(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetEps() const;
   int GetChannels() const;
   void SetEps(float eps);

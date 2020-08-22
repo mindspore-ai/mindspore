@@ -19,7 +19,7 @@
 #include "schema/inner/model_generated.h"
 #include "frontend/operator/ops.h"
 #include "src/param_value_lite.h"
-#include "import_from_meta_graphT.h"
+#include "tools/anf_importer/import_from_meta_graphT.h"
 #include "utils/log_adapter.h"
 #include "include/errorcode.h"
 
@@ -80,7 +80,7 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
 ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<schema::CNodeT> &cNode) {
   MS_ASSERT(nullptr != meta_graph_);
   MS_ASSERT(nullptr != cNode);
-  auto primitiveCValue = std::make_shared<PrimitiveC>(cNode->primitive.release());
+  auto primitiveCValue = PrimitiveC::UnPackFromSchemaPrimitiveT(cNode->primitive.release());
   cNode->primitive = nullptr;
   // add quant parameter
   if (cNode->quantType == schema::QuantType_AwareTraining) {
@@ -98,7 +98,7 @@ ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<s
       }
     }
   }
-  auto value_node = NewValueNode(primitiveCValue);
+  auto value_node = NewValueNode(std::shared_ptr<PrimitiveC>(primitiveCValue));
   return value_node;
 }
 

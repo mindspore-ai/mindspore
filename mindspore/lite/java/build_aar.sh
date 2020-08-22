@@ -5,13 +5,13 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 TOP_PATH="${BASE_PATH}/../../.."
 # build mindspore-lite arm64
 cd ${TOP_PATH}
-#bash build.sh -I arm64
-#COMPILE_RET=$?
+bash build.sh -I arm64
+COMPILE_RET=$?
 
-#if [[ "${COMPILE_RET}" -ne 0 ]]; then
-#    echo "---------------- mindspore lite: build failed ----------------"
-#    exit
-#fi
+if [[ "${COMPILE_RET}" -ne 0 ]]; then
+    echo "---------------- mindspore lite: build failed ----------------"
+    exit
+fi
 
 # copy arm64 so
 cd ${TOP_PATH}/output/

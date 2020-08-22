@@ -25,13 +25,14 @@
 
 namespace mindspore {
 namespace lite {
-class SliceOp : public PrimitiveC {
+class Slice : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  explicit SliceOp(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  Slice() = default;
+  explicit Slice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+#else
+  explicit Slice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
-  explicit SliceOp(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   std::vector<int> GetBegin() const;

@@ -15,9 +15,11 @@
  */
 
 #include "src/ops/concat.h"
+#include <memory>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/ir/tensor.h"
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -26,6 +28,16 @@ int Concat::GetN() const { return this->primitive_->value.AsConcat()->n; }
 
 void Concat::SetAxis(int axis) { this->primitive_->value.AsConcat()->axis = axis; }
 void Concat::SetN(int n) { this->primitive_->value.AsConcat()->n = n; }
+
+int Concat::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::ConcatT>();
+  auto prim_axis = GetValue<int>(prim.GetAttr("axis"));
+  attr->axis = prim_axis;
+  this->primitive_->value.type = schema::PrimitiveType_Concat;
+  this->primitive_->value.value = attr.release();
+  return RET_OK;
+}
 
 #else
 

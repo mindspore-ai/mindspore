@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/reshape.h"
+#include <memory>
 #include <algorithm>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
@@ -28,6 +29,32 @@ std::vector<long> Reshape::GetShape() const { return this->primitive_->value.AsR
 
 void Reshape::SetFormat(int format) { this->primitive_->value.AsReshape()->format = (schema::Format)format; }
 void Reshape::SetShape(const std::vector<long> &shape) { this->primitive_->value.AsReshape()->shape = shape; }
+int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::ReshapeT>();
+  MS_ASSERT(inputs.size() == kAnfPopulaterThree - 1);
+  auto inputNode = inputs[kAnfPopulaterTwo - 1];
+  if (inputNode->isa<ValueNode>()) {
+    auto valueNode = inputNode->cast<ValueNodePtr>();
+    MS_ASSERT(valueNode != nullptr);
+    auto val = valueNode->value();
+    MS_ASSERT(val != nullptr);
+    if (val->isa<ValueTuple>()) {
+      auto tuple = val->cast<ValueTuplePtr>();
+      MS_ASSERT(tuple != nullptr);
+      for (size_t i = 0; i < tuple->size(); ++i) {
+        auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+        MS_ASSERT(elem != nullptr);
+        attr->shape.emplace_back(static_cast<int>(elem->value()));
+      }
+    }
+  }
+
+  this->primitive_->value.type = schema::PrimitiveType_Reshape;
+  this->primitive_->value.value = attr.release();
+
+  return RET_OK;
+}
 
 #else
 

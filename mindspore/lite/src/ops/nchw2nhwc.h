@@ -28,10 +28,11 @@ namespace lite {
 class Nchw2Nhwc : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Nchw2Nhwc() = default;
   explicit Nchw2Nhwc(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Nchw2Nhwc(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };
 }  // namespace lite

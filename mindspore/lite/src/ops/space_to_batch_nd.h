@@ -28,10 +28,11 @@ namespace lite {
 class SpaceToBatchND : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  SpaceToBatchND() = default;
   explicit SpaceToBatchND(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit SpaceToBatchND(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;
   void SetBlockShape(const std::vector<int> &block_shape);

@@ -17,10 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_POPULATE_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_POPULATE_PARAMETER_H_
 
-#include "schema/model_generated.h"
-
-#include "nnacl/op_base.h"
 #include "src/ops/primitive_c.h"
+#include "schema/model_generated.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::kernel {
 typedef OpParameter *(*PopulateParameterFunc)(const mindspore::lite::PrimitiveC *);

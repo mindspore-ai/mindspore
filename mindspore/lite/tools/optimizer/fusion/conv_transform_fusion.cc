@@ -17,6 +17,8 @@
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 #include <memory>
 #include "src/ops/primitive_c.h"
+#include "src/ops/conv2d.h"
+#include "src/ops/depthwise_conv2d.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -38,12 +40,18 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   MS_ASSERT(value != nullptr);
   auto primitive = value->cast<PrimitiveCPtr>();
   MS_ASSERT(primitive != nullptr);
-  auto type = primitive->GetPrimitiveT()->value.type;
+  auto type = (schema::PrimitiveType)primitive->Type();
+
   if (type == schema::PrimitiveType_Conv2D) {
-    return primitive->GetPrimitiveT()->value.AsConv2D()->channelOut;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive);
+    MS_ASSERT(primc != nullptr);
+    return primc->GetChannelOut();
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier *
-        primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive);
+    MS_ASSERT(primc != nullptr);
+    return primc->GetChannelMultiplier() * primc->GetChannelIn();
   } else {
     MS_LOG(ERROR) << "Unsupported opType, " << type;
     return 0;
@@ -74,12 +82,12 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
     MS_LOG(INFO) << "Unsupported conv node, " << conv_node->DebugString();
     return node;
   }
-  auto trans_scale = new(std::nothrow) float[kernel_nums];
+  auto trans_scale = new (std::nothrow) float[kernel_nums];
   if (trans_scale == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
     return nullptr;
   }
-  auto trans_bias = new(std::nothrow) float[kernel_nums];
+  auto trans_bias = new (std::nothrow) float[kernel_nums];
   if (trans_bias == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
     delete trans_scale;
@@ -91,11 +99,17 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   delete[] trans_scale;
   auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
   MS_ASSERT(primitiveT_value != nullptr);
-  auto type = primitiveT_value->GetPrimitiveT()->value.type;
+  auto type = primitiveT_value->Type();
   if (type == schema::PrimitiveType_Conv2D) {
-    primitiveT_value->GetPrimitiveT()->value.AsConv2D()->hasBias = true;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value);
+    MS_ASSERT(primc != nullptr);
+    primc->SetHasBias(true);
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    primitiveT_value->GetPrimitiveT()->value.AsDepthwiseConv2D()->hasBias = true;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value);
+    MS_ASSERT(primc != nullptr);
+    primc->SetHasBias(true);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported opType, " << type;
   }
@@ -170,7 +184,7 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
     bias_data = reinterpret_cast<float *>(bias_tensor->tensor_addr());
     bias_flag = true;
   } else {
-    bias_data = new(std::nothrow) float[kernel_num];
+    bias_data = new (std::nothrow) float[kernel_num];
     if (bias_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       return;
@@ -186,7 +200,7 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
 const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kernel_num, int kernel_size,
                                                    const float *trans_scale) const {
   MS_ASSERT(weight_data != nullptr);
-  auto tmp_weight_data = new(std::nothrow) float[kernel_num * kernel_size];
+  auto tmp_weight_data = new (std::nothrow) float[kernel_num * kernel_size];
   MS_ASSERT(new_weight_data != nullptr);
   auto data_size = kernel_num * kernel_size * sizeof(float);
   if (0 != memset_s(tmp_weight_data, data_size, 0, data_size)) {
@@ -212,7 +226,7 @@ const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_nu
                                                  const float *trans_scale, const float *trans_bias) const {
   MS_ASSERT(bias_data != nullptr);
   if (bias_flag) {
-    auto tmp_bias_data = new(std::nothrow) float[kernel_num];
+    auto tmp_bias_data = new (std::nothrow) float[kernel_num];
     if (tmp_bias_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       return;

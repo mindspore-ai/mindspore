@@ -28,10 +28,11 @@ namespace lite {
 class L2Norm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  L2Norm() = default;
   explicit L2Norm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit L2Norm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetAxis() const;
   float GetEpsilon() const;
   void SetAxis(const std::vector<int> &axis);

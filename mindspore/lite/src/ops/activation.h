@@ -27,9 +27,12 @@ namespace lite {
 class Activation : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Activation() = default;
   explicit Activation(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit Activation(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
   int GetType() const;
   float GetAlpha() const;
   void SetType(int type);

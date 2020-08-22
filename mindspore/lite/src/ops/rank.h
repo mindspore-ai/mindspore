@@ -28,10 +28,11 @@ namespace lite {
 class Rank : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Rank() = default;
   explicit Rank(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Rank(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };
 }  // namespace lite

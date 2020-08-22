@@ -28,10 +28,11 @@ namespace lite {
 class Lrn : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Lrn() = default;
   explicit Lrn(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Lrn(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetAlpha() const;
   float GetBeta() const;
   float GetBias() const;

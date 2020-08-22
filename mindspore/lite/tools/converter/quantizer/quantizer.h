@@ -20,12 +20,12 @@
 #include <unordered_map>
 #include <utility>
 #include <memory>
+#include "schema/inner/model_generated.h"
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "base/base.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore::lite::quant {

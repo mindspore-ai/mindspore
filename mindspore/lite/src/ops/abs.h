@@ -33,9 +33,11 @@ namespace lite {
 class Abs : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Abs() = default;
   explicit Abs(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Abs(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

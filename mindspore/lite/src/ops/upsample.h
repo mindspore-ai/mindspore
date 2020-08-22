@@ -29,10 +29,11 @@ namespace lite {
 class Upsample : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Upsample() = default;
   explicit Upsample(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Upsample(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::string GetMode() const;
   std::vector<float> GetScales() const;
   void SetMode(std::string mode);

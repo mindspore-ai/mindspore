@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_ANF_DEQUANT_PARSER_H
-#define MINDSPORE_ANF_DEQUANT_PARSER_H
-#include "tools/anf_importer/anf_populater/anf_node_populater.h"
+
+#ifndef LITE_MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
+#define LITE_MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
 #include <vector>
+#include "src/ops/primitive_c.h"
 
-namespace mindspore::lite {
-class AnfDequantPopulater : public AnfNodePopulater {
+namespace mindspore {
+namespace lite {
+class MakeTuple : public PrimitiveC {
  public:
-  AnfDequantPopulater() = default;
-  ~AnfDequantPopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
-               const std::vector<AnfNodePtr> &inputs) override;
+#ifdef PRIMITIVE_WRITEABLE
+  MakeTuple() = default;
+  explicit MakeTuple(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
+  explicit MakeTuple(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
 };
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 
-#endif  // MINDSPORE_ANF_DEQUANT_PARSER_H
+#endif  // LITE_MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_

@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_ANF_QUANT_PARSER_H
-#define MINDSPORE_ANF_QUANT_PARSER_H
-#include "tools/anf_importer/anf_populater/anf_node_populater.h"
-#include <vector>
-namespace mindspore::lite {
-class AnfQuantPopulater : public AnfNodePopulater {
- public:
-  AnfQuantPopulater() = default;
-  ~AnfQuantPopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
-               const std::vector<AnfNodePtr> &inputs) override;
-};
-}  // namespace mindspore::lite
 
-#endif  // MINDSPORE_ANF_QUANT_PARSER_H
+#ifndef LITE_MINDSPORE_LITE_SRC_OPS_QUANT_H_
+#define LITE_MINDSPORE_LITE_SRC_OPS_QUANT_H_
+#include <vector>
+#include "src/ops/primitive_c.h"
+
+namespace mindspore {
+namespace lite {
+class Quant : public PrimitiveC {
+ public:
+#ifdef PRIMITIVE_WRITEABLE
+  Quant() = default;
+  explicit Quant(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
+  explicit Quant(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
+};
+}  // namespace lite
+}  // namespace mindspore
+
+#endif  // LITE_MINDSPORE_LITE_SRC_OPS_QUANT_H_

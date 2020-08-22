@@ -28,10 +28,11 @@ namespace lite {
 class Scale : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Scale() = default;
   explicit Scale(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Scale(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetAxis() const;
   void SetAxis(int axis);
 };

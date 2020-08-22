@@ -28,9 +28,11 @@ namespace lite {
 class LogicalAnd : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  LogicalAnd() = default;
   explicit LogicalAnd(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit LogicalAnd(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

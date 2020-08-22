@@ -33,10 +33,12 @@ namespace lite {
 class Add : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Add() = default;
   explicit Add(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit Add(schema::Primitive *primitive) : Arithmetic(primitive) {}
-
+#endif
   int GetActivationType() const;
   void SetActivationType(int activation_type);
 };

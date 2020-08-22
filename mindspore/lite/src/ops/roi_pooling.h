@@ -28,10 +28,11 @@ namespace lite {
 class ROIPooling : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ROIPooling() = default;
   explicit ROIPooling(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ROIPooling(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetPooledH() const;
   int GetPooledW() const;

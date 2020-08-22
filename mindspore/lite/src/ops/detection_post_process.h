@@ -28,10 +28,11 @@ namespace lite {
 class DetectionPostProcess : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  DetectionPostProcess() = default;
   explicit DetectionPostProcess(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit DetectionPostProcess(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetFormat() const;
   int GetInputSize() const;
   float GetHScale() const;

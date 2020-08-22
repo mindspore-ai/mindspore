@@ -28,10 +28,11 @@ namespace lite {
 class Reverse : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Reverse() = default;
   explicit Reverse(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Reverse(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetAxis() const;
   void SetAxis(const std::vector<int> &axis);
 };

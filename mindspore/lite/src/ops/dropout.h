@@ -28,10 +28,11 @@ namespace lite {
 class Dropout : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Dropout() = default;
   explicit Dropout(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Dropout(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetRatio() const;
   void SetRatio(float ratio);
 };

@@ -28,10 +28,11 @@ namespace lite {
 class Arithmetic : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Arithmetic() = default;
   explicit Arithmetic(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Arithmetic(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool Broadcasting() { return this->broadcasting_; }
   int NDims() { return this->ndim_; }

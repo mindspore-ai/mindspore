@@ -28,10 +28,11 @@ namespace lite {
 class Unique : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Unique() = default;
   explicit Unique(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Unique(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetOutType() const;
   void SetOutType(int out_type);

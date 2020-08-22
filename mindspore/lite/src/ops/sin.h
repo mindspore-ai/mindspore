@@ -28,9 +28,11 @@ namespace lite {
 class Sin : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Sin() = default;
   explicit Sin(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Sin(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

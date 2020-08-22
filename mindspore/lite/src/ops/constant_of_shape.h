@@ -28,9 +28,11 @@ namespace lite {
 class ConstantOfShape : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ConstantOfShape() = default;
   explicit ConstantOfShape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ConstantOfShape(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   float GetValue() const;
   void SetValue(float value);

@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/bias_add.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -22,6 +23,16 @@ namespace lite {
 std::vector<int> BiasAdd::GetAxis() const { return this->primitive_->value.AsBiasAdd()->axis; }
 
 void BiasAdd::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsBiasAdd()->axis = axis; }
+
+int BiasAdd::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::BiasAddT>();
+  attr->axis = {0};
+  this->primitive_->value.type = schema::PrimitiveType_BiasAdd;
+  this->primitive_->value.value = attr.release();
+
+  return RET_OK;
+}
 
 #else
 

@@ -20,18 +20,29 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
 class MatMul : public PrimitiveC {
- public:
 #ifdef PRIMITIVE_WRITEABLE
+ public:
+  MatMul() = default;
   explicit MatMul(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
-  explicit MatMul(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 
+ private:
+  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
+  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
+#else
+
+ public:
+  explicit MatMul(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
+
+ public:
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool GetTransposeA() const;
   bool GetTransposeB() const;

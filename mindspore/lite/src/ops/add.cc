@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/add.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -23,6 +24,29 @@ int Add::GetActivationType() const { return this->primitive_->value.AsAdd()->act
 
 void Add::SetActivationType(int activation_type) {
   this->primitive_->value.AsAdd()->activationType = (schema::ActivationType)activation_type;
+}
+
+int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Add;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Add) {
+    MS_LOG(ERROR) << "Primitive type should be add";
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    this->primitive_->value.value = new (std::nothrow) schema::AddT();
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 #else

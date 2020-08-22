@@ -15,7 +15,11 @@
  */
 
 #include "src/ops/matmul.h"
+#include <memory>
 #include <utility>
+#ifdef PRIMITIVE_WRITEABLE
+#include "tools/converter/quantizer/quantize_util.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -25,6 +29,102 @@ bool MatMul::GetTransposeB() const { return this->primitive_->value.AsMatMul()->
 
 void MatMul::SetTransposeA(bool transpose_a) { this->primitive_->value.AsMatMul()->transposeA = transpose_a; }
 void MatMul::SetTransposeB(bool transpose_b) { this->primitive_->value.AsMatMul()->transposeB = transpose_b; }
+
+void MatMul::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
+  constexpr float qmin = 0;
+  constexpr float qmax = 255;
+  *mMin = static_cast<float>((qmin - mean) / stdDev);
+  *mMax = static_cast<float>((qmax - mean) / stdDev);
+}
+
+void MatMul::PopulaterQuantParam(const Primitive &prim,
+                                 std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                                 std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
+  auto narrow_range = prim.GetAttr("narrow_range");
+  bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
+  auto num_bits = prim.GetAttr("num_bits");
+  int32_t numbitsRangeQuantParam = GetValue<int32_t>(num_bits);
+
+  std::vector<schema::QuantParamT> quants;
+  schema::QuantParamT quantParam;
+  auto mean = prim.GetAttr("mean");
+  auto std_dev = prim.GetAttr("std_dev");
+  if (mean != nullptr && std_dev != nullptr) {
+    auto meanQuantOaram = GetValue<double>(mean);
+    double stddevQuantOaram = GetValue<double>(std_dev);
+    float mMin = 0.0;
+    float mMax = 0.0;
+    CalQuantParam(meanQuantOaram, stddevQuantOaram, &mMin, &mMax);
+    quantParam.min = mMin;
+    quantParam.max = mMax;
+  } else {
+    auto inputMin = prim.GetAttr("input_minq");
+    auto inputMax = prim.GetAttr("input_maxq");
+    auto inputMinPtr = inputMin->cast<lite::tensor::TensorPtr>();
+    auto inputMaxPtr = inputMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(inputMinPtr->Data());
+    float *maxBuf = static_cast<float *>(inputMaxPtr->Data());
+    quantParam.min = *minBuf;
+    quantParam.max = *maxBuf;
+  }
+  quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                               numbitsRangeQuantParam);
+  quants.emplace_back(quantParam);
+  vecInputQuantParam->emplace_back(quants);
+
+  quants.clear();
+  auto filterMin = prim.GetAttr("filter_minq");
+  auto filterMax = prim.GetAttr("filter_maxq");
+  if (filterMin != nullptr && filterMax != nullptr) {
+    auto filterMinPtr = filterMin->cast<lite::tensor::TensorPtr>();
+    auto filterMaxPtr = filterMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(filterMinPtr->Data());
+    float *maxBuf = static_cast<float *>(filterMaxPtr->Data());
+    for (int i = 0; i < filterMinPtr->DataSize(); ++i) {
+      quantParam.min = *(minBuf++);
+      quantParam.max = *(maxBuf++);
+      quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                                   numbitsRangeQuantParam);
+      quants.emplace_back(quantParam);
+    }
+    vecInputQuantParam->emplace_back(quants);
+  }
+
+  quants.clear();
+  auto outputMin = prim.GetAttr("output_minq");
+  auto outputMax = prim.GetAttr("output_maxq");
+  if (outputMin != nullptr && outputMax != nullptr) {
+    auto outputMinPtr = outputMin->cast<lite::tensor::TensorPtr>();
+    auto outputMaxPtr = outputMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(outputMinPtr->Data());
+    float *maxBuf = static_cast<float *>(outputMaxPtr->Data());
+    quantParam.min = *minBuf;
+    quantParam.max = *maxBuf;
+    quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                                 numbitsRangeQuantParam);
+    quants.emplace_back(quantParam);
+    vecOutputQuantParam->emplace_back(quants);
+  }
+}
+
+int MatMul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+
+  auto attr = std::make_unique<schema::MatMulT>();
+  attr->transposeA = GetValue<bool>(prim.GetAttr("transpose_a"));
+  attr->transposeB = GetValue<bool>(prim.GetAttr("transpose_b"));
+
+  this->primitive_->value.type = schema::PrimitiveType_MatMul;
+  this->primitive_->value.value = attr.release();
+  if (GetQuantType() == schema::QuantType_AwareTraining) {
+    std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
+    std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
+    PopulaterQuantParam(prim, &vecInputQuantParam, &vecOutputQuantParam);
+    SetInputQuantParam(vecInputQuantParam);
+    SetOutputQuantParam(vecOutputQuantParam);
+  }
+  return RET_OK;
+}
 
 #else
 

@@ -26,12 +26,25 @@
 namespace mindspore {
 namespace lite {
 class DepthwiseConv2D : public PrimitiveC {
- public:
 #ifdef PRIMITIVE_WRITEABLE
-  explicit DepthwiseConv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
-  explicit DepthwiseConv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 
+ public:
+  DepthwiseConv2D() = default;
+  explicit DepthwiseConv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+
+ private:
+  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
+  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
+#else
+
+ public:
+  explicit DepthwiseConv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
+
+ public:
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetChannelIn() const;

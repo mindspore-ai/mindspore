@@ -28,10 +28,11 @@ namespace lite {
 class Clip : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Clip() = default;
   explicit Clip(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Clip(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetMax() const;
   float GetMin() const;
   void SetMax(float max);

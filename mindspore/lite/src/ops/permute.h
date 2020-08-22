@@ -28,10 +28,11 @@ namespace lite {
 class Permute : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Permute() = default;
   explicit Permute(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Permute(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<long> GetOrder() const;
   void SetOrder(const std::vector<long> &order);
 };

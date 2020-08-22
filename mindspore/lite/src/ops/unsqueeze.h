@@ -28,10 +28,11 @@ namespace lite {
 class Unsqueeze : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Unsqueeze() = default;
   explicit Unsqueeze(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Unsqueeze(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetAxis() const;
   void SetAxis(const std::vector<int> &axis);

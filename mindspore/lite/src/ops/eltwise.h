@@ -28,10 +28,11 @@ namespace lite {
 class Eltwise : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Eltwise() = default;
   explicit Eltwise(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Eltwise(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetMode() const;
   void SetMode(int mode);
 };

@@ -28,10 +28,11 @@ namespace lite {
 class Pad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Pad() = default;
   explicit Pad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Pad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetPaddings() const;
   int GetPaddingMode() const;

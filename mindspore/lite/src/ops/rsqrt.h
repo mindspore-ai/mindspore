@@ -28,9 +28,11 @@ namespace lite {
 class Rsqrt : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Rsqrt() = default;
   explicit Rsqrt(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Rsqrt(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

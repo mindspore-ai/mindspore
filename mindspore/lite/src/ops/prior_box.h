@@ -28,10 +28,11 @@ namespace lite {
 class PriorBox : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  PriorBox() = default;
   explicit PriorBox(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit PriorBox(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetMinSizes() const;
   std::vector<int> GetMaxSizes() const;

@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/flatten.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -48,5 +49,14 @@ int Flatten::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
   output->set_shape(output_shape);
   return RET_OK;
 }
+#ifdef PRIMITIVE_WRITEABLE
+int Flatten::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::FlattenT>();
+  this->primitive_->value.type = schema::PrimitiveType_Flatten;
+  this->primitive_->value.value = attr.release();
+  return RET_OK;
+}
+#endif
 }  // namespace lite
 }  // namespace mindspore

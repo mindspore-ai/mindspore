@@ -28,9 +28,11 @@ namespace lite {
 class FloorDiv : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  FloorDiv() = default;
   explicit FloorDiv(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit FloorDiv(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

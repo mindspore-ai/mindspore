@@ -27,9 +27,11 @@ namespace lite {
 class Square : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Square() = default;
   explicit Square(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Square(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

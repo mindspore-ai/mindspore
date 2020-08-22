@@ -28,9 +28,11 @@ namespace lite {
 class Equal : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Equal() = default;
   explicit Equal(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Equal(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -28,10 +28,11 @@ namespace lite {
 class ExpandDims : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ExpandDims() = default;
   explicit ExpandDims(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ExpandDims(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetDim() const;
   void SetDim(int dim);

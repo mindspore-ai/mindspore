@@ -28,10 +28,11 @@ namespace lite {
 class ScatterND : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ScatterND() = default;
   explicit ScatterND(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ScatterND(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };
 }  // namespace lite

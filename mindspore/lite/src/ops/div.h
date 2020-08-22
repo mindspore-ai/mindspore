@@ -28,10 +28,11 @@ namespace lite {
 class Div : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Div() = default;
   explicit Div(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Div(schema::Primitive *primitive) : Arithmetic(primitive) {}
-
+#endif
   int GetActivationType() const;
   void SetActivationType(int activation_type);
 };

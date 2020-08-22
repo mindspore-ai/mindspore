@@ -28,12 +28,15 @@ namespace lite {
 class Mul : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Mul() = default;
   explicit Mul(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Mul(schema::Primitive *primitive) : Arithmetic(primitive) {}
-
+#endif
   int GetActivationType() const;
   void SetActivationType(int activation_type);
+
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 };
 }  // namespace lite
 }  // namespace mindspore

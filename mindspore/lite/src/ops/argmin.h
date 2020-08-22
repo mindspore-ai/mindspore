@@ -28,10 +28,11 @@ namespace lite {
 class ArgMin : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  ArgMin() = default;
   explicit ArgMin(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit ArgMin(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   bool GetOutMaxValue() const;

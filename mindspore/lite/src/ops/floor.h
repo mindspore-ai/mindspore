@@ -28,9 +28,11 @@ namespace lite {
 class Floor : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Floor() = default;
   explicit Floor(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Floor(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

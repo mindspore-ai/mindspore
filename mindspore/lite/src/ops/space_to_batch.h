@@ -28,10 +28,11 @@ namespace lite {
 class SpaceToBatch : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  SpaceToBatch() = default;
   explicit SpaceToBatch(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit SpaceToBatch(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;

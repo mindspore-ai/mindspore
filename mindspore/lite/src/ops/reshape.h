@@ -28,10 +28,12 @@ namespace lite {
 class Reshape : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Reshape() = default;
   explicit Reshape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit Reshape(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   std::vector<long> GetShape() const;

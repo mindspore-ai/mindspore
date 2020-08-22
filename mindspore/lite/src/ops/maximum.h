@@ -28,9 +28,11 @@ namespace lite {
 class Maximum : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Maximum() = default;
   explicit Maximum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Maximum(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

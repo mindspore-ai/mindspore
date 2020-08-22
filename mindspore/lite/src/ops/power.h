@@ -28,10 +28,11 @@ namespace lite {
 class Power : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Power() = default;
   explicit Power(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Power(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   float GetPower() const;
   float GetScale() const;

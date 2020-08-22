@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include "src/populate_parameter.h"
+#include "src/ops/primitive_c.h"
+#include "utils/log_adapter.h"
+#include "schema/ops_generated.h"
 #include "src/ops/constant_of_shape.h"
 #include "src/ops/space_to_batch.h"
 #include "src/ops/conv2d.h"
@@ -106,18 +110,14 @@
 #include "src/ops/squared_difference.h"
 #include "src/ops/ceil.h"
 #include "src/ops/round.h"
-#include "src/ops/primitive_c.h"
-#include "src/populate_parameter.h"
-#include "utils/log_adapter.h"
-#include "schema/ops_generated.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
 #include "nnacl/fp32/cast.h"
 #include "nnacl/concat_parameter.h"
-#include "nnacl/prelu_parameter.h"
 #include "nnacl/fp32/slice.h"
 #include "nnacl/fp32/broadcast_to.h"
 #include "nnacl/reshape_parameter.h"
+#include "nnacl/prelu_parameter.h"
 #include "nnacl/shape.h"
 #include "nnacl/fp32/constant_of_shape.h"
 #include "nnacl/fp32/stack.h"
@@ -154,11 +154,11 @@
 #include "nnacl/scatter_nd.h"
 #include "nnacl/batch_to_space.h"
 #include "nnacl/fp32/crop.h"
-#include "src/runtime/kernel/arm/fp32/flatten.h"
+#include "fp32/flatten.h"
 #include "nnacl/fp32/unsqueeze.h"
 #include "nnacl/fp32/one_hot.h"
 #include "nnacl/strided_slice.h"
-#include "src/runtime/kernel/arm/base/prior_box.h"
+#include "base/prior_box.h"
 #include "nnacl/fp32/space_to_depth.h"
 #include "nnacl/fp32/space_to_batch.h"
 #include "nnacl/int8/quant_dtype_cast.h"
@@ -998,7 +998,7 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
     MS_LOG(ERROR) << "new SliceParameter failed.";
     return nullptr;
   }
-  auto param = reinterpret_cast<mindspore::lite::SliceOp *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto param = reinterpret_cast<mindspore::lite::Slice *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   slice_param->op_parameter_.type_ = primitive->Type();
   auto param_begin = param->GetBegin();
   auto param_size = param->GetSize();
