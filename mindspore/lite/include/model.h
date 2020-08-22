@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "src/ops/primitive_c.h"
+#include "schema/model_generated.h"
 
 namespace mindspore {
 #define MS_API __attribute__((visibility("default")))
