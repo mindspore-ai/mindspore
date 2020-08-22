@@ -20,8 +20,8 @@
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/runtime_api.h"
-#include "src/runtime/kernel/arm/nnacl/pad_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/pad.h"
+#include "nnacl/pad_parameter.h"
+#include "nnacl/int8/pad.h"
 
 namespace mindspore::kernel {
 class PadInt8CPUKernel : public LiteKernel {

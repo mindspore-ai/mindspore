@@ -18,7 +18,7 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
+#include "mindspore/lite/nnacl/fp32/arithmetic.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 

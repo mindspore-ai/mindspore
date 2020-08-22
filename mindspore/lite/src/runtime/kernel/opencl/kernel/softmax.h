@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/softmax.h"
+#include "nnacl/fp32/softmax.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {

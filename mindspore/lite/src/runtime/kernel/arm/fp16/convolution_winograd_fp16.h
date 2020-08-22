@@ -21,10 +21,10 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/conv_fp16.h"
 #include "src/runtime/kernel/arm/fp16/matrix_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/winograd_utils_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
+#include "nnacl/fp16/winograd_utils_fp16.h"
+#include "nnacl/optimized_kernel.h"
 
 namespace mindspore::kernel {
 class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {

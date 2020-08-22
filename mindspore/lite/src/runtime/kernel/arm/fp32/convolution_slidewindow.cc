@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_slidewindow.h"
-#include "src/runtime/kernel/arm/nnacl/common_func.h"
+#include "nnacl/common_func.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

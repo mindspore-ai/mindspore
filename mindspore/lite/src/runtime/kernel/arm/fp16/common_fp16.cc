@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
 
 namespace mindspore::kernel {
 float16_t *ConvertInputFp32toFp16(lite::tensor::Tensor *input, const lite::Context *ctx) {

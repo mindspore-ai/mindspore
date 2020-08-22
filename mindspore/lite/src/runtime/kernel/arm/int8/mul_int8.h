@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/mul_parameter.h"
+#include "nnacl/mul_parameter.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {

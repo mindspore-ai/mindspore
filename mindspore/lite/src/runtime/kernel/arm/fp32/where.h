@@ -20,7 +20,7 @@
 #include "src/lite_kernel.h"
 
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/where.h"
+#include "nnacl/where.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;

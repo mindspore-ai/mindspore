@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/shape.h"
+#include "nnacl/shape.h"
 
 namespace mindspore::kernel {
 

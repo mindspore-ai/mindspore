@@ -198,6 +198,7 @@ endif ()
 
 if (BUILD_DEVICE)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nnacl)
     if (NOT WIN32)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)

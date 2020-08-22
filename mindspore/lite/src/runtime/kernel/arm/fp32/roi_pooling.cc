@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/roi_pooling.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/roi_pooling.h"
+#include "nnacl/fp32/roi_pooling.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

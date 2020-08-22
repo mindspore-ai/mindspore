@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/scatter_nd.h"
+#include "nnacl/scatter_nd.h"
 
 namespace mindspore::kernel {
 

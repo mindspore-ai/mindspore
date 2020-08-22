@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
 class DepthToSpaceInt8CPUKernel : public DepthToSpaceBaseCPUKernel {

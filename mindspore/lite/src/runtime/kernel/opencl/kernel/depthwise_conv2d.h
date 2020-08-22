@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/conv_parameter.h"
 
 #include "src/runtime/opencl/opencl_runtime.h"
 

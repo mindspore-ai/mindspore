@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/int8/div_int8.h"
 #include <limits>
 #include <algorithm>
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic_common.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

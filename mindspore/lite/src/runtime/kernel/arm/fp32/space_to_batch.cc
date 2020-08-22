@@ -18,8 +18,8 @@
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/space_to_batch.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/fp32/space_to_batch.h"
+#include "nnacl/errorcode.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 

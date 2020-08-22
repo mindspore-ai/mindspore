@@ -21,7 +21,7 @@
 
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
+#include "nnacl/fp32/activation.h"
 
 namespace mindspore::kernel {
 

@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_depthwise_fp16.h"
+#include "nnacl/fp16/conv_depthwise_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/int8/unsqueeze_int8.h"
+#include "nnacl/int8/unsqueeze_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;

@@ -21,9 +21,9 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/matmul_fp16.h"
+#include "nnacl/optimized_kernel.h"
+#include "nnacl/matmul_parameter.h"
+#include "nnacl/fp16/matmul_fp16.h"
 
 namespace mindspore::kernel {
 class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {

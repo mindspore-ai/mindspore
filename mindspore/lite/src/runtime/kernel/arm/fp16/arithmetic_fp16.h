@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/arithmetic_fp16.h"
+#include "nnacl/fp16/arithmetic_fp16.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {

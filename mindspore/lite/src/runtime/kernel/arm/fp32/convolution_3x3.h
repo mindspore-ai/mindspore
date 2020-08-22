@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/nnacl/winograd_transform.h"
+#include "nnacl/winograd_transform.h"
 
 namespace mindspore::kernel {
 class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {

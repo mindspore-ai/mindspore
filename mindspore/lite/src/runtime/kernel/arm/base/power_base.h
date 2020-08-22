@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/power_parameter.h"
+#include "nnacl/power_parameter.h"
 
 namespace mindspore::kernel {
 class PowerBaseCPUKernel : public LiteKernel {

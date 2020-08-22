@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
 #include "schema/ops_generated.h"
 #include "mindspore/core/utils/log_adapter.h"
 

@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/common/file_utils_ext.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/reduce.h"
+#include "mindspore/lite/nnacl/fp32/reduce.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/arithmetic_grad.h"
 #include "mindspore/lite/src/kernel_registry.h"
 

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/power_base.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/quantization/quantize.h"
 
 namespace mindspore::kernel {
 class PowerInt8CPUKernel : public PowerBaseCPUKernel {

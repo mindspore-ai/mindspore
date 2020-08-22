@@ -21,7 +21,7 @@
 #include <vector>
 #include "CL/cl2.hpp"
 #include "utils/log_adapter.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::lite {

@@ -15,9 +15,9 @@
  */
 #include "mindspore/core/utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/arg_min_max.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/arg_min_max.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "mindspore/lite/nnacl/fp32/arg_min_max.h"
+#include "mindspore/lite/nnacl/arg_min_max.h"
+#include "mindspore/lite/nnacl/arithmetic_common.h"
 
 namespace mindspore {
 

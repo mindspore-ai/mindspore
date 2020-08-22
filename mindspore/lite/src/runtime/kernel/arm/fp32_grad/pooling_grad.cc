@@ -17,8 +17,8 @@
 #include "src/runtime/kernel/arm/fp32_grad/pooling_grad.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/pooling.h"
-#include "src/runtime/kernel/arm/nnacl/fp32_grad/pooling_grad.h"
+#include "nnacl/fp32/pooling.h"
+#include "nnacl/fp32_grad/pooling_grad.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

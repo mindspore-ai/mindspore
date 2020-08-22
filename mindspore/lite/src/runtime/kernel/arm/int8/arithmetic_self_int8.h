@@ -19,8 +19,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_self_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/int8/arithmetic_self_int8.h"
+#include "nnacl/arithmetic_self_parameter.h"
+#include "nnacl/int8/arithmetic_self_int8.h"
 #include "schema/model_generated.h"
 #include "include/context.h"
 

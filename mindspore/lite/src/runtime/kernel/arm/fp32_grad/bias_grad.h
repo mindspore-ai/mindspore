@@ -21,7 +21,7 @@
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
 
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic.h"
 
 namespace mindspore::kernel {
 class BiasGradCPUKernel : public LiteKernel {

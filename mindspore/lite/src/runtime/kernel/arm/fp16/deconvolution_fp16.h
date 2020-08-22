@@ -24,10 +24,10 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/deconv_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/matmul_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/deconv_fp16.h"
+#include "nnacl/fp16/matmul_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
 
 namespace mindspore::kernel {
 class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {

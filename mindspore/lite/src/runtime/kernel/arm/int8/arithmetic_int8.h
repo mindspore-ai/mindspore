@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "schema/model_generated.h"
-#include "src/runtime/kernel/arm/nnacl/int8/arithmetic_int8.h"
+#include "nnacl/int8/arithmetic_int8.h"
 
 namespace mindspore::kernel {
 class ArithmeticInt8CPUKernel : public LiteKernel {

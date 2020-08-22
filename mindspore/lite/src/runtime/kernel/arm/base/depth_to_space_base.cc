@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
-#include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
+#include "nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/fp32/depth_to_space.h"
 #include "src/runtime/kernel/arm/int8/depth_to_space_int8.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

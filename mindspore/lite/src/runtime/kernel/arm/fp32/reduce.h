@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 
-#include "src/runtime/kernel/arm/nnacl/fp32/reduce.h"
+#include "nnacl/fp32/reduce.h"
 #include "src/runtime/kernel/arm/base/reduce_base.h"
 #include "ir/anf.h"
 using mindspore::schema::ReduceMode;

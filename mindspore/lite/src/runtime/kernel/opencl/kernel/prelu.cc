@@ -24,7 +24,7 @@
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/cl/activation.cl.inc"
-#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "nnacl/prelu_parameter.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;

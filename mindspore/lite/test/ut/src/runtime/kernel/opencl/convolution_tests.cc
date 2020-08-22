@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/arm/nnacl/pack.h"
+#include "nnacl/pack.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/convolution.h"
 

@@ -16,7 +16,7 @@
 #include <memory>
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/reduce.h"
+#include "mindspore/lite/nnacl/fp32/reduce.h"
 
 namespace mindspore {
 

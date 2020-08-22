@@ -20,8 +20,8 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/batchnorm.h"
-#include "src/runtime/kernel/arm/nnacl/batchnorm_parameter.h"
+#include "nnacl/fp32/batchnorm.h"
+#include "nnacl/batchnorm_parameter.h"
 
 using mindspore::lite::Context;
 

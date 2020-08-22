@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/convolution_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
-#include "src/runtime/kernel/arm/nnacl/int8/conv_int8.h"
+#include "nnacl/int8/conv_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

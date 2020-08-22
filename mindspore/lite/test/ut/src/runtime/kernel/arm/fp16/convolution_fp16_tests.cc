@@ -22,7 +22,7 @@
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/conv_fp16.h"
 
 namespace mindspore {
 class TestConvolutionFp16 : public mindspore::CommonTest {

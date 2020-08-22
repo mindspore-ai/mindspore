@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/base/quant_dtype_cast.h"
 #include <vector>
-#include "src/runtime/kernel/arm/nnacl/int8/quant_dtype_cast.h"
+#include "nnacl/int8/quant_dtype_cast.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"

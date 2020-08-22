@@ -19,7 +19,7 @@
 
 #include "schema/model_generated.h"
 
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore::kernel {
