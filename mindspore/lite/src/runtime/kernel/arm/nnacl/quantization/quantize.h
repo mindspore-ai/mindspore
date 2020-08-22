@@ -259,6 +259,17 @@ typedef struct PowerQuantArg {
   int output_activation_max_;
 } PowerQuantArg;
 
+typedef struct LeakyReluQuantArg {
+  OpParameter op_parameter_;
+  PreluQuantArg quant_arg;
+  float *slope_;
+  int64_t axis_;
+  const int *in_shape_;
+  const int *out_shape_;
+  int input_dim_;
+  int element_num;
+} LeakyReluQuantArg;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

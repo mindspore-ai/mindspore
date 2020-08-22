@@ -17,23 +17,13 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
-
-#define PRELU_OFFSET_MAX_SIZE 65535
-
-typedef struct PreluParameter {
+#include "src/runtime/kernel/arm/nnacl/op_base.h"
+typedef struct PReluParameter {
   OpParameter op_parameter_;
-  PreluQuantArg quant_arg;
-  double alpha_;
-  int thread_count_;
-  float slope_[PRELU_OFFSET_MAX_SIZE];
-  int64_t in_offset_[PRELU_OFFSET_MAX_SIZE];
-  int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
-  int input_dim_;
-  int element_num;
-} PreluParameter;
+  float *slope_;
+  bool channelShared;
+  int channel_num_;
+  int input_num_;
+} PReluParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_PARAMETER_H_

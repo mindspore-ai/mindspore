@@ -114,7 +114,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/arg_min_max.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/cast.h"
 #include "src/runtime/kernel/arm/nnacl/concat_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/caffeprelu_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/slice.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/broadcast_to.h"
 #include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
@@ -165,7 +165,7 @@
 #include "src/runtime/kernel/arm/nnacl/fp32/lstm.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/embedding_lookup.h"
 #include "src/runtime/kernel/arm/nnacl/fp32/elu.h"
-#include "src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "src/runtime/kernel/arm/nnacl/leaky_relu_parameter.h"
 
 namespace mindspore::kernel {
 
@@ -227,31 +227,37 @@ OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *prim
   return reinterpret_cast<OpParameter *>(expand_dims_param);
 }
 
-OpParameter *PopulateCaffePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::CaffePReLU *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *caffePrelu_param = new (std::nothrow) CaffePreluParameter();
-  if (caffePrelu_param == nullptr) {
-    MS_LOG(ERROR) << "new caffePReluParameter failed.";
-    return nullptr;
-  }
-  caffePrelu_param->op_parameter_.type_ = primitive->Type();
-  caffePrelu_param->channelShared = param->GetChannelShared();
-  return reinterpret_cast<OpParameter *>(caffePrelu_param);
-}
-
-OpParameter *PopulatePreluParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::Prelu *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *prelu_param = new (std::nothrow) PreluParameter();
+OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto param = dynamic_cast<const mindspore::lite::CaffePReLU *>(primitive);
+  auto *prelu_param = new (std::nothrow) PReluParameter();
   if (prelu_param == nullptr) {
     MS_LOG(ERROR) << "new caffePReluParameter failed.";
     return nullptr;
   }
   prelu_param->op_parameter_.type_ = primitive->Type();
-  auto temp = param->GetSlope();
-  for (size_t i = 0; i < temp.size(); i++) {
-    prelu_param->slope_[i] = temp[i];
-  }
+  prelu_param->channelShared = param->GetChannelShared();
   return reinterpret_cast<OpParameter *>(prelu_param);
+}
+
+OpParameter *PopulateLeakyReluParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto param = dynamic_cast<const mindspore::lite::Prelu *>(primitive);
+  LeakyReluParameter *leaky_relu_param = new (std::nothrow) LeakyReluParameter();
+  if (leaky_relu_param == nullptr) {
+    MS_LOG(ERROR) << "new LeakyReluParameter failed.";
+    return nullptr;
+  }
+  leaky_relu_param->op_parameter_.type_ = primitive->Type();
+  auto temp = param->GetSlope();
+  leaky_relu_param->slope_ = reinterpret_cast<float *>(malloc(temp.size() * sizeof(float)));
+  if (leaky_relu_param->slope_ == nullptr) {
+    MS_LOG(ERROR) << "malloc relu slope fail!";
+    return nullptr;
+  }
+  for (size_t i = 0; i < temp.size(); i++) {
+    leaky_relu_param->slope_[i] = temp[i];
+  }
+  leaky_relu_param->slope_num_ = temp.size();
+  return reinterpret_cast<OpParameter *>(leaky_relu_param);
 }
 
 OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -1529,8 +1535,8 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_ScatterND] = PopulateScatterNDParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Squeeze] = PopulateSqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_CaffePReLU] = PopulateCaffePReLUParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_Prelu] = PopulatePreluParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_CaffePReLU] = PopulatePReLUParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_Prelu] = PopulateLeakyReluParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;

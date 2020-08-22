@@ -22,7 +22,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/caffe_prelu.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/caffeprelu.h"
+#include "mindspore/lite/src/runtime/kernel/arm/nnacl/prelu_parameter.h"
 
 using mindspore::kernel::CaffePReluOpenCLKernel;
 using mindspore::kernel::LiteKernel;
@@ -127,7 +127,7 @@ TEST_F(TestCaffePReluOpenCL, CaffePReluFp32_dim4) {
   MS_LOG(INFO) << "CaffePRelu==================weight data================";
   printf_tensor_caffeprelu(inputs[1], weight_tensor->ElementsNum());
 
-  auto param = new (std::nothrow) CaffePReluParameter();
+  auto param = new (std::nothrow) PReluParameter();
   if (param == nullptr) {
     MS_LOG(ERROR) << "new param error!";
     delete input_tensor;

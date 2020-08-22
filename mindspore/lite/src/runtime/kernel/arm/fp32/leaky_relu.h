@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CAFFEPRELU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CAFFEPRELU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LEAKY_RELU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LEAKY_RELU_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/caffeprelu.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/leaky_relu.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class CaffePReluCPUKernel : public LiteKernel {
+class LeakyReluCPUKernel : public LiteKernel {
  public:
-  CaffePReluCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    prelu_param_ = reinterpret_cast<CaffePReluParameter *>(op_parameter_);
+  LeakyReluCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const mindspore::lite::PrimitiveC *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    prelu_param_ = (reinterpret_cast<LeakyReluParameter *>(op_parameter_));
     primitive_ = primitive;
   }
-  ~CaffePReluCPUKernel() = default;
+  ~LeakyReluCPUKernel();
 
   int Init() override;
   int ReSize() override { return 0; }
@@ -43,13 +42,11 @@ class CaffePReluCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const Context *ctx_;
-  int thread_count_;
-  CaffePReluParameter *prelu_param_;
+  LeakyReluParameter *prelu_param_;
 
  private:
-  float *input_data;
-  float *output_data;
+  float *input_data = nullptr;
+  float *output_data = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CAFFEPRELU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LEAKY_RELU_H_

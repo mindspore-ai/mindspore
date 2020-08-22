@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/nnacl/caffeprelu.h"
+#include "nnacl/fp32/prelu.h"
 
-void CaffePRelu(float *input, float *output, CaffePReluParameter *prelu_param_, int task_id) {
+void DoPRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id) {
   int block = (int)(prelu_param_->input_num_ / prelu_param_->op_parameter_.thread_num_);
   int start = task_id * block;
   int end = start + block;
@@ -26,11 +26,11 @@ void CaffePRelu(float *input, float *output, CaffePReluParameter *prelu_param_, 
     if (input[i] > 0) {
       output[i] = input[i];
     } else {
-      if (!prelu_param_->channeShared) {
+      if (!prelu_param_->channelShared) {
         int temp = i % prelu_param_->channel_num_;
-        output[i] = input[i] * prelu_param_->negtive_slope_[temp];
+        output[i] = input[i] * prelu_param_->slope_[temp];
       } else {
-        output[i] = input[i] * prelu_param_->negtive_slope_[0];
+        output[i] = input[i] * prelu_param_->slope_[0];
       }
     }
   }

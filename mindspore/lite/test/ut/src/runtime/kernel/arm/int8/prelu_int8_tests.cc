@@ -18,7 +18,7 @@
 #include "schema/inner/model_generated.h"
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "mindspore/lite/src/runtime/kernel/arm/nnacl/quantization/quantize.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 #include "mindspore/lite/src/ir/tensor.h"
@@ -64,10 +64,10 @@ TEST_F(TestPreluInt8, prelu_1) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  PreluParameter op_param;
+  LeakyReluQuantArg op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Prelu;
-
-  op_param.alpha_ = 0.25;
+  op_param.slope_ = reinterpret_cast<float *>(malloc(sizeof(float)));
+  op_param.slope_[0] = 0.25;
 
   lite::Context *ctx = new lite::Context;
   ctx->thread_num_ = 2;

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/prelu.h"
+#include "src/runtime/kernel/arm/fp32/leaky_relu.h"
 #include <vector>
 #include "schema/model_generated.h"
+#include "src/runtime/kernel/arm/nnacl/fp32/leaky_relu.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
@@ -24,45 +25,48 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_CaffePReLU;
+using mindspore::schema::PrimitiveType_LeakyReLU;
+using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 namespace {
-int PReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto PReludata = reinterpret_cast<PReluCPUKernel *>(cdata);
-  auto ret = PReludata->DoExcute(task_id);
+int LeakyReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto kernel_relu = reinterpret_cast<LeakyReluCPUKernel *>(cdata);
+  auto ret = kernel_relu->DoExcute(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PReluRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "LeakyReluRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 }  // namespace
 
-int PReluCPUKernel::Init() { return RET_OK; }
+LeakyReluCPUKernel::~LeakyReluCPUKernel() {
+  if (prelu_param_->slope_ != nullptr) {
+    free(prelu_param_->slope_);
+    prelu_param_->slope_ = nullptr;
+  }
+}
 
-int PReluCPUKernel::DoExcute(int task_id) {
-  DoPRelu(input_data, output_data, prelu_param_, task_id);
+int LeakyReluCPUKernel::Init() { return RET_OK; }
+
+int LeakyReluCPUKernel::DoExcute(int task_id) {
+  DoLeakyRelu(input_data, output_data, prelu_param_, task_id);
   return RET_OK;
 }
 
-int PReluCPUKernel::Run() {
+int LeakyReluCPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto input = in_tensors_[0];
-  auto input1 = in_tensors_[1];
-
+  auto input = in_tensors_.at(0);
   prelu_param_->input_num_ = input->ElementsNum();
   input_data = reinterpret_cast<float *>(input->Data());
-  output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  auto channels = input->shape();
-  prelu_param_->slope_ = reinterpret_cast<float *>(input1->Data());
-  prelu_param_->channel_num_ = channels.at(channels.size() - 1);
+  output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  auto ret = LiteBackendParallelLaunch(PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  auto ret = LiteBackendParallelLaunch(LeakyReluRun, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PReluDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -70,19 +74,19 @@ int PReluCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs,
-                                              OpParameter *param, const lite::Context *ctx,
-                                              const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                  const std::vector<lite::tensor::Tensor *> &outputs,
+                                                  OpParameter *param, const lite::Context *ctx,
+                                                  const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input param is nullptr!";
     return nullptr;
   }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Prelu);
-  auto *kernel = new (std::nothrow) PReluCPUKernel(param, inputs, outputs, ctx, primitive);
+  MS_ASSERT(desc.type == schema::PrimitiveType_LeakyRelu);
+  auto *kernel = new (std::nothrow) LeakyReluCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PReluCPUKernel fail!";
+    MS_LOG(ERROR) << "new LeakyReluCPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -95,5 +99,6 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CaffePReLU, CpuPReluFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LeakyReLU, CpuLeakyReluFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Prelu, CpuLeakyReluFp32KernelCreator)
 }  // namespace mindspore::kernel

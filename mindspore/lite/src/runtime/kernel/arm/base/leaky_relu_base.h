@@ -14,37 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PRELU_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PRELU_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LEAKY_RELU_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LEAKY_RELU_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "include/context.h"
-#include "src/runtime/kernel/arm/base/prelu_base.h"
-#include "src/runtime/runtime_api.h"
+#include "src/runtime/kernel/arm/nnacl/leaky_relu_parameter.h"
+#include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;
 
 namespace mindspore::kernel {
-class PreluInt8CPUKernel : public PreluBaseCPUKernel {
+class LeakyReluBaseCPUKernel : public LiteKernel {
  public:
-  PreluInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+  LeakyReluBaseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : PreluBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    quant_prelu_parm_ = reinterpret_cast<PreluParameter *>(op_parameter_);
-  }
-  ~PreluInt8CPUKernel() override {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+
+  ~LeakyReluBaseCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override;
-  int Run() override;
-  int DoExecute(int task_id);
 
- private:
-  PreluParameter *quant_prelu_parm_;
+  int ReSize() override { return 0; }
+
+  int Run() override { return 0; }
 };
-int PreluInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PRELU_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LEAKY_RELU_BASE_H_

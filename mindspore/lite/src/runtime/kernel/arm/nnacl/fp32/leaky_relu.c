@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+// * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
+#include "nnacl/fp32/leaky_relu.h"
 
-#include "nnacl/op_base.h"
-
-typedef struct PReluParameter {
-  OpParameter op_parameter_;
-  float *negtive_slope_;
-  int input_num_;
-  int thread_num_;
-} PReluParameter;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id);
-#ifdef __cplusplus
+void DoLeakyRelu(float *input, float *output, LeakyReluParameter *param, int task_id) {
+  for (int i = task_id; i < param->input_num_; i += param->op_parameter_.thread_num_) {
+    if (input[i] <= 0) {
+      output[i] = input[i] * param->slope_[0];
+    } else {
+      output[i] = input[i];
+    }
+  }
 }
-#endif
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_PRELU_H_
