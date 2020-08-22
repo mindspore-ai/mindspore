@@ -52,7 +52,7 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
         int plane_c4_res = b % C4NUM;
         int src_plane_offset = src_tile_offset + plane_c4_block * tile_num * C4NUM * ic4 * C4NUM + plane_c4_res * C4NUM;
         int weight_plane_offset =
-          weight_oc4_offset + plane_c4_block * tile_num * C4NUM * ic4 * C4NUM + plane_c4_res * C4NUM;
+          weight_oc4_offset + plane_c4_block * C4NUM * C4NUM * ic4 * C4NUM + plane_c4_res * C4NUM;
         for (int i = 0; i < ic4; i++) {
           int src_ic4_offset = src_plane_offset + i * tile_num * C4NUM * C4NUM;
           int weight_ic4_offset = weight_plane_offset + i * C4NUM * C4NUM * C4NUM;
