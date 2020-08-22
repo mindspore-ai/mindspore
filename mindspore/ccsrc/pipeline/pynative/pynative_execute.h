@@ -130,6 +130,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
   static ResourcePtr resource_;
+  static int graph_id_;
   bool grad_flag_;
   std::unordered_map<std::string, FuncGraphPtr> graph_map_;
   std::unordered_map<std::string, FuncGraphPtr> cell_graph_map_;
