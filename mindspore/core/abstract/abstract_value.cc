@@ -97,8 +97,12 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   }
   auto value_self = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_self);
-  ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
   TypePtr res_type = TypeJoin(GetTypeTrack(), other->GetTypeTrack());
+  if (res_type == kAnyType) {
+    MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << GetTypeTrack()->ToString()
+                            << ", type2 = " << other->GetTypeTrack()->ToString();
+  }
+  ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
   if (res_value == value_self) {
     return shared_from_base<AbstractBase>();
   }

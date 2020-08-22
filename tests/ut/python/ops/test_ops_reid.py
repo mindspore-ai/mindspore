@@ -118,29 +118,29 @@ test_case_reid_ops = [
         'desc_inputs': [[256, 8]],
         'desc_bprop': [[256, 8]]}),
     ('Pow', {
-        'block': P.Pow(),  # 输入有标量插件产生了段错误。
+        'block': P.Pow(),
         'desc_const': [2.0],
         'desc_inputs': [[1, 512]],
         'desc_bprop': [[1, 512]]}),
     ('LogicalNot', {
         'block': P.LogicalNot(),
         'desc_inputs': [convert([256], np.bool_)],
-        'desc_bprop': [[256]]}),  # 自定义算子 input bool没转换，gongchen提单。
+        'desc_bprop': [convert([256], np.bool_)]}),
     ('Equal', {
         'block': P.Equal(),
         'desc_inputs': [convert([256], np.float16), convert([256], np.float16)],
-        'desc_bprop': [[256]]}),
+        'desc_bprop': [convert([256], np.bool_)]}),
     ('Greater', {
         'block': P.Greater(),
         'desc_inputs': [convert([256], np.float16), convert([256], np.float16)],
-        'desc_bprop': [[256]]}),
+        'desc_bprop': [convert([256], np.bool_)]}),
     ('Dropout', {
         'block': nn.Dropout(),
         'desc_inputs': [[1, 512, 7, 7]],
-        'desc_bprop': [[1, 512, 7, 7]]}),  # 输入有标量插件产生了段错误。
+        'desc_bprop': [[1, 512, 7, 7]]}),
     ('MatMul', {
         'block': P.MatMul(),
-        'desc_inputs': [[64, 512], [512, 64]],  # fp16不行。很有问题。
+        'desc_inputs': [[64, 512], [512, 64]],
         'desc_bprop': [[64, 64]]}),
     ('Maximum', {
         'block': P.Maximum(),
