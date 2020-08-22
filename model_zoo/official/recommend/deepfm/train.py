@@ -83,6 +83,8 @@ if __name__ == '__main__':
                               rank_size=rank_size,
                               rank_id=rank_id)
 
+    steps_size = ds_train.get_dataset_size()
+
     model_builder = ModelBuilder(ModelConfig, TrainConfig)
     train_net, eval_net = model_builder.get_train_eval_net()
     auc_metric = AUCMetric()
@@ -95,8 +97,12 @@ if __name__ == '__main__':
     if train_config.save_checkpoint:
         if rank_size:
             train_config.ckpt_file_name_prefix = train_config.ckpt_file_name_prefix + str(get_rank())
-        config_ck = CheckpointConfig(save_checkpoint_steps=train_config.save_checkpoint_steps,
-                                     keep_checkpoint_max=train_config.keep_checkpoint_max)
+        if args_opt.device_target == "GPU":
+            config_ck = CheckpointConfig(save_checkpoint_steps=steps_size,
+                                         keep_checkpoint_max=train_config.keep_checkpoint_max)
+        else:
+            config_ck = CheckpointConfig(save_checkpoint_steps=train_config.save_checkpoint_steps,
+                                         keep_checkpoint_max=train_config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix=train_config.ckpt_file_name_prefix,
                                   directory=args_opt.ckpt_path,
                                   config=config_ck)
