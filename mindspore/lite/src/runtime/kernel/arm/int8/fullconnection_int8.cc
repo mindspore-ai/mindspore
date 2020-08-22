@@ -39,36 +39,32 @@ int FullconnectionInt8CPUKernel::ReSize() {
   fc_param_->row_8_ = UP_ROUND(fc_param_->row_, 8);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, 8);
 
-  thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, 8));
-  thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, 8), thread_count_);
-
-  a_c8_ptr_ =
-    reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(fc_param_->row_8_ * fc_param_->deep_ * sizeof(int8_t)));
-  if (!a_c8_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(a_c8_ptr_, 0, fc_param_->row_8_ * fc_param_->deep_ * sizeof(int8_t));
-  b_r8_ptr_ =
-    reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(fc_param_->col_8_ * fc_param_->deep_ * sizeof(int8_t)));
-  if (!b_r8_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(int8_t));
+  r4_ = UP_ROUND(fc_param_->row_, 4);
+  c4_ = UP_ROUND(fc_param_->col_, 4);
+  d16_ = UP_ROUND(fc_param_->deep_, 16);
+  thread_count_ = MSMIN(thread_count_, UP_DIV(c4_, 4));
+  thread_stride_ = UP_DIV(UP_DIV(c4_, 4), thread_count_);
+  a_r4x16_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(r4_ * d16_ * sizeof(int8_t)));
+  if (!a_r4x16_ptr_) return RET_MEMORY_FAILED;
+  memset(a_r4x16_ptr_, 0, r4_ * d16_ * sizeof(int8_t));
+  b_c16x4_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(c4_ * d16_ * sizeof(int8_t)));
+  if (!b_c16x4_ptr_) return RET_MEMORY_FAILED;
+  memset(b_c16x4_ptr_, 0, c4_ * d16_ * sizeof(int8_t));
+  input_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(r4_ * sizeof(int)));
+  if (!input_sums_) return RET_MEMORY_FAILED;
+  memset(input_sums_, 0, r4_ * sizeof(int));
+  weight_bias_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(c4_ * sizeof(int)));
+  if (!weight_bias_sums_) return RET_MEMORY_FAILED;
+  memset(weight_bias_sums_, 0, c4_ * sizeof(int));
   auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->Data());
-  RowMajor2Col8MajorInt8(weight_data, b_r8_ptr_, fc_param_->col_, fc_param_->deep_);
-  c_r8x8_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int)));
-  if (!c_r8x8_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(c_r8x8_ptr_, 0, fc_param_->row_8_ * fc_param_->col_8_ * sizeof(int));
-  auto bias_len = fc_param_->col_8_ * sizeof(int);
-  bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_len));
-  if (!bias_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(bias_ptr_, 0, bias_len);
+  RowMajor2Row4x16Major(weight_data, fc_param_->col_, fc_param_->deep_, b_c16x4_ptr_, d16_);
   if (in_tensors_.size() == 3) {
+    auto bias_len = fc_param_->col_8_ * sizeof(int);
+    bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_len));
+    if (!bias_ptr_) return RET_MEMORY_FAILED;
     memcpy(bias_ptr_, in_tensors_[2]->Data(), bias_len);
+  } else {
+    bias_ptr_ = NULL;
   }
 
   auto input_tensor = in_tensors_[0];
@@ -93,18 +89,32 @@ int FullconnectionInt8CPUKernel::ReSize() {
   CalculateActivationRangeQuantized(fc_param_->act_type_ == ActType_Relu, fc_param_->act_type_ == ActType_Relu6,
                                     quant_params_.output.zp_, quant_params_.output.scale_, &quant_params_.out_act_min,
                                     &quant_params_.out_act_max);
+  CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
+                     bias_ptr_, weight_bias_sums_);
   return RET_OK;
 }
 
 int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
-  int cur_oc = MSMIN(thread_stride_, UP_DIV(fc_param_->col_8_, 8) - task_id * thread_stride_);
+  int cur_oc = MSMIN(thread_stride_, UP_DIV(c4_, 4) - task_id * thread_stride_);
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  auto &p = quant_params_;
-  auto cur_b = b_r8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->deep_;
-  auto cur_c = c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->row_8_;
-  MatMulInt8(a_c8_ptr_, cur_b, cur_c, fc_param_->row_8_, cur_oc * 8, fc_param_->deep_, p.input.zp_, p.weight.zp_);
+  int cur_oc_res = MSMIN(thread_stride_ * C4NUM, fc_param_->col_ - task_id * thread_stride_ * C4NUM);
+  auto &q = quant_params_;
+  auto &p = fc_param_;
+  auto cur_b = b_c16x4_ptr_ + task_id * thread_stride_ * C4NUM * d16_;
+  auto cur_bias = weight_bias_sums_ + task_id * thread_stride_ * C4NUM;
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+  auto cur_c = output_ptr + task_id * thread_stride_ * C4NUM;
+#ifdef ENABLE_ARM64
+  MatmulInt8Neon64(a_r4x16_ptr_, cur_b, cur_c, r4_, cur_oc * C4NUM, d16_, input_sums_, cur_bias, q.out_act_min,
+                   q.out_act_max, q.output.zp_, q.quant_multiplier, q.left_shift, q.right_shift, p->row_, cur_oc_res,
+                   p->col_ * sizeof(int8_t));
+#else
+  MatmulInt8(a_r4x16_ptr_, cur_b, cur_c, input_sums_, cur_bias, q.out_act_min, q.out_act_max, q.output.zp_,
+             q.quant_multiplier, q.left_shift, q.right_shift, p->row_, cur_oc_res, d16_, p->col_);
+#endif
+
   return RET_OK;
 }
 
@@ -124,13 +134,10 @@ int FullconnectionInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
-  auto &p = quant_params_;
-  RowMajor2Col8MajorInt8(a_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
+  RowMajor2Row4x16Major(input_ptr, fc_param_->row_, fc_param_->deep_, a_r4x16_ptr_, d16_);
+  CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_);
   LiteBackendParallelLaunch(FcInt8Run, this, thread_count_);
-  PostFuncInt8C8(c_r8x8_ptr_, bias_ptr_, output_ptr, fc_param_->col_, fc_param_->row_, p.quant_multiplier, p.left_shift,
-                 p.right_shift, p.output.zp_, p.out_act_min, p.out_act_max);
   return RET_OK;
 }
 

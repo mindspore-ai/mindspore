@@ -117,25 +117,6 @@ void RowMajor2Col8MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) 
   }
 }
 
-void MatMulInt8(const int8_t *a, const int8_t *b, int32_t *c, const int row8, const int col8, const int deep,
-                const int32_t a_zp, const int32_t b_zp) {
-  /*  col8-major * row8-major => row8x8-major  */
-  for (int row = 0; row < row8; row++) {
-    for (int col = 0; col < col8; col++) {
-      int r8div = row / 8, r8mod = row % 8;
-      int c8div = col / 8, c8mod = col % 8;
-      size_t ci = c8div * row8 * 8 + row * 8 + c8mod;
-      int32_t value = 0;
-      for (int d = 0; d < deep; d++) {
-        size_t ai = r8div * deep * 8 + d * 8 + r8mod;
-        size_t bi = c8div * deep * 8 + d * 8 + c8mod;
-        value = value + ((int32_t)a[ai] - a_zp) * ((int32_t)b[bi] - b_zp);
-      }
-      c[ci] = value;
-    }
-  }
-}
-
 void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                      const int *input_sum, const int *bias) {
   /*  row4x16-major * row16x4-major => row4x4-major  */
@@ -191,6 +172,36 @@ void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row
   return;
 }
 
+/*  row4x16-major * col16x4-major => row4x4-major  */
+void MatmulInt8(const int8_t *a, const int8_t *b, int8_t *dst, const int *a_sums, const int *bias, int act_min,
+                int act_max, int out_zp, int multiplier, int left_shift, int right_shift, int row, int col, int deep16,
+                int stride) {
+  int8_t *output = dst;
+  for (int r = 0; r < row; r++) {
+    for (int c = 0; c < col; c++) {
+      int r4div = r / C4NUM;
+      int r4mod = r % C4NUM;
+      int c4div = c / C4NUM;
+      int c4mod = c % C4NUM;
+      int value = 0;
+      for (int d = 0; d < deep16; d++) {
+        int d16div = d / C16NUM;
+        int d16mod = d % C16NUM;
+        size_t ai = r4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
+        size_t bi = c4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
+        value += a[ai] * b[bi];
+      }
+      value -= a_sums[r];
+      value += bias[c];
+      value = MultiplyByQuantizedMultiplier(value, multiplier, left_shift, right_shift) + out_zp;
+      value = MSMIN(INT8_MAX, value);
+      value = MSMAX(INT8_MIN, value);
+      output[c] = (int8_t)value;
+    }
+    output += stride;
+  }
+}
+
 void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16) {
   int stride = sizeof(int8_t) * 16 * 4;
   for (int r = 0; r < row; ++r) {
@@ -213,23 +224,28 @@ void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_1
   }
 }
 
-void RowMajor2Asums(int8_t *a, int row, int col, int b_zp, int *dst) {
+// dst: weight_zp * input_row_sums
+void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst) {
   for (int r = 0; r < row; ++r) {
+    int sum = 0;
     for (int c = 0; c < col; ++c) {
       int src_idx = r * col + c;
-      dst[r] += a[src_idx];
+      sum += input[src_idx];
     }
-    dst[r] *= b_zp;
+    sum *= weight_zp;
+    dst[r] = sum;
   }
 }
 
-void RowMajor2Bbias(int8_t *b, int row, int col, int a_zp, int b_zp, int *bias, int *dst) {
+// dst: bias + depth*input_zp*weight_zp - input_zp*weight_col_sums
+void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weight_zp, int *bias, int *dst) {
   for (int c = 0; c < col; ++c) {
+    int sum = 0;
     for (int r = 0; r < row; ++r) {
       int src_idx = r * col + c;
-      dst[c] += b[src_idx];
+      sum += weight[src_idx];
     }
-    dst[c] = row * a_zp * b_zp - a_zp * dst[c];
+    dst[c] = row * input_zp * weight_zp - input_zp * sum;
     if (bias) {
       dst[c] += bias[c];
     }

@@ -48,46 +48,23 @@ int MatmulInt8CPUKernel::ReSize() {
   params_->row_8_ = UP_ROUND(params_->row_, 8);
   params_->col_8_ = UP_ROUND(params_->col_, 8);
 
-#ifdef ENABLE_ARM64
   r4_ = UP_ROUND(params_->row_, 4);
   c4_ = UP_ROUND(params_->col_, 4);
   d16_ = UP_ROUND(params_->deep_, 16);
-  a_r4d16_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(r4_ * d16_ * sizeof(int8_t)));
-  if (!a_r4d16_ptr_) return RET_MEMORY_FAILED;
-  memset(a_r4d16_ptr_, 0, r4_ * d16_ * sizeof(int8_t));
-  b_c4d16_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(c4_ * d16_ * sizeof(int8_t)));
-  if (!b_c4d16_ptr_) return RET_MEMORY_FAILED;
-  memset(b_c4d16_ptr_, 0, c4_ * d16_ * sizeof(int8_t));
-  c_r4c4_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(r4_ * c4_ * sizeof(int8_t)));
-  if (!c_r4c4_ptr_) return RET_MEMORY_FAILED;
-  memset(c_r4c4_ptr_, 0, r4_ * c4_ * sizeof(int8_t));
-  a_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(r4_ * sizeof(int)));
-  if (!a_sums_) return RET_MEMORY_FAILED;
-  memset(a_sums_, 0, r4_ * sizeof(int));
-  b_bias_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(c4_ * sizeof(int)));
-  if (!b_bias_) return RET_MEMORY_FAILED;
-  memset(b_bias_, 0, c4_ * sizeof(int));
+  a_r4x16_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(r4_ * d16_ * sizeof(int8_t)));
+  if (!a_r4x16_ptr_) return RET_MEMORY_FAILED;
+  memset(a_r4x16_ptr_, 0, r4_ * d16_ * sizeof(int8_t));
+  b_c16x4_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(c4_ * d16_ * sizeof(int8_t)));
+  if (!b_c16x4_ptr_) return RET_MEMORY_FAILED;
+  memset(b_c16x4_ptr_, 0, c4_ * d16_ * sizeof(int8_t));
+  input_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(r4_ * sizeof(int)));
+  if (!input_sums_) return RET_MEMORY_FAILED;
+  memset(input_sums_, 0, r4_ * sizeof(int));
+  weight_bias_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(c4_ * sizeof(int)));
+  if (!weight_bias_sums_) return RET_MEMORY_FAILED;
+  memset(weight_bias_sums_, 0, c4_ * sizeof(int));
   thread_count_ = MSMIN(thread_count_, UP_DIV(c4_, 4));
   thread_stride_ = UP_DIV(UP_DIV(c4_, 4), thread_count_);
-#else
-  a_c8_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(params_->row_8_ * params_->deep_ * sizeof(int8_t)));
-  if (!a_c8_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(a_c8_ptr_, 0, params_->row_8_ * params_->deep_ * sizeof(int8_t));
-  b_r8_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(params_->col_8_ * params_->deep_ * sizeof(int8_t)));
-  if (!b_r8_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(b_r8_ptr_, 0, params_->col_8_ * params_->deep_ * sizeof(int8_t));
-  c_r8x8_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(params_->row_8_ * params_->col_8_ * sizeof(int)));
-  if (!c_r8x8_ptr_) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(c_r8x8_ptr_, 0, params_->row_8_ * params_->col_8_ * sizeof(int));
-  thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));
-  thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, 8), thread_count_);
-#endif
 
   auto input_tensor = in_tensors_[0];
   auto params = input_tensor->GetQuantParams();
@@ -112,27 +89,25 @@ int MatmulInt8CPUKernel::ReSize() {
 }
 
 int MatmulInt8CPUKernel::RunImpl(int task_id) {
-#ifdef ENABLE_ARM64
   int cur_oc = MSMIN(thread_stride_, UP_DIV(c4_, 4) - task_id * thread_stride_);
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  auto cur_b = b_c4d16_ptr_ + task_id * thread_stride_ * 4 * d16_;
-  auto cur_c = c_r4c4_ptr_ + task_id * thread_stride_ * 4 * r4_;
-  auto &p = quant_params_;
-  MatmulInt8Neon64(a_r4d16_ptr_, cur_b, cur_c, r4_, c4_, d16_, a_sums_, b_bias_, INT_MIN, INT_MAX, p.output.zp_,
-                   p.quant_multiplier, p.left_shift, p.right_shift);
-#else
-  int cur_oc = MSMIN(thread_stride_, UP_DIV(params_->col_8_, 8) - task_id * thread_stride_);
-  if (cur_oc <= 0) {
-    return RET_OK;
-  }
-  auto cur_b = b_r8_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_;
-  auto cur_c = c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * params_->row_8_;
+  int cur_oc_res = MSMIN(thread_stride_ * C4NUM, params_->col_ - task_id * thread_stride_ * C4NUM);
+  auto cur_b = b_c16x4_ptr_ + task_id * thread_stride_ * 4 * d16_;
+  auto cur_bias = weight_bias_sums_ + task_id * thread_stride_ * 4;
+  auto cur_c = c_ptr_ + task_id * thread_stride_ * 4;
 
-  MatMulInt8(a_c8_ptr_, cur_b, cur_c, params_->row_8_, cur_oc * 8, params_->deep_, quant_params_.input.zp_,
-             quant_params_.weight.zp_);
+  auto &p = quant_params_;
+#ifdef ENABLE_ARM64
+  MatmulInt8Neon64(a_r4x16_ptr_, cur_b, cur_c, r4_, cur_oc * C4NUM, d16_, input_sums_, cur_bias, INT8_MIN, INT8_MAX,
+                   p.output.zp_, p.quant_multiplier, p.left_shift, p.right_shift, params_->row_, cur_oc_res,
+                   params_->col_ * sizeof(int8_t));
+#else
+  MatmulInt8(a_r4x16_ptr_, cur_b, cur_c, input_sums_, cur_bias, INT8_MIN, INT8_MAX, p.output.zp_, p.quant_multiplier,
+             p.left_shift, p.right_shift, params_->row_, cur_oc_res, d16_, params_->col_);
 #endif
+
   return RET_OK;
 }
 
@@ -162,43 +137,27 @@ int MatmulInt8CPUKernel::Run() {
   for (int i = 0; i < params_->batch; ++i) {
     auto cur_a_ptr = a_ptr + i * a_stride;
     auto cur_b_ptr = b_ptr + i * b_stride;
-    auto cur_c_ptr = c_ptr + i * c_stride;
 
-#ifdef ENABLE_ARM64
     if (params_->a_transpose_) {
-      RowMajor2Col16x4Major(cur_a_ptr, params_->deep_, params_->row_, a_r4d16_ptr_, d16_);
+      RowMajor2Col16x4Major(cur_a_ptr, params_->deep_, params_->row_, a_r4x16_ptr_, d16_);
     } else {
-      RowMajor2Row4x16Major(cur_a_ptr, params_->row_, params_->deep_, a_r4d16_ptr_, d16_);
+      RowMajor2Row4x16Major(cur_a_ptr, params_->row_, params_->deep_, a_r4x16_ptr_, d16_);
     }
     if (params_->b_transpose_) {
-      RowMajor2Row4x16Major(cur_b_ptr, params_->col_, params_->deep_, b_c4d16_ptr_, d16_);
+      RowMajor2Row4x16Major(cur_b_ptr, params_->col_, params_->deep_, b_c16x4_ptr_, d16_);
     } else {
-      RowMajor2Col16x4Major(cur_b_ptr, params_->deep_, params_->col_, b_c4d16_ptr_, d16_);
+      RowMajor2Col16x4Major(cur_b_ptr, params_->deep_, params_->col_, b_c16x4_ptr_, d16_);
     }
+    c_ptr_ = c_ptr + i * c_stride;
     auto &q = quant_params_;
-    RowMajor2Asums(cur_a_ptr, params_->row_, params_->deep_, q.weight.zp_, a_sums_);
-    RowMajor2Bbias(cur_b_ptr, params_->deep_, params_->col_, q.input.zp_, q.weight.zp_, NULL, b_bias_);
-    LiteBackendParallelLaunch(MatmulInt8Run, this, thread_count_);
-    Row4x4Major2RowMajor(c_r4c4_ptr_, r4_, cur_c_ptr, params_->row_, params_->col_);
-#else
-    if (params_->a_transpose_) {
-      RowMajor2Row8MajorInt8(cur_a_ptr, a_c8_ptr_, params_->deep_, params_->row_);
-    } else {
-      RowMajor2Col8MajorInt8(cur_a_ptr, a_c8_ptr_, params_->row_, params_->deep_);
+    CalcInputSums(cur_a_ptr, params_->row_, params_->deep_, q.weight.zp_, input_sums_);
+    CalcWeightBiasSums(cur_b_ptr, params_->deep_, params_->col_, q.input.zp_, q.weight.zp_, NULL, weight_bias_sums_);
+    ret = LiteBackendParallelLaunch(MatmulInt8Run, this, thread_count_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";
+      return ret;
     }
-    if (params_->b_transpose_) {
-      RowMajor2Col8MajorInt8(cur_b_ptr, b_r8_ptr_, params_->col_, params_->deep_);
-    } else {
-      RowMajor2Row8MajorInt8(cur_b_ptr, b_r8_ptr_, params_->deep_, params_->col_);
-    }
-    LiteBackendParallelLaunch(MatmulInt8Run, this, thread_count_);
-    auto &q = quant_params_;
-    SimplePostFuncInt8(c_r8x8_ptr_, cur_c_ptr, params_->col_, params_->row_, params_->row_8_, q.quant_multiplier,
-                       q.left_shift, q.right_shift, q.output.zp_);
-#endif
   }
-
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

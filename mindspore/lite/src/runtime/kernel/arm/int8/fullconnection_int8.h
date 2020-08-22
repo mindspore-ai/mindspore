@@ -41,28 +41,36 @@ class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
-    if (a_c8_ptr_ != nullptr) {
-      ctx_->allocator->Free(a_c8_ptr_);
-      a_c8_ptr_ = nullptr;
+    if (a_r4x16_ptr_ != nullptr) {
+      ctx_->allocator->Free(a_r4x16_ptr_);
+      a_r4x16_ptr_ = nullptr;
     }
-    if (b_r8_ptr_ != nullptr) {
-      ctx_->allocator->Free(b_r8_ptr_);
-      b_r8_ptr_ = nullptr;
+    if (b_c16x4_ptr_ != nullptr) {
+      ctx_->allocator->Free(b_c16x4_ptr_);
+      b_c16x4_ptr_ = nullptr;
     }
-    if (c_r8x8_ptr_ != nullptr) {
-      ctx_->allocator->Free(c_r8x8_ptr_);
-      c_r8x8_ptr_ = nullptr;
+    if (input_sums_ != nullptr) {
+      ctx_->allocator->Free(input_sums_);
+      input_sums_ = nullptr;
+    }
+    if (weight_bias_sums_ != nullptr) {
+      ctx_->allocator->Free(weight_bias_sums_);
+      weight_bias_sums_ = nullptr;
     }
     if (bias_ptr_ != nullptr) {
-      ctx_->allocator->Free(bias_ptr_);
-      bias_ptr_ = nullptr;
+      ctx_->allocator->Free(weight_bias_sums_);
+      weight_bias_sums_ = nullptr;
     }
   }
   MatmulQuantArg quant_params_;
-  int8_t *a_c8_ptr_ = nullptr;
-  int8_t *b_r8_ptr_ = nullptr;
-  int *c_r8x8_ptr_ = nullptr;
+  int8_t *a_r4x16_ptr_ = nullptr;
+  int8_t *b_c16x4_ptr_ = nullptr;
+  int *input_sums_ = nullptr;
+  int *weight_bias_sums_ = nullptr;
   int *bias_ptr_ = nullptr;
+  int r4_;
+  int c4_;
+  int d16_;
 };
 }  // namespace mindspore::kernel
 
