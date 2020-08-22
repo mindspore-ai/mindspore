@@ -87,14 +87,15 @@ class StridedSliceGradGpuKernel : public GpuKernel {
 
     for (size_t i = 0; i < MAX_DIMS; i++) {
       if (i < begin_.size()) {
-        begin_[i] =
-          std::min(begin_[i] < 0 ? SizeToInt(begin_[i] + input_shape_[i]) : begin_[i], SizeToInt(input_shape_[i] - 1));
+        int dim = SizeToInt(input_shape_[i]);
+        begin_[i] = std::min(begin_[i] < 0 ? std::max(begin_[i] + dim, 0) : begin_[i], dim - 1);
       } else {
         begin_.push_back(0);
       }
 
       if (i < end_.size()) {
-        end_[i] = std::max(end_[i] < 0 ? end_[i] + SizeToInt(input_shape_[i]) : end_[i], -1);
+        int dim = SizeToInt(input_shape_[i]);
+        end_[i] = std::max(end_[i] < 0 ? end_[i] + dim : std::min(end_[i], dim), -1);
       } else {
         end_.push_back(i < input_shape_.size() ? input_shape_[i] : 1);
       }
