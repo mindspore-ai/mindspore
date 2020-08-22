@@ -16,14 +16,17 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_distribute_train_gpu.sh DATA_PATH"
-echo "for example: bash run_distribute_train_gpu.sh /path/ImageNet2012/train"
+echo "bash run_eval.sh DATA_PATH DATASET_TYPE DEVICE_TYPE CHECKPOINT_PATH"
+echo "for example: bash run_eval.sh /path/ImageNet2012/train cifar10 Ascend /path/a.ckpt "
 echo "=============================================================================================================="
 
-DATA_PATH=$1
+DATA_PATH=&1
+DATASET_TYPE=$2
+DEVICE_TYPE=$3
+CHECKPOINT_PATH=$4
 
-mpirun -n 8 python train.py  \
-    --device_target="GPU" \
-    --dataset="imagenet2012" \
-    --is_distributed=1 \
-    --data_path=$DATA_PATH  > output.train.log 2>&1 &
+python eval.py \
+    --data_path=$DATA_PATH \
+    --dataset=$DATASET_TYPE \
+    --device_target=$DEVICE_TYPE \
+    --pre_trained=$CHECKPOINT_PATH > output.eval.log 2>&1 &
