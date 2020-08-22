@@ -333,7 +333,7 @@ int ArithmeticFP16CPUKernel::DoArithmetic(int task_id) {
   return RET_OK;
 }
 
-int ArithmeticsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ArithmeticsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticFP16CPUKernel *>(cdata);
   auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {

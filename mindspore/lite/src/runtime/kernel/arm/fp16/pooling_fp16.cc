@@ -89,7 +89,7 @@ int PoolingFp16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int PoolingFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int PoolingFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto pooling = reinterpret_cast<PoolingFp16CPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {

@@ -186,7 +186,7 @@ int ConvolutionSWFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionSWFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvolutionSWFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto conv = reinterpret_cast<ConvolutionSWFP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

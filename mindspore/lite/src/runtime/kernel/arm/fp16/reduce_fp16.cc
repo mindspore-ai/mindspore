@@ -49,7 +49,7 @@ int ReduceFp16CPUKernel::Init() {
     MS_LOG(ERROR) << "Reduce fp16 only support ReduceMode_ReduceMean";
     return RET_ERROR;
   }
-  reducer_ = ReduceMean;
+  reducer_ = ReduceMeanFp16;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -67,7 +67,7 @@ int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
   return ret;
 }
 
-int ReduceImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ReduceImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto reduce = reinterpret_cast<ReduceFp16CPUKernel *>(cdata);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {

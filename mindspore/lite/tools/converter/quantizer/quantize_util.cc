@@ -373,7 +373,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
         float min = FLT_MAX;
         float max = -FLT_MAX;
         // find min and max
-        for (uint32_t j = 0; j < one_filter_size; j++) {
+        for (size_t j = 0; j < one_filter_size; j++) {
           auto index = j + i * one_filter_size;
           if (index >= elem_count) {
             MS_LOG(ERROR) << "over flow!";

@@ -63,7 +63,7 @@ int SplitFp16CPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int SplitRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto g_kernel = reinterpret_cast<SplitFp16CPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
