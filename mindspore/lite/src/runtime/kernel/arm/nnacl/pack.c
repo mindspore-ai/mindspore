@@ -879,8 +879,8 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
         const float *src_ptr = src_batch + hw * channel + c;
         float *dst_ptr = dst_batch + c * plane + hw;
 #ifdef ENABLE_ARM64
-        int srcStride = channel * 4;
-        int dstStride = plane * 4;
+        size_t srcStride = channel * sizeof(float);
+        size_t dstStride = plane * sizeof(float);
         asm volatile(
           "mov x10, %[src_ptr]\n"
           "mov x11, %[dst_ptr]\n"

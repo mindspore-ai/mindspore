@@ -8,8 +8,8 @@
 #endif
 
 // void IndirectGemmInt8_4x4(int8_t *output, int8_t *input, int8_t *weight, int32_t *bias, size_t ksize, size_t ic4,
-// size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, size_t out_multiplier,
-// size_t shift_before, size_t shift_after);
+// size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,
+// int32_t *out_multiplier, int32_t *shift_before, int32_t *shift_after, size_t asymmetric, size_t per_channel);
 // x0: output, x1: input, x2: weight, x3: bias, x4: kSize, x5: ic4, x6: oc, x7: offset
 IndirectGemmInt8_4x4:
 
@@ -36,18 +36,26 @@ IndirectGemmInt8_4x4:
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // r19 ~ r29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
-    sub sp, sp, #144
+    sub sp, sp, #176
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
+    stp x21, x22, [sp], #16
+    stp x23, x24, [sp], #16
 
     ldr x15, [sp]
     ldr w8, [sp, #8]
     ldr w9, [sp, #16]
     ldr w16, [sp, #24]
-    ldr w17, [sp, #32]
-    ldr w18, [sp, #40]
-    ldr w19, [sp, #48]
+    ldr x17, [sp, #32]
+    ldr x18, [sp, #40]
+    ldr x19, [sp, #48]
+    ldr x20, [sp, #56]
+    ldr x21, [sp, #64]
+
+    add x24, x6, #3
+    mov x23, #4
+    sdiv x23, x24, x23
 
     mul x5, x4, x5
     mov x4, #1
@@ -189,12 +197,6 @@ IndirectGemmInt8_4x4:
                 sadalp v30.4s, v14.8h
                 sadalp v31.4s, v15.8h
 
-                // load sum
-                mov x20, x15
-                ld1r {v8.4s}, [x20], #4
-                ld1r {v9.4s}, [x20], #4
-                ld1r {v10.4s}, [x20], #4
-                ld1r {v11.4s}, [x20]
                 // pairwise add
                 addp v16.4s, v16.4s, v17.4s
                 addp v18.4s, v18.4s, v19.4s
@@ -212,28 +214,51 @@ IndirectGemmInt8_4x4:
                 addp v20.4s, v20.4s, v22.4s
                 addp v24.4s, v24.4s, v26.4s
                 addp v28.4s, v28.4s, v30.4s
+                cbz x20, NoSum
+                // load sum
+                mov x22, x15
+                cbz x21, SymSum
+                ld1r {v8.4s}, [x22], x23
+                ld1r {v9.4s}, [x22], x23
+                ld1r {v10.4s}, [x22], x23
+                ld1r {v11.4s}, [x22]
+                b AddSum
+            SymSum:
+                ld1r {v8.4s}, [x22], #4
+                ld1r {v9.4s}, [x22], #4
+                ld1r {v10.4s}, [x22], #4
+                ld1r {v11.4s}, [x22]
+            AddSum:
                 sub v16.4s, v16.4s, v8.4s
                 sub v20.4s, v20.4s, v9.4s
                 sub v24.4s, v24.4s, v10.4s
                 sub v28.4s, v28.4s, v11.4s
+            NoSum:
                 add v16.4s, v16.4s, v12.4s
                 add v20.4s, v20.4s, v12.4s
                 add v24.4s, v24.4s, v12.4s
                 add v28.4s, v28.4s, v12.4s
 
-                dup v2.4s, w18
+                cbnz x21, PerChannel
+                ld1r {v2.4s}, [x18]
+                ld1r {v3.4s}, [x17]
+                ld1r {v4.4s}, [x19]
+                b QuantizeStart
+            PerChannel:
+                ld1 {v2.4s}, [x18]
+                ld1 {v3.4s}, [x17]
+                ld1 {v4.4s}, [x19]
+            QuantizeStart:
                 sqshl v16.4s, v16.4s, v2.4s
                 sqshl v20.4s, v20.4s, v2.4s
                 sqshl v24.4s, v24.4s, v2.4s
                 sqshl v28.4s, v28.4s, v2.4s
 
-                dup v3.4s, w17
                 sqrdmulh v16.4s, v16.4s, v3.4s
                 sqrdmulh v20.4s, v20.4s, v3.4s
                 sqrdmulh v24.4s, v24.4s, v3.4s
                 sqrdmulh v28.4s, v28.4s, v3.4s
 
-                dup v4.4s, w19
                 and v0.16b, v4.16b, v16.16b
                 sshr v0.4s, v0.4s, #31
                 sqadd v16.4s, v16.4s, v0.4s
@@ -325,15 +350,25 @@ IndirectGemmInt8_4x4:
             bne LoopKsize
 
         subs x6, x6, #4
+        cbz x21, NoChannelForward
+        cbz x20, NoSumForward
+        add x15, x15, #16
+    NoSumForward:
+        add x17, x17, #16
+        add x18, x18, #16
+        add x19, x19, #16
+    NoChannelForward:
         cbz x3, NoStepFowrard
         add x3, x3, #16
     NoStepFowrard:
         bgt LoopOc
 
-    sub sp, sp, #144
+    sub sp, sp, #176
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
+    ldp x21, x22, [sp], #16
+    ldp x23, x24, [sp], #16
     ret
 #endif
 

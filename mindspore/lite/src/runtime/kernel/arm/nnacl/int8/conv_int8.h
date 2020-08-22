@@ -28,8 +28,8 @@
 
 typedef void (*GEMM_FUNC)(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias, size_t ksize,
                           size_t ic4, size_t output_channel, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, size_t out_multiplier, size_t shift_before,
-                          size_t shift_after);
+                          size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
+                          int32_t *shift_after, size_t asymmetric, size_t per_channel);
 
 #ifdef __cplusplus
 extern "C" {
