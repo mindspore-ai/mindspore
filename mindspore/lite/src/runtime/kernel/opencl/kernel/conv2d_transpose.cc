@@ -42,7 +42,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
   std::string kernel_name = "conv2d_transpose2x2";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   std::string source = conv2d_transpose2x2_source;
   std::set<std::string> build_options;

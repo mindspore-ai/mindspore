@@ -62,7 +62,7 @@ int PoolingOpenCLKernel::Init() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";

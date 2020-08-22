@@ -103,10 +103,7 @@ int ArithmeticOpenCLKernel::Init() {
 
   lite::STATUS error_code = RET_OK;
 #ifdef PROGRAM_WITH_IL
-  bool ret = runtime_->CreateKernelFromIL(kernel_(), kernel_name);
-  if (!ret) {
-    error_code = RET_ERROR;
-  }
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   if (out_mem_type_ == OpenCLMemType::IMG) {
     kernel_name += "_IMG";

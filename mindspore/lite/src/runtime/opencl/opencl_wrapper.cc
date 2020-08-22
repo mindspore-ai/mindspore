@@ -273,6 +273,15 @@ cl_program clCreateProgramWithSource(cl_context context, cl_uint count, const ch
   return func(context, count, strings, lengths, errcode_ret);
 }
 
+// clCreateProgramWithBinary wrapper, use OpenCLWrapper function.
+cl_program clCreateProgramWithBinary(cl_context context, cl_uint num_devices, const cl_device_id *devices_list,
+                                     const size_t *lengths, const unsigned char **binaries, cl_int *binary_status,
+                                     cl_int *errcode_ret) {
+  auto func = mindspore::lite::opencl::OpenCLWrapper::GetInstance()->clCreateProgramWithBinary;
+  MS_ASSERT(func != nullptr);
+  return func(context, num_devices, devices_list, lengths, binaries, binary_status, errcode_ret);
+}
+
 // clGetProgramInfo wrapper, use OpenCLWrapper function.
 cl_int clGetProgramInfo(cl_program program, cl_program_info param_name, size_t param_value_size, void *param_value,
                         size_t *param_value_size_ret) {

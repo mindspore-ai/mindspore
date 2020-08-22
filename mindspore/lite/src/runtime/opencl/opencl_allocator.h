@@ -40,7 +40,7 @@ struct OpenclMemory {
   OpenCLMemoryType mem_type{MS_HOST_BUFFER | MS_CL_BUFFER};
 };
 
-enum class MEM_TYPE : char { BUF, IMG };
+enum class MemType : char { SVM, BUF, IMG };
 
 class OpenCLAllocator : public Allocator {
  public:
@@ -58,7 +58,7 @@ class OpenCLAllocator : public Allocator {
   void *GetBuffer(void *host_ptr);
   void *MapBuffer(void *host_ptr, int flags, void *command_queue = nullptr, bool sync = true);
   int UnmapBuffer(void *host_ptr, void *command_queue = nullptr);
-  MEM_TYPE GetMemType(void *host_ptr);
+  MemType GetMemType(void *host_ptr);
   int GetImageSize(void *host_ptr, std::vector<size_t> *img_size);
   void *Prepare(void *ptr) override {
     if (ptr != nullptr) {
@@ -86,7 +86,6 @@ class OpenCLAllocator : public Allocator {
   // 6 is empirical value
   int shift_factor_ = 6;
   bool lock_flag_ = false;
-  bool svm_on_{false};
 };
 
 }  // namespace mindspore::lite::opencl

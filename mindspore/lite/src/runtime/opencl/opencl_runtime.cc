@@ -138,27 +138,27 @@ int OpenCLRuntime::Init() {
                << max_work_item_sizes_[2];
 
   gpu_info_ = ParseGpuInfo(device_name, device_version);
-  cl_int err;
+  cl_int ret;
 #if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
   // create context from glcontext
   MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
   cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
                                           CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
-  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &err);
+  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
 
-  if (err != CL_SUCCESS) {
+  if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Create special OpenCL context falied, Create common OpenCL context then.";
-    context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &err);
+    context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
   }
 #else
   MS_LOG(INFO) << "Create common opencl context";
   //  cl_context_properties context_prop[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platforms[0](),
   //                                          CL_PRINTF_CALLBACK_ARM, (cl_context_properties)printf_callback, 0};
   //  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &err);
-  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &err);
+  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
 #endif
-  if (err != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(err);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
 
@@ -170,9 +170,8 @@ int OpenCLRuntime::Init() {
   auto success = device_->getInfo(CL_DEVICE_HALF_FP_CONFIG, &fp_config);
   support_fp16_ = CL_SUCCESS == success && fp_config > 0;
 
-  err = device_->getInfo(CL_DEVICE_SVM_CAPABILITIES, &svm_capabilities_);
-  svm_capabilities_ = 0;
-  if (err != CL_SUCCESS || svm_capabilities_ == 0) {
+  ret = device_->getInfo(CL_DEVICE_SVM_CAPABILITIES, &svm_capabilities_);
+  if (ret != CL_SUCCESS || svm_capabilities_ == 0) {
     svm_capabilities_ = 0;
     MS_LOG(INFO) << "SVM capalibilties: "
                  << "NONE";
@@ -204,16 +203,16 @@ int OpenCLRuntime::Init() {
   properties |= CL_QUEUE_PROFILING_ENABLE;
 #endif
 
-  default_command_queue_ = std::make_shared<cl::CommandQueue>(*context_, *device_, properties, &err);
-  if (err != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(err);
+  default_command_queue_ = std::make_shared<cl::CommandQueue>(*context_, *device_, properties, &ret);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
 
   allocator_ = std::make_shared<OpenCLAllocator>();
 #ifdef PROGRAM_WITH_IL
   std::string flag = "";
-  CreateProgramFromIL(g_program_binary, flag);
+  binary_program_ = CreateProgramFromIL(g_program_binary, flag);
 #endif
   init_done_ = true;
   MS_LOG(INFO) << "OpenCLRuntime init done!";
@@ -317,7 +316,7 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
       MS_LOG(ERROR) << "load program (" << program_name << ") failed!";
       return RET_ERROR;
     }
-    status = this->BuildProgram(build_options_str, &program);
+    status = this->BuildProgram(build_options_str, program);
     if (!status) {
       MS_LOG(ERROR) << program_name << " build failed!";
       return RET_ERROR;
@@ -325,50 +324,12 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
     program_map_.emplace(build_program_key, program);
   }
 
-  cl_int err;
-  kernel = cl::Kernel(program, kernel_name.c_str(), &err);
-  if (err != CL_SUCCESS) {
-    MS_LOG(ERROR) << kernel_name << " Kernel create failed:" << CLErrorCode(err);
+  cl_int ret;
+  kernel = cl::Kernel(program, kernel_name.c_str(), &ret);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << kernel_name << " Kernel create failed:" << CLErrorCode(ret);
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-// Run Kernel with 1D, 2D, 3D group size, and local size can be empty.
-int OpenCLRuntime::RunKernel(const cl_kernel &kernel, const std::vector<size_t> &global,
-                             const std::vector<size_t> &local, cl::CommandQueue *command_queue) {
-  if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
-  }
-  MS_ASSERT(local.size() == 0 || local.size() == global.size());
-  std::vector<size_t> internal_global_ws = global;
-  for (size_t i = 0; i < local.size(); ++i) {
-    internal_global_ws[i] = ROUND_UP(global[i], local[i]);
-  }
-
-  MS_LOG(DEBUG) << "global size: " << global.size() << ", local size: " << local.size();
-  for (size_t i = 0; i < global.size(); i++) {
-    MS_LOG(DEBUG) << "global[" << i << "] = " << global[i];
-  }
-  for (size_t i = 0; i < local.size(); i++) {
-    MS_LOG(DEBUG) << "local[" << i << "] = " << local[i];
-  }
-
-  cl::Event event;
-  cl_int error = CL_SUCCESS;
-  if (local.size() == 0) {
-    error =
-      clEnqueueNDRangeKernel((*command_queue)(), kernel, global.size(), 0, global.data(), nullptr, 0, nullptr, nullptr);
-  } else {
-    error = clEnqueueNDRangeKernel((*command_queue)(), kernel, global.size(), 0, global.data(), local.data(), 0,
-                                   nullptr, nullptr);
-  }
-
-  if (error != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(error);
-    return RET_ERROR;
-  }
-  MS_LOG(DEBUG) << "RunKernel success!";
   return RET_OK;
 }
 
@@ -392,9 +353,6 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
     MS_LOG(DEBUG) << "local[" << i << "] = " << local[i];
   }
 
-  cl::Event event;
-  cl_int err = CL_SUCCESS;
-
   cl::NDRange global_range = cl::NullRange;
   cl::NDRange local_range = cl::NullRange;
   if (global.size() == 1) {
@@ -417,10 +375,12 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
     return RET_ERROR;
   }
 
-  err = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global_range, local_range, nullptr, &event);
+  cl::Event event;
+  cl_int ret = CL_SUCCESS;
+  ret = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global_range, local_range, nullptr, &event);
 
-  if (err != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(err);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(ret);
     return RET_ERROR;
   }
   MS_LOG(DEBUG) << "RunKernel success!";
@@ -486,11 +446,11 @@ bool OpenCLRuntime::LoadProgram(const std::string &program_name, cl::Program *pr
 }
 
 // build program with build options
-bool OpenCLRuntime::BuildProgram(const std::string &build_options, cl::Program *program) {
-  cl_int ret = program->build({*device_}, build_options.c_str());
+bool OpenCLRuntime::BuildProgram(const std::string &build_options, const cl::Program &program) {
+  cl_int ret = program.build({*device_}, build_options.c_str());
   if (ret != CL_SUCCESS) {
-    if (program->getBuildInfo<CL_PROGRAM_BUILD_STATUS>(*device_) == CL_BUILD_ERROR) {
-      std::string build_log = program->getBuildInfo<CL_PROGRAM_BUILD_LOG>(*device_);
+    if (program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(*device_) == CL_BUILD_ERROR) {
+      std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(*device_);
       MS_LOG(ERROR) << "Program build log: " << build_log;
     }
     MS_LOG(ERROR) << "Build program failed: " << CLErrorCode(ret);
@@ -525,7 +485,7 @@ bool OpenCLRuntime::CopyHostMemToDevice(const void *dst, const void *src, size_t
   return cl_ret == CL_SUCCESS;
 }
 
-void *OpenCLRuntime::MapBuffer(const cl::Buffer buffer, int flags, size_t size, cl::CommandQueue *command_queue,
+void *OpenCLRuntime::MapBuffer(const cl::Buffer &buffer, int flags, size_t size, cl::CommandQueue *command_queue,
                                bool sync) const {
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
@@ -534,7 +494,7 @@ void *OpenCLRuntime::MapBuffer(const cl::Buffer buffer, int flags, size_t size, 
 }
 
 int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::CommandQueue *command_queue, bool sync) const {
-  if (svm_capabilities_ & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
+  if (GetSVMCapabilities() & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
     return RET_OK;
   }
   if (command_queue == nullptr) {
@@ -543,7 +503,7 @@ int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::Command
   return command_queue->enqueueMapSVM(host_ptr, sync, flags, size);
 }
 
-void *OpenCLRuntime::MapBuffer(const cl::Image2D buffer, bool sync, int flags, const std::vector<size_t> &region,
+void *OpenCLRuntime::MapBuffer(const cl::Image2D &buffer, bool sync, int flags, const std::vector<size_t> &region,
                                cl::CommandQueue *command_queue) const {
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
@@ -555,7 +515,7 @@ void *OpenCLRuntime::MapBuffer(const cl::Image2D buffer, bool sync, int flags, c
   return command_queue->enqueueMapImage(buffer, sync, flags, origin_, region_, &row_pitch, &slice_pitch);
 }
 
-int OpenCLRuntime::UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::CommandQueue *command_queue) const {
+int OpenCLRuntime::UnmapBuffer(const cl::Memory &buffer, void *host_ptr, cl::CommandQueue *command_queue) const {
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
   }
@@ -563,7 +523,7 @@ int OpenCLRuntime::UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::Comm
 }
 
 int OpenCLRuntime::UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue) const {
-  if (svm_capabilities_ & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
+  if (GetSVMCapabilities() & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
     return RET_OK;
   }
   if (command_queue == nullptr) {
@@ -586,43 +546,55 @@ bool OpenCLRuntime::SyncCommandQueue(cl::CommandQueue *command_queue) {
 
 int OpenCLRuntime::GetKernelMaxWorkGroupSize(cl_kernel kernel, cl_device_id device_id) {
   size_t max_work_group_size;
-  cl_int err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t),
+  cl_int ret = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t),
                                         &max_work_group_size, nullptr);
-  if (err != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Failed to get info CL_KERNEL_WORK_GROUP_SIZE " << CLErrorCode(err);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to get info CL_KERNEL_WORK_GROUP_SIZE " << CLErrorCode(ret);
   }
   return static_cast<int>(max_work_group_size);
 }
 
-bool OpenCLRuntime::CreateKernelFromIL(cl_kernel &kernel, const std::string kernel_name) {
+cl::Kernel OpenCLRuntime::GetKernelFromBinary(const std::string &kernel_name) {
   cl_int ret = CL_SUCCESS;
-  kernel = clCreateKernel(il_program_, kernel_name.c_str(), &ret);
+  cl::Kernel kernel = cl::Kernel(binary_program_, kernel_name.c_str(), &ret);
   if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create kernel with IL failed: " << CLErrorCode(ret);
+    MS_LOG(ERROR) << "Create kernel with binary program failed: " << CLErrorCode(ret);
   }
-  return ret == CL_SUCCESS;
+  return kernel;
 }
 
 // build program with IL
-bool OpenCLRuntime::CreateProgramFromIL(const std::vector<u_char> program_binary, const std::string flag) {
+cl::Program OpenCLRuntime::CreateProgramFromIL(const std::vector<char> &binary, const std::string &flag) {
 #if CL_HPP_TARGET_OPENCL_VERSION >= 210
-  size_t program_length = program_binary.size();
-  cl_int ret = CL_SUCCESS;
-  il_program_ = clCreateProgramWithIL((*context_)(), program_binary.data(), program_length, &ret);
-  if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create program with IL failed: " << CLErrorCode(ret);
-    return false;
+  cl::Program program = cl::Program(*context_, binary);
+  bool status = BuildProgram(default_build_opts_, program);
+  if (!status) {
+    MS_LOG(ERROR) << "Build program with IL failed!";
   }
-
-  ret = clBuildProgram(il_program_, 1, &(*device_)(), flag.c_str(), NULL, NULL);
-  if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Build program with IL failed: " << CLErrorCode(ret);
-  }
-  return ret == CL_SUCCESS;
+  return program;
 #else
   MS_LOG(ERROR) << "Create program with IL failed! The compute capabitity of device should be 2.1 and higher.";
-  return false;
+  return cl::Program();
 #endif
 }
 
+// build program with binary
+cl::Program OpenCLRuntime::CreateProgramFromBinary(const std::vector<std::vector<unsigned char>> &binary,
+                                                   const std::string &flag) {
+  cl::Program program = cl::Program(*context_, {*device_}, binary);
+  bool status = BuildProgram(default_build_opts_, program);
+  if (!status) {
+    MS_LOG(ERROR) << "Build program with binary failed!";
+  }
+  return program;
+}
+
+std::vector<std::vector<unsigned char>> OpenCLRuntime::GetProgramBinaries(const cl::Program &program) {
+  cl_int ret = CL_SUCCESS;
+  auto binary = program.getInfo<CL_PROGRAM_BINARIES>(&ret);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Get program binary failed: " << CLErrorCode(ret);
+  }
+  return binary;
+}
 }  // namespace mindspore::lite::opencl
