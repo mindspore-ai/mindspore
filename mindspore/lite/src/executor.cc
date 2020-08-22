@@ -29,6 +29,10 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
+    if (inTensor->Data() == nullptr) {
+      MS_LOG(ERROR) << "Graph input tensor data is nullptr";
+      return RET_ERROR;
+    }
     if (inTensor->GetFormat() != schema::Format_NHWC) {
       MS_LOG(ERROR) << "Model input tensor should be NHWC";
       return RET_ERROR;
