@@ -2535,6 +2535,8 @@ class TransferDataset(DatasetOp):
         # need to keep iterator alive so the executionTree is not destroyed
         if self._noop_mode():
             return
+        if self.iterator is not None:
+            del self.iterator
         self.iterator = TupleIterator(self, num_epochs=num_epochs)
 
     def stop_send(self):
