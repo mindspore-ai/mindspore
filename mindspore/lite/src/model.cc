@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/ops/primitive_c.h"
 #include "include/model.h"
 #include "src/ops/unique.h"
 #include "src/ops/space_to_batch.h"
