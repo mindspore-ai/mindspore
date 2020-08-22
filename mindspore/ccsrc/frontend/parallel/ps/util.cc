@@ -22,6 +22,8 @@
 namespace mindspore {
 namespace parallel {
 namespace ps {
+int Util::rank_id_ = -1;
+
 std::unordered_map<std::string, int> Util::optimizer_to_ids{
   {kApplyMomentum, 0},
   {kSparseAdam, 1},
@@ -140,6 +142,10 @@ int Util::LocalShard(int first_dim, int rank_id, int server_num) {
     return first_dim - (shard_size * (server_num - 1));
   }
 }
+
+void Util::SetRankId(int rank_id) { rank_id_ = rank_id; }
+
+int Util::GetRankId() { return rank_id_; }
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore

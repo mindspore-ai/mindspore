@@ -280,6 +280,9 @@ class ModelCheckpoint(Callback):
         if save_ckpt:
             cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
                                + str(step_num_in_epoch) + ".ckpt"
+            if os.getenv("MS_ROLE") == "MS_PSERVER":
+                from mindspore.parallel._ps_utils import _get_ps_mode_rank
+                cur_ckpoint_file = "PServer_" + str(_get_ps_mode_rank()) + "_" + cur_ckpoint_file
             # update checkpoint file list.
             self._manager.update_ckpoint_filelist(self._directory, self._prefix)
             # keep checkpoint files number equal max number.

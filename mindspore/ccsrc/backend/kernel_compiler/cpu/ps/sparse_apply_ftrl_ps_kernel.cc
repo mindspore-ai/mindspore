@@ -28,6 +28,8 @@ void SparseApplyFtrlPSKernel::InitKernel(
   std::vector<size_t> grad_shape = *(shape_vec[3]);
   std::vector<size_t> indices_shape = *(shape_vec[4]);
 
+  SetTotalRowCnt(var_shape[0]);
+  CalOffset();
   Shard(&var_shape, 0);
   Shard(&accum_shape, 0);
   Shard(&linear_shape, 0);
@@ -88,7 +90,7 @@ bool SparseApplyFtrlPSKernel::Execute(const std::vector<AddressPtr> &inputs, con
   ReInit(inputs);
   int *indices = reinterpret_cast<int *>(inputs[4]->addr);
   for (size_t i = 0; i < inputs[4]->size / sizeof(int); i++) {
-    indices[i] -= rank_id_ * var_first_dim_size_;
+    indices[i] -= row_offset_;
   }
   return Launch(inputs, workspace, outputs);
 }

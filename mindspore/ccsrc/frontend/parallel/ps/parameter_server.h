@@ -721,6 +721,7 @@ void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
     return;
   }
   Init(func_graph);
+  Util::SetRankId(rank_id_);
   thread_->join();
   ::ps::Finalize(0, true);
 }

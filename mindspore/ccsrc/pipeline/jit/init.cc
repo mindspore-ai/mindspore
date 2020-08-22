@@ -33,6 +33,9 @@
 #else
 #include "runtime/device/gpu/distribution/collective_fake_init.h"
 #endif
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "frontend/parallel/ps/util.h"
+#endif
 namespace py = pybind11;
 
 using EnvInstance = mindspore::EnvInstance;
@@ -322,7 +325,10 @@ PYBIND11_MODULE(_c_expression, m) {
               "Init gpu collective communication mode.");
   (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::FinalizeCollective,
               "Finalize gpu collective communication mode.");
+#endif
 
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  (void)m.def("get_ps_mode_rank", &mindspore::parallel::ps::Util::GetRankId, "Get Worker and PServer rank id.");
 #endif
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
