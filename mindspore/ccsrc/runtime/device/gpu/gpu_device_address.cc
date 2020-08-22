@@ -32,6 +32,10 @@ namespace device {
 namespace gpu {
 bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, TypeId, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  bool need_sync = (size != 0) && (size_ != 0);
+  if (!need_sync) {
+    return true;
+  }
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   auto ret = GPUDeviceManager::GetInstance().SyncStream(stream);
@@ -48,6 +52,10 @@ bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, T
 
 bool GPUDeviceAddress::SyncHostToDevice(const std::vector<int> &, size_t size, TypeId, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  bool need_sync = (size != 0) && (size_ != 0);
+  if (!need_sync) {
+    return true;
+  }
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   if (size != size_) {
