@@ -73,7 +73,7 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/scheduler.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lite_kernel.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/ms_tensor_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm/nnacl/pack.c
+            ${CMAKE_CURRENT_SOURCE_DIR}../../nnacl/pack.c
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/populate_parameter.cc
             )
 endif()
@@ -136,19 +136,19 @@ set(LITE_SRC
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
 file(GLOB KERNEL_SRC
         ${ARM_DIR}/base/*.cc
-        ${ARM_DIR}/nnacl/*.c
-        ${ARM_DIR}/nnacl/fp32/*.c
-        ${ARM_DIR}/nnacl/int8/*.c
-        ${ARM_DIR}/nnacl/quantization/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/fp32/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/int8/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/quantization/*.c
         ${ARM_DIR}/fp32/*.cc
         ${ARM_DIR}/int8/*.cc
         )
-list(REMOVE_ITEM KERNEL_SRC ${ARM_DIR}/nnacl/opt_op_handler.c)
+list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/opt_op_handler.c)
 
 if (PLATFORM_ARM64)
     # assembly
-    file(GLOB ASSEMBLY_SRC nnacl/assembly/arm64/*.s
-            nnacl/assembly/arm64/*.S)
+    file(GLOB ASSEMBLY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/assembly/arm64/*.s
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif ()

@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/context.h"
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/power.h"
+#include "nnacl/power.h"
 #include "src/runtime/kernel/arm/base/power_base.h"
 
 namespace mindspore::kernel {

@@ -18,9 +18,9 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/pack.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/strassen_matmul.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "mindspore/lite/nnacl/pack.h"
+#include "mindspore/lite/nnacl/fp32/strassen_matmul.h"
+#include "mindspore/lite/nnacl/conv_parameter.h"
 
 namespace mindspore {
 class TestStrassenFp32 : public mindspore::CommonTest {

@@ -15,8 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/int8/bias_add_int8.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/errorcode.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 

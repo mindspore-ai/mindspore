@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/quantization/quantize.h"
+#include "nnacl/quantization/quantize.h"
 #include "src/runtime/kernel/arm/base/matmul_base.h"
 
 using mindspore::lite::Context;

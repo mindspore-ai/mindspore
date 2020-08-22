@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "src/runtime/kernel/arm/nnacl/optimized_kernel.h"
+#include "nnacl/optimized_kernel.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

@@ -15,10 +15,10 @@
  */
 #include "src/runtime/kernel/arm/fp16/convolution_sw_fp16.h"
 #include <vector>
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/conv_depthwise.h"
+#include "nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp32/conv_depthwise.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/flatten.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/nnacl/flatten.h"
+#include "nnacl/flatten.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

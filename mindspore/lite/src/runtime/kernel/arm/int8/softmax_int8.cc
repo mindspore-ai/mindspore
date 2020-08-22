@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/softmax_int8.h"
 #include <limits>
-#include "src/runtime/kernel/arm/nnacl/int8/softmax_int8.h"
+#include "nnacl/int8/softmax_int8.h"
 #include "schema/model_generated.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"

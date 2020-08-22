@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LOCAL_RESPONSE_NORM_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/nnacl/fp32/local_response_norm.h"
+#include "nnacl/fp32/local_response_norm.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {

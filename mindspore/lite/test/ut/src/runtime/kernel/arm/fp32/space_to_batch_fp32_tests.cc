@@ -17,7 +17,7 @@
 #include <memory>
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/space_to_batch.h"
+#include "mindspore/lite/nnacl/fp32/space_to_batch.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
+#include "nnacl/reshape_parameter.h"
 
 using mindspore::lite::Context;
 

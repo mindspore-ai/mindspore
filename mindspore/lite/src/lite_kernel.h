@@ -22,7 +22,7 @@
 #include <arm_neon.h>
 #endif
 #include "src/ops/primitive_c.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #include "include/context.h"
 #include "src/ir/tensor.h"
 #include "include/errorcode.h"

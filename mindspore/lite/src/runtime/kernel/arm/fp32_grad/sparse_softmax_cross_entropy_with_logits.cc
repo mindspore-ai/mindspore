@@ -15,8 +15,8 @@
  */
 
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/nnacl/softmax_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/softmax.h"
+#include "nnacl/softmax_parameter.h"
+#include "nnacl/fp32/softmax.h"
 #include "src/runtime/kernel/arm/fp32_grad/sparse_softmax_cross_entropy_with_logits.h"
 #include "include/errorcode.h"
 

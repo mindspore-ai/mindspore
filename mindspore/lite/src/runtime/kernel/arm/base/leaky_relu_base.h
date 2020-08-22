@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/leaky_relu_parameter.h"
+#include "nnacl/leaky_relu_parameter.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::Context;

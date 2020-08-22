@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_allocator.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/fp32/activation.h"
+#include "mindspore/lite/nnacl/fp32/activation.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/activation.h"
 
 using mindspore::kernel::LiteKernel;

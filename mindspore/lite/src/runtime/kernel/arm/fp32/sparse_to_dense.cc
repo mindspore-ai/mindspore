@@ -17,7 +17,7 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "schema/ops_generated.h"
-#include "src/runtime/kernel/arm/nnacl/sparse_to_dense.h"
+#include "nnacl/sparse_to_dense.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

@@ -15,8 +15,8 @@
  */
 #include "mindspore/core/utils/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/batch_to_space.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/arithmetic_common.h"
+#include "mindspore/lite/nnacl/batch_to_space.h"
+#include "mindspore/lite/nnacl/arithmetic_common.h"
 
 namespace mindspore {
 

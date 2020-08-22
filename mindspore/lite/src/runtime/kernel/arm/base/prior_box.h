@@ -19,8 +19,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/reshape_parameter.h"
-#include "src/runtime/kernel/arm/nnacl/prior_box.h"
+#include "nnacl/reshape_parameter.h"
+#include "nnacl/prior_box.h"
 
 using mindspore::lite::Context;
 

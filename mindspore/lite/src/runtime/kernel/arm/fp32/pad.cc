@@ -18,7 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/runtime/kernel/arm/fp32/pad.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/errorcode.h"
+#include "nnacl/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

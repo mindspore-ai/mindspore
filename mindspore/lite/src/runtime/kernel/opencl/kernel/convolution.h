@@ -23,7 +23,7 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "schema/model_generated.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/arm/nnacl/conv_parameter.h"
+#include "nnacl/conv_parameter.h"
 
 namespace mindspore::kernel {
 

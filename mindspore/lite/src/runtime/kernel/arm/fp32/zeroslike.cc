@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/zeroslike.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/runtime/kernel/arm/nnacl/zeroslike.h"
+#include "nnacl/zeroslike.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 

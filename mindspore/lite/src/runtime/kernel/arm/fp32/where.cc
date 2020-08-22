@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/where.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/runtime/kernel/arm/nnacl/where.h"
+#include "nnacl/where.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

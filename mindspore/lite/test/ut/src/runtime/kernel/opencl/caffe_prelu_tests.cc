@@ -18,11 +18,11 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
-#include "src/runtime/kernel/arm/nnacl/pack.h"
+#include "nnacl/pack.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/caffe_prelu.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "mindspore/lite/nnacl/prelu_parameter.h"
 
 using mindspore::kernel::CaffePReluOpenCLKernel;
 using mindspore::kernel::LiteKernel;

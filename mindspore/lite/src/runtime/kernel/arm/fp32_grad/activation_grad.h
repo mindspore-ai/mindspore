@@ -21,7 +21,7 @@
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
 
-#include "src/runtime/kernel/arm/nnacl/activation_grad.h"
+#include "nnacl/activation_grad.h"
 
 namespace mindspore::kernel {
 class ActivationGradCPUKernel : public LiteKernel {

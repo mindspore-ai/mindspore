@@ -15,11 +15,11 @@
  */
 #include "src/runtime/kernel/arm/fp16/pooling_fp16.h"
 #include <vector>
-#include "src/runtime/kernel/arm/nnacl/fp16/pooling_fp16.h"
+#include "nnacl/fp16/pooling_fp16.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 #include "nnacl/fp16/cast_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

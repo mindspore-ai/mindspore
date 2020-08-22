@@ -22,7 +22,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/prelu.h"
-#include "mindspore/lite/src/runtime/kernel/arm/nnacl/prelu_parameter.h"
+#include "mindspore/lite/nnacl/prelu_parameter.h"
 
 using mindspore::kernel::LiteKernel;
 using mindspore::kernel::PReluOpenCLKernel;

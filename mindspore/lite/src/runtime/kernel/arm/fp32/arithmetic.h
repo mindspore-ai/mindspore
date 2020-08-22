@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic.h"
 #include "schema/model_generated.h"
 
 using mindspore::schema::PrimitiveType_Add;

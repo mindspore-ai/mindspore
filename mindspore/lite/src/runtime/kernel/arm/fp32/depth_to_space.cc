@@ -17,8 +17,8 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/nnacl/arithmetic_common.h"
-#include "src/runtime/kernel/arm/nnacl/depth_to_space.h"
+#include "nnacl/arithmetic_common.h"
+#include "nnacl/depth_to_space.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

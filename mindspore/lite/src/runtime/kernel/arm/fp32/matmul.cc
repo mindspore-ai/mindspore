@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/matmul.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/matmul.h"
+#include "nnacl/fp32/matmul.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 

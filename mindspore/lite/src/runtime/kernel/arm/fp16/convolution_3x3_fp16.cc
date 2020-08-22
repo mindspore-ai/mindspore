@@ -15,10 +15,10 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/convolution_3x3_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/conv_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/winograd_transform_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/conv_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/winograd_transform_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

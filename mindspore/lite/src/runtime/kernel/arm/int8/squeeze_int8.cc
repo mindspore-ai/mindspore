@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/nnacl/int8/squeeze_int8.h"
+#include "nnacl/int8/squeeze_int8.h"
 #include "src/runtime/kernel/arm/int8/squeeze_int8.h"
-#include "src/runtime/kernel/arm/nnacl/squeeze_parameter.h"
+#include "nnacl/squeeze_parameter.h"
 
 #include "schema/model_generated.h"
 #include "src/runtime/runtime_api.h"

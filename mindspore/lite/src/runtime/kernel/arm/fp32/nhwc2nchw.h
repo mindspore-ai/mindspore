@@ -23,7 +23,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/nnacl/pack.h"
+#include "nnacl/pack.h"
 
 namespace mindspore::kernel {
 class Nhwc2NchwCPUKernel : public LiteKernel {

@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/softmax.h"
 #include <string.h>
 #include <vector>
-#include "src/runtime/kernel/arm/nnacl/fp32/softmax.h"
+#include "nnacl/fp32/softmax.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

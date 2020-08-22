@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/unstack.h"
+#include "nnacl/unstack.h"
 
 namespace mindspore::kernel {
 class UnstackCPUKernel : public LiteKernel {

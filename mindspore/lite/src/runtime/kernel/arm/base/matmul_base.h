@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/nnacl/matmul_parameter.h"
+#include "nnacl/matmul_parameter.h"
 
 using mindspore::lite::Context;
 

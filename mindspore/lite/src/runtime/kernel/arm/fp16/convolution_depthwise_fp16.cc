@@ -15,8 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

@@ -19,8 +19,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/nnacl/fp32/activation.h"
-#include "src/runtime/kernel/arm/nnacl/int8/relux_int8.h"
+#include "nnacl/fp32/activation.h"
+#include "nnacl/int8/relux_int8.h"
 
 namespace mindspore::kernel {
 class ReluXInt8CPUKernel : public LiteKernel {
