@@ -100,7 +100,7 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
         }
         std::vector<AnfNodePtr> op_inputs = {value_node, input_cnode};
         auto quant_cast_cnode = graph->NewCNode(op_inputs);
-        quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast");
+        quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast_" + std::to_string(i));
         cnode->set_input(i, quant_cast_cnode);
         MS_LOG(DEBUG) << "Add quant cast. "
                       << "cur_node: " << cnode->fullname_with_scope() << " quant_type: " << curnode_quant_type

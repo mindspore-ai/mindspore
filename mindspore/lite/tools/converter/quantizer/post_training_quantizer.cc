@@ -227,10 +227,10 @@ struct DivergInfo {
     int zero_point = 0;
     if (quant_min == 0 && quant_max == 255) {
       zero_point = 128;
-    } else if (quant_min == -128 && quant_max == 127) {
+    } else if (quant_min == -127 && quant_max == 127) {
       zero_point = 0;
     } else {
-      MS_LOG(ERROR) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
+      MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
     }
     return std::make_pair(this->cnode, zero_point);
   }
@@ -486,7 +486,7 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   this->target_type_ = target_type;
   if (target_type == kNumberTypeInt8) {
     quant_max = (1 << (this->bit_num - 1)) - 1;  // 127
-    quant_min = -(1 << (this->bit_num - 1));     // -128
+    quant_min = -quant_max;     // -127
   } else if (target_type == kNumberTypeUInt8) {
     quant_max = (1 << this->bit_num) - 1;  // 255
     quant_min = 0;
