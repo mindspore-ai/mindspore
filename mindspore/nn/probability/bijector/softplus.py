@@ -19,7 +19,7 @@ from mindspore.common import dtype as mstype
 from mindspore.nn.layer.activation import LogSigmoid
 from mindspore._checkparam import Validator as validator
 from ..distribution._utils.utils import cast_to_tensor, CheckTensor
-from ..distribution._utils.custom_ops import log_by_step, expm1_by_step
+from ..distribution._utils.custom_ops import exp_by_step, expm1_by_step, log_by_step
 from .bijector import Bijector
 
 class Softplus(Bijector):
@@ -59,10 +59,10 @@ class Softplus(Bijector):
         super(Softplus, self).__init__(name=name, param=param)
         self._sharpness = cast_to_tensor(sharpness)
 
-        self.abs = P.Abs()
-        self.exp = P.Exp()
+        self.exp = exp_by_step
         self.log = log_by_step
         self.expm1 = expm1_by_step
+        self.abs = P.Abs()
         self.fill = P.Fill()
         self.greater = P.Greater()
         self.less = P.Less()

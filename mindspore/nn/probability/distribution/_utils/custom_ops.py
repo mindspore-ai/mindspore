@@ -17,10 +17,36 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
+def exp_by_step(input_x):
+    """
+    Log op on Ascend doesn't supprot int types.
+    Fix this with casting the type.
+    """
+    exp = P.Exp()
+    cast = P.Cast()
+    dtype = P.DType()
+    checktype = P.IsSubClass()
+
+    if checktype(dtype(input_x), mstype.int_):
+        input_x = cast(input_x, mstype.float32)
+    elif checktype(dtype(input_x), mstype.float_):
+        pass
+    else:
+        return None
+    return exp(input_x)
+
+def expm1_by_step(input_x):
+    """
+    Expm1 ops under GPU context.
+    """
+    return exp_by_step(input_x) - 1.0
+
 def log_by_step(input_x):
     """
     Log op on Ascend is calculated as log(abs(x)).
     Fix this with putting negative values as nan.
+    And log op on Ascend doesn't supprot int types.
+    Fix this with casting the type.
     """
     log = P.Log()
     less = P.Less()
@@ -30,8 +56,14 @@ def log_by_step(input_x):
     dtype = P.DType()
     shape = P.Shape()
     select = P.Select()
+    checktype = P.IsSubClass()
 
-    input_x = cast(input_x, mstype.float32)
+    if checktype(dtype(input_x), mstype.int_):
+        input_x = cast(input_x, mstype.float32)
+    elif checktype(dtype(input_x), mstype.float_):
+        pass
+    else:
+        return None
     nan = fill(dtype(input_x), shape(input_x), np.nan)
     inf = fill(dtype(input_x), shape(input_x), np.inf)
     neg_x = less(input_x, 0.0)
@@ -45,10 +77,3 @@ def log1p_by_step(x):
     Log1p ops on GPU device or when device_target == GPU.
     """
     return log_by_step(x + 1.0)
-
-def expm1_by_step(input_x):
-    """
-    Expm1 ops under GPU context.
-    """
-    exp = P.Exp()
-    return exp(input_x) - 1.0

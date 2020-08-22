@@ -13,13 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Transformed Distribution"""
-from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 from .distribution import Distribution
 from ._utils.utils import check_type, raise_not_impl_error
-from ._utils.custom_ops import log_by_step
+from ._utils.custom_ops import exp_by_step, log_by_step
 
 class TransformedDistribution(Distribution):
     """
@@ -56,7 +55,7 @@ class TransformedDistribution(Distribution):
         self._bijector = bijector
         self._distribution = distribution
         self._is_linear_transformation = bijector.is_constant_jacobian
-        self.exp = P.Exp()
+        self.exp = exp_by_step
         self.log = log_by_step
 
     @property

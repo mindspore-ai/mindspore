@@ -20,7 +20,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
-from ._utils.custom_ops import log_by_step
+from ._utils.custom_ops import exp_by_step, log_by_step
 
 class Exponential(Distribution):
     """
@@ -112,14 +112,14 @@ class Exponential(Distribution):
         self.minval = np.finfo(np.float).tiny
 
         # ops needed for the class
+        self.exp = exp_by_step
+        self.log = log_by_step
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
-        self.exp = P.Exp()
         self.fill = P.Fill()
         self.less = P.Less()
-        self.log = log_by_step
         self.select = P.Select()
         self.shape = P.Shape()
         self.sqrt = P.Sqrt()
@@ -277,8 +277,8 @@ class Exponential(Distribution):
         minval = self.const(self.minval)
         maxval = self.const(1.0)
         sample_uniform = self.uniform(sample_shape, minval, maxval, self.seed)
-        sample = -self.log(sample_uniform) / rate
-        value = self.cast(sample, self.dtype)
+        sample = self.log(sample_uniform) / rate
+        value = self.cast(-sample, self.dtype)
         if origin_shape == ():
             value = self.squeeze(value)
         return value
