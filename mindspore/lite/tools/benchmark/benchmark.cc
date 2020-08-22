@@ -102,10 +102,12 @@ int Benchmark::ReadInputFile() {
       if (size != tensorDataSize) {
         std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size << std::endl;
         MS_LOG(ERROR) << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size;
+        delete binBuf;
         return RET_ERROR;
       }
       auto inputData = cur_tensor->MutableData();
       memcpy(inputData, binBuf, tensorDataSize);
+      delete binBuf;
     }
   }
   return RET_OK;

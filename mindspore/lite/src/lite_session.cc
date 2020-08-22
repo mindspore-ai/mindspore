@@ -287,6 +287,13 @@ LiteSession::~LiteSession() {
   for (auto *kernel : kernels_) {
     delete kernel;
   }
+  for (auto *ms_tensor : input_vec_) {
+    if (ms_tensor != nullptr) {
+      ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
+      delete ms_tensor;
+    }
+  }
+  input_vec_.clear();
   delete this->context_;
   delete this->executor;
   this->executor = nullptr;
