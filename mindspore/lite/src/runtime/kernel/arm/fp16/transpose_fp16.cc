@@ -121,7 +121,7 @@ int TransposeFp16CPUKernel::TransposeParallel(int task_id) {
   return RET_OK;
 }
 
-int TransposeRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int TransposeRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto g_kernel = reinterpret_cast<TransposeFp16CPUKernel *>(cdata);
   auto ret = g_kernel->TransposeParallel(task_id);
   if (ret != RET_OK) {

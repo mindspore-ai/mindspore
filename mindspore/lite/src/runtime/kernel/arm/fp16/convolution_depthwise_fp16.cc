@@ -150,7 +150,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto conv_dw_fp16 = reinterpret_cast<ConvolutionDepthwiseFp16CPUKernel *>(cdata);
   auto ret = conv_dw_fp16->Execute(task_id);
   if (ret != RET_OK) {

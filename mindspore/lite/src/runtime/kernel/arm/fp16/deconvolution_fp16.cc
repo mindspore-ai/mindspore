@@ -137,7 +137,7 @@ void DeConvolutionFp16CPUKernel::FreeRunBuf() {
   return;
 }
 
-int DeConvFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int DeConvFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto deconv = reinterpret_cast<DeConvolutionFp16CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {

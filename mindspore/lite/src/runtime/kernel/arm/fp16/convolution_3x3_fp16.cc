@@ -197,7 +197,7 @@ int Convolution3x3FP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int Convolution3x3Fp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int Convolution3x3Fp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto conv = reinterpret_cast<Convolution3x3FP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

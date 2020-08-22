@@ -42,7 +42,7 @@ int UnstackCPUKernel::ReSize() {
   if (para->axis_ < 0) {
     para->axis_ += shape_size;
   }
-  for (size_t i = 0; i < static_cast<size_t>(shape_size); i++) {
+  for (size_t i = 0; i < shape_size; i++) {
     if (static_cast<int>(i) < para->axis_) {
       para->pre_dims_ *= input->DimensionSize(i);
     } else if (static_cast<int>(i) > para->axis_) {

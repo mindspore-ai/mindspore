@@ -348,7 +348,7 @@ int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionWinogradFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvolutionWinogradFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto conv = reinterpret_cast<ConvolutionWinogradFP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
