@@ -20,6 +20,7 @@ add_library(caffe_parser_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_power_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_prelu_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_relu_parser.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_relu6_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_reshape_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_scale_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_sigmoid_parser.cc
