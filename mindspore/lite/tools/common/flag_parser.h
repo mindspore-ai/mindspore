@@ -33,7 +33,7 @@ struct Nothing {};
 
 class FlagParser {
  public:
-  FlagParser() { AddFlag(&FlagParser::help, "help", "print usage message", false); }
+  FlagParser() { AddFlag(&FlagParser::help, "help", "print usage message", ""); }
 
   virtual ~FlagParser() {}
 
@@ -298,4 +298,3 @@ void FlagParser::AddFlag(Option<T> Flags::*t, const std::string &flagName, const
 }  // namespace mindspore
 
 #endif  // PREDICT_COMMON_FLAG_PARSER_H_
-

@@ -160,7 +160,7 @@ std::string FlagParser::Usage(const Option<std::string> &usgMsg) const {
     std::string flagName = flag->second.flagName;
     std::string helpInfo = flag->second.helpInfo;
     // parameter line
-    std::string thisLine = flag->second.isBoolean ? " --[no-]" + flagName : " --" + flagName + "=VALUE";
+    std::string thisLine = flagName == "help" ? " --" + flagName : " --" + flagName + "=VALUE";
     if (++i <= flags.size()) {
       // add parameter help message of each line
       thisLine += " " + helpInfo;
