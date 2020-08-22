@@ -41,11 +41,14 @@ static const std::vector<std::string> g_opencl_library_paths = {
   "/system/lib64/libOpenCL.so",
 #else
   // Qualcomm Adreno
-  "/system/vendor/lib/libOpenCL.so", "/system/lib/libOpenCL.so",
+  "/system/vendor/lib/libOpenCL.so",
+  "/system/lib/libOpenCL.so",
   // Mali
-  "/system/vendor/lib/egl/libGLES_mali.so", "/system/lib/egl/libGLES_mali.so",
+  "/system/vendor/lib/egl/libGLES_mali.so",
+  "/system/lib/egl/libGLES_mali.so",
   // other
-  "/system/vendor/lib/libPVROCL.so", "/data/data/org.pocl.libs/files/lib/libpocl.so"
+  "/system/vendor/lib/libPVROCL.so",
+  "/data/data/org.pocl.libs/files/lib/libpocl.so"
 #endif
   "libOpenCL.so",
   "libGLES_mali.so",
@@ -680,4 +683,3 @@ cl_int clSetKernelArgSVMPointer(cl_kernel kernel, cl_uint index, const void *hos
 #endif
 
 #endif  // USE_OPENCL_WRAPPER
-

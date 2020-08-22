@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "include/errorcode.h"
 
 namespace mindspore::kernel {
 
@@ -37,15 +38,15 @@ class OpenCLKernel : public LiteKernel {
                         const std::vector<lite::tensor::Tensor *> &outputs)
       : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
 
-  virtual int Init() { return -1; }
-  virtual int Prepare() { return -1; }
-  virtual int InferShape() { return -1; }
-  virtual int ReSize() { return -1; }
-  virtual int Run() { return -1; }
-  virtual int GetImageSize(size_t idx, std::vector<size_t> *img_size) { return -1; }
-  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return -1; }
+  virtual int Init() { return RET_ERROR; }
+  virtual int Prepare() { return RET_ERROR; }
+  virtual int InferShape() { return RET_ERROR; }
+  virtual int ReSize() { return RET_ERROR; }
+  virtual int Run() { return RET_ERROR; }
+  virtual int GetImageSize(size_t idx, std::vector<size_t> *img_size) { return RET_ERROR; }
+  virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return RET_ERROR; }
   virtual int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) {
-    return -1;
+    return RET_ERROR;
   }
   OpenCLMemType GetMemType() { return out_mem_type_; }
   void SetMemType(OpenCLMemType mem_type) { out_mem_type_ = mem_type; }

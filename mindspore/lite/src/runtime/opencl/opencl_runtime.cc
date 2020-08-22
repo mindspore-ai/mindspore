@@ -20,6 +20,7 @@
 #ifdef SHARING_MEM_WITH_OPENGL
 #include <EGL/egl.h>
 #endif
+#include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/opencl/opencl_allocator.h"
 #ifdef PROGRAM_WITH_IL
@@ -80,7 +81,7 @@ int OpenCLRuntime::Init() {
   std::unique_lock<std::mutex> lck(g_init_mtx);
 
   if (init_done_) {
-    return 0;
+    return RET_OK;
   }
   MS_LOG(INFO) << "OpenCL version: CL_TARGET_OPENCL_VERSION " << CL_TARGET_OPENCL_VERSION;
   MS_LOG(INFO) << "CL_HPP_TARGET_OPENCL_VERSION " << CL_HPP_TARGET_OPENCL_VERSION;
@@ -89,7 +90,7 @@ int OpenCLRuntime::Init() {
 #ifdef USE_OPENCL_WRAPPER
   if (false == OpenCLWrapper::GetInstance()->LoadOpenCLLibrary()) {
     MS_LOG(ERROR) << "Load OpenCL symbols failed!";
-    return 1;
+    return RET_ERROR;
   }
 #endif  // USE_OPENCL_WRAPPER
 
@@ -97,7 +98,7 @@ int OpenCLRuntime::Init() {
   cl::Platform::get(&platforms);
   if (platforms.size() == 0) {
     MS_LOG(ERROR) << "OpenCL Platform not found!";
-    return 1;
+    return RET_ERROR;
   }
 
   // search GPU
@@ -119,7 +120,7 @@ int OpenCLRuntime::Init() {
   // not found, return error code.
   if (devices.size() == 0) {
     MS_LOG(ERROR) << "OpenCL Device not found!";
-    return 1;
+    return RET_ERROR;
   }
 
   device_ = std::make_shared<cl::Device>();
@@ -158,7 +159,7 @@ int OpenCLRuntime::Init() {
 #endif
   if (err != CL_SUCCESS) {
     MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(err);
-    return 1;
+    return RET_ERROR;
   }
 
   // get cache size, compute units and frequency.
@@ -206,7 +207,7 @@ int OpenCLRuntime::Init() {
   default_command_queue_ = std::make_shared<cl::CommandQueue>(*context_, *device_, properties, &err);
   if (err != CL_SUCCESS) {
     MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(err);
-    return 1;
+    return RET_ERROR;
   }
 
   allocator_ = std::make_shared<OpenCLAllocator>();
@@ -217,7 +218,7 @@ int OpenCLRuntime::Init() {
   init_done_ = true;
   MS_LOG(INFO) << "OpenCLRuntime init done!";
 
-  return 0;
+  return RET_OK;
 }
 
 OpenCLRuntime::~OpenCLRuntime() {
@@ -314,12 +315,12 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
     auto status = this->LoadProgram(program_name, &program);
     if (!status) {
       MS_LOG(ERROR) << "load program (" << program_name << ") failed!";
-      return 1;
+      return RET_ERROR;
     }
     status = this->BuildProgram(build_options_str, &program);
     if (!status) {
       MS_LOG(ERROR) << program_name << " build failed!";
-      return 1;
+      return RET_ERROR;
     }
     program_map_.emplace(build_program_key, program);
   }
@@ -328,9 +329,9 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
   kernel = cl::Kernel(program, kernel_name.c_str(), &err);
   if (err != CL_SUCCESS) {
     MS_LOG(ERROR) << kernel_name << " Kernel create failed:" << CLErrorCode(err);
-    return 1;
+    return RET_ERROR;
   }
-  return 0;
+  return RET_OK;
 }
 
 // Run Kernel with 1D, 2D, 3D group size, and local size can be empty.
@@ -365,10 +366,10 @@ int OpenCLRuntime::RunKernel(const cl_kernel &kernel, const std::vector<size_t> 
 
   if (error != CL_SUCCESS) {
     MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(error);
-    return 1;
+    return RET_ERROR;
   }
   MS_LOG(DEBUG) << "RunKernel success!";
-  return 0;
+  return RET_OK;
 }
 
 // Run Kernel with 1D, 2D, 3D group size, and local size can be empty.
@@ -413,14 +414,14 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
     }
   } else {
     MS_LOG(ERROR) << "Not supported NDRange!";
-    return 1;
+    return RET_ERROR;
   }
 
   err = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global_range, local_range, nullptr, &event);
 
   if (err != CL_SUCCESS) {
     MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(err);
-    return 1;
+    return RET_ERROR;
   }
   MS_LOG(DEBUG) << "RunKernel success!";
 #if MS_OPENCL_PROFILE
@@ -432,7 +433,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
   double nanoSeconds = time_end - time_start;
   MS_LOG(INFO) << "OpenCl Execution time is: " << nanoSeconds / 1000000.0 << "ms";
 #endif
-  return 0;
+  return RET_OK;
 }
 
 // get gpu divce type
@@ -534,7 +535,7 @@ void *OpenCLRuntime::MapBuffer(const cl::Buffer buffer, int flags, size_t size, 
 
 int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::CommandQueue *command_queue, bool sync) const {
   if (svm_capabilities_ & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
-    return 0;
+    return RET_OK;
   }
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
@@ -563,7 +564,7 @@ int OpenCLRuntime::UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::Comm
 
 int OpenCLRuntime::UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue) const {
   if (svm_capabilities_ & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
-    return 0;
+    return RET_OK;
   }
   if (command_queue == nullptr) {
     command_queue = default_command_queue_.get();
@@ -578,7 +579,7 @@ bool OpenCLRuntime::SyncCommandQueue(cl::CommandQueue *command_queue) {
   cl_int ret = command_queue->finish();
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Command queue sync failed: " << CLErrorCode(ret);
-    return 1;
+    return RET_ERROR;
   }
   return ret == CL_SUCCESS;
 }

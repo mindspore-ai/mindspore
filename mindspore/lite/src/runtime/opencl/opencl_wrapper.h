@@ -237,4 +237,3 @@ class OpenCLWrapper {
 }  // namespace mindspore::lite::opencl
 #endif  // USE_OPENCL_WRAPPER
 #endif  // MINDSPORE_LITE_SRC_OPENCL_WRAPPER_H_
-

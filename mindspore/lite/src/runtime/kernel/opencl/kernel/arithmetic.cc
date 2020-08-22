@@ -70,7 +70,7 @@ int ArithmeticOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
-  return 0;
+  return RET_OK;
 }
 
 int ArithmeticOpenCLKernel::Init() {

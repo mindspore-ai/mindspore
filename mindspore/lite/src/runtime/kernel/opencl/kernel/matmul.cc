@@ -67,10 +67,10 @@ int MatMulOpenCLKernel::Init() {
     in_tensors_[0]->SetFormat(schema::Format_NC4);
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return 0;
+  return RET_OK;
 }
 
-int MatMulOpenCLKernel::ReSize() { return 0; }
+int MatMulOpenCLKernel::ReSize() { return RET_OK; }
 
 void MatMulOpenCLKernel::PadWeight() {
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
@@ -147,7 +147,7 @@ int MatMulOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCO);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, hasBias_ ? 1 : 0);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
-  return 0;
+  return RET_OK;
 }
 
 kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

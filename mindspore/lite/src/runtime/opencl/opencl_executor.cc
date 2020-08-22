@@ -21,6 +21,9 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::opencl {
+
+int OpenCLExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
+
 int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tensor::Tensor *> &outputs,
                         std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                         const session::KernelCallBack &before, const session::KernelCallBack &after) {
@@ -70,137 +73,5 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
     }
   }
   return RET_OK;
-}
-
-int OpenCLExecutor::TransformTensorLayout(tensor::Tensor *tensor, schema::Format src_format, schema::Format dst_format,
-                                          bool trans_dir) {
-  MS_ASSERT(nullptr != tensor);
-  MS_ASSERT(4 == tensor->shape().size());
-  auto data_type = tensor->data_type();
-  switch (data_type) {
-    case kNumberTypeInt8:
-      return TransformTensorLayoutUint8(tensor, src_format, dst_format, trans_dir);
-    case kNumberTypeFloat32:
-      return TransformTensorLayoutFp32(tensor, src_format, dst_format, trans_dir);
-    default:
-      MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                    << schema::EnumNameFormat(dst_format);
-      return RET_ERROR;
-  }
-}
-
-int OpenCLExecutor::TransformTensorLayoutFp32(tensor::Tensor *tensor, schema::Format src_format,
-                                              schema::Format dst_format, bool trans_dir) {
-  MS_ASSERT(nullptr != tensor);
-  MS_ASSERT(nullptr != allocator_);
-  MS_ASSERT(4 == tensor->shape().size());
-  if (trans_dir) {
-    if (is_image2d_out_) {
-      return TransformTensorLayoutToImage(tensor, src_format, dst_format);
-    } else {
-      return TransformTensorLayoutToBuffer(tensor, src_format, dst_format);
-    }
-  } else {
-    if (is_image2d_out_) {
-      return TransformTensorLayoutFromImage(tensor, src_format, dst_format);
-    } else {
-      return TransformTensorLayoutToBuffer(tensor, src_format, dst_format);
-    }
-  }
-}
-
-int OpenCLExecutor::TransformTensorLayoutToBuffer(tensor::Tensor *tensor, schema::Format src_format,
-                                                  schema::Format dst_format) {
-  if (dst_format == schema::Format_NHWC4) {
-    auto *src_data = tensor->Data();
-    size_t C4 = UP_DIV(tensor->Channel(), C4NUM);
-    std::vector<size_t> img_size{tensor->Width() * C4, (size_t)tensor->Height(), CL_FLOAT};
-    if (src_format == schema::Format_NHWC) {
-      auto *dst_data = allocator_->Malloc(tensor->Size(), img_size);
-      if (dst_data == nullptr) {
-        MS_LOG(ERROR) << "Malloc data failed";
-        return RET_ERROR;
-      }
-      dst_data = reinterpret_cast<FLOAT_t *>(allocator_->MapBuffer(dst_data, CL_MAP_WRITE, nullptr, true));
-      PackNHWCToNHWC4Fp32(src_data, dst_data, tensor->Batch(), tensor->Height() * tensor->Width(), tensor->Channel());
-      tensor->SetData(dst_data);
-      allocator_->Free(src_data);
-      allocator_->UnmapBuffer(dst_data);
-    }
-    tensor->SetFormat(dst_format);
-    return RET_OK;
-  } else if (dst_format == schema::Format_NHWC) {
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                  << schema::EnumNameFormat(dst_format) << " in float32";
-    return RET_ERROR;
-  }
-}
-
-int OpenCLExecutor::TransformTensorLayoutToImage(tensor::Tensor *tensor, schema::Format src_format,
-                                                 schema::Format dst_format) {
-  if (dst_format == schema::Format_NHWC4) {
-    tensor->SetFormat(schema::Format_NHWC4);
-    // convert to nhwc4
-    auto *src_data = tensor->Data();
-    auto *dst_data{src_data};
-    if (src_format == schema::Format_NHWC) {
-      dst_data = allocator_->Malloc(tensor->Size());
-      if (dst_data == nullptr) {
-        MS_LOG(ERROR) << "Malloc data failed";
-        return RET_ERROR;
-      }
-      dst_data = reinterpret_cast<FLOAT_t *>(allocator_->MapBuffer(dst_data, CL_MAP_WRITE, nullptr, true));
-      PackNHWCToNHWC4Fp32(src_data, dst_data, tensor->Batch(), tensor->Height() * tensor->Width(), tensor->Channel());
-      tensor->SetData(dst_data);
-      allocator_->Free(src_data);
-      allocator_->UnmapBuffer(dst_data);
-    }
-    // copy to image2d
-    src_data = dst_data;
-    size_t C4 = UP_DIV(tensor->Channel(), C4NUM);
-    std::vector<size_t> img_size{tensor->Width() * C4, (size_t)tensor->Height(), CL_FLOAT};
-    dst_data = allocator_->CreateImageFromHost(src_data, tensor->Size(), img_size);
-    tensor->SetData(dst_data);
-    allocator_->Free(src_data);
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                  << schema::EnumNameFormat(dst_format) << " in float32";
-    return RET_ERROR;
-  }
-}
-
-int OpenCLExecutor::TransformTensorLayoutFromImage(tensor::Tensor *tensor, schema::Format src_format,
-                                                   schema::Format dst_format) {
-  if (dst_format == schema::Format_NHWC) {
-    auto src_data = tensor->Data();
-    auto dst_data = allocator_->Malloc(tensor->Size());
-    cl::Image2D *out_mem = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-    std::vector<size_t> img_size;
-    allocator_->GetImageSize(src_data, &img_size);
-    auto origin = cl::array<cl::size_type, 3U>{0, 0, 0};
-    auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
-    auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-    ocl_runtime->GetDefaultCommandQueue()->enqueueReadImage(*out_mem, CL_TRUE, origin, region, 0, 0, dst_data);
-    tensor->SetData(dst_data);
-    allocator_->Free(src_data);
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                  << schema::EnumNameFormat(dst_format) << " in float32";
-    return RET_ERROR;
-  }
-}
-
-int OpenCLExecutor::TransformTensorLayoutUint8(tensor::Tensor *tensor, schema::Format src_format,
-                                               schema::Format dst_format, bool is_image) {
-  MS_ASSERT(nullptr != tensor);
-  MS_ASSERT(4 == tensor->shape().size());
-  //  auto src_format = tensor->GetFormat();
-  MS_LOG(ERROR) << "Unsupported layout transform: " << schema::EnumNameFormat(tensor->GetFormat()) << " to "
-                << schema::EnumNameFormat(dst_format) << " in uint8";
-  return RET_ERROR;
 }
 }  // namespace mindspore::lite::opencl
