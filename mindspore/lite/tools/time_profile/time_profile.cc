@@ -273,7 +273,7 @@ int TimeProfile::PrintResult(const std::vector<std::string> &title,
       columnLenMax.at(i) = printBuf.size();
     }
     printBuf.resize(columnLenMax.at(i), ' ');
-    printf("%s", printBuf.c_str());
+    printf("%s\t", printBuf.c_str());
   }
   printf("\n");
   for (size_t i = 0; i < rows.size(); i++) {
