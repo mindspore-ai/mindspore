@@ -40,9 +40,6 @@ class ParallelExecutor : public Executor {
   inline void SetResult(const int index, const int result) { results.at(index) = result; }
 
  private:
-  void PrepareReadyKernels(const std::vector<kernel::LiteKernel *> &kernels);
-
- private:
   predict::ThreadPool *pool;
   std::unordered_map<kernel::LiteKernel *, size_t> refCount;
   std::vector<kernel::LiteKernel *> readyKernels;
