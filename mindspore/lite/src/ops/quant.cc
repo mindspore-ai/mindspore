@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_ANF_RESHAPE_PARSER_H
-#define MINDSPORE_ANF_RESHAPE_PARSER_H
-#include "tools/anf_importer/anf_populater/anf_node_populater.h"
+#include "src/ops/quant.h"
 #include <vector>
-namespace mindspore::lite {
-class AnfReshapePopulater : public AnfNodePopulater {
- public:
-  AnfReshapePopulater() = default;
-  ~AnfReshapePopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtr,
-               const std::vector<AnfNodePtr> &inputs) override;
-};
-}  // namespace mindspore::lite
+#include <memory>
 
-#endif  // MINDSPORE_ANF_RESHAPE_PARSER_H
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int Quant::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::OnnxInt8QuantizeT>();
+  this->primitive_->value.type = schema::PrimitiveType_OnnxInt8Quantize;
+  this->primitive_->value.value = attr.release();
+
+  return RET_OK;
+}
+#endif
+}  // namespace lite
+}  // namespace mindspore

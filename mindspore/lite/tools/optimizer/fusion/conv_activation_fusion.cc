@@ -16,10 +16,13 @@
 
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
 #include <memory>
-#include "mindspore/lite/src/ops/activation.h"
 #include "src/ops/primitive_c.h"
+#include "src/ops/conv2d.h"
+#include "src/ops/depthwise_conv2d.h"
+#include "src/ops/activation.h"
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
+
 
 namespace mindspore::opt {
 namespace {
@@ -44,8 +47,11 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   CheckIfCNodeIsNull(act_node);
   CheckInputSize(act_node, kActivationInputsLength);
 
-  auto act_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(act_node->input(0));
-  if (act_primitive->GetPrimitiveT()->value.AsActivation()->type != activation_type) {
+  auto primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(act_node->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Activation>>(primitivec));
+  auto act_primitivec = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitivec);
+  MS_ASSERT(act_primitivec != nullptr);
+  if (act_primitivec->GetType() != activation_type) {
     return node;
   }
   AnfNodePtr pre_node = act_node->input(1);
@@ -59,10 +65,16 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
     MS_ASSERT(primitiveT_value);
     if (node_type == schema::PrimitiveType_Conv2D) {
-      primitiveT_value->GetPrimitiveT()->value.AsConv2D()->activationType = activation_type;
+      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value));
+      auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value);
+      MS_ASSERT(primc != nullptr);
+      primc->SetActivationType(activation_type);
       return pre_node;
     } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
-      primitiveT_value->GetPrimitiveT()->value.AsDepthwiseConv2D()->activationType = activation_type;
+      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value));
+      auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value);
+      MS_ASSERT(primc != nullptr);
+      primc->SetActivationType(activation_type);
       return pre_node;
     } else {
       MS_LOG(EXCEPTION) << "conv activation pass match only conv2d or depthwise_conv2d ";

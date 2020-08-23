@@ -28,9 +28,11 @@ namespace lite {
 class NotEqual : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  NotEqual() = default;
   explicit NotEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit NotEqual(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

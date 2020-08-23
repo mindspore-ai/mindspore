@@ -28,10 +28,11 @@ namespace lite {
 class FusedBatchNorm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  FusedBatchNorm() = default;
   explicit FusedBatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit FusedBatchNorm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetEpsilon() const;
   float GetMomentum() const;
   int GetSpatial() const;

@@ -32,6 +32,7 @@ std::vector<size_t> GetGraphInputNodes(const schema::MetaGraph *meta_graph) {
     for (size_t j = 0; j < meta_graph->nodes()->size(); j++) {
       auto *cNode = meta_graph->nodes()->GetAs<schema::CNode>(j);
       MS_ASSERT(nullptr != cNode);
+      MS_ASSERT(nullptr != cNode->inputIndex());
       for (size_t k = 0; k < cNode->inputIndex()->size(); k++) {
         if (cNode->inputIndex()->GetAs<uint32_t>(k) == input_index) {
           if (!IsContain<size_t>(ret, j)) {

@@ -28,10 +28,12 @@ namespace lite {
 class BatchNorm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  BatchNorm() = default;
   explicit BatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit BatchNorm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetEpsilon() const;
   void SetEpsilon(float epsilon);
 };

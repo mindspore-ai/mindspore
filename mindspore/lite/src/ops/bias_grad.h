@@ -28,10 +28,11 @@ namespace lite {
 class BiasGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  BiasGrad() = default;
   explicit BiasGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit BiasGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetAxis() const;
   void SetAxis(const std::vector<int> &axis);
 };

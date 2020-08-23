@@ -28,10 +28,11 @@ namespace lite {
 class CaffePReLU : public Activation {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  CaffePReLU() = default;
   explicit CaffePReLU(schema::PrimitiveT *primitive) : Activation(primitive) {}
-#endif
+#else
   explicit CaffePReLU(schema::Primitive *primitive) : Activation(primitive) {}
-
+#endif
   bool GetChannelShared() const;
   void SetChannelShared(bool channel_shared);
 };

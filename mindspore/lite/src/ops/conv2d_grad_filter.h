@@ -28,10 +28,11 @@ namespace lite {
 class Conv2DGradFilter : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Conv2DGradFilter() = default;
   explicit Conv2DGradFilter(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Conv2DGradFilter(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetFormat() const;
   int GetGroup() const;
   int GetChannelIn() const;

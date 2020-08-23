@@ -20,17 +20,35 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
+#include <memory>
 #include "src/ops/primitive_c.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
 class Conv2D : public PrimitiveC {
- public:
 #ifdef PRIMITIVE_WRITEABLE
+
+ public:
+  Conv2D() = default;
   explicit Conv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+
+ private:
+  void PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
+                                 const std::vector<AnfNodePtr> &inputs);
+  void PopulaterConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
+  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
+  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
+#else
+
+ public:
   explicit Conv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
+
+ public:
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int PadUp() const;
   int PadDown() const;

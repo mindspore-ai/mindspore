@@ -28,10 +28,11 @@ namespace lite {
 class Elu : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Elu() = default;
   explicit Elu(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Elu(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetAlpha() const;
   void SetAlpha(float alpha);
 };

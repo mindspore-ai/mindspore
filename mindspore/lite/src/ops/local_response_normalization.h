@@ -28,10 +28,11 @@ namespace lite {
 class LocalResponseNormalization : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  LocalResponseNormalization() = default;
   explicit LocalResponseNormalization(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit LocalResponseNormalization(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetDepthRadius() const;
   float GetBias() const;
   float GetAlpha() const;

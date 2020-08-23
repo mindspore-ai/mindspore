@@ -28,9 +28,11 @@ namespace lite {
 class Minimum : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Minimum() = default;
   explicit Minimum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Minimum(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

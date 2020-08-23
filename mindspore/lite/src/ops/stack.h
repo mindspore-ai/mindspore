@@ -28,10 +28,11 @@ namespace lite {
 class Stack : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Stack() = default;
   explicit Stack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Stack(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   int GetN() const;

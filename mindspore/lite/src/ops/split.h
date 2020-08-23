@@ -28,10 +28,11 @@ namespace lite {
 class Split : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Split() = default;
   explicit Split(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Split(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetNumberSplit() const;
   std::vector<int> GetSizeSplits() const;

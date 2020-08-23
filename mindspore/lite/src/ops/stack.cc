@@ -84,8 +84,8 @@ int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
       }
     }
     if (inputs[i]->data_type() != input0_data_type) {
-      MS_LOG(ERROR) << "All input shuld have the same data type!input[" << i << "] data type = "
-                    << inputs[i]->data_type();
+      MS_LOG(ERROR) << "All input shuld have the same data type!input[" << i
+                    << "] data type = " << inputs[i]->data_type();
       return RET_PARAM_INVALID;
     }
   }

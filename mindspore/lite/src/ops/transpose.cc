@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/transpose.h"
+#include <memory>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 
@@ -26,6 +27,32 @@ bool Transpose::GetConjugate() const { return this->primitive_->value.AsTranspos
 
 void Transpose::SetPerm(const std::vector<int> &perm) { this->primitive_->value.AsTranspose()->perm = perm; }
 void Transpose::SetConjugate(bool conjugate) { this->primitive_->value.AsTranspose()->conjugate = conjugate; }
+
+int Transpose::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::TransposeT>();
+  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
+  auto inputNode = inputs[kAnfPopulaterOne];
+  if (inputNode->isa<ValueNode>()) {
+    auto valNode = inputNode->cast<ValueNodePtr>();
+    MS_ASSERT(valNode != nullptr);
+    auto val = valNode->value();
+    MS_ASSERT(val != nullptr);
+    if (val->isa<ValueTuple>()) {
+      auto tuple = val->cast<ValueTuplePtr>();
+      MS_ASSERT(tuple != nullptr);
+      for (size_t i = 0; i < tuple->size(); i++) {
+        auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+        MS_ASSERT(elem != nullptr);
+        attr->perm.emplace_back(static_cast<int>(elem->value()));
+      }
+    }
+  }
+
+  this->primitive_->value.type = schema::PrimitiveType_Transpose;
+  this->primitive_->value.value = attr.release();
+  return RET_OK;
+}
 
 #else
 

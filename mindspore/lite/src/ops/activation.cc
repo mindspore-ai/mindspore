@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/activation.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -25,6 +26,21 @@ float Activation::GetAlpha() const { return this->primitive_->value.AsActivation
 void Activation::SetType(int type) { this->primitive_->value.AsActivation()->type = (schema::ActivationType)type; }
 void Activation::SetAlpha(float alpha) { this->primitive_->value.AsActivation()->alpha = alpha; }
 
+int Activation::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::ActivationT>();
+  if (prim.name() == "ReLU") {
+    attr->type = schema::ActivationType_RELU;
+  } else if (prim.name() == "Sigmoid") {
+    attr->type = schema::ActivationType_SIGMOID;
+  } else if (prim.name() == "ReLU6") {
+    attr->type = schema::ActivationType_RELU6;
+  }
+  this->primitive_->value.type = schema::PrimitiveType_Activation;
+  this->primitive_->value.value = attr.release();
+
+  return RET_OK;
+}
 #else
 
 int Activation::GetType() const { return this->primitive_->value_as_Activation()->type(); }

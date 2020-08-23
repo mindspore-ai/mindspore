@@ -28,10 +28,11 @@ namespace lite {
 class SoftmaxCrossEntropy : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  SoftmaxCrossEntropy() = default;
   explicit SoftmaxCrossEntropy(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit SoftmaxCrossEntropy(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetAxis() const;
   void SetAxis(const std::vector<int> &axis);
 };

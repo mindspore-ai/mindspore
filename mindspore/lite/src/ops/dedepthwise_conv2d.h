@@ -28,10 +28,11 @@ namespace lite {
 class DeDepthwiseConv2D : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  DeDepthwiseConv2D() = default;
   explicit DeDepthwiseConv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit DeDepthwiseConv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetChannelIn() const;

@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/mul.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -23,6 +24,14 @@ int Mul::GetActivationType() const { return this->primitive_->value.AsMul()->act
 
 void Mul::SetActivationType(int activation_type) {
   this->primitive_->value.AsMul()->activationType = (schema::ActivationType)activation_type;
+}
+int Mul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::MulT>();
+  this->primitive_->value.type = schema::PrimitiveType_Mul;
+  this->primitive_->value.value = attr.release();
+
+  return RET_OK;
 }
 
 #else

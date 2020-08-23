@@ -35,10 +35,12 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
   auto buf = ReadFile(model_path, &size);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "the file buffer is nullptr";
+    return nullptr;
   }
   flatbuffers::Verifier verify((const uint8_t *)buf, size);
   if (!tflite::VerifyModelBuffer(verify)) {
     MS_LOG(ERROR) << "the buffer is invalid and fail to create graph";
+    return nullptr;
   }
   return tflite::UnPackModel(buf);
 }

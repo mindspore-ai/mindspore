@@ -28,10 +28,11 @@ namespace lite {
 class PowerGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  PowerGrad() = default;
   explicit PowerGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit PowerGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetPower() const;
   float GetScale() const;
   float GetShift() const;

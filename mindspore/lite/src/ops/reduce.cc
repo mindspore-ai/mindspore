@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/reduce.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +27,38 @@ int Reduce::GetMode() const { return this->primitive_->value.AsReduce()->mode; }
 void Reduce::SetAxes(const std::vector<int> &axes) { this->primitive_->value.AsReduce()->axes = axes; }
 void Reduce::SetKeepDims(int keep_dims) { this->primitive_->value.AsReduce()->keepDims = keep_dims; }
 void Reduce::SetMode(int mode) { this->primitive_->value.AsReduce()->mode = (schema::ReduceMode)mode; }
+
+int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::ReduceT>();
+  attr->mode = schema::ReduceMode_ReduceMean;
+
+  attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));
+  if (inputs.size() == kAnfPopulaterTwo) {
+    auto inputNode = inputs[kAnfPopulaterOne];
+    MS_ASSERT(inputNode != nullptr);
+    if (inputNode->isa<ValueNode>()) {
+      auto valueNode = inputNode->cast<ValueNodePtr>();
+      MS_ASSERT(valueNode != nullptr);
+      auto value = valueNode->value();
+      MS_ASSERT(value != nullptr);
+      if (value->isa<ValueTuple>()) {
+        auto valTuplPtr = dyn_cast<ValueTuple>(value);
+        MS_ASSERT(valTuplPtr != nullptr);
+        for (size_t i = 0; i < valTuplPtr->size(); i++) {
+          auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+          MS_ASSERT(elem != nullptr);
+          attr->axes.emplace_back(elem->value());
+        }
+      }
+    }
+  }
+
+  this->primitive_->value.type = schema::PrimitiveType_Reduce;
+  this->primitive_->value.value = attr.release();
+
+  return RET_OK;
+}
 
 #else
 

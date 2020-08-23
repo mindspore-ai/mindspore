@@ -28,10 +28,11 @@ namespace lite {
 class EmbeddingLookup : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  EmbeddingLookup() = default;
   explicit EmbeddingLookup(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit EmbeddingLookup(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   float GetMaxNorm() const;
   void SetMaxNorm(float max_norm);

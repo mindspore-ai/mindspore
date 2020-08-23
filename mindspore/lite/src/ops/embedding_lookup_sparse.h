@@ -28,10 +28,11 @@ namespace lite {
 class EmbeddingLookupSparse : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  EmbeddingLookupSparse() = default;
   explicit EmbeddingLookupSparse(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit EmbeddingLookupSparse(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetSpIds() const;
   std::vector<float> GetSpWeights() const;
   float GetMaxNortm() const;

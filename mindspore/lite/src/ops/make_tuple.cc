@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,20 @@
  * limitations under the License.
  */
 
-#include "tools/anf_importer/anf_populater/anf_node_populater.h"
+#include "src/ops/make_tuple.h"
+#include <vector>
+#include <memory>
 
-namespace mindspore::lite {}  // namespace mindspore::lite
+namespace mindspore {
+namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+int MakeTuple::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  this->primitive_ = new (schema::PrimitiveT);
+  auto attr = std::make_unique<schema::MakeTupleT>();
+  this->primitive_->value.type = schema::PrimitiveType_MakeTuple;
+  this->primitive_->value.value = attr.release();
+  return RET_OK;
+}
+#endif
+}  // namespace lite
+}  // namespace mindspore

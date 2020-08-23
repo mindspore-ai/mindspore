@@ -28,10 +28,11 @@ namespace lite {
 class GatherNd : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  GatherNd() = default;
   explicit GatherNd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit GatherNd(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBatchDims() const;
   void SetBatchDims(int batch_dims);

@@ -28,10 +28,11 @@ namespace lite {
 class SoftMax : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  SoftMax() = default;
   explicit SoftMax(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit SoftMax(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   void SetAxis(int axis);

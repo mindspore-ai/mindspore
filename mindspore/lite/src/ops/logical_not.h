@@ -28,9 +28,11 @@ namespace lite {
 class LogicalNot : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  LogicalNot() = default;
   explicit LogicalNot(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit LogicalNot(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

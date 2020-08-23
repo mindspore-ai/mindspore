@@ -28,10 +28,11 @@ namespace lite {
 class LeakyReLU : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  LeakyReLU() = default;
   explicit LeakyReLU(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit LeakyReLU(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   float GetNegativeSlope() const;
   void SetNegativeSlope(float negative_slope);
 };

@@ -28,10 +28,11 @@ namespace lite {
 class SparseToDense : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  SparseToDense() = default;
   explicit SparseToDense(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit SparseToDense(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetOutputShape() const;
   std::vector<int> GetSparseValue() const;
   std::vector<int> GetDefaultValue() const;

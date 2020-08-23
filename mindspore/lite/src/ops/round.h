@@ -28,9 +28,11 @@ namespace lite {
 class Round : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Round() = default;
   explicit Round(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Round(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

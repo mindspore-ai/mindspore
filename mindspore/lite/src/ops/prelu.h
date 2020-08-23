@@ -28,10 +28,11 @@ namespace lite {
 class Prelu : public Activation {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Prelu() = default;
   explicit Prelu(schema::PrimitiveT *primitive) : Activation(primitive) {}
-#endif
+#else
   explicit Prelu(schema::Primitive *primitive) : Activation(primitive) {}
-
+#endif
   std::vector<float> GetSlope() const;
   void SetSlope(const std::vector<float> &slope);
 };

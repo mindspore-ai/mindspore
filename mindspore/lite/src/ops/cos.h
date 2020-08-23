@@ -28,9 +28,11 @@ namespace lite {
 class Cos : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Cos() = default;
   explicit Cos(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Cos(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

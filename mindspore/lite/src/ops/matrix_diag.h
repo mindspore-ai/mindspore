@@ -28,10 +28,11 @@ namespace lite {
 class MatrixDiag : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MatrixDiag() = default;
   explicit MatrixDiag(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit MatrixDiag(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int GetK() const;
   int GetNumRows() const;
   int GetNumCols() const;

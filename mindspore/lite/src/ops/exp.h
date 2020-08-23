@@ -28,9 +28,11 @@ namespace lite {
 class Exp : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Exp() = default;
   explicit Exp(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Exp(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

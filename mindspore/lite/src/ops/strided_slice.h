@@ -28,10 +28,11 @@ namespace lite {
 class StridedSlice : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  StridedSlice() = default;
   explicit StridedSlice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit StridedSlice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBeginMask() const;
   int GetEndMask() const;

@@ -28,10 +28,11 @@ namespace lite {
 class FakeQuantWithMinMaxVars : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  FakeQuantWithMinMaxVars() = default;
   explicit FakeQuantWithMinMaxVars(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit FakeQuantWithMinMaxVars(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   bool GetNarrowRange() const;
   int GetNumBits() const;
   void SetNarrowRange(bool narrow_range);

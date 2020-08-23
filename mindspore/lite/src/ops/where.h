@@ -28,10 +28,11 @@ namespace lite {
 class Where : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Where() = default;
   explicit Where(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Where(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<bool> GetCondition() const;
   void SetCondition(const std::vector<bool> &condition);

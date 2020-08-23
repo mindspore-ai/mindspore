@@ -53,6 +53,7 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
+
     if (after != nullptr) {
       if (!after(PackToMSTensors(kernel->in_tensors()), PackToMSTensors(kernel->out_tensors()),
                  {kernel->name(), kernel->type_str()})) {

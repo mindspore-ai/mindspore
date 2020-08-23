@@ -28,10 +28,12 @@ namespace lite {
 class BiasAdd : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  BiasAdd() = default;
   explicit BiasAdd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit BiasAdd(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   std::vector<int> GetAxis() const;
   void SetAxis(const std::vector<int> &axis);
 };

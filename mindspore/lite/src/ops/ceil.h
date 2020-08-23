@@ -28,9 +28,11 @@ namespace lite {
 class Ceil : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Ceil() = default;
   explicit Ceil(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Ceil(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

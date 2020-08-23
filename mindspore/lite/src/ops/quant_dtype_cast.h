@@ -28,10 +28,12 @@ namespace lite {
 class QuantDTypeCast : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  QuantDTypeCast() = default;
   explicit QuantDTypeCast(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  MS_DECLARE_PARENT(QuantDTypeCast, PrimitiveC);
+#else
   explicit QuantDTypeCast(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetSrcT() const;
   int GetDstT() const;

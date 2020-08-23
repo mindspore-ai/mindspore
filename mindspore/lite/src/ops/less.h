@@ -28,9 +28,11 @@ namespace lite {
 class Less : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Less() = default;
   explicit Less(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Less(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

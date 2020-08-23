@@ -28,11 +28,14 @@ namespace lite {
 class Flatten : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Flatten() = default;
   explicit Flatten(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Flatten(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 };
 }  // namespace lite
 }  // namespace mindspore

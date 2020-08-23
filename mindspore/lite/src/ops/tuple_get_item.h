@@ -14,19 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_ANF_CONCAT_PARSER_H
-#define MINDSPORE_ANF_CONCAT_PARSER_H
-#include "tools/anf_importer/anf_populater/anf_node_populater.h"
+#ifndef LITE_MINDSPORE_LITE_SRC_OPS_TUPLE_GET_ITEM_H_
+#define LITE_MINDSPORE_LITE_SRC_OPS_TUPLE_GET_ITEM_H_
+
 #include <vector>
+#include "src/ops/primitive_c.h"
 
-namespace mindspore::lite {
-class AnfConcatPopulater : public AnfNodePopulater {
+namespace mindspore {
+namespace lite {
+class TupleGetItem : public PrimitiveC {
  public:
-  AnfConcatPopulater() = default;
-  ~AnfConcatPopulater() override = default;
-  int Populate(const PrimitivePtr &prim, PrimitiveC *primitiveCPtrr,
-               const std::vector<AnfNodePtr> &inputs) override;
+#ifdef PRIMITIVE_WRITEABLE
+  TupleGetItem() = default;
+  explicit TupleGetItem(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
+  explicit TupleGetItem(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+#endif
 };
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 
-#endif  // MINDSPORE_ANF_CONCAT_PARSER_H
+#endif  // LITE_MINDSPORE_LITE_SRC_OPS_TUPLE_GET_ITEM_H_

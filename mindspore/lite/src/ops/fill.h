@@ -28,10 +28,11 @@ namespace lite {
 class Fill : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Fill() = default;
   explicit Fill(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Fill(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetDims() const;
   void SetDims(const std::vector<int> &dims);

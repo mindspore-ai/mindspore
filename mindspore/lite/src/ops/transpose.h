@@ -28,10 +28,12 @@ namespace lite {
 class Transpose : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Transpose() = default;
   explicit Transpose(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit Transpose(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetPerm() const;
   bool GetConjugate() const;

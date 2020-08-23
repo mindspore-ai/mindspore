@@ -28,10 +28,11 @@ namespace lite {
 class Sub : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Sub() = default;
   explicit Sub(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Sub(schema::Primitive *primitive) : Arithmetic(primitive) {}
-
+#endif
   int GetActivationType() const;
   void SetActivationType(int activation_type);
 };

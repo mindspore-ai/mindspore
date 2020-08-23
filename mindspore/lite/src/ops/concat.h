@@ -28,10 +28,12 @@ namespace lite {
 class Concat : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Concat() = default;
   explicit Concat(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+#else
   explicit Concat(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   int GetN() const;

@@ -15,6 +15,9 @@
  */
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include <memory>
+#include "src/ops/conv2d.h"
+#include "src/ops/depthwise_conv2d.h"
+#include "src/ops/deconv2d.h"
 #include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
@@ -57,12 +60,20 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   MS_ASSERT(primitive != nullptr);
   auto type = (schema::PrimitiveType)primitive->Type();
   if (type == schema::PrimitiveType_Conv2D) {
-    return primitive->GetPrimitiveT()->value.AsConv2D()->channelOut;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive);
+    MS_ASSERT(primc != nullptr);
+    return primc->GetChannelOut();
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    return primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelMultiplier *
-           primitive->GetPrimitiveT()->value.AsDepthwiseConv2D()->channelIn;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive);
+    MS_ASSERT(primc != nullptr);
+    return primc->GetChannelMultiplier() * primc->GetChannelIn();
   } else if (type == schema::PrimitiveType_DeConv2D) {
-    return primitive->GetPrimitiveT()->value.AsDeConv2D()->channelOut;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DeConv2D>>(primitive));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DeConv2D>>(primitive);
+    MS_ASSERT(primc != nullptr);
+    return primc->GetChannelOut();
   } else {
     MS_LOG(ERROR) << "Unsupported opType, " << type;
     return 0;
@@ -83,7 +94,7 @@ void GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, c
   if (kernel_nums <= 0) {
     MS_LOG(EXCEPTION) << "kernel num less than 0";
   }
-  auto add_bias_data = new(std::nothrow) float[kernel_nums];
+  auto add_bias_data = new (std::nothrow) float[kernel_nums];
   if (add_bias_data == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
     return;
@@ -151,13 +162,22 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
   GenConvNewBias(func_graph, conv_node, add_node);
   auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
   MS_ASSERT(primitiveT_value != nullptr);
-  auto type = primitiveT_value->GetPrimitiveT()->value.type;
+  auto type = primitiveT_value->Type();
   if (type == schema::PrimitiveType_Conv2D) {
-    primitiveT_value->GetPrimitiveT()->value.AsConv2D()->hasBias = true;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value);
+    MS_ASSERT(primc != nullptr);
+    primc->SetHasBias(true);
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    primitiveT_value->GetPrimitiveT()->value.AsDepthwiseConv2D()->hasBias = true;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value);
+    MS_ASSERT(primc != nullptr);
+    primc->SetHasBias(true);
   } else if (type == schema::PrimitiveType_DeConv2D) {
-    primitiveT_value->GetPrimitiveT()->value.AsDeConv2D()->hasBias = true;
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DeConv2D>>(primitiveT_value));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DeConv2D>>(primitiveT_value);
+    MS_ASSERT(primc != nullptr);
+    primc->SetHasBias(true);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported opType, " << type;
   }

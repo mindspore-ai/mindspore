@@ -27,9 +27,11 @@ namespace lite {
 class Greater : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Greater() = default;
   explicit Greater(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit Greater(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

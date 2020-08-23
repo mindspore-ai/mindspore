@@ -28,10 +28,11 @@ namespace lite {
 class Crop : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Crop() = default;
   explicit Crop(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Crop(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   long GetAxis() const;
   std::vector<long> GetOffsets() const;

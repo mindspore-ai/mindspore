@@ -28,10 +28,11 @@ namespace lite {
 class TopK : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  TopK() = default;
   explicit TopK(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit TopK(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetK() const;
   bool GetSorted() const;

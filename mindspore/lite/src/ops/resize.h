@@ -28,10 +28,11 @@ namespace lite {
 class Resize : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Resize() = default;
   explicit Resize(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Resize(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetMethod() const;

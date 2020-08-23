@@ -28,9 +28,11 @@ namespace lite {
 class Log : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Log() = default;
   explicit Log(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
-#endif
+#else
   explicit Log(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore

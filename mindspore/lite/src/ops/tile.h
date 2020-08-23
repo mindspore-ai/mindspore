@@ -28,10 +28,11 @@ namespace lite {
 class Tile : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  Tile() = default;
   explicit Tile(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-#endif
+#else
   explicit Tile(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-
+#endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetMultiples() const;
   void SetMultiples(const std::vector<int> &multiples);

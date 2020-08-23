@@ -28,9 +28,11 @@ namespace lite {
 class SquaredDifference : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  SquaredDifference() = default;
   explicit SquaredDifference(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
-#endif
+#else
   explicit SquaredDifference(schema::Primitive *primitive) : Arithmetic(primitive) {}
+#endif
 };
 }  // namespace lite
 }  // namespace mindspore
