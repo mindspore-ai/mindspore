@@ -15,14 +15,28 @@
  */
 
 #include "nnacl/fp16/matmul_fp16.h"
-void ColMajor2Row8MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
-  for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
-      int cd8 = c / 8;
-      int cm8 = c % 8;
-      dst_ptr[cd8 * 8 * row + r * 8 + cm8] = src_ptr[c * row + r];
+
+void ColMajor2Row8MajorFp16(void *src_ptr, float16_t *dst_ptr, size_t row, size_t col, bool src_float16) {
+  if (src_float16) {
+    float16_t *src = (float16_t *)src_ptr;
+    for (int r = 0; r < row; r++) {
+      for (int c = 0; c < col; c++) {
+        int cd8 = c / 8;
+        int cm8 = c % 8;
+        dst_ptr[cd8 * 8 * row + r * 8 + cm8] = (float16_t)(src[c * row + r]);
+      }
+    }
+  } else {
+    float *src = (float *)src_ptr;
+    for (int r = 0; r < row; r++) {
+      for (int c = 0; c < col; c++) {
+        int cd8 = c / 8;
+        int cm8 = c % 8;
+        dst_ptr[cd8 * 8 * row + r * 8 + cm8] = (float16_t)(src[c * row + r]);
+      }
     }
   }
+  return;
 }
 
 void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,

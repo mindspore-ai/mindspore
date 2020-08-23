@@ -23,6 +23,14 @@
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
+
+ConvolutionBaseFP16CPUKernel::~ConvolutionBaseFP16CPUKernel() {
+  if (fp16_weight_ != nullptr) {
+    free(fp16_weight_);
+    fp16_weight_ = nullptr;
+  }
+}
+
 int ConvolutionBaseFP16CPUKernel::GetExecuteTensor() {
   // ===================input====================//
   auto input_tensor = in_tensors_.at(kInputIndex);
@@ -65,6 +73,7 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
   } else {
     auto *origin_weight = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->Data());
     execute_weight_ = origin_weight;
+    fp16_weight_ = nullptr;
   }
   return RET_OK;
 }

@@ -32,7 +32,7 @@ extern "C" {
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, bool write_nhwc);
 
-void ColMajor2Row8MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col);
+void ColMajor2Row8MajorFp16(void *src_ptr, float16_t *dst_ptr, size_t row, size_t col, bool src_float16);
 
 void RowMajor2Col16MajorFp16(float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col);
 
