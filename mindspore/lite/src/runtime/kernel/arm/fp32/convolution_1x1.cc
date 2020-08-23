@@ -59,7 +59,7 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->col_ = conv_param_->output_channel_;
   matmul_param_->deep_ = conv_param_->input_channel_;
-  matmul_param_->row_8_ = UP_ROUND(matmul_param_->row_, C8NUM);
+  matmul_param_->row_12_ = UP_ROUND(matmul_param_->row_, C12NUM);
   matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
   matmul_param_->act_type_ = (conv_param_->is_relu6_) ? ActType_Relu6 : ActType_No;
   matmul_param_->act_type_ = (conv_param_->is_relu_) ? ActType_Relu : matmul_param_->act_type_;
@@ -100,12 +100,12 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, C8NUM), thread_count_) * C8NUM;
 
-  pack_input_ = reinterpret_cast<float *>(malloc(matmul_param_->row_8_ * matmul_param_->deep_ * sizeof(float)));
+  pack_input_ = reinterpret_cast<float *>(malloc(matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float)));
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
   }
-  memset(pack_input_, 0, matmul_param_->row_8_ * matmul_param_->deep_ * sizeof(float));
+  memset(pack_input_, 0, matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float));
   return RET_OK;
 }
 
@@ -118,7 +118,7 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
     input_ptr_ = src_input;
   }
 
-  RowMajor2Col8Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+  RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
   return;
 }
 
@@ -143,7 +143,7 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
 
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id;
 
-  MatMul(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
+  MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
          output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
          matmul_param_->row_, cur_oc, matmul_param_->col_, true);
 
