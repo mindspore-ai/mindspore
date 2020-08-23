@@ -78,8 +78,6 @@ if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
         set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_SHARED_LINKER_FLAGS}")
         set(CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_EXE_LINKER_FLAGS}")
         string(REPLACE    " -g " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
     endif ()
 endif ()
 
