@@ -19,8 +19,9 @@ from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name,\
-                          raise_none_error
+    raise_none_error
 from ._utils.custom_ops import exp_by_step, log_by_step
+
 
 class Geometric(Distribution):
     """
@@ -100,7 +101,7 @@ class Geometric(Distribution):
         Constructor of Geometric distribution.
         """
         param = dict(locals())
-        valid_dtype = mstype.int_type + mstype.uint_type
+        valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         check_type(dtype, valid_dtype, "Geometric")
         super(Geometric, self).__init__(seed, dtype, name, param)
         self.parameter_type = mstype.float32
@@ -129,7 +130,6 @@ class Geometric(Distribution):
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
         self.uniform = C.uniform
-
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -242,7 +242,6 @@ class Geometric(Distribution):
         zeros = self.fill(self.dtypeop(probs1), self.shape(cdf), 0.0)
         comp = self.less(value, zeros)
         return self.select(comp, zeros, cdf)
-
 
     def _kl_loss(self, dist, probs1_b, probs1=None):
         r"""
