@@ -34,10 +34,10 @@ class Crop : public PrimitiveC {
   explicit Crop(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
-  long GetAxis() const;
-  std::vector<long> GetOffsets() const;
-  void SetAxis(long axis);
-  void SetOffsets(const std::vector<long> &offsets);
+  int64_t GetAxis() const;
+  std::vector<int64_t> GetOffsets() const;
+  void SetAxis(int64_t axis);
+  void SetOffsets(const std::vector<int64_t> &offsets);
 };
 }  // namespace lite
 }  // namespace mindspore

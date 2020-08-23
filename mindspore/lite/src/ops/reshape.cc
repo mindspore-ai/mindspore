@@ -25,10 +25,10 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Reshape::GetFormat() const { return this->primitive_->value.AsReshape()->format; }
-std::vector<long> Reshape::GetShape() const { return this->primitive_->value.AsReshape()->shape; }
+std::vector<int64_t> Reshape::GetShape() const { return this->primitive_->value.AsReshape()->shape; }
 
 void Reshape::SetFormat(int format) { this->primitive_->value.AsReshape()->format = (schema::Format)format; }
-void Reshape::SetShape(const std::vector<long> &shape) { this->primitive_->value.AsReshape()->shape = shape; }
+void Reshape::SetShape(const std::vector<int64_t> &shape) { this->primitive_->value.AsReshape()->shape = shape; }
 int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   this->primitive_ = new (schema::PrimitiveT);
   auto attr = std::make_unique<schema::ReshapeT>();
@@ -59,13 +59,13 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
 #else
 
 int Reshape::GetFormat() const { return this->primitive_->value_as_Reshape()->format(); }
-std::vector<long> Reshape::GetShape() const {
+std::vector<int64_t> Reshape::GetShape() const {
   auto fb_vector = this->primitive_->value_as_Reshape()->shape();
-  return std::vector<long>(fb_vector->begin(), fb_vector->end());
+  return std::vector<int64_t>(fb_vector->begin(), fb_vector->end());
 }
 
 void Reshape::SetFormat(int format) {}
-void Reshape::SetShape(const std::vector<long> &shape) {}
+void Reshape::SetShape(const std::vector<int64_t> &shape) {}
 #endif
 
 int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_shape) const {

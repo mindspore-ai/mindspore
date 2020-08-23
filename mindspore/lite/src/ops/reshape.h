@@ -36,9 +36,9 @@ class Reshape : public PrimitiveC {
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
-  std::vector<long> GetShape() const;
+  std::vector<int64_t> GetShape() const;
   void SetFormat(int format);
-  void SetShape(const std::vector<long> &shape);
+  void SetShape(const std::vector<int64_t> &shape);
 
  private:
   int CalNewShape(const lite::tensor::Tensor *in_tensor, std::vector<int> *out_shape) const;

@@ -36,14 +36,14 @@ class Resize : public PrimitiveC {
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetMethod() const;
-  long GetNewHeight() const;
-  long GetNewWidth() const;
+  int64_t GetNewHeight() const;
+  int64_t GetNewWidth() const;
   bool GetAlignCorners() const;
   bool GetPreserveAspectRatio() const;
   void SetFormat(int format);
   void SetMethod(int method);
-  void SetNewHeight(long new_height);
-  void SetNewWidth(long new_width);
+  void SetNewHeight(int64_t new_height);
+  void SetNewWidth(int64_t new_width);
   void SetAlignCorners(bool align_corners);
   void SetPreserveAspectRatio(bool preserve_aspect_ratio);
 };

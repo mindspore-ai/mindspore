@@ -19,18 +19,18 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<long> Permute::GetOrder() const { return this->primitive_->value.AsPermute()->order; }
+std::vector<int64_t> Permute::GetOrder() const { return this->primitive_->value.AsPermute()->order; }
 
-void Permute::SetOrder(const std::vector<long> &order) { this->primitive_->value.AsPermute()->order = order; }
+void Permute::SetOrder(const std::vector<int64_t> &order) { this->primitive_->value.AsPermute()->order = order; }
 
 #else
 
-std::vector<long> Permute::GetOrder() const {
+std::vector<int64_t> Permute::GetOrder() const {
   auto fb_vector = this->primitive_->value_as_Permute()->order();
-  return std::vector<long>(fb_vector->begin(), fb_vector->end());
+  return std::vector<int64_t>(fb_vector->begin(), fb_vector->end());
 }
 
-void Permute::SetOrder(const std::vector<long> &order) {}
+void Permute::SetOrder(const std::vector<int64_t> &order) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

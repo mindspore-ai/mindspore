@@ -41,10 +41,10 @@ class DetectionPostProcess : public PrimitiveC {
   float GetYScale() const;
   float GetNmsIouThreshold() const;
   float GetNmsScoreThreshold() const;
-  long GetMaxDetections() const;
-  long GetDetectionsPreClass() const;
-  long GetMaxClassesPreDetection() const;
-  long GetNumClasses() const;
+  int64_t GetMaxDetections() const;
+  int64_t GetDetectionsPreClass() const;
+  int64_t GetMaxClassesPreDetection() const;
+  int64_t GetNumClasses() const;
   bool GetUseRegularNms() const;
   void SetFormat(int format);
   void SetInputSize(int input_size);
@@ -54,10 +54,10 @@ class DetectionPostProcess : public PrimitiveC {
   void SetYScale(float y_scale);
   void SetNmsIouThreshold(float nms_iou_threshold);
   void SetNmsScoreThreshold(float nms_score_threshold);
-  void SetMaxDetections(long max_detections);
-  void SetDetectionsPreClass(long detections_pre_class);
-  void SetMaxClassesPreDetection(long max_classes_pre_detection);
-  void SetNumClasses(long num_classes);
+  void SetMaxDetections(int64_t max_detections);
+  void SetDetectionsPreClass(int64_t detections_pre_class);
+  void SetMaxClassesPreDetection(int64_t max_classes_pre_detection);
+  void SetNumClasses(int64_t num_classes);
   void SetUseRegularNms(bool use_regular_nms);
 };
 }  // namespace lite
