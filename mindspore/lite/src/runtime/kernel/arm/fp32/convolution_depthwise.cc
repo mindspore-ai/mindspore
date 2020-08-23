@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::kernel {
 ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
 }

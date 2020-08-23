@@ -142,7 +142,10 @@ void AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_p
   MS_ASSERT(nullptr != return_node);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
-    if (input_node->isa<CNode>()) {
+    if (input_node == nullptr) {
+      MS_LOG(ERROR) << "output node is nullptr";
+      return;
+    } else if (input_node->isa<CNode>()) {
       auto ret = ConvertInputCNode(input_node, return_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "obtain outputs failed";
@@ -175,7 +178,10 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
     RemoveIfMakeTuple(cnode);
 
     auto node = std::make_unique<schema::CNodeT>();
-
+    if (node == nullptr) {
+        MS_LOG(ERROR) << "object failed to be constructed";
+        return nullptr;
+    }
     if (primT->value.type == schema::PrimitiveType_Return) {
       node->name = "return_node";
       SetGraphoutputIndex(cnode, meta_graphT, node.get());

@@ -54,7 +54,7 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
     return RET_OK;
   }
 
-  auto dims = GetAxis().data();
+  auto dims = GetAxis();
   auto in_shape = input->shape();
   auto in_rank = in_shape.size();
   auto dim_rank = GetAxis().size();
