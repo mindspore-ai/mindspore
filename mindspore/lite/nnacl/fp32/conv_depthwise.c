@@ -21,6 +21,70 @@
 #include <arm_neon.h>
 #endif
 
+#ifndef ENABLE_ARM64
+void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,
+                   int output_channel, int input_step) {
+  for (int i = 0; i < num_pixels; i++) {
+    for (int c = 0; c < output_channel; c++) {
+      *output_ptr++ += weight_ptr[c] * input_ptr[c];
+    }
+    input_ptr += input_step;
+  }
+}
+#endif
+
+void ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+            const ConvParameter *conv_param, int task_id) {
+  int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
+  int h_start = h_step * task_id;
+  int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    const float *src = input_data + b * conv_param->input_h_ * conv_param->input_w_ * conv_param->input_channel_;
+    float *dst = output_data + b * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
+    for (int oh = h_start; oh < h_end; oh++) {
+      float *dst_data = dst + oh * conv_param->output_w_ * conv_param->output_channel_;
+
+      int ih_origin = oh * conv_param->stride_h_ - conv_param->pad_h_;
+      int start_kh = MSMAX(0, UP_DIV(-ih_origin, conv_param->dilation_h_));
+      int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih_origin, conv_param->dilation_h_));
+
+      for (int ow = 0; ow < conv_param->output_w_; ow++) {
+        memcpy(dst_data + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(float));
+      }
+      for (int kh = start_kh; kh < end_kh; kh++) {
+        int ih = ih_origin + conv_param->dilation_w_ * kh;
+
+        const float *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
+        const float *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
+
+        int in_sw_step = conv_param->stride_w_ * conv_param->input_channel_;
+        for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
+          int out_w_start = MSMAX(
+            0, (conv_param->pad_w_ - conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) / conv_param->stride_w_);
+          int out_w_end = MSMIN(conv_param->output_w_, (conv_param->input_w_ + conv_param->pad_w_ -
+                                                        conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) /
+                                                         conv_param->stride_w_);
+
+          float *dst_w = dst_data + out_w_start * conv_param->output_channel_;
+          int iw_origin = (out_w_start * conv_param->stride_w_) - conv_param->pad_w_ + conv_param->dilation_w_ * kw;
+
+          const float *src_kw = src_kh + iw_origin * conv_param->input_channel_;
+          int num_pixels = out_w_end - out_w_start;
+
+          ConvDwFp32Row(dst_w, src_kw, weight_kh, num_pixels, conv_param->output_channel_, in_sw_step);
+          weight_kh += conv_param->output_channel_;
+        }
+      }
+      if (conv_param->is_relu_) {
+        ReluFp32(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
+      }
+      if (conv_param->is_relu6_) {
+        Relu6Fp32(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
+      }
+    }
+  }
+}
+
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
   int left = 0;
   int right = conv_param->output_w_;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -23,26 +23,30 @@
 #include "nnacl/fp32/conv_depthwise.h"
 
 namespace mindspore::kernel {
-class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
+class ConvolutionDepthwiseSWCPUKernel : public ConvolutionBaseCPUKernel {
  public:
-  ConvolutionDepthwiseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
+  ConvolutionDepthwiseSWCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                                  const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionDepthwiseCPUKernel() override;
+  ~ConvolutionDepthwiseSWCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitBuffer();
   int InitWeightBias();
   int Execute(int task_id);
 
  private:
+  void FreeTmpBuffer();
+  SlidingWindowParam *sliding_ = nullptr;
   float *packed_weight_ = nullptr;
-  float *input_ptr_ = nullptr;
-  float *output_ptr_ = nullptr;
+  float *packed_input_ = nullptr;
+  float *packed_output_ = nullptr;
+  bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_H_
