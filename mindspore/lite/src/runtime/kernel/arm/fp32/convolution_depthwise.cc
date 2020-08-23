@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise.h"
-#include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -30,27 +29,9 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
-  if (sliding_ != nullptr) {
-    delete sliding_;
-    sliding_ = nullptr;
-  }
   if (packed_weight_ != nullptr) {
     delete packed_weight_;
     packed_weight_ = nullptr;
-  }
-  FreeTmpBuffer();
-}
-
-void ConvolutionDepthwiseCPUKernel::FreeTmpBuffer() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
   }
 }
 
@@ -58,61 +39,33 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
-  int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
-  int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
+  int channel = weight_tensor->Batch();
+  int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
-                       weight_tensor->Batch());
+  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(), channel);
 
-  bias_data_ = reinterpret_cast<float *>(malloc(C4NUM * OC4 * sizeof(float)));
+  auto bias_tensor = in_tensors_[kBiasIndex];
+  bias_data_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
+
+  memset(bias_data_, 0, channel * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, in_tensors_.at(kBiasIndex)->ElementsNum() * sizeof(float));
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->Data());
+    memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
 
-  conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
-  return RET_OK;
-}
-
-int ConvolutionDepthwiseCPUKernel::InitBuffer() {
-  if (conv_param_->input_channel_ % C4NUM != 0) {
-    need_align_ = true;
-    int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-    int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM * IC4;
-    packed_input_ = reinterpret_cast<float *>(malloc(pack_input_size * sizeof(float)));
-    if (packed_input_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-
-    int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
-    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * OC4;
-    packed_output_ = reinterpret_cast<float *>(malloc(pack_output_size * sizeof(float)));
-    if (packed_output_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-  }
   return RET_OK;
 }
 
 int ConvolutionDepthwiseCPUKernel::Init() {
-  sliding_ = new (std::nothrow) SlidingWindowParam;
-  if (sliding_ == nullptr) {
-    MS_LOG(ERROR) << "new sliding window param failed.";
-    return RET_ERROR;
-  }
-
   auto ret = InitWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitWeightBias failed.";
@@ -125,21 +78,13 @@ int ConvolutionDepthwiseCPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseCPUKernel::ReSize() {
-  FreeTmpBuffer();
   ConvolutionBaseCPUKernel::Init();
-  InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
-
-  auto ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
-    return RET_ERROR;
-  }
+  conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
   return RET_OK;
 }
 
 int ConvolutionDepthwiseCPUKernel::Execute(int task_id) {
-  ConvDwC4Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
-               sliding_, task_id);
+  ConvDw(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
   return RET_OK;
 }
 
@@ -164,29 +109,15 @@ int ConvolutionDepthwiseCPUKernel::Run() {
     return RET_ERROR;
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
+  input_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
 
-  if (need_align_) {
-    PackNHWCToNHWC4Fp32(input_addr, packed_input_, conv_param_->input_batch_,
-                        conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
-  } else {
-    packed_input_ = input_addr;
-  }
-
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  if (!need_align_) {
-    packed_output_ = output_addr;
-  }
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  output_ptr_ = reinterpret_cast<float *>(output_tensor->Data());
 
   ret = LiteBackendParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
-  }
-
-  if (need_align_) {
-    PackNHWC4ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
-                        conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }
   return RET_OK;
 }
