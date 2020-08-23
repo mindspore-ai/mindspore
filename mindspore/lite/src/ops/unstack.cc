@@ -30,8 +30,6 @@ void Unstack::SetAxis(int axis) { this->primitive_->value.AsUnstack()->axis = ax
 int Unstack::GetNum() const { return this->primitive_->value_as_Unstack()->num(); }
 int Unstack::GetAxis() const { return this->primitive_->value_as_Unstack()->axis(); }
 
-void Unstack::SetNum(int num) {}
-void Unstack::SetAxis(int axis) {}
 #endif
 
 int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {

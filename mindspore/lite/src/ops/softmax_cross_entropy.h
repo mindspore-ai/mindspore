@@ -28,13 +28,15 @@ namespace lite {
 class SoftmaxCrossEntropy : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SoftmaxCrossEntropy, PrimitiveC);
   SoftmaxCrossEntropy() = default;
   explicit SoftmaxCrossEntropy(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(const std::vector<int> &axis);
+
 #else
   explicit SoftmaxCrossEntropy(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   std::vector<int> GetAxis() const;
-  void SetAxis(const std::vector<int> &axis);
 };
 }  // namespace lite
 }  // namespace mindspore

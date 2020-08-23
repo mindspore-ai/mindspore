@@ -28,14 +28,15 @@ namespace lite {
 class BiasAdd : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(BiasAdd, PrimitiveC);
   BiasAdd() = default;
   explicit BiasAdd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void SetAxis(const std::vector<int> &axis);
 #else
   explicit BiasAdd(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   std::vector<int> GetAxis() const;
-  void SetAxis(const std::vector<int> &axis);
 };
 }  // namespace lite
 }  // namespace mindspore

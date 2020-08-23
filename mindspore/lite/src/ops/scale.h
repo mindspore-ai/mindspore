@@ -28,13 +28,15 @@ namespace lite {
 class Scale : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Scale, PrimitiveC);
   Scale() = default;
   explicit Scale(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+
 #else
   explicit Scale(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int GetAxis() const;
-  void SetAxis(int axis);
 };
 }  // namespace lite
 }  // namespace mindspore

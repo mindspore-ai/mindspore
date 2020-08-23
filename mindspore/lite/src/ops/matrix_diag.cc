@@ -38,10 +38,6 @@ int MatrixDiag::GetNumRows() const { return this->primitive_->value_as_MatrixDia
 int MatrixDiag::GetNumCols() const { return this->primitive_->value_as_MatrixDiag()->numCols(); }
 float MatrixDiag::GetPaddingValue() const { return this->primitive_->value_as_MatrixDiag()->paddingValue(); }
 
-void MatrixDiag::SetK(int k) {}
-void MatrixDiag::SetNumRows(int num_rows) {}
-void MatrixDiag::SetNumCols(int num_cols) {}
-void MatrixDiag::SetPaddingValue(float padding_value) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

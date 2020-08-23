@@ -36,10 +36,6 @@ float Lrn::GetBeta() const { return this->primitive_->value_as_Lrn()->beta(); }
 float Lrn::GetBias() const { return this->primitive_->value_as_Lrn()->bias(); }
 int Lrn::GetSize() const { return this->primitive_->value_as_Lrn()->size(); }
 
-void Lrn::SetAlpha(float alpha) {}
-void Lrn::SetBeta(float beta) {}
-void Lrn::SetBias(float bias) {}
-void Lrn::SetSize(int size) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

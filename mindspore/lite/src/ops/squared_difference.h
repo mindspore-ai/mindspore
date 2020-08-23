@@ -28,6 +28,7 @@ namespace lite {
 class SquaredDifference : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SquaredDifference, Arithmetic);
   SquaredDifference() = default;
   explicit SquaredDifference(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

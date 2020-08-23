@@ -28,9 +28,13 @@ namespace lite {
 class Reduce : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Reduce, PrimitiveC);
   Reduce() = default;
   explicit Reduce(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void SetAxes(const std::vector<int> &axes);
+  void SetKeepDims(int keep_dims);
+  void SetMode(int mode);
 #else
   explicit Reduce(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -38,9 +42,6 @@ class Reduce : public PrimitiveC {
   std::vector<int> GetAxes() const;
   int GetKeepDims() const;
   int GetMode() const;
-  void SetAxes(const std::vector<int> &axes);
-  void SetKeepDims(int keep_dims);
-  void SetMode(int mode);
 };
 }  // namespace lite
 }  // namespace mindspore

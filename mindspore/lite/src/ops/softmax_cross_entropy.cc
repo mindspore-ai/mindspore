@@ -32,7 +32,6 @@ std::vector<int> SoftmaxCrossEntropy::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void SoftmaxCrossEntropy::SetAxis(const std::vector<int> &axis) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -29,7 +29,6 @@ void Sub::SetActivationType(int activation_type) {
 
 int Sub::GetActivationType() const { return this->primitive_->value_as_Sub()->activationType(); }
 
-void Sub::SetActivationType(int activation_type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

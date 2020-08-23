@@ -39,11 +39,6 @@ int ArgMax::GetTopK() const { return this->primitive_->value_as_ArgMax()->topK()
 bool ArgMax::GetKeepDims() const { return this->primitive_->value_as_ArgMax()->keepDims(); }
 int ArgMax::GetAxisType() const { return this->primitive_->value_as_ArgMax()->axisType(); }
 
-void ArgMax::SetAxis(int axis) {}
-void ArgMax::SetOutMaxValue(bool out_max_value) {}
-void ArgMax::SetTopK(int top_k) {}
-void ArgMax::SetKeepDims(bool keep_dims) {}
-void ArgMax::SetAxisType(int axis_type) {}
 #endif
 
 int ArgMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

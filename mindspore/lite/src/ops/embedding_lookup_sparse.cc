@@ -51,9 +51,6 @@ float EmbeddingLookupSparse::GetMaxNortm() const {
   return this->primitive_->value_as_EmbeddingLookupSparse()->maxNortm();
 }
 
-void EmbeddingLookupSparse::SetSpIds(const std::vector<int> &sp_ids) {}
-void EmbeddingLookupSparse::SetSpWeights(const std::vector<float> &sp_weights) {}
-void EmbeddingLookupSparse::SetMaxNortm(float max_nortm) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

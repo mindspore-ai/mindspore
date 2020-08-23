@@ -28,17 +28,18 @@ namespace lite {
 class FusedBatchNorm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(FusedBatchNorm, PrimitiveC);
   FusedBatchNorm() = default;
   explicit FusedBatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetEpsilon(float epsilon);
+  void SetMomentum(float momentum);
+  void SetSpatial(int spatial);
 #else
   explicit FusedBatchNorm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   float GetEpsilon() const;
   float GetMomentum() const;
   int GetSpatial() const;
-  void SetEpsilon(float epsilon);
-  void SetMomentum(float momentum);
-  void SetSpatial(int spatial);
 };
 }  // namespace lite
 }  // namespace mindspore

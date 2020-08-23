@@ -42,8 +42,6 @@ std::vector<int> BatchToSpace::GetCrops() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void BatchToSpace::SetBlockShape(const std::vector<int> &block_shape) {}
-void BatchToSpace::SetCrops(const std::vector<int> &crops) {}
 #endif
 namespace {
 constexpr int kBatchToSpaceOutputNum = 1;

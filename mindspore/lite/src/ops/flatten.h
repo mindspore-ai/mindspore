@@ -28,6 +28,7 @@ namespace lite {
 class Flatten : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Flatten, PrimitiveC);
   Flatten() = default;
   explicit Flatten(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

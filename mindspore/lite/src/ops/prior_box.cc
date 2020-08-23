@@ -77,17 +77,6 @@ bool PriorBox::GetClip() const { return this->primitive_->value_as_PriorBox()->c
 bool PriorBox::GetFlip() const { return this->primitive_->value_as_PriorBox()->flip(); }
 float PriorBox::GetOffset() const { return this->primitive_->value_as_PriorBox()->offset(); }
 
-void PriorBox::SetMinSizes(const std::vector<int> &min_sizes) {}
-void PriorBox::SetMaxSizes(const std::vector<int> &max_sizes) {}
-void PriorBox::SetAspectRatios(const std::vector<float> &aspect_ratios) {}
-void PriorBox::SetVariances(const std::vector<float> &variances) {}
-void PriorBox::SetImageSizeW(int image_size_w) {}
-void PriorBox::SetImageSizeH(int image_size_h) {}
-void PriorBox::SetStepW(float step_w) {}
-void PriorBox::SetStepH(float step_h) {}
-void PriorBox::SetClip(bool clip) {}
-void PriorBox::SetFlip(bool flip) {}
-void PriorBox::SetOffset(float offset) {}
 #endif
 
 namespace {

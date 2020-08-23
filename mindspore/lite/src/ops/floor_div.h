@@ -28,6 +28,7 @@ namespace lite {
 class FloorDiv : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(FloorDiv, Arithmetic);
   FloorDiv() = default;
   explicit FloorDiv(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

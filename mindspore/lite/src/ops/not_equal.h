@@ -28,6 +28,7 @@ namespace lite {
 class NotEqual : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(NotEqual, Arithmetic);
   NotEqual() = default;
   explicit NotEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

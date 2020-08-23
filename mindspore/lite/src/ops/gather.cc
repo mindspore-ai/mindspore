@@ -33,8 +33,6 @@ void Gather::SetBatchDims(int batch_dims) { this->primitive_->value.AsGather()->
 int Gather::GetAxis() const { return this->primitive_->value_as_Gather()->axis(); }
 int Gather::GetBatchDims() const { return this->primitive_->value_as_Gather()->batchDims(); }
 
-void Gather::SetAxis(int axis) {}
-void Gather::SetBatchDims(int batch_dims) {}
 #endif
 
 int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

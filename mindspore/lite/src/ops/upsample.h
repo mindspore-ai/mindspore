@@ -29,15 +29,16 @@ namespace lite {
 class Upsample : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Upsample, PrimitiveC);
   Upsample() = default;
   explicit Upsample(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMode(std::string mode);
+  void SetScales(const std::vector<float> &scales);
 #else
   explicit Upsample(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   std::string GetMode() const;
   std::vector<float> GetScales() const;
-  void SetMode(std::string mode);
-  void SetScales(const std::vector<float> &scales);
 };
 }  // namespace lite
 }  // namespace mindspore

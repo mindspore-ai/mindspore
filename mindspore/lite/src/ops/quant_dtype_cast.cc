@@ -30,8 +30,6 @@ void QuantDTypeCast::SetDstT(int dst_t) { this->primitive_->value.AsQuantDTypeCa
 int QuantDTypeCast::GetSrcT() const { return this->primitive_->value_as_QuantDTypeCast()->srcT(); }
 int QuantDTypeCast::GetDstT() const { return this->primitive_->value_as_QuantDTypeCast()->dstT(); }
 
-void QuantDTypeCast::SetSrcT(int src_t) {}
-void QuantDTypeCast::SetDstT(int dst_t) {}
 #endif
 
 int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

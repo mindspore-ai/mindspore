@@ -28,8 +28,13 @@ namespace lite {
 class SparseToDense : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SparseToDense, PrimitiveC);
   SparseToDense() = default;
   explicit SparseToDense(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetOutputShape(const std::vector<int> &output_shape);
+  void SetSparseValue(const std::vector<int> &sparse_value);
+  void SetDefaultValue(const std::vector<int> &default_value);
+  void SetValidateIndices(bool validate_indices);
 #else
   explicit SparseToDense(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,10 +42,6 @@ class SparseToDense : public PrimitiveC {
   std::vector<int> GetSparseValue() const;
   std::vector<int> GetDefaultValue() const;
   bool GetValidateIndices() const;
-  void SetOutputShape(const std::vector<int> &output_shape);
-  void SetSparseValue(const std::vector<int> &sparse_value);
-  void SetDefaultValue(const std::vector<int> &default_value);
-  void SetValidateIndices(bool validate_indices);
 };
 }  // namespace lite
 }  // namespace mindspore

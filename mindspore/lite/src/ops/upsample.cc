@@ -34,8 +34,6 @@ std::vector<float> Upsample::GetScales() const {
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
 
-void Upsample::SetMode(std::string mode) {}
-void Upsample::SetScales(const std::vector<float> &scales) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

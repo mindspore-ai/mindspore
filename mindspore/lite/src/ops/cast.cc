@@ -30,8 +30,6 @@ void Cast::SetDstT(int dst_t) { this->primitive_->value.AsCast()->dstT = dst_t; 
 int Cast::GetSrcT() const { return this->primitive_->value_as_Cast()->srcT(); }
 int Cast::GetDstT() const { return this->primitive_->value_as_Cast()->dstT(); }
 
-void Cast::SetSrcT(int src_t) {}
-void Cast::SetDstT(int dst_t) {}
 #endif
 
 int Cast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

@@ -28,15 +28,16 @@ namespace lite {
 class BNGradInput : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(BNGradInput, PrimitiveC);
   BNGradInput() = default;
   explicit BNGradInput(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetEps(float eps);
+  void SetChannels(int channels);
 #else
   explicit BNGradInput(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   float GetEps() const;
   int GetChannels() const;
-  void SetEps(float eps);
-  void SetChannels(int channels);
 };
 }  // namespace lite
 }  // namespace mindspore

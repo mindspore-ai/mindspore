@@ -28,6 +28,7 @@ namespace lite {
 class Floor : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Floor, ArithmeticSelf);
   Floor() = default;
   explicit Floor(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

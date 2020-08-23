@@ -28,17 +28,18 @@ namespace lite {
 class EmbeddingLookupSparse : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(EmbeddingLookupSparse, PrimitiveC);
   EmbeddingLookupSparse() = default;
   explicit EmbeddingLookupSparse(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetSpIds(const std::vector<int> &sp_ids);
+  void SetSpWeights(const std::vector<float> &sp_weights);
+  void SetMaxNortm(float max_nortm);
 #else
   explicit EmbeddingLookupSparse(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   std::vector<int> GetSpIds() const;
   std::vector<float> GetSpWeights() const;
   float GetMaxNortm() const;
-  void SetSpIds(const std::vector<int> &sp_ids);
-  void SetSpWeights(const std::vector<float> &sp_weights);
-  void SetMaxNortm(float max_nortm);
 };
 }  // namespace lite
 }  // namespace mindspore

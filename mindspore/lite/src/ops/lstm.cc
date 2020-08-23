@@ -27,7 +27,6 @@ void Lstm::SetBidirection(bool bidirection) { this->primitive_->value.AsLstm()->
 
 bool Lstm::GetBidirection() const { return this->primitive_->value_as_Lstm()->bidirection(); }
 
-void Lstm::SetBidirection(bool bidirection) {}
 #endif
 
 const int kLstmInputNum = 6;

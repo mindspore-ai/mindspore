@@ -38,9 +38,6 @@ std::vector<int> Pad::GetPaddings() const {
 int Pad::GetPaddingMode() const { return this->primitive_->value_as_Pad()->paddingMode(); }
 float Pad::GetConstantValue() const { return this->primitive_->value_as_Pad()->constantValue(); }
 
-void Pad::SetPaddings(const std::vector<int> &paddings) {}
-void Pad::SetPaddingMode(int padding_mode) {}
-void Pad::SetConstantValue(float constant_value) {}
 #endif
 namespace {
 const size_t kInputRank = 4;

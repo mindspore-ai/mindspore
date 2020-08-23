@@ -30,7 +30,6 @@ std::vector<int> Fill::GetDims() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Fill::SetDims(const std::vector<int> &dims) {}
 #endif
 
 int Fill::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

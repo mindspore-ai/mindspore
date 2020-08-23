@@ -28,6 +28,7 @@ namespace lite {
 class ZerosLike : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ZerosLike, PrimitiveC);
   ZerosLike() = default;
   explicit ZerosLike(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

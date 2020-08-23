@@ -119,19 +119,6 @@ bool DetectionPostProcess::GetUseRegularNms() const {
   return this->primitive_->value_as_DetectionPostProcess()->UseRegularNms();
 }
 
-void DetectionPostProcess::SetFormat(int format) {}
-void DetectionPostProcess::SetInputSize(int input_size) {}
-void DetectionPostProcess::SetHScale(float h_scale) {}
-void DetectionPostProcess::SetWScale(float w_scale) {}
-void DetectionPostProcess::SetXScale(float x_scale) {}
-void DetectionPostProcess::SetYScale(float y_scale) {}
-void DetectionPostProcess::SetNmsIouThreshold(float nms_iou_threshold) {}
-void DetectionPostProcess::SetNmsScoreThreshold(float nms_score_threshold) {}
-void DetectionPostProcess::SetMaxDetections(int64_t max_detections) {}
-void DetectionPostProcess::SetDetectionsPreClass(int64_t detections_pre_class) {}
-void DetectionPostProcess::SetMaxClassesPreDetection(int64_t max_classes_pre_detection) {}
-void DetectionPostProcess::SetNumClasses(int64_t num_classes) {}
-void DetectionPostProcess::SetUseRegularNms(bool use_regular_nms) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

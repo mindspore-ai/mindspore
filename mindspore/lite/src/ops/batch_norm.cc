@@ -24,11 +24,27 @@ float BatchNorm::GetEpsilon() const { return this->primitive_->value.AsBatchNorm
 void BatchNorm::SetEpsilon(float epsilon) { this->primitive_->value.AsBatchNorm()->epsilon = epsilon; }
 
 int BatchNorm::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::FusedBatchNormT>();
-  attr->epsilon = GetValue<float>(prim.GetAttr("epsilon"));
-  this->primitive_->value.type = schema::PrimitiveType_FusedBatchNorm;
-  this->primitive_->value.value = attr.release();
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_FusedBatchNorm;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_FusedBatchNorm) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::FusedBatchNormT();
+    attr->epsilon = GetValue<float>(prim.GetAttr("epsilon"));
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
@@ -36,7 +52,6 @@ int BatchNorm::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
 
 float BatchNorm::GetEpsilon() const { return this->primitive_->value_as_BatchNorm()->epsilon(); }
 
-void BatchNorm::SetEpsilon(float epsilon) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

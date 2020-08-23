@@ -28,8 +28,12 @@ namespace lite {
 class Power : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Power, PrimitiveC);
   Power() = default;
   explicit Power(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPower(float power);
+  void SetScale(float scale);
+  void SetShift(float shift);
 #else
   explicit Power(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class Power : public PrimitiveC {
   float GetPower() const;
   float GetScale() const;
   float GetShift() const;
-  void SetPower(float power);
-  void SetScale(float scale);
-  void SetShift(float shift);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -28,8 +28,20 @@ namespace lite {
 class PriorBox : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(PriorBox, PrimitiveC);
   PriorBox() = default;
   explicit PriorBox(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMinSizes(const std::vector<int> &min_sizes);
+  void SetMaxSizes(const std::vector<int> &max_sizes);
+  void SetAspectRatios(const std::vector<float> &aspect_ratios);
+  void SetVariances(const std::vector<float> &variances);
+  void SetImageSizeW(int image_size_w);
+  void SetImageSizeH(int image_size_h);
+  void SetStepW(float step_w);
+  void SetStepH(float step_h);
+  void SetClip(bool clip);
+  void SetFlip(bool flip);
+  void SetOffset(float offset);
 #else
   explicit PriorBox(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -45,17 +57,6 @@ class PriorBox : public PrimitiveC {
   bool GetClip() const;
   bool GetFlip() const;
   float GetOffset() const;
-  void SetMinSizes(const std::vector<int> &min_sizes);
-  void SetMaxSizes(const std::vector<int> &max_sizes);
-  void SetAspectRatios(const std::vector<float> &aspect_ratios);
-  void SetVariances(const std::vector<float> &variances);
-  void SetImageSizeW(int image_size_w);
-  void SetImageSizeH(int image_size_h);
-  void SetStepW(float step_w);
-  void SetStepH(float step_h);
-  void SetClip(bool clip);
-  void SetFlip(bool flip);
-  void SetOffset(float offset);
 };
 }  // namespace lite
 }  // namespace mindspore

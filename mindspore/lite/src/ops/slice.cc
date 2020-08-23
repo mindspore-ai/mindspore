@@ -46,9 +46,6 @@ std::vector<int> Slice::GetSize() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Slice::SetFormat(int format) {}
-void Slice::SetBegin(const std::vector<int> &begin) {}
-void Slice::SetSize(const std::vector<int> &size) {}
 #endif
 
 int Slice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {

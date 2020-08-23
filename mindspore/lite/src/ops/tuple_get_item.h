@@ -25,6 +25,7 @@ namespace lite {
 class TupleGetItem : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(TupleGetItem, PrimitiveC);
   TupleGetItem() = default;
   explicit TupleGetItem(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);

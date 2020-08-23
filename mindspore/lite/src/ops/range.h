@@ -28,8 +28,13 @@ namespace lite {
 class Range : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Range, PrimitiveC);
   Range() = default;
   explicit Range(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetDType(int d_type);
+  void SetStart(int start);
+  void SetLimit(int limit);
+  void SetDelta(int delta);
 #else
   explicit Range(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -38,10 +43,6 @@ class Range : public PrimitiveC {
   int GetStart() const;
   int GetLimit() const;
   int GetDelta() const;
-  void SetDType(int d_type);
-  void SetStart(int start);
-  void SetLimit(int limit);
-  void SetDelta(int delta);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -41,8 +41,6 @@ std::vector<int> SpaceToBatch::GetPaddings() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void SpaceToBatch::SetBlockShape(const std::vector<int> &block_shape) {}
-void SpaceToBatch::SetPaddings(const std::vector<int> &paddings) {}
 #endif
 namespace {
 constexpr int kSpaceToBatchNDOutputNum = 1;

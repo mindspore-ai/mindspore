@@ -28,6 +28,7 @@ namespace lite {
 class Rank : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Rank, PrimitiveC);
   Rank() = default;
   explicit Rank(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

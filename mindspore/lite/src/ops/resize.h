@@ -28,8 +28,15 @@ namespace lite {
 class Resize : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Resize, PrimitiveC);
   Resize() = default;
   explicit Resize(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetMethod(int method);
+  void SetNewHeight(int64_t new_height);
+  void SetNewWidth(int64_t new_width);
+  void SetAlignCorners(bool align_corners);
+  void SetPreserveAspectRatio(bool preserve_aspect_ratio);
 #else
   explicit Resize(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -40,12 +47,6 @@ class Resize : public PrimitiveC {
   int64_t GetNewWidth() const;
   bool GetAlignCorners() const;
   bool GetPreserveAspectRatio() const;
-  void SetFormat(int format);
-  void SetMethod(int method);
-  void SetNewHeight(int64_t new_height);
-  void SetNewWidth(int64_t new_width);
-  void SetAlignCorners(bool align_corners);
-  void SetPreserveAspectRatio(bool preserve_aspect_ratio);
 };
 }  // namespace lite
 }  // namespace mindspore

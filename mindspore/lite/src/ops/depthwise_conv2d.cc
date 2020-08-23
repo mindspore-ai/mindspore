@@ -254,22 +254,6 @@ int DepthwiseConv2D::GetActivationType() const {
   return this->primitive_->value_as_DepthwiseConv2D()->activationType();
 }
 
-void DepthwiseConv2D::SetFormat(int format) {}
-void DepthwiseConv2D::SetChannelIn(int channel_in) {}
-void DepthwiseConv2D::SetChannelMultiplier(int channel_multiplier) {}
-void DepthwiseConv2D::SetKernelW(int kernel_w) {}
-void DepthwiseConv2D::SetKernelH(int kernel_h) {}
-void DepthwiseConv2D::SetStrideW(int stride_w) {}
-void DepthwiseConv2D::SetStrideH(int stride_h) {}
-void DepthwiseConv2D::SetPadMode(int pad_mode) {}
-void DepthwiseConv2D::SetPadUp(int pad_up) {}
-void DepthwiseConv2D::SetPadDown(int pad_down) {}
-void DepthwiseConv2D::SetPadLeft(int pad_left) {}
-void DepthwiseConv2D::SetPadRight(int pad_right) {}
-void DepthwiseConv2D::SetDilateW(int dilate_w) {}
-void DepthwiseConv2D::SetDilateH(int dilate_h) {}
-void DepthwiseConv2D::SetHasBias(bool has_bias) {}
-void DepthwiseConv2D::SetActivationType(int activation_type) {}
 #endif
 int DepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
                                 std::vector<lite::tensor::Tensor *> outputs_) {

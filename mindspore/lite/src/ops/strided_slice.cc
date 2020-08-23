@@ -73,15 +73,6 @@ std::vector<int> StridedSlice::GetIsScale() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void StridedSlice::SetBeginMask(int begin_mask) {}
-void StridedSlice::SetEndMask(int end_mask) {}
-void StridedSlice::SetEllipsisMask(int ellipsis_mask) {}
-void StridedSlice::SetNewAxisMask(int new_axis_mask) {}
-void StridedSlice::SetShrinkAxisMask(int shrink_axis_mask) {}
-void StridedSlice::SetBegin(const std::vector<int> &begin) {}
-void StridedSlice::SetEnd(const std::vector<int> &end) {}
-void StridedSlice::SetStride(const std::vector<int> &stride) {}
-void StridedSlice::SetIsScale(const std::vector<int> &is_scale) {}
 #endif
 namespace {
 constexpr int kStridedSliceOutputNum = 1;

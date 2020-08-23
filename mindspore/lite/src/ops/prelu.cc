@@ -30,7 +30,6 @@ std::vector<float> Prelu::GetSlope() const {
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
 
-void Prelu::SetSlope(const std::vector<float> &slope) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

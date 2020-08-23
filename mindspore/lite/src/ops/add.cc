@@ -36,7 +36,7 @@ int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
     this->primitive_->value.type = schema::PrimitiveType_Add;
   }
   if (this->primitive_->value.type != schema::PrimitiveType_Add) {
-    MS_LOG(ERROR) << "Primitive type should be add";
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -53,7 +53,6 @@ int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
 
 int Add::GetActivationType() const { return this->primitive_->value_as_Add()->activationType(); }
 
-void Add::SetActivationType(int activation_type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

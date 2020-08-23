@@ -33,9 +33,6 @@ float Power::GetPower() const { return this->primitive_->value_as_Power()->power
 float Power::GetScale() const { return this->primitive_->value_as_Power()->scale(); }
 float Power::GetShift() const { return this->primitive_->value_as_Power()->shift(); }
 
-void Power::SetPower(float power) {}
-void Power::SetScale(float scale) {}
-void Power::SetShift(float shift) {}
 #endif
 
 int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {

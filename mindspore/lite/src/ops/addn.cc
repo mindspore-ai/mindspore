@@ -27,7 +27,6 @@ void AddN::SetN(int n) { this->primitive_->value.AsAddN()->N = n; }
 
 int AddN::GetN() const { return this->primitive_->value_as_AddN()->N(); }
 
-void AddN::SetN(int n) {}
 #endif
 
 namespace {

@@ -29,7 +29,6 @@ void Div::SetActivationType(int activation_type) {
 
 int Div::GetActivationType() const { return this->primitive_->value_as_Div()->activationType(); }
 
-void Div::SetActivationType(int activation_type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

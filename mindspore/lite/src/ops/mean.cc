@@ -33,8 +33,6 @@ std::vector<int> Mean::GetAxis() const {
 }
 bool Mean::GetKeepDims() const { return this->primitive_->value_as_Mean()->keepDims(); }
 
-void Mean::SetAxis(const std::vector<int> &axis) {}
-void Mean::SetKeepDims(bool keep_dims) {}
 #endif
 
 namespace {

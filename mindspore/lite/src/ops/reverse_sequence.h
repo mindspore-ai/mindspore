@@ -28,8 +28,12 @@ namespace lite {
 class ReverseSequence : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ReverseSequence, PrimitiveC);
   ReverseSequence() = default;
   explicit ReverseSequence(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetSeqAxis(int seq_axis);
+  void SetBatchAxis(int batch_axis);
+  void SetSeqLengths(const std::vector<int> &seq_lengths);
 #else
   explicit ReverseSequence(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class ReverseSequence : public PrimitiveC {
   int GetSeqAxis() const;
   int GetBatchAxis() const;
   std::vector<int> GetSeqLengths() const;
-  void SetSeqAxis(int seq_axis);
-  void SetBatchAxis(int batch_axis);
-  void SetSeqLengths(const std::vector<int> &seq_lengths);
 };
 }  // namespace lite
 }  // namespace mindspore

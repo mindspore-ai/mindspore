@@ -28,8 +28,12 @@ namespace lite {
 class Pad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Pad, PrimitiveC);
   Pad() = default;
   explicit Pad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPaddings(const std::vector<int> &paddings);
+  void SetPaddingMode(int padding_mode);
+  void SetConstantValue(float constant_value);
 #else
   explicit Pad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class Pad : public PrimitiveC {
   std::vector<int> GetPaddings() const;
   int GetPaddingMode() const;
   float GetConstantValue() const;
-  void SetPaddings(const std::vector<int> &paddings);
-  void SetPaddingMode(int padding_mode);
-  void SetConstantValue(float constant_value);
 };
 }  // namespace lite
 }  // namespace mindspore

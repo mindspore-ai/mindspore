@@ -33,7 +33,6 @@ void ConstantOfShape::SetValue(float value) { this->primitive_->value.AsConstant
 
 float ConstantOfShape::GetValue() const { return this->primitive_->value_as_ConstantOfShape()->value(); }
 
-void ConstantOfShape::SetValue(float value) {}
 #endif
 
 int ConstantOfShape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

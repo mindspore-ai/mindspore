@@ -27,7 +27,6 @@ void Unique::SetOutType(int out_type) { this->primitive_->value.AsUnique()->outT
 
 int Unique::GetOutType() const { return this->primitive_->value_as_Unique()->outType(); }
 
-void Unique::SetOutType(int out_type) {}
 #endif
 
 int Unique::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

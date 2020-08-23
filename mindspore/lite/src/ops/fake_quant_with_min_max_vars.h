@@ -28,15 +28,16 @@ namespace lite {
 class FakeQuantWithMinMaxVars : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(FakeQuantWithMinMaxVars, PrimitiveC);
   FakeQuantWithMinMaxVars() = default;
   explicit FakeQuantWithMinMaxVars(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetNarrowRange(bool narrow_range);
+  void SetNumBits(int num_bits);
 #else
   explicit FakeQuantWithMinMaxVars(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   bool GetNarrowRange() const;
   int GetNumBits() const;
-  void SetNarrowRange(bool narrow_range);
-  void SetNumBits(int num_bits);
 };
 }  // namespace lite
 }  // namespace mindspore

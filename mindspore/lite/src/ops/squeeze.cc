@@ -30,7 +30,6 @@ std::vector<int> Squeeze::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Squeeze::SetAxis(const std::vector<int> &axis) {}
 #endif
 
 namespace {

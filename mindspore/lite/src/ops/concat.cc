@@ -30,12 +30,32 @@ void Concat::SetAxis(int axis) { this->primitive_->value.AsConcat()->axis = axis
 void Concat::SetN(int n) { this->primitive_->value.AsConcat()->n = n; }
 
 int Concat::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::ConcatT>();
-  auto prim_axis = GetValue<int>(prim.GetAttr("axis"));
-  attr->axis = prim_axis;
-  this->primitive_->value.type = schema::PrimitiveType_Concat;
-  this->primitive_->value.value = attr.release();
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Concat;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Concat) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::ConcatT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    auto prim_axis = GetValue<int>(prim.GetAttr("axis"));
+    attr->axis = prim_axis;
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
@@ -44,8 +64,6 @@ int Concat::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 int Concat::GetAxis() const { return this->primitive_->value_as_Concat()->axis(); }
 int Concat::GetN() const { return this->primitive_->value_as_Concat()->n(); }
 
-void Concat::SetAxis(int axis) {}
-void Concat::SetN(int n) {}
 #endif
 
 namespace {

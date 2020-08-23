@@ -28,16 +28,17 @@ namespace lite {
 class BatchToSpace : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(BatchToSpace, PrimitiveC);
   BatchToSpace() = default;
   explicit BatchToSpace(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBlockShape(const std::vector<int> &block_shape);
+  void SetCrops(const std::vector<int> &crops);
 #else
   explicit BatchToSpace(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetCrops() const;
-  void SetBlockShape(const std::vector<int> &block_shape);
-  void SetCrops(const std::vector<int> &crops);
 };
 }  // namespace lite
 }  // namespace mindspore

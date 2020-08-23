@@ -28,6 +28,7 @@ namespace lite {
 class LessEqual : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(LessEqual, Arithmetic);
   LessEqual() = default;
   explicit LessEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

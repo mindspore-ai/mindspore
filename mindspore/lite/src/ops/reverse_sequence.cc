@@ -42,9 +42,6 @@ std::vector<int> ReverseSequence::GetSeqLengths() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void ReverseSequence::SetSeqAxis(int seq_axis) {}
-void ReverseSequence::SetBatchAxis(int batch_axis) {}
-void ReverseSequence::SetSeqLengths(const std::vector<int> &seq_lengths) {}
 #endif
 
 int ReverseSequence::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {

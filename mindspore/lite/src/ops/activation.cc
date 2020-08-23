@@ -27,7 +27,18 @@ void Activation::SetType(int type) { this->primitive_->value.AsActivation()->typ
 void Activation::SetAlpha(float alpha) { this->primitive_->value.AsActivation()->alpha = alpha; }
 
 int Activation::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Activation;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Activation) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
   auto attr = std::make_unique<schema::ActivationT>();
   if (prim.name() == "ReLU") {
     attr->type = schema::ActivationType_RELU;
@@ -36,18 +47,17 @@ int Activation::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> 
   } else if (prim.name() == "ReLU6") {
     attr->type = schema::ActivationType_RELU6;
   }
-  this->primitive_->value.type = schema::PrimitiveType_Activation;
   this->primitive_->value.value = attr.release();
-
+  if (this->primitive_->value.value == nullptr) {
+    MS_LOG(ERROR) << "new primitiveT value failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 #else
 
 int Activation::GetType() const { return this->primitive_->value_as_Activation()->type(); }
 float Activation::GetAlpha() const { return this->primitive_->value_as_Activation()->alpha(); }
-
-void Activation::SetType(int type) {}
-void Activation::SetAlpha(float alpha) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

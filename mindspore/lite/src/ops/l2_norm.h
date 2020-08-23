@@ -28,15 +28,16 @@ namespace lite {
 class L2Norm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(L2Norm, PrimitiveC);
   L2Norm() = default;
   explicit L2Norm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(const std::vector<int> &axis);
+  void SetEpsilon(float epsilon);
 #else
   explicit L2Norm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   std::vector<int> GetAxis() const;
   float GetEpsilon() const;
-  void SetAxis(const std::vector<int> &axis);
-  void SetEpsilon(float epsilon);
 };
 }  // namespace lite
 }  // namespace mindspore
