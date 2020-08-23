@@ -22,7 +22,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoPRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id);
+void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id);
+
+void PReluShareChannel(float *input, float *output, PReluParameter *prelu_param_, int task_id);
 #ifdef __cplusplus
 }
 #endif

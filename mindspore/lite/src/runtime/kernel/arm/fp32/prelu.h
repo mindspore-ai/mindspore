@@ -25,8 +25,8 @@ namespace mindspore::kernel {
 class PReluCPUKernel : public LiteKernel {
  public:
   PReluCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
+                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                 const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     prelu_param_ = reinterpret_cast<PReluParameter *>(op_parameter_);
   }
@@ -36,11 +36,14 @@ class PReluCPUKernel : public LiteKernel {
   int ReSize() override { return 0; }
   int Run() override;
   int DoExcute(int task_id);
+  int ProcessShareChannelInput();
+  int ProcessInput();
 
  private:
   PReluParameter *prelu_param_;
-  float *input_data = nullptr;
-  float *output_data = nullptr;
+  float *ori_input_ = nullptr;
+  float *input_data_ = nullptr;
+  float *output_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PRELU_H_
