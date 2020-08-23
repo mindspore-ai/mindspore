@@ -31,16 +31,16 @@ float DetectionPostProcess::GetNmsIouThreshold() const {
 float DetectionPostProcess::GetNmsScoreThreshold() const {
   return this->primitive_->value.AsDetectionPostProcess()->NmsScoreThreshold;
 }
-long DetectionPostProcess::GetMaxDetections() const {
+int64_t DetectionPostProcess::GetMaxDetections() const {
   return this->primitive_->value.AsDetectionPostProcess()->MaxDetections;
 }
-long DetectionPostProcess::GetDetectionsPreClass() const {
+int64_t DetectionPostProcess::GetDetectionsPreClass() const {
   return this->primitive_->value.AsDetectionPostProcess()->DetectionsPreClass;
 }
-long DetectionPostProcess::GetMaxClassesPreDetection() const {
+int64_t DetectionPostProcess::GetMaxClassesPreDetection() const {
   return this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection;
 }
-long DetectionPostProcess::GetNumClasses() const {
+int64_t DetectionPostProcess::GetNumClasses() const {
   return this->primitive_->value.AsDetectionPostProcess()->NumClasses;
 }
 bool DetectionPostProcess::GetUseRegularNms() const {
@@ -71,16 +71,16 @@ void DetectionPostProcess::SetNmsIouThreshold(float nms_iou_threshold) {
 void DetectionPostProcess::SetNmsScoreThreshold(float nms_score_threshold) {
   this->primitive_->value.AsDetectionPostProcess()->NmsScoreThreshold = nms_score_threshold;
 }
-void DetectionPostProcess::SetMaxDetections(long max_detections) {
+void DetectionPostProcess::SetMaxDetections(int64_t max_detections) {
   this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_detections;
 }
-void DetectionPostProcess::SetDetectionsPreClass(long detections_pre_class) {
+void DetectionPostProcess::SetDetectionsPreClass(int64_t detections_pre_class) {
   this->primitive_->value.AsDetectionPostProcess()->DetectionsPreClass = detections_pre_class;
 }
-void DetectionPostProcess::SetMaxClassesPreDetection(long max_classes_pre_detection) {
+void DetectionPostProcess::SetMaxClassesPreDetection(int64_t max_classes_pre_detection) {
   this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_classes_pre_detection;
 }
-void DetectionPostProcess::SetNumClasses(long num_classes) {
+void DetectionPostProcess::SetNumClasses(int64_t num_classes) {
   this->primitive_->value.AsDetectionPostProcess()->NumClasses = num_classes;
 }
 void DetectionPostProcess::SetUseRegularNms(bool use_regular_nms) {
@@ -103,16 +103,16 @@ float DetectionPostProcess::GetNmsIouThreshold() const {
 float DetectionPostProcess::GetNmsScoreThreshold() const {
   return this->primitive_->value_as_DetectionPostProcess()->NmsScoreThreshold();
 }
-long DetectionPostProcess::GetMaxDetections() const {
+int64_t DetectionPostProcess::GetMaxDetections() const {
   return this->primitive_->value_as_DetectionPostProcess()->MaxDetections();
 }
-long DetectionPostProcess::GetDetectionsPreClass() const {
+int64_t DetectionPostProcess::GetDetectionsPreClass() const {
   return this->primitive_->value_as_DetectionPostProcess()->DetectionsPreClass();
 }
-long DetectionPostProcess::GetMaxClassesPreDetection() const {
+int64_t DetectionPostProcess::GetMaxClassesPreDetection() const {
   return this->primitive_->value_as_DetectionPostProcess()->MaxClassesPreDetection();
 }
-long DetectionPostProcess::GetNumClasses() const {
+int64_t DetectionPostProcess::GetNumClasses() const {
   return this->primitive_->value_as_DetectionPostProcess()->NumClasses();
 }
 bool DetectionPostProcess::GetUseRegularNms() const {
@@ -127,10 +127,10 @@ void DetectionPostProcess::SetXScale(float x_scale) {}
 void DetectionPostProcess::SetYScale(float y_scale) {}
 void DetectionPostProcess::SetNmsIouThreshold(float nms_iou_threshold) {}
 void DetectionPostProcess::SetNmsScoreThreshold(float nms_score_threshold) {}
-void DetectionPostProcess::SetMaxDetections(long max_detections) {}
-void DetectionPostProcess::SetDetectionsPreClass(long detections_pre_class) {}
-void DetectionPostProcess::SetMaxClassesPreDetection(long max_classes_pre_detection) {}
-void DetectionPostProcess::SetNumClasses(long num_classes) {}
+void DetectionPostProcess::SetMaxDetections(int64_t max_detections) {}
+void DetectionPostProcess::SetDetectionsPreClass(int64_t detections_pre_class) {}
+void DetectionPostProcess::SetMaxClassesPreDetection(int64_t max_classes_pre_detection) {}
+void DetectionPostProcess::SetNumClasses(int64_t num_classes) {}
 void DetectionPostProcess::SetUseRegularNms(bool use_regular_nms) {}
 #endif
 }  // namespace lite

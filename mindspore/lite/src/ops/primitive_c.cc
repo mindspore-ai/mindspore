@@ -410,11 +410,32 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new Shape(primitive);
     case schema::PrimitiveType_Unsqueeze:
       return new Unsqueeze(primitive);
+    case schema::PrimitiveType_BatchToSpace:
+      return new BatchToSpace(primitive);
+    case schema::PrimitiveType_SpaceToBatch:
+      return new SpaceToBatch(primitive);
+    case schema::PrimitiveType_BroadcastTo:
+      return new BroadcastTo(primitive);
+    case schema::PrimitiveType_DepthToSpace:
+      return new DepthToSpace(primitive);
+    case schema::PrimitiveType_Lstm:
+      return new Lstm(primitive);
+    case schema::PrimitiveType_ZerosLike:
+      return new ZerosLike(primitive);
+    case schema::PrimitiveType_MakeTuple:
+      return new MakeTuple(primitive);
+    case schema::PrimitiveType_Where:
+      return new Where(primitive);
+    case schema::PrimitiveType_ScatterND:
+      return new ScatterND(primitive);
+    case schema::PrimitiveType_ConstantOfShape:
+      return new ConstantOfShape(primitive);
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitiveT : "
                     << schema::EnumNamePrimitiveType(op_type);
-      return nullptr;
+      break;
   }
+  return nullptr;
 }
 #else
 PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive) {
@@ -433,6 +454,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new Reduce(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Pooling:
       return new Pooling(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_ROIPooling:
+      return new ROIPooling(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_DepthwiseConv2D:
       return new DepthwiseConv2D(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_FusedBatchNorm:
@@ -443,6 +466,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new FullConnection(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Power:
       return new Power(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Pad:
+      return new Pad(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Range:
       return new Range(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Mul:
@@ -469,20 +494,22 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new Scale(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Eltwise:
       return new Eltwise(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Ceil:
+      return new Ceil(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Concat:
       return new Concat(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Fill:
       return new Fill(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Nhwc2Nchw:
+      return new Nhwc2Nchw(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Nchw2Nhwc:
+      return new Nchw2Nhwc(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Transpose:
       return new Transpose(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Slice:
       return new Slice(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Squeeze:
       return new Squeeze(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_Nchw2Nhwc:
-      return new Nchw2Nhwc(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_Nhwc2Nchw:
-      return new Nhwc2Nchw(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Flatten:
       return new Flatten(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Mean:
@@ -521,8 +548,6 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new Maximum(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Minimum:
       return new Minimum(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_Pad:
-      return new Pad(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_StridedSlice:
       return new StridedSlice(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Prelu:
@@ -559,12 +584,12 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new GreaterEqual(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Floor:
       return new Floor(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_Ceil:
-      return new Ceil(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Split:
       return new Split(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_OneHot:
       return new OneHot(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_PriorBox:
+      return new PriorBox(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_SpaceToDepth:
       return new SpaceToDepth(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Tile:
@@ -591,7 +616,29 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new Shape(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Unsqueeze:
       return new Unsqueeze(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_BatchToSpace:
+      return new BatchToSpace(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_SpaceToBatch:
+      return new SpaceToBatch(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_BroadcastTo:
+      return new BroadcastTo(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_DepthToSpace:
+      return new DepthToSpace(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Lstm:
+      return new Lstm(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_ZerosLike:
+      return new ZerosLike(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_MakeTuple:
+      return new MakeTuple(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_Where:
+      return new Where(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_ScatterND:
+      return new ScatterND(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_ConstantOfShape:
+      return new ConstantOfShape(const_cast<schema::Primitive *>(primitive));
     default:
+      MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitive : "
+                    << schema::EnumNamePrimitiveType(op_type);
       break;
   }
   return nullptr;

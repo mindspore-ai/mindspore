@@ -33,8 +33,8 @@ class Permute : public PrimitiveC {
 #else
   explicit Permute(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
-  std::vector<long> GetOrder() const;
-  void SetOrder(const std::vector<long> &order);
+  std::vector<int64_t> GetOrder() const;
+  void SetOrder(const std::vector<int64_t> &order);
 };
 }  // namespace lite
 }  // namespace mindspore

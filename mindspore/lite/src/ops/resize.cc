@@ -21,15 +21,15 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Resize::GetFormat() const { return this->primitive_->value.AsResize()->format; }
 int Resize::GetMethod() const { return this->primitive_->value.AsResize()->method; }
-long Resize::GetNewHeight() const { return this->primitive_->value.AsResize()->newHeight; }
-long Resize::GetNewWidth() const { return this->primitive_->value.AsResize()->newWidth; }
+int64_t Resize::GetNewHeight() const { return this->primitive_->value.AsResize()->newHeight; }
+int64_t Resize::GetNewWidth() const { return this->primitive_->value.AsResize()->newWidth; }
 bool Resize::GetAlignCorners() const { return this->primitive_->value.AsResize()->alignCorners; }
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value.AsResize()->preserveAspectRatio; }
 
 void Resize::SetFormat(int format) { this->primitive_->value.AsResize()->format = (schema::Format)format; }
 void Resize::SetMethod(int method) { this->primitive_->value.AsResize()->method = (schema::ResizeMethod)method; }
-void Resize::SetNewHeight(long new_height) { this->primitive_->value.AsResize()->newHeight = new_height; }
-void Resize::SetNewWidth(long new_width) { this->primitive_->value.AsResize()->newWidth = new_width; }
+void Resize::SetNewHeight(int64_t new_height) { this->primitive_->value.AsResize()->newHeight = new_height; }
+void Resize::SetNewWidth(int64_t new_width) { this->primitive_->value.AsResize()->newWidth = new_width; }
 void Resize::SetAlignCorners(bool align_corners) { this->primitive_->value.AsResize()->alignCorners = align_corners; }
 void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {
   this->primitive_->value.AsResize()->preserveAspectRatio = preserve_aspect_ratio;
@@ -39,15 +39,15 @@ void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {
 
 int Resize::GetFormat() const { return this->primitive_->value_as_Resize()->format(); }
 int Resize::GetMethod() const { return this->primitive_->value_as_Resize()->method(); }
-long Resize::GetNewHeight() const { return this->primitive_->value_as_Resize()->newHeight(); }
-long Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()->newWidth(); }
+int64_t Resize::GetNewHeight() const { return this->primitive_->value_as_Resize()->newHeight(); }
+int64_t Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()->newWidth(); }
 bool Resize::GetAlignCorners() const { return this->primitive_->value_as_Resize()->alignCorners(); }
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value_as_Resize()->preserveAspectRatio(); }
 
 void Resize::SetFormat(int format) {}
 void Resize::SetMethod(int method) {}
-void Resize::SetNewHeight(long new_height) {}
-void Resize::SetNewWidth(long new_width) {}
+void Resize::SetNewHeight(int64_t new_height) {}
+void Resize::SetNewWidth(int64_t new_width) {}
 void Resize::SetAlignCorners(bool align_corners) {}
 void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {}
 #endif
