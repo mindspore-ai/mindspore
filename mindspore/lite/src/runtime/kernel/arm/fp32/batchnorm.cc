@@ -15,50 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/batchnorm.h"
-#include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
-#include "nnacl/batchnorm_parameter.h"
-#include "nnacl/fp32/batchnorm.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::kernel {
-BatchnormCPUKernel::~BatchnormCPUKernel() {
-  if (mean_addr_ != nullptr) {
-    free(mean_addr_);
-    mean_addr_ = nullptr;
-  }
-  if (var_addr_ != nullptr) {
-    free(var_addr_);
-    var_addr_ = nullptr;
-  }
-}
-
-int BatchnormCPUKernel::InitConstTensor() {
-  auto mean = in_tensors_[1];
-  mean_addr_ = reinterpret_cast<float *>(malloc(mean->ElementsNum() * sizeof(float)));
-  if (mean_addr_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
-  memcpy(mean_addr_, mean->Data(), mean->ElementsNum() * sizeof(float));
-
-  auto variance = in_tensors_[2];
-  var_addr_ = reinterpret_cast<float *>(malloc(variance->ElementsNum() * sizeof(float)));
-  if (var_addr_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
-  memcpy(var_addr_, variance->Data(), variance->ElementsNum() * sizeof(float));
-  return RET_OK;
-}
-
 int BatchnormCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -67,62 +29,72 @@ int BatchnormCPUKernel::Init() {
 }
 
 int BatchnormCPUKernel::ReSize() {
-  if (mean_addr_ != nullptr) {
-    free(mean_addr_);
-    mean_addr_ = nullptr;
+  FreeMeanAndVariance();
+  FillParam();
+  return InitConstTensor();
+}
+
+void BatchnormCPUKernel::FreeMeanAndVariance() {
+  if (mean_ != nullptr) {
+    free(mean_);
+    mean_ = nullptr;
   }
-  if (var_addr_ != nullptr) {
-    free(var_addr_);
-    var_addr_ = nullptr;
+  if (variance_ != nullptr) {
+    free(variance_);
+    variance_ = nullptr;
   }
+}
+
+void BatchnormCPUKernel::FillParam() {
   auto input_shapes = in_tensors_[0]->shape();
   auto n_dim = input_shapes.size();
-  batchnorm_param_->channel_ = input_shapes[n_dim - 1];
-  batchnorm_param_->unit_ = 1;
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  param->channel_ = input_shapes[n_dim - 1];
+  param->unit_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {
-    batchnorm_param_->unit_ *= input_shapes[i];
+    param->unit_ *= input_shapes[i];
   }
-  batchnorm_param_->op_parameter_.thread_num_ =
-    MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->channel_);
+}
 
-  auto ret = InitConstTensor();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Batchnorm fp32 InitConstTensor failed.";
+int BatchnormCPUKernel::InitConstTensor() {
+  mean_ = malloc(in_tensors_[1]->Size());
+  variance_ = malloc(in_tensors_[2]->Size());
+  if (mean_ == nullptr || variance_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    FreeMeanAndVariance();
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int BatchnormCPUKernel::DoExecute(int task_id) {
-  BatchNorm(out_addr_, in_addr_, mean_addr_, var_addr_, task_id, batchnorm_param_);
-  return RET_OK;
-}
-
-int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto g_kernel = reinterpret_cast<BatchnormCPUKernel *>(cdata);
-  auto ret = g_kernel->DoExecute(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "BatchnormRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return ret;
-  }
+  memcpy(mean_, in_tensors_[1]->Data(), in_tensors_[1]->Size());
+  memcpy(variance_, in_tensors_[2]->Data(), in_tensors_[2]->Size());
   return RET_OK;
 }
 
 int BatchnormCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << prepare_ret;
-    return prepare_ret;
-  }
-  in_addr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
-  out_addr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
-
-  int ret = LiteBackendParallelLaunch(BatchNormRun, this, batchnorm_param_->op_parameter_.thread_num_);
+  auto ret = Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
+    MS_LOG(ERROR) << "Prepare fail! Ret error code: " << ret;
     return ret;
   }
-  return RET_OK;
+  ret = LiteBackendParallelLaunch(BatchNormRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
+  }
+  return ret;
+}
+
+int BatchnormCPUKernel::DoExecute(int task_id) {
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  BatchNormFp32(in_tensors_.at(0)->Data(), mean_, variance_, param, task_id, out_tensors_.at(0)->Data());
+  return mindspore::lite::RET_OK;
+}
+
+int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto kernel = reinterpret_cast<BatchnormCPUKernel *>(cdata);
+  auto ret = kernel->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "BatchnormRun error task_id[" << task_id << "] error_code[" << ret << "]";
+  }
+  return ret;
 }
 
 kernel::LiteKernel *CpuBatchnormKernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
@@ -131,7 +103,6 @@ kernel::LiteKernel *CpuBatchnormKernelCreator(const std::vector<lite::tensor::Te
                                               const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_BatchNorm);
   auto *kernel = new (std::nothrow) BatchnormCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchNormCPUKernel fail!";

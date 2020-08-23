@@ -22,6 +22,7 @@
 #include "include/context.h"
 #include "nnacl/fp32/batchnorm.h"
 #include "nnacl/batchnorm_parameter.h"
+#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::Context;
 
@@ -31,24 +32,23 @@ class BatchnormCPUKernel : public LiteKernel {
   BatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
-  }
-  ~BatchnormCPUKernel() override;
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  virtual ~BatchnormCPUKernel() { FreeMeanAndVariance(); }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int InitConstTensor();
-  int DoExecute(int tid);
+  virtual int InitConstTensor();
+  virtual int DoExecute(int task_id);
 
- private:
-  float *in_addr_ = nullptr;
-  float *mean_addr_ = nullptr;
-  float *var_addr_ = nullptr;
-  float *out_addr_ = nullptr;
-  BatchNormParameter *batchnorm_param_;
+ protected:
+  void FillParam();
+  void FreeMeanAndVariance();
+  void *mean_ = nullptr;
+  void *variance_ = nullptr;
 };
+
+int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_H_

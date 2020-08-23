@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_BATCHNORM_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_BATCHNORM_FP16_H_
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_BATCHNORM_H_
-#define MINDSPORE_LITE_NNACL_FP32_BATCHNORM_H_
-
+#ifdef ENABLE_NEON
+#include <arm_neon.h>
+#endif
 #include "nnacl/batchnorm_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void BatchNormFp32(const void *input, const void *mean, const void *variance, BatchNormParameter *param, int task_id,
+void BatchNormFp16(const void *input, const void *mean, const void *variance, BatchNormParameter *param, int task_id,
                    void *output);
-void FusedBatchNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
+void FusedBatchNormFp16(const void *input, const void *scale, const void *offset, const void *mean,
                         const void *variance, BatchNormParameter *param, int task_id, void *output);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FUSED_BATCHNORM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_BATCHNORM_FP16_H_
