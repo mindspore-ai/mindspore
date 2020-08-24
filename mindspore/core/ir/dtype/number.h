@@ -68,6 +68,8 @@ class Number : public Object {
   const int nbits_;
 };
 
+using NumberPtr = std::shared_ptr<Number>;
+
 // Bool
 class Bool : public Number {
  public:

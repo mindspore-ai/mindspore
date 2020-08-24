@@ -88,6 +88,17 @@ std::string Parameter::DebugString(int recursive_level) const {
   return buffer.str();
 }
 
+ParamInfoPtr Parameter::param_info() const {
+  if (!has_default()) {
+    return nullptr;
+  }
+  auto tensor = default_param()->cast<tensor::MetaTensorPtr>();
+  if (tensor == nullptr || !tensor->is_parameter()) {
+    return nullptr;
+  }
+  return tensor->param_info();
+}
+
 std::string ValueNode::ToString() const {
   MS_EXCEPTION_IF_NULL(value_);
   if (value_->isa<FuncGraph>()) {

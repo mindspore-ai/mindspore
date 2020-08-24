@@ -19,15 +19,15 @@
 #include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "ir/dtype/tensor_type.h"
 
 namespace mindspore {
 TypePtr RefType::DeepCopy() const {
   if (IsGeneric()) {
     return std::make_shared<RefType>();
   } else {
-    auto subtype = subtype_->DeepCopy();
-    auto subtype_origin = subtype_origin_->DeepCopy();
-    return std::make_shared<RefType>(subtype, subtype_origin);
+    auto subtype = TensorType::DeepCopy()->cast<TensorTypePtr>();
+    return std::make_shared<RefType>(subtype);
   }
 }
 
@@ -39,7 +39,7 @@ std::string RefType::DumpText() const {
     buffer << "Ref";
   } else {
     buffer << "Ref[";
-    buffer << subtype_->DumpText() << "]";
+    buffer << TensorType::DumpText() << "]";
   }
   return buffer.str();
 }

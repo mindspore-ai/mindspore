@@ -233,13 +233,14 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
-      ValuePtr value = param_node->default_param();
-      constexpr bool broaden = true;
-      AbstractBasePtr ptr = abstract::FromValue(value, broaden);
-
-      parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
-      args_spec.push_back(ptr);
-      parallel::ParallelParameterContextCkptInTraining(func_graph, param_node, ptr);
+      auto value = param_node->default_param();
+      auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
+      auto ref_key = std::make_shared<RefKey>(param_node->name());
+      auto abs_ref_key = ref_key->ToAbstract();
+      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
+      parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, abs_ref);
+      args_spec.push_back(abs_ref);
+      parallel::ParallelParameterContextCkptInTraining(func_graph, param_node, abs_ref);
     }
   }
   // Analyze

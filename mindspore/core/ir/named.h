@@ -62,6 +62,21 @@ class Named : public Value {
 };
 using NamedPtr = std::shared_ptr<Named>;
 
+struct NamedHasher {
+  std::size_t operator()(NamedPtr const &name) const {
+    std::size_t hash = name->Hash();
+    return hash;
+  }
+};
+
+struct NamedEqual {
+  bool operator()(NamedPtr const &t1, NamedPtr const &t2) const {
+    MS_EXCEPTION_IF_NULL(t1);
+    MS_EXCEPTION_IF_NULL(t2);
+    return *t1 == *t2;
+  }
+};
+
 class None : public Named {
  public:
   None() : Named("None") {}

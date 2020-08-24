@@ -105,24 +105,12 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     auto value = py::cast<tensor::MetaTensorPtr>(obj);
     node->set_default_param(value);
     // set_abstract for parameter
-    constexpr bool broaden = true;
-    node->set_abstract(abstract::FromValue(value, broaden));
+    auto abs = value->ToAbstract();
+    node->set_abstract(abs);
     para_node = node;
   }
-  auto iter = func_graph->make_ref_params().find(para_node);
-  if (iter == func_graph->make_ref_params().end()) {
-    ValuePtr target_type = GetMixedPrecisionTargetType(func_graph, para_node);
 
-    AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
-    AnfNodePtr ref_key = NewValueNode(std::make_shared<RefKey>(param_name));
-    AnfNodePtr target_type_node = NewValueNode(target_type);
-    AnfNodePtr ref_node = func_graph->NewCNode({make_ref, ref_key, para_node, target_type_node});
-    func_graph->make_ref_params()[para_node] = ref_node;
-    func_graph->add_parameter_obj_node(ref_node);
-    return ref_node;
-  } else {
-    return iter->second;
-  }
+  return para_node;
 }
 
 bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, AnfNodePtr *const node) {

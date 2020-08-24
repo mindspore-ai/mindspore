@@ -284,11 +284,9 @@ class AbstractTensor : public AbstractUndetermined {
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden(uint8_t config = 0) const override;
   AbstractBasePtr BroadenWithShape() const;
-  AbstractBasePtr Join(const AbstractBasePtr &other) final;
-
+  AbstractBasePtr Join(const AbstractBasePtr &other);
   bool operator==(const AbstractTensor &other) const;
   bool operator==(const AbstractBase &other) const override;
-
   std::string ToString() const override;
   std::size_t hash() const override {
     auto value = GetValueTrack();
@@ -301,6 +299,9 @@ class AbstractTensor : public AbstractUndetermined {
     }
     return hash_sum;
   }
+
+ protected:
+  bool equal_to(const AbstractTensor &other) const;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
@@ -575,42 +576,42 @@ class AbstractRefKey : public AbstractBase {
 };
 using AbstractRefKeyPtr = std::shared_ptr<AbstractRefKey>;
 
-class AbstractRef : public AbstractBase {
+class AbstractRef : public AbstractTensor {
  public:
-  AbstractRef(const AbstractBasePtr &ref_key, const AbstractBasePtr &ref_value, bool need_cast = false,
-              TypePtr cast_target = nullptr);
+  AbstractRef(const AbstractBasePtr &ref_key, const AbstractTensorPtr &ref_value);
 
   ~AbstractRef() override = default;
-  MS_DECLARE_PARENT(AbstractRef, AbstractBase)
+  MS_DECLARE_PARENT(AbstractRef, AbstractTensor)
 
   TypePtr BuildType() const override;
-  BaseShapePtr BuildShape() const override;
   bool operator==(const AbstractRef &other) const;
   bool operator==(const AbstractBase &other) const override;
   AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractRef>(ref_key_->Clone(), ref_->Clone(), need_cast_, target_type_);
+    auto abs_tensor = AbstractTensor::Clone()->cast<AbstractTensorPtr>();
+    if (abs_tensor == nullptr) {
+      return nullptr;
+    }
+    return std::make_shared<AbstractRef>(ref_key_->Clone(), abs_tensor);
   }
   std::string ToString() const override;
-  inline AbstractBasePtr ref() const { return ref_; }
+  inline AbstractTensorPtr ref() { return shared_from_base<AbstractTensor>(); }
   inline AbstractBasePtr ref_key() const { return ref_key_; }
   inline RefKeyPtr ref_key_value() const { return ref_key_value_; }
-  inline TypePtr target_type() const { return target_type_; }
-  inline bool need_cast() const { return need_cast_; }
   AbstractBasePtr Broaden(uint8_t config = 0) const override {
     // always broaden for ref
-    return std::make_shared<AbstractRef>(ref_key_->Broaden(config), ref_->Broaden(), need_cast_, target_type_);
+    auto abs_tensor = AbstractTensor::Broaden()->cast<AbstractTensorPtr>();
+    if (abs_tensor == nullptr) {
+      return nullptr;
+    }
+    return std::make_shared<AbstractRef>(ref_key_->Broaden(config), abs_tensor);
   }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
   std::size_t hash() const override {
-    return ref_->hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);  // ref_key_->hash() ^
+    return AbstractTensor::hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);  // ref_key_->hash() ^
   }
 
  private:
   AbstractBasePtr ref_key_;
-  AbstractBasePtr ref_;
-  // For mix presicion, only float type need to cast to float16 of float32
-  bool need_cast_;
-  TypePtr target_type_;
   // cache for ref_key after build value, when value is null, return nullptr.
   RefKeyPtr ref_key_value_;
 };

@@ -23,6 +23,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "ir/param_info.h"
 #include "ir/dtype.h"
 #include "utils/convert_utils_base.h"
 #include "utils/hashing.h"
@@ -163,6 +164,15 @@ class MetaTensor : public Value {
       return false;
     }
   }
+  // Get tensor's param_info info.
+  ParamInfoPtr param_info() const { return param_info_; }
+  bool is_parameter() const { return is_parameter_; }
+
+  // Set tensor's param_info info.
+  void set_param_info(const ParamInfoPtr &param_info) {
+    is_parameter_ = true;
+    param_info_ = param_info;
+  }
 
  protected:
   // brief Data type of the tensor.
@@ -184,6 +194,9 @@ class MetaTensor : public Value {
   //
   // Includes the format and data type of a tensor on device.
   DeviceInfo device_info_;
+
+  bool is_parameter_{false};
+  ParamInfoPtr param_info_{nullptr};
 };
 
 using MetaTensorPtr = std::shared_ptr<MetaTensor>;

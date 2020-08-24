@@ -27,6 +27,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.common.api import ms_function, _executor
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
@@ -254,3 +255,60 @@ def test_bprop_with_wrong_output_shape():
         net = BpropWithWrongOutputShapeCell()
         net.set_grad()
         grad_all(net)(Tensor(np.ones([64, 10]).astype(np.int32)))
+
+class AssignWhenInsertGrad(nn.Cell):
+    """ NetWithNDarray definition """
+
+    def __init__(self):
+        super(AssignWhenInsertGrad, self).__init__()
+        self.gather = P.GatherV2()
+        self.damping = Tensor(np.array([0.03, 0.03]).astype(np.float32))
+        self.cov_step = ms.Parameter(0, name="cov_step", requires_grad=False)
+        self.freq = Tensor(278, ms.int32)
+        self.getG = P.InsertGradientOf(self.save_gradient)
+
+    def save_gradient(self, dout):
+        self.cov_step = self.cov_step + self.freq
+        return dout
+
+    def construct(self, x):
+        self.gather(self.damping, self.cov_step, 0)
+        out = P.ReLU()(x)
+        out = self.getG(out)
+        return out
+
+grad_all = C.GradOperation('get_all', get_all=True)
+
+class GradNet(nn.Cell):
+    def __init__(self, net):
+        super(GradNet, self).__init__()
+        self.net = net
+
+    def construct(self, *inputs):
+        out = self.net(*inputs)
+        return out, grad_all(self.net)(*inputs)
+
+def test_assign_in_insert_grad():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = AssignWhenInsertGrad().to_float(ms.float16)
+    input_data = np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32')
+    net_back = GradNet(net)
+    net_back(ms.Tensor(input_data))
+
+class Assign(nn.Cell):
+    """ NetWithNDarray definition """
+
+    def __init__(self):
+        super(Assign, self).__init__()
+        self.cov_step = ms.Parameter(0.0, name="cov_step", requires_grad=False)
+
+    def construct(self, x):
+        self.cov_step = self.cov_step + x
+        return self.cov_step
+
+def test_assign():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Assign()
+    input_data = ms.Tensor(np.array(1).astype(np.int32))
+    net_back = GradNet(net)
+    net_back(input_data)

@@ -359,7 +359,7 @@ class ParseAst {
 bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
-ValuePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
+TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph);
 
 }  // namespace parse
 }  // namespace mindspore

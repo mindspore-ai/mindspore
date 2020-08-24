@@ -17,21 +17,13 @@
 #ifndef MINDSPORE_CORE_IR_DTYPE_REF_H_
 #define MINDSPORE_CORE_IR_DTYPE_REF_H_
 
-#include <cstddef>
-#include <iostream>
-#include <initializer_list>
-#include <map>
 #include <memory>
-#include <utility>
-#include <sstream>
 #include <string>
-#include <vector>
-#include <type_traits>
-#include <unordered_map>
-#include <algorithm>
+
 #include "base/base.h"
 #include "ir/named.h"
 #include "ir/dtype/type.h"
+#include "ir/dtype/tensor_type.h"
 
 namespace mindspore {
 // TypeRefKey type
@@ -48,23 +40,16 @@ class RefKeyType : public Object {
 };
 
 // TypeRef type
-class RefType : public Object {
+class RefType : public TensorType {
  public:
-  RefType() : Object(kObjectTypeRef) {}
-  RefType(const TypePtr &subtype, const TypePtr &subtype_origin)
-      : Object(kObjectTypeRef, false), subtype_(subtype), subtype_origin_(subtype_origin) {}
+  RefType() : TensorType() {}
+  explicit RefType(const TensorTypePtr &subtype) : TensorType(subtype->element()) {}
   ~RefType() override {}
-  MS_DECLARE_PARENT(RefType, Object)
+  MS_DECLARE_PARENT(RefType, TensorType)
 
-  TypePtr subtype() const { return subtype_; }
-  TypeId generic_type_id() const override { return kObjectTypeRef; }
   TypePtr DeepCopy() const override;
   std::string ToString() const override;
   std::string DumpText() const override;
-
- private:
-  TypePtr subtype_;
-  TypePtr subtype_origin_;
 };
 using RefTypePtr = std::shared_ptr<RefType>;
 

@@ -200,16 +200,6 @@ bool StringImm::operator==(const Value &other) const {
 }
 bool StringImm::operator==(const StringImm &other) const { return str_ == other.str_; }
 
-bool RefKey::operator==(const Value &other) const {
-  if (other.isa<RefKey>()) {
-    auto other_ = static_cast<const RefKey &>(other);
-    return *this == other_;
-  } else {
-    return false;
-  }
-}
-bool RefKey::operator==(const RefKey &other) const { return tag_ == other.tag_; }
-
 bool AnyValue::operator==(const Value &other) const {
   if (other.isa<AnyValue>()) {
     return true;

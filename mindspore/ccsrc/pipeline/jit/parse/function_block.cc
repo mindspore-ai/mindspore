@@ -306,7 +306,14 @@ void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr 
 }
 
 void FunctionBlock::SetStateAssgin(const AnfNodePtr &target, const std::string &readid) {
-  state_assign_[target] = readid;
+  const std::string primitive_name("assign");
+  const std::string module_name("mindspore.ops.functional");
+  ValueNodePtr assign_op = NewValueNode(prim::GetPythonOps(primitive_name, module_name, true));
+  auto source = ReadVariable(readid);
+  auto assign = func_graph()->NewCNode({assign_op, target, source});
+  WriteVariable(readid, assign);
+  MS_LOG(INFO) << "SetState read " << target->DebugString() << ", " << readid;
+  AddAutoDepend(assign);
 }
 
 void FunctionBlock::AddAutoDepend(const AnfNodePtr &target) { auto_depends_.push_back(target); }
@@ -321,21 +328,13 @@ void FunctionBlock::InsertDependItemsBeforeReturn() {
   ValueNodePtr make_tuple_op = NewValueNode(prim::kPrimMakeTuple);
   ValueNodePtr depend_op = NewValueNode(prim::kPrimDepend);
   ValueNodePtr stop_gradient_op = NewValueNode(prim::kPrimStopGradient);
-  const std::string primitive_name("assign");
-  const std::string module_name("mindspore.ops.functional");
-  ValueNodePtr assign_op = NewValueNode(prim::GetPythonOps(primitive_name, module_name, true));
-  if (state_assign_.size() == 0 && auto_depends_.size() == 0) {
+
+  if (auto_depends_.size() == 0) {
     return;
   }
   AnfNodePtr state = nullptr;
   std::vector<AnfNodePtr> vec_states;
   vec_states.emplace_back(make_tuple_op);
-  for (auto &item : state_assign_) {
-    auto source = ReadVariable(item.second);
-    auto assign = func_graph()->NewCNode({assign_op, item.first, source});
-    MS_LOG(INFO) << "SetState read " << item.first->ToString() << ", " << item.second;
-    vec_states.emplace_back(assign);
-  }
   for (auto &item : auto_depends_) {
     MS_LOG(DEBUG) << "auto_depends " << item->ToString();
     vec_states.emplace_back(item);
@@ -361,7 +360,6 @@ void FunctionBlock::InsertDependItemsBeforeReturn() {
   AnfNodePtr stopped = func_graph()->NewCNode({stop_gradient_op, state});
   AnfNodePtr ret = func_graph()->NewCNode({depend_op, old_ret, stopped});
   func_graph()->set_output(ret, true);
-  state_assign_.clear();
 }
 }  // namespace parse
 }  // namespace mindspore

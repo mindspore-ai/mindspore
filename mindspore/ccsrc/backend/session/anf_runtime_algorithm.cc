@@ -592,11 +592,6 @@ TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const AnfNodePtr &node, size_
     return get_single_type((*tuple_ptr)[output_idx]);
   };
   TypePtr type_ptr = node->Type();
-  if (type_ptr->isa<RefType>()) {
-    auto ref_type_ptr = type_ptr->cast<RefTypePtr>();
-    MS_EXCEPTION_IF_NULL(ref_type_ptr);
-    return get_tuple_type(ref_type_ptr->subtype(), output_idx);
-  }
   return get_tuple_type(type_ptr, output_idx);
 }
 
