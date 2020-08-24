@@ -32,7 +32,7 @@ namespace device {
 namespace gpu {
 bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, TypeId, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
-  bool need_sync = (size != 0) && (size_ != 0);
+  bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
     return true;
   }
@@ -52,7 +52,7 @@ bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, T
 
 bool GPUDeviceAddress::SyncHostToDevice(const std::vector<int> &, size_t size, TypeId, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
-  bool need_sync = (size != 0) && (size_ != 0);
+  bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
     return true;
   }
