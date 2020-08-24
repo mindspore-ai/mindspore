@@ -45,4 +45,12 @@ ATTR_MAP(ResizeBilinearV2D) = {
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeBilinearV2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinearV2D, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2D))
+
+// CropAndResize
+INPUT_MAP(CropAndResize) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};
+ATTR_MAP(CropAndResize) = {{"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
+                           {"method", ATTR_DESC(method, AnyTraits<std::string>())}};
+OUTPUT_MAP(CropAndResize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResize))
 }  // namespace mindspore::transform
