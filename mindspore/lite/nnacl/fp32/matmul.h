@@ -29,7 +29,7 @@ extern "C" {
 void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int row, int col,
             int stride, bool write_nhwc);
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int row,
-            int col, int stride, bool write_nhwc);
+            int col, size_t stride, size_t writeNhwc, size_t writeC4);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
@@ -38,7 +38,7 @@ void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, size_t row, size_t col
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, size_t stride, bool write_nhwc);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                       int col, size_t stride, bool write_nhwc);
+                       int col, size_t stride, size_t writeNhwc, size_t writeC4);
 #endif
 #ifdef __cplusplus
 }

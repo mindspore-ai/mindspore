@@ -370,8 +370,8 @@ void MatMul8x8(const float *a, const float *b, float *dst, const float *bias, Ac
 }
 
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
-               int col, int stride, bool write_nhwc) {
-  if (write_nhwc) {
+               int col, size_t stride, size_t writeNhwc, size_t writeC4) {
+  if (writeNhwc != 0) {
     /*  col8-major * row8-major => col-major  */
     for (int r = 0; r < row; r++) {
       for (int c = 0; c < col; c++) {
@@ -404,10 +404,10 @@ void MatMul(const float *a, const float *b, float *c, const float *bias, ActType
 }
 
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
-            int col, int stride, bool write_nhwc) {
+            int col, size_t stride, size_t writeNhwc, size_t writeC4) {
 #ifdef ENABLE_ARM64
-  MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, write_nhwc);
+  MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, writeNhwc, writeC4);
 #else
-  MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, write_nhwc);
+  MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride,  writeNhwc, writeC4);
 #endif
 }
