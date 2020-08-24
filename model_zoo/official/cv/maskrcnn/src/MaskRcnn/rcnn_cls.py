@@ -113,7 +113,7 @@ class RcnnCls(nn.Cell):
         self.relu = P.ReLU()
         self.logicaland = P.LogicalAnd()
         self.loss_cls = P.SoftmaxCrossEntropyWithLogits()
-        self.loss_bbox = P.SmoothL1Loss(sigma=1.0)
+        self.loss_bbox = P.SmoothL1Loss(beta=1.0)
         self.loss_mask = P.SigmoidCrossEntropyWithLogits()
         self.reshape = P.Reshape()
         self.onehot = P.OneHot()
