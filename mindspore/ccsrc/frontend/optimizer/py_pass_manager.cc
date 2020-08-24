@@ -45,14 +45,19 @@ PyPassManagerPtr PyPassManager::GetInstance() {
 PyPassManager::PyPassManager() {
   phase_to_group_[Phase::RESOLVE] = std::make_shared<PassGroup>();
   phase_to_group_[Phase::OPT] = std::make_shared<PassGroup>();
+  res_ = std::make_shared<MatchResult>();
 }
 
 void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-                            Phase phase, bool run_only_once, bool multigraph) {
-  auto cur_pm = GetPassGroup(phase);
-  MS_EXCEPTION_IF_NULL(cur_pm);
-  PythonPassPtr new_pass = std::make_shared<PythonPass>(pass_name, pattern, target, run_only_once, multigraph);
-  cur_pm->AddPass(new_pass);
+                            Phase phase, bool run_only_once) {
+  auto cur_pg = GetPassGroup(phase);
+  MS_EXCEPTION_IF_NULL(cur_pg);
+  cur_pg->SetRunOnlyOnce(run_only_once);
+  MS_EXCEPTION_IF_NULL(pattern);
+  MS_EXCEPTION_IF_NULL(target);
+  MS_EXCEPTION_IF_NULL(cur_pg);
+  PythonPassPtr new_pass = std::make_shared<PythonPass>(pass_name, pattern, target, run_only_once);
+  cur_pg->AddPass(new_pass);
 }
 
 void PyPassManager::Unregiste(const std::string &pass_name, Phase phase) {
@@ -61,6 +66,21 @@ void PyPassManager::Unregiste(const std::string &pass_name, Phase phase) {
   if (!cur_pm->DeletePass(pass_name)) {
     MS_LOG(WARNING) << "No such pass : " + pass_name + "\n";
   }
+}
+
+void PyPassManager::GenNewParameter(const PatternPtr &parameter) {
+  MS_EXCEPTION_IF_NULL(parameter);
+  // Add new parameter after resolve
+  // NOTE: Add NewParameter at early stage will cause CSE problems
+  auto cur_pg = GetPassGroup(Phase::OPT);
+  MS_EXCEPTION_IF_NULL(cur_pg);
+  cur_pg->SetRunOnlyOnce(true);
+  auto new_para_pattern = parameter->cast<NewParameterPtr>();
+  MS_EXCEPTION_IF_NULL(new_para_pattern);
+  auto pass_name = new_para_pattern->para_name();
+  parameter->set_should_replace(false);
+  auto new_pass = std::make_shared<PythonPass>(pass_name, nullptr, parameter, true);
+  cur_pg->AddPass(new_pass);
 }
 
 void PyPassManager::ClearRes() {
@@ -75,7 +95,9 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<PyPassManager, std::shared_ptr<PyPassManager>>(*m, "PyPassManager_")
       .def(py::init([]() { return PyPassManager::GetInstance(); }))
       .def("registe", &PyPassManager::Registe, "Registe python pass")
-      .def("unregiste", &PyPassManager::Unregiste, "Delete Python Pass");
+      .def("unregiste", &PyPassManager::Unregiste, "Delete Python Pass")
+      .def("gen_new_parameter", &PyPassManager::GenNewParameter, "Generate new parameter")
+      .def("set_renorm", &PyPassManager::SetRenorm, "Set whether or not to do renorm after modified graph");
   }));
 }  // namespace python_pass
 }  // namespace opt

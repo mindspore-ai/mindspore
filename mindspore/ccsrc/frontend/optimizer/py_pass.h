@@ -34,20 +34,20 @@ using NodeEquivPtr = std::shared_ptr<NodeEquiv>;
 
 class PythonPass {
  public:
-  explicit PythonPass(const std::string &name, const PatternPtr &src, const PatternPtr &dst, bool run_only_once = false,
-                      bool multigraph = true)
-      : src_pattern_(src), dst_pattern_(dst), name_(name), run_only_once_(run_only_once), multigraph_(multigraph) {}
+  explicit PythonPass(const std::string &name, const PatternPtr &src, const PatternPtr &dst, bool run_only_once = false)
+      : src_pattern_(src), dst_pattern_(dst), name_(name), run_only_once_(run_only_once) {}
   ~PythonPass() = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res);
   std::string name() const { return name_; }
-  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node);
+  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const MatchResultPtr &res);
+  PatternPtr src_pattern() { return src_pattern_; }
+  PatternPtr dst_pattern() { return dst_pattern_; }
 
  private:
   PatternPtr src_pattern_;
   PatternPtr dst_pattern_;
   const std::string name_;
   bool run_only_once_;
-  bool multigraph_ = true;
 };
 
 using PythonPassPtr = std::shared_ptr<PythonPass>;

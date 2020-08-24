@@ -96,6 +96,7 @@ MatchResultPtr IsIn::match(const AnfNodePtr &node) {
   for (auto &iter : patterns_) {
     auto res = iter->match(node);
     if (res != nullptr) {
+      res->add_entry(shared_from_base<IsIn>(), node);
       return res;
     }
   }
@@ -151,6 +152,9 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<AnyPattern, std::shared_ptr<AnyPattern>, Pattern>(*m, "AnyPattern").def(py::init<>());
     (void)py::class_<NewTensor, std::shared_ptr<NewTensor>, Pattern>(*m, "NewTensor_")
       .def(py::init<tensor::TensorPtr>());
+    (void)py::class_<NewParameter, std::shared_ptr<NewParameter>, Pattern>(*m, "NewParameter_")
+      .def(py::init<string, tensor::TensorPtr, bool, bool, bool>());
+    (void)py::class_<Imm, std::shared_ptr<Imm>, Pattern>(*m, "Imm").def(py::init<int>());
   }));
 }  // namespace python_pass
 }  // namespace opt

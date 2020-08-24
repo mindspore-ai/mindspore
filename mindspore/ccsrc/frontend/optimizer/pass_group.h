@@ -41,12 +41,14 @@ class PassGroup {
   // @return false, graph not changed
   bool Run(const FuncGraphPtr &func_graph) const;
   // Run the given graph passes on the input graph
-  // @param [inout] graph The graph to be optimized
+  // @param [inout] func_graph The graph to be optimized
   // @param [in] passes The given graph passes
+  // @param [inout] res MatchResult used to collect all matched patterns and nodes
   // @return true, graph changed
   // @return false, graph not changed
-  bool Run(const FuncGraphPtr &func_graph, const std::vector<PythonPassPtr> &passes) const;
+  bool Run(const FuncGraphPtr &func_graph, const std::vector<PythonPassPtr> &passes, const MatchResultPtr &res) const;
   std::string name() const { return name_; }
+  void SetRunOnlyOnce(bool run_only_once) { run_only_once_ = run_only_once; }
 
  private:
   const std::string name_;
