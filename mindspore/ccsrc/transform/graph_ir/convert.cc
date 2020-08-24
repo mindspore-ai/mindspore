@@ -1705,6 +1705,5 @@ void DfGraphConvertor::RegisterAdapter(const std::string &name, OpAdapterPtr adp
 void DfGraphConvertor::RegisterAdapter(const std::string &name, OpAdapterPtr train_adpt, OpAdapterPtr infer_adpt) {
   OpAdapterMap::get()[name] = std::make_shared<OpAdapterDesc>(train_adpt, infer_adpt);
 }
-
 }  // namespace transform
 }  // namespace mindspore

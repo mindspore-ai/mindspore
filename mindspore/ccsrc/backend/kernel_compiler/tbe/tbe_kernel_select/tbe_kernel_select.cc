@@ -364,7 +364,6 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
         }
         dynamic_input_index++;
         real_io_tensor_index += dynamic_input_size;
-
       } else {
         if (ios_info.size() != 1) {
           MS_LOG(EXCEPTION) << "if output is dynamic, so output must has one output.";

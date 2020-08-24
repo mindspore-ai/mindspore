@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <algorithm>
 #include "utility"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/mem.h"
@@ -226,7 +227,7 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   DumpKernelInput(kernel, args, dump_task);
 }
 
-void DataDumper::SetOpDebugMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
+void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
   MS_LOG(INFO) << "[DataDump] Add op debug info to OpMappingInfo, task id = " << debug_task_id_
                << ", stream id = " << debug_stream_id_;
   aicpu::dump::Task task;
