@@ -29,7 +29,7 @@ MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) { rnd_.seed(GetSeed()); 
 
 Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   if (input.size() < 2) {
-    RETURN_STATUS_UNEXPECTED("Both images and labels columns are required for this operation");
+    RETURN_STATUS_UNEXPECTED("Both images and labels columns are required for this operation.");
   }
 
   std::vector<std::shared_ptr<CVTensor>> images;
@@ -38,13 +38,13 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batch before calling MixUpBatch");
+    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batched before calling MixUpBatch.");
   }
   if (label_shape.size() != 2) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: Label's must be in one-hot format and in a batch");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: Label's must be in one-hot format and in a batch.");
   }
   if ((image_shape[1] != 1 && image_shape[1] != 3) && (image_shape[3] != 1 && image_shape[3] != 3)) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: Images must be in the shape of HWC or CHW");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: Images must be in the shape of HWC or CHW.");
   }
 
   // Move images into a vector of CVTensors
