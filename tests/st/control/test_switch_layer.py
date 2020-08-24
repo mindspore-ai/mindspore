@@ -52,5 +52,5 @@ def test_switch_layer():
     assert ret
 
     idx3 = Tensor(3, mstype.int32)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(IndexError):
         value = net(data, idx3, idx2)

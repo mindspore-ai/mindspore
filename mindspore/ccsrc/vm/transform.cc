@@ -438,8 +438,9 @@ VectorRef CompileGraph::SplitNodes(const FuncGraphPtr &graph) {
 void CompileGraph::Push(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (slots_.count(node) > 0) {
-    MS_LOG(EXCEPTION) << "Push failed node in slots:" << node->DebugString()
-                      << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    MS_LOG(WARNING) << "Push failed node in slots:" << node->DebugString()
+                    << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    return;
   }
   MS_LOG(DEBUG) << "Push node: " << node->DebugString(true) << " height_: " << height_
                 << " is parameter: " << node->isa<Parameter>();

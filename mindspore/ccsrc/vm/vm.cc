@@ -341,13 +341,15 @@ void FinalVM::InstSwitchLayer(const VectorRef &args) {
   if (!backend_->GetIndex(index, &idx_value)) {
     MS_LOG(EXCEPTION) << "Not supported type to be casted to int.";
   }
+  auto ori_value = idx_value;
   if (idx_value < 0) {
     // Add support negative index range [-size, -1].
     idx_value += size;
   }
   if (idx_value < 0 || idx_value >= size) {
-    MS_LOG(EXCEPTION) << __FUNCTION__ << " given index " << idx_value << " out of range. Please make sure the value "
-                      << "of index in [" << -size << ", " << size << "), and the type is int32.";
+    MS_EXCEPTION(IndexError) << __FUNCTION__ << " given index " << ori_value
+                             << " out of range. Please make sure the value "
+                             << "of index in [" << -size << ", " << size << "), and the type is int32.";
   }
   Push(branches[idx_value]);
   MS_LOG(DEBUG) << "End";
