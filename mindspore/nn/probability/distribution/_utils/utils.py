@@ -26,6 +26,7 @@ from mindspore import context
 import mindspore.nn as nn
 import mindspore.nn.probability as msp
 
+
 def cast_to_tensor(t, hint_type=mstype.float32):
     """
     Cast an user input value into a Tensor of dtype.
@@ -47,7 +48,7 @@ def cast_to_tensor(t, hint_type=mstype.float32):
         return t
     t_type = hint_type
     if isinstance(t, Tensor):
-        #convert the type of tensor to dtype
+        # convert the type of tensor to dtype
         return Tensor(t.asnumpy(), dtype=t_type)
     if isinstance(t, (list, np.ndarray)):
         return Tensor(t, dtype=t_type)
@@ -56,7 +57,8 @@ def cast_to_tensor(t, hint_type=mstype.float32):
     if isinstance(t, (int, float)):
         return Tensor(t, dtype=t_type)
     invalid_type = type(t)
-    raise TypeError(f"Unable to convert input of type {invalid_type} to a Tensor of type {t_type}")
+    raise TypeError(
+        f"Unable to convert input of type {invalid_type} to a Tensor of type {t_type}")
 
 
 def convert_to_batch(t, batch_shape, required_type):
@@ -79,6 +81,7 @@ def convert_to_batch(t, batch_shape, required_type):
     t = cast_to_tensor(t, required_type)
     return Tensor(np.broadcast_to(t.asnumpy(), batch_shape), dtype=required_type)
 
+
 def check_scalar_from_param(params):
     """
     Check if params are all scalars.
@@ -93,11 +96,7 @@ def check_scalar_from_param(params):
             return params['distribution'].is_scalar_batch
         if isinstance(value, Parameter):
             return False
-        if isinstance(value, (str, type(params['dtype']))):
-            continue
-        elif isinstance(value, (int, float)):
-            continue
-        else:
+        if not isinstance(value, (int, float, str, type(params['dtype']))):
             return False
     return True
 
@@ -124,7 +123,8 @@ def calc_broadcast_shape_from_param(params):
             value_t = value.default_input
         else:
             value_t = cast_to_tensor(value, mstype.float32)
-        broadcast_shape = utils.get_broadcast_shape(broadcast_shape, list(value_t.shape), params['name'])
+        broadcast_shape = utils.get_broadcast_shape(
+            broadcast_shape, list(value_t.shape), params['name'])
     return tuple(broadcast_shape)
 
 
@@ -147,6 +147,7 @@ def check_greater_equal_zero(value, name):
     comp = np.less(value.asnumpy(), np.zeros(value.shape))
     if comp.any():
         raise ValueError(f'{name} should be greater than ot equal to zero.')
+
 
 def check_greater_zero(value, name):
     """
@@ -251,6 +252,7 @@ def probs_to_logits(probs, is_binary=False):
         return P.Log()(ps_clamped) - P.Log()(1-ps_clamped)
     return P.Log()(ps_clamped)
 
+
 def check_tensor_type(name, inputs, valid_type):
     """
    Check if inputs is proper.
@@ -268,25 +270,34 @@ def check_tensor_type(name, inputs, valid_type):
     if input_type not in valid_type:
         raise TypeError(f"{name} dtype is invalid")
 
+
 def check_type(data_type, value_type, name):
     if not data_type in value_type:
-        raise TypeError(f"For {name}, valid type include {value_type}, {data_type} is invalid")
+        raise TypeError(
+            f"For {name}, valid type include {value_type}, {data_type} is invalid")
+
 
 @constexpr
 def raise_none_error(name):
     raise TypeError(f"the type {name} should be subclass of Tensor."
                     f" It should not be None since it is not specified during initialization.")
 
+
 @constexpr
 def raise_not_impl_error(name):
-    raise ValueError(f"{name} function should be implemented for non-linear transformation")
+    raise ValueError(
+        f"{name} function should be implemented for non-linear transformation")
+
 
 @constexpr
 def check_distribution_name(name, expected_name):
     if name is None:
-        raise ValueError(f"Distribution should be a constant which is not None.")
+        raise ValueError(
+            f"Distribution should be a constant which is not None.")
     if name != expected_name:
-        raise ValueError(f"Expected distribution name is {expected_name}, but got {name}.")
+        raise ValueError(
+            f"Expected distribution name is {expected_name}, but got {name}.")
+
 
 class CheckTuple(PrimitiveWithInfer):
     """
@@ -294,13 +305,13 @@ class CheckTuple(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self):
-        """init Cast"""
         super(CheckTuple, self).__init__("CheckTuple")
-        self.init_prim_io_names(inputs=['x'], outputs=['dummy_output'])
+        self.init_prim_io_names(inputs=['x', 'name'], outputs=['dummy_output'])
 
     def __infer__(self, x, name):
         if not isinstance(x['dtype'], tuple):
-            raise TypeError(f"For {name['value']}, Input type should b a tuple.")
+            raise TypeError(
+                f"For {name['value']}, Input type should b a tuple.")
 
         out = {'shape': None,
                'dtype': None,
@@ -310,10 +321,11 @@ class CheckTuple(PrimitiveWithInfer):
     def __call__(self, x, name):
         if context.get_context("mode") == 0:
             return x["value"]
-        #Pynative mode
+        # Pynative mode
         if isinstance(x, tuple):
             return x
         raise TypeError(f"For {name['value']}, Input type should b a tuple.")
+
 
 class CheckTensor(PrimitiveWithInfer):
     """
@@ -321,13 +333,13 @@ class CheckTensor(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self):
-        """init Cast"""
         super(CheckTensor, self).__init__("CheckTensor")
-        self.init_prim_io_names(inputs=['x'], outputs=['dummy_output'])
+        self.init_prim_io_names(inputs=['x', 'name'], outputs=['dummy_output'])
 
     def __infer__(self, x, name):
         src_type = x['dtype']
-        validator.check_subclass("input", src_type, [mstype.tensor], name["value"])
+        validator.check_subclass(
+            "input", src_type, [mstype.tensor], name["value"])
 
         out = {'shape': None,
                'dtype': None,

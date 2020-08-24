@@ -19,6 +19,7 @@ from ..distribution._utils.utils import cast_to_tensor, CheckTensor
 from ..distribution._utils.custom_ops import log_by_step
 from .bijector import Bijector
 
+
 class ScalarAffine(Bijector):
     """
     Scalar Affine Bijector.
@@ -47,6 +48,7 @@ class ScalarAffine(Bijector):
         >>>         ans = self.s1.forward_log_jacobian(value)
         >>>         ans = self.s1.inverse_log_jacobian(value)
     """
+
     def __init__(self,
                  scale=1.0,
                  shift=0.0,
@@ -91,7 +93,7 @@ class ScalarAffine(Bijector):
         .. math::
             f(x) = a * x + b
         """
-        self.checktensor(x, 'x')
+        self.checktensor(x, 'value')
         return self.scale * x + self.shift
 
     def _inverse(self, y):
@@ -99,7 +101,7 @@ class ScalarAffine(Bijector):
         .. math::
             f(y) = \frac{y - b}{a}
         """
-        self.checktensor(y, 'y')
+        self.checktensor(y, 'value')
         return (y - self.shift) / self.scale
 
     def _forward_log_jacobian(self, x):
@@ -109,7 +111,7 @@ class ScalarAffine(Bijector):
             f'(x) = a
             \log(f'(x)) = \log(a)
         """
-        self.checktensor(x, 'x')
+        self.checktensor(x, 'value')
         return self.log(self.abs(self.scale))
 
     def _inverse_log_jacobian(self, y):
@@ -119,5 +121,5 @@ class ScalarAffine(Bijector):
             f'(x) = \frac{1.0}{a}
             \log(f'(x)) = - \log(a)
         """
-        self.checktensor(y, 'y')
+        self.checktensor(y, 'value')
         return -1. * self.log(self.abs(self.scale))
