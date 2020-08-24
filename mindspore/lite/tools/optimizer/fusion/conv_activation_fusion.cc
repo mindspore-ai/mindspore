@@ -62,17 +62,17 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     }
     auto conv_node = pre_node->cast<CNodePtr>();
     auto node_type = GetCNodeType(conv_node);
-    auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
-    MS_ASSERT(primitiveT_value);
+    auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
+    MS_ASSERT(primitive_c);
     if (node_type == schema::PrimitiveType_Conv2D) {
-      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value));
-      auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value);
+      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c));
+      auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       primc->SetActivationType(activation_type);
       return pre_node;
     } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
-      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value));
-      auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value);
+      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c));
+      auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       primc->SetActivationType(activation_type);
       return pre_node;

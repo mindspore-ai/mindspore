@@ -87,13 +87,13 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   }
   auto cnode = std::dynamic_pointer_cast<CNode>(node);
 
-  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-  if (primitiveT_value == nullptr) {
-    MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
+  auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+  if (primitive_c == nullptr) {
+    MS_LOG(WARNING) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     return false;
   }
 
-  auto type = (schema::PrimitiveType)primitiveT_value->Type();
+  auto type = (schema::PrimitiveType)primitive_c->Type();
   MS_LOG(INFO) << "Primitive type: " << type;
   static const std::vector<schema::PrimitiveType> uint8OpList = {
     schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
@@ -279,7 +279,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   return RET_OK;
 }
 
-STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, QuantType quantType,
+STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitive_c, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum, bool per_channel, bool depth_wise) {
   auto dims = weight->tensor_shape();
   if (per_channel) {
@@ -450,7 +450,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
   }
-  primitiveT_value->AddInputQuantParam(quant_params);
+  primitive_c->AddInputQuantParam(quant_params);
   return RET_OK;
 }
 

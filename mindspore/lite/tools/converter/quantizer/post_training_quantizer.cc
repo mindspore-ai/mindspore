@@ -534,7 +534,7 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value,
+STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c,
                                             bool perchanel, bool depthwise) {
   // const vector<int> dims = filter->dims;
   // perlayer
@@ -552,7 +552,7 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_ERROR;
   }
-  auto status = QuantFilter(paramValue, primitiveT_value, QuantType_PostTraining, quant_max, quant_min, bit_num,
+  auto status = QuantFilter(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num,
                             perchanel, depthwise);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
@@ -573,8 +573,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitiveT_value) {
-  if (primitiveT_value == nullptr || bias == nullptr) {
+STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitive_c) {
+  if (primitive_c == nullptr || bias == nullptr) {
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
   }
@@ -583,7 +583,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
   auto bias_default_param = bias_parameter_ptr->default_param();
   auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
 
-  auto active_weight_quant_params = primitiveT_value->GetInputQuantParams();
+  auto active_weight_quant_params = primitive_c->GetInputQuantParams();
   if (active_weight_quant_params.size() != 2) {
     MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
     return RET_ERROR;
@@ -627,7 +627,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
     quant_param.inited = true;
     quant_params.emplace_back(quant_param);
   }
-  primitiveT_value->AddInputQuantParam(quant_params);
+  primitive_c->AddInputQuantParam(quant_params);
   // quant bias data
   int32_t *quant_datas = new (std::nothrow) int32_t[shape_size];
   if (quant_datas == nullptr) {
@@ -683,18 +683,18 @@ STATUS PostTrainingQuantizer::QuantNode() {
       MS_LOG(INFO) << cnode_name << " can not do quant";
       continue;
     }
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitiveT_value == nullptr) {
-      MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is nullptr";
       continue;
     }
     if (input_scale.find(cnode) == input_scale.end()) {
-      primitiveT_value->SetQuantType(schema::QuantType_QUANT_NONE);
+      primitive_c->SetQuantType(schema::QuantType_QUANT_NONE);
       continue;
     }
-    primitiveT_value->ClearInputOutputQuantParam();
+    primitive_c->ClearInputOutputQuantParam();
     auto op_name = cnode->fullname_with_scope();
-    auto op_type = (schema::PrimitiveType)primitiveT_value->Type();
+    auto op_type = (schema::PrimitiveType)primitive_c->Type();
     MS_LOG(INFO) << "OpName: " << op_name;
     if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D &&
         op_type != PrimitiveType_FullConnection) {
@@ -715,35 +715,35 @@ STATUS PostTrainingQuantizer::QuantNode() {
           auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
           if (abstractTensor->element()->GetTypeTrack()->type_id() == kNumberTypeFloat32) {
             MS_LOG(DEBUG) << "this parameter do quant";
-            DoWeightQuant(input_node, primitiveT_value, false, false);
+            DoWeightQuant(input_node, primitive_c, false, false);
           } else {
             MS_LOG(DEBUG) << "this parameter no need to do quant";
           }
           continue;
         }
         auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-        auto input_cnode_primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
-        if (input_cnode_primitiveT_value == nullptr) {
+        auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
+        if (input_cnode_primitive_c == nullptr) {
           MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
                         << " PrimitiveC is null";
           continue;
         }
-        if (!input_cnode_primitiveT_value->GetOutputQuantParams().empty()) {
-          for (auto &quant_param : input_cnode_primitiveT_value->GetOutputQuantParams()) {
-            primitiveT_value->AddInputQuantParam(quant_param);
+        if (!input_cnode_primitive_c->GetOutputQuantParams().empty()) {
+          for (auto &quant_param : input_cnode_primitive_c->GetOutputQuantParams()) {
+            primitive_c->AddInputQuantParam(quant_param);
           }
         } else {
           // do input quant
           double scale = input_scale[cnode];
           int32_t zp = input_zero_point[cnode];
-          DoQuantInput(scale, zp, &input_min_max[cnode], primitiveT_value);
+          DoQuantInput(scale, zp, &input_min_max[cnode], primitive_c);
         }
       }
     } else {
       // do input quant
       double scale = input_scale[cnode];
       int32_t convInputzeropoint = input_zero_point[cnode];
-      DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitiveT_value);
+      DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitive_c);
       // do weight quant
       auto weight = cnode->input(2);
       bool depthwise = op_type == PrimitiveType_DepthwiseConv2D;
@@ -751,18 +751,18 @@ STATUS PostTrainingQuantizer::QuantNode() {
       if (op_type == PrimitiveType_FullConnection) {
         perchannel = false;
       }
-      DoWeightQuant(weight, primitiveT_value, perchannel, depthwise);
+      DoWeightQuant(weight, primitive_c, perchannel, depthwise);
       // do bias quant
       if (cnode->inputs().size() == 4) {
         auto bias = cnode->input(3);
-        DoBiasQuant(bias, primitiveT_value);
+        DoBiasQuant(bias, primitive_c);
       }
     }
     // do output quant
     double OutputScale = output_scale[cnode];
     int32_t OutputZeropoint = output_zeropoint[cnode];
-    DoQuantOutput(OutputScale, OutputZeropoint, &output_min_max[cnode], primitiveT_value);
-    primitiveT_value->SetQuantType(schema::QuantType_PostTraining);
+    DoQuantOutput(OutputScale, OutputZeropoint, &output_min_max[cnode], primitive_c);
+    primitive_c->SetQuantType(schema::QuantType_PostTraining);
   }
   return RET_OK;
 }

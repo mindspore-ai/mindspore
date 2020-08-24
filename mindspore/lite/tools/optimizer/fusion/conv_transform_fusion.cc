@@ -97,17 +97,17 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   GenNewConvTensor(func_graph, conv_node, kernel_nums, trans_scale, trans_bias);
   delete[] trans_bias;
   delete[] trans_scale;
-  auto primitiveT_value = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
-  MS_ASSERT(primitiveT_value != nullptr);
-  auto type = primitiveT_value->Type();
+  auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
+  MS_ASSERT(primitive_c != nullptr);
+  auto type = primitive_c->Type();
   if (type == schema::PrimitiveType_Conv2D) {
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value));
-    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitiveT_value);
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c);
     MS_ASSERT(primc != nullptr);
     primc->SetHasBias(true);
   } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value));
-    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitiveT_value);
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
     MS_ASSERT(primc != nullptr);
     primc->SetHasBias(true);
   } else {

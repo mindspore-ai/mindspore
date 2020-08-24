@@ -44,17 +44,17 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
   bool first = true;
 
   for (auto &cnode : cnodes) {
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     auto curnode_quant_type = schema::QuantType_QUANT_NONE;
-    if (primitiveT_value == nullptr) {
-      MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
+    if (primitive_c == nullptr) {
+      MS_LOG(WARNING) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     } else {
-      curnode_quant_type = primitiveT_value->GetQuantType();
+      curnode_quant_type = primitive_c->GetQuantType();
     }
     if (first) {
       if (curnode_quant_type == schema::QuantType_PostTraining && inputDataDType == kNumberTypeFloat32) {
         auto value_node =
-            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitiveT_value->GetInputQuantParams().front());
+            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->GetInputQuantParams().front());
         std::vector<AnfNodePtr> op_inputs = {value_node, cnode->input(1)};
         auto quant_cast_cnode = graph->NewCNode(op_inputs);
         quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast");
@@ -72,24 +72,24 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
         continue;
       }
       auto input_cnode = std::dynamic_pointer_cast<CNode>(input_node);
-      auto input_cnode_primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
-      if (input_cnode_primitiveT_value == nullptr) {
+      auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
+      if (input_cnode_primitive_c == nullptr) {
         MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
                       << " PrimitiveC is null";
         continue;
       }
-      auto input_cnode_quant_type = input_cnode_primitiveT_value->GetQuantType();
+      auto input_cnode_quant_type = input_cnode_primitive_c->GetQuantType();
 
       if (curnode_quant_type != input_cnode_quant_type) {
         ValueNodePtr value_node = nullptr;
         if (curnode_quant_type == schema::QuantType_PostTraining &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
           value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
-                                             primitiveT_value->GetInputQuantParams().front());
+                                             primitive_c->GetInputQuantParams().front());
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
             input_cnode_quant_type == schema::QuantType_PostTraining) {
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                             input_cnode_primitiveT_value->GetInputQuantParams().front());
+                                             input_cnode_primitive_c->GetInputQuantParams().front());
         }
         if (value_node == nullptr) {
           MS_LOG(WARNING) << "value_node is null! "

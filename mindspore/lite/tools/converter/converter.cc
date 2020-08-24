@@ -62,12 +62,12 @@ void Converter::FreeFuncGraph(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitiveT_value == nullptr) {
-      MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is nullptr";
       return;
     }
-    auto primT = primitiveT_value->GetPrimitiveT();
+    auto primT = primitive_c->GetPrimitiveT();
     if (primT == nullptr) {
       MS_LOG(ERROR) << "PrimitiveT is nullptr";
       return;
@@ -75,7 +75,7 @@ void Converter::FreeFuncGraph(const FuncGraphPtr &func_graph) {
     if (primT->value.type == schema::PrimitiveType_TupleGetItem ||
         primT->value.type == schema::PrimitiveType_MakeTuple || primT->value.type == schema::PrimitiveType_Return) {
       delete primT;
-      primitiveT_value->SetPrimitiveT(nullptr);
+      primitive_c->SetPrimitiveT(nullptr);
     }
   }
 }
