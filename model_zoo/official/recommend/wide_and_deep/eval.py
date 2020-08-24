@@ -18,7 +18,8 @@
 import os
 
 from mindspore import Model, context
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train.serialization import load_checkpoint, load_param_into_net,\
+    build_searched_strategy, merge_sliced_parameter
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
@@ -81,8 +82,28 @@ def test_eval(config):
 
     net_builder = ModelBuilder()
     train_net, eval_net = net_builder.get_net(config)
-
-    param_dict = load_checkpoint(config.ckpt_path)
+    ckpt_path = config.ckpt_path
+    if ";" in ckpt_path:
+        ckpt_paths = ckpt_path.split(';')
+        param_list_dict = {}
+        strategy = build_searched_strategy(config.stra_ckpt)
+        for slice_path in ckpt_paths:
+            param_slice_dict = load_checkpoint(slice_path)
+            for key, value in param_slice_dict.items():
+                if 'optimizer' in key:
+                    continue
+                if key not in param_list_dict:
+                    param_list_dict[key] = []
+                param_list_dict[key].append(value)
+        param_dict = {}
+        for key, value in param_list_dict.items():
+            if key in strategy:
+                merged_parameter = merge_sliced_parameter(value, strategy)
+            else:
+                merged_parameter = merge_sliced_parameter(value)
+            param_dict[key] = merged_parameter
+    else:
+        param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(eval_net, param_dict)
 
     auc_metric = AUCMetric()

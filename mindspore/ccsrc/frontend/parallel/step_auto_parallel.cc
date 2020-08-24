@@ -343,7 +343,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   std::string strategy_key_name = "";
   auto param_names = NodeParameterName(cnode);
   if (!param_names.empty()) {
-    strategy_key_name = param_names[0].first;
+    strategy_key_name = prim->name() + "_" + param_names[0].first;
   }
   bool load_strategy_from_ckpt =
     StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map->find(strategy_key_name) != stra_map->end();

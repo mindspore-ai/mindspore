@@ -30,6 +30,8 @@ def argparse_init():
     parser.add_argument("--deep_layer_dim", type=int, nargs='+', default=[1024, 512, 256, 128])
     parser.add_argument("--deep_layer_act", type=str, default='relu')
     parser.add_argument("--keep_prob", type=float, default=1.0)
+    parser.add_argument("--stra_ckpt", type=str, default="./strategy_train.ckpt",
+                        help="The strategy checkpoint file.")
 
     parser.add_argument("--output_path", type=str, default="./output/")
     parser.add_argument("--ckpt_path", type=str, default="./checkpoints/")
@@ -63,6 +65,7 @@ class WideDeepConfig():
         self.eval_file_name = "eval.log"
         self.loss_file_name = "loss.log"
         self.ckpt_path = "./checkpoints/"
+        self.stra_ckpt = "./strategy_train.ckpt"
 
     def argparse_init(self):
         """
@@ -90,3 +93,4 @@ class WideDeepConfig():
         self.eval_file_name = args.eval_file_name
         self.loss_file_name = args.loss_file_name
         self.ckpt_path = args.ckpt_path
+        self.stra_ckpt = args.stra_ckpt

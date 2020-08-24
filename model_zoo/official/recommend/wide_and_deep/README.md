@@ -152,7 +152,11 @@ optional arguments:
   --keep_prob                         The keep rate in dropout layer.(Default:1.0)
   --dropout_flag                      Enable dropout.(Default:0)
   --output_path                       Deprecated
-  --ckpt_path                         The location of the checkpoint file.(Defalut:./checkpoints/)
+  --ckpt_path                         The location of the checkpoint file. If the checkpoint file 
+                                      is a slice of weight, multiple checkpoint files need to be 
+                                      transferred. Use ';' to separate them and sort them in sequence
+                                      like "./checkpoints/0.ckpt;./checkpoints/1.ckpt".
+                                      (Defalut:./checkpoints/)
   --eval_file_name                    Eval output file.(Default:eval.og)
   --loss_file_name                    Loss output file.(Default:loss.log)
   --host_device_mix                   Enable host device mode or not.(Default:0)

@@ -97,6 +97,7 @@ class EvalCallBack(Callback):
         self.eval_file_name = config.eval_file_name
         self.eval_values = []
         self.host_device_mix = host_device_mix
+        self.config = config
 
     def epoch_end(self, run_context):
         """
@@ -106,7 +107,7 @@ class EvalCallBack(Callback):
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             context.set_auto_parallel_context(strategy_ckpt_save_file="",
-                                              strategy_ckpt_load_file="./strategy_train.ckpt")
+                                              strategy_ckpt_load_file=self.config.stra_ckpt)
         rank_id = 0
         if parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL,
                              ParallelMode.DATA_PARALLEL):
