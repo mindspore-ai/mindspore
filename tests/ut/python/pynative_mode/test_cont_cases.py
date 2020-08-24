@@ -14,158 +14,21 @@
 # ============================================================================
 """ test control ops """
 import numpy as np
-
 from mindspore import dtype as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import nn
+from mindspore import ms_function
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 # from tests.vm_impl.math_ops_vm_impl import *
 # from tests.vm_impl.vm_interface import *
 # from tests.vm_impl import *
-# context.set_context(save_graphs=True)
 
 
-def test_while_forward():
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-
-        def construct(self, idx, end, x):
-            while idx < end:
-                part = x[idx, :, :]
-                max_num = self.max(part)
-                x[idx, :, 0:2] = max_num
-                idx = idx + 1
-            return x
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net = MyWhileNet()
-    idx = Tensor(np.array(0), dtype=ms.int32)
-    end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
-    net(idx, end, x)
-
-
-def test_while_grad():
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-
-        def construct(self, idx, end, x):
-            while idx < end:
-                part = x[idx, :, :]
-                max_num = self.max(part)
-                x[idx, :, 0:2] = max_num
-                idx = idx + 1
-            return x
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-
-        def construct(self, *inputs):
-            return C.grad_all(self.net)(*inputs)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    idx = Tensor(np.array(0), dtype=ms.int32)
-    end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
-    net(idx, end, x)
-
-
-def test_while_with_param_forward():
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-            self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
-            self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
-
-        def construct(self, idx, end, x):
-            out = self.zero
-            while idx < end:
-                part = x[idx, :, :]
-                max_num = self.max(part)
-                x[idx, :, 0:2] = max_num
-                out = out + x + self.param
-                idx = idx + 1
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net = MyWhileNet()
-    idx = Tensor(np.array(0), dtype=ms.int32)
-    end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
-    net(idx, end, x)
-
-
-def test_while_endless_case():
-    """endless case when optmization"""
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-            self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
-            self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
-
-        def construct(self, idx, end, x):
-            out = self.zero
-            while idx < end:
-                part = x[idx, :, :]
-                out = out + part
-                idx = idx + 1
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    net = MyWhileNet()
-    idx = Tensor(np.array(0), dtype=ms.int32)
-    end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
-    net(idx, end, x)
-
-
-def test_while_with_param_grad():
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-            self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
-            self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
-
-        def construct(self, idx, end, x):
-            out = self.zero
-            while idx < end:
-                part = x[idx, :, :]
-                max_num = self.max(part)
-                x[idx, :, 0:2] = max_num
-                out = out + x + self.param
-                idx = idx + 1
-            return out
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-            self.weights = ParameterTuple(net.trainable_params())
-
-        def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    idx = Tensor(np.array(0), dtype=ms.int32)
-    end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.arange(8).reshape(2, 2, 2).astype(np.float32), dtype=ms.float32)
-    net(idx, end, x)
+def setup_module():
+    context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=False)
 
 
 def test_while_with_param_forward_with_const_branch():
@@ -177,6 +40,7 @@ def test_while_with_param_forward_with_const_branch():
             self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
             self.reduce = P.ReduceSum()
 
+        @ms_function
         def construct(self, idx, end, x):
             out = self.zero
             while idx < end:
@@ -187,7 +51,6 @@ def test_while_with_param_forward_with_const_branch():
                 idx = idx + 1
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = while_net
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -221,10 +84,10 @@ def test_while_opt_endless():
             super(GradNet, self).__init__()
             self.net = net
 
+        @ms_function
         def construct(self, *inputs):
             return C.grad_all(self.net)(*inputs)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -242,6 +105,7 @@ def test_no_while_call():
             self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
             self.reduce = P.ReduceSum()
 
+        @ms_function
         def construct(self, idx, end, x):
             out = self.zero
             if 2 > 1:
@@ -250,7 +114,6 @@ def test_no_while_call():
                 out = out + idx + self.param
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = while_net
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -284,10 +147,10 @@ def test_while_with_param_grad_with_const_branch():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -324,10 +187,10 @@ def test_for_while_with_param_grad_with_const_branch():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -361,10 +224,10 @@ def test_for_while_with_param_grad_basic():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -398,10 +261,10 @@ def test_for_while_with_param_grad_normal():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -432,10 +295,10 @@ def test_while_with_param_basic_grad():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -466,10 +329,10 @@ def test_while_with_param_basic_grad_mul():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -501,10 +364,10 @@ def test_while_with_param_basic_grad_two():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -537,10 +400,10 @@ def test_while_with_param_basic_grad_three():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -574,10 +437,10 @@ def test_while_if_with_param_grad():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -607,10 +470,10 @@ def test_while_with_param_grad_not_enter_while():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, a, b, c):
             return C.grad_by_list(self.net, self.weights)(a, b, c)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
     net = GradNet(while_net)
     idx = Tensor(np.array(3), dtype=ms.int32)
@@ -627,6 +490,7 @@ def test_with_param_if_by_if_forward():
             self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
             self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
 
+        @ms_function
         def construct(self, a, b, x):
             out = self.zero
             if a < b:
@@ -639,7 +503,6 @@ def test_with_param_if_by_if_forward():
                 out = out + x*2
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -669,10 +532,10 @@ def test_with_param_if_by_if_grad_inputs():
             super(GradNet, self).__init__()
             self.net = net
 
+        @ms_function
         def construct(self, *inputs):
             return C.grad_all(self.net)(*inputs)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -703,10 +566,10 @@ def test_with_param_if_by_if_grad_parameter():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, *inputs):
             return C.grad_by_list(self.net, self.weights)(*inputs)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(0), dtype=ms.int32)
@@ -735,10 +598,10 @@ def test_with_param_if_by_if_grad_param_excute_null():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, *inputs):
             return C.grad_by_list(self.net, self.weights)(*inputs)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(4), dtype=ms.int32)
@@ -769,10 +632,10 @@ def test_if_by_if_return_inside_grad():
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
+        @ms_function
         def construct(self, *inputs):
             return C.grad_by_list(self.net, self.weights)(*inputs)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     idx = Tensor(np.array(1), dtype=ms.int32)
@@ -790,6 +653,7 @@ def test_if_by_if_forward():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
+        @ms_function
         def construct(self, a, b, x):
             if a < b:
                 a = self.add(a, b)
@@ -807,7 +671,6 @@ def test_if_by_if_forward():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -832,6 +695,7 @@ def test_if_by_if_forward_control_tuple_switch():
             else:
                 b = self.add(a, x)
             return a, b, x
+
     class Branch2Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -857,6 +721,7 @@ def test_if_by_if_forward_control_tuple_switch():
             self.div = P.RealDiv()
             self.net = Branch2Net()
 
+        @ms_function
         def construct(self, a, b, x):
             if a < b:
                 a = self.add(a, b)
@@ -867,15 +732,12 @@ def test_if_by_if_forward_control_tuple_switch():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
     end = Tensor(np.array(3), dtype=ms.float32)
     x = Tensor(np.array(0), dtype=ms.float32)
     net(idx, end, x)
-
-
 
 
 def test_if_by_if_forward_control_inside_net():
@@ -895,6 +757,7 @@ def test_if_by_if_forward_control_inside_net():
             a = a * b
             out = a + b + x
             return out
+
     class Branch2Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -920,6 +783,7 @@ def test_if_by_if_forward_control_inside_net():
             self.div = P.RealDiv()
             self.net = Branch2Net()
 
+        @ms_function
         def construct(self, a, b, x):
             if a < b:
                 a = self.add(a, b)
@@ -928,14 +792,12 @@ def test_if_by_if_forward_control_inside_net():
             out = self.net(a, b, x)
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
     end = Tensor(np.array(3), dtype=ms.float32)
     x = Tensor(np.array(0), dtype=ms.float32)
     net(idx, end, x)
-
 
 
 def test_if_by_if_forward_use_namespace():
@@ -947,6 +809,7 @@ def test_if_by_if_forward_use_namespace():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
+        @ms_function
         def construct(self, a, b, x):
             if a < b:
                 a = P.TensorAdd()(a, b)
@@ -964,7 +827,6 @@ def test_if_by_if_forward_use_namespace():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -982,6 +844,7 @@ def test_if_by_if_forward_use_global_op():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
+        @ms_function
         def construct(self, a, b, x):
             add = P.TensorAdd()
             sub = P.Sub()
@@ -1003,7 +866,6 @@ def test_if_by_if_forward_use_global_op():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
@@ -1019,6 +881,7 @@ def test_for_with_if_by_if_forward():
             self.add = P.TensorAdd()
             self.sub = P.Sub()
 
+        @ms_function
         def construct(self, a, b, x):
             for _ in range(0, 4):
                 if a < b:
@@ -1029,14 +892,12 @@ def test_for_with_if_by_if_forward():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
     end = Tensor(np.array(3), dtype=ms.float32)
     x = Tensor(np.array(0), dtype=ms.float32)
     net(idx, end, x)
-
 
 
 def test_for_with_if_by_if_forward_namespace():
@@ -1048,6 +909,7 @@ def test_for_with_if_by_if_forward_namespace():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
+        @ms_function
         def construct(self, a, b, x):
             for _ in range(0, 6):
                 if a < b:
@@ -1058,14 +920,12 @@ def test_for_with_if_by_if_forward_namespace():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
     end = Tensor(np.array(3), dtype=ms.float32)
     x = Tensor(np.array(0), dtype=ms.float32)
     net(idx, end, x)
-
 
 
 def test_if_by_if_forward_const_branch_inner():
@@ -1077,6 +937,7 @@ def test_if_by_if_forward_const_branch_inner():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
+        @ms_function
         def construct(self, a, b, x):
             add = P.TensorAdd()
             sub = P.Sub()
@@ -1098,15 +959,12 @@ def test_if_by_if_forward_const_branch_inner():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)
     end = Tensor(np.array(3), dtype=ms.float32)
     x = Tensor(np.array(0), dtype=ms.float32)
     net(idx, end, x)
-
-
 
 
 def test_if_by_if_forward_all_const_branch():
@@ -1118,6 +976,7 @@ def test_if_by_if_forward_all_const_branch():
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
+        @ms_function
         def construct(self, a, b, x):
             add = P.TensorAdd()
             sub = P.Sub()
@@ -1139,7 +998,6 @@ def test_if_by_if_forward_all_const_branch():
             out = a + b + x
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
     net = if_net
     idx = Tensor(np.array(2), dtype=ms.float32)

@@ -1029,6 +1029,12 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   FunctionBlockPtr after_block = MakeFunctionBlock(*this);
   TraceManager::EndTrace();
 
+  if (MsContext::GetInstance()->backend_policy() != "ge") {
+    // for backends excludes 'ge', it can handle multi graph call, use this flag to
+    // generate call not inline `after_block` graph to reduce if by if switch expansion.
+    after_block->func_graph()->set_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK, true);
+  }
+
   // process the if-true branch
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr true_end = ParseStatements(true_block, bodyNode);
