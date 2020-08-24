@@ -73,91 +73,24 @@ void printf_tensor(mindspore::lite::tensor::Tensor *in_data) {
   MS_LOG(INFO) << "Print tensor done";
 }
 
-kernel::ActivationOpenClKernel *create_kernel(lite::opencl::OpenCLAllocator *allocator,
-                                              const std::vector<lite::tensor::Tensor *> &inputs,
-                                              const std::vector<lite::tensor::Tensor *> &outputs, std::string test_name,
-                                              int type, std::string in_file, float alpha = 0.2) {
-  auto *param = new (std::nothrow) ActivationParameter();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "New ActivationParameter fail.";
-    return nullptr;
-  }
-  memcpy(param->op_parameter_.name_, test_name.c_str(), test_name.size());
-  param->alpha_ = alpha;
-  param->type_ = type;
-  auto *kernel =
-    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  if (kernel == nullptr) {
-    delete param;
-    MS_LOG(ERROR) << "Kernel:" << test_name << " create fail.";
-    delete param;
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete param;
-    delete kernel;
-    MS_LOG(ERROR) << "Init " << test_name << " fail.";
-    delete kernel;
-    delete param;
-    return nullptr;
-  }
-  MS_LOG(INFO) << "Initialize input data";
-  LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
-  MS_LOG(INFO) << "==================input data================";
-  printf_tensor(inputs[0]);
-  return kernel;
-}
-
-int RunSubGraphOpenCLKernel(const std::vector<lite::tensor::Tensor *> &inputs,
-                            const std::vector<lite::tensor::Tensor *> &outputs,
-                            kernel::ActivationOpenClKernel *kernel) {
-  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
-  std::vector<kernel::LiteKernel *> kernels{kernel};
-  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
-  if (sub_graph == nullptr) {
-    delete kernel;
-    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
-    return RET_ERROR;
-  }
-  MS_LOG(INFO) << "Initialize sub_graph.";
-  auto ret = sub_graph->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    delete sub_graph;
-    MS_LOG(ERROR) << "Init sub_graph error.";
-    return RET_ERROR;
-  }
-  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
-  ret = sub_graph->Run();
-  if (ret != RET_OK) {
-    delete sub_graph;
-    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
-    return RET_ERROR;
-  }
-  delete sub_graph;
-  return RET_OK;
-}
-
-TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
-  MS_LOG(INFO) << "Begin test!";
+TEST_F(TestActivationOpenCL, ReluFp32_dim4) {
+  std::string in_file = "/data/local/tmp/in_data.bin";
+  std::string out_file = "/data/local/tmp/relu.bin";
+  MS_LOG(INFO) << "Relu Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "Init tensors.";
-  std::vector<int> input_shape = {1, 4, 3, 8};
-
+  std::vector<int> input_shape = {1, 9};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
@@ -166,40 +99,390 @@ TEST_F(TestActivationOpenCL, ActivationFp32_dim4) {
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
   inputs[0]->MallocData(allocator);
+  MS_LOG(INFO) << "Initialize input data";
+  LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
+  MS_LOG(INFO) << "==================input data================";
+  printf_tensor(inputs[0]);
 
-  std::map<std::string, int> Test_Activation_Type;
-  std::map<std::string, std::string> Test_Res_File;
-  Test_Activation_Type["Relu"] = ActivationType_RELU;
-  Test_Activation_Type["Leaky_Relu"] = ActivationType_LEAKY_RELU;
-  Test_Activation_Type["Relu6"] = ActivationType_RELU6;
-  Test_Activation_Type["Sigmoid"] = ActivationType_SIGMOID;
-  Test_Res_File["Leaky_Relu"] = "/data/local/tmp/leaky_relu.bin";
-  Test_Res_File["Relu"] = "/data/local/tmp/relu.bin";
-  Test_Res_File["Relu6"] = "/data/local/tmp/relu6.bin";
-  Test_Res_File["Sigmoid"] = "/data/local/tmp/sigmoid.bin";
-  std::string in_file = "/data/local/tmp/in_data.bin";
-
-  std::map<std::string, int>::iterator it = Test_Activation_Type.begin();
-  while (it != Test_Activation_Type.end()) {
-    auto kernel = create_kernel(allocator, inputs, outputs, it->first, it->second, in_file, 0.3);
-    if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create kernel:" << it->first << " error.";
-      return;
-    }
-
-    auto ret = RunSubGraphOpenCLKernel(inputs, outputs, kernel);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << it->first << " RunSubGraphOpenCLKernel error.";
-      return;
-    }
-    MS_LOG(INFO) << "==================output data================";
-    printf_tensor(outputs[0]);
-    CompareRes(output_tensor, Test_Res_File[it->first]);
-    it++;
+  auto *param = new (std::nothrow) ActivationParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  param->type_ = ActivationType_RELU;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:Relu create fail.";
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Init relu fail.";
+    return;
+  }
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
   }
 
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    return;
+  }
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+
+  MS_LOG(INFO) << "==================output data================";
+  printf_tensor(outputs[0]);
+  CompareRes(output_tensor, out_file);
+  delete kernel;
+  delete param;
   delete input_tensor;
   delete output_tensor;
+  delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestActivationOpenCL, Relu6Fp32_dim4) {
+  std::string in_file = "/data/local/tmp/in_data.bin";
+  std::string out_file = "/data/local/tmp/relu6.bin";
+  MS_LOG(INFO) << "Relu6 Begin test!";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
+
+  MS_LOG(INFO) << "Init tensors.";
+  std::vector<int> input_shape = {1, 9};
+  auto data_type = kNumberTypeFloat32;
+  auto tensor_type = schema::NodeType_ValueNode;
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "new input tensor error!";
+    return;
+  }
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "new output tensor error!";
+    delete input_tensor;
+    return;
+  }
+  std::vector<lite::tensor::Tensor *> inputs{input_tensor};
+  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  inputs[0]->MallocData(allocator);
+  MS_LOG(INFO) << "Initialize input data";
+  LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
+  MS_LOG(INFO) << "==================input data================";
+  printf_tensor(inputs[0]);
+
+  auto *param = new (std::nothrow) ActivationParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  param->type_ = ActivationType_RELU6;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:Relu6 create fail.";
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Init relu6 fail.";
+    return;
+  }
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    return;
+  }
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+
+  MS_LOG(INFO) << "==================output data================";
+  printf_tensor(outputs[0]);
+  CompareRes(output_tensor, out_file);
+  delete kernel;
+  delete param;
+  delete input_tensor;
+  delete output_tensor;
+  delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
+  std::string in_file = "/data/local/tmp/in_data.bin";
+  std::string out_file = "/data/local/tmp/sigmoid.bin";
+  MS_LOG(INFO) << "Sigmoid Begin test!";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
+
+  MS_LOG(INFO) << "Init tensors.";
+  std::vector<int> input_shape = {1, 9};
+  auto data_type = kNumberTypeFloat32;
+  auto tensor_type = schema::NodeType_ValueNode;
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "new input tensor error!";
+    return;
+  }
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "new output tensor error!";
+    delete input_tensor;
+    return;
+  }
+  std::vector<lite::tensor::Tensor *> inputs{input_tensor};
+  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  inputs[0]->MallocData(allocator);
+  MS_LOG(INFO) << "Initialize input data";
+  LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
+  MS_LOG(INFO) << "==================input data================";
+  printf_tensor(inputs[0]);
+
+  auto *param = new (std::nothrow) ActivationParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  param->type_ = ActivationType_SIGMOID;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:Sigmoid create fail.";
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Init sigmoid fail.";
+    return;
+  }
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    return;
+  }
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+
+  MS_LOG(INFO) << "==================output data================";
+  printf_tensor(outputs[0]);
+  CompareRes(output_tensor, out_file);
+  delete kernel;
+  delete param;
+  delete input_tensor;
+  delete output_tensor;
+  delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
+  std::string in_file = "/data/local/tmp/in_data.bin";
+  std::string out_file = "/data/local/tmp/leaky_relu.bin";
+  MS_LOG(INFO) << "Leaky relu Begin test!";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
+
+  MS_LOG(INFO) << "Init tensors.";
+  std::vector<int> input_shape = {1, 9};
+  auto data_type = kNumberTypeFloat32;
+  auto tensor_type = schema::NodeType_ValueNode;
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "new input tensor error!";
+    return;
+  }
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "new output tensor error!";
+    delete input_tensor;
+    return;
+  }
+  std::vector<lite::tensor::Tensor *> inputs{input_tensor};
+  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  inputs[0]->MallocData(allocator);
+  MS_LOG(INFO) << "Initialize input data";
+  LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
+  MS_LOG(INFO) << "==================input data================";
+  printf_tensor(inputs[0]);
+
+  auto *param = new (std::nothrow) ActivationParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  param->alpha_ = 0.3;
+  param->type_ = ActivationType_LEAKY_RELU;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:leaky relu create fail.";
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    return;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Init leaky relu fail.";
+    return;
+  }
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    return;
+  }
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete kernel;
+    delete param;
+    delete input_tensor;
+    delete output_tensor;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+
+  MS_LOG(INFO) << "==================output data================";
+  printf_tensor(outputs[0]);
+  CompareRes(output_tensor, out_file);
+  delete kernel;
+  delete param;
+  delete input_tensor;
+  delete output_tensor;
+  delete sub_graph;
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
