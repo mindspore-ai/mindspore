@@ -149,7 +149,23 @@ currently the containerized build options are supported as follows:
     sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
     sudo systemctl restart docker
     ```
-
+    Then edit the file daemon.json:
+    ```
+    $ vim /etc/docker/daemon.json
+    {
+        "runtimes": {
+            "nvidia": {
+                "path": "nvidia-container-runtime",
+                "runtimeArgs": []
+            }
+        }
+    }
+    ```
+    Restart docker again:
+    ```
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    ```
     Then you can pull and run the latest stable image using the below command:
     ```
     docker pull mindspore/mindspore-gpu:0.7.0-beta
