@@ -20,7 +20,6 @@ from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.parallel._utils import _set_has_initializer
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
@@ -61,7 +60,6 @@ def compile_net(net, x, y):
 
 
 def test_add_relu_stride_slice():
-    _set_has_initializer(False)
     context.set_auto_parallel_context(device_num=8, global_rank=7)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -75,7 +73,6 @@ def test_add_relu_stride_slice():
 
 
 def test_add_relu_all_gather():
-    _set_has_initializer(False)
     context.set_auto_parallel_context(device_num=8, global_rank=7)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 

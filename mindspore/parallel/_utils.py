@@ -32,19 +32,6 @@ def _get_full_batch():
     """Get whether to use full_batch."""
     return auto_parallel_context().get_full_batch()
 
-def _get_has_initializer():
-    """Get whether any Initializer has been created."""
-    return auto_parallel_context().get_has_initializer()
-
-def _set_has_initializer(has_initializer):
-    """
-    Set whether any Initializer has been created.
-
-    Args:
-        has_initializer (bool): True if a Initializer created.
-    """
-    auto_parallel_context().set_has_initializer(has_initializer)
-
 
 def _need_to_full():
     """Check whether to convert input to full shape or tensor."""

@@ -20,7 +20,6 @@ from mindspore import Parameter, Tensor, context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.parallel._utils import _set_has_initializer
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
@@ -61,7 +60,6 @@ def test_matmul_sub():
             out = self.sub(out, b)
             return out
 
-    _set_has_initializer(False)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))

@@ -23,7 +23,6 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train import Model, ParallelMode
-from mindspore.parallel._utils import _set_has_initializer
 from tests.dataset_mock import MindData
 
 
@@ -182,7 +181,6 @@ def test_allreduce_fusion_parameters():
 
 
 def test_allreduce_fusion1():
-    _set_has_initializer(False)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
