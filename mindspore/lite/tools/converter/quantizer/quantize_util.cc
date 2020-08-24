@@ -168,11 +168,11 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
                              int quant_max, int quant_min, int num_bits) {
   MS_ASSERT(quantParam != nullptr);
   if (mMin > 0.0f) {
-    MS_LOG(ERROR) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
+    MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
     mMin = 0.0f;
   }
   if (mMax < 0.0f) {
-    MS_LOG(ERROR) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
+    MS_LOG(DEBUG) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
     mMax = 0.0f;
   }
   if (mMin > mMax) {
