@@ -36,9 +36,11 @@ class PReluOpenCLKernel : public OpenCLKernel {
   int Init() override;
   int Run() override;
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
+  void InitBuffer();
 
  private:
   cl::Kernel kernel_;
+  FLOAT_t *PReluWeight_;
 };
 
 }  // namespace mindspore::kernel

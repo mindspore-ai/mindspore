@@ -23,8 +23,7 @@
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/cl/activation.cl.inc"
-#include "nnacl/prelu_parameter.h"
+#include "src/runtime/kernel/opencl/cl/prelu.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -34,15 +33,41 @@ using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 
+void PReluOpenCLKernel::InitBuffer() {
+  int C = in_tensors_[1]->shape()[0];
+  int div_ci = UP_DIV(C, C4NUM);
+  std::cout << div_ci << std::endl;
+  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  PReluWeight_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(div_ci * C4NUM * sizeof(FLOAT_t)));
+  PReluWeight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(PReluWeight_, CL_MAP_WRITE, nullptr, true));
+  memset(PReluWeight_, 0x00, div_ci * C4NUM * sizeof(FLOAT_t));
+  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_[1]->Data());
+  for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
+    PReluWeight_[i] = origin_weight[i];
+  }
+  allocator->UnmapBuffer(PReluWeight_);
+}
+
 int PReluOpenCLKernel::Init() {
   if (in_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "PRelu only support dim=4, but your dim=" << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
+  int C_Weight = in_tensors_[1]->shape()[0];
+  int C = in_tensors_[0]->shape()[3];
+  if (C_Weight != 1 && UP_DIV(C_Weight, C4NUM) != UP_DIV(C, C4NUM)) {
+    MS_LOG(ERROR)
+      << "PRelu weight channel size must be 1 or must be equal with in_teneors channel size, but your weight size is "
+      << C_Weight << " and your input channel size is " << C;
+    return RET_ERROR;
+  }
+  if (C_Weight != 1) {
+    InitBuffer();
+  }
   std::set<std::string> build_options;
-  std::string source = activation_source;
+  std::string source = prelu_source;
   std::string program_name = "PRelu";
-  std::string kernel_name = "ReluScalar";
+  std::string kernel_name = "PRelu";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
@@ -61,17 +86,18 @@ int PReluOpenCLKernel::Run() {
   int W = in_tensors_[0]->shape()[2];
   int C = in_tensors_[0]->shape()[3];
   cl_int4 input_shape = {N, H, W, C};
-  if (in_tensors_[1]->ElementsNum() < 1) {
-    MS_LOG(ERROR) << "PRelu weight size must be greater than 1! But your weight size is "
-                  << in_tensors_[1]->ElementsNum();
-    return RET_ERROR;
-  }
+
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<float *>(in_tensors_[1]->Data())[0]);
+  if (in_tensors_[1]->shape()[0] == 1) {
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<float *>(in_tensors_[1]->Data()));
+  } else {
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
+  }
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<int>(in_tensors_[1]->shape()[0]));
 
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(H), static_cast<size_t>(W)};
