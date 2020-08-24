@@ -22,12 +22,9 @@
 #include <vector>
 #include "ir/anf.h"
 #include "utils/any.h"
-#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 namespace draw {
-
-namespace parse = mindspore::parse;
 
 class Graphviz {
  public:

@@ -17,8 +17,8 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+
 #include "c_ops/primitive_c.h"
-#include "pipeline/jit/parse/data_converter.h"
 #include "ir/manager.h"
 #include "ir/param_info.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -1286,7 +1286,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   auto graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
   // set input[0]
-  PrimitivePtr op_prim = op_run_info.py_primitive;
+  PrimitivePtr op_prim = op_run_info.primitive;
   MS_EXCEPTION_IF_NULL(op_prim);
   inputs.push_back(std::make_shared<ValueNode>(op_prim));
   // set input parameter

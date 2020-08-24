@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/dump_proto.h"
 #include "backend/session/gpu_session.h"
+
 #include "runtime/device/gpu/kernel_info_setter.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
 #include "runtime/device/gpu/gpu_kernel_runtime.h"
@@ -47,8 +47,8 @@
 #include "utils/ms_utils.h"
 #include "common/trans.h"
 #include "utils/ms_context.h"
-#include "utils/base_ref_extends.h"
 #include "debug/tensor_load.h"
+#include "debug/dump_proto.h"
 
 namespace mindspore {
 namespace session {

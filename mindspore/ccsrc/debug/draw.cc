@@ -15,17 +15,19 @@
  */
 
 #include "debug/draw.h"
+
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include "ir/meta_func_graph.h"
 #include "ir/param_info.h"
 #include "ir/primitive.h"
 #include "ir/graph_utils.h"
 #include "utils/utils.h"
 #include "frontend/operator/composite/composite.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "ir/tensor.h"
 
 namespace mindspore {

@@ -21,7 +21,7 @@
 #include "vm/vmimpl.h"
 #include "vm/backend.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "utils/base_ref_extends.h"
+#include "pybind_api/ir/base_ref_py.h"
 
 namespace mindspore {
 namespace compile {

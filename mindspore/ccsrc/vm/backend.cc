@@ -21,9 +21,10 @@
 #include "utils/log_adapter.h"
 #include "ir/anf.h"
 #include "utils/callbacks.h"
-#include "utils/base_ref_extends.h"
+#include "utils/convert_utils.h"
 #include "backend/session/session_factory.h"
 #include "utils/ms_utils.h"
+#include "pybind_api/ir/base_ref_py.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
 #endif

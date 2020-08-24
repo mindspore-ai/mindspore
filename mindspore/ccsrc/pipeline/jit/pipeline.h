@@ -25,8 +25,8 @@
 #include <map>
 #include <mutex>
 
-#include "utils/base_ref_extends.h"
-#include "debug/draw.h"
+#include "pybind11/pybind11.h"
+
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "pipeline/jit/action.h"

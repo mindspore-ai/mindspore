@@ -29,8 +29,12 @@
 #include <deque>
 #include <unordered_map>
 
+#include "pybind11/pybind11.h"
+
 #include "ir/anf.h"
-#include "utils/base_ref_extends.h"
+#include "base/base_ref.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace compile {

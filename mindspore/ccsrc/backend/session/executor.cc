@@ -17,6 +17,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/session/executor_manager.h"
 #include "utils/comm_manager.h"
+#include "utils/scoped_long_running.h"
 
 namespace mindspore {
 namespace session {
@@ -223,7 +224,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   std::unique_lock<std::mutex> lock(task_mutex_);
   ready_tasks_.push(task);
   task_cond_var_.notify_all();
-  py::gil_scoped_release release;
+  mindspore::ScopedLongRunning long_running;
   sync_cond_var_.wait(lock);
   CheckException();
 }

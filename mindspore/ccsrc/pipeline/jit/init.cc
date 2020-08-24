@@ -37,6 +37,9 @@
 #include "frontend/parallel/ps/util.h"
 #endif
 #include "frontend/parallel/ps/ps_context.h"
+
+#include "pybind_api/gil_scoped_long_running.h"
+
 namespace py = pybind11;
 
 using EnvInstance = mindspore::EnvInstance;
@@ -60,6 +63,8 @@ PYBIND11_MODULE(_c_expression, m) {
   for (auto &item : fns) {
     item.second(&m);
   }
+
+  mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
 
   // Class Pipeline interface
   (void)py::class_<ExecutorPy, std::shared_ptr<ExecutorPy>>(m, "Executor_")

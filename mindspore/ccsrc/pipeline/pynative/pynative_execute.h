@@ -29,6 +29,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 
+#include "pybind_api/ir/base_ref_py.h"
 #include "pipeline/pynative/base.h"
 #include "utils/ms_context.h"
 #include "ir/anf.h"
