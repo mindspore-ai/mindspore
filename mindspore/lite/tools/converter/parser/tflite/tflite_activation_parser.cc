@@ -71,7 +71,7 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
       return RET_NULL_PTR;
     }
     attr->alpha = tflite_attr->alpha;
-    attr->type = schema::ActivationType_SIGMOID;
+    attr->type = schema::ActivationType_LEAKY_RELU;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Activation;
