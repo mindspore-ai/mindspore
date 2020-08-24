@@ -175,6 +175,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
                                                                                         const AnfNodePtr &node,
                                                                                         size_t output_index);
+bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs);
 
