@@ -69,6 +69,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     // activation
     auto input_quant_params = primitive->GetInputQuantParams();
     auto node_type = (schema::PrimitiveType)primitive->Type();
+    if (input_quant_params.empty()) {
+      MS_LOG(ERROR) << "node: " << dst_node->name << " input quant params is empty";
+      return RET_ERROR;
+    }
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
         MS_LOG(ERROR) << "node: " << dst_node->name << " input has " << input_quant_params.size()
@@ -93,7 +97,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto tensor_output = meta_graph->allTensors[output_index].get();
     auto output_quant_params = primitive->GetOutputQuantParams();
     if (output_quant_params.empty()) {
-      MS_LOG(WARNING) << "node: " << dst_node->name << " output quant params is empty";
+      if (node_type != schema::PrimitiveType_QuantDTypeCast) {
+        MS_LOG(ERROR) << "node: " << dst_node->name << " output quant params is empty";
+        return RET_ERROR;
+      }
     } else {
       for (auto output_quant_param : output_quant_params[0]) {
         if (tensor_output->quantParams.empty()) {
