@@ -263,12 +263,13 @@ void ExecutorPy::DelNetRes(const std::string &id) {
   if (executor_ != nullptr) {
     bool flag = false;
     auto tmp_info = info_;
-    for (auto &item : tmp_info) {
-      if (item.first.find(id) != string::npos) {
-        MS_LOG(DEBUG) << "Delete network res:" << item.first;
-        item.second = nullptr;
-        (void)info_.erase(item.first);
+    for (auto it = tmp_info.begin(); it != tmp_info.end();) {
+      if (it->first.find(flag) != std::string::npos) {
+        it->second = nullptr;
+        it = tmp_info.erase(it);
         flag = true;
+      } else {
+        it++;
       }
     }
 
