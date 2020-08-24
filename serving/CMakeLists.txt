@@ -1,4 +1,5 @@
 find_package(Threads REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
 
 # This branch assumes that gRPC and all its dependencies are already installed
 # on this system, so they can be located by find_package().
@@ -99,6 +100,7 @@ add_executable(ms_serving ${SERVING_SRC})
 target_link_libraries(ms_serving mindspore::event mindspore::event_pthreads)
 
 target_link_libraries(ms_serving ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF} pthread)
+set_target_properties(ms_serving PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if (ENABLE_D)
     add_compile_definitions(ENABLE_D)
     target_link_libraries(ms_serving ${RUNTIME_LIB})

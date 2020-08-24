@@ -30,7 +30,7 @@ using nlohmann::json;
 namespace mindspore {
 namespace serving {
 
-const int BUF_MAX = 0x1FFFFF;
+const int BUF_MAX = 0x7FFFFFFF;
 static constexpr char HTTP_DATA[] = "data";
 static constexpr char HTTP_TENSOR[] = "tensor";
 enum HTTP_TYPE { TYPE_DATA = 0, TYPE_TENSOR };
@@ -46,10 +46,12 @@ Status GetPostMessage(struct evhttp_request *req, std::string *buf) {
   if (post_size == 0) {
     ERROR_INFER_STATUS(status, INVALID_INPUTS, "http message invalid");
     return status;
+  } else if (post_size > BUF_MAX) {
+    ERROR_INFER_STATUS(status, INVALID_INPUTS, "http message is bigger than 0x7FFFFFFF.");
+    return status;
   } else {
-    size_t copy_len = post_size > BUF_MAX ? BUF_MAX : post_size;
-    buf->resize(copy_len);
-    memcpy(buf->data(), evbuffer_pullup(req->input_buffer, -1), copy_len);
+    buf->resize(post_size);
+    memcpy(buf->data(), evbuffer_pullup(req->input_buffer, -1), post_size);
     return status;
   }
 }
@@ -85,7 +87,7 @@ Status CheckMessageValid(const json &message_info, HTTP_TYPE *type) {
     count++;
   }
   if (count != 1) {
-    ERROR_INFER_STATUS(status, INVALID_INPUTS, "http message must have only one type of (data, tensor, text)");
+    ERROR_INFER_STATUS(status, INVALID_INPUTS, "http message must have only one type of (data, tensor)");
     return status;
   }
   return status;
@@ -206,7 +208,7 @@ Status TransDataToPredictRequest(const json &message_info, PredictRequest *reque
   }
   for (int i = 0; i < request->data_size(); i++) {
     for (size_t j = 0;  j < tensor_list[i].shape().size(); ++j) {
-      request->mutable_data(i)->mutable_tensor_shape()->add_dims(tensor_list[i].shape()[i]);
+      request->mutable_data(i)->mutable_tensor_shape()->add_dims(tensor_list[i].shape()[j]);
     }
   }
   return SUCCESS;
