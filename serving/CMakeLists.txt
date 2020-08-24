@@ -99,6 +99,7 @@ add_executable(ms_serving ${SERVING_SRC})
 target_link_libraries(ms_serving mindspore::event mindspore::event_pthreads)
 
 target_link_libraries(ms_serving ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF} pthread)
+set_target_properties(ms_serving PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if (ENABLE_D)
     add_compile_definitions(ENABLE_D)
     target_link_libraries(ms_serving ${RUNTIME_LIB})
