@@ -292,10 +292,14 @@ int DepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
     output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(GetStrideW()));
     auto pad_h_all = ((output_h - 1) * GetStrideH() + (GetKernelH() - 1) * GetDilateH() + 1 - input_h);
     auto pad_w_all = ((output_w - 1) * GetStrideW() + (GetKernelW() - 1) * GetDilateW() + 1 - input_w);
-    pad_u_ = pad_h_all / 2;
-    pad_d_ = pad_h_all - pad_u_;
-    pad_l_ = pad_w_all / 2;
-    pad_r_ = pad_w_all - pad_l_;
+    if (pad_h_all > 0) {
+      pad_u_ = pad_h_all / 2;
+      pad_d_ = pad_h_all - pad_u_;
+    }
+    if (pad_w_all > 0) {
+      pad_l_ = pad_w_all / 2;
+      pad_r_ = pad_w_all - pad_l_;
+    }
   } else {
     output_h = std::ceil((static_cast<float>(input_h) + pad_u_ + pad_d_ -
                           (static_cast<float>(GetKernelH()) - 1) * static_cast<float>(GetDilateH())) /
