@@ -25,7 +25,6 @@
 #define C8NUM 8
 #define C12NUM 12
 #define C16NUM 16
-#define BLOCK 4
 #define TILE_NUM 8
 
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
@@ -61,5 +60,7 @@ typedef struct OpParameter {
   int type_;
   int thread_num_;
 } OpParameter;
+
+typedef enum ActType { ActType_No, ActType_Relu, ActType_Relu6 } ActType;
 
 #endif  // MINDSPORE_LITE_NNACL_OP_BASE_H_

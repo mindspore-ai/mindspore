@@ -158,14 +158,14 @@ void Conv1x1InputPack(const void *src_ptr, void *dst_ptr, ConvParameter *conv_pa
   char *src = (char *)src_ptr;
   char *dst = (char *)dst_ptr;
   for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
-    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
+    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_u_;
     if (src_h < 0 || src_h >= conv_param->input_h_) {
       continue;
     }
     const char *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_ * data_size;
     char *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_ * data_size;
     for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
-      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
+      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_l_;
       if (src_w < 0 || src_w >= conv_param->input_w_) {
         continue;
       }
@@ -296,8 +296,8 @@ void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, floa
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   int in_channel = conv_param->input_channel_;
@@ -348,8 +348,8 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   int in_channel = conv_param->input_channel_;
@@ -419,8 +419,8 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   int in_channel = conv_param->input_channel_;

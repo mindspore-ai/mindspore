@@ -126,14 +126,12 @@ int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vecto
   output->set_shape(out_shape);
 
   if (pad_mode == schema::PadMode_SAME) {
-    pad_h_ = ((input_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - output_h) / 2;
-    pad_w_ = ((input_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - output_w) / 2;
+    pad_u_ = ((input_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - output_h) / 2;
+    pad_l_ = ((input_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - output_w) / 2;
   } else if (pad_mode == schema::PadMode_VALID) {
-    pad_h_ = 0;
-    pad_w_ = 0;
+    pad_u_ = 0;
+    pad_l_ = 0;
   } else if (pad_mode == schema::PadMode_CAFFE) {
-    pad_h_ = pad_u_;
-    pad_w_ = pad_l_;
   } else {
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
   }

@@ -322,10 +322,12 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
     return ret;
   }
   // now only consider per tensor for output
-  CalculateActivationRangeQuantized(
-    conv_param_->is_relu_, conv_param_->is_relu6_, conv_param_->conv_quant_arg_.output_quant_args_[0].zp_,
-    conv_param_->conv_quant_arg_.output_quant_args_[0].scale_, &conv_param_->conv_quant_arg_.out_act_min_[0],
-    &conv_param_->conv_quant_arg_.out_act_max_[0]);
+  bool relu = conv_param_->act_type_ == ActType_Relu;
+  bool relu6 = conv_param_->act_type_ == ActType_Relu6;
+  CalculateActivationRangeQuantized(relu, relu6, conv_param_->conv_quant_arg_.output_quant_args_[0].zp_,
+                                    conv_param_->conv_quant_arg_.output_quant_args_[0].scale_,
+                                    &conv_param_->conv_quant_arg_.out_act_min_[0],
+                                    &conv_param_->conv_quant_arg_.out_act_max_[0]);
 
   return RET_OK;
 }

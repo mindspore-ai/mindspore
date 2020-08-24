@@ -170,10 +170,18 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
     auto pad_h_all = ((output_h - 1) * GetStrideH() + (window_h - 1) + 1 - input_h);
     auto pad_w_all = ((output_w - 1) * GetStrideW() + (window_w - 1) + 1 - input_w);
-    pad_u_ = pad_h_all / 2;
-    pad_d_ = pad_h_all - pad_u_;
-    pad_l_ = pad_w_all / 2;
-    pad_r_ = pad_w_all - pad_l_;
+    if (pad_h_all < 0) {
+      pad_u_ = pad_d_ = 0;
+    } else {
+      pad_u_ = pad_h_all / 2;
+      pad_d_ = pad_h_all - pad_u_;
+    }
+    if (pad_w_all < 0) {
+      pad_l_ = pad_r_ = 0;
+    } else {
+      pad_l_ = pad_w_all / 2;
+      pad_r_ = pad_w_all - pad_l_;
+    }
   } else {
     auto round_mode = (schema::RoundMode)GetRoundMode();
     if (round_mode == schema::RoundMode_FLOOR) {

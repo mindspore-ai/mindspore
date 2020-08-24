@@ -74,16 +74,12 @@ class DeConv2D : public PrimitiveC {
   int PadDown() const { return this->pad_d_; }
   int PadLeft() const { return this->pad_l_; }
   int PadRight() const { return this->pad_r_; }
-  int PadH() const { return this->pad_h_; }
-  int PadW() const { return this->pad_w_; }
 
  protected:
   int pad_u_ = 0;
   int pad_d_ = 0;
   int pad_l_ = 0;
   int pad_r_ = 0;
-  int pad_h_ = 0;
-  int pad_w_ = 0;
 };
 }  // namespace lite
 }  // namespace mindspore

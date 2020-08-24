@@ -32,8 +32,6 @@ typedef struct ConvParameter {
   int stride_w_;
   int dilation_h_;
   int dilation_w_;
-  int pad_h_;
-  int pad_w_;
   int pad_u_;
   int pad_d_;
   int pad_l_;
@@ -51,8 +49,7 @@ typedef struct ConvParameter {
   int thread_num_;
   int input_unit_;
   int output_unit_;
-  bool is_relu_;
-  bool is_relu6_;
+  ActType act_type_;
 } ConvParameter;
 
 typedef struct SlidingWindowParam {

@@ -47,7 +47,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
 // void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth
-//                        int row, int col, size_t stride, size_t writeNhwc, size_t writeC4)
+//                        int row, int col, size_t stride, size_t writeNhwc, size_t WriteWino)
 // x0: a
 // x1: b
 // x2: c
@@ -64,11 +64,20 @@ MatmulFloatNeon64Opt:
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
 
+  ldr x9, [sp, #8]
+  ldr x14, [sp, #16]
+
   mov w18, #32 // sizeof(float) * 8
   mul w15, w5, w18 // block stride of lhs/rhs: sizeof(float) * 8 * depth
-  mov x11, x3 // bias flag
   mov x18, #4
   ldr x17, [sp]
+  cbz x14, NoWinoSteps
+  mul x8, x7, x17
+  mov x11, #8
+  mul x11, x11, x17
+  mul x8, x8, x18
+  mul x11, x11, x18
+NoWinoSteps:
   mul x17, x17, x18
 
 L1:
@@ -79,7 +88,6 @@ L1:
 L2:
   mov x16, x1 // reload rhs ptr
   mov w13, w5 // reload depth
-  mov x14, x3 // reload bias ptr
   dup v8.4s, wzr
   dup v9.4s, wzr
   dup v10.4s, wzr
@@ -150,7 +158,7 @@ Loop:
   fmla v11.4s, v4.4s, v0.s[1]
   fmla v13.4s, v4.4s, v0.s[2]
   fmla v15.4s, v4.4s, v0.s[3]
-  
+
   subs w13, w13, #1
   bgt Loop
 
@@ -173,9 +181,10 @@ LoopEnd:
   fmla v31.4s, v4.4s, v2.s[3]
 
 Bias:
-  cbz x11, Activation
-  ld1 {v0.4s}, [x14], #16
-  ld1 {v1.4s}, [x14], #16
+  cbz x3, Activation
+  ld1 {v0.4s}, [x3], #16
+  ld1 {v1.4s}, [x3]
+  sub x3, x3, #16
   fadd v8.4s, v8.4s, v0.4s
   fadd v9.4s, v9.4s, v1.4s
   fadd v10.4s, v10.4s, v0.4s
@@ -265,10 +274,8 @@ Relu:
   fmax v31.4s, v31.4s, v3.4s
 
 Write:
-  ldr w8, [sp, #8]
-  cbz w8, WriteC8
-  ldr w8, [sp, #16]
-  cbnz w8, WriteC4
+  cbnz x14, WriteWino
+  cbz x9, WriteC8
   cmp w7, #1
   beq Write1
   cmp w7, #2
@@ -721,39 +728,26 @@ Write7:
   st1 {v31.s}[2], [x16], x17
   b WriteEnd
 WriteC8:
-  st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [x2], #64
-  st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [x2], #64
-  st1 {v16.8h, v17.8h, v18.8h, v19.8h}, [x2], #64
-  st1 {v20.8h, v21.8h, v22.8h, v23.8h}, [x2], #64
-  st1 {v24.8h, v25.8h, v26.8h, v27.8h}, [x2], #64
-  st1 {v28.8h, v29.8h, v30.8h, v31.8h}, [x2], #64
+  st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [x2], #64
+  st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [x2], #64
+  st1 {v16.4s, v17.4s, v18.4s, v19.4s}, [x2], #64
+  st1 {v20.4s, v21.4s, v22.4s, v23.4s}, [x2], #64
+  st1 {v24.4s, v25.4s, v26.4s, v27.4s}, [x2], #64
+  st1 {v28.4s, v29.4s, v30.4s, v31.4s}, [x2], #64
   b WriteEnd
-WriteC4:
-  st1 {v8.8h}, [x2], #16
-  st1 {v10.8h}, [x2], #16
-  st1 {v12.8h}, [x2], #16
-  st1 {v14.8h}, [x2], #16
-  st1 {v16.8h}, [x2], #16
-  st1 {v18.8h}, [x2], #16
-  st1 {v20.8h}, [x2], #16
-  st1 {v22.8h}, [x2], #16
-  st1 {v24.8h}, [x2], #16
-  st1 {v26.8h}, [x2], #16
-  st1 {v28.8h}, [x2], #16
-  st1 {v30.8h}, [x2], #16
-  add x18, x2, x17
-  st1 {v9.8h}, [x18], #16
-  st1 {v11.8h}, [x18], #16
-  st1 {v13.8h}, [x18], #16
-  st1 {v15.8h}, [x18], #16
-  st1 {v17.8h}, [x18], #16
-  st1 {v19.8h}, [x18], #16
-  st1 {v21.8h}, [x18], #16
-  st1 {v23.8h}, [x18], #16
-  st1 {v25.8h}, [x18], #16
-  st1 {v27.8h}, [x18], #16
-  st1 {v29.8h}, [x18], #16
-  st1 {v31.8h}, [x18], #16
+WriteWino:
+  st1 {v8.4s, v9.4s}, [x18], x8
+  st1 {v10.4s, v11.4s}, [x18], x8
+  st1 {v12.4s, v13.4s}, [x18], x8
+  st1 {v14.4s, v15.4s}, [x18], x8
+  st1 {v16.4s, v17.4s}, [x18], x8
+  st1 {v18.4s, v19.4s}, [x18], x8
+  st1 {v20.4s, v21.4s}, [x18], x8
+  st1 {v22.4s, v23.4s}, [x18], x8
+  st1 {v24.4s, v25.4s}, [x18], x8
+  st1 {v26.4s, v27.4s}, [x18], x8
+  st1 {v28.4s, v29.4s}, [x18], x8
+  st1 {v30.4s, v31.4s}, [x18], x8
   b WriteEnd
 Write8:
   st1 {v8.4s, v9.4s}, [x18], x17
@@ -798,15 +792,15 @@ WriteEnd:
 End2:
   subs w7, w7, #8 // rhs col - 8
   add x1, x1, x15 // rhs ptr + stride
+  cbz x3, NoBiasStep
   add x3, x3, #32 // bias ptr + stride
-  ldr w8, [sp, #8]
-  cbz w8, NoDstStep
-  ldr w8, [sp, #16]
-  cbnz w8, C4DstStep
+NoBiasStep:
+  cbnz x14, WinoDstStep
+  cbz x9, NoDstStep
   add x2, x2, #32 // dst ptr + stride
   b NoDstStep
-C4DstStep:
-  add x2, x2, x17
+WinoDstStep:
+  add x2, x2, x11
 NoDstStep:
   bgt L1
 

@@ -119,8 +119,8 @@ void RunTestCase(const std::vector<int> shape, const std::vector<std::string> fi
   opParameter->kernel_w_ = kw;
   opParameter->stride_h_ = 2;
   opParameter->stride_w_ = 2;
-  opParameter->pad_h_ = pad;
-  opParameter->pad_w_ = pad;
+  opParameter->pad_u_ = pad;
+  opParameter->pad_l_ = pad;
   opParameter->input_channel_ = ci;
   opParameter->output_channel_ = co;
   auto op_kernel_ptr = std::make_unique<kernel::Conv2dTransposeOpenCLKernel>(

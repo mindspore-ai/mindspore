@@ -169,8 +169,8 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
     conv_param->stride_w_ = 1;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
-    conv_param->pad_h_ = 0;
-    conv_param->pad_w_ = 0;
+    conv_param->pad_u_ = 0;
+    conv_param->pad_l_ = 0;
   }
 
   // nhwc
@@ -214,8 +214,8 @@ TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
     conv_param->stride_w_ = 1;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
-    conv_param->pad_h_ = 1;
-    conv_param->pad_w_ = 1;
+    conv_param->pad_u_ = 1;
+    conv_param->pad_l_ = 1;
   }
 
   // nhwc
@@ -286,8 +286,8 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
     conv_param->stride_w_ = 1;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
-    conv_param->pad_h_ = 0;
-    conv_param->pad_w_ = 0;
+    conv_param->pad_u_ = 0;
+    conv_param->pad_l_ = 0;
   }
 
   // nhwc
@@ -331,8 +331,8 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
     conv_param->stride_w_ = 1;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
-    conv_param->pad_h_ = 1;
-    conv_param->pad_w_ = 1;
+    conv_param->pad_u_ = 1;
+    conv_param->pad_l_ = 1;
   }
 
   // nhwc
@@ -405,8 +405,8 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
     conv_param->stride_w_ = 1;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
-    conv_param->pad_h_ = 0;
-    conv_param->pad_w_ = 0;
+    conv_param->pad_u_ = 0;
+    conv_param->pad_l_ = 0;
   }
 
   // nhwc
@@ -529,8 +529,8 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
     conv_param->stride_w_ = 1;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
-    conv_param->pad_h_ = 1;
-    conv_param->pad_w_ = 1;
+    conv_param->pad_u_ = 1;
+    conv_param->pad_l_ = 1;
   }
 
   // nhwc
@@ -724,8 +724,8 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
         conv_param->kernel_w_ = filter_shape[i][2];
         conv_param->stride_h_ = conv_param->output_h_ / conv_param->input_h_;
         conv_param->stride_w_ = conv_param->output_w_ / conv_param->input_w_;
-        conv_param->pad_h_ = (conv_param->kernel_h_ - 1) / 2;
-        conv_param->pad_w_ = (conv_param->kernel_w_ - 1) / 2;
+        conv_param->pad_u_ = (conv_param->kernel_h_ - 1) / 2;
+        conv_param->pad_l_ = (conv_param->kernel_w_ - 1) / 2;
         conv_param->dilation_h_ = 1;
         conv_param->dilation_w_ = 1;
       }
@@ -774,8 +774,8 @@ TEST_F(TestConvolutionDwOpenCL, Buffer2Image) {
     conv_param->kernel_w_ = filter_shape[2];
     conv_param->stride_h_ = conv_param->output_h_ / conv_param->input_h_;
     conv_param->stride_w_ = conv_param->output_w_ / conv_param->input_w_;
-    conv_param->pad_h_ = (conv_param->kernel_h_ - 1) / 2;
-    conv_param->pad_w_ = (conv_param->kernel_w_ - 1) / 2;
+    conv_param->pad_u_ = (conv_param->kernel_h_ - 1) / 2;
+    conv_param->pad_l_ = (conv_param->kernel_w_ - 1) / 2;
     conv_param->dilation_h_ = 1;
     conv_param->dilation_w_ = 1;
   }

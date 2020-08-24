@@ -94,7 +94,9 @@ int Convolution3x3CPUKernel::InitWeightBias() {
 }
 
 int Convolution3x3CPUKernel::InitTmpBuffer() {
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
+  int oC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
   const int k_plane = 16;
   MS_ASSERT(ctx_->allocator != nullptr);
 
@@ -105,10 +107,17 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * k_plane * oC4 * C4NUM * sizeof(float);
+  size_t tmp_dst_buffer_size = thread_count_ * C12NUM * k_plane * oC8 * C8NUM * sizeof(float);
   tmp_dst_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_buffer_ failed.";
+    return RET_ERROR;
+  }
+
+  size_t col_buffer_size = thread_count_ * C12NUM * C4NUM * ic4 * sizeof(float);
+  col_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(col_buffer_size));
+  if (col_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc col_buffer_ failed.";
     return RET_ERROR;
   }
 
@@ -124,6 +133,7 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   tmp_buffer_address_list_[1] = block_unit_buffer_;
   tmp_buffer_address_list_[2] = tmp_dst_buffer_;
   tmp_buffer_address_list_[3] = nc4hw4_out_;
+  tmp_buffer_address_list_[4] = col_buffer_;
   return RET_OK;
 }
 
@@ -182,7 +192,7 @@ int Convolution3x3CPUKernel::ReSize() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * iC4 * C4NUM * sizeof(float);
+  size_t tile_buffer_size = thread_count_ * C12NUM * C16NUM * iC4 * C4NUM * sizeof(float);
   tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
   if (tile_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tile buffer failed.";
@@ -237,8 +247,8 @@ int Convolution3x3CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto is_relu = conv_param_->is_relu_;
-  auto is_relu6 = conv_param_->is_relu6_;
+  auto is_relu = conv_param_->act_type_ == ActType_Relu;
+  auto is_relu6 = conv_param_->act_type_ == ActType_Relu6;
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   if (is_relu) {
     PackNC4HW4ToNHWCReluFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,

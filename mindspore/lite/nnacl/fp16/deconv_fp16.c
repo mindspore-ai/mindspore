@@ -73,8 +73,8 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
-        int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
-        int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
+        int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
+        int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
 
         int kh_start = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
         int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
@@ -112,7 +112,7 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
     }       /*ih*/
   }         /*oc8*/
 
-  PostConvFuncFp16C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_, conv_param->is_relu_,
-                     conv_param->is_relu6_);
+  PostConvFuncFp16C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_,
+                     conv_param->act_type_ == ActType_Relu, conv_param->act_type_ == ActType_Relu6);
   return NNACL_OK;
 }

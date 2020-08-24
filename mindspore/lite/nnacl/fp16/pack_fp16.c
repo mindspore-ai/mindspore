@@ -21,14 +21,14 @@
 void Conv1x1InputPackFp16(const float16_t *src, float16_t *dst, ConvParameter *conv_param) {
   /* support nhwc */
   for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
-    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
+    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_u_;
     if (src_h < 0 || src_h >= conv_param->input_h_) {
       continue;
     }
     const float16_t *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_;
     float16_t *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_;
     for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
-      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
+      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_l_;
       if (src_w < 0 || src_w >= conv_param->input_w_) {
         continue;
       }
@@ -46,8 +46,8 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   int in_channel = conv_param->input_channel_;

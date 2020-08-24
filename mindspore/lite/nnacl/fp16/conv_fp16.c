@@ -173,16 +173,18 @@ void SWBorderPixel(float16_t *dst, const float16_t *src, const float16_t *weight
 
 void SWBorderFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias, int top,
                   int bottom, int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   float16_t *dst_h = dst + top * sliding->out_h_step_;
   for (int oh = top; oh < bottom; oh++) {
-    int ih = oh * conv_param->stride_h_ - conv_param->pad_h_;
+    int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
     int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
     int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
     const float16_t *src_h = src + ih * sliding->in_h_step_;
 
     float16_t *dst_kernel = dst_h + left * sliding->block_channel_;
     for (int ow = left; ow < right; ow++) {
-      int iw = ow * conv_param->stride_w_ - conv_param->pad_w_;
+      int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
       int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
       int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
       const float16_t *src_w = src_h + iw * sliding->ic4_channel_;
@@ -192,7 +194,7 @@ void SWBorderFp16(float16_t *dst, const float16_t *src, const float16_t *weight,
 
       SWBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
                     sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_h_, conv_param->kernel_w_,
-                    sliding->ic4_channel_, conv_param->is_relu_, conv_param->is_relu6_);
+                    sliding->ic4_channel_, relu, relu6);
 
       dst_kernel += sliding->block_channel_;
     }  // width loop
@@ -273,6 +275,8 @@ void SWCenterFp16(float16_t *dst, const float16_t *src, const float16_t *weight,
 void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, const float16_t *bias_data,
                 float16_t *tmp_out_block, float16_t *output_data, int task_id, ConvParameter *conv_param,
                 SlidingWindowParam *slidingWindow_param) {
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   int oc4_res = conv_param->output_channel_ % C4NUM;
   const float16_t *src = input_data;
   float16_t *dst;
@@ -299,8 +303,8 @@ void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, con
 
       if (slidingWindow_param->right_ > slidingWindow_param->left_ &&
           slidingWindow_param->bottom_ > slidingWindow_param->top_) {
-        int in_h_start = slidingWindow_param->top_ * conv_param->stride_h_ - conv_param->pad_h_;
-        int in_w_start = slidingWindow_param->left_ * conv_param->stride_w_ - conv_param->pad_w_;
+        int in_h_start = slidingWindow_param->top_ * conv_param->stride_h_ - conv_param->pad_u_;
+        int in_w_start = slidingWindow_param->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const float16_t *in_t =
           src_data + in_h_start * slidingWindow_param->in_h_step_ + in_w_start * slidingWindow_param->ic4_channel_;
         float16_t *out_t = dst_data + slidingWindow_param->top_ * slidingWindow_param->out_h_step_ +
@@ -310,7 +314,7 @@ void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, con
                      conv_param->kernel_w_, slidingWindow_param->out_h_step_, slidingWindow_param->block_channel_,
                      slidingWindow_param->ic4_channel_, slidingWindow_param->in_sh_step_,
                      slidingWindow_param->in_sw_step_, slidingWindow_param->in_kh_step_,
-                     slidingWindow_param->in_kw_step_, conv_param->is_relu_, conv_param->is_relu6_);
+                     slidingWindow_param->in_kw_step_, relu, relu6);
       }
     }  // output C4 loop
     src += slidingWindow_param->in_step_;
@@ -330,8 +334,8 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-  bool relu = conv_param->is_relu_;
-  bool relu6 = conv_param->is_relu6_;
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   int thread_count = conv_param->thread_num_;
   const int tile_n = 16;
   int output_count = out_h * out_w;

@@ -50,8 +50,8 @@ void InitConvParamGroup1Fp16(ConvParameter *conv_param) {
   conv_param->dilation_h_ = 1;
   conv_param->dilation_w_ = 1;
 
-  conv_param->pad_h_ = 1;
-  conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = 1;
+  conv_param->pad_l_ = 1;
   conv_param->thread_num_ = 1;
 }
 
@@ -75,8 +75,8 @@ void InitConvParamGroup2Fp16(ConvParameter *conv_param) {
   conv_param->dilation_h_ = 1;
   conv_param->dilation_w_ = 1;
 
-  conv_param->pad_h_ = 1;
-  conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = 1;
+  conv_param->pad_l_ = 1;
   conv_param->thread_num_ = 1;
 }
 

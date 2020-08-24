@@ -60,14 +60,19 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(nc4hw4_out_);
       nc4hw4_out_ = nullptr;
     }
+    if (col_buffer_ != nullptr) {
+      ctx_->allocator->Free(col_buffer_);
+      col_buffer_ = nullptr;
+    }
   }
 
   float *transformed_filter_addr_ = nullptr;
   float *tile_buffer_ = nullptr;
   float *block_unit_buffer_ = nullptr;
   float *tmp_dst_buffer_ = nullptr;
+  float *col_buffer_ = nullptr;
   float *nc4hw4_out_ = nullptr;
-  TmpBufferAddress tmp_buffer_address_list_[4];
+  TmpBufferAddress tmp_buffer_address_list_[5];
   GEMM_FUNC_FP32 gemm_func_ = nullptr;
 };
 void ProcessFilter(float *origin_weight, float *dst_weight, ConvParameter *conv_param, int oc_block, int oc_block_num);

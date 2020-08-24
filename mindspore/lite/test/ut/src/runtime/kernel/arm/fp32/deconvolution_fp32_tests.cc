@@ -468,7 +468,7 @@ int DeConvTestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -537,7 +537,7 @@ int DeConvTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -616,7 +616,7 @@ int DeConvTestInit3(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 2;
   conv_param->stride_h_ = conv_param->stride_w_ = 3;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 2;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
   return out_t->ElementsNum();
 }
 
@@ -685,8 +685,8 @@ int DeConvTestInit4(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
-  conv_param->is_relu_ = conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->act_type_ = ActType_No;
 
   return out_t->ElementsNum();
 }

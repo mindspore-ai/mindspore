@@ -20,9 +20,9 @@
 static int is_a_ge_zero_and_a_lt_b(int a, int b) { return (unsigned)(a) < (unsigned)(b); }
 
 void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param) {
-  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_w_;
+  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_l_;
   // const int pad_right =  /*conv_param->pad_r_*/conv_param->pad_w_;
-  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_h_;
+  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_u_;
   // const int pad_down =   /*conv_param->pad_d/*/conv_param->pad_h_;
 
   const int stride_h = conv_param->stride_h_;
@@ -72,9 +72,9 @@ void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param
 
 // output matrix is (kernel_h*kernel_w*channels)X(output_h*output_w)
 void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param) {
-  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_w_;
+  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_l_;
   // const int pad_right =  /*conv_param->pad_r_*/conv_param->pad_w_;
-  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_h_;
+  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_u_;
   // const int pad_down =   /*conv_param->pad_d/*/conv_param->pad_h_;
 
   const int stride_h = conv_param->stride_h_;
