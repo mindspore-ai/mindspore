@@ -618,10 +618,12 @@ build_lite()
 
     if [[ "${COMPILE_RET}" -ne 0 ]]; then
         echo "---------------- mindspore lite: build failed ----------------"
+        exit 1
     else
         mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         rm -rf ${BASEPATH}/output/tmp/
         echo "---------------- mindspore lite: build success ----------------"
+        exit 0
     fi
 }
 

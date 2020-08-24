@@ -32,7 +32,7 @@ STATUS CaffeTanhParser::Parse(const caffe::LayerParameter &proto,
   return RET_OK;
 }
 
-CaffeNodeRegistrar g_caffeTanhParser("Tanh", new CaffeTanhParser());
+CaffeNodeRegistrar g_caffeTanhParser("TanH", new CaffeTanhParser());
 }  // namespace lite
 }  // namespace mindspore
 

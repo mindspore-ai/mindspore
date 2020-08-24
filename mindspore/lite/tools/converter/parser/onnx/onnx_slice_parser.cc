@@ -42,7 +42,7 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {
       const int size = onnx_node_attr.ints_size();
-      MS_LOG(ERROR) << "SLICE starts size " << size;
+      MS_LOG(INFO) << "SLICE starts size " << size;
       for (int i = 0; i < size; ++i) {
         attr->begin.emplace_back(static_cast<int32_t>(onnx_node_attr.ints(i)));
       }
