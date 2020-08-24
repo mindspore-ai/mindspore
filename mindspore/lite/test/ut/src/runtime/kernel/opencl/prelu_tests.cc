@@ -62,26 +62,27 @@ void CompareOutPRelu(lite::tensor::Tensor *output_tensor, const std::string &sta
 
 TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
-  std::string standard_answer_file = "/data/local/tmp/leaky_relu.bin";
+  std::string weight_file = "/data/local/tmp/weight_data.bin";
+  std::string standard_answer_file = "/data/local/tmp/caffe_prelu.bin";
   MS_LOG(INFO) << "-------------------->> Begin test PRelu!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "Init tensors.";
-  std::vector<int> input_shape = {1, 4, 3, 8};
+  std::vector<int> input_shape = {1, 4, 3, 9};
 
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
   auto input_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input_tensor error!";
     return;
   }
 
   auto output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensor_type);
+    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output_tensor error";
     delete input_tensor;
@@ -89,7 +90,7 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   }
 
   auto weight_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, std::vector<int>{1}, schema::Format_NHWC, tensor_type);
+    new (std::nothrow) lite::tensor::Tensor(data_type, std::vector<int>{9}, schema::Format_NHWC, tensor_type);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight_tensor error";
     delete input_tensor;
@@ -105,11 +106,13 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
 
   MS_LOG(INFO) << "initialize input data";
   LoadDataPRelu(input_tensor->Data(), input_tensor->Size(), in_file);
+  LoadDataPRelu(weight_tensor->Data(), weight_tensor->Size(), weight_file);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->Data());
-  weight_data[0] = 0.3;
+  PrintData("Weight data", weight_data, inputs[1]->ElementsNum());
   auto *input_data = reinterpret_cast<float *>(inputs[0]->Data());
-  PrintData("PRelu input data", input_data, inputs[0]->ElementsC4Num());
-
+  PrintData("PRelu input data", input_data, inputs[0]->ElementsNum());
+  std::cout << inputs[0]->ElementsNum() << std::endl;
+  std::cout << "--------------------------------------------" << std::endl;
   auto param = new (std::nothrow) PReluParameter();
   if (param == nullptr) {
     MS_LOG(ERROR) << "new PreluParameter error";
