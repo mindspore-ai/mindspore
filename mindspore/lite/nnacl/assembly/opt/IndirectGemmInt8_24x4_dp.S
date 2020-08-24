@@ -36,7 +36,7 @@ IndirectGemmInt8_24x4_dp:
         ld1 {v17.4s}, [x22], x23
         ld1 {v18.4s}, [x22], x23
         ld1 {v19.4s}, [x22], x23
-        ld1{v20.4s}, [x22], x23
+        ld1 {v20.4s}, [x22], x23
         ld1 {v21.4s}, [x22], x23
         ld1 {v22.4s}, [x22], x23
         ld1 {v23.4s}, [x22], x23
@@ -404,7 +404,7 @@ IndirectGemmInt8_24x4_dp:
                 sshr v0.4s, v0.4s, #31
                 sqadd v8.4s, v8.4s, v0.4s
                 srshl v8.4s, v8.4s, v4.4s
-                and v0.16b, v4.16b, v9.16b
+                and v1.16b, v4.16b, v9.16b
                 sshr v1.4s, v1.4s, #31
                 sqadd v9.4s, v9.4s, v1.4s
                 srshl v9.4s, v9.4s, v4.4s
@@ -420,7 +420,7 @@ IndirectGemmInt8_24x4_dp:
                 sshr v0.4s, v0.4s, #31
                 sqadd v12.4s, v12.4s, v0.4s
                 srshl v12.4s, v12.4s, v4.4s
-                and v0.16b, v4.16b, v13.16b
+                and v1.16b, v4.16b, v13.16b
                 sshr v1.4s, v1.4s, #31
                 sqadd v13.4s, v13.4s, v1.4s
                 srshl v13.4s, v13.4s, v4.4s
@@ -436,7 +436,7 @@ IndirectGemmInt8_24x4_dp:
                 sshr v0.4s, v0.4s, #31
                 sqadd v16.4s, v16.4s, v0.4s
                 srshl v16.4s, v16.4s, v4.4s
-                and v0.16b, v4.16b, v17.16b
+                and v1.16b, v4.16b, v17.16b
                 sshr v1.4s, v1.4s, #31
                 sqadd v17.4s, v17.4s, v1.4s
                 srshl v17.4s, v17.4s, v4.4s
@@ -452,7 +452,7 @@ IndirectGemmInt8_24x4_dp:
                 sshr v0.4s, v0.4s, #31
                 sqadd v20.4s, v20.4s, v0.4s
                 srshl v20.4s, v20.4s, v4.4s
-                and v0.16b, v4.16b, v21.16b
+                and v1.16b, v4.16b, v21.16b
                 sshr v1.4s, v1.4s, #31
                 sqadd v21.4s, v21.4s, v1.4s
                 srshl v21.4s, v21.4s, v4.4s
@@ -468,7 +468,7 @@ IndirectGemmInt8_24x4_dp:
                 sshr v0.4s, v0.4s, #31
                 sqadd v24.4s, v24.4s, v0.4s
                 srshl v24.4s, v24.4s, v4.4s
-                and v0.16b, v4.16b, v25.16b
+                and v1.16b, v4.16b, v25.16b
                 sshr v1.4s, v1.4s, #31
                 sqadd v25.4s, v25.4s, v1.4s
                 srshl v25.4s, v25.4s, v4.4s
@@ -484,7 +484,7 @@ IndirectGemmInt8_24x4_dp:
                 sshr v0.4s, v0.4s, #31
                 sqadd v28.4s, v28.4s, v0.4s
                 srshl v28.4s, v28.4s, v4.4s
-                and v0.16b, v4.16b, v29.16b
+                and v1.16b, v4.16b, v29.16b
                 sshr v1.4s, v1.4s, #31
                 sqadd v29.4s, v29.4s, v1.4s
                 srshl v29.4s, v29.4s, v4.4s
