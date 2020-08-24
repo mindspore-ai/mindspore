@@ -84,10 +84,22 @@ def test_wrong_order_set_parallel_mode_with_initializer():
     net = Net(strategy1, strategy2, weight)
     exe = me._executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    net.set_auto_parallel()
     with pytest.raises(RuntimeError):
-        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-        net.set_auto_parallel()
         exe.compile(net, x, auto_parallel_mode=True, phase='train')
+
+def test_wrong_order_set_same_parallel_mode_with_initializer():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    weight = initializer("Normal", [64, 32], ms.float32)
+    strategy1 = ((2, 1), (4, 1))
+    strategy2 = ((2, 4),)
+    net = Net(strategy1, strategy2, weight)
+    exe = me._executor
+    x = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    net.set_auto_parallel()
+    exe.compile(net, x, auto_parallel_mode=True, phase='train')
 
 def test_wrong_order_set_parallel_mode_without_initializer():
     weight = Tensor(np.ones([64, 32]), ms.float32)

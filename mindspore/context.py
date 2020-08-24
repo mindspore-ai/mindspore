@@ -449,7 +449,7 @@ def set_auto_parallel_context(**kwargs):
         next task, interface mindspore.context.reset_auto_parallel_context() needs to be called to reset
         the configuration.
         Setting or changing parallel modes must be called before any Initializer created, or RuntimeError
-        will be raised.
+        may be raised when compile network.
 
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
@@ -491,7 +491,6 @@ def set_auto_parallel_context(**kwargs):
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
-        RuntimeError: If there is any Initializer created before setting or changing parallel_mode.
 
     Examples:
         >>> context.set_auto_parallel_context(device_num=8)

@@ -21,7 +21,6 @@ from mindspore import context, Tensor, Parameter, ParameterTuple
 from mindspore._checkparam import _check_str_by_regular
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.parallel._utils import _set_has_initializer
 
 def test_parameter_init():
     dat = np.array([[1, 2, 3], [2, 3, 4]])
@@ -191,7 +190,6 @@ def test_scalar_parameter_update():
 
 
 def test_parameter_lazy_init():
-    _set_has_initializer(False)
     # support lazy init in SEMI_AUTO_PARALLEL mode
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8)
