@@ -102,13 +102,17 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args)
         py::object grad_dtype = grads[i].attr("dtype");
         py::tuple arg_shape = py_args[i].attr("shape");
         py::object arg_dtype = py_args[i].attr("dtype");
-        if (!grad_shape.equal(arg_shape) || !grad_dtype.is(arg_dtype)) {
-          MS_EXCEPTION(ValueError) << "For user define net bprop, the gradient of the " << i
-                                   << "th arg should have the same shape and dtype as the " << i << "th arg, but the "
-                                   << i << "th arg shape: " << py::cast<py::str>(arg_shape)
-                                   << " and dtype: " << py::cast<py::str>(arg_dtype)
-                                   << ", the gradient shape: " << py::cast<py::str>(grad_shape)
-                                   << " and dtype: " << py::cast<py::str>(grad_dtype) << ".";
+        if (!grad_shape.equal(arg_shape)) {
+          MS_EXCEPTION(ValueError) << "When user defines the net bprop, the gradient of the " << i
+                                   << "th arg should have the same shape as the " << i << "th arg, but the " << i
+                                   << "th arg shape is: " << py::cast<py::str>(arg_shape)
+                                   << ", the gradient shape is: " << py::cast<py::str>(grad_shape) << ".";
+        }
+        if (!grad_dtype.is(arg_dtype)) {
+          MS_EXCEPTION(TypeError) << "When user defines the net bprop, the gradient of the " << i
+                                  << "th arg should have the same dtype as the " << i << "th arg, but the " << i
+                                  << "th arg dtype is: " << py::cast<py::str>(arg_dtype)
+                                  << ", the gradient dtype is: " << py::cast<py::str>(grad_dtype) << ".";
         }
       }
     }
