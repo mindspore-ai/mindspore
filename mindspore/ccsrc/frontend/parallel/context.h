@@ -58,9 +58,6 @@ class ParallelContext {
   void set_full_batch(bool full_batch);
   bool full_batch() const { return full_batch_; }
 
-  void set_has_initializer(bool has_initializer);
-  bool has_initializer() const { return has_initializer_; }
-
   void set_cast_before_mirror(bool cast_before_mirror);
   bool cast_before_mirror() const { return cast_before_mirror_; }
 
@@ -115,7 +112,6 @@ class ParallelContext {
   static std::shared_ptr<ParallelContext> inst_context_;
   bool mirror_mean_;
   bool full_batch_;
-  bool has_initializer_ = false;
   bool cast_before_mirror_;
   bool loss_repeated_mean_;
   int32_t device_num_;
