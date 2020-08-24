@@ -141,7 +141,7 @@ class Parameter(MetaTensor):
             data = data.to_tensor()
         if isinstance(data, Tensor):
             # make a copy of Tensor to init the parameter
-            return (Tensor, data.asnumpy(),)
+            return (Tensor, data.asnumpy().copy(),)
         if isinstance(data, int):
             return (Tensor, data, mstype.int32)
         if isinstance(data, float):
