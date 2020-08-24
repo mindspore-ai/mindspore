@@ -145,7 +145,7 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
 
   MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
          output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
-         matmul_param_->row_, cur_oc, matmul_param_->col_, true);
+         matmul_param_->row_, cur_oc, matmul_param_->col_, 1, 0);
 
   return RET_OK;
 }
