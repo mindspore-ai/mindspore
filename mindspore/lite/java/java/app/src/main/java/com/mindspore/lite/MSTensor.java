@@ -16,6 +16,8 @@
 
 package com.mindspore.lite;
 
+import android.util.Log;
+
 public class MSTensor {
     private long tensorPtr;
 
@@ -52,6 +54,10 @@ public class MSTensor {
         return this.getData(this.tensorPtr);
     }
 
+    public float[] getFloatData() {
+        return decodeBytes(this.getData(this.tensorPtr));
+    }
+
     public void setData(byte[] data) {
         this.setData(this.tensorPtr, data, data.length);
     }
@@ -67,6 +73,24 @@ public class MSTensor {
     public void free() {
         this.free(this.tensorPtr);
         this.tensorPtr = 0;
+    }
+
+    private float[] decodeBytes(byte[] bytes) {
+        if (bytes.length % 4 != 0) {
+            Log.e("MS_LITE", "Length of bytes should be multi of 4 ");
+            return null;
+        }
+        int size = bytes.length / 4;
+        float[] ret = new float[size];
+        for (int i = 0; i < size; i=i+4) {
+            int accNum = 0;
+            accNum = accNum | (bytes[i] & 0xff) << 0;
+            accNum = accNum | (bytes[i+1] & 0xff) << 8;
+            accNum = accNum | (bytes[i+2] & 0xff) << 16;
+            accNum = accNum | (bytes[i+3] & 0xff) << 24;
+            ret[i/4] = Float.intBitsToFloat(accNum);
+        }
+        return ret;
     }
 
     private native long createMSTensor(int dataType, int[] shape, int shapeLen);
