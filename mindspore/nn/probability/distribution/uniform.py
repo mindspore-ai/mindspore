@@ -19,7 +19,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater, check_type, check_distribution_name,\
                           raise_none_error
-from ._utils.custom_ops import exp_by_step, log_by_step
+from ._utils.custom_ops import exp_generic, log_generic
 
 class Uniform(Distribution):
     """
@@ -113,8 +113,8 @@ class Uniform(Distribution):
             self._high = high
 
         # ops needed for the class
-        self.exp = exp_by_step
-        self.log = log_by_step
+        self.exp = exp_generic
+        self.log = log_generic
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
