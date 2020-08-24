@@ -553,6 +553,30 @@ bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   return output_node_list->size() > 1;
 }
 
+bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto output_node_list = GetRealNodeUsedList(graph, node);
+  MS_EXCEPTION_IF_NULL(output_node_list);
+  if (output_node_list->empty()) {
+    return true;
+  }
+  for (const auto &output : *output_node_list) {
+    auto out_node = output.first;
+    auto name = AnfAlgo::GetCNodeName(out_node);
+    if (name == prim::kPrimDepend->name() || name == prim::kPrimMakeTuple->name() ||
+        name == prim::kPrimTupleGetItem->name()) {
+      auto result = IsNotRealUsedByOthers(graph, out_node);
+      if (!result) {
+        return result;
+      }
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
   auto idx = NewValueNode(SizeToInt(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
