@@ -438,11 +438,12 @@ class Multinomial(PrimitiveWithInfer):
         but must be non-negative, finite and have a non-zero sum.
     Args:
         seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
+          Must be non-negative. Default: 0.
+        replacement(bool) - whether to draw with replacement or not.
 
     Inputs:
         - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2 dims.
-        - **num_samples** (int) - number of samples to draw.
+        - **num_samples** (int32) - number of samples to draw.
 
     Outputs:
         Tensor. have the same rows with input, each row has num_samples sampled indices.
@@ -450,13 +451,15 @@ class Multinomial(PrimitiveWithInfer):
     Examples:
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
         >>> multinomial = P.Multinomial(seed=10)
-        >>> output = multinomial(input, 2)
+        >>> output = multinomial(input, 2, True)
     """
 
     @prim_attr_register
-    def __init__(self, seed=0):
+    def __init__(self, replacement=True, seed=0):
         """init"""
         validator.check_value_type("seed", seed, [int], self.name)
+        validator.check_integer("seed", seed, 0, Rel.GE, self.name)
+        validator.check_value_type("replacement", replacement, [bool], self.name)
         self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
 
     def __infer__(self, inputs, num_samples):
@@ -467,7 +470,7 @@ class Multinomial(PrimitiveWithInfer):
         num_samples_value = num_samples["value"]
         if num_samples_value is None:
             raise ValueError(f"For {self.name}, shape nust be const")
-        validator.check_value_type("num_samples", num_samples_value, [int], self.name)
+        validator.check_value_type("num_samples", num_samples_value, (int,), self.name)
         validator.check_integer("num_samples", num_samples_value, 0, Rel.GT, None)
         y_shape = (num_samples_value,)
         if len(input_shape) == 2:
