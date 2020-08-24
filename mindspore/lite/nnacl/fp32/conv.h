@@ -24,7 +24,6 @@
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/fp32/strassen_matmul.h"
 #include "nnacl/winograd_utils.h"
 #include "nnacl/fp32/conv_depthwise.h"
 
@@ -51,10 +50,6 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
 void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,
               float *tmp_out_block, float *output_data, int task_id, ConvParameter *conv_param,
               GEMM_FUNC_FP32 gemm_func);
-
-// fp32 conv1x1 strassen matmul
-int Conv1x1Fp32(const float *input_data, const float *weight_data, float *output_data, float *tmp_ptr,
-                StrassenMatMulParameter matmul_param);
 
 // fp32 convolution winograd
 void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,

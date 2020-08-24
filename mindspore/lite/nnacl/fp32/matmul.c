@@ -28,6 +28,18 @@ void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col) {
   return;
 }
 
+void RowMajor2Row12Major(float *src_ptr, float *dst_ptr, int row, int col) {
+  for (int r = 0; r < row; r++) {
+    float *src = src_ptr + r * col;
+    for (int c = 0; c < col; c++) {
+      int cd8 = c / C12NUM;
+      int cm8 = c % C12NUM;
+      dst_ptr[cd8 * C12NUM * row + r * C12NUM + cm8] = src[c];
+    }
+  }
+  return;
+}
+
 void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) {
   size_t row12 = row / C12NUM * C12NUM;
   size_t col4 = col / C4NUM * C4NUM;
@@ -323,55 +335,9 @@ void Row8x8Major2RowMajor(float *src_ptr, float *dst_ptr, size_t row, size_t col
   return;
 }
 
-void MatMul8x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
-               int col, int stride, bool write_nhwc) {
-  if (write_nhwc) {
-    /*  col8-major * row8-major => col-major  */
-    for (int r = 0; r < row; r++) {
-      for (int c = 0; c < col; c++) {
-        int r8div = r / 8, r8mod = r % 8;
-        int c8div = c / 8, c8mod = c % 8;
-        size_t ci = r * stride + c;
-        float value = 0;
-        for (int d = 0; d < deep; d++) {
-          size_t ai = r8div * deep * 8 + d * 8 + r8mod;
-          size_t bi = c8div * deep * 8 + d * 8 + c8mod;
-          value = value + a[ai] * b[bi];
-        }
-        if (bias != NULL) value += bias[c];
-        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
-        if (act_type != ActType_No) value = MSMAX(0.0f, value);
-        dst[ci] = value;
-      }
-    }
-  } else {
-    /*  col8-major * row8-major => col8x8-major  */
-    int col_8 = UP_ROUND(col, C8NUM);
-    int row_8 = UP_ROUND(row, C8NUM);
-    for (int r = 0; r < row_8; r++) {
-      for (int c = 0; c < col_8; c++) {
-        int r8div = r / 8, r8mod = r % 8;
-        int c8div = c / 8, c8mod = c % 8;
-        size_t ci = c8div * row_8 * 8 + r * 8 + c8mod;
-        float value = 0;
-        for (int d = 0; d < deep; d++) {
-          size_t ai = r8div * deep * 8 + d * 8 + r8mod;
-          size_t bi = c8div * deep * 8 + d * 8 + c8mod;
-          value = value + a[ai] * b[bi];
-        }
-        if (bias != NULL) value += bias[c];
-        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
-        if (act_type != ActType_No) value = MSMAX(0.0f, value);
-        dst[ci] = value;
-      }
-    }
-  }
-  return;
-}
-
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
-               int col, size_t stride, size_t writeNhwc, size_t writeC4) {
-  if (writeNhwc != 0) {
+                int col, int stride, int out_type) {
+  if (out_type == OutType_Nhwc) {
     /*  col8-major * row8-major => col-major  */
     for (int r = 0; r < row; r++) {
       for (int c = 0; c < col; c++) {
@@ -390,24 +356,39 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
         dst[ci] = value;
       }
     }
+  } else {
+    /*  col8-major * row8-major => col12x8-major  */
+    int col_8 = UP_ROUND(col, C8NUM);
+    int row_12 = UP_ROUND(row, C12NUM);
+    for (int r = 0; r < row_12; r++) {
+      for (int c = 0; c < col_8; c++) {
+        int r12div = r / C12NUM, r12mod = r % C12NUM;
+        int c8div = c / C8NUM, c8mod = c % C8NUM;
+        int c4div = c / C4NUM, c4mod = c % C4NUM;
+        size_t ci = (out_type == OutType_C4) ? (c4div * C4NUM * row_12 + r * C4NUM + c4mod)
+                                             : (c8div * C8NUM * row_12 + r * C8NUM + c8mod);
+        float value = 0;
+        for (int d = 0; d < deep; d++) {
+          size_t ai = r12div * deep * C12NUM + d * C12NUM + r12mod;
+          size_t bi = c8div * deep * C8NUM + d * C8NUM + c8mod;
+          value = value + a[ai] * b[bi];
+        }
+        if (bias != NULL) value += bias[c];
+        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
+        if (act_type != ActType_No) value = MSMAX(0.0f, value);
+        dst[ci] = value;
+      }
+    }
   }
   return;
 }
 
-void MatMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row, int col,
-            int stride, bool write_nhwc) {
-#ifdef ENABLE_ARM64
-  MatmulFloatNeon64(a, b, c, bias, (int)act_type, deep, row, col, stride, write_nhwc);
-#else
-  MatMul8x8(a, b, c, bias, act_type, deep, row, col, stride, write_nhwc);
-#endif
-}
-
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
-            int col, size_t stride, size_t writeNhwc, size_t writeC4) {
+               int col, size_t stride, int out_type) {
 #ifdef ENABLE_ARM64
-  MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, writeNhwc, writeC4);
+  MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type == OutType_Nhwc),
+                       (int)(out_type == OutType_C4));
 #else
-  MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride,  writeNhwc, writeC4);
+  MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
 }

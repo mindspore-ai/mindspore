@@ -251,12 +251,6 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
   }
 }
 
-// fp32 conv1x1 strassen matmul
-int Conv1x1Fp32(const float *input_data, const float *weight_data, float *output_data, float *tmp_ptr,
-                StrassenMatMulParameter matmul_param) {
-  return StrassenMatmul(input_data, weight_data, output_data, &matmul_param, FP32_STRASSEN_MAX_RECURSION, 0, tmp_ptr);
-}
-
 // fp32 conv winograd
 void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,
                       int task_id, ConvParameter *conv_param, InputTransformUnitFunc input_trans_func,

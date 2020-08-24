@@ -16,20 +16,19 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_DECONV_H_
 #define MINDSPORE_LITE_NNACL_FP32_DECONV_H_
 
+#include <string.h>
 #include "nnacl/pack.h"
 #include "nnacl/op_base.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/fp32/strassen_matmul.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/fp32/common_func.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane);
-
-int DeConvPostFp32C4(const float *src, float *tmp_c4, float *dst, const float *bias, int output_channel,
-                     int input_plane, int kernel_plane, int output_plane, ConvParameter *conv_param);
-int DeConvPostFp32C8x8(const float *src, float *tmp_out, const float *bias, float *dst, int output_channel,
-                       ConvParameter *conv_param);
+int DeConvPostFp32C12x8(const float *src, float *tmp_out, const float *bias, float *dst, int output_channel,
+                        ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif
