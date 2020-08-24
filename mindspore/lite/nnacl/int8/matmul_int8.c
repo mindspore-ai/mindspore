@@ -63,16 +63,17 @@ void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col) {
   for (int ri = 0; ri < row_4div; ri += C4NUM) {
     for (int ci = 0; ci < col_16div; ci += C16NUM) {
 #ifdef ENABLE_ARM64
+      size_t col_offset = col;
       int8_t *src_c = src_r + ci;
       int8_t *dst_c = dst_r + ci * C4NUM;
       asm volatile(
         "mov x10, %[src_c] \n"
         "mov x11, %[dst_c] \n"
 
-        "ld1 {v0.16b}, [x10], %[col]\n"
-        "ld1 {v1.16b}, [x10], %[col]\n"
-        "ld1 {v2.16b}, [x10], %[col]\n"
-        "ld1 {v3.16b}, [x10], %[col]\n"
+        "ld1 {v0.16b}, [x10], %[col_offset]\n"
+        "ld1 {v1.16b}, [x10], %[col_offset]\n"
+        "ld1 {v2.16b}, [x10], %[col_offset]\n"
+        "ld1 {v3.16b}, [x10], %[col_offset]\n"
 
         "st1 {v0.16b}, [x11], #16\n"
         "st1 {v1.16b}, [x11], #16\n"
@@ -80,7 +81,7 @@ void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col) {
         "st1 {v3.16b}, [x11], #16\n"
 
         :
-        : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ col ] "r"(col)
+        : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ col_offset ] "r"(col_offset)
         : "x10", "x11", "v0", "v1", "v2", "v3");
 #else
       MatrixPack4x16UnitInt8(src_r + ci, dst_r + ci * C4NUM, C4NUM, C16NUM, col);

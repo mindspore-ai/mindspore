@@ -607,7 +607,7 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
         for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
           int src_x_offset = src_y_offset + j * ic8 * C8NUM;
           int dst_x_offset = dst_y_offset + j * C8NUM;
-          float16_t *src_addr = input_data + src_x_offset;
+          const float16_t *src_addr = input_data + src_x_offset;
           float16_t *dst_addr = tmp_data + dst_x_offset;
 #ifdef ENABLE_NEON
           vst1q_f16(dst_addr, vld1q_f16(src_addr));

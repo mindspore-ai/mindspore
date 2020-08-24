@@ -1225,9 +1225,9 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
     ls = vld1q_s32(left_shift);
     rs = vld1q_s32(right_shift);
   } else {
-    out_multiplier = vdupq_n_s32(quant_multiplier);
-    ls = vdupq_n_s32(left_shift);
-    rs = vdupq_n_s32(right_shift);
+    out_multiplier = vdupq_n_s32(quant_multiplier[0]);
+    ls = vdupq_n_s32(left_shift[0]);
+    rs = vdupq_n_s32(right_shift[0]);
   }
   int32x4_t out_zp = vdupq_n_s32(output_zp);
   int32x4_t output_min = vdupq_n_s32(out_min);

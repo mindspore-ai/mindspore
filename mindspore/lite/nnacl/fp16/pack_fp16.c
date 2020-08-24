@@ -55,7 +55,6 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
   int in_w = conv_param->input_w_;
   int out_w = conv_param->output_w_;
   int channel_block = UP_DIV(in_channel, 4);
-  int kernel_plane = kernel_h * kernel_w;
 
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;

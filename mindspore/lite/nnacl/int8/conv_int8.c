@@ -28,7 +28,7 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
   int32_t out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int32_t act_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int32_t act_max = conv_param->conv_quant_arg_.out_act_max_[0];
-  int oc4 = UP_DIV(output_channel, C4NUM);
+
 #ifdef ENABLE_ARM64
   size_t asymmetric = conv_param->conv_quant_arg_.asymmetric_ & FILTER_ASYMMETRIC;
   size_t per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
@@ -36,6 +36,7 @@ void IndirectGemmInt8(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const in
                        output_channel * sizeof(int8_t), input_sum, act_min, act_max, out_zp, out_multiplier,
                        shift_before, shift_after, asymmetric, per_channel);
 #else
+  int oc4 = UP_DIV(output_channel, C4NUM);
   int tile_num = conv_param->tile_num_;
   int plane_c4 = UP_DIV(kernel_plane, C4NUM);
   for (int oc = 0; oc < output_channel; oc++) {

@@ -27,12 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Range;
 
 namespace mindspore::kernel {
-
-namespace {
-constexpr int kInputNum = 0;
-constexpr int kOutputNum = 1;
-}  // namespace
-
 int RangeCPUKernel::Init() { return RET_OK; }
 
 int RangeCPUKernel::ReSize() { return RET_OK; }

@@ -395,7 +395,6 @@ void Conv3x3Fp16(float16_t *input_data, float16_t *transed_weight, const float16
 
   int input_batch = conv_param->input_batch_;
   for (int batch = 0; batch < input_batch; batch++) {
-    int in_batch_offset = batch * ic4 * C4NUM * conv_param->input_h_ * conv_param->input_w_;
     int tmp_out_batch_offset = batch * oc8 * C8NUM * out_w_block * out_h_block * output_unit * output_unit;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
       int start_index = thread_id * tile_num;

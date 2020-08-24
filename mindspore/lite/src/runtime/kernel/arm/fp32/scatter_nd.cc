@@ -30,8 +30,6 @@ using mindspore::schema::PrimitiveType_ScatterND;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int kScatterNDInputNum = 3;
-constexpr int kScatterNDOutputNum = 1;
 constexpr int kScatterShapeIndex = 0;
 constexpr int kScatterIndicesIndex = 1;
 constexpr int kScatterUpdateIndex = 2;

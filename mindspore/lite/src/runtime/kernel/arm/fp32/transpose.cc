@@ -29,10 +29,6 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kTransposeInputNum = 1;
-constexpr int kTransposeOutputNum = 1;
-}  // namespace
 int TransposeCPUKernel::Init() {
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
   num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(param->perm_[kNHWC_H]));
