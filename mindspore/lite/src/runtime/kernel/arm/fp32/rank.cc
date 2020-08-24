@@ -27,12 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Rank;
 
 namespace mindspore::kernel {
-
-namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-}  // namespace
-
 int RankCPUKernel::Init() { return RET_OK; }
 
 int RankCPUKernel::ReSize() { return RET_OK; }

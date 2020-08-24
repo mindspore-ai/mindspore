@@ -30,12 +30,6 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-constexpr size_t kRank = 4;
-}  // namespace
-
 int ResizeInt8CPUKernel::Init() {
   auto ret = ResizeBaseCPUKernel::Init();
   if (ret != RET_OK) {

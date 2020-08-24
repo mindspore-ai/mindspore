@@ -28,12 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ConstantOfShape;
 
 namespace mindspore::kernel {
-
-namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-}  // namespace
-
 int ConstantOfShapeCPUKernel::Init() { return RET_OK; }
 
 int ConstantOfShapeCPUKernel::ReSize() { return RET_OK; }

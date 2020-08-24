@@ -28,12 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore::kernel {
-
-namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-}  // namespace
-
 int FillCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;

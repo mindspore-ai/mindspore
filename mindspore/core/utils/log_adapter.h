@@ -147,7 +147,7 @@ class LogWriter {
 
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
             ExceptionType excp_type = NoExceptionType)
-      : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
+      : location_(location), log_level_(log_level), exception_type_(excp_type) {}
   ~LogWriter() = default;
 
   void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
@@ -161,7 +161,6 @@ class LogWriter {
 
   LocationInfo location_;
   MsLogLevel log_level_;
-  SubModuleId submodule_;
   ExceptionType exception_type_;
 
   inline static ExceptionHandler exception_handler_ = nullptr;

@@ -40,8 +40,14 @@ int PriorBoxCPUKernel::Init() {
     return RET_NULL_PTR;
   }
 
-  MS_ASSERT(in_tensors_.size() == kInputNum);
-  MS_ASSERT(out_tensors_.size() == kOutputNum);
+  if (in_tensors_.size() != kInputNum) {
+    MS_LOG(ERROR) << "Size of input tensors is wrong.";
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() != kOutputNum) {
+    MS_LOG(ERROR) << "Size of input tensors is wrong.";
+    return RET_ERROR;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;

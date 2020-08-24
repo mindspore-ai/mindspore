@@ -92,7 +92,7 @@ int QuantizedAddCPUKernel::Run() {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
 
-    ArithmeticParameter tile_para = {0};
+    ArithmeticParameter tile_para;
     tile_para.ndim_ = out_tensors_.at(0)->shape().size();
     for (size_t i = 0; i < tile_para.ndim_; i++) {
       tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);

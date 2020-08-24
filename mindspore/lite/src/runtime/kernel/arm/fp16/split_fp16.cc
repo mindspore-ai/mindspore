@@ -111,8 +111,8 @@ int SplitFp16CPUKernel::Run() {
       context_->allocator->Free(output_ptr_[i]);
       output_ptr_[i] = nullptr;
     }
-    return RET_OK;
   }
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuSplitFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

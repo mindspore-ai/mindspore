@@ -54,7 +54,10 @@ int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<
   if (input == nullptr) {
     return 1;
   }
-  MS_ASSERT(input->shape().size() == kInputRank);
+  if (input->shape().size() != kInputRank) {
+    MS_LOG(ERROR) << "Size of input shape is wrong.";
+    return RET_ERROR;
+  }
 
   auto output = outputs_.front();
   if (output == nullptr) {

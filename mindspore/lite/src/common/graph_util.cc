@@ -43,7 +43,7 @@ std::vector<size_t> GetGraphInputNodes(const schema::MetaGraph *meta_graph) {
       }
     }
   }
-  return std::move(ret);
+  return ret;
 }
 
 std::vector<size_t> GetGraphOutputNodes(const schema::MetaGraph *meta_graph) {
@@ -64,7 +64,7 @@ std::vector<size_t> GetGraphOutputNodes(const schema::MetaGraph *meta_graph) {
       }
     }
   }
-  return std::move(ret);
+  return ret;
 }
 
 // NODE_ID OpNode::ID() { return id; }

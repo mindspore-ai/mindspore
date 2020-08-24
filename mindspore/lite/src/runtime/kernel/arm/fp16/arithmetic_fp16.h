@@ -46,7 +46,6 @@ class ArithmeticFP16CPUKernel : public LiteKernel {
  private:
   void FreeTmpBuffer();
   int break_pos_;
-  int outside_;
   int out_thread_stride_;
   int out_count_;
   float16_t *tile_data0_ = nullptr;

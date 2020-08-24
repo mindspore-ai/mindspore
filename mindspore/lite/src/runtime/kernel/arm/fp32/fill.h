@@ -30,7 +30,7 @@ class FillCPUKernel : public LiteKernel {
   FillCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                 const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~FillCPUKernel() override = default;
 
   int Init() override;
@@ -44,7 +44,6 @@ class FillCPUKernel : public LiteKernel {
   int data_size_;
   float src_data_;
   float *out_ptr_;
-  const Context *ctx_;
   int thread_count_;
 };
 }  // namespace mindspore::kernel

@@ -30,7 +30,6 @@ class PowerCPUKernel : public PowerBaseCPUKernel {
                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
       : PowerBaseCPUKernel(param, inputs, outputs, ctx, primitive),
-        ctx_(ctx),
         thread_count_(ctx->thread_num_),
         power_(reinterpret_cast<PowerParameter *>(op_parameter_)->power_),
         scale_(reinterpret_cast<PowerParameter *>(op_parameter_)->scale_),
@@ -43,7 +42,6 @@ class PowerCPUKernel : public PowerBaseCPUKernel {
   int RunImpl(int task_id);
 
  private:
-  const lite::Context *ctx_;
   int thread_count_;
   float power_;
   float scale_;
