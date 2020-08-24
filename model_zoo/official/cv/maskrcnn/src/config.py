@@ -20,7 +20,7 @@ from easydict import EasyDict as ed
 config = ed({
     "img_width": 1280,
     "img_height": 768,
-    "keep_ratio": False,
+    "keep_ratio": True,
     "flip_ratio": 0.5,
     "photo_ratio": 0.5,
     "expand_ratio": 1.0,
@@ -138,7 +138,7 @@ config = ed({
     "epoch_size": 12,
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
-    "keep_checkpoint_max": 10,
+    "keep_checkpoint_max": 12,
     "save_checkpoint_path": "./checkpoint",
 
     "mindrecord_dir": "/home/mxw/mask_rcnn/scripts/MindRecord_COCO2017_Train",
