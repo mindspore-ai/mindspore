@@ -93,7 +93,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
     return false;
   }
 
-  auto type = primitiveT_value->GetPrimitiveT()->value.type;
+  auto type = (schema::PrimitiveType)primitiveT_value->Type();
   MS_LOG(INFO) << "Primitive type: " << type;
   static const std::vector<schema::PrimitiveType> uint8OpList = {
     schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,

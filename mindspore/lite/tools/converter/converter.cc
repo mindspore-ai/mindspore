@@ -73,13 +73,11 @@ void Converter::FreeFuncGraph(const FuncGraphPtr &func_graph) {
       return;
     }
     if (primT->value.type == schema::PrimitiveType_TupleGetItem ||
-        primT->value.type == schema::PrimitiveType_MakeTuple ||
-        primT->value.type == schema::PrimitiveType_Return) {
+        primT->value.type == schema::PrimitiveType_MakeTuple || primT->value.type == schema::PrimitiveType_Return) {
       delete primT;
       primitiveT_value->SetPrimitiveT(nullptr);
     }
   }
-  return;
 }
 MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   // parse the model and weight file to generate inference data structure

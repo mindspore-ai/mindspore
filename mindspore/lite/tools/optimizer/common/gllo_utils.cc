@@ -170,7 +170,7 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (a.m_ptr->isa<lite::PrimitiveC>() && b.m_ptr->isa<lite::PrimitiveC>()) {
     auto a_value_node_ptr = a.m_ptr->cast<PrimitiveCPtr>();
     auto b_value_node_ptr = b.m_ptr->cast<PrimitiveCPtr>();
-    return a_value_node_ptr->GetPrimitiveT()->value.type == b_value_node_ptr->GetPrimitiveT()->value.type;
+    return a_value_node_ptr->Type() == b_value_node_ptr->Type();
   }
 
   return a == b;
@@ -316,7 +316,7 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
   if (utils::isa<PrimitiveCPtr>(value)) {
     auto primitive = value->cast<PrimitiveCPtr>();
     MS_ASSERT(primitive != nullptr);
-    return primitive->GetPrimitiveT()->value.type;
+    return (schema::PrimitiveType)primitive->Type();
   } else if (utils::isa<Primitive>(value)) {
     auto primitive = value->cast<PrimitivePtr>();
     MS_ASSERT(primitive != nullptr);
