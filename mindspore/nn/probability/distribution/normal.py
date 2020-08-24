@@ -20,7 +20,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import convert_to_batch, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
-from ._utils.custom_ops import exp_by_step, expm1_by_step, log_by_step
+from ._utils.custom_ops import exp_generic, expm1_generic, log_generic, erf_generic
 
 class Normal(Distribution):
     """
@@ -114,13 +114,13 @@ class Normal(Distribution):
             self._sd_value = sd
 
         #ops needed for the class
-        self.exp = exp_by_step
-        self.expm1 = expm1_by_step
-        self.log = log_by_step
+        self.exp = exp_generic
+        self.expm1 = expm1_generic
+        self.log = log_generic
+        self.erf = erf_generic
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
-        self.erf = P.Erf()
         self.fill = P.Fill()
         self.shape = P.Shape()
         self.sq = P.Square()

@@ -20,7 +20,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
-from ._utils.custom_ops import exp_by_step, log_by_step
+from ._utils.custom_ops import exp_generic, log_generic
 
 class Exponential(Distribution):
     """
@@ -112,8 +112,8 @@ class Exponential(Distribution):
         self.minval = np.finfo(np.float).tiny
 
         # ops needed for the class
-        self.exp = exp_by_step
-        self.log = log_by_step
+        self.exp = exp_generic
+        self.log = log_generic
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
         self.const = P.ScalarToArray()

@@ -17,14 +17,14 @@ from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ..distribution._utils.utils import CheckTensor
-from ..distribution._utils.custom_ops import exp_by_step, expm1_by_step, log_by_step, log1p_by_step
+from ..distribution._utils.custom_ops import exp_generic, expm1_generic, log_generic, log1p_generic
 from .bijector import Bijector
 
 
 class PowerTransform(Bijector):
     r"""
     Power Bijector.
-    This Bijector performs the operation: Y = g(X) = (1 + X * c)^(1 / c), X >= -1 / c, where c is power.
+    This Bijector performs the operation: Y = g(X) = (1 + X * c)^(1 / c), X >= -1 / c, where c >= 0 is the power.
 
     The power transform maps inputs from `[-1/c, inf]` to `[0, inf]`.
 
@@ -61,10 +61,10 @@ class PowerTransform(Bijector):
         validator.check_number("power", power, 0, Rel.GE, self.name)
         self._power = power
         self.pow = P.Pow()
-        self.exp = exp_by_step
-        self.expm1 = expm1_by_step
-        self.log = log_by_step
-        self.log1p = log1p_by_step
+        self.exp = exp_generic
+        self.expm1 = expm1_generic
+        self.log = log_generic
+        self.log1p = log1p_generic
 
         self.checktensor = CheckTensor()
 
