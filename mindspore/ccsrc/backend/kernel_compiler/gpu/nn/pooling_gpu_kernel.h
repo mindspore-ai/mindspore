@@ -88,15 +88,15 @@ class PoolingGpuFwdKernel : public GpuKernel {
       return true;
     }
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
-    int nbDims = 4;
+    const int nbDims = 4;
     int dimA[4];
     int strideAin[4];
     int dimAout[4];
     int strideAout[4];
-    SetDimA(input_shape, dimA, data_format_);
-    SetStrideA(input_shape, strideAin, data_format_);
-    SetDimA(output_shape, dimAout, data_format_);
-    SetStrideA(output_shape, strideAout, data_format_);
+    SetDimA(input_shape, dimA, 4, data_format_);
+    SetStrideA(input_shape, strideAin, 4, data_format_);
+    SetDimA(output_shape, dimAout, 4, data_format_);
+    SetStrideA(output_shape, strideAout, 4, data_format_);
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetTensorNdDescriptor(input_descriptor_, cudnn_data_type_, nbDims, dimA, strideAin),
       "cudnnSetTensor4dDescriptor failed");

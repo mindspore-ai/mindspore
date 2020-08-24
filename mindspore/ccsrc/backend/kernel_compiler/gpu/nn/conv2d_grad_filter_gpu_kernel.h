@@ -148,13 +148,13 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       if (data_format_ == "NCHW" || data_format_ == "DefaultFormat") {
         auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
                              IntToSize(old_width_ + pad_width_)};
-        SetDimA(padded_shape, dimA, data_format_);
-        SetStrideA(padded_shape, strideApadded, data_format_);
+        SetDimA(padded_shape, dimA, 4, data_format_);
+        SetStrideA(padded_shape, strideApadded, 4, data_format_);
       } else if (data_format_ == "NHWC") {
         auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
                              IntToSize(c_)};
-        SetDimA(padded_shape, dimA, data_format_);
-        SetStrideA(padded_shape, strideApadded, data_format_);
+        SetDimA(padded_shape, dimA, 4, data_format_);
+        SetStrideA(padded_shape, strideApadded, 4, data_format_);
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, 4, dimA, strideApadded),
@@ -283,15 +283,15 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   }
   void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &filter_shape,
                  const std::vector<size_t> &in_shape) {
-    int nbDims = 4;
+    const int nbDims = 4;
     int dimA[4];
     int strideAin[4];
     int dimAdy[4];
     int strideAdy[4];
-    SetDimA(in_shape, dimA, data_format_);
-    SetStrideA(in_shape, strideAin, data_format_);
-    SetDimA(dy_shape, dimAdy, data_format_);
-    SetStrideA(dy_shape, strideAdy, data_format_);
+    SetDimA(in_shape, dimA, 4, data_format_);
+    SetStrideA(in_shape, strideAin, 4, data_format_);
+    SetDimA(dy_shape, dimAdy, 4, data_format_);
+    SetStrideA(dy_shape, strideAdy, 4, data_format_);
     // filter shape always keep OIHW.
     int filterDimA[4] = {SizeToInt(filter_shape[0]), SizeToInt(filter_shape[1]), SizeToInt(filter_shape[2]),
                          SizeToInt(filter_shape[3])};

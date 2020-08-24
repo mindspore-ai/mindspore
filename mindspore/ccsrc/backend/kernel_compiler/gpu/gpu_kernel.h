@@ -80,7 +80,10 @@ class GpuKernel : public KernelMod {
     std::swap((*shape)[2], (*shape)[1]);
   }
 
-  void SetDimA(const std::vector<size_t> &shape, int *dimA, const std::string &format) {
+  void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format) {
+    if (shape.size() != len) {
+      MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
+    }
     if (format == "NCHW" || format == "DefaultFormat") {
       dimA[0] = SizeToInt(shape[0]);
       dimA[1] = SizeToInt(shape[1]);
@@ -95,7 +98,10 @@ class GpuKernel : public KernelMod {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
   }
-  void SetStrideA(const std::vector<size_t> &shape, int *strideA, const std::string &format) {
+  void SetStrideA(const std::vector<size_t> &shape, int *strideA, size_t len, const std::string &format) {
+    if (shape.size() != len) {
+      MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with strideA " << len << "-D.";
+    }
     if (format == "NCHW" || format == "DefaultFormat") {
       strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3]);
       strideA[1] = SizeToInt(shape[2] * shape[3]);

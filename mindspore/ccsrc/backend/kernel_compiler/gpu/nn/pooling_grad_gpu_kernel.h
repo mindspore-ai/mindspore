@@ -100,7 +100,7 @@ class PoolingGradGpuKernel : public GpuKernel {
     int windowDimA[2] = {window_height, window_width};
     int paddingA[2] = {0, 0};
     int strideA[2] = {stride_[2], stride_[3]};
-    int nbDims = 4;
+    const int nbDims = 4;
     int dimA[4];
     int strideAin[4];
     int dimAy[4];
@@ -109,14 +109,14 @@ class PoolingGradGpuKernel : public GpuKernel {
     int strideAdy[4];
     int dimAout[4];
     int strideAout[4];
-    SetDimA(input_shape, dimA, data_format_);
-    SetStrideA(input_shape, strideAin, data_format_);
-    SetDimA(input_mask, dimAy, data_format_);
-    SetStrideA(input_mask, strideAiny, data_format_);
-    SetDimA(dout_shape, dimAdy, data_format_);
-    SetStrideA(dout_shape, strideAdy, data_format_);
-    SetDimA(output_shape, dimAout, data_format_);
-    SetStrideA(output_shape, strideAout, data_format_);
+    SetDimA(input_shape, dimA, 4, data_format_);
+    SetStrideA(input_shape, strideAin, 4, data_format_);
+    SetDimA(input_mask, dimAy, 4, data_format_);
+    SetStrideA(input_mask, strideAiny, 4, data_format_);
+    SetDimA(dout_shape, dimAdy, 4, data_format_);
+    SetStrideA(dout_shape, strideAdy, 4, data_format_);
+    SetDimA(output_shape, dimAout, 4, data_format_);
+    SetStrideA(output_shape, strideAout, 4, data_format_);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(y_descriptor_, cudnn_data_type_, nbDims, dimAy, strideAiny),
                                 "cudnnSetTensor4dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(dy_descriptor_, cudnn_data_type_, nbDims, dimAdy, strideAdy),
