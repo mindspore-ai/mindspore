@@ -116,7 +116,6 @@ def test_user_define_bprop_check_shape():
     grad_net = GradNet(net)
     with pytest.raises(ValueError) as ex:
         ret = grad_net(x, sens)
-    assert "the gradient of the 0th arg should have the same shape and dtype as the 0th arg" in str(ex.value)
 
 
 def test_user_define_bprop_check_dtype():
@@ -145,9 +144,8 @@ def test_user_define_bprop_check_dtype():
     context.set_context(mode=context.PYNATIVE_MODE, check_bprop=True)
     net = Net()
     grad_net = GradNet(net)
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         ret = grad_net(x, sens)
-    assert "the gradient of the 0th arg should have the same shape and dtype as the 0th arg" in str(ex.value)
 
 
 def test_user_define_bprop_check_parameter():
