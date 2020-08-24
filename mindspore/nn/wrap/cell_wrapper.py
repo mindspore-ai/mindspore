@@ -82,7 +82,7 @@ class WithGradCell(Cell):
 
     Wraps the network with backward cell to compute gradients. A network with a loss function is necessary
     as argument. If loss function in None, the network must be a wrapper of network and loss function. This
-    Cell accepts *inputs as inputs and returns gradients for each trainable parameter.
+    Cell accepts '*inputs' as inputs and returns gradients for each trainable parameter.
 
     Note:
         Run in PyNative mode.
