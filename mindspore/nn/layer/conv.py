@@ -68,6 +68,7 @@ class _Conv(Cell):
         self.group = check_int_positive(group)
         self.has_bias = has_bias
         if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
+            isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \
             kernel_size[0] < 1 or kernel_size[1] < 1:
             raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
                              + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
@@ -76,9 +77,9 @@ class _Conv(Cell):
             raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
                              + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
         if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
-            dilation[0] < 1 or dilation[1] < 1:
+            isinstance(dilation[0], bool) or isinstance(dilation[1], bool) or dilation[0] < 1 or dilation[1] < 1:
             raise ValueError("Attr 'dilation' of 'Conv2D' Op passed "
-                             + str(self.dilation) + ", should equal to or greater than 1.")
+                             + str(self.dilation) + ", should be a int or tuple and equal to or greater than 1.")
         if in_channels % group != 0:
             raise ValueError("Attr 'in_channels' of 'Conv2D' Op must be divisible by "
                              "attr 'group' of 'Conv2D' Op.")
@@ -845,7 +846,10 @@ class DepthwiseConv2d(Cell):
             - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
               Tensor borders. `padding` should be greater than or equal to 0.
 
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
+            the padding of top, bottom, left and right is the same, equal to padding. If `padding` is a tuple
+            with four integers, the padding of top, bottom, left and right will be equal to padding[0],
+            padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value should
@@ -892,11 +896,14 @@ class DepthwiseConv2d(Cell):
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
         self.pad_mode = pad_mode
-        self.padding = padding
         self.dilation = dilation
         self.has_bias = has_bias
         self.weight_init = weight_init
         self.bias_init = bias_init
+        Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
+        if isinstance(padding, tuple):
+            Validator.check_integer('padding size', len(padding), 4, Rel.EQ, self.cls_name)
+        self.padding = padding
         self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
                                             kernel_size=self.kernel_size,
                                             pad_mode=self.pad_mode,

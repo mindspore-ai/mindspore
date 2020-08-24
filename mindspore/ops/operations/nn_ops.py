@@ -983,7 +983,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         mode (int): 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (int): The pad value to fill. Default: 0.
+        pad (Union[int, tuple[int]]): The pad value to fill. Default: 0. If `pad` is one integer, the padding of
+            top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
+            of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding.
         stride (Union[int, tuple[int]]): The stride to apply conv filter. Default: 1.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits input into groups. Default: 1.
@@ -1028,9 +1030,18 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             raise ValueError("The height and width of dilation should be equal,"
                              f"but got height:{self.dilation[0]},  width:{self.dilation[1]}")
         self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
-        validator.check_value_type('pad', pad, (int,), self.name)
+        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        if isinstance(pad, int):
+            pad = (pad,) * 4
+        else:
+            validator.check_integer('pad size', len(pad), 4, Rel.EQ, self.name)
+        self.padding = pad
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
-        self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
+        if pad_mode != 'pad' and pad != (0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
+        if self.pad_mode == 'pad':
+            for item in pad:
+                validator.check_integer('pad item', item, 0, Rel.GE, self.name)
         self.mode = validator.check_integer("mode", mode, 3, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
         self.channel_multiplier = validator.check_integer("channel_multiplier", channel_multiplier, 0, Rel.GT,
@@ -1065,11 +1076,11 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
-            pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
+            pad_top, pad_bottom, pad_left, pad_right = self.padding
 
-            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
+            h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
                 / stride_h
-            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
+            w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
                 / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
