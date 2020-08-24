@@ -211,12 +211,22 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Accuracy                   | ACC1[78.8%] ACC5[94.2%]                                    | ACC1[78.7%] ACC5[94.1%]   |
 | Total time                 | 11h                                                        | 72h                       |
 | Params (M)                 | 103M                                                       | 103M                      |
-| Checkpoint for Fine tuning | 313M                                                       | 312.41                    |
-| Model for inference        |                                                            |                           |
+| Checkpoint for Fine tuning | 313M                                                       | 312.41M                   |
 
 #### Inference Performance
 
-To be added.
+| Parameters          | InceptionV3                 |
+| ------------------- | --------------------------- |
+| Model Version       |  				            |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 08/22/2020 (month/day/year) |
+| MindSpore Version   | 0.6.0-beta                  |
+| Dataset             | 50,000 images               |
+| batch_size          | 128                         |
+| outputs             | probability                 |
+| Accuracy            | ACC1[78.8%] ACC5[94.2%]     |
+| Total time          | 2mins                       |
+| Model for inference | 92M (.onnx file)            |
 
 # [Description of Random Situation](#contents)
 
