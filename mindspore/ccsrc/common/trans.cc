@@ -392,8 +392,8 @@ std::vector<int> GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   } else {
     host_shape = AnfAlgo::GetOutputInferShape(node, index);
   }
-  if (trans::IsNeedPadding(AnfAlgo::GetOutputFormat(node, 0), host_shape.size())) {
-    host_shape = trans::PaddingShapeTo4d(host_shape, AnfAlgo::GetOutputReshapeType(node, 0));
+  if (trans::IsNeedPadding(AnfAlgo::GetOutputFormat(node, index), host_shape.size())) {
+    host_shape = trans::PaddingShapeTo4d(host_shape, AnfAlgo::GetOutputReshapeType(node, index));
   }
   std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToInt);
   return shape;
