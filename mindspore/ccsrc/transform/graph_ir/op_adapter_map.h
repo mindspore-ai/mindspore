@@ -202,7 +202,6 @@ class OpAdapterMap {
  private:
   static std::unordered_map<std::string, OpAdapterDescPtr> adpt_map_;
 };
-
 }  // namespace transform
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_MAP_H_

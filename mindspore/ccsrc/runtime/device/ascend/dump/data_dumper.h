@@ -61,7 +61,7 @@ class DataDumper {
   void ReleaseDevMem(void **ptr) const;
   bool KernelNeedDump(const CNodePtr &kernel) const;
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
-  void SetOpDebugMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
+  void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const;
 
   std::function<void *()> model_handle_;
