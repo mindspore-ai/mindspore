@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_GATHER_H_
-#define MINDSPORE_LITE_NNACL_GATHER_H_
+#include "nnacl/int8/gatherNd_int8.h"
+#include <string.h>
+#include "nnacl/errorcode.h"
 
-#include "nnacl/op_base.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-int Gather(float *input, int outer_size, int inner_size, int limit, int *indices, int indices_element_size,
-           float *output);
-int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, int *indices, int indices_element_size,
-                int32_t *output);
-#ifdef __cplusplus
+int GatherNdInt8(int8_t *input, int8_t *output, int *in_offset, int area, int count, GatherQuantArg param) {
+  double alpha = param.alpha_;
+  int z1 = param.zp_in_;
+  int z2 = param.zp_out_;
+  for (int i = 0; i < count; ++i) {
+    for (int j = 0; j < area; ++j) {
+      int32_t tmp = round(alpha * (input[in_offset[i] + j] - z1)) + z2;
+      tmp = tmp > 127 ? 127 : tmp;
+      tmp = tmp < -128 ? -128 : tmp;
+      output[area * i + j] = (int8_t)tmp;
+    }
+  }
+  return NNACL_OK;
 }
-#endif
-
-#endif  // MINDSPORE_LITE_NNACL_GATHER_H_

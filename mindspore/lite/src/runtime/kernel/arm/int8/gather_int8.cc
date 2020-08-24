@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/gather.h"
+#include "src/runtime/kernel/arm/int8/gather_int8.h"
 #include <vector>
 #include "nnacl/gather_parameter.h"
-#include "nnacl/fp32/gather.h"
+#include "nnacl/int8/gather_int8.h"
+#include "nnacl/quantization/quantize.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -30,28 +31,48 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
 
-int GatherCPUKernel::Init() {
+int GatherInt8CPUKernel::Init() {
   axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
   batchDims_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->batchDims_;
+  auto in_quant_args = in_tensors_.at(0)->GetQuantParams();
+  auto ind_quant_args = in_tensors_.at(1)->GetQuantParams();
+  auto out_quant_args = out_tensors_.at(0)->GetQuantParams();
+  param_.alpha_ = in_quant_args.front().scale / out_quant_args.front().scale;
+  param_.zp_in_ = in_quant_args.front().zeroPoint;
+  param_.zp_out_ = out_quant_args.front().zeroPoint;
+
+  auto indices_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->Data());
+  if (indices_ != nullptr) {
+    free(indices_);
+    indices_ = nullptr;
+  }
+  int count = in_tensors_.at(1)->ElementsNum();
+  indices_ = reinterpret_cast<int *>(malloc(count * sizeof(int)));
+  if (indices_ == nullptr) {
+    MS_LOG(ERROR) << "Gather Malloc indices_ error!";
+    return RET_ERROR;
+  }
+  (void)memset(indices_, 0, count * sizeof(int));
+  for (int i = 0; i < count; ++i) {
+    indices_[i] =
+      static_cast<int>(round((indices_ptr[i] - ind_quant_args.front().zeroPoint) * ind_quant_args.front().scale));
+  }
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int GatherCPUKernel::ReSize() { return RET_OK; }
+int GatherInt8CPUKernel::ReSize() { return RET_OK; }
 
-int GatherCPUKernel::DoGather(int task_id) {
+int GatherInt8CPUKernel::DoGather(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
 
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->Data());
-  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->Data());
-  auto output_ptr = reinterpret_cast<float *>(out_tensor->Data());
-
-  auto input_int32 = reinterpret_cast<int32_t *>(input_tensor->Data());
-  auto output_int32 = reinterpret_cast<int32_t *>(out_tensor->Data());
+  auto input_ptr = reinterpret_cast<int8_t *>(input_tensor->Data());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensor->Data());
 
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
@@ -59,8 +80,8 @@ int GatherCPUKernel::DoGather(int task_id) {
 
   const int limit = in_shape[axis_];
   for (int i = 0; i < indices_element_size; ++i) {
-    if (indices_ptr[i] >= limit) {
-      MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
+    if (indices_[i] >= limit) {
+      MS_LOG(ERROR) << " indice data: " << indices_[i] << " is not in [ 0, " << limit - 1 << " ]";
       return RET_ERROR;
     }
   }
@@ -80,15 +101,9 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto thread_stride = stride * task_id;
 
   int error_code;
-  if (input_tensor->data_type() == kNumberTypeInt32) {
-    input_int32 += thread_stride * limit;
-    output_int32 += thread_stride * indices_element_size;
-    error_code = GatherInt32(input_int32, count, inner_size, limit, indices_ptr, indices_element_size, output_int32);
-  } else {
-    input_ptr += thread_stride * limit;
-    output_ptr += thread_stride * indices_element_size;
-    error_code = Gather(input_ptr, count, inner_size, limit, indices_ptr, indices_element_size, output_ptr);
-  }
+  input_ptr += thread_stride * limit;
+  output_ptr += thread_stride * indices_element_size;
+  error_code = GatherInt8(input_ptr, output_ptr, count, inner_size, limit, indices_, indices_element_size, param_);
 
   if (error_code != RET_OK) {
     return RET_ERROR;
@@ -96,8 +111,8 @@ int GatherCPUKernel::DoGather(int task_id) {
   return RET_OK;
 }
 
-int GatherRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto gather_kernel = reinterpret_cast<GatherCPUKernel *>(cdata);
+int GatherInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+  auto gather_kernel = reinterpret_cast<GatherInt8CPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "GatherRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -106,13 +121,13 @@ int GatherRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   return RET_OK;
 }
 
-int GatherCPUKernel::Run() {
+int GatherInt8CPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(GatherRun, this, thread_count_);
+  int error_code = LiteBackendParallelLaunch(GatherInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -120,7 +135,7 @@ int GatherCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+kernel::LiteKernel *CpuGatherInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
                                                OpParameter *opParameter, const lite::Context *ctx,
                                                const kernel::KernelKey &desc,
@@ -130,7 +145,7 @@ kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::T
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) GatherCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) GatherInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     return nullptr;
   }
@@ -144,6 +159,5 @@ kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::T
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Gather, CpuGatherFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Gather, CpuGatherInt8KernelCreator)
 }  // namespace mindspore::kernel

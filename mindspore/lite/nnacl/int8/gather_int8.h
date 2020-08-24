@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_GATHER_H_
-#define MINDSPORE_LITE_NNACL_GATHER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHER_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHER_INT8_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Gather(float *input, int outer_size, int inner_size, int limit, int *indices, int indices_element_size,
-           float *output);
-int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, int *indices, int indices_element_size,
-                int32_t *output);
+int GatherInt8(int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit, int *indices,
+               int indices_element_size, GatherQuantArg para);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_GATHER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHER_INT8_H_

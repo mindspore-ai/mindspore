@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_GATHER_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_GATHER_INT8_H_
 
 #include <vector>
 #include "nnacl/gather_parameter.h"
+#include "nnacl/quantization/quantize.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class GatherCPUKernel : public LiteKernel {
+class GatherInt8CPUKernel : public LiteKernel {
  public:
-  GatherCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                  const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
-                  const mindspore::lite::PrimitiveC *primitive)
+  GatherInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                      const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
+                      const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
-  ~GatherCPUKernel() override = default;
+  ~GatherInt8CPUKernel() {
+    free(indices_);
+    indices_ = nullptr;
+  }
 
   int Init() override;
   int ReSize() override;
@@ -36,10 +40,12 @@ class GatherCPUKernel : public LiteKernel {
   int DoGather(int task_id);
 
  private:
+  int *indices_ = nullptr;
   int thread_count_;
   int batchDims_;
   int axis_;
+  GatherQuantArg param_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_GATHER_INT8_H_
