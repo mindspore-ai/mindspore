@@ -81,6 +81,7 @@
 #include "backend/optimizer/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
+#include "backend/optimizer/ascend/buffer_fusion/matmul_confusiontranspose_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
@@ -504,6 +505,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   ub_fusion_pm->AddPass(std::make_shared<MultiOutputFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<MatmulConfusionTranposeFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(ub_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
