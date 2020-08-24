@@ -39,8 +39,8 @@ class UniqueWithPadCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  int64_t n_;
-  TypeId dtype_;
+  int64_t n_{0};
+  TypeId dtype_{0};
 };
 
 MS_REG_CPU_KERNEL(UniqueWithPad,

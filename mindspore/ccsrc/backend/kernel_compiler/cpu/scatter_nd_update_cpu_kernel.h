@@ -35,7 +35,7 @@ class ScatterNdUpdateCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs);
 
  private:
   void Check(const CNodePtr &kernel_node);
