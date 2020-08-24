@@ -168,6 +168,27 @@ add_executable(converter_lite
         ${LITE_SRC}
         )
 
+if (WIN32)
+    add_library(converter_mid OBJECT
+            ${ANF_SRC}
+            ${CONVERTER_SRC}
+            ${OPS_SRC}
+            ${KERNEL_SRC}
+            ${LITE_SRC}
+            )
+    add_library(converter_parser STATIC
+            $<TARGET_OBJECTS:tflite_parser_mid>
+            $<TARGET_OBJECTS:caffe_parser_mid>
+            $<TARGET_OBJECTS:onnx_parser_mid>
+            $<TARGET_OBJECTS:anf_importer_mid>
+            $<TARGET_OBJECTS:anf_exporter_mid>
+            $<TARGET_OBJECTS:graph_pass_mid>
+            $<TARGET_OBJECTS:fusion_mid>
+            $<TARGET_OBJECTS:quantizer_mid>
+            $<TARGET_OBJECTS:converter_mid>
+            )
+endif()
+
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
         caffe_parser_mid

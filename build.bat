@@ -29,7 +29,7 @@ IF NOT EXIST %BUILD_PATH%/mindspore (
 
 cd %CD%/mindspore
 
-IF "%2%" == "lite" (
+IF "%1%" == "lite" (
     call :gene_gtest
     call :run_cmake
     IF errorlevel 1 (
@@ -47,10 +47,10 @@ IF "%2%" == "lite" (
     )
 
     cd %BUILD_PATH%/mindspore
-    IF "%1%" == "" (
-        cmake --build . -- -j6
+    IF "%2%" == "" (
+        cmake --build . --target package -- -j6
     ) ELSE (
-        cmake --build . -- -j%1%
+        cmake --build . --target package -- -j%2%
     )
     IF errorlevel 1 (
         echo "build fail."
