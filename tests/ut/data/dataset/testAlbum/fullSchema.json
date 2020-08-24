@@ -5,7 +5,7 @@
       "rank": 1
     },
     "label" : {
-      "type": "int32",
+      "type": "string",
       "rank": 1
     },
     "id" : {

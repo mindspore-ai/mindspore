@@ -49,6 +49,8 @@ class FilterOp;
 class GeneratorOp;
 #endif
 
+class AlbumOp;
+
 class RandomDataOp;
 
 class RepeatOp;
@@ -177,6 +179,8 @@ class NodePass : public Pass {
 #endif
 
   virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified);
+
+  virtual Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified);
 
   virtual Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified);
 

@@ -21,6 +21,7 @@
 #include "minddata/dataset/engine/datasetops/cache_lookup_op.h"
 #include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
+#include "minddata/dataset/engine/datasetops/source/album_op.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
@@ -149,6 +150,11 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<RandomDataOp> no
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
+  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
+}
+
+// Perform leaf node cache transform identification
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 

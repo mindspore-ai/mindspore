@@ -48,6 +48,7 @@ class TensorOperation;
 class SchemaObj;
 class SamplerObj;
 // Datasets classes (in alphabetical order)
+class AlbumDataset;
 class CelebADataset;
 class Cifar10Dataset;
 class Cifar100Dataset;
@@ -79,13 +80,27 @@ class ZipDataset;
 /// \return Shared pointer to the current schema
 std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "");
 
+/// \brief Function to create an AlbumDataset
+/// \notes The generated dataset is specified through setting a schema
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] data_schema Path to dataset schema file
+/// \param[in] column_names Column names used to specify columns to load, if empty, will read all columns.
+///     (default = {})
+/// \param[in] decode the option to decode the images in dataset (default = false)
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
+///     A `RandomSampler` will be used to randomly iterate the entire dataset (default = nullptr)
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                    const std::vector<std::string> &column_names = {}, bool decode = false,
+                                    const std::shared_ptr<SamplerObj> &sampler = nullptr);
+
 /// \brief Function to create a CelebADataset
 /// \notes The generated dataset has two columns ['image', 'attr'].
-//     The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+//      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] dataset_type One of 'all', 'train', 'valid' or 'test'.
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
+///     will be used to randomly iterate the entire dataset
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
 /// \return Shared pointer to the current Dataset
@@ -97,7 +112,7 @@ std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std:
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
+///     will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir,
                                         const std::shared_ptr<SamplerObj> &sampler = nullptr);
@@ -106,7 +121,7 @@ std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir,
 /// \notes The generated dataset has three columns ['image', 'coarse_label', 'fine_label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
+///     will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
                                           const std::shared_ptr<SamplerObj> &sampler = nullptr);
@@ -114,19 +129,19 @@ std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
 /// \brief Function to create a CLUEDataset
 /// \notes The generated dataset has a variable number of columns depending on the task and usage
 /// \param[in] dataset_files List of files to be read to search for a pattern of files. The list
-///    will be sorted in a lexicographical order.
+///     will be sorted in a lexicographical order.
 /// \param[in] task The kind of task, one of "AFQMC", "TNEWS", "IFLYTEK", "CMNLI", "WSC" and "CSL" (default="AFQMC").
 /// \param[in] usage Be used to "train", "test" or "eval" data (default="train").
 /// \param[in] num_samples The number of samples to be included in the dataset.
-///    (Default = 0 means all samples.)
-/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode::kGlobal)
-///    Can be any of:
-///    ShuffleMode::kFalse - No shuffling is performed.
-///    ShuffleMode::kFiles - Shuffle files only.
-///    ShuffleMode::kGlobal - Shuffle both the files and samples.
+///     (Default = 0 means all samples.)
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
+///     Can be any of:
+///     ShuffleMode.kFalse - No shuffling is performed.
+///     ShuffleMode.kFiles - Shuffle files only.
+///     ShuffleMode.kGlobal - Shuffle both the files and samples.
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
-///    specified only when num_shards is also specified. (Default = 0)
+///     specified only when num_shards is also specified. (Default = 0)
 /// \return Shared pointer to the current CLUEDataset
 std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files, const std::string &task = "AFQMC",
                                   const std::string &usage = "train", int64_t num_samples = 0,
@@ -135,19 +150,19 @@ std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files,
 
 /// \brief Function to create a CocoDataset
 /// \notes The generated dataset has multi-columns :
-///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-///                                     ['iscrowd', dtype=uint32]].
-///        - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd', dtype=uint32]].
-///        - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
-///                                    ['num_keypoints', dtype=uint32]].
-///        - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-///                                    ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                  ['iscrowd', dtype=uint32]].
+///     - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd', dtype=uint32]].
+///     - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+///                                 ['num_keypoints', dtype=uint32]].
+///     - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                 ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] annotation_file Path to the annotation json
 /// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
+///     will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                   const std::string &task = "Detection", const bool &decode = false,
@@ -181,12 +196,12 @@ std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, c
 
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
-///    All images within one folder have the same label
-///    The generated dataset has two columns ['image', 'label']
+///     All images within one folder have the same label
+///     The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] decode A flag to decode in ImageFolder
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///    A `RandomSampler` will be used to randomly iterate the entire dataset
+///     A `RandomSampler` will be used to randomly iterate the entire dataset
 /// \param[in] extensions File extensions to be read
 /// \param[in] class_indexing a class name to label map
 /// \return Shared pointer to the current ImageFolderDataset
@@ -200,9 +215,9 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 /// \param[in] dataset_file The dataset file to be read
 /// \param[in] usage Need "train", "eval" or "inference" data (default="train")
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///    A `RandomSampler` will be used to randomly iterate the entire dataset
+///     A `RandomSampler` will be used to randomly iterate the entire dataset
 /// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
-///    names will be sorted alphabetically and each class will be given a unique index starting from 0).
+///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
 /// \param[in] decode Decode the images after reading (default=false).
 /// \return Shared pointer to the current ManifestDataset
 std::shared_ptr<ManifestDataset> Manifest(std::string dataset_file, std::string usage = "train",
@@ -214,7 +229,7 @@ std::shared_ptr<ManifestDataset> Manifest(std::string dataset_file, std::string 
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///    A `RandomSampler` will be used to randomly iterate the entire dataset
+///     A `RandomSampler` will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir,
                                     const std::shared_ptr<SamplerObj> &sampler = nullptr);
@@ -245,17 +260,17 @@ std::shared_ptr<RandomDataset> RandomData(const int32_t &total_rows = 0, T schem
 /// \brief Function to create a TextFileDataset
 /// \notes The generated dataset has one column ['text']
 /// \param[in] dataset_files List of files to be read to search for a pattern of files. The list
-///    will be sorted in a lexicographical order.
+///     will be sorted in a lexicographical order.
 /// \param[in] num_samples The number of samples to be included in the dataset.
-///    (Default = 0 means all samples.)
-/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode::kGlobal)
-///    Can be any of:
-///    ShuffleMode::kFalse - No shuffling is performed.
-///    ShuffleMode::kFiles - Shuffle files only.
-///    ShuffleMode::kGlobal - Shuffle both the files and samples.
+///     (Default = 0 means all samples.)
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode.kGlobal)
+///     Can be any of:
+///     ShuffleMode.kFalse - No shuffling is performed.
+///     ShuffleMode.kFiles - Shuffle files only.
+///     ShuffleMode.kGlobal - Shuffle both the files and samples.
 /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1)
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
-///    specified only when num_shards is also specified. (Default = 0)
+///     specified only when num_shards is also specified. (Default = 0)
 /// \return Shared pointer to the current TextFileDataset
 std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples = 0,
                                           ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
@@ -263,16 +278,16 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
 
 /// \brief Function to create a VOCDataset
 /// \notes The generated dataset has multi-columns :
-///        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
-///                                     ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
-///        - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
+///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+///                                  ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+///     - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
 /// \param[in] mode Set the data list txt file to be readed
 /// \param[in] class_indexing A str-to-int mapping from label name to index
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
+///     will be used to randomly iterate the entire dataset
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                                 const std::string &mode = "train",
@@ -335,9 +350,9 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \notes Combines batch_size number of consecutive rows into batches
   /// \param[in] batch_size Path to the root directory that contains the dataset
   /// \param[in] drop_remainder Determines whether or not to drop the last possibly incomplete
-  ///    batch. If true, and if there are less than batch_size rows
-  ///    available to make the last batch, then those rows will
-  ///    be dropped and not propagated to the next node
+  ///     batch. If true, and if there are less than batch_size rows
+  ///     available to make the last batch, then those rows will
+  ///     be dropped and not propagated to the next node
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
@@ -368,16 +383,16 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
   /// \param[in] operations Vector of operations to be applied on the dataset. Operations are
-  ///    applied in the order they appear in this list
+  ///     applied in the order they appear in this list
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
-  ///    operation as input. The size of this list must match the number of
-  ///    input columns expected by the first operator. The default input_columns
-  ///    is the first column
+  ///     operation as input. The size of this list must match the number of
+  ///     input columns expected by the first operator. The default input_columns
+  ///     is the first column
   /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation
-  ///    This parameter is mandatory if len(input_columns) != len(output_columns)
-  ///    The size of this list must match the number of output columns of the
-  ///    last operation. The default output_columns will have the same
-  ///    name as the input columns, i.e., the columns will be replaced
+  ///     This parameter is mandatory if len(input_columns) != len(output_columns)
+  ///     The size of this list must match the number of output columns of the
+  ///     last operation. The default output_columns will have the same
+  ///     name as the input columns, i.e., the columns will be replaced
   /// \param[in] project_columns A list of column names to project
   /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorOperation>> operations,
@@ -404,7 +419,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] count Number of times the dataset should be repeated
   /// \return Shared pointer to the current Dataset
   /// \note Repeat will return shared pointer to `Dataset` instead of `RepeatDataset`
-  ///    due to a limitation in the current implementation
+  ///     due to a limitation in the current implementation
   std::shared_ptr<Dataset> Repeat(int32_t count = -1);
 
   /// \brief Function to create a Shuffle Dataset
@@ -505,6 +520,31 @@ class SchemaObj {
 
 // DERIVED DATASET CLASSES FOR LEAF-NODE DATASETS
 // (In alphabetical order)
+
+class AlbumDataset : public Dataset {
+ public:
+  /// \brief Constructor
+  AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
+               const std::vector<std::string> &column_names, bool decode, const std::shared_ptr<SamplerObj> &sampler);
+
+  /// \brief Destructor
+  ~AlbumDataset() = default;
+
+  /// \brief a base class override function to create a runtime dataset op object from this class
+  /// \return shared pointer to the newly created DatasetOp
+  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Parameters validation
+  /// \return bool true if all the params are valid
+  bool ValidateParams() override;
+
+ private:
+  std::string dataset_dir_;
+  std::string schema_path_;
+  std::vector<std::string> column_names_;
+  bool decode_;
+  std::shared_ptr<SamplerObj> sampler_;
+};
 
 class CelebADataset : public Dataset {
  public:

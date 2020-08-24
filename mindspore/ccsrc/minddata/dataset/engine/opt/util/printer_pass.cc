@@ -111,5 +111,11 @@ Status PrinterPass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modifie
   std::cout << "Visiting ImageFolderOp" << '\n';
   return Status::OK();
 }
+
+Status PrinterPass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
+  *modified = false;
+  std::cout << "Visiting ImageFolderOp" << '\n';
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

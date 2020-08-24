@@ -58,6 +58,8 @@ class PrinterPass : public NodePass {
   Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
 
   Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) override;
+
+  Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) override;
 };
 
 }  // namespace dataset

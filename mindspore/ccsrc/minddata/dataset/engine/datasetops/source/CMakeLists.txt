@@ -13,6 +13,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     text_file_op.cc
     clue_op.cc
     csv_op.cc
+    album_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

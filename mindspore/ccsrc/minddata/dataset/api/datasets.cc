@@ -21,6 +21,7 @@
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
 // Source dataset headers (in alphabetical order)
+#include "minddata/dataset/engine/datasetops/source/album_op.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
@@ -116,6 +117,15 @@ std::shared_ptr<SchemaObj> Schema(const std::string &schema_file) {
 
 // FUNCTIONS TO CREATE DATASETS FOR LEAF-NODE DATASETS
 // (In alphabetical order)
+
+// Function to create a AlbumDataset.
+std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                    const std::vector<std::string> &column_names, bool decode,
+                                    const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<AlbumDataset>(dataset_dir, data_schema, column_names, decode, sampler);
+
+  return ds->ValidateParams() ? ds : nullptr;
+}
 
 // Function to create a CelebADataset.
 std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &dataset_type,
@@ -686,6 +696,49 @@ bool ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_sha
 
 // DERIVED DATASET CLASSES LEAF-NODE DATASETS
 // (In alphabetical order)
+
+// Constructor for AlbumDataset
+AlbumDataset::AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
+                           const std::vector<std::string> &column_names, bool decode,
+                           const std::shared_ptr<SamplerObj> &sampler)
+    : dataset_dir_(dataset_dir),
+      schema_path_(data_schema),
+      column_names_(column_names),
+      decode_(decode),
+      sampler_(sampler) {}
+
+bool AlbumDataset::ValidateParams() {
+  if (!ValidateDatasetDirParam("AlbumDataset", dataset_dir_)) {
+    return false;
+  }
+
+  if (!ValidateDatasetFilesParam("AlbumDataset", {schema_path_})) {
+    return false;
+  }
+
+  return true;
+}
+
+// Function to build AlbumDataset
+std::vector<std::shared_ptr<DatasetOp>> AlbumDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  // If user does not specify Sampler, create a default sampler, i.e., RandomSampler.
+  if (sampler_ == nullptr) {
+    sampler_ = CreateDefaultSampler();
+  }
+
+  auto schema = std::make_unique<DataSchema>();
+  RETURN_EMPTY_IF_ERROR(schema->LoadSchemaFile(schema_path_, column_names_));
+
+  // Argument that is not exposed to user in the API.
+  std::set<std::string> extensions = {};
+
+  node_ops.push_back(std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
+                                               decode_, extensions, std::move(schema), std::move(sampler_->Build())));
+  return node_ops;
+}
 
 // Constructor for CelebADataset
 CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &dataset_type,

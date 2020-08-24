@@ -30,6 +30,7 @@
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/skip_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
+#include "minddata/dataset/engine/datasetops/source/album_op.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
@@ -195,6 +196,11 @@ Status NodePass::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) 
 }
 
 Status NodePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
+Status NodePass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
   // Fallback to base class visitor by default
   return RunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }

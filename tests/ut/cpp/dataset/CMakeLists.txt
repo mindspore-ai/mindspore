@@ -5,6 +5,7 @@ SET(DE_UT_SRCS
         common/cvop_common.cc
         common/bboxop_common.cc
         auto_contrast_op_test.cc
+	album_op_test.cc
         batch_op_test.cc
         bit_functions_test.cc
         storage_container_test.cc
@@ -101,6 +102,7 @@ SET(DE_UT_SRCS
         c_api_samplers_test.cc
         c_api_transforms_test.cc
         c_api_dataset_ops_test.cc
+        c_api_dataset_album_test.cc
         c_api_dataset_cifar_test.cc
         c_api_dataset_clue_test.cc
         c_api_dataset_coco_test.cc
