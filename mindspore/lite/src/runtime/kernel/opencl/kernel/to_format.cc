@@ -172,5 +172,6 @@ kernel::LiteKernel *OpenCLToFormatKernelCreator(const std::vector<lite::tensor::
   return kernel;
 }
 
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ToFormat, OpenCLToFormatKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ToFormat, OpenCLToFormatKernelCreator)
 }  // namespace mindspore::kernel

@@ -93,11 +93,10 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
     }
 
     out_tensors->emplace_back(new_tensor);
-#ifdef ENABLE_FP16
-    KernelKey desc{kGPU, kNumberTypeFloat16, schema::PrimitiveType_ToFormat};
-#else
     KernelKey desc{kGPU, kNumberTypeFloat32, schema::PrimitiveType_ToFormat};
-#endif
+    if (lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
+      desc.data_type = kNumberTypeFloat16;
+    }
     OpenCLToFormatParameter *parameter = new (std::nothrow) OpenCLToFormatParameter;
     MS_ASSERT(parameter);
     if (parameter == nullptr) {

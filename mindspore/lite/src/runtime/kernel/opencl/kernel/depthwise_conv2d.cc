@@ -20,9 +20,10 @@
 #include <utility>
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/arm/fp32/convolution_depthwise.h"
+#include "src/runtime/kernel/opencl/utils.h"
+#include "nnacl/fp32/common_func.h"
+#include "nnacl/op_base.h"
 #include "include/errorcode.h"
-#include "nnacl/pack.h"
 
 #ifndef PROGRAM_WITH_IL
 
@@ -81,30 +82,50 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto allocator = ocl_runtime->GetAllocator();
+  bool is_fp16 = ocl_runtime->GetFp16Enable();
 
   // weight: o, h, w, i; o == group, i == 1
-  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kWeightIndex)->Data());
+  void *origin_weight = in_tensors_.at(kWeightIndex)->Data();
   int CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
-  packed_weight_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(pack_weight_size * sizeof(FLOAT_t)));
-  packed_weight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true));
   int plane = parameter->kernel_h_ * parameter->kernel_w_;
-#ifdef ENABLE_FP16
-  PackNCHWToNC4HW4Fp16(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel());
-#else
-  PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel());
-#endif
+  if (is_fp16) {
+    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(int16_t));
+    packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
+    if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
+      std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
+      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+    } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
+      std::function<int16_t(float)> to_dtype = Float32ToShort;
+      PackNCHWToNC4HW4<float, int16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+    } else {
+      MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
+    }
+  } else {
+    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
+    packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
+    if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
+      std::function<float(float)> to_dtype = [](float x) -> float { return (float)x; };
+      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+    } else {
+      MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
+    }
+  }
 
   allocator->UnmapBuffer(packed_weight_);
 
   if (in_tensors_.size() == kInputSize2) {
-    bias_data_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(C4NUM * CO4 * sizeof(FLOAT_t)));
-    bias_data_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true));
-    size_t up_co_size = C4NUM * CO4 * sizeof(FLOAT_t);
+    size_t dtype_size = sizeof(float);
+    if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat16) {
+      dtype_size = sizeof(int16_t);
+    }
+    bias_data_ = allocator->Malloc(C4NUM * CO4 * dtype_size);
+    bias_data_ = allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true);
+    size_t up_co_size = C4NUM * CO4 * dtype_size;
     memset(bias_data_, 0, up_co_size);
-    auto ori_bias = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kBiasIndex)->Data());
-    memcpy(bias_data_, ori_bias, out_tensors_[0]->Channel() * sizeof(FLOAT_t));
+    auto ori_bias = in_tensors_.at(kBiasIndex)->Data();
+    memcpy(bias_data_, ori_bias, out_tensors_[0]->Channel() * dtype_size);
     allocator->UnmapBuffer(bias_data_);
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -124,11 +145,10 @@ int DepthwiseConv2dOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
     im_dst_y = out_tensors_[0]->Height() * CO4;
     im_dst_x = out_tensors_[0]->Width();
   }
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -204,5 +224,6 @@ kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::t
   return kernel;
 }
 
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DepthwiseConv2D, OpenCLDepthwiseConv2dKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, OpenCLDepthwiseConv2dKernelCreator)
 }  // namespace mindspore::kernel
