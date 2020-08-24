@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR"
-echo "for example: bash run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json"
+echo "bash run_distributed_gd_for_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR TEACHER_CKPT_PATH"
+echo "for example: bash run_distributed_gd_for_gpu.sh 8 3 /path/data/ /path/datasetSchema.json /path/bert_base.ckpt"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -25,20 +25,17 @@ RANK_SIZE=$1
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
+TEACHER_CKPT_PATH=$5
+
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 
 mpirun --allow-run-as-root -n $RANK_SIZE \
-	python run_pretrain.py				\
-		--device_target="GPU"			\
-		--distribute="true"				\
-		--epoch_size=$EPOCH_SIZE		\
-		--enable_save_ckpt="true"		\
-		--enable_lossscale="false"		\
-		--do_shuffle="true"				\
-		--enable_data_sink="true"		\
-		--data_sink_steps=1				\
-		--load_checkpoint_path=""			\
-		--save_checkpoint_steps=10000	\
-		--save_checkpoint_num=1			\
-		--data_dir=$DATA_DIR			\
-		--schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
-
+	python ${PROJECT_DIR}/../run_general_distill.py  \
+	--distribute="true" \
+	--device_target="GPU" \
+	--epoch_size=$EPOCH_SIZE \
+	--save_ckpt_path="" \
+	--data_dir=$DATA_DIR \
+	--schema_dir=$SCHEMA_DIR \
+	--enable_data_sink=False \
+	--load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &
