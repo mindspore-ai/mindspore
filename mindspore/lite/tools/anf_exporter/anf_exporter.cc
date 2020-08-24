@@ -165,14 +165,14 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   for (const auto &cnode : cnodes) {
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitiveT_value == nullptr) {
-      MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is nullptr";
       return nullptr;
     }
-    auto primT = primitiveT_value->GetPrimitiveT();
-    if (primitiveT_value->Type() == schema::PrimitiveType_TupleGetItem ||
-        primitiveT_value->Type() == schema::PrimitiveType_MakeTuple) {
+    auto primT = primitive_c->GetPrimitiveT();
+    if (primitive_c->Type() == schema::PrimitiveType_TupleGetItem ||
+        primitive_c->Type() == schema::PrimitiveType_MakeTuple) {
       continue;
     }
     RemoveIfMakeTuple(cnode);
@@ -196,7 +196,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
       return nullptr;
     }
     SetOpOutputNode(cnode, meta_graphT, node.get());
-    ret = ConvertQuantParam(meta_graphT, primitiveT_value, node);
+    ret = ConvertQuantParam(meta_graphT, primitive_c, node);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ConvertQuantParam failed";
       return nullptr;

@@ -118,7 +118,7 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   }();
 }
 
-STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, QuantType quantType,
+STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitive_c, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum = UINT8_QUANTIZATION, bool per_channel = false,
                    bool depth_wise = false);
 
