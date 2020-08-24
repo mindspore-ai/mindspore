@@ -26,13 +26,16 @@ from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, Adam
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
 
     def construct(self, x):
-        return C.grad_all(self.network)(x)
+        return grad_all(self.network)(x)
 
 def test_bprop_with_sparse_feature_allreduce():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="hybrid_parallel")

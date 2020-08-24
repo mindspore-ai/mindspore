@@ -18,8 +18,11 @@ import numpy as np
 from mindspore import Parameter, ParameterTuple, Tensor
 from mindspore.nn import Cell
 from mindspore.nn.optim import Optimizer
-from mindspore.ops.composite import grad_by_list
 from mindspore.ops.operations import BiasAdd, MatMul
+import mindspore.ops.composite as C
+
+
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
 
 
 class Net(Cell):

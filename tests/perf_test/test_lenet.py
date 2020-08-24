@@ -26,6 +26,9 @@ from mindspore.common.api import _executor
 
 context.set_context(mode=context.GRAPH_MODE)
 
+
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
 batch_size = 1
 channel = 1
 height = 32
@@ -38,7 +41,7 @@ class LeNetGrad(nn.Cell):
 
     def __init__(self, network):
         super(LeNetGrad, self).__init__()
-        self.grad_op = C.grad_all_with_sens
+        self.grad_op = grad_all_with_sens
         self.network = network
 
     def construct(self, x, sens):

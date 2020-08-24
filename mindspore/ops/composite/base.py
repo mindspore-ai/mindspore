@@ -163,14 +163,6 @@ class GradOperation(GradOperation_):
         return self.grad_fn
 
 
-grad = GradOperation('grad')
-grad_all = GradOperation('get_all', get_all=True)
-grad_by_list = GradOperation('get_by_list', get_by_list=True)
-grad_with_sens = GradOperation('grad_with_sens', sens_param=True)
-grad_all_with_sens = GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
-grad_by_list_with_sens = GradOperation('grad_by_list_with_sens', get_by_list=True, sens_param=True)
-
-
 class MultitypeFuncGraph(MultitypeFuncGraph_):
     """
     Generate multiply graph.

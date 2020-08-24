@@ -25,6 +25,9 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE)
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network, types, shapes, output_num, strategy3=None, strategy4=None, axis=-1):
         super(NetWithLoss, self).__init__()
@@ -49,7 +52,7 @@ class GradWrap(nn.Cell):
         self.weights = ParameterTuple(network.trainable_params())
 
     def construct(self):
-        return C.grad_by_list(self.network, self.weights)()
+        return grad_by_list(self.network, self.weights)()
 
 
 def compile_net(net):

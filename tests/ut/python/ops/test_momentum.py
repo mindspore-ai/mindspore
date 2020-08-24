@@ -34,6 +34,9 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 run_opt = C.MultitypeFuncGraph("run_opt")
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+
+
 @run_opt.register("Function", "Tensor", "Tensor", "Tensor",
                   "Tensor", "Tensor",
                   "Tensor")
@@ -83,7 +86,7 @@ class TrainStepWrap(nn.Cell):
 
     def construct(self, x, label):
         weights = self.weights
-        grads = C.grad_by_list(self.network, weights)(x, label)
+        grads = grad_by_list(self.network, weights)(x, label)
         return self.optimizer(grads)
 
 

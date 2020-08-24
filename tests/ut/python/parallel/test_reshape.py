@@ -36,6 +36,9 @@ context.set_context(mode=context.GRAPH_MODE)
 context.reset_auto_parallel_context()
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3, input_num=2):
         super(Dataset, self).__init__(size=length)
@@ -194,7 +197,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x):
-        return C.grad_all(self.network)(x)
+        return grad_all(self.network)(x)
 
 
 class ReshapeNet1(nn.Cell):

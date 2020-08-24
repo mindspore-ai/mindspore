@@ -40,6 +40,9 @@ np.random.seed(1)
 ds.config.set_seed(1)
 
 
+grad_by_list = CP.GradOperation('get_by_list', get_by_list=True)
+
+
 def weight_variable(shape):
     return initializer('XavierUniform', shape=shape, dtype=mstype.float32)
 
@@ -389,7 +392,7 @@ class GradWrap(Cell):
 
     def construct(self, x, label):
         weights = self.weights
-        return CP.grad_by_list(self.network, weights)(x, label)
+        return grad_by_list(self.network, weights)(x, label)
 
 
 @pytest.mark.level0

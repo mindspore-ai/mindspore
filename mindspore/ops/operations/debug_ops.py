@@ -268,6 +268,7 @@ class HookBackward(PrimitiveWithInfer):
         >>> def hook_fn(grad_out):
         >>>     print(grad_out)
         >>>
+        >>> grad_all = GradOperation('get_all', get_all=True)
         >>> hook = P.HookBackward(hook_fn)
         >>>
         >>> def hook_test(x, y):
@@ -277,7 +278,7 @@ class HookBackward(PrimitiveWithInfer):
         >>>     return z
         >>>
         >>> def backward(x, y):
-        >>>     return C.grad_all(hook_test)(x, y)
+        >>>     return grad_all(hook_test)(x, y)
         >>>
         >>> backward(1, 2)
     """

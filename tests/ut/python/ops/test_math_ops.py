@@ -38,6 +38,8 @@ context.set_context(mode=context.GRAPH_MODE)
 # W0613: unused-argument
 # W0231: super-init-not-called
 
+grad = C.GradOperation('grad')
+
 def test_multiply():
     """ test_multiply """
     input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]))
@@ -200,7 +202,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x, y, b):
-        return C.grad(self.network)(x, y, b)
+        return grad(self.network)(x, y, b)
 
 
 class MatMulNet(nn.Cell):
@@ -236,7 +238,7 @@ class GradWrapSub(nn.Cell):
         self.network = network
 
     def construct(self, x, y):
-        return C.grad(self.network)(x, y)
+        return grad(self.network)(x, y)
 
 
 class SubNet(nn.Cell):
@@ -315,7 +317,7 @@ class GradWrapCumSum(nn.Cell):
         self.network = network
 
     def construct(self, input_):
-        return C.grad(self.network)(input_)
+        return grad(self.network)(input_)
 
 
 class NetCumSum(nn.Cell):

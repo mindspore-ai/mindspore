@@ -26,6 +26,10 @@ from ....mindspore_test_framework.utils.bprop_util import bprop
 from ....mindspore_test_framework.utils.debug_util import PrintShapeTypeCell, PrintGradShapeTypeCell
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -48,7 +52,7 @@ def test_InsertGradientOf_1():
 
     @ms_function
     def f(x, y):
-        return C.grad_all(stop_test)(x, y)
+        return grad_all(stop_test)(x, y)
 
     print("stop_gradient:", f(1, 2))
 
@@ -83,7 +87,7 @@ def test_InsertGradientOf_2():
 
     @ms_function
     def fd(x, y):
-        return C.grad_all(clip_test)(x, y)
+        return grad_all(clip_test)(x, y)
 
     print("forward: ", f(1.1, 0.1))
     print("clip_gradient:", fd(1.1, 0.1))
@@ -111,7 +115,7 @@ def test_InsertGradientOf_3():
         return c
 
     def f(x, y):
-        return C.grad_all(debug_test)(x, y)
+        return grad_all(debug_test)(x, y)
 
     print("debug_gradient:", f(Tensor(1.0), Tensor(2.0)))
 
@@ -145,7 +149,7 @@ def test_cell_assign():
             self.weights = mindspore.ParameterTuple(net.get_parameters())
 
         def construct(self, x, y):
-            return C.grad_by_list(self.net, self.weights)(x, y)
+            return grad_by_list(self.net, self.weights)(x, y)
 
     class Mul(nn.Cell):
         def __init__(self):

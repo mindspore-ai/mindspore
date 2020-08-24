@@ -31,6 +31,10 @@ from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.bprop_util import bprop
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -85,19 +89,19 @@ def stop_test4(x, y):
 @ms_function
 def grad_stop_test(x, y):
     """ grad_stop_test """
-    return C.grad_all(stop_test2)(x, y)
+    return grad_all(stop_test2)(x, y)
 
 
 @ms_function
 def grad_stop_test1(x, y):
     """ grad_stop_test1 """
-    return C.grad_all(stop_test3)(x, y)
+    return grad_all(stop_test3)(x, y)
 
 
 @ms_function
 def grad_stop_test5(x, y):
     """ grad_stop_test5 """
-    return C.grad_all(stop_test5)(x, y)
+    return grad_all(stop_test5)(x, y)
 
 
 def test_stop():
@@ -126,7 +130,7 @@ class GradWrap(nn.Cell):
     @ms_function
     def construct(self, x, label):
         weights = self.weights
-        return C.grad_by_list(self.network, weights)(x, label)
+        return grad_by_list(self.network, weights)(x, label)
 
 
 @non_graph_engine
@@ -256,7 +260,7 @@ def test_stop_gradient_4():
     def stop_test(x):
         return stop_gradient(x)
 
-    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
+    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
 
 
 def test_stop_gradient_5():
@@ -266,7 +270,7 @@ def test_stop_gradient_5():
         ret = x + y
         return ret
 
-    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
+    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
 
 
 def test_stop_gradient_6():
@@ -275,7 +279,7 @@ def test_stop_gradient_6():
         ret = stop_gradient(ret)
         return ret
 
-    assert C.grad_all(stop_test)(Tensor(1, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (0, 0)
+    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (0, 0)
 
 
 class PrimWithMultiOutputs(PrimitiveWithInfer):
@@ -436,5 +440,5 @@ def test_stop_print():
             self.printm(y)
             return x, y
 
-    C.grad_all(StopPrint())(Tensor(np.ones([2]).astype(np.float32)),
-                            Tensor(np.ones([2]).astype(np.float32)))
+    grad_all(StopPrint())(Tensor(np.ones([2]).astype(np.float32)),
+                          Tensor(np.ones([2]).astype(np.float32)))

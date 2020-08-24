@@ -24,6 +24,9 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import composite as C
 
 
+grad_by_list_with_sens = C.GradOperation('grad_by_list_with_sens', get_by_list=True, sens_param=True)
+
+
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -319,9 +322,6 @@ def test_setitem_by_mixed_tensors_2():
 
 
 class TensorGetItemByMixedTensorsTypeError(Cell):
-    def __init__(self):
-        super(TensorGetItemByMixedTensorsTypeError, self).__init__()
-
     def construct(self, x, index_0, index_1):
         ret = x[index_0, index_1, 0:3, ..., 0:5, [1, 2, 3, 4]]
         return ret
@@ -667,7 +667,7 @@ def test_setitem_grad():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, x, y, sens):
-            return C.grad_by_list_with_sens(self.net, self.weights)(x, y, sens)
+            return grad_by_list_with_sens(self.net, self.weights)(x, y, sens)
     net = GradNet(Net())
     x = Tensor(np.ones([4, 4, 5]).astype(np.float32), mstype.float32)
     y = Tensor(np.array([3]).astype(np.float32), mstype.float32)
@@ -676,27 +676,18 @@ def test_setitem_grad():
 
 
 class TensorAssignWithSliceError1(Cell):
-    def __init__(self):
-        super(TensorAssignWithSliceError1, self).__init__()
-
     def construct(self, a, b):
         a[1:3:-1, ::] = b
         return a
 
 
 class TensorAssignWithSliceError2(Cell):
-    def __init__(self):
-        super(TensorAssignWithSliceError2, self).__init__()
-
     def construct(self, a, b):
         a[1:3:-1] = b
         return a
 
 
 class TensorAssignWithSlice2(Cell):
-    def __init__(self):
-        super(TensorAssignWithSlice2, self).__init__()
-
     def construct(self, a, b, ck):
         a[1:5] = b
         a[3:4] = 5
@@ -864,18 +855,12 @@ def test_tensor_assign_exception():
 
 
 class TensorAssignWithTupleEllipsis2(Cell):
-    def __init__(self):
-        super(TensorAssignWithTupleEllipsis2, self).__init__()
-
     def construct(self, a, b):
         a[1:, ..., ::] = b
         return a
 
 
 class TensorAssignWithTupleEllipsis(Cell):
-    def __init__(self):
-        super(TensorAssignWithTupleEllipsis, self).__init__()
-
     def construct(self, a, b):
         a[:2, ...] = 1.0
         a[1:, ...] = b
@@ -883,9 +868,6 @@ class TensorAssignWithTupleEllipsis(Cell):
 
 
 class TensorAssignWithEllipsis(Cell):
-    def __init__(self):
-        super(TensorAssignWithEllipsis, self).__init__()
-
     def construct(self, a, b):
         a[...] = 1
         a[...] = b
@@ -893,9 +875,6 @@ class TensorAssignWithEllipsis(Cell):
 
 
 class TensorAssignWithInteger(Cell):
-    def __init__(self):
-        super(TensorAssignWithInteger, self).__init__()
-
     def construct(self, a, b, ck):
         a[1] = 1
         a[0] = b
@@ -904,9 +883,6 @@ class TensorAssignWithInteger(Cell):
 
 
 class TensorAssignWithTupleInteger(Cell):
-    def __init__(self):
-        super(TensorAssignWithTupleInteger, self).__init__()
-
     def construct(self, a, b, ck):
         a[(1)] = 1
         a[(1)] = b
@@ -930,9 +906,6 @@ class TensorAssignWithBoolTensorIndex(Cell):
 
 
 class TensorAssignWithBoolTensorIndexError(Cell):
-    def __init__(self):
-        super(TensorAssignWithBoolTensorIndexError, self).__init__()
-
     def construct(self, a, b, c, u_tensor):
         a[b][c] = u_tensor
         return a
@@ -955,9 +928,6 @@ class TensorAssignWithBoolTensorIndex2(Cell):
 
 
 class TensorAssignWithBoolTensorIndex2Error(Cell):
-    def __init__(self):
-        super(TensorAssignWithBoolTensorIndex2Error, self).__init__()
-
     def construct(self, a, u_tensor):
         a[a > 8][a > 5] = u_tensor
         return a

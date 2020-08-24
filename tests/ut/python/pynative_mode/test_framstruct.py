@@ -35,6 +35,12 @@ def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
 
+grad = C.GradOperation('grad')
+grad_all = C.GradOperation('get_all', get_all=True)
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 @ms_function
 def while_upper_bound(upper):
     rval = 2
@@ -109,12 +115,12 @@ def add_mul(x, y):
 
 def mainf(x, y):
     """ mainf """
-    return C.grad_all(mul)(x, y)
+    return grad_all(mul)(x, y)
 
 
 def grad_add_mul(x, y):
     """ grad_add_mul """
-    return C.grad_all(add_mul)(x, y)
+    return grad_all(add_mul)(x, y)
 
 
 @ms_function
@@ -269,7 +275,7 @@ def rec(x):
 
 @ms_function
 def grad_rec(input_x):
-    return C.grad(rec)(input_x)
+    return grad(rec)(input_x)
 
 def test_grad_rec():
     """ test_grad_rec """
@@ -300,7 +306,7 @@ def test_while2():
 def test_grad_while2():
     @ms_function
     def df_t2_while(input_x, input_y):
-        return C.grad(t2_while)(input_x, input_y)
+        return grad(t2_while)(input_x, input_y)
     assert df_t2_while(2, 3) == 3
 
 
@@ -313,7 +319,7 @@ def if_test(a, b):
 
 def grad_if(x, y):
     """ grad_if """
-    return C.grad_all(if_test)(x, y)
+    return grad_all(if_test)(x, y)
 
 
 def test_grad_if():
@@ -333,7 +339,7 @@ def test_dont_unroll_while():
 
     @ms_function()
     def invoke_while(x, y):
-        return C.grad(dont_unroll_while)(x, y)
+        return grad(dont_unroll_while)(x, y)
 
     res = invoke_while(2, 3)
     assert res == 3
@@ -418,7 +424,7 @@ def _while(x):
 
 def grad_while(x):
     """ grad_while """
-    return C.grad_all(_while)(x)
+    return grad_all(_while)(x)
 
 
 def test_grad_while():
@@ -442,7 +448,7 @@ def test_factorial():
 def test_grad_factorial():
     @ms_function
     def df_factorial(x):
-        return C.grad(factorial)(x)
+        return grad(factorial)(x)
     assert df_factorial(3) == 11
 
 
@@ -520,7 +526,7 @@ def _for(x):
 @ms_function
 def grad_for(x):
     """ grad_for """
-    return C.grad_all(_for)(x)
+    return grad_all(_for)(x)
 
 
 def test_grad_for():
@@ -792,7 +798,7 @@ def multi_outputs(x, y):
 def test_grad_multi_outputs():
     @ms_function
     def df_multi_outputs(x, y):
-        return C.grad_all_with_sens(multi_outputs)(x, y, (1, 1))
+        return grad_all_with_sens(multi_outputs)(x, y, (1, 1))
     assert df_multi_outputs(2, 3) == (4, 4)
 
 
@@ -820,7 +826,7 @@ def grad_refactor_simple_1(x, y):
 
 
 def test_grad_refactor_simple_1():
-    assert C.grad_all(grad_refactor_simple_1)(Tensor(2, dtype=ms.int32), Tensor(1, dtype=ms.int32)) == (4, 2)
+    assert grad_all(grad_refactor_simple_1)(Tensor(2, dtype=ms.int32), Tensor(1, dtype=ms.int32)) == (4, 2)
 
 
 def grad_refactor_simple_2(x, y, z):
@@ -832,7 +838,7 @@ def test_grad_refactor_simple_2():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(3, dtype=ms.int32)
     z = Tensor(0, dtype=ms.int32)
-    assert C.grad_all(grad_refactor_simple_2)(x, y, z) == (7, 4, 7)
+    assert grad_all(grad_refactor_simple_2)(x, y, z) == (7, 4, 7)
 
 
 def grad_refactor_1(a, b):
@@ -845,7 +851,7 @@ def grad_refactor_1(a, b):
 
 
 def test_grad_refactor_1():
-    assert C.grad_all(grad_refactor_1)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (3, 2)
+    assert grad_all(grad_refactor_1)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (3, 2)
 
 
 def grad_refactor_2(a, b):
@@ -858,7 +864,7 @@ def grad_refactor_2(a, b):
 
 
 def test_grad_refactor_2():
-    assert C.grad_all(grad_refactor_2)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (27, 54)
+    assert grad_all(grad_refactor_2)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (27, 54)
 
 
 def grad_refactor_3(a):
@@ -871,7 +877,7 @@ def grad_refactor_3(a):
 def test_grad_refactor_3():
     @ms_function
     def df_refactor_3(x):
-        return C.grad_all(grad_refactor_3)(x)
+        return grad_all(grad_refactor_3)(x)
     assert df_refactor_3(3) == (3,)
 
 
@@ -883,7 +889,7 @@ def grad_refactor_4(a):
 
 
 def test_grad_refactor_4():
-    assert C.grad_all(grad_refactor_4)(Tensor(4, dtype=ms.int32)) == (3,)
+    assert grad_all(grad_refactor_4)(Tensor(4, dtype=ms.int32)) == (3,)
 
 
 def grad_refactor_5(a):
@@ -896,7 +902,7 @@ def grad_refactor_5(a):
 def test_grad_refactor_5():
     @ms_function
     def df_refactor_5(x):
-        return C.grad_all(grad_refactor_5)(x)
+        return grad_all(grad_refactor_5)(x)
     assert df_refactor_5(1) == (1,)
 
 
@@ -908,7 +914,7 @@ def grad_refactor_6(a, b):
 
 
 def test_grad_refactor_6():
-    assert C.grad_all(grad_refactor_6)(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32)) == (3, 1)
+    assert grad_all(grad_refactor_6)(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32)) == (3, 1)
 
 
 def grad_refactor_while(x):
@@ -922,7 +928,7 @@ def grad_refactor_while(x):
 def test_grad_refactor_9():
     @ms_function
     def df_refactor_while(input_x):
-        return C.grad_all(grad_refactor_while)(input_x)
+        return grad_all(grad_refactor_while)(input_x)
     assert df_refactor_while(3) == (6,)
 
 
@@ -938,7 +944,7 @@ def grad_refactor__while_1(x):
 
 def test_grad_refactor_10():
     """ test_grad_while """
-    assert C.grad_all(grad_refactor__while_1)(Tensor(5, dtype=ms.int32)) == (60,)
+    assert grad_all(grad_refactor__while_1)(Tensor(5, dtype=ms.int32)) == (60,)
 
 
 def test_grad_refactor_11():
@@ -952,7 +958,7 @@ def test_grad_refactor_11():
             return x * y * y
 
     net = Net()
-    C.grad_all(net)(Tensor(np.ones([2]).astype(np.float32)), Tensor(np.ones([2]).astype(np.float32)))
+    grad_all(net)(Tensor(np.ones([2]).astype(np.float32)), Tensor(np.ones([2]).astype(np.float32)))
 
 
 def test_grad_refactor_12():
@@ -967,7 +973,7 @@ def test_grad_refactor_12():
             return x * self.z * y
 
     net = Net()
-    C.grad_all(net)(Tensor(np.ones([2]).astype(np.float32)), Tensor(np.zeros([2]).astype(np.float32)))
+    grad_all(net)(Tensor(np.ones([2]).astype(np.float32)), Tensor(np.zeros([2]).astype(np.float32)))
 
 
 def test_grad_refactor_13():
@@ -983,7 +989,7 @@ def test_grad_refactor_13():
 
     net = Net()
     weights = ParameterTuple(net.trainable_params())
-    C.grad_by_list(net, weights)(Tensor(np.ones([2]).astype(np.float32)), Tensor(np.zeros([2]).astype(np.float32)))
+    grad_by_list(net, weights)(Tensor(np.ones([2]).astype(np.float32)), Tensor(np.zeros([2]).astype(np.float32)))
 
 
 def grad_refactor_14(a, b):
@@ -1006,7 +1012,7 @@ def grad_refactor_14(a, b):
 def test_grad_refactor_14():
     @ms_function
     def df_refactor_14(x, y):
-        return C.grad_all(grad_refactor_14)(x, y)
+        return grad_all(grad_refactor_14)(x, y)
     assert df_refactor_14(2, 3) == (3, 9)
 
 
@@ -1029,7 +1035,7 @@ def test_grad_if_defer_inline():
     network = IfDeferInline([128, 96])
     network.add_flags(defer_inline=False)
     inp = Tensor(np.ones([128, 96]).astype(np.float32))
-    grads = C.grad_all(network)(inp)
+    grads = grad_all(network)(inp)
     assert np.all(grads[0].asnumpy() == np.full([128, 96], 0.6, dtype=np.float32))
 
 

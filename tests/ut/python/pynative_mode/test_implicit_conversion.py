@@ -20,6 +20,9 @@ from mindspore import Tensor, nn
 from mindspore.ops import composite as C
 
 
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 def test_float_tensor_and_int_add():
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = 2
@@ -139,7 +142,7 @@ def test_float_tensor_and_bool_tensors_add_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-            return C.grad_all_with_sens(self.net)(x, y, sens)
+            return grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = Tensor(np.array([[True, True, True], [False, False, False]], dtype=np.bool_))
@@ -167,7 +170,7 @@ def test_float_tensor_and_int_tensors_sub_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-            return C.grad_all_with_sens(self.net)(x, y, sens)
+            return grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32))
@@ -195,7 +198,7 @@ def test_float16_tensor_and_float32_tensors_sub_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-            return C.grad_all_with_sens(self.net)(x, y, sens)
+            return grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.int32))
     y = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32))
@@ -223,7 +226,7 @@ def test_float_tensor_and_int_add_grad():
             self.net = net
 
         def construct(self, x, sens):
-            return C.grad_all_with_sens(self.net)(x, sens)
+            return grad_all_with_sens(self.net)(x, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
@@ -248,7 +251,7 @@ def test_int8_tensor_and_uint8_tensors_add_grad():
             self.net = net
 
         def construct(self, x, y, sens):
-            return C.grad_all_with_sens(self.net)(x, y, sens)
+            return grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int8))
     y = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8))

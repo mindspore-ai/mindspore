@@ -23,6 +23,9 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
         super(NetWithLoss, self).__init__()
@@ -42,7 +45,7 @@ class OneStepCell(nn.Cell):
 
     def construct(self, data, label):
         weights = self.weights
-        grads = C.grad_by_list(self.network, weights)(data, label)
+        grads = grad_by_list(self.network, weights)(data, label)
         return grads
 
 

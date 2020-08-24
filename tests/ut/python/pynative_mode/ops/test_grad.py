@@ -22,12 +22,16 @@ from mindspore.common.api import ms_function
 from mindspore.common.dtype import get_py_obj_dtype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-from mindspore.ops.composite import grad_all_with_sens
 from ...ut_filter import non_graph_engine
 
 # pylint: disable=unused-argument
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
+
+
+grad = C.GradOperation('grad')
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
 
 def mul(x, y):
     return x * y
@@ -35,7 +39,7 @@ def mul(x, y):
 
 @ms_function
 def mainf(x, y):
-    return C.grad(mul)(x, y)
+    return grad(mul)(x, y)
 
 
 @non_graph_engine
@@ -94,7 +98,7 @@ def test_scalar_cast_grad():
 
     @ms_function
     def grad_fx_cast(input_x):
-        return C.grad(fx_cast)(input_x)
+        return grad(fx_cast)(input_x)
 
     gfn = grad_fx_cast(input_x)
     expect_dx = 1

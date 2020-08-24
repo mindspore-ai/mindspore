@@ -26,6 +26,9 @@ from mindspore.ops.operations.comm_ops import _VirtualDataset
 context.set_context(mode=context.GRAPH_MODE)
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3, strategy4, axis):
         super(NetWithLoss, self).__init__()
@@ -49,7 +52,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x, y, b):
-        return C.grad_all(self.network)(x, y, b)
+        return grad_all(self.network)(x, y, b)
 
 
 class Net(nn.Cell):

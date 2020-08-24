@@ -30,6 +30,11 @@ from mindspore.common import ms_function
 context.set_context(mode=context.GRAPH_MODE)
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_all = C.GradOperation('get_all', get_all=True)
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 def cond_data_test(x_init, y_init):
     class Net(nn.Cell):
         def __init__(self):
@@ -401,9 +406,9 @@ def test_switch_layer():
     index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
-                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                              Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
 def test_index_to_switch_layer():
@@ -439,9 +444,9 @@ def test_index_to_switch_layer():
     index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
-                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                              Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
 def test_parser_switch_layer_switch_in_bprop():
@@ -477,7 +482,7 @@ def test_parser_switch_layer_switch_in_bprop():
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
     grad = Tensor(np.random.randn(2, 2).astype(np.float32))
     i = Tensor(1, mstype.int32)
-    grad_net = C.grad_all_with_sens(net)
+    grad_net = grad_all_with_sens(net)
     grad_net(i, input1, grad)
 
 
@@ -520,7 +525,7 @@ def test_parser_switch_layer_inputs_tuple():
     input2 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     i = Tensor(1, mstype.int32)
     grad = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
-    back_net = C.grad_all_with_sens(net)
+    back_net = grad_all_with_sens(net)
     back_out = back_net(i, input1, input2, grad)
 
 
@@ -539,9 +544,9 @@ def test_switch_layer_with_single_prim():
     index = Tensor(0, dtype=mstype.int32)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
-                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                              Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
 def test_switch_layer_env_eliminate():

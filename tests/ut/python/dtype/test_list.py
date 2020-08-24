@@ -31,6 +31,9 @@ from tests.mindspore_test_framework.pipeline.forward.compile_forward \
 context.set_context(mode=context.GRAPH_MODE)
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 def test_list_equal():
     class Net(nn.Cell):
         def __init__(self, z: list):
@@ -303,7 +306,7 @@ def test_grad_make_list():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_all(self.net)(*inputs)
+            return grad_all(self.net)(*inputs)
 
     while_net = MyWhileNet()
     net = GradNet(while_net)
