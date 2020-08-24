@@ -54,7 +54,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack1) {
   conv_param->pad_h_ = conv_param->pad_w_ = 2;
 
   float out[20] = {0};
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   EXPECT_EQ(0, lite::CompareOutputData(out, correct, 20));
   delete conv_param;
 }
@@ -95,7 +95,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack2) {
   conv_param->pad_h_ = conv_param->pad_w_ = 0;
 
   float out[28] = {0};
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   CompareOutputData(out, correct, 28, 0.0001);
   delete conv_param;
 }
@@ -114,7 +114,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack3) {
   float correct[] = {0.0,       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.025112,
                      -5.052577, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   EXPECT_EQ(0, lite::CompareOutputData(out, correct, 18));
   delete conv_param;
 }
@@ -136,7 +136,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack4) {
                      -1.770, 41.903, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,    0.0,
                      0.0,    0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0};
   float out[54] = {0};
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   EXPECT_EQ(0, lite::CompareOutputData(out, correct, 54));
   delete conv_param;
 }

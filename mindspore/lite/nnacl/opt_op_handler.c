@@ -15,6 +15,7 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,5 +45,12 @@ void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int
 void MatMulR4Int8_optimize_handler(const int8_t *a, const int8_t *b, int *dst, int row4, int col4, int deep16,
                                    const int *input_sum, const int *bias) {
   return MatMulOptR4Int8Neon64(a, b, dst, row4, col4, deep16, input_sum, bias);
+}
+
+void MatMulRInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
+                                  size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
+                                  int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini,
+                                  int32_t maxi, bool per_channel) {
+  return;
 }
 #endif

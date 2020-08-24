@@ -118,10 +118,13 @@ int ConvolutionBaseCPUKernel::CheckLayout(lite::tensor::Tensor *input_tensor) {
 }
 
 int ConvolutionBaseCPUKernel::SetIfPerChannel() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+
   uint8_t per_channel = 0b0;
   if (conv_quant_arg_->input_arg_num_ != kPerTensor) {
-    int in_channel = conv_param_->input_channel_;
-    if (static_cast<int>(conv_quant_arg_->input_arg_num_) != in_channel) {
+    if (static_cast<int>(conv_quant_arg_->input_arg_num_) != input_channel) {
       MS_LOG(ERROR) << "input per channel quant param length is not equal to input channel.";
       return RET_ERROR;
     }
@@ -129,8 +132,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
   }
 
   if (conv_quant_arg_->filter_arg_num_ != kPerTensor) {
-    int filter_num = conv_param_->output_channel_;
-    if (static_cast<int>(conv_quant_arg_->filter_arg_num_) != filter_num) {
+    if (static_cast<int>(conv_quant_arg_->filter_arg_num_) != output_channel) {
       MS_LOG(ERROR) << "weight per channel quant param length is not equal to filter num.";
       return RET_ERROR;
     }
@@ -138,8 +140,7 @@ int ConvolutionBaseCPUKernel::SetIfPerChannel() {
   }
 
   if (conv_quant_arg_->output_arg_num_ != kPerTensor) {
-    int out_channel = conv_param_->output_channel_;
-    if (static_cast<int>(conv_quant_arg_->output_arg_num_) != out_channel) {
+    if (static_cast<int>(conv_quant_arg_->output_arg_num_) != output_channel) {
       MS_LOG(ERROR) << "output per channel quant param length is not equal to output channel.";
       return RET_ERROR;
     }
