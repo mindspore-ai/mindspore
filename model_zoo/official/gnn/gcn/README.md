@@ -1,10 +1,53 @@
-# GCN Example
- 
-## Description
- 
-This is an example of training GCN with Cora and Citeseer dataset in MindSpore.
+# Contents
 
-## Requirements
+- [GCN Description](#gcn-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training, Evaluation, Test Process](#training-evaluation-test-process)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+- [Description of Random Situation](#description-of-random-situation)
+- [ModelZoo Homepage](#modelzoo-homepage)
+
+
+# [GCN Description](#contents)
+
+GCN(Graph Convolutional Networks) was proposed in 2016 and designed to do semi-supervised learning on graph-structured data. A scalable approach based on an efficient variant of convolutional neural networks which operate directly on graphs was presented. The model scales linearly in the number of graph edges and learns hidden layer representations that encode both local graph structure and features of nodes.
+
+[Paper](https://arxiv.org/abs/1609.02907):  Thomas N. Kipf, Max Welling. 2016. Semi-Supervised Classification with Graph Convolutional Networks. In ICLR 2016.
+
+
+# [Model Architecture](#contents)
+
+GCN contains two graph convolution layers. Each layer takes nodes features and adjacency matrix as input, nodes' features are then updated by aggregating neighbours' features. 
+
+
+# [Dataset](#contents)
+| Dataset  | Type             | Nodes | Edges | Classes | Features | Label rate |
+| -------  | ---------------: |-----: | ----: | ------: |--------: | ---------: |
+| Cora    | Citation network | 2708  | 5429  | 7       | 1433     | 0.052      |
+| Citeseer| Citation network | 3327  | 4732  | 6       | 3703     | 0.036      |
+
+
+
+
+# [Environment Requirements](#contents)
+
+- Hardware（Ascend）
+  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Framework
+  - [MindSpore](https://gitee.com/mindspore/mindspore)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
+
+
+# [Quick Start](#contents)
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
@@ -41,7 +84,9 @@ sh run_process_data.sh ./data cora
 sh run_process_data.sh ./data citeseer
 ```
 
-## Structure
+# [Script Description](#contents)
+
+## [Script and Sample Code](#contents)
  
 ```shell
 .
@@ -49,7 +94,7 @@ sh run_process_data.sh ./data citeseer
   ├─README.md
   ├─scripts 
   | ├─run_process_data.sh  # Generate dataset in mindrecord format
-  | └─run_train.sh         # Launch training   
+  | └─run_train.sh         # Launch training, now only Ascend backend is supported.
   |
   ├─src
   | ├─config.py            # Parameter configuration
@@ -57,10 +102,10 @@ sh run_process_data.sh ./data citeseer
   | ├─gcn.py               # GCN backbone
   | └─metrics.py           # Loss and accuracy
   |
-  └─train.py               # Train net
+  └─train.py               # Train net, evaluation is performed after every training epoch. After the verification result converges, the training stops, then testing is performed.
 ```
  
-## Parameter configuration
+## [Script Parameters](#contents)
  
 Parameters for training can be set in config.py.
  
@@ -73,9 +118,7 @@ Parameters for training can be set in config.py.
 "early_stopping": 10,             # Tolerance for early stopping
 ```
 
-## Running the example
-
-### Train
+## [Training, Evaluation, Test Process](#contents)
  
 #### Usage
 
@@ -112,4 +155,34 @@ Test set results: cost= 1.00983 accuracy= 0.81300 time= 0.39083
 ...
 ```
 
+# [Model Description](#contents)
+## [Performance](#contents)
+
+| Parameters                 | GCN                                                            |
+| -------------------------- | -------------------------------------------------------------- |
+| Resource                   | Ascend 910                                                     |
+| uploaded Date              | 06/09/2020 (month/day/year)                                    |
+| MindSpore Version          | 0.5.0-beta                                                     |
+| Dataset                    | Cora/Citeseer                                                  |
+| Training Parameters        | epoch=200                                                      |
+| Optimizer                  | Adam                                                           |
+| Loss Function              | Softmax Cross Entropy                                          |
+| Accuracy                   | 81.5/70.3                                                      |
+| Parameters (B)             | 92160/59344                                                    |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn |
+
+
+
+# [Description of Random Situation](#contents)
+
+There are two random situations:
+- Seed is set in train.py according to input argument --seed.
+- Dropout operations.
+
+Some seeds have already been set in train.py to avoid the randomness of weight initialization. If you want to disable dropout, please set the corresponding dropout_prob parameter to 0 in src/config.py.
+
+
+# [ModelZoo Homepage](#contents)
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
 
