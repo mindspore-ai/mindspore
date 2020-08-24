@@ -37,7 +37,7 @@ class ELBO(Cell):
 
     Inputs:
         - **input_data** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
-        - **target_data** (Tensor) - the target tensor.
+        - **target_data** (Tensor) - the target tensor of shape :math:`(N,)`.
 
     Outputs:
         Tensor, loss float tensor.

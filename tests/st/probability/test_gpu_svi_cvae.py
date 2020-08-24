@@ -98,7 +98,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 
-def test_svi_cave():
+def test_svi_cvae():
     # define the encoder and decoder
     encoder = Encoder(num_classes=10)
     decoder = Decoder()

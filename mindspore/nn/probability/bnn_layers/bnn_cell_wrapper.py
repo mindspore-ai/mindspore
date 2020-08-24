@@ -25,6 +25,9 @@ class ClassWrap:
     def __init__(self, cls):
         self._cls = cls
         self.bnn_loss_file = None
+        self.__doc__ = cls.__doc__
+        self.__name__ = cls.__name__
+        self.__bases__ = cls.__bases__
 
     def __call__(self, backbone, loss_fn, dnn_factor, bnn_factor):
         obj = self._cls(backbone, loss_fn, dnn_factor, bnn_factor)
