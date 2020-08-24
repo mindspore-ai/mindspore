@@ -479,7 +479,6 @@ set_cost_model_context_func_map = {
     "costmodel_communi_threshold": cost_model_context().set_costmodel_communi_threshold,
     "costmodel_communi_const": cost_model_context().set_costmodel_communi_const,
     "costmodel_communi_bias": cost_model_context().set_costmodel_communi_bias,
-    "multi_subgraphs": cost_model_context().set_multi_subgraphs,
     "run_phase": cost_model_context().set_run_phase,
     "costmodel_allreduce_fusion_algorithm": cost_model_context().set_costmodel_allreduce_fusion_algorithm,
     "costmodel_allreduce_fusion_times": cost_model_context().set_costmodel_allreduce_fusion_times,
@@ -501,7 +500,6 @@ get_cost_model_context_func_map = {
     "costmodel_communi_threshold": cost_model_context().get_costmodel_communi_threshold,
     "costmodel_communi_const": cost_model_context().get_costmodel_communi_const,
     "costmodel_communi_bias": cost_model_context().get_costmodel_communi_bias,
-    "multi_subgraphs": cost_model_context().get_multi_subgraphs,
     "run_phase": cost_model_context().get_run_phase,
     "costmodel_allreduce_fusion_algorithm": cost_model_context().get_costmodel_allreduce_fusion_algorithm,
     "costmodel_allreduce_fusion_times": cost_model_context().get_costmodel_allreduce_fusion_times,
@@ -538,7 +536,6 @@ def set_cost_model_context(**kwargs):
         costmodel_communi_threshold (float): A parameter used in adjusting communication calculation for practice.
         costmodel_communi_const (float): A parameter used in adjusting communication calculation for practice.
         costmodel_communi_bias (float): A parameter used in adjusting communication calculation for practice.
-        multi_subgraphs (bool): A parameter used in marking the flag of ANF graph containing multiple subgraphs.
         run_phase (int): A parameter indicating which phase is running: training (0) or inference (1). Default: 0.
         costmodel_allreduce_fusion_algorithm (int): The allreduce fusion algorithm.
             0: bypass allreduce fusion;
@@ -591,3 +588,18 @@ def get_cost_model_context(attr_key):
 def reset_cost_model_context():
     """Reset cost model context attributes."""
     cost_model_context().reset_cost_model()
+
+def set_multi_subgraphs(multi_subgraph=True):
+    """
+    Set the flag of ANF graph containing multiple subgraphs.
+
+    Args:
+        multi_subgraph (bool): A parameter used in marking the multi-subgraphs flag.
+    """
+    cost_model_context().set_multi_subgraphs(multi_subgraph)
+
+def get_multi_subgraphs():
+    """
+        Get the flag of ANF graph containing multiple subgraphs.
+    """
+    cost_model_context().get_multi_subgraphs()

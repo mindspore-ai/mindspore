@@ -17,5 +17,7 @@ This interface is ONLY used in Auto-parallel procedure.
 """
 from .algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters
+from ._cost_model_context import set_multi_subgraphs, get_multi_subgraphs
 
-__all__ = ["get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]
+__all__ = ["set_multi_subgraphs", "get_multi_subgraphs",
+           "get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]

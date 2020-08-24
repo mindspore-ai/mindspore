@@ -21,7 +21,7 @@ from mindspore import Model, context
 from mindspore.train.callback import TimeMonitor
 from mindspore.train import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
-from mindspore.parallel import _cost_model_context as cost_model_context
+from mindspore.parallel import set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
@@ -33,7 +33,7 @@ from src.config import WideDeepConfig
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
 context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, mirror_mean=True)
-cost_model_context.set_cost_model_context(multi_subgraphs=True)
+set_multi_subgraphs()
 init()
 
 
