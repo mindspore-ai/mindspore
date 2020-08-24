@@ -3693,6 +3693,72 @@ Copyright (c) 1999, Frank Warmerdam
 Copyright (c) 1991-1996 Sam Leffler
 Copyright (c) 1996 USAF Phillips Laboratory
 
+Software: libevent 2.1.12
+Copyright notice:
+Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
+COPYRIGHT AND PERMISSION NOTICE
+Copyright (c) 1996 - 2013, Daniel Stenberg, <daniel@haxx.se>.
+Copyright (C) 2012, iSEC Partners.
+Copyright (c) 1987, 1993, 1994, 1995
+Copyright (c) 1987, 1993, 1994, 1996
+Copyright 2002 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
+Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2007-2012 Niels Provos, Nick Mathewson
+Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
+Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
+Copyright (c) 1991, 1993
+Copyright (c) 2009, Michihiro NAKAJIMA
+Copyright 2000-2013 Kitware, Inc.
+Copyright 2000-2011 Insight Software Consortium
+notices of original copyright by their contributors; see each source
+Copyright (C) 1996-2018 Free Software Foundation, Inc.
+Copyright (c) 2010 Chris Davis, Niels Provos, and Nick Mathewson
+Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
+Copyright (c) 1996, David Mazieres <dm@uun.org>
+Copyright (c) 2008, Damien Miller <djm@openbsd.org>
+Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2002-2006 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
+Copyright 2000-2009 Niels Provos <provos@citi.umich.edu>
+Copyright 2009-2012 Niels Provos and Nick Mathewson
+Copyright 2000-2007 Niels Provos <provos@citi.umich.edu>
+Copyright 2007-2012 Niels Provos, Nick Mathewson
+Copyright 2003-2009 Niels Provos <provos@citi.umich.edu>
+Copyright 2006-2007 Niels Provos
+Copyright 2007-2012 Nick Mathewson and Niels Provos
+Copyright (c) 2005-2007 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2003-2009 Niels Provos <provos@citi.umich.edu>
+Copyright 2007-2012 Niels Provos and Nick Mathewson
+Copyright (c) 2007 Sun Microsystems. All rights reserved.
+Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
+Copyright 2002 Christopher Clark
+Copyright 2005-2012 Nick Mathewson
+Copyright 2001-2007 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2012 Niels Provos and Nick Mathewson
+Copyright (c) 2000 Dug Song <dugsong@monkey.org>
+Copyright (c) 1993 The Regents of the University of California.
+Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+Copyright (c) 2003 Michael A. Davis <mike@datanerds.net>
+Copyright (c) 2007 Sun Microsystems
+Copyright (c) 2002 Christopher Clark
+Copyright (c) 2006 Maxim Yegorushkin <maxim.yegorushkin@gmail.com>
+Copyright (c) 2010 BitTorrent, Inc.
+Copyright (c) 2005-2012 Niels Provos and Nick Mathewson
+Copyright (c) 1993
+Copyright 2003 Michael A. Davis <mike@datanerds.net>
+Copyright 2003-2007 Niels Provos <provos@citi.umich.edu>
+Copyright 2008-2012 Niels Provos and Nick Mathewson
+Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
+Copyright (c) 2013 Niels Provos and Nick Mathewson
+Copyright (c) 2009-2012 Nick Mathewson and Niels Provos
+Copyright (c) 2007-2013 Niels Provos and Nick Mathewson
+Copyright (c) 2012 Ross Lagerwall <rosslagerwall@gmail.com>
+tinytest.c -- Copyright 2009-2012 Nick Mathewson
+tinytest.h -- Copyright 2009-2012 Nick Mathewson
+tinytestmacros.h -- Copyright 2009-2012 Nick Mathewson
+
 Software: opencv 4.2.0
 Copyright notice:
 Copyright (C) 2016, NVIDIA Corporation, all rights reserved.
