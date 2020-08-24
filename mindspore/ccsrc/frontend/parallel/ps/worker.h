@@ -28,6 +28,7 @@
 #include "frontend/parallel/ps/util.h"
 #include "frontend/parallel/ps/common.h"
 #include "frontend/parallel/ps/worker_proxy.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -41,15 +42,15 @@ class Worker {
   }
 
   void Run();
-  void Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const std::vector<int> &sizes);
+  void Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const ShapeVector &sizes);
   void Pull(const size_t key, void *dev_addr, const size_t size);
   size_t SetParamKey(const std::string &param_name);
   void SetParamInitInServer(const std::string &param_name, bool init_in_server);
   bool GetParamInitInServer(const std::string &param_name);
   void SetKeyOptimId(size_t key, const std::string &optimizer_name);
-  void SetOptimInputShapes(size_t key, const std::vector<int> &shape);
+  void SetOptimInputShapes(size_t key, const ShapeVector &shape);
   void AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count);
-  void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const std::vector<int> &sizes);
+  void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const ShapeVector &sizes);
   void InitPSParamAndOptim(const std::string &param_name, tensor::TensorPtr tensor);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
@@ -75,7 +76,7 @@ class Worker {
   std::map<std::string, size_t> param_to_key_;
   std::map<size_t, bool> init_keys_;
   std::map<size_t, int> key_to_optimId_;
-  std::map<size_t, std::vector<std::vector<int>>> key_to_optim_shapes_;
+  std::map<size_t, std::vector<ShapeVector>> key_to_optim_shapes_;
   std::map<std::string, bool> param_to_init_in_server_;
 };
 
@@ -94,7 +95,7 @@ void Worker<T>::Run() {
 }
 
 template <typename T>
-void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const std::vector<int> &sizes) {
+void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const ShapeVector &sizes) {
   size_t total_size = 0;
   for (auto size : sizes) {
     total_size += size;
@@ -154,7 +155,7 @@ void Worker<T>::InitPSParamData(const std::vector<size_t> &keys, void *origin_ad
 }
 
 template <typename T>
-void Worker<T>::SetOptimInputShapes(size_t key, const std::vector<int> &shape) {
+void Worker<T>::SetOptimInputShapes(size_t key, const ShapeVector &shape) {
   if (key_to_optim_shapes_.find(key) == key_to_optim_shapes_.end()) {
     key_to_optim_shapes_[key] = {shape};
   } else {
@@ -167,7 +168,7 @@ void Worker<T>::InitPSOptimInputShapes(const size_t key) {
   ::ps::SArray<::ps::Key> keys;
   ::ps::SArray<int> shape_len;
   ::ps::SArray<T> all_shape;
-  std::vector<std::vector<int>> shapes = key_to_optim_shapes_[key];
+  std::vector<ShapeVector> shapes = key_to_optim_shapes_[key];
   for (auto shape : shapes) {
     keys.push_back(key);
     if (shape.size() == 0) {
@@ -255,7 +256,7 @@ void Worker<T>::InitPSOptimId(const size_t param_key) {
 
 template <typename T>
 void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes,
-                                     const std::vector<int> &sizes) {
+                                     const ShapeVector &sizes) {
   bool has_init = IsKeyInit(keys[0]);
   if (has_init) {
     MS_LOG(DEBUG) << "The key embedding table of key " << keys[0] << " is initialized.";
@@ -272,7 +273,7 @@ template <typename T>
 void Worker<T>::InitPSParamAndOptim(const std::string &param_name, tensor::TensorPtr tensor) {
   void *param_data = tensor->data_c();
   size_t param_size = LongToSize(tensor->data().nbytes());
-  std::vector<int> param_shape = tensor->shape_c();
+  ShapeVector param_shape = tensor->shape_c();
 
   size_t param_key = GetParamKey(param_name);
   if (param_key == kInvalidKey) {
@@ -280,7 +281,7 @@ void Worker<T>::InitPSParamAndOptim(const std::string &param_name, tensor::Tenso
     return;
   }
   bool init_in_server = false;
-  std::vector<int> shape_init_in_server = {1};
+  ShapeVector shape_init_in_server = {1};
   if (param_shape == shape_init_in_server) {
     init_in_server = true;
   }

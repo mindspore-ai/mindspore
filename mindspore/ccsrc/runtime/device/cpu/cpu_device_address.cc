@@ -20,8 +20,7 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-bool CPUDeviceAddress::SyncDeviceToHost(const std::vector<int> & /*shape*/, size_t size, TypeId type,
-                                        void *host_ptr) const {
+bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /*shape*/, size_t size, TypeId type, void *host_ptr) const {
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
     return false;
@@ -50,7 +49,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const std::vector<int> & /*shape*/, size
   return true;
 }
 
-bool CPUDeviceAddress::SyncHostToDevice(const std::vector<int> & /*shape*/, size_t size, TypeId type,
+bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /*shape*/, size_t size, TypeId type,
                                         const void *host_ptr) const {
   if (host_ptr == ptr_) {
     MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";

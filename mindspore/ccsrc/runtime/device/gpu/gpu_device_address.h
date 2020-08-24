@@ -21,6 +21,8 @@
 #include <vector>
 #include "runtime/device/device_address.h"
 
+using ShapeVecotr = std::vector<int>;
+
 namespace mindspore {
 #ifdef ENABLE_DEBUGGER
 class Debugger;
@@ -34,15 +36,15 @@ class GPUDeviceAddress : public DeviceAddress {
       : DeviceAddress(ptr, size, format, type_id) {}
   ~GPUDeviceAddress() override;
 
-  bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const override;
-  bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type, const void *host_ptr) const override;
+  bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
+  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override;
   void set_status(DeviceAddressStatus status) { status_ = status; }
   DeviceAddressStatus status() const { return status_; }
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kGPU; }
 
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                     const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
+                     const ShapeVector &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
                      bool keep_prev) const;
 #endif
  private:

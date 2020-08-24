@@ -42,7 +42,7 @@
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
 #include "backend/kernel_compiler/cpu/random_op_cpu_kernel.h"
-
+#include "utils/shape_utils.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/common.h"
 #include "frontend/parallel/ps/util.h"
@@ -136,10 +136,10 @@ py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple i
         return false;
       }
       std::shared_ptr<MetaTensor> sig = input_signature[count].cast<std::shared_ptr<MetaTensor>>();
-      std::vector<int> sig_shape = sig->shape();
+      ShapeVector sig_shape = sig->shape();
       TypePtr sig_type = sig->Dtype();
 
-      std::vector<int> tensor_shape = m_tensor->shape_c();
+      ShapeVector tensor_shape = m_tensor->shape_c();
       if (tensor_shape != sig_shape) {
         MS_LOG(ERROR) << "Python input shape is incompatible with input_signature";
         return false;
@@ -849,13 +849,13 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
   MS_LOG(INFO) << "Start InitDataSet Entry";
-  std::vector<int> int_input_indexes;
+  ShapeVector int_input_indexes;
   (void)std::transform(input_indexes.begin(), input_indexes.end(), std::back_inserter(int_input_indexes),
                        [](int64_t item) { return static_cast<int>(item); });
-  std::vector<std::vector<int>> int_shapes;
+  std::vector<ShapeVector> int_shapes;
   (void)std::transform(shapes.begin(), shapes.end(), std::back_inserter(int_shapes),
                        [](const std::vector<int64_t> &item) {
-                         std::vector<int> vector_item;
+                         ShapeVector vector_item;
                          (void)std::transform(item.begin(), item.end(), std::back_inserter(vector_item),
                                               [](int64_t inner_item) { return static_cast<int>(inner_item); });
                          return vector_item;

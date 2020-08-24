@@ -17,11 +17,12 @@
 #include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
 namespace {
-std::vector<int> BroadcastShape(std::vector<int> shpx, std::vector<int> shpy) {
+ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy) {
   int dlen = SizeToInt(shpx.size()) - SizeToInt(shpy.size());
   if (dlen < 0) {
     for (int i = 0; i < -dlen; ++i) {
@@ -35,7 +36,7 @@ std::vector<int> BroadcastShape(std::vector<int> shpx, std::vector<int> shpy) {
   if (shpx.size() != shpy.size()) {
     MS_LOG(EXCEPTION) << "Failure: shpx.size() != shpy.size().";
   }
-  std::vector<int> shp;
+  ShapeVector shp;
   for (size_t i = 0; i < shpx.size(); i++) {
     auto a = shpx[i];
     auto b = shpy[i];
@@ -50,7 +51,7 @@ std::vector<int> BroadcastShape(std::vector<int> shpx, std::vector<int> shpy) {
     } else if (a == b) {
       shp.push_back(a);
     } else {
-      return std::vector<int>();
+      return ShapeVector();
     }
   }
   return shp;
@@ -89,18 +90,18 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   auto value_tuple_x = xs->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple_x);
   auto shp_tuple_x = value_tuple_x->value();
-  std::vector<int> shp_x;
+  ShapeVector shp_x;
   (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(shp_x),
                        [](const ValuePtr &e) -> int { return GetValue<int>(e); });
 
   auto value_tuple_y = ys->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple_y);
   auto shp_tuple_y = value_tuple_y->value();
-  std::vector<int> shp_y;
+  ShapeVector shp_y;
   (void)std::transform(std::begin(shp_tuple_y), std::end(shp_tuple_y), std::back_inserter(shp_y),
                        [](const ValuePtr &e) -> int { return GetValue<int>(e); });
 
-  std::vector<int> res = BroadcastShape(shp_x, shp_y);
+  ShapeVector res = BroadcastShape(shp_x, shp_y);
   if (res.empty()) {
     MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
                       << args_spec_list[1]->ToString();
@@ -130,7 +131,7 @@ AbstractBasePtr InferImplTile(const AnalysisEnginePtr &, const PrimitivePtr &pri
     MS_LOG(EXCEPTION) << "shape's data field can't be anything: " << args_spec_list[1]->ToString();
   }
 
-  std::vector<int> mul_shp;
+  ShapeVector mul_shp;
   auto value_tuple_mul = mul_shp_value->cast<ValueTuplePtr>();
   auto mul_shp_data = value_tuple_mul->value();
   (void)std::transform(std::begin(mul_shp_data), std::end(mul_shp_data), std::back_inserter(mul_shp),
@@ -140,7 +141,7 @@ AbstractBasePtr InferImplTile(const AnalysisEnginePtr &, const PrimitivePtr &pri
                       << input_shape->shape().size() << ", value size is: " << mul_shp_data.size() << ".";
   }
 
-  std::vector<int> result_shp;
+  ShapeVector result_shp;
   for (size_t i = 0; i < mul_shp_data.size(); ++i) {
     result_shp.push_back(input_shape->shape()[i] * mul_shp[i]);
   }
@@ -195,9 +196,9 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   if (shape->shape().size() != 1) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
-  std::vector<int> ids_shape = {Shape::SHP_ANY};
-  std::vector<int> min_shape = {1};
-  std::vector<int> max_shape = shape->shape();
+  ShapeVector ids_shape = {Shape::SHP_ANY};
+  ShapeVector min_shape = {1};
+  ShapeVector max_shape = shape->shape();
   auto ids =
     std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
   auto ids_idx = std::make_shared<AbstractTensor>(std::make_shared<Int>(32), shape->shape());

@@ -26,6 +26,7 @@
 #include "ir/meta_tensor.h"
 #include "utils/log_adapter.h"
 #include "base/float16.h"
+#include "utils/shape_utils.h"
 
 // brief mindspore namespace.
 //
@@ -52,7 +53,7 @@ class TensorData {
   /// Is data equals.
   virtual bool equals(const TensorData &other) const = 0;
   /// To string.
-  virtual std::string ToString(const TypeId type, const std::vector<int> &shape) const = 0;
+  virtual std::string ToString(const TypeId type, const ShapeVector &shape) const = 0;
 };
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
@@ -76,31 +77,31 @@ class Tensor : public MetaTensor {
   // brief Create tensor with the given shared tensor data.
   //
   // param data_type [TypeId] Data type of the tensor.
-  // param shape The shape represented by std::vector<int> of the tensor.
+  // param shape The shape represented by ShapeVector of the tensor.
   // param data The shared tensor data.
-  Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data);
+  Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data);
 
   // brief Create a lazy allocated tensor.
   //
   // param data_type [TypeId] Data type of the tensor.
-  // param shape The shape represented by std::vector<int> of the tensor.
-  Tensor(TypeId data_type, const std::vector<int> &shape);
+  // param shape The shape represented by ShapeVector of the tensor.
+  Tensor(TypeId data_type, const ShapeVector &shape);
 
   // brief Create a tensor with input data buffer.
   //
   // param data_type [TypeId] Data type of the tensor.
-  // param shape The shape represented by std::vector<int> of the tensor.
+  // param shape The shape represented by ShapeVector of the tensor.
   // param data The input data to be copied into tensor.
   // param data_len The length of data in bytes.
-  Tensor(TypeId data_type, const std::vector<int> &shape, void *data, size_t data_len);
+  Tensor(TypeId data_type, const ShapeVector &shape, void *data, size_t data_len);
 
   // brief Create a tensor with input data buffer and given source data type.
   //
   // param data_type [TypeId] Data type of the tensor.
-  // param shape The shape represented by std::vector<int> of the tensor.
+  // param shape The shape represented by ShapeVector of the tensor.
   // param data The input data to be copied into tensor.
   // param src_data_type The source data type.
-  Tensor(TypeId data_type, const std::vector<int> &shape, void *data, TypeId src_data_type);
+  Tensor(TypeId data_type, const ShapeVector &shape, void *data, TypeId src_data_type);
 
   // brief Create 1 dimension tensor from an int vector.
   //
@@ -170,8 +171,8 @@ class Tensor : public MetaTensor {
 
   // brief Get the tensor's shape for C++
   //
-  // return [std::vector<int>]
-  std::vector<int> shape_c(void) const { return shape(); }
+  // return [ShapeVector]
+  ShapeVector shape_c(void) const { return shape(); }
 
   // brief Get Tensor data pointer for c++ type
   //

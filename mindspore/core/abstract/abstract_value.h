@@ -33,6 +33,7 @@
 #include "ir/value.h"
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -250,7 +251,7 @@ class AbstractUndetermined : public AbstractBase {
     }
     set_shape(shape);
   }
-  AbstractUndetermined(const TypePtr &element_type, const std::vector<int> &shape)
+  AbstractUndetermined(const TypePtr &element_type, const ShapeVector &shape)
       : AbstractBase(kAnyValue), element_(std::make_shared<AbstractScalar>(kAnyValue, element_type)) {
     if (element_type == nullptr) {
       MS_LOG(EXCEPTION) << "element_type is nullptr";
@@ -273,8 +274,7 @@ class AbstractTensor : public AbstractUndetermined {
   // only element_ and value, shape track are valid member, type track are unknown.
   explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
-  AbstractTensor(const TypePtr &element_type, const std::vector<int> &shape)
-      : AbstractUndetermined(element_type, shape) {}
+  AbstractTensor(const TypePtr &element_type, const ShapeVector &shape) : AbstractUndetermined(element_type, shape) {}
   explicit AbstractTensor(const tensor::TensorPtr &tensor) : AbstractUndetermined(tensor->Dtype(), tensor->shape()) {}
   ~AbstractTensor() override = default;
   MS_DECLARE_PARENT(AbstractTensor, AbstractUndetermined)
@@ -632,7 +632,7 @@ class AbstractRowTensor : public AbstractUndetermined {
  public:
   explicit AbstractRowTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
-  AbstractRowTensor(const TypePtr &element_type, const std::vector<int> &shape)
+  AbstractRowTensor(const TypePtr &element_type, const ShapeVector &shape)
       : AbstractUndetermined(element_type, shape) {}
   ~AbstractRowTensor() override = default;
   MS_DECLARE_PARENT(AbstractRowTensor, AbstractUndetermined)
@@ -661,7 +661,7 @@ class AbstractSparseTensor : public AbstractUndetermined {
  public:
   explicit AbstractSparseTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
-  AbstractSparseTensor(const TypePtr &element_type, const std::vector<int> &shape)
+  AbstractSparseTensor(const TypePtr &element_type, const ShapeVector &shape)
       : AbstractUndetermined(element_type, shape) {}
   ~AbstractSparseTensor() override = default;
   MS_DECLARE_PARENT(AbstractSparseTensor, AbstractUndetermined)

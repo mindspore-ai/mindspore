@@ -94,8 +94,8 @@ GeFormat TransformUtil::ConvertFormat(const string &format) {
 
 static int64_t IntegerCastFunc(size_t temp) { return static_cast<int64_t>(temp); }
 
-std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const std::vector<int> &me_shape,
-                                                             const MeDataType &me_type, const std::string &format) {
+std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &me_shape, const MeDataType &me_type,
+                                                             const std::string &format) {
   // convert me shape to ge shape
   std::vector<int64_t> ge_shape;
 
@@ -196,7 +196,7 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
 }
 
 std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors,
-                                                         const std::vector<std::vector<int>> &request_dims) {
+                                                         const std::vector<ShapeVector> &request_dims) {
   std::vector<MeTensorPtr> outputs;
 
   for (size_t index = 0; index < ge_tensors.size(); index++) {
@@ -204,7 +204,7 @@ std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTen
     if (index < request_dims.size()) {
       me_tensor_ptr = ConvertGeTensor(ge_tensors[index], request_dims[index]);
     } else {
-      std::vector<int> empty_shape;
+      ShapeVector empty_shape;
       me_tensor_ptr = ConvertGeTensor(ge_tensors[index], empty_shape);
     }
 
@@ -270,7 +270,7 @@ MeDataType TransformUtil::ConvertGeDataType(const GeDataType &type) {
 }
 
 namespace {
-bool IsGeShapeCompatible(const GeShape &ge_shape, const std::vector<int> &request_dims) {
+bool IsGeShapeCompatible(const GeShape &ge_shape, const ShapeVector &request_dims) {
   MS_LOG(INFO) << "GeTensor's shape is " << TransformUtil::PrintVector(ge_shape.GetDims());
   MS_LOG(INFO) << "Me request shape is " << TransformUtil::PrintVector(request_dims);
 
@@ -307,20 +307,20 @@ bool IsGeShapeCompatible(const GeShape &ge_shape, const std::vector<int> &reques
 }
 }  // namespace
 
-GeShape TransformUtil::ConvertMeShape(const std::vector<int> &me_dims) {
+GeShape TransformUtil::ConvertMeShape(const ShapeVector &me_dims) {
   std::vector<int64_t> ge_dims;
   (void)std::copy(me_dims.begin(), me_dims.end(), std::back_inserter(ge_dims));
   return GeShape(ge_dims);
 }
 
-std::vector<int> TransformUtil::ConvertGeShape(const GeShape &ge_shape) {
-  std::vector<int> me_dims;
+ShapeVector TransformUtil::ConvertGeShape(const GeShape &ge_shape) {
+  ShapeVector me_dims;
   std::vector<int64_t> ge_dims = ge_shape.GetDims();
   (void)std::copy(ge_dims.begin(), ge_dims.end(), std::back_inserter(me_dims));
   return me_dims;
 }
 
-std::vector<int> TransformUtil::ConvertGeShape(const GeShape &ge_shape, const std::vector<int> &request_dims) {
+ShapeVector TransformUtil::ConvertGeShape(const GeShape &ge_shape, const ShapeVector &request_dims) {
   vector<int> ret;
   if (ge_shape.GetDimNum() == 0) {
     MS_LOG(DEBUG) << "GeTensor's shape is scalar";
@@ -336,7 +336,7 @@ std::vector<int> TransformUtil::ConvertGeShape(const GeShape &ge_shape, const st
   return ret;
 }
 
-MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const std::vector<int> &me_dims,
+MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &me_dims,
                                             const TypeId &me_type) {
   MeTensor me_tensor(me_type, me_dims);
 
@@ -380,7 +380,7 @@ MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor) {
 }
 
 // if request_dims is empty, use ge tensor's shape,otherwise convert to request shape
-MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const std::vector<int> &request_dims) {
+MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &request_dims) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
   GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
   vector<int> me_dims = ConvertGeShape(ge_shape, request_dims);

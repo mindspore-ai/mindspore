@@ -371,9 +371,9 @@ bool IsNeedPadding(const std::string &format, const size_t shape_size) {
   return false;
 }
 
-std::vector<int> GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
+ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<int> shape;
+  ShapeVector shape;
   std::vector<size_t> host_shape;
   if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();

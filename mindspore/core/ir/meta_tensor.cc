@@ -27,9 +27,9 @@ namespace tensor {
 // MetaTensor has default type_id_ which is TypeId::kTypeUnknown.
 MetaTensor::MetaTensor() : data_type_(TypeId::kTypeUnknown) {}
 
-MetaTensor::MetaTensor(const TypeId data_type, const std::vector<int> &shape) : data_type_(data_type), shape_(shape) {}
+MetaTensor::MetaTensor(const TypeId data_type, const ShapeVector &shape) : data_type_(data_type), shape_(shape) {}
 
-MetaTensor::MetaTensor(const TypePtr &type_ptr, const std::vector<int> &shape) {
+MetaTensor::MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape) {
   TypeId data_type = TypeId::kTypeUnknown;
   if (type_ptr != nullptr) {
     data_type = type_ptr->type_id();

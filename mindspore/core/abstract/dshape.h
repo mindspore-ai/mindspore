@@ -29,6 +29,7 @@
 
 #include "utils/log_adapter.h"
 #include "base/base.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -69,12 +70,12 @@ class Shape : public BaseShape {
     (void)std::transform(list_in.begin(), list_in.end(), std::back_inserter(shape_),
                          [](const int64_t &value) { return static_cast<int>(value); });
   }
-  explicit Shape(const std::vector<int> &list) : shape_(list) {}
+  explicit Shape(const ShapeVector &list) : shape_(list) {}
   explicit Shape(const std::vector<int64_t> &list) {
     (void)std::transform(list.begin(), list.end(), std::back_inserter(shape_),
                          [](const int64_t &value) { return static_cast<int>(value); });
   }
-  Shape(const std::vector<int> &list, const std::vector<int> &min_shape, const std::vector<int> &max_shape)
+  Shape(const ShapeVector &list, const ShapeVector &min_shape, const ShapeVector &max_shape)
       : shape_(list), min_shape_(min_shape), max_shape_(max_shape) {}
   ~Shape() override = default;
   MS_DECLARE_PARENT(Shape, BaseShape)
@@ -83,13 +84,13 @@ class Shape : public BaseShape {
   bool operator==(const BaseShape &other) const override;
   BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, min_shape_, max_shape_); }
   void Broaden() override;
-  std::vector<int> &shape() { return shape_; }
-  std::vector<int> &min_shape() { return min_shape_; }
-  std::vector<int> &max_shape() { return max_shape_; }
+  ShapeVector &shape() { return shape_; }
+  ShapeVector &min_shape() { return min_shape_; }
+  ShapeVector &max_shape() { return max_shape_; }
 
-  std::vector<int> shape_;      // use SHP_ANY to implement the any shape in python
-  std::vector<int> min_shape_;  // record mininum length for each dynamic dimention
-  std::vector<int> max_shape_;  // record maximum length for each dynamic dimention
+  ShapeVector shape_;      // use SHP_ANY to implement the any shape in python
+  ShapeVector min_shape_;  // record mininum length for each dynamic dimention
+  ShapeVector max_shape_;  // record maximum length for each dynamic dimention
 };
 using ShapePtr = std::shared_ptr<Shape>;
 using ShapePtrList = std::vector<ShapePtr>;

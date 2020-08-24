@@ -26,6 +26,7 @@
 #include "ir/dtype.h"
 #include "utils/convert_utils_base.h"
 #include "utils/hashing.h"
+#include "utils/shape_utils.h"
 
 // brief mindspore namespace.
 //
@@ -37,7 +38,6 @@ namespace mindspore {
 //
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
-
 // brief Device info of Tensor
 //
 // Includes the format and data type of a tensor.
@@ -63,9 +63,9 @@ class MetaTensor : public Value {
   // information of a Tensor. The following codes will create a 2x3 float
   // param data_type The data type of the tensor.
   // param shape The shape of the tensor.
-  MetaTensor(const TypeId data_type, const std::vector<int> &shape);
+  MetaTensor(const TypeId data_type, const ShapeVector &shape);
 
-  MetaTensor(const TypePtr &type_ptr, const std::vector<int> &shape);
+  MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape);
   // brief Constructs a MetaTensor object from an existing MetaTensor instance.
   //
   // The constructed MetaTensor object will have the same data type and shape as the
@@ -115,7 +115,7 @@ class MetaTensor : public Value {
   // order it represents.
   //
   // return A const vector<int> which represents the shape of the tensor.
-  const std::vector<int> &shape() const { return shape_; }
+  const ShapeVector &shape() const { return shape_; }
 
   // brief Sets the shape of a tensor.
   //
@@ -126,7 +126,7 @@ class MetaTensor : public Value {
   //
   // param shape The shape of the tensor.
   // return The shape's size.
-  size_t set_shape(const std::vector<int> &shape) {
+  size_t set_shape(const ShapeVector &shape) {
     this->shape_ = shape;
     return shape_.size();
   }
@@ -174,11 +174,11 @@ class MetaTensor : public Value {
 
   // brief Shape of the tensor.
   //
-  // A std::vector<int> container is used to store the shape of a tensor.
+  // A ShapeVector container is used to store the shape of a tensor.
   // Each element of the vector represents the size of a dimension of the tensor.
   // The order of each element in the vector is as same as the the dimension's
   // order it represents. If the dimension size is not set, its value will be -1.
-  std::vector<int> shape_;
+  ShapeVector shape_;
 
   // brief Device info of Tensor
   //

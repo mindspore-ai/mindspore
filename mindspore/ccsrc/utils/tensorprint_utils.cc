@@ -22,6 +22,7 @@
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
 #include "utils/ms_utils.h"
+#include "utils/shape_utils.h"
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"
 #include "tdt/tdt_host_interface.h"
@@ -59,7 +60,7 @@ std::string GetParseType(const std::string &tensorType_) {
   return type_iter->second;
 }
 
-bool ParseTensorShape(const std::string &input_shape_str, std::vector<int> *const tensor_shape, size_t *dims) {
+bool ParseTensorShape(const std::string &input_shape_str, ShapeVector *const tensor_shape, size_t *dims) {
   if (tensor_shape == nullptr) {
     return false;
   }
@@ -189,7 +190,7 @@ bool ConvertDataItem2Tensor(const std::vector<tdt::DataItem> &items) {
       continue;
     }
 
-    std::vector<int> tensor_shape;
+    ShapeVector tensor_shape;
     size_t totaldims = 1;
     if (!ParseTensorShape(item.tensorShape_, &tensor_shape, &totaldims)) {
       MS_LOG(ERROR) << "Tensor print can not parse tensor shape, receive info" << item.tensorShape_;
@@ -235,7 +236,7 @@ bool SaveDataItem2File(const std::vector<tdt::DataItem> &items, const std::strin
       }
     }
 
-    std::vector<int> tensor_shape;
+    ShapeVector tensor_shape;
     size_t totaldims = 1;
     if (!ParseTensorShape(item.tensorShape_, &tensor_shape, &totaldims)) {
       MS_LOG(ERROR) << "Tensor print can not parse tensor shape, receive info" << item.tensorShape_;

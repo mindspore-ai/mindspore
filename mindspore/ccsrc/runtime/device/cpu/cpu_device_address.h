@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include "runtime/device/device_address.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -32,8 +33,8 @@ class CPUDeviceAddress : public DeviceAddress {
 
   ~CPUDeviceAddress() override = default;
 
-  bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const override;
-  bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type, const void *host_ptr) const override;
+  bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
+  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override;
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kCPU; }
 };
 }  // namespace cpu
