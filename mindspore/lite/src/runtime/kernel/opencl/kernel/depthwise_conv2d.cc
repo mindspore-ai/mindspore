@@ -64,7 +64,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
     kernel_name += "_1x1";
   }
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   std::string program_name = "DepthwiseConv2d";
   std::set<std::string> build_options;

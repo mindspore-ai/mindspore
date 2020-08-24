@@ -36,7 +36,7 @@ int MatMulOpenCLKernel::Init() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = matmul_source;

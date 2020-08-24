@@ -81,7 +81,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
   void *device_ptr = nullptr;
   void *image_ptr = nullptr;
 
-  if (svm_capabilities && svm_on_) {
+  if (svm_capabilities) {
     cl_svm_mem_flags flags = (svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) ? CL_MEM_SVM_FINE_GRAIN_BUFFER : 0;
     flags |= (svm_capabilities & CL_DEVICE_SVM_ATOMICS) ? CL_MEM_SVM_ATOMICS : 0;
     flags = flags | CL_MEM_READ_WRITE;
@@ -280,7 +280,7 @@ void OpenCLAllocator::Clear() {
 void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue, bool sync) {
   auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
   auto svm_capabilities = ocl_runtime->GetSVMCapabilities();
-  if (svm_capabilities && svm_on_) {
+  if (svm_capabilities) {
     if (!(svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
       auto it = allocated_list_.find(host_ptr);
       if (it == allocated_list_.end()) {
@@ -356,8 +356,8 @@ int OpenCLAllocator::UnmapBuffer(void *host_ptr, void *command_queue) {
   }
 }
 
-MEM_TYPE OpenCLAllocator::GetMemType(void *host_ptr) {
-  MEM_TYPE mem_type{MEM_TYPE::BUF};
+MemType OpenCLAllocator::GetMemType(void *host_ptr) {
+  MemType mem_type{MemType::BUF};
   Lock();
   auto it = allocated_list_.find(host_ptr);
   if (it == allocated_list_.end()) {
@@ -367,9 +367,9 @@ MEM_TYPE OpenCLAllocator::GetMemType(void *host_ptr) {
   }
   MemBuf *mem_buf = it->second;
   if (mem_buf->img_size.empty()) {
-    mem_type = MEM_TYPE::BUF;
+    mem_type = MemType::BUF;
   } else {
-    mem_type = MEM_TYPE::IMG;
+    mem_type = MemType::IMG;
   }
   UnLock();
   return mem_type;
