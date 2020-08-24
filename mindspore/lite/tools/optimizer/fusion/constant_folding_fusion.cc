@@ -73,26 +73,6 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
   }
   return input_tensors;
 }
-schema::Primitive *PackPrimitiveT(const CNodePtr &cnode) {
-  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-  if (primitiveT_value == nullptr) {
-    MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
-    return nullptr;
-  }
-
-  auto *lite_primitive = primitiveT_value->GetPrimitiveT();
-  if (lite_primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive in primitiveT_value is nullptr";
-    return nullptr;
-  }
-
-  flatbuffers::FlatBufferBuilder builder(1024);
-  auto offset = schema::Primitive::Pack(builder, lite_primitive);
-  builder.Finish(offset);
-  auto buf = builder.GetBufferPointer();
-  auto primitive = flatbuffers::GetRoot<schema::Primitive>(buf);
-  return const_cast<schema::Primitive *>(primitive);
-}
 const ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   auto parameter = func_graph->add_parameter();
   std::vector<int> shape;
@@ -175,16 +155,10 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       }
       MS_LOG(INFO) << "Begin fold node:" << input_node->fullname_with_scope();
       auto output_nums = GetOutputTensorNum(input_cnode);
+      auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
       std::vector<Tensor *> output_tensors{output_nums, new Tensor()};
-      auto scheam_primitive = PackPrimitiveT(input_cnode);
-      auto lite_primitive = mindspore::lite::PrimitiveC::UnPackFromSchemaPrimitive(scheam_primitive);
-      if (lite_primitive == nullptr) {
-        MS_LOG(ERROR) << "constant_folding schedule node lite primitive nullptr";
-        FreeInputTensor(&input_tensors);
-        return nullptr;
-      }
-      lite_primitive->InferShape(input_tensors, output_tensors);
-      auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, lite_primitive);
+      primitiveT_value->InferShape(input_tensors, output_tensors);
+      auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, primitiveT_value.get());
       if (lite_kernel == nullptr) {
         MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
         FreeInputTensor(&input_tensors);
