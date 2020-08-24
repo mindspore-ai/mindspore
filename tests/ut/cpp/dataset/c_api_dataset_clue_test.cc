@@ -362,8 +362,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFiles) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFiles.";
+TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesA) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFilesA.";
   // Test CLUE Dataset with files shuffle, num_parallel_workers=1
 
   // Set configuration
@@ -373,7 +373,74 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFiles) {
   GlobalContext::config_manager()->set_seed(135);
   GlobalContext::config_manager()->set_num_parallel_workers(1);
 
-  // Create a CLUE Dataset, with two text files
+  // Create a CLUE Dataset, with two text files, dev.json and train.json, in lexicographical order
+  // Note: train.json has 3 rows
+  // Note: dev.json has 3 rows
+  // Use default of all samples
+  // They have the same keywords
+  // Set shuffle to files shuffle
+  std::string clue_file1 = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string clue_file2 = datasets_root_path_ + "/testCLUE/afqmc/dev.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+  std::shared_ptr<Dataset> ds = CLUE({clue_file2, clue_file1}, task, usage, 0, ShuffleMode::kFiles);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("sentence1"), row.end());
+  std::vector<std::string> expected_result = {
+    "你有花呗吗",
+    "吃饭能用花呗吗",
+    "蚂蚁花呗支付金额有什么限制",
+    "蚂蚁借呗等额还款能否换成先息后本",
+    "蚂蚁花呗说我违约了",
+    "帮我看看本月花呗账单结清了没"
+  };
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["sentence1"];
+    std::string_view sv;
+    text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 3 + 3 = 6 samples
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
+TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesB) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFilesB.";
+  // Test CLUE Dataset with files shuffle, num_parallel_workers=1
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(135);
+  GlobalContext::config_manager()->set_num_parallel_workers(1);
+
+  // Create a CLUE Dataset, with two text files, train.json and dev.json, in non-lexicographical order
   // Note: train.json has 3 rows
   // Note: dev.json has 3 rows
   // Use default of all samples
@@ -397,12 +464,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFiles) {
 
   EXPECT_NE(row.find("sentence1"), row.end());
   std::vector<std::string> expected_result = {
-    "蚂蚁借呗等额还款能否换成先息后本",
-    "蚂蚁花呗说我违约了",
-    "帮我看看本月花呗账单结清了没",
     "你有花呗吗",
     "吃饭能用花呗吗",
-    "蚂蚁花呗支付金额有什么限制"
+    "蚂蚁花呗支付金额有什么限制",
+    "蚂蚁借呗等额还款能否换成先息后本",
+    "蚂蚁花呗说我违约了",
+    "帮我看看本月花呗账单结清了没"
   };
 
   uint64_t i = 0;
