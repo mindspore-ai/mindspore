@@ -20,6 +20,7 @@ from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name, raise_none_error
 from ._utils.custom_ops import exp_by_step, log_by_step
 
+
 class Bernoulli(Distribution):
     """
     Bernoulli Distribution.
@@ -97,7 +98,7 @@ class Bernoulli(Distribution):
         Constructor of Bernoulli distribution.
         """
         param = dict(locals())
-        valid_dtype = mstype.int_type + mstype.uint_type
+        valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         check_type(dtype, valid_dtype, "Bernoulli")
         super(Bernoulli, self).__init__(seed, dtype, name, param)
         self.parameter_type = mstype.float32
@@ -211,7 +212,6 @@ class Bernoulli(Distribution):
         """
         self.checktensor(value, 'value')
         value = self.cast(value, mstype.float32)
-        value = self.floor(value)
         probs1 = self._check_param(probs1)
         probs0 = 1.0 - probs1
         return self.log(probs1) * value + self.log(probs0) * (1.0 - value)
