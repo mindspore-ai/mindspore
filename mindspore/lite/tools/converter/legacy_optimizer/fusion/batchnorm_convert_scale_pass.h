@@ -36,7 +36,7 @@ class BatchNormConvertScalePass : public FusionPass {
  public:
   BatchNormConvertScalePass() = default;
 
-  ~BatchNormConvertScalePass() override;
+  ~BatchNormConvertScalePass() = default;
 
   STATUS DefinePattern() override;
 
