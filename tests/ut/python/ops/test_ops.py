@@ -1275,6 +1275,13 @@ test_case_math_ops = [
         'block': P.Mod(),
         'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
         'desc_bprop': [[2, 3, 4, 5]]}),
+    ('IFMR', {
+        'block': P.IFMR(min_percentile=0.2, max_percentile=0.9, search_range=(1.0, 2.0),
+                        search_step=1.0, with_offset=False),
+        'desc_inputs': [[3, 4, 5], Tensor([0.1], mstype.float32), Tensor([0.9], mstype.float32),
+                        Tensor(np.random.rand(4).astype(np.int32))],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_nn_ops = [
