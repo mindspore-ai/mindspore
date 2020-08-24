@@ -17,6 +17,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
+
 def exp_by_step(input_x):
     """
     Log op on Ascend doesn't supprot int types.
@@ -24,22 +25,17 @@ def exp_by_step(input_x):
     """
     exp = P.Exp()
     cast = P.Cast()
-    dtype = P.DType()
-    checktype = P.IsSubClass()
 
-    if checktype(dtype(input_x), mstype.int_):
-        input_x = cast(input_x, mstype.float32)
-    elif checktype(dtype(input_x), mstype.float_):
-        pass
-    else:
-        return None
+    input_x = cast(input_x, mstype.float32)
     return exp(input_x)
+
 
 def expm1_by_step(input_x):
     """
     Expm1 ops under GPU context.
     """
     return exp_by_step(input_x) - 1.0
+
 
 def log_by_step(input_x):
     """
@@ -56,14 +52,8 @@ def log_by_step(input_x):
     dtype = P.DType()
     shape = P.Shape()
     select = P.Select()
-    checktype = P.IsSubClass()
 
-    if checktype(dtype(input_x), mstype.int_):
-        input_x = cast(input_x, mstype.float32)
-    elif checktype(dtype(input_x), mstype.float_):
-        pass
-    else:
-        return None
+    input_x = cast(input_x, mstype.float32)
     nan = fill(dtype(input_x), shape(input_x), np.nan)
     inf = fill(dtype(input_x), shape(input_x), np.inf)
     neg_x = less(input_x, 0.0)
@@ -71,6 +61,7 @@ def log_by_step(input_x):
     log_x = log(input_x)
     result = select(nonpos_x, -inf, log_x)
     return select(neg_x, nan, result)
+
 
 def log1p_by_step(x):
     """
