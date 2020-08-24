@@ -12,7 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Preprocess data obtained for training"""
+"""
+Preprocess data obtained for training
+Cora and Citeseer datasets are supported by our example, the original versions of these datasets are as follows:
+@inproceedings{nr,
+    title={The Network Data Repository with Interactive Graph Analytics and Visualization},
+    author={Ryan A. Rossi and Nesreen K. Ahmed},
+    booktitle={AAAI},
+    url={http://networkrepository.com},
+    year={2015}
+}
+In this example, we use dataset splits provided by https://github.com/kimiyoung/planetoid (Zhilin Yang, William W. Cohen, Ruslan Salakhutdinov, [Revisiting Semi-Supervised Learning with Graph Embeddings](https://arxiv.org/abs/1603.08861), ICML 2016).
+"""
 import numpy as np
 import mindspore.dataset as ds
 
