@@ -481,13 +481,7 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
     if (op_info != nullptr) {
       is_ref = op_info->is_ref();
     }
-    MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-    if (MsContext::GetInstance()->execution_mode() == kPynativeMode &&
-        AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown) {
-      continue;
-    }
-    if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) != kTypeUnknown &&
-        AnfAlgo::OutputAddrExist(real_input_node, 0)) {
+    if (AnfAlgo::OutputAddrExist(real_input_node, 0)) {
       continue;
     }
     if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {

@@ -19,6 +19,8 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "base/core_ops.h"
+#include "frontend/operator/ops.h"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -32,21 +34,21 @@ const AnfNodePtr RemoveReshapePair::Process(const FuncGraphPtr &func_graph, cons
                                             const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
-  auto reshape_op_1 = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputNum);
-  MS_EXCEPTION_IF_NULL(reshape_op_1);
+  auto out_reshape = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputNum);
+  MS_EXCEPTION_IF_NULL(out_reshape);
   // If reshape operator used by more than one other operators, reshape operator cant not be deleted  directly
-  if (IsUsedByOthers(func_graph, reshape_op_1)) {
+  if (IsUsedByOthers(func_graph, out_reshape)) {
     return nullptr;
   }
-  auto reshape_op_2 = CheckAnfNodeIfCNodeAndInputSize(reshape_op_1->input(1), kBackendReshapeInputNum);
-  MS_EXCEPTION_IF_NULL(reshape_op_2);
-  if (IsUsedByOthers(func_graph, reshape_op_2)) {
+  auto in_reshape = CheckAnfNodeIfCNodeAndInputSize(AnfAlgo::GetInputNode(out_reshape, 0), kBackendReshapeInputNum);
+  MS_EXCEPTION_IF_NULL(in_reshape);
+  if (IsUsedByOthers(func_graph, in_reshape)) {
     return nullptr;
   }
-  auto output_shape = AnfAlgo::GetOutputDeviceShape(reshape_op_2, 0);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(reshape_op_1, 0);
-  if (input_shape == output_shape) {
-    auto input_node = reshape_op_2->input(1);
+  auto output_shape = AnfAlgo::GetOutputDeviceShape(out_reshape, 0);
+  auto input_shape = AnfAlgo::GetInputDeviceShape(in_reshape, 0);
+  if (kernel::IsSameShape(input_shape, output_shape)) {
+    auto input_node = AnfAlgo::GetInputNode(in_reshape, 0);
     return input_node;
   }
   return nullptr;

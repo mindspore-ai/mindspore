@@ -87,6 +87,7 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     new_transdata_node =
       NewTransOpNode(func_graph, new_transpose_node, kernel_select_, false, prim::KPrimTransData->name());
     RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node);
+    new_transdata_node->set_abstract(node->abstract());
     new_replace_node = new_transdata_node;
   }
   FuncGraphManagerPtr manager = func_graph->manager();

@@ -106,12 +106,12 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Create tensor for output[" << node->DebugString() << "] index[" << output_index << "]";
   // if node is a value node, no need sync addr from device to host
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    return value_node->value();
+  }
   if (!AnfAlgo::OutputAddrExist(node, output_index)) {
-    if (node->isa<ValueNode>()) {
-      auto value_node = node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      return value_node->value();
-    }
     if (node->isa<Parameter>()) {
       for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
         if (input_idx >= input_tensors.size()) {
@@ -252,6 +252,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
     kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
+    AnfAlgo::SetOutputAddr(device_address, 0, param.get());
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter
