@@ -506,6 +506,8 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->pad_d_ = deconv_lite_primitive->PadDown();
   conv_param->pad_l_ = deconv_lite_primitive->PadLeft();
   conv_param->pad_r_ = deconv_lite_primitive->PadRight();
+  conv_param->pad_h_ = deconv_lite_primitive->PadH();
+  conv_param->pad_w_ = deconv_lite_primitive->PadW();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
   auto act_type = conv_primitive->GetActivationType();
@@ -523,26 +525,6 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
       conv_param->is_relu6_ = false;
       break;
   }
-
-  auto pad_mode = conv_primitive->GetPadMode();
-  switch (pad_mode) {
-    case schema::PadMode_SAME:
-      conv_param->pad_h_ = (conv_param->kernel_h_ - 1) / 2;
-      conv_param->pad_w_ = (conv_param->kernel_w_ - 1) / 2;
-      break;
-    case schema::PadMode_VALID:
-      conv_param->pad_h_ = 0;
-      conv_param->pad_w_ = 0;
-      break;
-    case schema::PadMode_CAFFE:
-      conv_param->pad_h_ = conv_param->pad_u_;
-      conv_param->pad_w_ = conv_param->pad_l_;
-      break;
-    default:
-      MS_LOG(ERROR) << "invalid pad mode!";
-      return nullptr;
-  }
-
   return reinterpret_cast<OpParameter *>(conv_param);
 }
 

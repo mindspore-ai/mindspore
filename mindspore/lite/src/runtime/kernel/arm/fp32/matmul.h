@@ -43,8 +43,10 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
  private:
   float *a_c12_ptr_ = nullptr;
   float *b_r8_ptr_ = nullptr;
-  float *c_r_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
+  float *a_ptr_ = nullptr;
+  float *b_ptr_ = nullptr;
+  float *c_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
