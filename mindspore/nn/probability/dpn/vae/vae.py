@@ -29,7 +29,7 @@ class VAE(Cell):
 
     Note:
         When define the encoder and decoder, the shape of the encoder's output tensor and decoder's input tensor
-        should be :math:`(N, hidden_size)`.
+        should be :math:`(N, hidden\_size)`.
         The latent_size should be less than or equal to the hidden_size.
 
     Args:
@@ -39,7 +39,7 @@ class VAE(Cell):
         latent_size(int): The size of the latent space.
 
     Inputs:
-        - **input** (Tensor) - the same shape as the input of encoder.
+        - **input** (Tensor) - the same shape as the input of encoder, the shape is :math:`(N, C, H, W)`.
 
     Outputs:
         - **output** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
@@ -106,7 +106,7 @@ class VAE(Cell):
         Reconstruct sample from original data.
 
         Args:
-            x (Tensor): The input tensor to be reconstructed.
+            x (Tensor): The input tensor to be reconstructed, the shape is (N, C, H, W).
 
         Returns:
             Tensor, the reconstructed sample.
