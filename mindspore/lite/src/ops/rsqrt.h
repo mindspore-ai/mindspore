@@ -28,6 +28,7 @@ namespace lite {
 class Rsqrt : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Rsqrt, ArithmeticSelf);
   Rsqrt() = default;
   explicit Rsqrt(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

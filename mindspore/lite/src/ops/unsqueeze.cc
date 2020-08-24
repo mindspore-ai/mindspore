@@ -33,7 +33,6 @@ std::vector<int> Unsqueeze::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Unsqueeze::SetAxis(const std::vector<int> &axis) {}
 #endif
 
 int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

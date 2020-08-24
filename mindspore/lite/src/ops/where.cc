@@ -32,7 +32,6 @@ std::vector<bool> Where::GetCondition() const {
   return std::vector<bool>(fb_vector->begin(), fb_vector->end());
 }
 
-void Where::SetCondition(const std::vector<bool> &condition) {}
 #endif
 
 int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

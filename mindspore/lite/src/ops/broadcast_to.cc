@@ -32,7 +32,6 @@ std::vector<int> BroadcastTo::GetDstShape() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void BroadcastTo::SetDstShape(const std::vector<int> &dst_shape) {}
 #endif
 namespace {
 constexpr int kBroadcastToInputNum = 1;

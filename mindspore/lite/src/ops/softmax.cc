@@ -27,7 +27,6 @@ void SoftMax::SetAxis(int axis) { this->primitive_->value.AsSoftMax()->axis = ax
 
 int SoftMax::GetAxis() const { return this->primitive_->value_as_SoftMax()->axis(); }
 
-void SoftMax::SetAxis(int axis) {}
 #endif
 
 int SoftMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

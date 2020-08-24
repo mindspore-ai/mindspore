@@ -21,10 +21,30 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Dequant::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::OnnxInt8DequantizeT>();
-  this->primitive_->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
-  this->primitive_->value.value = attr.release();
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_OnnxInt8Dequantize) {
+    MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow)(schema::OnnxInt8DequantizeT);
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "attr is nullptr";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 #endif

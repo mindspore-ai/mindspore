@@ -33,9 +33,6 @@ int ROIPooling::GetPooledH() const { return this->primitive_->value_as_ROIPoolin
 int ROIPooling::GetPooledW() const { return this->primitive_->value_as_ROIPooling()->pooledW(); }
 float ROIPooling::GetScale() const { return this->primitive_->value_as_ROIPooling()->scale(); }
 
-void ROIPooling::SetPooledH(int pooled_h) {}
-void ROIPooling::SetPooledW(int pooled_w) {}
-void ROIPooling::SetScale(float scale) {}
 #endif
 
 int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

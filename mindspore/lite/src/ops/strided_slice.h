@@ -28,8 +28,18 @@ namespace lite {
 class StridedSlice : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(StridedSlice, PrimitiveC);
   StridedSlice() = default;
   explicit StridedSlice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBeginMask(int begin_mask);
+  void SetEndMask(int end_mask);
+  void SetEllipsisMask(int ellipsis_mask);
+  void SetNewAxisMask(int new_axis_mask);
+  void SetShrinkAxisMask(int shrink_axis_mask);
+  void SetBegin(const std::vector<int> &begin);
+  void SetEnd(const std::vector<int> &end);
+  void SetStride(const std::vector<int> &stride);
+  void SetIsScale(const std::vector<int> &is_scale);
 #else
   explicit StridedSlice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -43,15 +53,6 @@ class StridedSlice : public PrimitiveC {
   std::vector<int> GetEnd() const;
   std::vector<int> GetStride() const;
   std::vector<int> GetIsScale() const;
-  void SetBeginMask(int begin_mask);
-  void SetEndMask(int end_mask);
-  void SetEllipsisMask(int ellipsis_mask);
-  void SetNewAxisMask(int new_axis_mask);
-  void SetShrinkAxisMask(int shrink_axis_mask);
-  void SetBegin(const std::vector<int> &begin);
-  void SetEnd(const std::vector<int> &end);
-  void SetStride(const std::vector<int> &stride);
-  void SetIsScale(const std::vector<int> &is_scale);
 
   int NDims() { return this->ndim_; }
   void ApplyNewAxisMask();

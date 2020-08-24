@@ -33,8 +33,6 @@ std::vector<int64_t> Crop::GetOffsets() const {
   return std::vector<int64_t>(fb_vector->begin(), fb_vector->end());
 }
 
-void Crop::SetAxis(int64_t axis) {}
-void Crop::SetOffsets(const std::vector<int64_t> &offsets) {}
 #endif
 namespace {
 constexpr int kCropOutputNum = 1;

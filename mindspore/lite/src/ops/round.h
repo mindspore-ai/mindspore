@@ -28,6 +28,7 @@ namespace lite {
 class Round : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Round, ArithmeticSelf);
   Round() = default;
   explicit Round(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

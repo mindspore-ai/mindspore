@@ -36,10 +36,6 @@ int Range::GetStart() const { return this->primitive_->value_as_Range()->start()
 int Range::GetLimit() const { return this->primitive_->value_as_Range()->limit(); }
 int Range::GetDelta() const { return this->primitive_->value_as_Range()->delta(); }
 
-void Range::SetDType(int d_type) {}
-void Range::SetStart(int start) {}
-void Range::SetLimit(int limit) {}
-void Range::SetDelta(int delta) {}
 #endif
 
 int Range::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

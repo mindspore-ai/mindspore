@@ -27,7 +27,6 @@ void Eltwise::SetMode(int mode) { this->primitive_->value.AsEltwise()->mode = (s
 
 int Eltwise::GetMode() const { return this->primitive_->value_as_Eltwise()->mode(); }
 
-void Eltwise::SetMode(int mode) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -39,11 +39,6 @@ int ArgMin::GetTopK() const { return this->primitive_->value_as_ArgMin()->topK()
 bool ArgMin::GetKeepDims() const { return this->primitive_->value_as_ArgMin()->keepDims(); }
 int ArgMin::GetAxisType() const { return this->primitive_->value_as_ArgMin()->axisType(); }
 
-void ArgMin::SetAxis(int axis) {}
-void ArgMin::SetOutMaxValue(bool out_max_value) {}
-void ArgMin::SetTopK(int top_k) {}
-void ArgMin::SetKeepDims(bool keep_dims) {}
-void ArgMin::SetAxisType(int axis_type) {}
 #endif
 
 int ArgMin::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {

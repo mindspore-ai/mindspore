@@ -28,17 +28,18 @@ namespace lite {
 class Transpose : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Transpose, PrimitiveC);
   Transpose() = default;
   explicit Transpose(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void SetPerm(const std::vector<int> &perm);
+  void SetConjugate(bool conjugate);
 #else
   explicit Transpose(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetPerm() const;
   bool GetConjugate() const;
-  void SetPerm(const std::vector<int> &perm);
-  void SetConjugate(bool conjugate);
 };
 }  // namespace lite
 }  // namespace mindspore

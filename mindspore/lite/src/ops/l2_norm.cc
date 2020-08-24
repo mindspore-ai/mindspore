@@ -33,8 +33,6 @@ std::vector<int> L2Norm::GetAxis() const {
 }
 float L2Norm::GetEpsilon() const { return this->primitive_->value_as_L2Norm()->epsilon(); }
 
-void L2Norm::SetAxis(const std::vector<int> &axis) {}
-void L2Norm::SetEpsilon(float epsilon) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

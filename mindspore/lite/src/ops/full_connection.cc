@@ -37,10 +37,6 @@ int FullConnection::GetAxis() const { return this->primitive_->value_as_FullConn
 bool FullConnection::GetUseAxis() const { return this->primitive_->value_as_FullConnection()->useAxis(); }
 int FullConnection::GetActivationType() const { return this->primitive_->value_as_FullConnection()->activationType(); }
 
-void FullConnection::SetHasBias(bool has_bias) {}
-void FullConnection::SetAxis(int axis) {}
-void FullConnection::SetUseAxis(bool use_axis) {}
-void FullConnection::SetActivationType(int activationType) {}
 #endif
 int FullConnection::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
                                std::vector<lite::tensor::Tensor *> outputs_) {

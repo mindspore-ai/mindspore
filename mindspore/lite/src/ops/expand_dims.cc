@@ -27,7 +27,6 @@ void ExpandDims::SetDim(int dim) { this->primitive_->value.AsExpandDims()->dim =
 
 int ExpandDims::GetDim() const { return this->primitive_->value_as_ExpandDims()->dim(); }
 
-void ExpandDims::SetDim(int dim) {}
 #endif
 
 int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

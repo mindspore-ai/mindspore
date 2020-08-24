@@ -28,8 +28,26 @@ namespace lite {
 class Conv2DGradFilter : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Conv2DGradFilter, PrimitiveC);
   Conv2DGradFilter() = default;
   explicit Conv2DGradFilter(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetGroup(int group);
+  void SetChannelIn(int channel_in);
+  void SetChannelOut(int channel_out);
+  void SetKernelW(int kernel_w);
+  void SetKernelH(int kernel_h);
+  void SetStrideW(int stride_w);
+  void SetStrideH(int stride_h);
+  void SetPadMode(int pad_mode);
+  void SetPadUp(int pad_up);
+  void SetPadDown(int pad_down);
+  void SetPadLeft(int pad_left);
+  void SetPadRight(int pad_right);
+  void SetDilateW(int dilate_w);
+  void SetDilateH(int dilate_h);
+  void SetHasBias(bool has_bias);
+  void SetActivationType(int activation_type);
 #else
   explicit Conv2DGradFilter(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -50,23 +68,6 @@ class Conv2DGradFilter : public PrimitiveC {
   int GetDilateH() const;
   bool GetHasBias() const;
   int GetActivationType() const;
-  void SetFormat(int format);
-  void SetGroup(int group);
-  void SetChannelIn(int channel_in);
-  void SetChannelOut(int channel_out);
-  void SetKernelW(int kernel_w);
-  void SetKernelH(int kernel_h);
-  void SetStrideW(int stride_w);
-  void SetStrideH(int stride_h);
-  void SetPadMode(int pad_mode);
-  void SetPadUp(int pad_up);
-  void SetPadDown(int pad_down);
-  void SetPadLeft(int pad_left);
-  void SetPadRight(int pad_right);
-  void SetDilateW(int dilate_w);
-  void SetDilateH(int dilate_h);
-  void SetHasBias(bool has_bias);
-  void SetActivationType(int activation_type);
 };
 }  // namespace lite
 }  // namespace mindspore

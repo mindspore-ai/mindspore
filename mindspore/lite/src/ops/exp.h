@@ -28,6 +28,7 @@ namespace lite {
 class Exp : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Exp, ArithmeticSelf);
   Exp() = default;
   explicit Exp(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

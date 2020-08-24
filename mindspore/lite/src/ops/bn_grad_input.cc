@@ -30,8 +30,6 @@ void BNGradInput::SetChannels(int channels) { this->primitive_->value.AsBNGradIn
 float BNGradInput::GetEps() const { return this->primitive_->value_as_BNGradInput()->eps(); }
 int BNGradInput::GetChannels() const { return this->primitive_->value_as_BNGradInput()->channels(); }
 
-void BNGradInput::SetEps(float eps) {}
-void BNGradInput::SetChannels(int channels) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

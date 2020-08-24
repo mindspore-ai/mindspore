@@ -27,10 +27,14 @@ namespace mindspore {
 namespace lite {
 class MatMul : public PrimitiveC {
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(MatMul, PrimitiveC);
+
  public:
   MatMul() = default;
   explicit MatMul(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void SetTransposeA(bool transpose_a);
+  void SetTransposeB(bool transpose_b);
 
  private:
   void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
@@ -46,8 +50,6 @@ class MatMul : public PrimitiveC {
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool GetTransposeA() const;
   bool GetTransposeB() const;
-  void SetTransposeA(bool transpose_a);
-  void SetTransposeB(bool transpose_b);
 };
 }  // namespace lite
 }  // namespace mindspore

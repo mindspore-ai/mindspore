@@ -28,13 +28,14 @@ namespace lite {
 class ActivationGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ActivationGrad, PrimitiveC);
   ActivationGrad() = default;
   explicit ActivationGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetType(int type);
 #else
   explicit ActivationGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int GetType() const;
-  void SetType(int type);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -27,7 +27,6 @@ void OneHot::SetAxis(int axis) { this->primitive_->value.AsOneHot()->axis = axis
 
 int OneHot::GetAxis() const { return this->primitive_->value_as_OneHot()->axis(); }
 
-void OneHot::SetAxis(int axis) {}
 #endif
 
 namespace {

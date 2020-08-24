@@ -28,8 +28,12 @@ namespace lite {
 class Split : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Split, PrimitiveC);
   Split() = default;
   explicit Split(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetNumberSplit(int number_split);
+  void SetSizeSplits(const std::vector<int> &size_splits);
+  void SetSplitDim(int split_dim);
 #else
   explicit Split(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class Split : public PrimitiveC {
   int GetNumberSplit() const;
   std::vector<int> GetSizeSplits() const;
   int GetSplitDim() const;
-  void SetNumberSplit(int number_split);
-  void SetSizeSplits(const std::vector<int> &size_splits);
-  void SetSplitDim(int split_dim);
 };
 }  // namespace lite
 }  // namespace mindspore

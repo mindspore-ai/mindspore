@@ -36,9 +36,6 @@ std::vector<int> Stack::GetIsScale() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Stack::SetAxis(int axis) {}
-void Stack::SetN(int n) {}
-void Stack::SetIsScale(const std::vector<int> &is_scale) {}
 #endif
 
 namespace {

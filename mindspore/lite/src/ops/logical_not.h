@@ -28,6 +28,7 @@ namespace lite {
 class LogicalNot : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(LogicalNot, ArithmeticSelf);
   LogicalNot() = default;
   explicit LogicalNot(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

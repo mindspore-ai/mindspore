@@ -19,11 +19,6 @@
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/arithmetic_self.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
 
 #ifndef LITE_MINDSPORE_LITE_C_OPS_ABS_H_
 #define LITE_MINDSPORE_LITE_C_OPS_ABS_H_
@@ -33,6 +28,7 @@ namespace lite {
 class Abs : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Abs, ArithmeticSelf);
   Abs() = default;
   explicit Abs(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

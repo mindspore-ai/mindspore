@@ -28,8 +28,14 @@ namespace lite {
 class ArgMin : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ArgMin, PrimitiveC);
   ArgMin() = default;
   explicit ArgMin(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+  void SetOutMaxValue(bool out_max_value);
+  void SetTopK(int top_k);
+  void SetKeepDims(bool keep_dims);
+  void SetAxisType(int axis_type);
 #else
   explicit ArgMin(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -39,11 +45,6 @@ class ArgMin : public PrimitiveC {
   int GetTopK() const;
   bool GetKeepDims() const;
   int GetAxisType() const;
-  void SetAxis(int axis);
-  void SetOutMaxValue(bool out_max_value);
-  void SetTopK(int top_k);
-  void SetKeepDims(bool keep_dims);
-  void SetAxisType(int axis_type);
 };
 }  // namespace lite
 }  // namespace mindspore

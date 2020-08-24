@@ -28,6 +28,7 @@ namespace lite {
 class Maximum : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Activation, Arithmetic);
   Maximum() = default;
   explicit Maximum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

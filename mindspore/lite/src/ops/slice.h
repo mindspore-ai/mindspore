@@ -28,8 +28,12 @@ namespace lite {
 class Slice : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Slice, PrimitiveC);
   Slice() = default;
   explicit Slice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetBegin(const std::vector<int> &begin);
+  void SetSize(const std::vector<int> &size);
 #else
   explicit Slice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class Slice : public PrimitiveC {
   int GetFormat() const;
   std::vector<int> GetBegin() const;
   std::vector<int> GetSize() const;
-  void SetFormat(int format);
-  void SetBegin(const std::vector<int> &begin);
-  void SetSize(const std::vector<int> &size);
 };
 }  // namespace lite
 }  // namespace mindspore

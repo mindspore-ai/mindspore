@@ -28,6 +28,7 @@ namespace lite {
 class Sin : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Sin, ArithmeticSelf);
   Sin() = default;
   explicit Sin(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

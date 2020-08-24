@@ -30,8 +30,6 @@ void Clip::SetMin(float min) { this->primitive_->value.AsClip()->min = min; }
 float Clip::GetMax() const { return this->primitive_->value_as_Clip()->max(); }
 float Clip::GetMin() const { return this->primitive_->value_as_Clip()->min(); }
 
-void Clip::SetMax(float max) {}
-void Clip::SetMin(float min) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -29,7 +29,6 @@ void ActivationGrad::SetType(int type) {
 
 int ActivationGrad::GetType() const { return this->primitive_->value_as_ActivationGrad()->type(); }
 
-void ActivationGrad::SetType(int type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

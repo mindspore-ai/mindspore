@@ -28,14 +28,16 @@ namespace lite {
 class Unique : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Unique, PrimitiveC);
   Unique() = default;
   explicit Unique(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetOutType(int out_type);
+
 #else
   explicit Unique(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetOutType() const;
-  void SetOutType(int out_type);
 };
 }  // namespace lite
 }  // namespace mindspore

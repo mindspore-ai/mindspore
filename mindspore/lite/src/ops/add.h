@@ -22,25 +22,21 @@
 #include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/arithmetic.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "schema/inner/model_generated.h"
-#else
-#include "schema/model_generated.h"
-#endif
 
 namespace mindspore {
 namespace lite {
 class Add : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Add, Arithmetic);
   Add() = default;
   explicit Add(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void SetActivationType(int activation_type);
 #else
   explicit Add(schema::Primitive *primitive) : Arithmetic(primitive) {}
 #endif
   int GetActivationType() const;
-  void SetActivationType(int activation_type);
 };
 }  // namespace lite
 }  // namespace mindspore

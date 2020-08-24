@@ -44,12 +44,6 @@ int64_t Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()
 bool Resize::GetAlignCorners() const { return this->primitive_->value_as_Resize()->alignCorners(); }
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value_as_Resize()->preserveAspectRatio(); }
 
-void Resize::SetFormat(int format) {}
-void Resize::SetMethod(int method) {}
-void Resize::SetNewHeight(int64_t new_height) {}
-void Resize::SetNewWidth(int64_t new_width) {}
-void Resize::SetAlignCorners(bool align_corners) {}
-void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {}
 #endif
 namespace {
 constexpr int kInputRank = 4;

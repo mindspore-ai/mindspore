@@ -28,6 +28,7 @@ namespace lite {
 class Nchw2Nhwc : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Nchw2Nhwc, PrimitiveC);
   Nchw2Nhwc() = default;
   explicit Nchw2Nhwc(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

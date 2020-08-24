@@ -60,10 +60,6 @@ float LocalResponseNormalization::GetBeta() const {
   return this->primitive_->value_as_LocalResponseNormalization()->beta();
 }
 
-void LocalResponseNormalization::SetDepthRadius(int depth_radius) {}
-void LocalResponseNormalization::SetBias(float bias) {}
-void LocalResponseNormalization::SetAlpha(float alpha) {}
-void LocalResponseNormalization::SetBeta(float beta) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

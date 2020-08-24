@@ -20,21 +20,23 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
 class Dropout : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Dropout, PrimitiveC);
   Dropout() = default;
   explicit Dropout(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetRatio(float ratio);
+
 #else
   explicit Dropout(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   float GetRatio() const;
-  void SetRatio(float ratio);
 };
 }  // namespace lite
 }  // namespace mindspore

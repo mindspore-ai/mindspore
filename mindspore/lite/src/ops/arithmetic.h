@@ -28,6 +28,7 @@ namespace lite {
 class Arithmetic : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Arithmetic, PrimitiveC);
   Arithmetic() = default;
   explicit Arithmetic(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

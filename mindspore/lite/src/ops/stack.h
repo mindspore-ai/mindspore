@@ -28,8 +28,12 @@ namespace lite {
 class Stack : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Stack, PrimitiveC);
   Stack() = default;
   explicit Stack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+  void SetN(int n);
+  void SetIsScale(const std::vector<int> &is_scale);
 #else
   explicit Stack(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class Stack : public PrimitiveC {
   int GetAxis() const;
   int GetN() const;
   std::vector<int> GetIsScale() const;
-  void SetAxis(int axis);
-  void SetN(int n);
-  void SetIsScale(const std::vector<int> &is_scale);
 };
 }  // namespace lite
 }  // namespace mindspore

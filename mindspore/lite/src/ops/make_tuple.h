@@ -24,6 +24,7 @@ namespace lite {
 class MakeTuple : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(MakeTuple, PrimitiveC);
   MakeTuple() = default;
   explicit MakeTuple(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);

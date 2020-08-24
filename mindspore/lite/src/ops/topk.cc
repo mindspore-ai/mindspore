@@ -30,8 +30,6 @@ void TopK::SetSorted(bool sorted) { this->primitive_->value.AsTopK()->sorted = s
 int TopK::GetK() const { return this->primitive_->value_as_TopK()->k(); }
 bool TopK::GetSorted() const { return this->primitive_->value_as_TopK()->sorted(); }
 
-void TopK::SetK(int k) {}
-void TopK::SetSorted(bool sorted) {}
 #endif
 
 int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

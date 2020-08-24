@@ -28,16 +28,17 @@ namespace lite {
 class DepthToSpace : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(DepthToSpace, PrimitiveC);
   DepthToSpace() = default;
   explicit DepthToSpace(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBlockSize(int block_size);
+  void SetFormat(int format);
 #else
   explicit DepthToSpace(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBlockSize() const;
   int GetFormat() const;
-  void SetBlockSize(int block_size);
-  void SetFormat(int format);
 };
 }  // namespace lite
 }  // namespace mindspore

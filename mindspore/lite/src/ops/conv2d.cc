@@ -19,7 +19,6 @@
 #include <memory>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
@@ -309,8 +308,18 @@ void Conv2D::PopulaterQuantParam(const Primitive &prim,
 }
 
 int Conv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Conv2D;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Conv2D) {
+    MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
   int group = GetValue<int>(prim.GetAttr("group"));
   if (group > 1) {
     PopulaterConv2DMultiGroup(prim, this->primitive_, group, inputs);
@@ -348,23 +357,6 @@ int Conv2D::GetDilateH() const { return this->primitive_->value_as_Conv2D()->dil
 bool Conv2D::GetHasBias() const { return this->primitive_->value_as_Conv2D()->hasBias(); }
 int Conv2D::GetActivationType() const { return this->primitive_->value_as_Conv2D()->activationType(); }
 
-void Conv2D::SetFormat(int format) {}
-void Conv2D::SetGroup(int group) {}
-void Conv2D::SetChannelIn(int channel_in) {}
-void Conv2D::SetChannelOut(int channel_out) {}
-void Conv2D::SetKernelW(int kernel_w) {}
-void Conv2D::SetKernelH(int kernel_h) {}
-void Conv2D::SetStrideW(int stride_w) {}
-void Conv2D::SetStrideH(int stride_h) {}
-void Conv2D::SetPadMode(int pad_mode) {}
-void Conv2D::SetPadUp(int pad_up) {}
-void Conv2D::SetPadDown(int pad_down) {}
-void Conv2D::SetPadLeft(int pad_left) {}
-void Conv2D::SetPadRight(int pad_right) {}
-void Conv2D::SetDilateW(int dilate_w) {}
-void Conv2D::SetDilateH(int dilate_h) {}
-void Conv2D::SetHasBias(bool has_bias) {}
-void Conv2D::SetActivationType(int activation_type) {}
 #endif
 void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output_w) {
   MS_ASSERT(this->primitive_ != nullptr);

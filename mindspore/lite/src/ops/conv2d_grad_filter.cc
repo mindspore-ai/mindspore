@@ -89,23 +89,6 @@ int Conv2DGradFilter::GetActivationType() const {
   return this->primitive_->value_as_Conv2DGradFilter()->activationType();
 }
 
-void Conv2DGradFilter::SetFormat(int format) {}
-void Conv2DGradFilter::SetGroup(int group) {}
-void Conv2DGradFilter::SetChannelIn(int channel_in) {}
-void Conv2DGradFilter::SetChannelOut(int channel_out) {}
-void Conv2DGradFilter::SetKernelW(int kernel_w) {}
-void Conv2DGradFilter::SetKernelH(int kernel_h) {}
-void Conv2DGradFilter::SetStrideW(int stride_w) {}
-void Conv2DGradFilter::SetStrideH(int stride_h) {}
-void Conv2DGradFilter::SetPadMode(int pad_mode) {}
-void Conv2DGradFilter::SetPadUp(int pad_up) {}
-void Conv2DGradFilter::SetPadDown(int pad_down) {}
-void Conv2DGradFilter::SetPadLeft(int pad_left) {}
-void Conv2DGradFilter::SetPadRight(int pad_right) {}
-void Conv2DGradFilter::SetDilateW(int dilate_w) {}
-void Conv2DGradFilter::SetDilateH(int dilate_h) {}
-void Conv2DGradFilter::SetHasBias(bool has_bias) {}
-void Conv2DGradFilter::SetActivationType(int activation_type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

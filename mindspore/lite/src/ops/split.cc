@@ -38,9 +38,6 @@ std::vector<int> Split::GetSizeSplits() const {
 }
 int Split::GetSplitDim() const { return this->primitive_->value_as_Split()->splitDim(); }
 
-void Split::SetNumberSplit(int number_split) {}
-void Split::SetSizeSplits(const std::vector<int> &size_splits) {}
-void Split::SetSplitDim(int split_dim) {}
 #endif
 
 namespace {

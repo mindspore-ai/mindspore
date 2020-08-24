@@ -20,14 +20,15 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include "src/ops/arithmetic_self.h"
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
 class Ceil : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Ceil, ArithmeticSelf);
   Ceil() = default;
   explicit Ceil(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else

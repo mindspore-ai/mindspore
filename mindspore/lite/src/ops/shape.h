@@ -20,14 +20,15 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
 class Shape : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Shape, PrimitiveC);
   Shape() = default;
   explicit Shape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

@@ -28,14 +28,16 @@ namespace lite {
 class Lstm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Lstm, PrimitiveC);
   Lstm() = default;
   explicit Lstm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBidirection(bool bidirection);
+
 #else
   explicit Lstm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool GetBidirection() const;
-  void SetBidirection(bool bidirection);
 };
 }  // namespace lite
 }  // namespace mindspore

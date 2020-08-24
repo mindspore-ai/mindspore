@@ -30,7 +30,6 @@ std::vector<int> BiasGrad::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void BiasGrad::SetAxis(const std::vector<int> &axis) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

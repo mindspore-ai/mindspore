@@ -28,15 +28,16 @@ namespace lite {
 class SpaceToBatchND : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SpaceToBatchND, PrimitiveC);
   SpaceToBatchND() = default;
   explicit SpaceToBatchND(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBlockShape(const std::vector<int> &block_shape);
+  void SetPaddings(const std::vector<int> &paddings);
 #else
   explicit SpaceToBatchND(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;
-  void SetBlockShape(const std::vector<int> &block_shape);
-  void SetPaddings(const std::vector<int> &paddings);
 };
 }  // namespace lite
 }  // namespace mindspore

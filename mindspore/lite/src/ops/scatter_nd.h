@@ -28,6 +28,7 @@ namespace lite {
 class ScatterND : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ScatterND, PrimitiveC);
   ScatterND() = default;
   explicit ScatterND(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else

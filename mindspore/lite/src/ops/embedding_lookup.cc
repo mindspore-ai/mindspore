@@ -27,7 +27,6 @@ void EmbeddingLookup::SetMaxNorm(float max_norm) { this->primitive_->value.AsEmb
 
 float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value_as_EmbeddingLookup()->maxNorm(); }
 
-void EmbeddingLookup::SetMaxNorm(float max_norm) {}
 #endif
 
 int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

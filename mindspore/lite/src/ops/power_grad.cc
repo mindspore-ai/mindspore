@@ -33,9 +33,6 @@ float PowerGrad::GetPower() const { return this->primitive_->value_as_PowerGrad(
 float PowerGrad::GetScale() const { return this->primitive_->value_as_PowerGrad()->scale(); }
 float PowerGrad::GetShift() const { return this->primitive_->value_as_PowerGrad()->shift(); }
 
-void PowerGrad::SetPower(float power) {}
-void PowerGrad::SetScale(float scale) {}
-void PowerGrad::SetShift(float shift) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

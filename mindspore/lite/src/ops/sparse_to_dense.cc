@@ -59,10 +59,6 @@ std::vector<int> SparseToDense::GetDefaultValue() const {
 }
 bool SparseToDense::GetValidateIndices() const { return this->primitive_->value_as_SparseToDense()->validateIndices(); }
 
-void SparseToDense::SetOutputShape(const std::vector<int> &output_shape) {}
-void SparseToDense::SetSparseValue(const std::vector<int> &sparse_value) {}
-void SparseToDense::SetDefaultValue(const std::vector<int> &default_value) {}
-void SparseToDense::SetValidateIndices(bool validate_indices) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -77,23 +77,6 @@ int DeConv2D::GetDilateH() const { return this->primitive_->value_as_DeConv2D()-
 bool DeConv2D::GetHasBias() const { return this->primitive_->value_as_DeConv2D()->hasBias(); }
 int DeConv2D::GetActivationType() const { return this->primitive_->value_as_DeConv2D()->activationType(); }
 
-void DeConv2D::SetFormat(int format) {}
-void DeConv2D::SetGroup(int group) {}
-void DeConv2D::SetChannelIn(int channel_in) {}
-void DeConv2D::SetChannelOut(int channel_out) {}
-void DeConv2D::SetKernelW(int kernel_w) {}
-void DeConv2D::SetKernelH(int kernel_h) {}
-void DeConv2D::SetStrideW(int stride_w) {}
-void DeConv2D::SetStrideH(int stride_h) {}
-void DeConv2D::SetPadMode(int pad_mode) {}
-void DeConv2D::SetPadUp(int pad_up) {}
-void DeConv2D::SetPadDown(int pad_down) {}
-void DeConv2D::SetPadLeft(int pad_left) {}
-void DeConv2D::SetPadRight(int pad_right) {}
-void DeConv2D::SetDilateW(int dilate_w) {}
-void DeConv2D::SetDilateH(int dilate_h) {}
-void DeConv2D::SetHasBias(bool has_bias) {}
-void DeConv2D::SetActivationType(int activation_type) {}
 #endif
 int DeConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);

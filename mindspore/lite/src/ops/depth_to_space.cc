@@ -30,8 +30,6 @@ void DepthToSpace::SetFormat(int format) { this->primitive_->value.AsDepthToSpac
 int DepthToSpace::GetBlockSize() const { return this->primitive_->value_as_DepthToSpace()->blockSize(); }
 int DepthToSpace::GetFormat() const { return this->primitive_->value_as_DepthToSpace()->format(); }
 
-void DepthToSpace::SetBlockSize(int block_size) {}
-void DepthToSpace::SetFormat(int format) {}
 #endif
 namespace {
 constexpr int kDepthToSpaceOutputNum = 1;

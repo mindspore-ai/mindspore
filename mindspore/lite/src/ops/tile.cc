@@ -35,14 +35,11 @@ std::vector<int> Tile::GetMultiples() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Tile::SetMultiples(const std::vector<int> &multiples) {}
-
 std::vector<int> Tile::GetDims() const {
   auto fb_vector = this->primitive_->value_as_Tile()->dims();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void Tile::SetDims(const std::vector<int> &dims) {}
 #endif
 
 int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

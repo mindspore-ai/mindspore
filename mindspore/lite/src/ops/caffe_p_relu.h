@@ -28,13 +28,15 @@ namespace lite {
 class CaffePReLU : public Activation {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(CaffePReLU, Activation);
   CaffePReLU() = default;
   explicit CaffePReLU(schema::PrimitiveT *primitive) : Activation(primitive) {}
+  void SetChannelShared(bool channel_shared);
+
 #else
   explicit CaffePReLU(schema::Primitive *primitive) : Activation(primitive) {}
 #endif
   bool GetChannelShared() const;
-  void SetChannelShared(bool channel_shared);
 };
 }  // namespace lite
 }  // namespace mindspore

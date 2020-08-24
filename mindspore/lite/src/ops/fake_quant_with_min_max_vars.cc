@@ -40,8 +40,6 @@ int FakeQuantWithMinMaxVars::GetNumBits() const {
   return this->primitive_->value_as_FakeQuantWithMinMaxVars()->numBits();
 }
 
-void FakeQuantWithMinMaxVars::SetNarrowRange(bool narrow_range) {}
-void FakeQuantWithMinMaxVars::SetNumBits(int num_bits) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

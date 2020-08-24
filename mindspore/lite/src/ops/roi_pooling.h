@@ -28,8 +28,12 @@ namespace lite {
 class ROIPooling : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ROIPooling, PrimitiveC);
   ROIPooling() = default;
   explicit ROIPooling(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPooledH(int pooled_h);
+  void SetPooledW(int pooled_w);
+  void SetScale(float scale);
 #else
   explicit ROIPooling(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -37,9 +41,6 @@ class ROIPooling : public PrimitiveC {
   int GetPooledH() const;
   int GetPooledW() const;
   float GetScale() const;
-  void SetPooledH(int pooled_h);
-  void SetPooledW(int pooled_w);
-  void SetScale(float scale);
 };
 }  // namespace lite
 }  // namespace mindspore

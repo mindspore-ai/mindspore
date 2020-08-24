@@ -27,7 +27,6 @@ void GatherNd::SetBatchDims(int batch_dims) { this->primitive_->value.AsGatherNd
 
 int GatherNd::GetBatchDims() const { return this->primitive_->value_as_GatherNd()->batchDims(); }
 
-void GatherNd::SetBatchDims(int batch_dims) {}
 #endif
 
 int GatherNd::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

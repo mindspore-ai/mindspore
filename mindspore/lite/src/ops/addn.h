@@ -28,14 +28,15 @@ namespace lite {
 class AddN : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(AddN, PrimitiveC);
   AddN() = default;
   explicit AddN(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetN(int n);
 #else
   explicit AddN(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetN() const;
-  void SetN(int n);
 };
 }  // namespace lite
 }  // namespace mindspore

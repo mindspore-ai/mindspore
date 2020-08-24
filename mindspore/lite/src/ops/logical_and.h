@@ -28,6 +28,7 @@ namespace lite {
 class LogicalAnd : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(LogicalAnd, Arithmetic);
   LogicalAnd() = default;
   explicit LogicalAnd(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

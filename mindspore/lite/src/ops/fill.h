@@ -28,14 +28,16 @@ namespace lite {
 class Fill : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Fill, PrimitiveC);
   Fill() = default;
   explicit Fill(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetDims(const std::vector<int> &dims);
+
 #else
   explicit Fill(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetDims() const;
-  void SetDims(const std::vector<int> &dims);
 };
 }  // namespace lite
 }  // namespace mindspore

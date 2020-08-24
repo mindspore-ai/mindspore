@@ -33,9 +33,6 @@ float FusedBatchNorm::GetEpsilon() const { return this->primitive_->value_as_Fus
 float FusedBatchNorm::GetMomentum() const { return this->primitive_->value_as_FusedBatchNorm()->momentum(); }
 int FusedBatchNorm::GetSpatial() const { return this->primitive_->value_as_FusedBatchNorm()->spatial(); }
 
-void FusedBatchNorm::SetEpsilon(float epsilon) {}
-void FusedBatchNorm::SetMomentum(float momentum) {}
-void FusedBatchNorm::SetSpatial(int spatial) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

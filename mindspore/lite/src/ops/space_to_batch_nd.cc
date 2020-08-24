@@ -42,8 +42,6 @@ std::vector<int> SpaceToBatchND::GetPaddings() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void SpaceToBatchND::SetBlockShape(const std::vector<int> &block_shape) {}
-void SpaceToBatchND::SetPaddings(const std::vector<int> &paddings) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

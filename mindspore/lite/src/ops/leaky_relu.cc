@@ -29,7 +29,6 @@ void LeakyReLU::SetNegativeSlope(float negative_slope) {
 
 float LeakyReLU::GetNegativeSlope() const { return this->primitive_->value_as_LeakyReLU()->negativeSlope(); }
 
-void LeakyReLU::SetNegativeSlope(float negative_slope) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

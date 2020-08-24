@@ -27,7 +27,6 @@ void Elu::SetAlpha(float alpha) { this->primitive_->value.AsElu()->alpha = alpha
 
 float Elu::GetAlpha() const { return this->primitive_->value_as_Elu()->alpha(); }
 
-void Elu::SetAlpha(float alpha) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

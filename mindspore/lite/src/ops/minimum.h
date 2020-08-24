@@ -28,6 +28,7 @@ namespace lite {
 class Minimum : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Activation, Arithmetic);
   Minimum() = default;
   explicit Minimum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

@@ -28,16 +28,17 @@ namespace lite {
 class TopK : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(TopK, PrimitiveC);
   TopK() = default;
   explicit TopK(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetK(int k);
+  void SetSorted(bool sorted);
 #else
   explicit TopK(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetK() const;
   bool GetSorted() const;
-  void SetK(int k);
-  void SetSorted(bool sorted);
 };
 }  // namespace lite
 }  // namespace mindspore

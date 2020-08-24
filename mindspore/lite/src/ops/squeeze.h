@@ -28,14 +28,16 @@ namespace lite {
 class Squeeze : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Squeeze, PrimitiveC);
   Squeeze() = default;
   explicit Squeeze(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(const std::vector<int> &axis);
+
 #else
   explicit Squeeze(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetAxis() const;
-  void SetAxis(const std::vector<int> &axis);
 };
 }  // namespace lite
 }  // namespace mindspore

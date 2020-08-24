@@ -27,7 +27,6 @@ void Scale::SetAxis(int axis) { this->primitive_->value.AsScale()->axis = axis; 
 
 int Scale::GetAxis() const { return this->primitive_->value_as_Scale()->axis(); }
 
-void Scale::SetAxis(int axis) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

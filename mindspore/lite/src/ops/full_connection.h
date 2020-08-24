@@ -28,8 +28,13 @@ namespace lite {
 class FullConnection : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(FullConnection, PrimitiveC);
   FullConnection() = default;
   explicit FullConnection(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetHasBias(bool has_bias);
+  void SetAxis(int axis);
+  void SetUseAxis(bool use_axis);
+  void SetActivationType(int activationType);
 #else
   explicit FullConnection(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -38,10 +43,6 @@ class FullConnection : public PrimitiveC {
   int GetAxis() const;
   bool GetUseAxis() const;
   int GetActivationType() const;
-  void SetHasBias(bool has_bias);
-  void SetAxis(int axis);
-  void SetUseAxis(bool use_axis);
-  void SetActivationType(int activationType);
 };
 }  // namespace lite
 }  // namespace mindspore

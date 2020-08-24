@@ -28,13 +28,15 @@ namespace lite {
 class Mul : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Mul, Arithmetic);
   Mul() = default;
   explicit Mul(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+  void SetActivationType(int activation_type);
+
 #else
   explicit Mul(schema::Primitive *primitive) : Arithmetic(primitive) {}
 #endif
   int GetActivationType() const;
-  void SetActivationType(int activation_type);
 
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 };

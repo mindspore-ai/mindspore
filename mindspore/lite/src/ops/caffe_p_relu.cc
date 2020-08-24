@@ -29,7 +29,6 @@ void CaffePReLU::SetChannelShared(bool channel_shared) {
 
 bool CaffePReLU::GetChannelShared() const { return this->primitive_->value_as_CaffePReLU()->channelShared(); }
 
-void CaffePReLU::SetChannelShared(bool channel_shared) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

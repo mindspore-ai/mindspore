@@ -28,7 +28,7 @@ namespace lite {
 class Permute : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  Permute() = default;
+  MS_DECLARE_PARENT(Permute, PrimitiveC);
   explicit Permute(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
   explicit Permute(schema::Primitive *primitive) : PrimitiveC(primitive) {}

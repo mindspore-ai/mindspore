@@ -28,6 +28,7 @@ namespace lite {
 class Equal : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Equal, PrimitiveC);
   Equal() = default;
   explicit Equal(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else

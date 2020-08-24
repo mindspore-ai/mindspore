@@ -30,29 +30,47 @@ std::vector<int64_t> Reshape::GetShape() const { return this->primitive_->value.
 void Reshape::SetFormat(int format) { this->primitive_->value.AsReshape()->format = (schema::Format)format; }
 void Reshape::SetShape(const std::vector<int64_t> &shape) { this->primitive_->value.AsReshape()->shape = shape; }
 int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::ReshapeT>();
-  MS_ASSERT(inputs.size() == kAnfPopulaterThree - 1);
-  auto inputNode = inputs[kAnfPopulaterTwo - 1];
-  if (inputNode->isa<ValueNode>()) {
-    auto valueNode = inputNode->cast<ValueNodePtr>();
-    MS_ASSERT(valueNode != nullptr);
-    auto val = valueNode->value();
-    MS_ASSERT(val != nullptr);
-    if (val->isa<ValueTuple>()) {
-      auto tuple = val->cast<ValueTuplePtr>();
-      MS_ASSERT(tuple != nullptr);
-      for (size_t i = 0; i < tuple->size(); ++i) {
-        auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
-        MS_ASSERT(elem != nullptr);
-        attr->shape.emplace_back(static_cast<int>(elem->value()));
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Reshape;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Reshape) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::ReshapeT();
+    MS_ASSERT(inputs.size() == kAnfPopulaterThree - 1);
+    auto inputNode = inputs[kAnfPopulaterTwo - 1];
+    if (inputNode->isa<ValueNode>()) {
+      auto valueNode = inputNode->cast<ValueNodePtr>();
+      MS_ASSERT(valueNode != nullptr);
+      auto val = valueNode->value();
+      MS_ASSERT(val != nullptr);
+      if (val->isa<ValueTuple>()) {
+        auto tuple = val->cast<ValueTuplePtr>();
+        MS_ASSERT(tuple != nullptr);
+        for (size_t i = 0; i < tuple->size(); ++i) {
+          auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+          MS_ASSERT(elem != nullptr);
+          attr->shape.emplace_back(static_cast<int>(elem->value()));
+        }
       }
     }
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
   }
-
-  this->primitive_->value.type = schema::PrimitiveType_Reshape;
-  this->primitive_->value.value = attr.release();
-
   return RET_OK;
 }
 
@@ -64,8 +82,6 @@ std::vector<int64_t> Reshape::GetShape() const {
   return std::vector<int64_t>(fb_vector->begin(), fb_vector->end());
 }
 
-void Reshape::SetFormat(int format) {}
-void Reshape::SetShape(const std::vector<int64_t> &shape) {}
 #endif
 
 int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_shape) const {

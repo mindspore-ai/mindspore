@@ -28,13 +28,15 @@ namespace lite {
 class Prelu : public Activation {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Prelu, PrimitiveC);
   Prelu() = default;
   explicit Prelu(schema::PrimitiveT *primitive) : Activation(primitive) {}
+  void SetSlope(const std::vector<float> &slope);
+
 #else
   explicit Prelu(schema::Primitive *primitive) : Activation(primitive) {}
 #endif
   std::vector<float> GetSlope() const;
-  void SetSlope(const std::vector<float> &slope);
 };
 }  // namespace lite
 }  // namespace mindspore

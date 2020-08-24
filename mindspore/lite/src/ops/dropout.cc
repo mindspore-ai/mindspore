@@ -27,7 +27,6 @@ void Dropout::SetRatio(float ratio) { this->primitive_->value.AsDropout()->ratio
 
 float Dropout::GetRatio() const { return this->primitive_->value_as_Dropout()->ratio(); }
 
-void Dropout::SetRatio(float ratio) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore
