@@ -137,7 +137,7 @@ class RPN(nn.Cell):
         self.CheckValid = P.CheckValid()
         self.sum_loss = P.ReduceSum()
         self.loss_cls = P.SigmoidCrossEntropyWithLogits()
-        self.loss_bbox = P.SmoothL1Loss(sigma=1.0/9.0)
+        self.loss_bbox = P.SmoothL1Loss(beta=1.0/9.0)
         self.squeeze = P.Squeeze()
         self.cast = P.Cast()
         self.tile = P.Tile()

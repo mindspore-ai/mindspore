@@ -27,7 +27,7 @@ FasterRcnn proposed that convolution feature maps based on region detectors (suc
 
 [Paper](https://arxiv.org/abs/1506.01497):   Ren S , He K , Girshick R , et al. Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks[J]. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2015, 39(6).
 
-#Model Architecture
+# Model Architecture
 
 FasterRcnn is a two-stage target detection network,This network uses a region proposal network (RPN), which can share the convolution features of the whole image with the detection network, so that the calculation of region proposal is almost cost free. The whole network further combines RPN and FastRcnn into a network by sharing the convolution features.
 
@@ -42,7 +42,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 - Data format：image and json files
   - Note：Data will be processed in dataset.py
 
-#Environment Requirements
+# Environment Requirements
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
@@ -86,6 +86,8 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 # Quick Start
 
 After installing MindSpore via the official website, you can start training and evaluation as follows: 
+
+Note: 1.the first run will generate the mindeocrd file, which will take a long time. 2. pretrained model is a resnet50 checkpoint that trained over ImageNet2012. 3. VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained. 
 
 ```
 # standalone training

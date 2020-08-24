@@ -151,7 +151,7 @@ def _build_training_pipeline(config: TransformerConfig,
     if dataset is None:
         raise ValueError("pre-training dataset or fine-tuning dataset must be provided one.")
 
-    update_steps = dataset.get_repeat_count() * dataset.get_dataset_size()
+    update_steps = config.epochs * dataset.get_dataset_size()
     if config.lr_scheduler == "isr":
         lr = Tensor(square_root_schedule(lr=config.lr,
                                          update_num=update_steps,
@@ -331,7 +331,8 @@ if __name__ == '__main__':
         mode=context.GRAPH_MODE,
         device_target=args.platform,
         reserve_class_name_in_scope=False,
-        device_id=device_id)
+        device_id=device_id,
+        max_call_depth=2000)
 
     _rank_size = os.getenv('RANK_SIZE')
 
