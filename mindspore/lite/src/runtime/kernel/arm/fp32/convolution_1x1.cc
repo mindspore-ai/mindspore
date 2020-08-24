@@ -39,6 +39,10 @@ void Convolution1x1CPUKernel::FreeTmpBuffer() {
     free(pack_input_);
     pack_input_ = nullptr;
   }
+  if (pre_trans_input_ && input_ptr_ != nullptr) {
+    free(input_ptr_);
+    input_ptr_ = nullptr;
+  }
   return;
 }
 
@@ -106,6 +110,16 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
     return RET_MEMORY_FAILED;
   }
   memset(pack_input_, 0, matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float));
+
+  if (pre_trans_input_) {
+    input_ptr_ = reinterpret_cast<float *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float)));
+    if (input_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "Conv1x1 Malloc input_ptr_ error!";
+      return RET_MEMORY_FAILED;
+    }
+    memset(input_ptr_, 0, matmul_param_->row_ * matmul_param_->deep_ * sizeof(float));
+  }
+
   return RET_OK;
 }
 
@@ -140,13 +154,10 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
-
-  auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id;
-
   MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
-         output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
-         matmul_param_->row_, cur_oc, matmul_param_->col_, 1, 0);
-
+            output_ptr_ + task_id * thread_stride_, reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id,
+            matmul_param_->act_type_, matmul_param_->deep_, matmul_param_->row_, cur_oc, matmul_param_->col_,
+            OutType_Nhwc);
   return RET_OK;
 }
 
@@ -169,15 +180,6 @@ int Convolution1x1CPUKernel::Run() {
   auto src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
 
-  if (pre_trans_input_) {
-    input_ptr_ =
-      reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float)));
-    if (input_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Conv1x1 Malloc input_ptr_ error!";
-      return RET_MEMORY_FAILED;
-    }
-  }
-
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
                 src_out + batch_index * matmul_param_->row_ * matmul_param_->col_);
@@ -189,10 +191,6 @@ int Convolution1x1CPUKernel::Run() {
     }
   }
 
-  if (pre_trans_input_) {
-    ctx_->allocator->Free(input_ptr_);
-    input_ptr_ = nullptr;
-  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel
