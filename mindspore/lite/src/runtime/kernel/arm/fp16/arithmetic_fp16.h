@@ -41,10 +41,12 @@ class ArithmeticFP16CPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int DoArithmetic(int task_id);
-  int broadcast_run_(float16_t *input0, float16_t *input1, float16_t *output, int dim);
+  int BroadcastRun(float16_t *input0, float16_t *input1, float16_t *output, int dim, int out_count,
+                     int out_thread_stride);
 
  private:
   void FreeTmpBuffer();
+  int outside_;
   int break_pos_;
   int out_thread_stride_;
   int out_count_;

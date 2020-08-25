@@ -45,8 +45,6 @@ class ArithmeticCPUKernel : public LiteKernel {
   typedef int (*ArithmeticRun)(float *input0, float *input1, float *output, int element_size);
   typedef int (*ArithmeticOptRun)(float *input0, float *input1, float *output, int element_size,
                                   ArithmeticParameter *param);
-  typedef int (*ArithmeticBroadcastRun)(float *input0, float *input1, float *tile_input0, float *tile_input1,
-                                        float *output, int element_size, ArithmeticParameter *param);
 
  public:
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
@@ -109,64 +107,50 @@ class ArithmeticCPUKernel : public LiteKernel {
         break;
       case PrimitiveType_LogicalAnd:
         arithmetic_run_ = ElementLogicalAnd;
-        arithmetic_broadcast_run_ = BroadcastLogicalAnd;
         break;
       case PrimitiveType_LogicalOr:
         arithmetic_run_ = ElementLogicalOr;
-        arithmetic_broadcast_run_ = BroadcastLogicalOr;
         break;
       case PrimitiveType_Maximum:
         arithmetic_run_ = ElementMaximum;
-        arithmetic_broadcast_run_ = BroadcastMaximum;
         break;
       case PrimitiveType_Minimum:
         arithmetic_run_ = ElementMinimum;
-        arithmetic_broadcast_run_ = BroadcastMinimum;
         break;
       case PrimitiveType_FloorDiv:
         arithmetic_run_ = ElementFloorDiv;
-        arithmetic_broadcast_run_ = BroadcastFloorDiv;
         break;
       case PrimitiveType_FloorMod:
         arithmetic_run_ = ElementFloorMod;
-        arithmetic_broadcast_run_ = BroadcastFloorMod;
         break;
       case PrimitiveType_Equal:
         arithmetic_run_ = ElementEqual;
-        arithmetic_broadcast_run_ = BroadcastEqual;
         break;
       case PrimitiveType_NotEqual:
         arithmetic_run_ = ElementNotEqual;
-        arithmetic_broadcast_run_ = BroadcastNotEqual;
         break;
       case PrimitiveType_Less:
         arithmetic_run_ = ElementLess;
-        arithmetic_broadcast_run_ = BroadcastLess;
         break;
       case PrimitiveType_LessEqual:
         arithmetic_run_ = ElementLessEqual;
-        arithmetic_broadcast_run_ = BroadcastLessEqual;
         break;
       case PrimitiveType_Greater:
         arithmetic_run_ = ElementGreater;
-        arithmetic_broadcast_run_ = BroadcastGreater;
         break;
       case PrimitiveType_GreaterEqual:
         arithmetic_run_ = ElementGreaterEqual;
-        arithmetic_broadcast_run_ = BroadcastGreaterEqual;
         break;
       case PrimitiveType_SquaredDifference:
         arithmetic_run_ = ElementSquaredDifference;
-        arithmetic_broadcast_run_ = BroadcastSquaredDifference;
         break;
       default:
         MS_LOG(ERROR) << "Error Operator type " << parameter->type_;
         arithmetic_run_ = nullptr;
-        arithmetic_broadcast_run_ = nullptr;
         break;
     }
   }
-  ~ArithmeticCPUKernel() = default;
+  ~ArithmeticCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -174,12 +158,14 @@ class ArithmeticCPUKernel : public LiteKernel {
   int DoArithmetic(int task_id);
 
  private:
+  int BroadcastRun(float *input0, float *input1, float *output, int dim, int out_count, int out_thread_stride);
+  int break_pos_;
+  int outside_;
+  int out_thread_stride_;
+  int out_count_;
   int thread_count_;
-  float *tile_data0_ = nullptr;
-  float *tile_data1_ = nullptr;
   ArithmeticParameter *arithmeticParameter_;
   ArithmeticRun arithmetic_run_ = nullptr;
-  ArithmeticBroadcastRun arithmetic_broadcast_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
 };
 }  // namespace mindspore::kernel
