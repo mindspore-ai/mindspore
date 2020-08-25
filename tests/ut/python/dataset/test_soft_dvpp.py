@@ -84,6 +84,7 @@ def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
             visualize_image(image1, image2, mse)
         num_iter += 1
 
+
 def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
     """
     Test SoftDvppDecodeResizeJpeg op
@@ -93,12 +94,12 @@ def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
-    resize_op = vision.Resize(256)
+    resize_op = vision.Resize(1134)
     data1 = data1.map(input_columns=["image"], operations=[decode_op, resize_op])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg(256)
+    soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg(1134)
     data2 = data2.map(input_columns=["image"], operations=soft_dvpp_decode_resize_op)
 
     num_iter = 0
@@ -114,8 +115,8 @@ def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
             visualize_image(image1, image2, mse)
         num_iter += 1
 
+
 if __name__ == "__main__":
     test_soft_dvpp_decode_resize_jpeg(plot=True)
     test_soft_dvpp_decode_random_crop_resize_jpeg(plot=True)
     test_soft_dvpp_decode_resize_jpeg_supplement(plot=True)
-    

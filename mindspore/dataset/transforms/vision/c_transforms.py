@@ -980,6 +980,9 @@ class SoftDvppDecodeResizeJpeg(cde.SoftDvppDecodeResizeJpegOp):
     When training, the DVPP of the ascend chip is not used,
     and the DVPP of the ascend chip is used during inference,
     and the accuracy of inference is lower than the accuracy of training.
+    And the input image size should be in range [32*32, 8192*8192].
+    The zoom-out and zoom-in multiples of the image length and width should in range [1/32, 16].
+    Only images with an even resolution can be output. The output of odd resolution is not supported.
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
@@ -1002,6 +1005,9 @@ class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegO
     ascend series chip DVPP module.
 
     The usage scenario is consistent with SoftDvppDecodeReiszeJpeg.
+    And the input image size should be in range [32*32, 8192*8192].
+    The zoom-out and zoom-in multiples of the image length and width should in range [1/32, 16].
+    Only images with an even resolution can be output. The output of odd resolution is not supported.
 
     Args:
         size (Union[int, sequence]): The size of the output image.
