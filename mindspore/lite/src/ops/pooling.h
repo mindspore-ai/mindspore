@@ -44,6 +44,7 @@ class Pooling : public PrimitiveC {
   void SetPadLeft(int pad_left);
   void SetPadRight(int pad_right);
   void SetRoundMode(int round_mode);
+  void SetActivationType(int activation_type);
 #else
   explicit Pooling(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
@@ -61,6 +62,7 @@ class Pooling : public PrimitiveC {
   int GetPadLeft() const;
   int GetPadRight() const;
   int GetRoundMode() const;
+  int GetActivationType() const;
 
   int PadUp() const;
   int PadDown() const;
@@ -74,7 +76,7 @@ class Pooling : public PrimitiveC {
   int pad_d_ = 0;
   int pad_l_ = 0;
   int pad_r_ = 0;
-};
+};  // namespace lite
 }  // namespace lite
 }  // namespace mindspore
 

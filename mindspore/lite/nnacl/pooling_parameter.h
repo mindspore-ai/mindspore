@@ -44,6 +44,7 @@ typedef struct PoolingParameter {
   int stride_w_;
   int stride_h_;
   int thread_num_;
+  ActType act_type_;
 } PoolingParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_POOLING_PARAMETER_H_

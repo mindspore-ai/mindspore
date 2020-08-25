@@ -290,6 +290,7 @@ table Pooling {
     padLeft: int;
     padRight: int;
     roundMode: RoundMode;
+    activationType: ActivationType = 0;
 }
 
 table DepthwiseConv2D {
