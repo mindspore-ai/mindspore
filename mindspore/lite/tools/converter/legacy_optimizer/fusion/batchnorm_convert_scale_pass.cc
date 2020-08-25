@@ -40,7 +40,7 @@ namespace lite {
 #define TF_BATCHNORM_VARIANCE_INDEX 3
 namespace {
 constexpr const float EPS = 1e-8;
-constexpr const float EPS_DEFAULT_FLOAT = 1e-5;
+constexpr const float EPS_DEFAULT_FLOAT = 1e-8;
 constexpr const float POW_NUM = 0.5;
 constexpr const int32_t NCHW_DIM_C = 1;
 }
