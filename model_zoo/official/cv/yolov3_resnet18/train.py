@@ -115,7 +115,8 @@ def main():
                                           8)
             print("Create Mindrecord Done, at {}".format(args_opt.mindrecord_dir))
         else:
-            print("image_dir or anno_path not exits.")
+            raise ValueError('image_dir {} or anno_path {} does not exist'.format(\
+                              args_opt.image_dir, args_opt.anno_path))
 
     if not args_opt.only_create_dataset:
         loss_scale = float(args_opt.loss_scale)
