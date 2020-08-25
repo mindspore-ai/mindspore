@@ -49,8 +49,9 @@ PyPassManager::PyPassManager() {
 }
 
 void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-                            Phase phase, bool run_only_once) {
-  auto cur_pg = GetPassGroup(phase);
+                            bool run_only_once) {
+  // NOTE: remove phase option to avoid unnecessary confusion.
+  auto cur_pg = GetPassGroup(Phase::OPT);
   MS_EXCEPTION_IF_NULL(cur_pg);
   cur_pg->SetRunOnlyOnce(run_only_once);
   MS_EXCEPTION_IF_NULL(pattern);
@@ -60,8 +61,9 @@ void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &patt
   cur_pg->AddPass(new_pass);
 }
 
-void PyPassManager::Unregiste(const std::string &pass_name, Phase phase) {
-  auto cur_pm = GetPassGroup(phase);
+void PyPassManager::Unregiste(const std::string &pass_name) {
+  // NOTE: remove phase option to avoid unnecessary confusion.
+  auto cur_pm = GetPassGroup(Phase::OPT);
   MS_EXCEPTION_IF_NULL(cur_pm);
   if (!cur_pm->DeletePass(pass_name)) {
     MS_LOG(WARNING) << "No such pass : " + pass_name + "\n";
@@ -70,7 +72,6 @@ void PyPassManager::Unregiste(const std::string &pass_name, Phase phase) {
 
 void PyPassManager::GenNewParameter(const PatternPtr &parameter) {
   MS_EXCEPTION_IF_NULL(parameter);
-  // Add new parameter after resolve
   // NOTE: Add NewParameter at early stage will cause CSE problems
   auto cur_pg = GetPassGroup(Phase::OPT);
   MS_EXCEPTION_IF_NULL(cur_pg);
@@ -78,7 +79,7 @@ void PyPassManager::GenNewParameter(const PatternPtr &parameter) {
   auto new_para_pattern = parameter->cast<NewParameterPtr>();
   MS_EXCEPTION_IF_NULL(new_para_pattern);
   auto pass_name = new_para_pattern->para_name();
-  parameter->set_should_replace(false);
+  new_para_pattern->set_last(true);
   auto new_pass = std::make_shared<PythonPass>(pass_name, nullptr, parameter, true);
   cur_pg->AddPass(new_pass);
 }

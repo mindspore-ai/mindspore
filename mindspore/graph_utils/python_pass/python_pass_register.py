@@ -15,7 +15,7 @@
 """Python pass register"""
 from inspect import isfunction
 from mindspore.graph_utils.graph_pattern import Pattern, NewParameter
-from mindspore._c_expression import PyPassManager_, phase
+from mindspore._c_expression import PyPassManager_
 
 
 __all__ = [
@@ -30,21 +30,16 @@ class PyPassManager(PyPassManager_):
     Used to registe and unregiste python passes which can be used to alter graphs.
 
     Args:
-        pipeline_phase (phase): Specify the stage in which the pass will run in the pipeline. Default: phase.opt.
         run_only_once (bool): Specify whether or not to run pass only once. Default: False.
-        multigraph (bool): Whether or not the pattern exists across graphs. Default: True.
 
     Raises:
         TypeError: If argument has invalid type.
     """
-    def __init__(self, pipeline_phase=phase.opt, run_only_once=False):
-        if not isinstance(pipeline_phase, phase):
-            raise TypeError(f"Expect phase, got : ({type(pipeline_phase)}){pipeline_phase}")
+    def __init__(self, run_only_once=False):
         if not isinstance(run_only_once, bool):
             raise TypeError(f"Expect bool, got : ({type(run_only_once)}){run_only_once}")
-        PyPassManager_.__init__(self)
-        self.phase_ = pipeline_phase
         self.run_only_once_ = run_only_once
+        PyPassManager_.__init__(self)
 
     def registe(self, py_pass):
         if not isfunction(py_pass):
@@ -55,16 +50,14 @@ class PyPassManager(PyPassManager_):
             raise TypeError(f"Expect pattern of Pattern type, got : ({type(pattern)}){pattern}")
         if not isinstance(target, Pattern):
             raise TypeError(f"Expect target of Pattern type, got : ({type(target)}){target}")
-        super().registe(pass_name, pattern, target, self.phase_, self.run_only_once_)
+        super().registe(pass_name, pattern, target, self.run_only_once_)
 
-    def unregiste(self, py_pass, pipeline_phase=phase.opt):
-        if not isinstance(pipeline_phase, phase):
-            raise TypeError(f"Expect phase, got : ({type(pipeline_phase)}){pipeline_phase}")
+    def unregiste(self, py_pass):
         if isinstance(py_pass, str):
-            super().unregiste(py_pass, pipeline_phase)
+            super().unregiste(py_pass)
             return
         if isfunction(py_pass):
-            super().unregiste(py_pass.__name__, pipeline_phase)
+            super().unregiste(py_pass.__name__)
             return
         raise TypeError(f"Expect py_pass to be string or function, got ({type(py_pass)}){py_pass}")
 
@@ -82,13 +75,11 @@ class PyPassManager(PyPassManager_):
             raise TypeError(f"Expect should_renorm to be a bool, got {should_renorm}")
         super().set_renorm(should_renorm)
 
-def registe_pass(pipeline_phase=phase.opt, run_only_once=False):
+def registe_pass(run_only_once=False):
     """
     Registe python pass to specified pipeline phase which would be used in compilation.
 
     Args:
-        pipeline_phase(:class:`mindspore._c_expression.phase`): To which compilation pipeline stage the pass is
-            registed. Support phase.resolve and phase.opt. Default: phase.opt.
         run_only_once(bool): Run this pass only once if set true. Otherwise run the pass until converge. Default: False.
 
     Returns:
@@ -102,19 +93,17 @@ def registe_pass(pipeline_phase=phase.opt, run_only_once=False):
         >>>     target = IsPrimTypeOf("ReLU6")
         >>>     return pattern, target
     """
-    return PyPassManager(pipeline_phase, run_only_once)
+    return PyPassManager(run_only_once)
 
-def unregiste_pass(py_pass, pipeline_phase=phase.opt):
+def unregiste_pass(py_pass):
     """
     Unregiste python pass.
 
     Args:
         py_pass(Union(str, function)): target python pass to unregiste.
-        pipeline_phase(:class:`mindspore._c_expression.phase`): To which compilation pipeline stage the pass is
-            unregisted. Support phase.resolve and phase.opt. Default: phase.opt.
     """
     ppm = PyPassManager()
-    ppm.unregiste(py_pass, pipeline_phase)
+    ppm.unregiste(py_pass)
 
 def gen_new_parameter(pattern):
     """
@@ -164,7 +153,14 @@ def cancel_new_parameter(pattern):
 
 def set_renorm(should_renorm):
     """
-    Set whether or not to do renorm after modified graph in python pass(es).
+    Set whether or not to do renormalization after modified graph in python pass(es).
+
+    Args:
+        should_renorm(bool): whether or not to do renormalization after modified graph in python pass(es).
+
+    NOTE:
+        This interface is mainly intended for testing modifying graph without worrying about its validity. Turn off
+        renormalization may BREAK the network.
     """
     ppm = PyPassManager()
     ppm.set_renorm(should_renorm)

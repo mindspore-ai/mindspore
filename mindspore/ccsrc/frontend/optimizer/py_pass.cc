@@ -80,7 +80,7 @@ bool IsTraversable(const AnfNodePtr &node) {
 
 AnfNodePtr BuildPrimitive(const PatternPtr &pattern, const MatchResultPtr &res) {
   // Build up AnfNode from primitive
-  auto prim_pattern = pattern->cast<IsPrimTypeOfPtr>();
+  auto prim_pattern = pattern->cast<PrimPtr>();
   MS_EXCEPTION_IF_NULL(prim_pattern);
   PrimitivePyPtr prim = prim_pattern->matched_primitive();
   MS_EXCEPTION_IF_NULL(prim);
@@ -98,13 +98,13 @@ AnfNodePtr BuildNewTensor(const PatternPtr &pattern, const MatchResultPtr &res) 
 }
 
 AnfNodePtr BuildPrimitiveValueNode(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &fg) {
-  auto call_with_pattern = pattern->cast<CallWithPtr>();
-  MS_EXCEPTION_IF_NULL(call_with_pattern);
-  auto prim = call_with_pattern->prim_value();
+  auto call_pattern = pattern->cast<CallPtr>();
+  MS_EXCEPTION_IF_NULL(call_pattern);
+  auto prim = call_pattern->prim_value();
   if (prim != nullptr) {
     return std::make_shared<ValueNode>(prim);
   }
-  auto prim_pattern = call_with_pattern->prim_pattern();
+  auto prim_pattern = call_pattern->prim_pattern();
   MS_EXCEPTION_IF_NULL(prim_pattern);
   return ProcessSinglePattern(prim_pattern, res, fg);
 }
@@ -152,45 +152,35 @@ AnfNodePtr BuildImmNode(const PatternPtr &pattern, const MatchResultPtr &res) {
 }
 
 AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr &res, const FuncGraphPtr &func_graph) {
-  if (pattern->should_replace()) {
-    // Find replacement in the MatchResult
-    auto target_node = res->get_node(pattern);
-    if (target_node == nullptr) {
-      // If it's base pattern(in contrast to complex pattern like CallWith/IsIn/IsNot), raise runtime exception.
-      if (pattern->isa<IsPrimTypeOf>() || pattern->isa<NewTensor>() || pattern->isa<NewParameter>()) {
-        MS_LOG(EXCEPTION) << "Cannot find target node, pattern: " + pattern->unique_name() + "\n";
-        return nullptr;
-      }
-      // Try to build this pattern and add to MatchResult, since this pattern is defined inside target
-      auto new_node = BuildTarget(pattern, func_graph, res);
-      if (new_node == nullptr) {
-        MS_LOG(EXCEPTION) << "Try to build pattern node but FAILED. pattern: " + pattern->unique_name() + "\n";
-      }
-      return new_node;
-    }
-    if (pattern->isa<NewParameter>()) {
+  auto target_node = res->get_node(pattern);
+  if (target_node != nullptr) {
+    // If pattern is NewParameter, check whether it shouldn't last and is not built
+    auto new_para = pattern->cast<NewParameterPtr>();
+    if (new_para == nullptr || new_para->should_last() || new_para->built()) {
       return target_node;
     }
-    return target_node;
   }
   // Build up new node from pattern
-  if (pattern->isa<IsPrimTypeOf>()) {
+  if (pattern->isa<Prim>()) {
     return BuildPrimitive(pattern, res);
   } else if (pattern->isa<NewTensor>()) {
     return BuildNewTensor(pattern, res);
-  } else if (pattern->isa<CallWith>()) {
+  } else if (pattern->isa<Call>()) {
     return BuildPrimitiveValueNode(pattern, res, func_graph);
   } else if (pattern->isa<NewParameter>()) {
     return BuildNewParameter(pattern, res, func_graph);
   } else if (pattern->isa<Imm>()) {
     return BuildImmNode(pattern, res);
+  } else {
+    MS_LOG(EXCEPTION) << "Cannot find or build target node, pattern: " + pattern->unique_name() + "\n";
+    return nullptr;
   }
   return nullptr;
 }
 
 AnfNodePtr ProcessComplexPatternFirstInput(const PatternPtr &pattern, const MatchResultPtr &res,
                                            const FuncGraphPtr &func_graph) {
-  if (pattern->isa<CallWith>()) {
+  if (pattern->isa<Call>()) {
     return BuildPrimitiveValueNode(pattern, res, func_graph);
   }
   return nullptr;
@@ -269,16 +259,16 @@ void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor
 }
 
 void Reset(PatternPtr pattern) {
-  if (pattern->isa<IsPrimTypeOf>()) {
-    auto prim_pattern = pattern->cast<IsPrimTypeOfPtr>();
+  if (pattern->isa<Prim>()) {
+    auto prim_pattern = pattern->cast<PrimPtr>();
     prim_pattern->reset();
     return;
   } else if (pattern->isa<NewParameter>()) {
     auto new_param_pattern = pattern->cast<NewParameterPtr>();
     new_param_pattern->reset();
     return;
-  } else if (pattern->isa<CallWith>()) {
-    auto call_with_pattern = pattern->cast<CallWithPtr>();
+  } else if (pattern->isa<Call>()) {
+    auto call_with_pattern = pattern->cast<CallPtr>();
     for (auto sub_pattern : call_with_pattern->inputs()) {
       Reset(sub_pattern);
     }

@@ -477,6 +477,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   // save the run graph func to MsPipeLine
   SaveCompiledGraph(phase_s);
 
+  opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
   resource->Clean();
   // Reclaim all resource used by optimizer;
   ReclaimOptimizer();

@@ -53,16 +53,17 @@ class PyPassManager {
   static PyPassManagerPtr GetInstance();
   virtual ~PyPassManager() = default;
   void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-               Phase phase = Phase::RESOLVE, bool run_only_once = false);
-  void Unregiste(const std::string &pass_name, Phase phase);
+               bool run_only_once = false);
+  void Unregiste(const std::string &pass_name);
   void GenNewParameter(const PatternPtr &parameter);
   PassGroupPtr GetPassGroup(Phase phase);
-  void ClearRes();
   MatchResultPtr GetMatchResult() { return res_; }
   void SetRenorm(bool should_renorm) { should_renorm_ = should_renorm; }
   bool ShouldRenorm() { return should_renorm_; }
   void SetResource(pipeline::ResourcePtr resource) { resource_ = resource; }
   pipeline::ResourcePtr GetResource() { return resource_; }
+  void ClearRes();
+  void ClearPipelineRes() { resource_ = nullptr; }
 
  private:
   bool should_renorm_ = true;
