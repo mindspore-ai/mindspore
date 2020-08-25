@@ -44,8 +44,7 @@ Status RandomSharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::sha
   float mid = (end_degree_ + start_degree_) / 2;
   alpha_ = mid + random_double * degree_range;
 
-  SharpnessOp::Compute(input, output);
-  return Status::OK();
+  return SharpnessOp::Compute(input, output);
 }
 }  // namespace dataset
 }  // namespace mindspore
