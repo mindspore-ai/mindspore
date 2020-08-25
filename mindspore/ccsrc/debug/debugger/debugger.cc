@@ -785,7 +785,10 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
     MS_LOG(INFO) << "OverFlow bin directory does not exist!";
   }
   closedir(d);
-  MS_LOG(ERROR) << "These operation overflows are detected " << op_names;
+
+  if (op_names.size()) {
+    MS_LOG(ERROR) << "These operation overflows are detected " << op_names;
+  }
 
   for (auto &i : bin_list) {
     if (i > last_overflow_bin_) {
