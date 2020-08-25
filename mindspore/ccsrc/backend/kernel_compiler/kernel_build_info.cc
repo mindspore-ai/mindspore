@@ -108,10 +108,7 @@ std::string KernelBuildInfo::ToString() const {
   return output_buffer.str();
 }
 
-bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
-  if (kernel_type_ != other.kernel_type_ || fusion_type_ != other.fusion_type_ || processor_ != other.processor_) {
-    return false;
-  }
+bool KernelBuildInfo::IsSimilarityKernelBuildInfo(const KernelBuildInfo &other) const {
   if (inputs_format_ != other.inputs_format_ || outputs_format_ != other.outputs_format_) {
     if (op_pattern_ != kFormatAgnosticPattern) {
       return false;
@@ -121,6 +118,13 @@ bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
     }
   }
   return !(inputs_device_type_ != other.inputs_device_type_ || outputs_device_type_ != other.outputs_device_type_);
+}
+
+bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
+  if (kernel_type_ != other.kernel_type_ || fusion_type_ != other.fusion_type_ || processor_ != other.processor_) {
+    return false;
+  }
+  return IsSimilarityKernelBuildInfo(other);
 }
 
 bool KernelBuildInfo::IsInputDefaultPadding() const { return input_reshape_type_.empty(); }

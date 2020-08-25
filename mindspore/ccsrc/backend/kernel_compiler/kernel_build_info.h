@@ -91,6 +91,8 @@ class KernelBuildInfo {
 
   std::string ToString() const;
 
+  bool IsSimilarityKernelBuildInfo(const KernelBuildInfo &other) const;
+
   bool operator==(const KernelBuildInfo &other) const;
 
   bool operator!=(const KernelBuildInfo &other) const;

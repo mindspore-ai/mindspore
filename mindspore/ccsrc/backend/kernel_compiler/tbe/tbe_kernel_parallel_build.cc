@@ -75,7 +75,6 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   set<std::string> processed_kernel;
   for (const auto &anf_node : anf_nodes) {
     // gen kernel json
-    tbe::TbeAdapter::SetTbeAttrsForTransDataOp(anf_node);
     if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
       continue;
     }

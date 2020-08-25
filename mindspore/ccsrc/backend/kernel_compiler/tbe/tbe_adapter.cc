@@ -178,22 +178,6 @@ void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   }
 }
 
-void TbeAdapter::SetTbeAttrsForTransDataOp(const mindspore::AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (AnfAlgo::GetCNodeName(anf_node) == kTransDataOpName) {
-    std::string input_format = AnfAlgo::GetInputFormat(anf_node, 0);
-    std::string output_format = AnfAlgo::GetOutputFormat(anf_node, 0);
-    if (input_format == kOpFormat_DEFAULT) {
-      input_format = kOpFormat_NCHW;
-    }
-    if (output_format == kOpFormat_DEFAULT) {
-      output_format = kOpFormat_NCHW;
-    }
-    AnfAlgo::SetNodeAttr("src_format", MakeValue(input_format), anf_node);
-    AnfAlgo::SetNodeAttr("dst_format", MakeValue(output_format), anf_node);
-  }
-}
-
 std::unordered_set<std::string> input_order_adjusted_ops = {
   "Conv2DBackpropInput",        "Conv2DBackpropFilter", "LogSoftmaxGrad", "LayerNormGrad",       "LayerNormXBackprop",
   "LayerNormBetaGammaBackprop", "MinimumGrad",          "MaximumGrad",    "ApplyCenteredRMSProp"};

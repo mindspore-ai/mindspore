@@ -224,6 +224,7 @@ constexpr auto kAttrEventId = "event_id";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
+constexpr auto kAttrDstFormat = "dst_format";
 constexpr auto kAttrMultiples = "multiples";
 constexpr auto kAttrFixPrecision = "fix_precision";
 constexpr auto kAttrOutputPrecision = "output_precision";
