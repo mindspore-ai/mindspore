@@ -143,7 +143,6 @@ TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {
   delete pooling_kernel;
   delete pGraph;
   delete param;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 }  // namespace mindspore

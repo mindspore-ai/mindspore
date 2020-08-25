@@ -202,7 +202,6 @@ void TestCase(const std::vector<int> &shape_a, const std::vector<int> &shape_b) 
   for (auto tensor : outputs) {
     delete tensor;
   }
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 class TestArithmeticOpenCL : public mindspore::CommonTest {

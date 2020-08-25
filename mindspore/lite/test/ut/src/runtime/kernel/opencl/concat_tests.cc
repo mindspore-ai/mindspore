@@ -213,6 +213,5 @@ TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
   delete param;
   delete concat_kernel;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

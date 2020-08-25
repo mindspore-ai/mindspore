@@ -230,8 +230,7 @@ class OpenCLWrapper {
   bool LoadLibraryFromPath(const std::string &path);
 
  private:
-  static std::shared_ptr<OpenCLWrapper> opencl_wrapper_singleton_;
-  void *handle_ = nullptr;
+  void *handle_{nullptr};
 };
 
 }  // namespace mindspore::lite::opencl

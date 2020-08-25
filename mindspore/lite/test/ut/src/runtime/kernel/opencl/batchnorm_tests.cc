@@ -155,6 +155,5 @@ TEST_F(TestBatchnormOpenCL, Batchnorminput_dim4) {
   delete param;
   delete batchnorm_kernel;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
