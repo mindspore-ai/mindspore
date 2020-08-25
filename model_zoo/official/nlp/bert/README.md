@@ -123,6 +123,7 @@ usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_n
                         [--enable_save_ckpt ENABLE_SAVE_CKPT] [--device_target DEVICE_TARGET]
                         [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
                         [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] 
+                        [--accumulation_steps N]
                         [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
                         [--load_checkpoint_path LOAD_CHECKPOINT_PATH]
                         [--save_checkpoint_steps N] [--save_checkpoint_num N] 
@@ -139,6 +140,7 @@ options:
     --do_shuffle               enable shuffle: "true" | "false", default is "true"
     --enable_data_sink         enable data sink: "true" | "false", default is "true"
     --data_sink_steps          set data sink steps: N, default is 1
+    --accumulation_steps       accumulate gradients N times before weight update: N, default is 1
     --save_checkpoint_path     path to save checkpoint files: PATH, default is ""
     --load_checkpoint_path     path to load checkpoint files: PATH, default is ""
     --save_checkpoint_steps    steps for saving checkpoint files: N, default is 1000

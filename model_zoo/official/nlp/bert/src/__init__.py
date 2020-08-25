@@ -15,7 +15,8 @@
 """Bert Init."""
 from .bert_for_pre_training import BertNetworkWithLoss, BertPreTraining, \
     BertPretrainingLoss, GetMaskedLMOutput, GetNextSentenceOutput, \
-    BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
+    BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
+    BertTrainAccumulateStepsWithLossScaleCell
 from .bert_model import BertAttention, BertConfig, BertEncoderCell, BertModel, \
     BertOutput, BertSelfAttention, BertTransformer, EmbeddingLookup, \
     EmbeddingPostprocessor, RelaPosEmbeddingsGenerator, RelaPosMatrixGenerator, \
@@ -23,7 +24,8 @@ from .bert_model import BertAttention, BertConfig, BertEncoderCell, BertModel, \
 
 __all__ = [
     "BertNetworkWithLoss", "BertPreTraining", "BertPretrainingLoss",
-    "GetMaskedLMOutput", "GetNextSentenceOutput", "BertTrainOneStepCell", "BertTrainOneStepWithLossScaleCell",
+    "GetMaskedLMOutput", "GetNextSentenceOutput", "BertTrainOneStepCell",
+    "BertTrainOneStepWithLossScaleCell", "BertTrainAccumulateStepsWithLossScaleCell",
     "BertAttention", "BertConfig", "BertEncoderCell", "BertModel", "BertOutput",
     "BertSelfAttention", "BertTransformer", "EmbeddingLookup",
     "EmbeddingPostprocessor", "RelaPosEmbeddingsGenerator",

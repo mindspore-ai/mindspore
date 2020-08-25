@@ -30,7 +30,8 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMoni
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
 from mindspore import log as logger
-from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
+from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
+                BertTrainAccumulateStepsWithLossScaleCell
 from src.dataset import create_bert_dataset
 from src.config import cfg, bert_net_cfg
 from src.utils import LossCallBack, BertLearningRate
@@ -51,6 +52,8 @@ def run_pretrain():
     parser.add_argument("--do_shuffle", type=str, default="true", help="Enable shuffle for dataset, default is true.")
     parser.add_argument("--enable_data_sink", type=str, default="true", help="Enable data sink, default is true.")
     parser.add_argument("--data_sink_steps", type=int, default="1", help="Sink steps for each epoch, default is 1.")
+    parser.add_argument("--accumulation_steps", type=int, default="1",
+                        help="Accumulating gradients N times before weight update, default is 1.")
     parser.add_argument("--save_checkpoint_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--save_checkpoint_steps", type=int, default=1000, help="Save checkpoint steps, "
@@ -97,6 +100,16 @@ def run_pretrain():
     if args_opt.device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32:
         logger.warning('Gpu only support fp32 temporarily, run with fp32.')
         bert_net_cfg.compute_type = mstype.float32
+
+    if args_opt.accumulation_steps > 1:
+        logger.info("accumulation steps: {}".format(args_opt.accumulation_steps))
+        logger.info("global batch size: {}".format(bert_net_cfg.batch_size * args_opt.accumulation_steps))
+        if args_opt.enable_data_sink == "true":
+            args_opt.data_sink_steps *= args_opt.accumulation_steps
+            logger.info("data sink steps: {}".format(args_opt.data_sink_steps))
+        if args_opt.enable_save_ckpt == "true":
+            args_opt.save_checkpoint_steps *= args_opt.accumulation_steps
+            logger.info("save checkpoint steps: {}".format(args_opt.save_checkpoint_steps))
 
     ds = create_bert_dataset(device_num, rank, args_opt.do_shuffle, args_opt.data_dir, args_opt.schema_dir)
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
@@ -157,8 +170,15 @@ def run_pretrain():
         update_cell = DynamicLossScaleUpdateCell(loss_scale_value=cfg.loss_scale_value,
                                                  scale_factor=cfg.scale_factor,
                                                  scale_window=cfg.scale_window)
-        net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
-                                                           scale_update_cell=update_cell)
+
+        if args_opt.accumulation_steps <= 1:
+            net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
+                                                               scale_update_cell=update_cell)
+        else:
+            accumulation_steps = args_opt.accumulation_steps
+            net_with_grads = BertTrainAccumulateStepsWithLossScaleCell(net_with_loss, optimizer=optimizer,
+                                                                       scale_update_cell=update_cell,
+                                                                       accumulation_steps=accumulation_steps)
     else:
         net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
 
