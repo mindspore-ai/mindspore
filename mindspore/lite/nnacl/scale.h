@@ -26,13 +26,12 @@ typedef struct ScaleParameter {
   int inner_size_;
   int axis_;
   bool const_scale_;
-  bool has_offset_;
 } ScaleParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
+void DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
 #ifdef __cplusplus
 }
 #endif

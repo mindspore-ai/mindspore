@@ -15,35 +15,65 @@
  */
 
 #include "nnacl/scale.h"
-#include "nnacl/errorcode.h"
-
-int DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param) {
-  if (in_data == NULL || out_data == NULL || scale == NULL || offset == NULL || scale_param == NULL) {
-    return NNACL_ERR;
-  }
-
-  if (scale_param->has_offset_) {
-    for (int out = task_id; out < scale_param->outer_size_; out += scale_param->op_parameter_.thread_num_) {
-      int out_offset = out * scale_param->axis_size_ * scale_param->inner_size_;
-      for (int i = 0; i < scale_param->axis_size_; i++) {
-        int axis_offset = out_offset + i * scale_param->inner_size_;
-        for (int in = 0; in < scale_param->inner_size_; in++) {
-          int in_offset = axis_offset + in;
-          out_data[in_offset] = in_data[in_offset] * scale[i] + offset[i];
-        }
+#ifdef ENABLE_ARM
+#include <arm_neon.h>
+#endif
+void ScaleInner(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+                int axis_size, int inner_size) {
+  for (int out = outer_start; out < outer_end; out++) {
+    int out_offset = out * axis_size * inner_size;
+    for (int i = 0; i < axis_size; i++) {
+      int axis_offset = out_offset + i * inner_size;
+      int in_index = 0;
+#ifdef ENABLE_ARM
+      for (; in_index < inner_size - 4; in_index += 4) {
+        int in_offset = axis_offset + in_index;
+        float32x4_t data = vld1q_f32(in_data + in_offset);
+        float32x4_t scale_4 = vdupq_n_f32(scale[i]);
+        float32x4_t offset_4 = vdupq_n_f32(offset[i]);
+        float32x4_t reslut = vfmaq_f32(offset_4, data, scale_4);
+        vst1q_f32(out_data + in_offset, reslut);
+      }
+#endif
+      for (; in_index < inner_size; in_index++) {
+        int in_offset = axis_offset + in_index;
+        out_data[in_offset] = in_data[in_offset] * scale[i] + offset[i];
       }
     }
+  }
+}
+
+void ScaleAxis(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+               int axis_size) {
+  for (int out = outer_start; out < outer_end; out++) {
+    int out_offset = out * axis_size;
+    int index = 0;
+#ifdef ENABLE_ARM
+    for (; index < axis_size - 4; index += 4) {
+      int in_offset = out_offset + index;
+      float32x4_t data = vld1q_f32(in_data + in_offset);
+      float32x4_t scale_4 = vld1q_f32(scale + index);
+      float32x4_t offset_4 = vld1q_f32(offset + index);
+      float32x4_t reslut = vfmaq_f32(offset_4, data, scale_4);
+      vst1q_f32(out_data + in_offset, reslut);
+    }
+#endif
+    for (; index < axis_size; index++) {
+      int in_offset = out_offset + index;
+      out_data[in_offset] = in_data[in_offset] * scale[index] + offset[index];
+    }
+  }
+}
+
+void DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param) {
+  int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
+  int outer_start = task_id * outer_step;
+  int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
+
+  if (scale_param->inner_size_ == 1) {
+    ScaleAxis(in_data, out_data, scale, offset, outer_start, outer_end, scale_param->axis_size_);
   } else {
-    for (int out = task_id; out < scale_param->outer_size_; out += scale_param->op_parameter_.thread_num_) {
-      int out_offset = out * scale_param->axis_size_ * scale_param->inner_size_;
-      for (int i = 0; i < scale_param->axis_size_; i++) {
-        int axis_offset = out_offset + i * scale_param->inner_size_;
-        for (int in = 0; in < scale_param->inner_size_; in++) {
-          int in_offset = axis_offset + in;
-          out_data[in_offset] = in_data[in_offset] * scale[i];
-        }
-      }
-    }
+    ScaleInner(in_data, out_data, scale, offset, outer_start, outer_end, scale_param->axis_size_,
+               scale_param->inner_size_);
   }
-  return NNACL_OK;
 }
