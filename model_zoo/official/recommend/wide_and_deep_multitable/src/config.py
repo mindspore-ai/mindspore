@@ -22,7 +22,7 @@ def argparse_init():
     parser = argparse.ArgumentParser(description='WideDeep')
 
     parser.add_argument("--data_path", type=str, default="./test_raw_data/")  # The location of the input data.
-    parser.add_argument("--epochs", type=int, default=200)  # The number of epochs used to train.
+    parser.add_argument("--epochs", type=int, default=8)  # The number of epochs used to train.
     parser.add_argument("--batch_size", type=int, default=131072)  # Batch size for training and evaluation
     parser.add_argument("--eval_batch_size", type=int, default=131072)  # The batch size used for evaluation.
     parser.add_argument("--deep_layers_dim", type=int, nargs='+', default=[1024, 512, 256, 128])  # The sizes of hidden layers for MLP

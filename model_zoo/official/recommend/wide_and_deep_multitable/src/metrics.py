@@ -148,6 +148,5 @@ class AUCMetric(Metric):
         auc = roc_auc_score(self.true_labels, self.pred_probs)
 
         MAP = new_compute_mAP(result_df, gb_key="display_ids", top_k=12)
-        print("=====" * 20 + " auc_metric  end ")
-        print("=====" * 20 + " auc: {}, map: {}".format(auc, MAP))
+        print("Eval result:"  + " auc: {}, map: {}".format(auc, MAP))
         return auc
