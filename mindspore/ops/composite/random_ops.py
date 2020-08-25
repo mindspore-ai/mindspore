@@ -20,8 +20,6 @@ from .. import functional as F
 from ..primitive import constexpr
 from .multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
 
 # set graph-level RNG seed
 _GRAPH_SEED = 0
@@ -204,14 +202,13 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
-    Args:
-        seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: 0.
 
-    Inputs:
-        - **input** (Tensor) - the input tensor containing probabilities, must be 1 or 2 dims.
-        - **num_samples** (int) - number of samples to draw.
-        - **replacement** (bool, optional) - whether to draw with replacement or not, default True.
+    Args:
+        input (Tensor) - the input tensor containing probabilities, must be 1 or 2 dims.
+        num_samples (int) - number of samples to draw.
+        replacement (bool, optional) - whether to draw with replacement or not, default True.
+        seed (int, optional) - used as entropy source for Random number engines generating pseudo-random numbers.
+          Must be non-negative. Default: 0.
 
     Outputs:
         Tensor. have the same rows with input, each row has num_samples sampled indices.
@@ -222,21 +219,19 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
     """
     shape = P.Shape()
     reshape = P.Reshape()
-    validator.check_value_type('replacement', replacement, (bool,), None)
-    validator.check_value_type('num_sample', num_sample, (int,), None)
-    validator.check_integer("num_sample", num_sample, 0, Rel.GT, None)
     if inputs.dim() != 1 and inputs.dim() != 2:
         raise ValueError("inputs dim must be 1d or 2d")
     if not replacement:
+        P.Multinomial(replacement=replacement, seed=seed)(inputs, num_sample)
         if shape(inputs)[-1] < num_sample:
             raise ValueError("num_sample must be less than shape(input)[-1] without replacement")
         n_dist = 1
         if len(shape(inputs)) > 1:
             n_dist = shape(inputs)[-2]
-        random_uniform = P.UniformReal(seed=seed)((n_dist * num_sample,))
+        random_uniform = P.UniformReal(seed=seed)((n_dist * shape(inputs)[-1],))
         if n_dist != 1:
-            random_uniform = reshape(random_uniform, (n_dist, num_sample))
+            random_uniform = reshape(random_uniform, (n_dist, shape(inputs)[-1]))
         vals = P.RealDiv()(P.Log()(random_uniform), inputs + 1e-6)
         _, indices = P.TopK()(vals, num_sample)
         return indices
-    return P.Multinomial(seed=seed)(inputs, num_sample)
+    return P.Multinomial(replacement=replacement, seed=seed)(inputs, num_sample)

@@ -33,7 +33,12 @@ namespace kernel {
 template <typename T>
 class MultinomialGpuKernel : public GpuKernel {
  public:
-  MultinomialGpuKernel() : input_size_0_(0), output_size_(0), distributions_(0), workspace_size_(sizeof(curandState)) {}
+  MultinomialGpuKernel()
+      : input_size_0_(0),
+        output_size_(0),
+        distributions_(0),
+        workspace_size_(sizeof(curandState)),
+        replacement_(true) {}
   ~MultinomialGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -49,6 +54,19 @@ class MultinomialGpuKernel : public GpuKernel {
     int categories = SizeToInt(inputs[0]->size / sizeof(T)) / distributions_;
     int num_sample = SizeToInt(outputs[0]->size / sizeof(T)) / distributions_;
     // check input
+    T *cum_sum_input = nullptr;
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(&cum_sum_input), input_size_0_),
+                               "cudaMalloc failed.");
+    CheckPeram(input_addr, cum_sum_input, categories, stream_ptr);
+    if (replacement_) {
+      Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
+                  IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(cum_sum_input), "cudaFree failed.");
+    return true;
+  }
+
+  void CheckPeram(const T *input_addr, T *cum_sum_input, int categories, void *stream_ptr) {
     T *flag = nullptr;
     T *cflag = nullptr;
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(&cflag), sizeof(T)), "cudaMalloc failed.");
@@ -67,9 +85,6 @@ class MultinomialGpuKernel : public GpuKernel {
     if (*flag > 0) {
       MS_LOG(EXCEPTION) << "Input is invalid (input element < 0)";
     }
-    T *cum_sum_input = nullptr;
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(&cum_sum_input), input_size_0_),
-                               "cudaMalloc failed.");
     CumSum(input_addr, cum_sum_input, cum_sum_input, IntToSize(distributions_), IntToSize(categories), 1,
            IntToSize(categories), 1, false, false, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -82,14 +97,10 @@ class MultinomialGpuKernel : public GpuKernel {
     if (*flag > 0) {
       MS_LOG(EXCEPTION) << "Input is invalid (sum <= 0)";
     }
-    Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
-                IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(cum_sum_input), "cudaFree failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(cflag), "cudaFree failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaFreeHost(flag), "cudaFreeHost failed.");
-    return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -114,9 +125,15 @@ class MultinomialGpuKernel : public GpuKernel {
     }
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     output_size_ = sizeof(int);
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      output_size_ *= output_shape[i];
-      workspace_size_ *= output_shape[i];
+    workspace_size_ = sizeof(int);
+    replacement_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("replacement"));
+    if (replacement_) {
+      for (size_t i = 0; i < output_shape.size(); i++) {
+        output_size_ *= output_shape[i];
+      }
+    }
+    if (replacement_) {
+      workspace_size_ = output_size_;
     }
     seed_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed"));
     InitSizeLists();
@@ -136,6 +153,7 @@ class MultinomialGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t distributions_;
   size_t workspace_size_;
+  bool replacement_;
   int seed_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
