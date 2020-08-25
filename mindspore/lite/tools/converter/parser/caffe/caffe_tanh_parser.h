@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_CAFFE_TANH_PARSER_H
-#define LITE_CAFFE_TANH_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TANH_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TANH_PARSER_H
 
 #include <vector>
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
@@ -27,10 +27,12 @@ class CaffeTanhParser : public CaffeNodeParser {
  public:
   CaffeTanhParser() : CaffeNodeParser("tanh") {}
 
-  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
+  STATUS Parse(const caffe::LayerParameter &proto,
+               const caffe::LayerParameter &weight,
+               schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_CAFFE_TANH_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TANH_PARSER_H
