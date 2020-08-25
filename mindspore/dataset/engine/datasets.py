@@ -1130,6 +1130,8 @@ class Dataset:
         Args:
             columns (list[str], optional): List of columns to be used to specify the order of columns
                 (default=None, means all columns).
+            num_epochs (int, optional): max epochs that iterator can be iteratered,
+                if num_epochs = -1, iterator can be iteratered infinit epochs (default=-1)
 
         Returns:
             Iterator, list of ndarray.
@@ -1154,6 +1156,10 @@ class Dataset:
 
         The data retrieved will be a dictionary. The order
         of the columns in the dictionary may not be the same as the original order.
+
+        Args:
+            num_epochs (int, optional): max epochs that iterator can be iteratered,
+                if num_epochs = -1, iterator can be iteratered infinit epochs (default=-1)
 
         Returns:
             Iterator, dictionary of column_name-ndarray pair.
