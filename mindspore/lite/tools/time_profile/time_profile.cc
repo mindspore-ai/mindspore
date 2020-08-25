@@ -42,6 +42,7 @@ int TimeProfile::GenerateInputData() {
     auto input_data = tensor->MutableData();
     if (input_data == nullptr) {
       MS_LOG(ERROR) << "MallocData for inTensor failed";
+      std::cerr << "MallocData for inTensor failed" << std::endl;
       return RET_ERROR;
     }
     MS_ASSERT(tensor->GetData() != nullptr);
@@ -49,6 +50,7 @@ int TimeProfile::GenerateInputData() {
     auto status = GenerateRandomData(tensor_byte_size, input_data);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Generate RandomData for inTensor failed " << status;
+      std::cerr << "Generate RandomData for inTensor failed " << status << std::endl;
       return RET_ERROR;
     }
   }
@@ -66,12 +68,14 @@ int TimeProfile::ReadInputFile() {
   size_t size;
   char *bin_buf = ReadFile(_flags->in_data_path_.c_str(), &size);
   if (bin_buf == nullptr) {
-    MS_LOG(ERROR) << "Input data file error, required: ";
+    MS_LOG(ERROR) << "Read input data failed.";
+    std::cerr << "Read input data failed." << std::endl;
     return RET_ERROR;
   }
   auto tensor_data_size = inTensor->Size();
   if (size != tensor_data_size) {
     MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << " in fact: " << size;
+    std::cerr << "Input binary file size error, required: " << tensor_data_size << " in fact: " << size << std::endl;
     return RET_ERROR;
   }
   auto input_data = inTensor->MutableData();
@@ -85,12 +89,14 @@ int TimeProfile::LoadInput() {
     auto status = GenerateInputData();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Generate input data error " << status;
+      std::cerr << "Generate input data error " << status << std::endl;
       return RET_ERROR;
     }
   } else {
     auto status = ReadInputFile();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "ReadInputFile error " << status;
+      std::cerr << "ReadInputFile error " << status << std::endl;
       return RET_ERROR;
     }
   }
@@ -102,6 +108,7 @@ int TimeProfile::InitSession() {
   char *graph_buf = ReadFile(_flags->model_path_.c_str(), &size);
   if (graph_buf == nullptr) {
     MS_LOG(ERROR) << "Load graph failed, path " << _flags->model_path_;
+    std::cerr << "Load graph failed, path " << _flags->model_path_ << std::endl;
     return RET_ERROR;
   }
 
@@ -113,6 +120,7 @@ int TimeProfile::InitSession() {
   session_ = session::LiteSession::CreateSession(ctx);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "New session failed while running.";
+    std::cerr << "New session failed while running." << std::endl;
     return RET_ERROR;
   }
 
@@ -179,11 +187,13 @@ int TimeProfile::Init() {
 
   if (_flags->num_threads_ < 1) {
     MS_LOG(ERROR) << "NumThreads: " << _flags->num_threads_ << " must greater than or equal 1";
+    std::cerr << "NumThreads: " << _flags->num_threads_ << " must greater than or equal 1" << std::endl;
     return RET_ERROR;
   }
 
   if (_flags->loop_count_ < 1) {
     MS_LOG(ERROR) << "LoopCount: " << _flags->loop_count_ << " must greater than or equal 1";
+    std::cerr << "LoopCount: " << _flags->loop_count_ << " must greater than or equal 1" << std::endl;
     return RET_ERROR;
   }
 
@@ -200,24 +210,28 @@ int TimeProfile::Init() {
 
   if (_flags->model_path_.empty()) {
     MS_LOG(ERROR) << "modelPath is required";
+    std::cerr << "modelPath is required" << std::endl;
     return RET_ERROR;
   }
 
   auto status = InitSession();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Init session failed.";
+    std::cerr << "Init session failed." << std::endl;
     return RET_ERROR;
   }
 
   status = this->LoadInput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Load input failed.";
+    std::cerr << "Load input failed." << std::endl;
     return RET_ERROR;
   }
 
   status = InitCallbackParameter();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Init callback Parameter failed.";
+    std::cerr << "Init callback Parameter failed." << std::endl;
     return RET_ERROR;
   }
 
@@ -299,6 +313,7 @@ int TimeProfile::RunTimeProfile() {
   char *graphBuf = ReadFile(_flags->model_path_.c_str(), &size);
   if (graphBuf == nullptr) {
     MS_LOG(ERROR) << "Load graph failed while running " << modelName.c_str();
+    std::cerr << "Load graph failed while running " << modelName.c_str() << std::endl;
     delete graphBuf;
     delete session_;
     return RET_ERROR;
@@ -307,6 +322,7 @@ int TimeProfile::RunTimeProfile() {
   delete graphBuf;
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
+    std::cerr << "Import model file failed while running " << modelName.c_str() << std::endl;
     delete session_;
     delete model;
     return RET_ERROR;
@@ -314,6 +330,7 @@ int TimeProfile::RunTimeProfile() {
   auto ret = session_->CompileGraph(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Compile graph failed.";
+    std::cerr << "Compile graph failed." << std::endl;
     delete session_;
     delete model;
     return RET_ERROR;
@@ -324,6 +341,7 @@ int TimeProfile::RunTimeProfile() {
   auto status = LoadInput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
+    std::cerr << "Generate input data error" << std::endl;
     delete session_;
     delete model;
     return status;
@@ -337,6 +355,7 @@ int TimeProfile::RunTimeProfile() {
     ret = session_->RunGraph(before_call_back_, after_call_back_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Run graph failed.";
+      std::cerr << "Run graph failed." << std::endl;
       delete session_;
       delete model;
       return RET_ERROR;
@@ -384,12 +403,14 @@ int RunTimeProfile(int argc, const char **argv) {
   auto ret = time_profile.Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init TimeProfile failed.";
+    std::cerr << "Init TimeProfile failed." << std::endl;
     return RET_ERROR;
   }
 
   ret = time_profile.RunTimeProfile();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run TimeProfile failed.";
+    std::cerr << "Run TimeProfile failed." << std::endl;
     return RET_ERROR;
   }
 
