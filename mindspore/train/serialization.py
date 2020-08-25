@@ -734,7 +734,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         >>>                      Parameter(Tensor(np.array([0.00015815, 0.00015458, -0.00012125])),
         >>>                                "network.embedding_table"),
         >>>                      Parameter(Tensor(np.array([0.00042165, 0.00029692, -0.00007941])),
-        >>>                                "network.embedding_tabel"),
+        >>>                                "network.embedding_table"),
         >>>                      Parameter(Tensor(np.array([0.00084451, 0.00089960, -0.00010431])),
         >>>                                "network.embedding_table")]
         >>> merged_parameter = merge_sliced_parameter(sliced_parameters, strategy)
