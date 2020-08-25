@@ -40,6 +40,8 @@ Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
   }
   cv::Mat in_image = input_cv->mat();
   cv::Mat output_img;
+  CHECK_FAIL_RETURN_UNEXPECTED(in_image.depth() == CV_8U || in_image.depth() == CV_8S,
+                               "Input image data type can not be float, but got " + input->type().ToString());
   cv::LUT(in_image, lut_vector, output_img);
   std::shared_ptr<CVTensor> result_tensor;
   RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, &result_tensor));

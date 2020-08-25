@@ -415,9 +415,7 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
     for (int i = 0; i < crop_width; i++) {
       for (int j = 0; j < crop_height; j++) {
         for (int c = 0; c < number_of_channels; c++) {
-          uint8_t pixel_value;
-          RETURN_IF_NOT_OK(sub_mat->GetItemAt(&pixel_value, {j, i, c}));
-          RETURN_IF_NOT_OK((*input)->SetItemAt({y + j, x + i, c}, pixel_value));
+          RETURN_IF_NOT_OK(CopyTensorValue(sub_mat, input, {j, i, c}, {y + j, x + i, c}));
         }
       }
     }
@@ -432,9 +430,7 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
     for (int i = 0; i < crop_width; i++) {
       for (int j = 0; j < crop_height; j++) {
         for (int c = 0; c < number_of_channels; c++) {
-          uint8_t pixel_value;
-          RETURN_IF_NOT_OK(sub_mat->GetItemAt(&pixel_value, {c, j, i}));
-          RETURN_IF_NOT_OK((*input)->SetItemAt({c, y + j, x + i}, pixel_value));
+          RETURN_IF_NOT_OK(CopyTensorValue(sub_mat, input, {c, j, i}, {c, y + j, x + i}));
         }
       }
     }
@@ -447,13 +443,29 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
     }
     for (int i = 0; i < crop_width; i++) {
       for (int j = 0; j < crop_height; j++) {
-        uint8_t pixel_value;
-        RETURN_IF_NOT_OK(sub_mat->GetItemAt(&pixel_value, {j, i}));
-        RETURN_IF_NOT_OK((*input)->SetItemAt({y + j, x + i}, pixel_value));
+        RETURN_IF_NOT_OK(CopyTensorValue(sub_mat, input, {j, i}, {y + j, x + i}));
       }
     }
   } else {
     RETURN_STATUS_UNEXPECTED("MaskWithTensor: Image format must be CHW, HWC, or HW.");
+  }
+  return Status::OK();
+}
+
+Status CopyTensorValue(const std::shared_ptr<Tensor> &source_tensor, std::shared_ptr<Tensor> *dest_tensor,
+                       const std::vector<int64_t> &source_indx, const std::vector<int64_t> &dest_indx) {
+  if (source_tensor->type() != (*dest_tensor)->type())
+    RETURN_STATUS_UNEXPECTED("CopyTensorValue: source and destination tensor must have the same type.");
+  if (source_tensor->type() == DataType::DE_UINT8) {
+    uint8_t pixel_value;
+    RETURN_IF_NOT_OK(source_tensor->GetItemAt(&pixel_value, source_indx));
+    RETURN_IF_NOT_OK((*dest_tensor)->SetItemAt(dest_indx, pixel_value));
+  } else if (source_tensor->type() == DataType::DE_FLOAT32) {
+    float pixel_value;
+    RETURN_IF_NOT_OK(source_tensor->GetItemAt(&pixel_value, source_indx));
+    RETURN_IF_NOT_OK((*dest_tensor)->SetItemAt(dest_indx, pixel_value));
+  } else {
+    RETURN_STATUS_UNEXPECTED("CopyTensorValue: Tensor type is not supported. Tensor type must be float32 or uint8.");
   }
   return Status::OK();
 }
