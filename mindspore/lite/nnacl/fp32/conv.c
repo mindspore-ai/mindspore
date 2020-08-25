@@ -303,7 +303,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       for (int i = 0; i < input_unit_square; ++i) {
         RowMajor2Col12Major(src_ptr + i * C12NUM * ic4 * C4NUM, tmp_col_ptr, C12NUM, ic4 * C4NUM);
         MatMulOpt(tmp_col_ptr, trans_weight + i * ic4 * C4NUM * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, ic4 * C4NUM,
-                  C12NUM, oc8 * C8NUM, input_unit_square, 2);
+                  cal_num, oc8 * C8NUM, input_unit_square, 2);
       }
 
       // step 4 : output transform
@@ -489,9 +489,8 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
       for (int i = 0; i < input_unit_square; ++i) {
         RowMajor2Col12Major(src_ptr + i * C12NUM * ic4 * C4NUM, tmp_col_ptr, C12NUM, ic4 * C4NUM);
         MatMulOpt(tmp_col_ptr, transed_weight + i * ic4 * C4NUM * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0,
-                  ic4 * C4NUM, C12NUM, oc8 * C8NUM, input_unit_square, 2);
+                  ic4 * C4NUM, real_cal_num, oc8 * C8NUM, input_unit_square, 2);
       }
-
       Conv3x3Fp32OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, nc4hw4_out + nc4hw4_buffer_offset,
                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
     }

@@ -39,6 +39,7 @@ void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bi
                        int col, size_t stride, bool write_nhwc);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, size_t stride, size_t write_nhwc, size_t write_c4);
+void MatmulFloatNeon64OptRemain(const float *a, const float *b, float *c, int depth, int row, int col, size_t stride);
 #endif
 #ifdef __cplusplus
 }
