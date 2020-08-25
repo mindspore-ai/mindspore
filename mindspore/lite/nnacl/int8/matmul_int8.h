@@ -24,8 +24,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void MatMulInt8(const int8_t *a, const int8_t *b, int *c, const int row8, const int col8, const int deep,
-                const int a_zp, const int b_zp);
 void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                      const int *input_sum, const int *bias);
 void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
@@ -39,15 +37,16 @@ void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col);
 
 void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16);
 void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_16);
-void RowMajor2Asums(int8_t *a, int row, int col, int b_zp, int *dst);
-void RowMajor2Bbias(int8_t *b, int row, int col, int a_zp, int b_zp, int *bias, int *dst);
-void Row4x4Major2RowMajor(int8_t *src, int row4, int8_t *dst, int row, int cow);
+void CalcInputSums(int8_t *a, int row, int col, int b_zp, int *dst);
+void CalcWeightBiasSums(int8_t *b, int row, int col, int a_zp, int b_zp, int *bias, int *dst);
+void MatmulInt8(const int8_t *a, const int8_t *b, int8_t *dst, const int *a_sums, const int *bias, int act_min,
+                int act_max, int out_zp, int multiplier, int left_shift, int right_shift, int row, int col, int deep16,
+                int stride);
 
 #ifdef ENABLE_ARM64
-// bias = bias + depth * a_zp * b_zp - a_zp * b_sums
 void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, const int *a_sums,
                       const int *bias, int act_min, int act_max, int out_zp, int multiplier, int left_shift,
-                      int right_shift);
+                      int right_shift, int row, int col, int stride);
 
 void MatMulR4Int8Neon64(const int8_t *a, const int8_t *b, int32_t *dst, int row4, int col4, int deep16,
                         const int *input_sum, const int *bias);

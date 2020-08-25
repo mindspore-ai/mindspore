@@ -29,99 +29,128 @@ class TestFcInt8 : public mindspore::CommonTest {
   TestFcInt8() {}
 };
 
-int FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<lite::tensor::Tensor *> *outputs_,
-                   MatMulParameter *matmal_param, float **correct, double *scale, int *zeropoint) {
-  float input_max = 20;
-  float input_min = -20;
-  float weight_max = 1;
-  float weight_min = -1;
-  float output_max = 20;
-  float output_min = -20;
+struct TensorInfo {
+  float *data;
+  int *data_int;
+  float min;
+  float max;
+  int len;
+  std::vector<int> *shape;
+};
 
-  double input_scale =
-    (input_max - input_min) / (std::numeric_limits<int8_t>::max() - std::numeric_limits<int8_t>::min());
-  int input_zp = std::numeric_limits<int8_t>::max() - input_max / input_scale;
-  double weight_scale =
-    (weight_max - weight_min) / (std::numeric_limits<int8_t>::max() - std::numeric_limits<int8_t>::min());
-  int weight_zp = std::numeric_limits<int8_t>::max() - weight_max / weight_scale;
-  double output_scale =
-    (output_max - output_min) / (std::numeric_limits<int8_t>::max() - std::numeric_limits<int8_t>::min());
-  int output_zp = std::numeric_limits<int8_t>::max() - output_max / output_scale;
-  *scale = output_scale;
-  *zeropoint = output_zp;
+extern void QuantProcess(float *input, int len, float min, float max, float *scale, int *zero_point, int8_t *output);
+extern lite::tensor::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, float scale, int zp);
 
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {2, 2, 2, 2}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  in_t->MallocData();
-  float in[] = {-3.2366564, -4.7733846, -7.8329225, 16.146885, 5.060793,  -6.1471,  -1.7680453, -6.5721383,
-                17.87506,   -5.1192183, 10.742863,  1.4536934, 19.693445, 19.45783, 5.063163,   0.5234792};
-  Quantize(in, in_t->ElementsNum(), input_scale, input_zp, reinterpret_cast<int8_t *>(in_t->Data()));
-  auto in_quant_arg = new mindspore::lite::tensor::QuantArg();
-  in_quant_arg->zeroPoint = input_zp;
-  in_quant_arg->scale = input_scale;
-  in_t->AddQuantParam(*in_quant_arg);
-  inputs_->push_back(in_t);
-
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 8}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  weight_t->MallocData();
-  float weight[] = {-0.24438887,  0.06738146,  -0.8169129,   0.21510671,   -0.012470592, -0.053063435,
-                    0.6050155,    0.8656233,   0.12911413,   -0.028635843, -0.034080597, -0.10622552,
-                    -0.012254699, -0.01312836, 0.25241964,   -0.4706142,   0.2451482,    -0.9558459,
-                    0.4481974,    0.33251503,  -0.011705584, -0.1720293,   -0.39410214,  -0.73637343};
-  Quantize(weight, weight_t->ElementsNum(), weight_scale, weight_zp, reinterpret_cast<int8_t *>(weight_t->Data()));
-  auto weight_quant_arg = new mindspore::lite::tensor::QuantArg();
-  weight_quant_arg->zeroPoint = weight_zp;
-  weight_quant_arg->scale = weight_scale;
-  weight_t->AddQuantParam(*weight_quant_arg);
-  inputs_->push_back(weight_t);
-
-  Tensor *bias_t = new Tensor(kNumberTypeInt32, {3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  bias_t->MallocData();
-  memset(bias_t->Data(), 0, sizeof(int) * bias_t->ElementsNum());
-  inputs_->push_back(bias_t);
-
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {2, 3}, schema::Format_NHWC, static_cast<schema::NodeType>(1));
-  out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::tensor::QuantArg();
-  output_quant_arg->zeroPoint = output_zp;
-  output_quant_arg->scale = output_scale;
-  out_t->AddQuantParam(*output_quant_arg);
-  outputs_->push_back(out_t);
-
-  *correct = reinterpret_cast<float *>(malloc(out_t->ElementsNum() * sizeof(float)));
-  float nchw_co[] = {3.84586822, 0.93586633, 12.16212629, -10.93835061, 2.46887183, 8.61480108};
-  memcpy(*correct, nchw_co, out_t->ElementsNum() * sizeof(float));
-
-  matmal_param->b_transpose_ = true;
-  matmal_param->a_transpose_ = false;
-  matmal_param->has_bias_ = true;
-  matmal_param->act_type_ = ActType_No;
-  return out_t->ElementsNum();
+lite::tensor::Tensor *MakeIntTensor(int *data, int len, std::vector<int> *shape) {
+  auto tensor =
+    new lite::tensor::Tensor(kNumberTypeInt32, *shape, schema::Format_NHWC, static_cast<schema::NodeType>(1));
+  tensor->MallocData();
+  auto tensor_ptr = reinterpret_cast<int *>(tensor->Data());
+  memcpy(tensor_ptr, data, len * sizeof(int));
+  return tensor;
 }
 
-TEST_F(TestFcInt8, fcint8) {
-  std::vector<lite::tensor::Tensor *> inputs_;
-  std::vector<lite::tensor::Tensor *> outputs_;
-  auto matmul_param = new MatMulParameter();
-  float *correct;
-  double output_scale;
-  int output_zp;
-  int total_size = FcInt8TestInit(&inputs_, &outputs_, matmul_param, &correct, &output_scale, &output_zp);
-  lite::Context *ctx = new lite::Context;
+void FcInt8TestInit(std::vector<lite::tensor::Tensor *> *inputs, std::vector<lite::tensor::Tensor *> *outputs,
+                    TensorInfo *in, TensorInfo *weight, TensorInfo *bias, TensorInfo *out) {
+  float in_scale, weight_scale, out_scale;
+  int in_zp, weight_zp, out_zp;
+  int8_t *in_data = new int8_t[in->len];
+  int8_t *weight_data = new int8_t[weight->len];
+  QuantProcess(in->data, in->len, in->min, in->max, &in_scale, &in_zp, in_data);
+  auto in_tensor = MakeQuantTensor(in_data, in->len, in->shape, in_scale, in_zp);
+  inputs->push_back(in_tensor);
+  QuantProcess(weight->data, weight->len, weight->min, weight->max, &weight_scale, &weight_zp, weight_data);
+  auto weight_tensor = MakeQuantTensor(weight_data, weight->len, weight->shape, weight_scale, weight_zp);
+  inputs->push_back(weight_tensor);
+  auto bias_tensor = MakeIntTensor(bias->data_int, bias->len, bias->shape);
+  inputs->push_back(bias_tensor);
+  QuantProcess(out->data, out->len, out->min, out->max, &out_scale, &out_zp, nullptr);
+  auto out_tensor = MakeQuantTensor(nullptr, out->len, out->shape, out_scale, out_zp);
+  outputs->push_back(out_tensor);
+  delete[] in_data;
+  delete[] weight_data;
+}
+
+TEST_F(TestFcInt8, fctest1) {
+  float in[] = {4.259103407444801,   5.992151035772917,   -9.495343223733581,  3.0509999931426215, -16.635707833991095,
+                -14.72005749234452,  2.8290916795754093,  -15.827977973039049, -16.98208477063347, 2.8801101778935347,
+                -0.5905297521382735, 18.042746010536085,  3.913511213700396,   11.571264917136105, 19.084257392926148,
+                8.571560238377568,   17.58868010598305,   12.433311533838427,  4.548078598583526,  15.609650071521138,
+                6.663372887795717,   17.581323475674594,  1.453277207446778,   -6.119351424589654, -16.87310296820285,
+                11.906066592064796,  -13.290100998834653, 19.627129875430548,  16.034262583959162, 10.255738135902781,
+                12.134650347811792,  -5.5882066903433305, 15.554050723026322,  15.288481461776783, 17.651080309797287,
+                -9.258779162183215,  4.218532791445092,   -6.205309122668545,  1.2220458021156908, 1.6800736573947326};
+  TensorInfo in_params;
+  in_params.data = in;
+  in_params.len = 40;
+  std::vector<int> in_shape{5, 2, 2, 2};
+  in_params.shape = &in_shape;
+  in_params.min = -20;
+  in_params.max = 20;
+
+  float weight[] = {
+    -0.586269014312498,   0.10845796767603733,  0.8455159907124523,   0.20261291069007226,  0.7564258582027543,
+    0.4505005038790615,   -0.607259232240795,   -0.6962171798923924,  0.7967573009922135,   -0.46069496925353715,
+    -0.2967638879316592,  -0.7025557337565955,  -0.5313515272071268,  0.07584168670764102,  -0.6860034691410029,
+    0.9218806800279316,   -0.07408538201953907, -0.7933652717840096,  0.6636691558029275,   -0.30198695606477477,
+    0.790225747868754,    -0.9478140254555916,  0.4537316306461665,   0.1776848732022871,   -0.7492316745474277,
+    -0.5825825240770948,  0.5680842804542614,   -0.9255552309192772,  0.20866577718844725,  0.9570928647172854,
+    0.18172570688854406,  -0.26442830241827253, -0.24765169216720873, -0.19512285277145702, 0.1120696020054861,
+    0.7558578199370625,   -0.15032457481135109, -0.08485585411928809, 0.6343014796699504,   0.026380085222785787,
+    -0.40516674259120444, -0.7407588590646037,  -0.28521396461492454, 0.2555841827858194,   0.023640857478332444,
+    -0.6540694390119834,  0.7439705499824205,   -0.7579774562590929};
+  TensorInfo weight_params;
+  weight_params.data = weight;
+  weight_params.len = 48;
+  std::vector<int> weight_shape{6, 8};
+  weight_params.shape = &weight_shape;
+  weight_params.min = -1;
+  weight_params.max = 1;
+
+  int bias[6] = {0};
+  TensorInfo bias_params;
+  bias_params.data_int = bias;
+  bias_params.len = 6;
+  std::vector<int> bias_shape{6};
+  bias_params.shape = &bias_shape;
+
+  float correct[] = {-19.170732, -7.5019627, -13.015462, -27.760283, 4.1447954,  20.660276,  4.0412164,  -33.750015,
+                     -4.560128,  7.1035166,  27.976341,  9.75216,    14.383608,  -12.87587,  -24.688887, -12.185722,
+                     3.7933283,  -19.266382, 17.193876,  -49.99205,  -15.480089, -3.1659412, 19.470417,  13.758459,
+                     4.0713396,  4.614437,   11.296907,  -7.244551,  -11.143417, -21.233654};
+  TensorInfo out_params;
+  out_params.data = correct;
+  out_params.len = 30;
+  std::vector<int> out_shape{5, 6};
+  out_params.shape = &out_shape;
+  out_params.min = -50;
+  out_params.max = 50;
+
+  auto fc_param = new MatMulParameter();
+  fc_param->a_transpose_ = false;
+  fc_param->b_transpose_ = true;
+  fc_param->has_bias_ = true;
+  fc_param->act_type_ = ActType_No;
+  std::vector<lite::tensor::Tensor *> inputs;
+  std::vector<lite::tensor::Tensor *> outputs;
+  FcInt8TestInit(&inputs, &outputs, &in_params, &weight_params, &bias_params, &out_params);
+  auto ctx = new lite::Context;
   ctx->thread_num_ = 2;
-  kernel::FullconnectionInt8CPUKernel *fc = new kernel::FullconnectionInt8CPUKernel(
-    reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
+
+  kernel::FullconnectionInt8CPUKernel *fc =
+    new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(fc_param), inputs, outputs, ctx, nullptr);
 
   fc->Init();
   fc->Run();
-  float fout[6] = {0};
-  Dequantize(reinterpret_cast<int8_t *>(outputs_[0]->Data()), outputs_[0]->ElementsNum(), output_scale, output_zp,
-             fout);
-  CompareOutputData(fout, correct, 6, 0.2);
-  delete matmul_param;
+  float out_scale;
+  int out_zp;
+  QuantProcess(correct, out_params.len, out_params.min, out_params.max, &out_scale, &out_zp, nullptr);
+  float *out = new float[out_params.len];
+  Dequantize(reinterpret_cast<int8_t *>(outputs[0]->Data()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
+  CompareOutputData(out, correct, 6, 0.3);
   delete fc;
-  for (auto t : inputs_) delete t;
-  for (auto t : outputs_) delete t;
-  free(correct);
+  for (auto t : inputs) delete t;
+  for (auto t : outputs) delete t;
+  delete[] out;
 }
-
 }  // namespace mindspore
