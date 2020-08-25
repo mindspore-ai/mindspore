@@ -18,10 +18,22 @@
 #include "minddata/dataset/kernels/image/soft_dvpp/utils/soft_dp_check.h"
 #include "minddata/dataset/kernels/image/soft_dvpp/utils/soft_jpegd.h"
 #include "minddata/dataset/kernels/image/soft_dvpp/utils/soft_vpc.h"
-
+#include <thread>
 const int32_t decodeSucc = 0;
+const int32_t checkParamErr = 1;
+const int32_t num2 = 2;
 
 uint32_t DecodeAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info) {
+  if (soft_dp_process_info == nullptr || soft_dp_process_info->input_buffer == nullptr ||
+      soft_dp_process_info->input_buffer_size <= 0 || soft_dp_process_info->output_buffer == nullptr ||
+      soft_dp_process_info->output_buffer_size <= 0) {
+    API_LOGE("The input buffer or out buffer is null or size is 0");
+    return checkParamErr;
+  }
+  if (soft_dp_process_info->output_width % 2 == 1 || soft_dp_process_info->output_height % 2 == 1) {
+    API_LOGE("odd width and height dose not support");
+    return checkParamErr;
+  }
   VpcInfo vpc_input_info;
   SoftJpegd soft_handler;
   int32_t ret = soft_handler.JpegdSoftwareDecodeProcess(&vpc_input_info, soft_dp_process_info);
@@ -47,6 +59,12 @@ uint32_t DecodeAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info) {
 }
 
 uint32_t DecodeAndCropAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info, const SoftDpCropInfo &crop_info) {
+  if (soft_dp_process_info == nullptr || soft_dp_process_info->input_buffer == nullptr ||
+      soft_dp_process_info->input_buffer_size <= 0 || soft_dp_process_info->output_buffer == nullptr ||
+      soft_dp_process_info->output_buffer_size <= 0) {
+    API_LOGE("The input buffer or out buffer is null or size is 0");
+    return checkParamErr;
+  }
   VpcInfo vpc_input_info;
   SoftJpegd soft_handler;
 
@@ -63,6 +81,15 @@ uint32_t DecodeAndCropAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info, co
   output.height = soft_dp_process_info->output_height;
   SoftDpCropInfo crop = crop_info;
 
+  if ((vpc_input_info.real_width % num2 == 1) && ((uint32_t)vpc_input_info.real_width == crop.right)) {
+    API_LOGD("crop width is equal the real width.");
+    crop.right = vpc_input_info.real_width - 1;
+  }
+
+  if ((vpc_input_info.real_height % num2 == 1) && ((uint32_t)vpc_input_info.real_height == crop.down)) {
+    API_LOGD("crop height is equal the real height.");
+    crop.down = vpc_input_info.real_height - 1;
+  }
   SoftVpc soft_vpc;
   ret = soft_vpc.Process(vpc_input_info, crop, output);
   return ret;
