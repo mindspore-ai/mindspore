@@ -48,6 +48,5 @@ bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   }
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
