@@ -916,3 +916,73 @@ def test_recursive_call():
     with pytest.raises(RuntimeError):
         net(input_data)
     context.set_context(max_call_depth=old_max_call_depth)
+
+
+def test_switch_layer_shape_join_failed():
+    class AddFuncNet(nn.Cell):
+        def __init__(self, funcs, new_func):
+            super(AddFuncNet, self).__init__()
+            self.funcs = funcs
+            self.new_func = new_func
+
+        def construct(self, i, inputs):
+            final_funcs = self.funcs + (self.new_func,)
+            x = final_funcs[i](inputs)
+            return x
+
+    class ReLUTuple(nn.Cell):
+        def __init__(self):
+            super(ReLUTuple, self).__init__()
+            self.op = nn.ReLU()
+
+        def construct(self, x):
+            return self.op(x[0])
+
+    func1 = nn.Softmax()
+    func2 = nn.ReLU()
+    func3 = ReLUTuple()
+
+    funcs = (func1, func2)
+
+
+    net = AddFuncNet(funcs, func3)
+
+    inp = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    i = Tensor(1, mstype.int32)
+    with pytest.raises(ValueError) as err:
+        net(i, inp)
+
+
+def test_switch_layer_dtype_join_failed():
+    class Cast(nn.Cell):
+        def __init__(self, dtype):
+            super(Cast, self).__init__()
+            self.op = P.Cast()
+            self.dtype = dtype
+
+        def construct(self, x):
+            y = self.op(x, self.dtype)
+            return y + y
+
+    class SwitchNegNet(nn.Cell):
+        def __init__(self, funcs):
+            super(SwitchNegNet, self).__init__()
+            self.funcs = funcs
+            self.op = P.Neg()
+
+        def construct(self, i, inputs):
+            x = self.funcs[i](inputs)
+            x = self.op(x)
+            return x
+
+
+    func1 = nn.ReLU()
+    func2 = Cast(mstype.int32)
+    funcs = (func1, func2)
+    net = SwitchNegNet(funcs)
+
+    inp = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    i = Tensor(0, mstype.int32)
+
+    with pytest.raises(TypeError) as err:
+        net(i, inp)

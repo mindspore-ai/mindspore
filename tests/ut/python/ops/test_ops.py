@@ -33,6 +33,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
             pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
 from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ....ops_common import convert
 
 
 grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
@@ -1703,7 +1704,7 @@ test_case_nn_ops = [
     ('ResizeBilinear', {
         'block': P.ResizeBilinear((5, 5)),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],
-        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)]}),
+        'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float32)]}),
     ('ResizeBilinearGrad', {
         'block': G.ResizeBilinearGrad(),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32), Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
@@ -1712,7 +1713,7 @@ test_case_nn_ops = [
     ('ROIAlign', {
         'block': P.ROIAlign(7, 7, 0.03125, 2),
         'desc_inputs': [[2, 256, 192, 320], [1024, 5]],
-        'desc_bprop': [[7, 7]]}),
+        'desc_bprop': [[1024, 256, 7, 7]]}),
     ('ROIAlignGrad', {
         'block': G.ROIAlignGrad((1, 1, 1, 1), 2, 2, 0.5, 2),
         'desc_inputs': [[1, 1, 2, 2], [1, 5]],
@@ -2315,7 +2316,7 @@ test_case_other_ops = [
     ('IOU', {
         'block': P.IOU(),
         'desc_inputs': [Tensor(np.ones((256, 4), np.float16)), Tensor(np.ones((128, 4), np.float16))],
-        'desc_bprop': [[128, 256]]}),
+        'desc_bprop': [convert([128, 256], np.float16)]}),
     ('Summary', {
         'block': SummaryNet(),
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),

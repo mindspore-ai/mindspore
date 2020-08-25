@@ -283,9 +283,99 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
   MS_LOG(ERROR) << "Resolve type is invalid " << ((std::string)py::str(obj));
   return false;
 }
+
+bool ConvertIntegerWithType(const int &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
+  if (dtype == nullptr) {
+    *data = std::make_shared<Int32Imm>(obj);
+    return true;
+  }
+
+  auto int_dypte = dyn_cast<Int>(dtype);
+  if (int_dypte != nullptr) {
+    switch (int_dypte->nbits()) {
+      case 8:
+        *data = std::make_shared<Int8Imm>(static_cast<int8_t>(obj));
+        break;
+      case 16:
+        *data = std::make_shared<Int16Imm>(obj);
+        break;
+      case 32:
+        *data = std::make_shared<Int32Imm>(obj);
+        break;
+      case 64:
+        *data = std::make_shared<Int64Imm>(obj);
+        break;
+      default:
+        *data = std::make_shared<Int32Imm>(obj);
+    }
+    return true;
+  }
+
+  auto uint_dypte = dyn_cast<UInt>(dtype);
+  if (int_dypte != nullptr) {
+    switch (uint_dypte->nbits()) {
+      case 8:
+        *data = std::make_shared<UInt8Imm>(obj);
+        break;
+      case 16:
+        *data = std::make_shared<UInt16Imm>(obj);
+        break;
+      case 32:
+        *data = std::make_shared<UInt32Imm>(obj);
+        break;
+      case 64:
+        *data = std::make_shared<UInt64Imm>(obj);
+        break;
+      default:
+        *data = std::make_shared<UInt32Imm>(obj);
+    }
+    return true;
+  }
+
+  auto float_dypte = dyn_cast<Float>(dtype);
+  if (float_dypte != nullptr) {
+    switch (float_dypte->nbits()) {
+      case 32:
+        *data = std::make_shared<FP32Imm>(obj);
+        break;
+      case 64:
+        *data = std::make_shared<FP64Imm>(obj);
+        break;
+      default:
+        *data = std::make_shared<FP32Imm>(obj);
+    }
+    return true;
+  }
+
+  return false;
+}
+
+bool ConvertFloatWithType(const float &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
+  if (dtype == nullptr) {
+    *data = std::make_shared<FP32Imm>(obj);
+    return true;
+  }
+
+  auto float_dypte = dyn_cast<Float>(dtype);
+  if (float_dypte == nullptr) {
+    return false;
+  }
+
+  switch (float_dypte->nbits()) {
+    case 32:
+      *data = std::make_shared<FP32Imm>(obj);
+      break;
+    case 64:
+      *data = std::make_shared<FP64Imm>(obj);
+      break;
+    default:
+      *data = std::make_shared<FP32Imm>(obj);
+  }
+  return true;
+}
 }  // namespace
 
-bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature) {
+bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature, TypePtr dtype) {
   // check parameter valid
   if (data == nullptr) {
     MS_LOG(ERROR) << "Data is null pointer";
@@ -299,9 +389,9 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   } else if (py::isinstance<py::bool_>(obj)) {
     converted = std::make_shared<BoolImm>(py::cast<bool>(obj));
   } else if (py::isinstance<py::int_>(obj)) {
-    converted = std::make_shared<Int32Imm>(py::cast<int>(obj));
+    ret = ConvertIntegerWithType(py::cast<int>(obj), &converted, dtype);
   } else if (py::isinstance<py::float_>(obj)) {
-    converted = std::make_shared<FP32Imm>(py::cast<float>(obj));
+    ret = ConvertFloatWithType(py::cast<float>(obj), &converted, dtype);
   } else if (py::isinstance<py::str>(obj)) {
     converted = std::make_shared<StringImm>(py::cast<std::string>(obj));
   } else if (py::isinstance<py::dict>(obj)) {

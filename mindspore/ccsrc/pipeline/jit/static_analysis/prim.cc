@@ -407,9 +407,9 @@ py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrLi
 
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output) {
   // Convert to AbstractValue based on type and shape
+  auto out_dtype = output["dtype"];
   if (output["value"].is_none()) {
     auto out_shape = output["shape"];
-    auto out_dtype = output["dtype"];
     py::object min_shape = output.contains("min_shape") ? (py::object)output["min_shape"] : (py::object)py::none();
     py::object max_shape = output.contains("max_shape") ? (py::object)output["max_shape"] : (py::object)py::none();
 
@@ -417,7 +417,8 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
   }
   // Convert pyobject to Value, then to AbstractValue
   ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(output["value"], &converted_ret);
+  TypePtr dtype = py::isinstance<Type>(out_dtype) ? out_dtype.cast<TypePtr>() : nullptr;
+  bool converted = parse::ConvertData(output["value"], &converted_ret, false, dtype);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Convert data failed";
   }

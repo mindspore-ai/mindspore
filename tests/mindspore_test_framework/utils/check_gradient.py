@@ -324,7 +324,7 @@ class ScalarGradChecker(_GradChecker):
             self.input_selector = [i for i in range(self.nin)]
 
     def get_sens(self, i):
-        return 1
+        return 1.0
 
     def check_against_numeric(self, out_index):
         args = list(self.args)

@@ -105,7 +105,7 @@ class Int8Imm : public IntergerImm {
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "I8(" << v_ << ")";
+    oss << "I8(" << int(v_) << ")";
     return oss.str();
   }
 
@@ -131,7 +131,7 @@ class Int16Imm : public IntergerImm {
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "I16(" << v_ << ")";
+    oss << "I16(" << int(v_) << ")";
     return oss.str();
   }
 
@@ -157,7 +157,7 @@ class Int32Imm : public IntergerImm {
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "I32(" << v_ << ")";
+    oss << "I32(" << int(v_) << ")";
     return oss.str();
   }
 
@@ -211,7 +211,7 @@ class UInt8Imm : public IntergerImm {
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "U8(" << v_ << ")";
+    oss << "U8(" << unsigned(v_) << ")";
     return oss.str();
   }
 
@@ -239,7 +239,7 @@ class UInt16Imm : public IntergerImm {
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "U16(" << v_ << ")";
+    oss << "U16(" << unsigned(v_) << ")";
     return oss.str();
   }
 
@@ -267,7 +267,7 @@ class UInt32Imm : public IntergerImm {
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "U32(" << v_ << ")";
+    oss << "U32(" << unsigned(v_) << ")";
     return oss.str();
   }
 

@@ -50,9 +50,17 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   if (*shape1 == *shape2) {
     return shape1;
   }
+  // lengths of two shapes are not same, join failed
   if (shape1->shape().size() != shape2->shape().size()) {
-    MS_LOG(WARNING) << "Unsupported shape join. shape1 = " << shape1->ToString() << ", shape2 = " << shape2->ToString();
-    return shape1;
+    // special case: shape(1), shape() -> shape(1)
+    if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().size() == 0) {
+      return shape1;
+    }
+    if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().size() == 0) {
+      return shape2;
+    }
+    MS_EXCEPTION(ValueError) << "Unsupported shape join. shape1 = " << shape1->ToString()
+                             << ", shape2 = " << shape2->ToString();
   }
   std::vector<int> dims;
   bool has_dynamic_shape = false;

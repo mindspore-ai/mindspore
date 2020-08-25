@@ -45,13 +45,33 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
     MS_LOG(EXCEPTION) << "value is null";
   }
   py::object ret;
-  if (value->isa<Int32Imm>()) {
-    MS_LOG(DEBUG) << "int";
+  if (value->isa<Int8Imm>()) {
+    MS_LOG(DEBUG) << "int8";
+    py::int_ v = value->cast<Int8ImmPtr>()->value();
+    ret = v;
+  } else if (value->isa<Int16Imm>()) {
+    MS_LOG(DEBUG) << "int16";
+    py::int_ v = value->cast<Int16ImmPtr>()->value();
+    ret = v;
+  } else if (value->isa<Int32Imm>()) {
+    MS_LOG(DEBUG) << "int32";
     py::int_ v = value->cast<Int32ImmPtr>()->value();
     ret = v;
   } else if (value->isa<Int64Imm>()) {
     MS_LOG(DEBUG) << "int64";
     py::int_ v = value->cast<Int64ImmPtr>()->value();
+    ret = v;
+  } else if (value->isa<UInt8Imm>()) {
+    MS_LOG(DEBUG) << "uint8";
+    py::int_ v = value->cast<UInt8ImmPtr>()->value();
+    ret = v;
+  } else if (value->isa<UInt16Imm>()) {
+    MS_LOG(DEBUG) << "uint16";
+    py::int_ v = value->cast<UInt16ImmPtr>()->value();
+    ret = v;
+  } else if (value->isa<UInt32Imm>()) {
+    MS_LOG(DEBUG) << "uint32";
+    py::int_ v = value->cast<UInt32ImmPtr>()->value();
     ret = v;
   } else if (value->isa<UInt64Imm>()) {
     MS_LOG(DEBUG) << "uint64";
