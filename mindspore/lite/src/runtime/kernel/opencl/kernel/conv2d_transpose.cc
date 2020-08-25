@@ -16,6 +16,7 @@
 
 #include <string>
 #include <set>
+#include "src/common/utils.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/conv2d_transpose.h"
@@ -41,6 +42,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
   }
   std::string kernel_name = "conv2d_transpose2x2";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
@@ -70,13 +72,18 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   int div_ci = UP_DIV(ci, C4NUM);
   int div_co = UP_DIV(co, C4NUM);
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  auto data_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
+  using FLT = float;
+  if (enable_fp16_) {
+    using FLT = float16_t;
+  }
 
   // IHWO to OHWI4(I)4(O)(converter format is IHWO)
   // init padWeight_(buffer mem)
-  padWeight_ =
-    reinterpret_cast<FLOAT_t *>(allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * sizeof(FLOAT_t)));
-  padWeight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
-  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kWeightIndex)->Data());
+  padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
+  padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+  auto origin_weight = in_tensors_.at(kWeightIndex)->Data();
+  auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
     for (int kh_i = 0; kh_i < kh; kh_i++) {
@@ -88,9 +95,19 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
               int ci_offset = ci_i * C4NUM + ci4_i;
               if (co_offset < co && ci_offset < ci) {
                 int ori_index = ((ci_offset * kh + kh_i) * kw + kw_i) * ci + co_offset;
-                padWeight_[index++] = origin_weight[ori_index];
+                if (enable_fp16_) {
+                  if (weight_dtype == kNumberTypeFloat32) {
+                    reinterpret_cast<float16_t *>(padWeight_)[index++] =
+                      lite::Float32ToShort(reinterpret_cast<float *>(origin_weight)[ori_index]);
+                  } else {
+                    reinterpret_cast<float16_t *>(padWeight_)[index++] =
+                      reinterpret_cast<float16_t *>(origin_weight)[ori_index];
+                  }
+                } else {
+                  reinterpret_cast<float *>(padWeight_)[index++] = reinterpret_cast<float *>(origin_weight)[ori_index];
+                }
               } else {
-                padWeight_[index++] = 0.;
+                reinterpret_cast<FLT *>(padWeight_)[index++] = 0.;
               }
             }
           }
@@ -104,17 +121,24 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   size_t im_dst_x, im_dst_y;
   im_dst_x = div_co;
   im_dst_y = 1;
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   std::vector<size_t> img_size{im_dst_x, im_dst_y, img_dtype};
-  bias_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(im_dst_x * im_dst_y * C4NUM * sizeof(FLOAT_t), img_size));
-  bias_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
-  memset(bias_, 0x00, div_co * C4NUM * sizeof(FLOAT_t));
+  bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * data_size, img_size);
+  bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
+  memset(bias_, 0x00, div_co * C4NUM * sizeof(data_size));
+  auto bias_dtype = in_tensors_[2]->data_type();
   if (in_tensors_.size() >= 3) {
-    memcpy(bias_, in_tensors_[2]->Data(), co * sizeof(FLOAT_t));
+    if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
+      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->Data());
+      for (int i = 0; i < co; i++) {
+        reinterpret_cast<float16_t *>(bias_)[i] = lite::Float32ToShort(fdata[i]);
+      }
+    } else {
+      memcpy(bias_, in_tensors_[2]->Data(), co * data_size);
+    }
   }
   allocator->UnmapBuffer(bias_);
 }
@@ -123,11 +147,10 @@ int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
   size_t im_dst_x, im_dst_y;
   im_dst_x = UP_DIV(out_tensors_[0]->Channel() * out_tensors_[0]->Width(), C4NUM);
   im_dst_y = out_tensors_[0]->Height();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -197,4 +220,5 @@ kernel::LiteKernel *OpenCLConv2dTransposeKernelCreator(const std::vector<lite::t
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DeConv2D, OpenCLConv2dTransposeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DeConv2D, OpenCLConv2dTransposeKernelCreator)
 }  // namespace mindspore::kernel
