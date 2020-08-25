@@ -28,6 +28,7 @@
 #include "tools/converter/legacy_optimizer/fusion/format_trans_transpose_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/batchnorm_convert_scale_pass.h"
+#include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/converter/legacy_optimizer/graph/weight_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
@@ -164,6 +165,17 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer fusionOptimizer;
     fusionOptimizer.AddPass(new (std::nothrow) FormatTransPermuteFusionPass());
+    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    status = fusionOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+
+  {
+    Optimizer fusionOptimizer;
+    fusionOptimizer.AddPass(new (std::nothrow) MulAddFusionPass());
     fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     status = fusionOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
