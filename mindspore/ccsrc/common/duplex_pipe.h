@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_COMMON_DUPLEX_PIPE_H_
 
 #include <unistd.h>
+#include <signal.h>
 #include <string>
 #include <memory>
 #include <initializer_list>
@@ -61,8 +62,8 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   DuplexPipe &operator>>(std::string &buf);
 
  private:
-  void SetTimeOut() { alarm_.Set(shared_from_this(), time_out_secs_); }
-  void CancelTimeOut() { alarm_.Cancel(); }
+  void SetTimeOut() { signal_handler_->SetAlarm(time_out_secs_); }
+  void CancelTimeOut() { signal_handler_->CancelAlarm(); }
   void TimeOut() {
     if (has_time_out_callback_) {
       time_out_callback_();
@@ -96,27 +97,27 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   int remote_stdout_;
   int remote_stderr_;
 
-  class Alarm {
+  class SignalHandler {
    public:
-    Alarm() = default;
-    ~Alarm() = default;
+    SignalHandler(std::shared_ptr<DuplexPipe> dp, pid_t pid);
+    ~SignalHandler();
 
-    void Set(std::shared_ptr<DuplexPipe> dp, unsigned int interval_secs);
-    void Cancel();
+    void SetAlarm(unsigned int interval_secs);
+    void CancelAlarm();
 
    private:
-    static void SigHandler(int sig) {
-      DP_INFO << "Signal: " << sig;
-      dp_->TimeOut();
-    }
+    static void SigAlarmHandler(int sig);
+    static void SigPipeHandler(int sig);
+    static void SigChildHandler(int sig);
 
-    inline static std::shared_ptr<DuplexPipe> dp_;
+    inline static std::weak_ptr<DuplexPipe> dp_;
+    inline static pid_t child_pid_;
   };
 
   unsigned int time_out_secs_ = kTimeOutSeconds;
   bool has_time_out_callback_ = false;
   std::function<void()> time_out_callback_;
-  Alarm alarm_;
+  std::shared_ptr<SignalHandler> signal_handler_;
 };
 }  // namespace mindspore
 

@@ -40,9 +40,9 @@ DuplexPipe &DuplexPipe::operator>>(std::string &buf) { DP_EXCEPTION << "Not supp
 
 void DuplexPipe::Close() { DP_EXCEPTION << "Not support for Windows by now."; }
 
-void DuplexPipe::Alarm::Set(std::shared_ptr<DuplexPipe> dp, unsigned int interval_secs) {
+void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) {
   DP_EXCEPTION << "Not support for Windows by now.";
 }
 
-void DuplexPipe::Alarm::Cancel() { DP_EXCEPTION << "Not support for Windows by now."; }
+void DuplexPipe::SignalHandler::CancelAlarm() { DP_EXCEPTION << "Not support for Windows by now."; }
 }  // namespace mindspore

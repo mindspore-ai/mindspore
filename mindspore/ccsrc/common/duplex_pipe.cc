@@ -16,7 +16,7 @@
 
 #include "common/duplex_pipe.h"
 
-#include <signal.h>
+#include <sys/wait.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -70,6 +70,8 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     local_stderr_ = dup(STDERR_FILENO);
     close(fd1_[0]);
     close(fd2_[1]);
+
+    signal_handler_ = std::make_shared<SignalHandler>(shared_from_this(), pid_);
   }
   return 0;
 }
@@ -147,14 +149,58 @@ void DuplexPipe::Close() {
   close(fd2_[1]);
 }
 
-void DuplexPipe::Alarm::Set(std::shared_ptr<DuplexPipe> dp, unsigned int interval_secs) {
+DuplexPipe::SignalHandler::SignalHandler(std::shared_ptr<DuplexPipe> dp, pid_t pid) {
   dp_ = dp;
-  signal(SIGALRM, SigHandler);
+  child_pid_ = pid;
+  signal(SIGCHLD, SigChildHandler);
+  signal(SIGPIPE, SigPipeHandler);
+}
+
+DuplexPipe::SignalHandler::~SignalHandler() { dp_.reset(); }
+
+void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) {
+  signal(SIGALRM, SigAlarmHandler);
   alarm(interval_secs);
 }
 
-void DuplexPipe::Alarm::Cancel() {
-  alarm(0);
-  dp_.reset();
+void DuplexPipe::SignalHandler::CancelAlarm() { alarm(0); }
+
+void DuplexPipe::SignalHandler::SigAlarmHandler(int sig) {
+  DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
+  if (!dp_.expired()) {
+    dp_.lock()->TimeOut();
+  }
+}
+
+void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
+  DP_INFO << "Signal: " << sig;
+  if (!dp_.expired()) {
+    dp_.lock()->Close();
+  }
+}
+
+void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
+  DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
+  int status;
+  auto pid = waitpid(child_pid_, &status, WNOHANG | WUNTRACED);
+  if (WIFEXITED(status)) {
+    DP_ERROR << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid;
+    if (!dp_.expired()) {
+      dp_.lock()->Close();
+    }
+
+    // When run multiple processes by 'mpirun',
+    // parent process never quit even Exception happens,
+    // which caused by MPI_Finalize() never returned.
+    exit(-1);
+  } else if (WIFSTOPPED(status)) {
+    DP_ERROR << "Child stopped, sig: " << WSTOPSIG(status) << ", pid: " << pid;
+  } else if (WIFSIGNALED(status)) {
+    DP_INFO << "Child not exited, signaled, sig: " << WTERMSIG(status) << ", pid: " << pid;
+  } else if (WIFCONTINUED(status)) {
+    DP_INFO << "Child continued, pid: " << pid;
+  } else {
+    DP_ERROR << "Wrong child status: " << status << ", pid: " << pid;
+  }
 }
 }  // namespace mindspore
