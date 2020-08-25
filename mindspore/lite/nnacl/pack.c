@@ -194,7 +194,7 @@ void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParam
   return;
 }
 
-void PackInputSum16x4PerLater(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16) {
+void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16) {
   /* optimize normal -> same layout */
 #ifdef ENABLE_ARM64
   asm volatile(
@@ -267,12 +267,12 @@ void PackInputSum16x4PerLater(const int8_t *src, int32_t *dst, int32_t filter_zp
   return;
 }
 
-void PackInputSum16x4Int8(int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
+void PackInputSum16x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
                           size_t plane_size, ConvParameter *conv_param) {
   size_t hw4 = UP_ROUND(plane_size, C4NUM);
   size_t ic16 = UP_ROUND(input_channel, C16NUM);
   if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
-    PackInputSum16x4PerLater(input_value, input_sum, conv_param->conv_quant_arg_.filter_quant_args_[0].zp_, hw4, ic16);
+    PackInputSum16x4PerLayer(input_value, input_sum, conv_param->conv_quant_arg_.filter_quant_args_[0].zp_, hw4, ic16);
   } else {
     for (int ri = 0; ri < plane_size; ri++) {
       int ri4div = ri / C4NUM, ri4mod = ri % C4NUM;
@@ -286,6 +286,40 @@ void PackInputSum16x4Int8(int8_t *input_value, int32_t *input_sum, size_t input_
           tmp_sum_value += input_value[src_index];
         }
         int dst_index = ci4div * C4NUM * hw4 + ri * C4NUM + ci4mod;
+        input_sum[dst_index] = tmp_sum_value * filter_zp;
+      }
+    }
+  }
+  return;
+}
+
+void PackInputSum8x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
+                         size_t plane_size, ConvParameter *conv_param) {
+  size_t hw8 = UP_ROUND(plane_size, C8NUM);
+  size_t ic4 = UP_ROUND(input_channel, C4NUM);
+  if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
+    for (int r = 0; r < hw8; r++) {
+      int32_t tmp_value = 0;
+      for (int c = 0; c < ic4; c++) {
+        int r8div = r / C8NUM, r8mod = r % C8NUM, c4div = c / C4NUM, c4mod = c % C4NUM;
+        int src_index = r8div * C8NUM * ic4 + c4div * C8NUM * C4NUM + r8mod * C4NUM + c4mod;
+        tmp_value += input_value[src_index];
+      }
+      input_sum[r] = tmp_value * conv_param->conv_quant_arg_.filter_quant_args_[0].zp_;
+    }
+  } else {
+    for (int ri = 0; ri < plane_size; ri++) {
+      int ri8div = ri / C8NUM, ri8mod = ri % C8NUM;
+      for (int ci = 0; ci < output_channel; ci++) {
+        int32_t tmp_sum_value = 0;
+        int ci8div = ci / C8NUM, ci8mod = ci % C8NUM;
+        int32_t filter_zp = conv_param->conv_quant_arg_.filter_quant_args_[ci].zp_;
+        for (int di = 0; di < input_channel; di++) {
+          size_t di4div = di / C4NUM, di4mod = di % C4NUM;
+          int src_index = ri8div * C8NUM * ic4 + di4div * C8NUM * C4NUM + ri8mod * C4NUM + di4mod;
+          tmp_sum_value += input_value[src_index];
+        }
+        int dst_index = ci8div * C8NUM * hw8 + ri * C8NUM + ci8mod;
         input_sum[dst_index] = tmp_sum_value * filter_zp;
       }
     }
