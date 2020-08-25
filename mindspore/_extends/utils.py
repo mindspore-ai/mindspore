@@ -14,49 +14,8 @@
 # ============================================================================
 
 """Some utils."""
-import hashlib
-import logging
-import os
 import inspect
 from functools import wraps
-
-
-def cal_sha256(file_path):
-    """
-    Calculate sha256 value of input file.
-
-    Args:
-        file_path (str): file path to calculate.
-
-    Returns:
-        str, returns sha256 value of input file or empty str if cal failed.
-    """
-    buf_size = 64 * 1024  # once read 64kb
-    sha256 = hashlib.sha256()
-    file_real_path = os.path.realpath(file_path)
-    if not os.path.isfile(file_real_path) or not os.access(file_real_path, os.R_OK):
-        return ""
-    _, extension = os.path.splitext(file_path)
-    try:
-        if extension == '.ptx':
-            with open(file_real_path, 'r') as kf:
-                while True:
-                    data = kf.read(buf_size)
-                    if not data:
-                        break
-                    sha256.update(data.encode("utf-8"))
-        else:
-            with open(file_real_path, 'rb') as kf:
-                while True:
-                    data = kf.read(buf_size)
-                    if not data:
-                        break
-                    sha256.update(data)
-    except IOError:
-        logging.error("Open file %s failed.", file_path)
-        return ""
-    return sha256.hexdigest()
-
 
 def cell_attr_register(fn=None, attrs=None):
     """

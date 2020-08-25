@@ -1,0 +1,150 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_UTILS_SYSTEM_SHA256_H_
+#define MINDSPORE_CCSRC_UTILS_SYSTEM_SHA256_H_
+
+#include <string>
+#include <iomanip>
+#include <fstream>
+
+namespace mindspore {
+namespace system {
+namespace sha256 {
+constexpr int kBitNumber = 8;
+constexpr int kDigestSize = 8;
+constexpr int kIterationNumber = 64;
+constexpr int kMessageBlockLength = 64;
+const uint32_t constant[64] = {
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
+
+inline uint32_t ch(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ ((~x) & z); }
+inline uint32_t ma(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ (x & z) ^ (y & z); }
+inline uint32_t sigma0(uint32_t x) { return (x >> 2 | x << 30) ^ (x >> 13 | x << 19) ^ (x >> 22 | x << 10); }
+inline uint32_t sigma1(uint32_t x) { return (x >> 6 | x << 26) ^ (x >> 11 | x << 21) ^ (x >> 25 | x << 7); }
+inline uint32_t sigma2(uint32_t x) { return (x >> 7 | x << 25) ^ (x >> 18 | x << 14) ^ (x >> 3); }
+inline uint32_t sigma3(uint32_t x) { return (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10); }
+
+std::string LoadFilePath(const std::string &path) {
+  std::ifstream bin_stream(path, std::ios::binary);
+  if (!bin_stream.is_open()) {
+    return "";
+  }
+  std::string message((std::istreambuf_iterator<char>(bin_stream)), std::istreambuf_iterator<char>());
+  return message;
+}
+
+void Padding(std::string *message) {
+  uint64_t bits_message = message->size() * kBitNumber;
+  int remains = message->size() % kMessageBlockLength;
+  // The length of the message needs to be stored in 8 bytes, supplemented at the end of the message.
+  int size_append = 8;
+  int size_required = kMessageBlockLength - size_append;
+  int size_pad = size_required - remains + (remains < size_required ? 0 : kMessageBlockLength);
+  message->push_back(0x80);
+  for (int i = 1; i < size_pad; ++i) {
+    message->push_back(0x00);
+  }
+  for (int i = size_append - 1; i >= 0; --i) {
+    message->push_back(static_cast<uint8_t>((bits_message >> (i * kBitNumber)) & 0xff));
+  }
+}
+
+void ProcessInner(const std::string &message, uint32_t *digest, const int bias) {
+  uint32_t w[kIterationNumber] = {0};
+  for (int i = 0; i < 16; ++i) {
+    w[i] = (static_cast<uint32_t>(message[bias + i * 4] & 0xff) << 24) |
+           (static_cast<uint32_t>(message[bias + i * 4 + 1] & 0xff) << 16) |
+           (static_cast<uint32_t>(message[bias + i * 4 + 2] & 0xff) << 8) |
+           (static_cast<uint32_t>(message[bias + i * 4 + 3] & 0xff));
+  }
+  for (int i = 16; i < kIterationNumber; ++i) {
+    w[i] = sigma3(w[i - 2]) + w[i - 7] + sigma2(w[i - 15]) + w[i - 16];
+  }
+
+  uint32_t hash[kDigestSize];
+  for (int i = 0; i < kDigestSize; ++i) {
+    hash[i] = digest[i];
+  }
+  for (int i = 0; i < kIterationNumber; ++i) {
+    uint32_t t1 = w[i] + constant[i] + hash[kDigestSize - 1] + sigma1(hash[kDigestSize - 4]) +
+                  ch(hash[kDigestSize - 4], hash[kDigestSize - 3], hash[kDigestSize - 2]);
+    uint32_t t2 =
+      sigma0(hash[kDigestSize - 8]) + ma(hash[kDigestSize - 8], hash[kDigestSize - 7], hash[kDigestSize - 6]);
+    for (int j = kDigestSize - 1; j >= 0; --j) {
+      if (j == 4) {
+        hash[j] = hash[j - 1] + t1;
+      } else if (j == 0) {
+        hash[j] = t1 + t2;
+      } else {
+        hash[j] = hash[j - 1];
+      }
+    }
+  }
+  for (int i = 0; i < kDigestSize; ++i) {
+    digest[i] += hash[i];
+  }
+}
+
+std::string ConvertToString(uint32_t *input) {
+  std::ostringstream oss;
+  oss << std::hex;
+  for (int i = 0; i < kDigestSize; ++i) {
+    for (int j = static_cast<int>(sizeof(uint32_t) / sizeof(uint8_t)) - 1; j >= 0; --j) {
+      uint8_t val = static_cast<uint8_t>((input[i] >> (j * kBitNumber)) & 0xff);
+      oss << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(val);
+    }
+  }
+  return oss.str();
+}
+
+std::string Encrypt(const std::string &message) {
+  uint32_t digest[kDigestSize] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+                                  0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+  for (int i = 0; i < static_cast<int>(message.size()); i += kMessageBlockLength) {
+    ProcessInner(message, digest, i);
+  }
+  return ConvertToString(digest);
+}
+
+std::string GetHashFromString(const std::string &data) {
+  if (data.empty()) {
+    return "";
+  }
+  std::string message = data;
+  Padding(&message);
+  return Encrypt(message);
+}
+
+std::string GetHashFromFile(const std::string &path) {
+  std::string message = LoadFilePath(path);
+  if (message.empty()) {
+    return "";
+  }
+  Padding(&message);
+  return Encrypt(message);
+}
+}  // namespace sha256
+}  // namespace system
+}  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_UTILS_SYSTEM_SHA256_H_
