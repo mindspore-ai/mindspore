@@ -75,7 +75,7 @@ struct Event {
   uint32_t device_id;
   uint32_t correlation_id;
   uint32_t thread_id;
-  int64_t context_id;
+  uint32_t context_id;
   uint32_t stream_id;
   CUpti_CallbackId cb_id;
   union {
@@ -131,7 +131,7 @@ class GPUProfiler {
   GPUProfiler() = default;
   void OpsParser();
   void EventLog(const Event &event);
-
+  void ClearInst();
   void HandleActivityRecord(CUpti_Activity *record);
   void AddEvent(Event &&event);
   void SetRunTimeData(const std::string &op_name, void *stream);

@@ -60,8 +60,8 @@ namespace gpu {
 std::shared_ptr<GPUProfiler> GPUProfiler::profiler_inst_ = nullptr;
 
 int32_t GetThreadID() {
-  int32_t thread_id = 0;
-  thread_id = static_cast<int32_t>(pthread_self());
+  uint32_t thread_id = 0;
+  thread_id = static_cast<uint32_t>(pthread_self());
   return thread_id;
 }
 
@@ -475,6 +475,7 @@ void GPUProfiler::Stop() {
   StopCUPTI();
   OpsParser();
   SaveProfileData();
+  ClearInst();
 }
 
 void GPUProfiler::SaveProfileData() {
@@ -486,9 +487,19 @@ void GPUProfiler::SaveProfileData() {
     dataSaver.ParseEvent(events_);
     dataSaver.WriteFile(profile_data_path_);
   }
+}
+
+void GPUProfiler::ClearInst() {
   op_info_map_.clear();
   op_name_map_.clear();
   events_.clear();
+  activities_enable_.clear();
+  enable_flag_ = false;
+  sync_enable_flag_ = true;
+  cupti_callback_events_count_ = 0l;
+  cupti_callback_events_drop_count_ = 0l;
+  cupti_activity_events_count_ = 0l;
+  cupti_activity_events_drop_count_ = 0l;
 }
 
 void CUPTIAPI ActivityAllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {
