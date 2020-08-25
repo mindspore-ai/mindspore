@@ -31,8 +31,8 @@ class TransformToBNN:
 
     Args:
         trainable_dnn (Cell): A trainable DNN model (backbone) wrapped by TrainOneStepCell.
-        dnn_factor ((int, float): The coefficient of backbone's loss, which is computed by loss function.
-        bnn_factor (int, float): The coefficient of kl loss, which is kl divergence of Bayesian layer.
+        dnn_factor ((int, float): The coefficient of backbone's loss, which is computed by loss function. Default: 1.
+        bnn_factor (int, float): The coefficient of kl loss, which is kl divergence of Bayesian layer. Default: 1.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -93,15 +93,15 @@ class TransformToBNN:
         Transform the whole DNN model to BNN model, and wrap BNN model by TrainOneStepCell.
 
         Args:
-            get_dense_args (:class:`function`): The arguments gotten from the DNN full connection layer. Default: lambda dp:
+            get_dense_args: The arguments gotten from the DNN full connection layer. Default: lambda dp:
                 {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "has_bias": dp.has_bias}.
-            get_conv_args (:class:`function`): The arguments gotten from the DNN convolutional layer. Default: lambda dp:
+            get_conv_args: The arguments gotten from the DNN convolutional layer. Default: lambda dp:
                 {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode,
                 "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias}.
             add_dense_args (dict): The new arguments added to BNN full connection layer. Note that the arguments in
-                `add_dense_args` should not duplicate arguments in `get_dense_args`. Default: {}.
+                `add_dense_args` should not duplicate arguments in `get_dense_args`. Default: None.
             add_conv_args (dict): The new arguments added to BNN convolutional layer. Note that the arguments in
-                `add_conv_args` should not duplicate arguments in `get_conv_args`. Default: {}.
+                `add_conv_args` should not duplicate arguments in `get_conv_args`. Default: None.
 
         Returns:
             Cell, a trainable BNN model wrapped by TrainOneStepCell.
@@ -142,7 +142,7 @@ class TransformToBNN:
                 nn.Dense, nn.Conv2d.
             bnn_layer_type (Cell): The type of BNN layer to be transformed to. The optional values are
                 DenseReparam, ConvReparam.
-            get_args (:class:`function`): The arguments gotten from the DNN layer. Default: None.
+            get_args: The arguments gotten from the DNN layer. Default: None.
             add_args (dict): The new arguments added to BNN layer. Note that the arguments in `add_args` should not
                 duplicate arguments in `get_args`. Default: None.
 

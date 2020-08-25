@@ -21,13 +21,13 @@ The objective of MDP is to integrate deep learning with Bayesian learning. On th
 
  **Layer 1-2: Probabilistic inference algorithms** 
 
-- SVI([mindspore.nn.probability.dpn](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/dpn)): A unified interface for stochastic variational inference.
+- SVI([mindspore.nn.probability.infer.variational](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/infer/variational)): A unified interface for stochastic variational inference.
 - MC: Algorithms for approximating integrals via sampling.
 
  **Layer 2: Deep Probabilistic Programming (DPP) aims to provide composable BNN modules** 
 
 - Layers([mindspore.nn.probability.bnn_layers](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/bnn_layers)): BNN layers, which are used to construct BNN.
-- Bnn: A bunch of BNN models that allow to be integrated into DNN;
+- Dpn([mindspore.nn.probability.dpn](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/dpn)): A bunch of BNN models that allow to be integrated into DNN;
 - Transform([mindspore.nn.probability.transforms](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/transforms)): Interfaces for the transformation between BNN and DNN;
 - Context: context managers for models and layers.
 
