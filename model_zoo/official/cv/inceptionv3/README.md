@@ -28,7 +28,7 @@ InceptionV3 by Google is the 3rd version in a series of Deep Learning Convolutio
 
 The overall network architecture of InceptionV3 is show below:
 
-[Link](https://arxiv.org/pdf/1905.02244)
+[Link](https://arxiv.org/pdf/1512.00567.pdf)
 
 
 # [Dataset](#contents)
@@ -64,21 +64,21 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```shell
 .
-└─Inception-v3      
+└─inceptionv3      
   ├─README.md
   ├─scripts      
-	├─run_standalone_train.sh         		  # launch standalone training with ascend platform(1p)
-    ├─run_standalone_train_for_gpu.sh         # launch standalone training with gpu platform(1p)
-	├─run_distribute_train.sh         		  # launch distributed training with ascend platform(8p)
-    ├─run_distribute_train_for_gpu.sh         # launch distributed training with gpu platform(8p)
-	├─run_eval.sh                     		  # launch evaluating with ascend platform
-    └─run_eval_for_gpu.sh                     # launch evaluating with gpu platform
+  │	├─run_standalone_train.sh         		  # launch standalone training with ascend platform(1p)
+  │ ├─run_standalone_train_for_gpu.sh         # launch standalone training with gpu platform(1p)
+  │ ├─run_distribute_train.sh         		  # launch distributed training with ascend platform(8p)
+  │ ├─run_distribute_train_for_gpu.sh         # launch distributed training with gpu platform(8p)
+  │ ├─run_eval.sh                     		  # launch evaluating with ascend platform
+  │ └─run_eval_for_gpu.sh                     # launch evaluating with gpu platform
   ├─src
-    ├─config.py                       # parameter configuration
-    ├─dataset.py                      # data preprocessing
-    ├─inception_v3.py                 # network definition
-    ├─loss.py                         # Customized CrossEntropy loss function
-    ├─lr_generator.py                 # learning rate generator
+  │  ├─config.py                       # parameter configuration
+  │  ├─dataset.py                      # data preprocessing
+  │  ├─inception_v3.py                 # network definition
+  │  ├─loss.py                         # Customized CrossEntropy loss function
+  │  ├─lr_generator.py                 # learning rate generator
   ├─eval.py                           # eval net
   ├─export.py                         # convert checkpoint
   └─train.py                          # train net
@@ -211,12 +211,22 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Accuracy                   | ACC1[78.8%] ACC5[94.2%]                                    | ACC1[78.7%] ACC5[94.1%]   |
 | Total time                 | 11h                                                        | 72h                       |
 | Params (M)                 | 103M                                                       | 103M                      |
-| Checkpoint for Fine tuning | 313M                                                       | 312.41                    |
-| Model for inference        |                                                            |                           |
+| Checkpoint for Fine tuning | 313M                                                       | 312.41M                   |
 
 #### Inference Performance
 
-To be added.
+| Parameters          | InceptionV3                 |
+| ------------------- | --------------------------- |
+| Model Version       |  				            |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 08/22/2020 (month/day/year) |
+| MindSpore Version   | 0.6.0-beta                  |
+| Dataset             | 50,000 images               |
+| batch_size          | 128                         |
+| outputs             | probability                 |
+| Accuracy            | ACC1[78.8%] ACC5[94.2%]     |
+| Total time          | 2mins                       |
+| Model for inference | 92M (.onnx file)            |
 
 # [Description of Random Situation](#contents)
 
