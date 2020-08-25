@@ -24,7 +24,7 @@ from mindspore import log as logger
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
-from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_tensor, _set_has_initializer
+from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_tensor
 # store ms_function class compiled pipeline cache
 ms_compile_cache = {}
 
@@ -383,7 +383,6 @@ class _Executor:
             Str, the full phase of the cell.
             Bool, if the graph has been compiled before, return False, else return True.
         """
-        _set_has_initializer(False)
         obj.check_names()
         args_names, args_list = _generate_pip_args(obj, *args)
         dic = dict(zip(args_names, args_list))

@@ -90,6 +90,9 @@ class Parameter(MetaTensor):
         input_class.__init__(obj, *class_init_args)
         # it's better to make the Initializer a kind of metatensor.
         obj.init_mode = None
+        obj.is_default_input_initializer = False
+        if isinstance(default_input, Initializer):
+            obj.is_default_input_initializer = True
         if not isinstance(obj, Tensor):
             obj.init_mode = default_input
         return obj
@@ -118,6 +121,7 @@ class Parameter(MetaTensor):
         self.is_param_ps = False
         self._cast_type = None
         self.init_in_server = False
+        self.is_in_parallel = _is_in_parallel_mode()
 
     @staticmethod
     def _get_base_class(input_class):
@@ -372,10 +376,17 @@ class Parameter(MetaTensor):
             set_sliced (bool): True if the parameter is set sliced after initializing the data.
                 Default: False.
 
+        Raises:
+            RuntimeError: If it is from Initializer, and parallel mode has changed after the Initializer created.
+
         Returns:
             Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,
             returns the same initialized `Parameter`.
         """
+        if self.is_default_input_initializer:
+            is_current_in_parallel = _is_in_parallel_mode()
+            if self.is_in_parallel != is_current_in_parallel:
+                raise RuntimeError("Must set or change parallel mode before any Initializer created.")
         if self.init_mode is None:
             return self
         if layout is not None:

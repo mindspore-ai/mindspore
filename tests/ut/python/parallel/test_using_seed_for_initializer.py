@@ -18,7 +18,6 @@ from numpy import allclose
 import mindspore.common.initializer as init
 import mindspore.nn as nn
 from mindspore import Parameter
-from mindspore.parallel._utils import _set_has_initializer
 
 parameter_shape = [16, 4]
 
@@ -47,7 +46,6 @@ def test_using_same_seed_for_initializer():
     np.random.seed(0)
     net2 = ParameterNet()
     net2.init_parameters_data()
-    _set_has_initializer(False)
     for key in net1.parameters_dict():
         if key not in net2.parameters_dict():
             assert False
@@ -62,7 +60,6 @@ def test_using_diffserent_seed_for_initializer():
     np.random.seed(1)
     net2 = ParameterNet()
     net2.init_parameters_data()
-    _set_has_initializer(False)
     for key in net1.parameters_dict():
         if key not in net2.parameters_dict():
             assert False
