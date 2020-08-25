@@ -39,7 +39,7 @@ using tinyxml2::XMLError;
 
 const char kAnnotationsFolder[] = "/Annotations/";
 const char kImagesFolder[] = "/JPEGImages/";
-const char kExpectedName[] = "Expected";
+const char kExpectedName[] = "apple_expect_";
 const char kActualName[] = "Actual";
 const char kAnnotExt[] = ".xml";
 const char kImageExt[] = ".jpg";

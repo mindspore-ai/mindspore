@@ -27,7 +27,7 @@ using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
 const bool kSaveExpected = false;
-const char kOpName[] = "RandomCropWithBBox_C";
+const char kOpName[] = "random_crop_with_bbox_c";
 
 class MindDataTestRandomCropWithBBoxOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
  protected:
