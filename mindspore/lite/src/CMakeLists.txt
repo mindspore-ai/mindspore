@@ -33,8 +33,11 @@ set(ANF_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/ir/meta_tensor_extends.cc
     )
 file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)
-add_library(mindspore-lite SHARED ${LITE_SRC} ${ANF_SRC} ${C_OPS_SRC})
+add_library(mindspore-lite SHARED ${LITE_SRC} ${C_OPS_SRC})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+add_library(anf OBJECT ${ANF_SRC})
 target_link_libraries(mindspore-lite
+    anf
     cpu_kernel_mid_
     )
 
