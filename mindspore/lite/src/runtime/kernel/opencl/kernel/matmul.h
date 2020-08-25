@@ -23,7 +23,6 @@
 #include "nnacl/conv_parameter.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 
-
 namespace mindspore::kernel {
 
 class MatMulOpenCLKernel : public OpenCLKernel {
@@ -43,9 +42,10 @@ class MatMulOpenCLKernel : public OpenCLKernel {
 
  private:
   cl::Kernel kernel_;
-  FLOAT_t *padWeight_;
-  FLOAT_t *bias_;
-  bool hasBias_ = false;
+  void *padWeight_;
+  void *bias_;
+  bool hasBias_{false};
+  bool enable_fp16_{false};
   cl_int2 sizeCI;
   cl_int2 sizeCO;
 };

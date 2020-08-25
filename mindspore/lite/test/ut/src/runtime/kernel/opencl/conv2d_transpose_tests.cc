@@ -22,6 +22,7 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/conv2d_transpose.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
@@ -29,7 +30,7 @@ class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
   TestConv2dTransposeOpenCL() {}
 };
 
-void RunTestCase(const std::vector<int> shape, const std::vector<std::string> file_path, bool fp16) {
+void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path, bool fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   if (fp16) {
     ocl_runtime->SetFp16Enable(true);
@@ -146,32 +147,12 @@ void RunTestCase(const std::vector<int> shape, const std::vector<std::string> fi
   pGraph->Init();
   memcpy(inputs[0]->Data(), input_data, input_size);
   pGraph->Run();
-  using FLT = float;
   if (fp16) {
-    using FLT = float16_t;
+    CompareOutput(tensor_out, file_path[3], static_cast<float16_t>(1e-2), 2e-2);
+  } else {
+    CompareOutput(tensor_out, file_path[3], static_cast<float>(1e-5));
   }
-  std::cout << "==================output data=================" << std::endl;
-  FLT *output_data = reinterpret_cast<FLT *>(tensor_out->Data());
-  std::cout << std::endl;
-  size_t output_size;
-  std::string output_path = file_path[3];
-  auto correct_data = reinterpret_cast<FLT *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
-  if (correct_data == nullptr) {
-    MS_LOG(ERROR) << "correct_data create error.";
-    return;
-  }
-  int size_n = oh * ow * co;
-  size_n = size_n > 100 ? 100 : size_n;
-  for (int i = 0; i < size_n; i++) {
-    std::cout << output_data[i] << ", " << correct_data[i] << " ";
-    if ((i + 1) % co == 0) {
-      std::cout << std::endl;
-    }
-  }
-  std::cout << std::endl;
 
-  // compare
-  CommonTest::CompareOutputData(output_data, correct_data, oh * ow * co, 0.00001);
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
   MS_LOG(INFO) << "Test Conv2dTransposeFp32 passed";
@@ -190,7 +171,7 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp32_weight.bin",
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp32_bias.bin",
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp32_output.bin"};
-  RunTestCase(shape, file_path, false);
+  RunTestCaseConv2dTranspose(shape, file_path, false);
 }
 
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16) {
@@ -207,6 +188,6 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16) {
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp16_weight.bin",
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp16_bias.bin",
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp16_output.bin"};
-  RunTestCase(shape, file_path, true);
+  RunTestCaseConv2dTranspose(shape, file_path, true);
 }
 }  // namespace mindspore
