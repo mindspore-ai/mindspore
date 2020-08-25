@@ -362,8 +362,8 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRenameFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail.";
+TEST_F(MindDataTestPipeline, TestRenameFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail1.";
   // We expect this test to fail because input and output in Rename are not the same size
 
   // Create an ImageFolder Dataset
@@ -378,6 +378,20 @@ TEST_F(MindDataTestPipeline, TestRenameFail) {
 
   // Create a Rename operation on ds
   ds = ds->Rename({"image", "label"}, {"col2"});
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRenameFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail2.";
+  // We expect this test to fail because input or output column name is empty
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Rename operation on ds
+  ds = ds->Rename({"image", "label"}, {"col2", ""});
   EXPECT_EQ(ds, nullptr);
 }
 
@@ -688,9 +702,15 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
 
   // Create a Take operation on ds with invalid count input
   int32_t count = -5;
-  ds = ds->Take(count);
+  auto ds1 = ds->Take(count);
   // Expect nullptr for invalid input take_count
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_EQ(ds1, nullptr);
+
+  // Create a Take operation on ds with invalid count input
+  count = 0;
+  auto ds2 = ds->Take(count);
+  // Expect nullptr for invalid input take_count
+  EXPECT_EQ(ds2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTakeDatasetNormal) {
