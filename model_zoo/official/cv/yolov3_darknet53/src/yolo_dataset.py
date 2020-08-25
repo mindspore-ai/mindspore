@@ -15,6 +15,7 @@
 """YOLOV3 dataset."""
 import os
 
+import multiprocessing
 from PIL import Image
 from pycocotools.coco import COCO
 import mindspore.dataset as de
@@ -126,7 +127,7 @@ class COCOYoloDataset:
             tmp.append(int(label))
             # tmp [x_min y_min x_max y_max, label]
             out_target.append(tmp)
-        return img, out_target
+        return img, out_target, [], [], [], [], [], []
 
     def __len__(self):
         return len(self.img_ids)
@@ -155,20 +156,22 @@ def create_yolo_dataset(image_dir, anno_path, batch_size, max_epoch, device_num,
     hwc_to_chw = CV.HWC2CHW()
 
     config.dataset_size = len(yolo_dataset)
-    num_parallel_workers1 = int(64 / device_num)
-    num_parallel_workers2 = int(16 / device_num)
+    cores = multiprocessing.cpu_count()
+    num_parallel_workers = int(cores / device_num)
     if is_training:
         multi_scale_trans = MultiScaleTrans(config, device_num)
+        dataset_column_names = ["image", "annotation", "bbox1", "bbox2", "bbox3",
+                                "gt_box1", "gt_box2", "gt_box3"]
         if device_num != 8:
-            ds = de.GeneratorDataset(yolo_dataset, column_names=["image", "annotation"],
-                                     num_parallel_workers=num_parallel_workers1,
+            ds = de.GeneratorDataset(yolo_dataset, column_names=dataset_column_names,
+                                     num_parallel_workers=min(32, num_parallel_workers),
                                      sampler=distributed_sampler)
-            ds = ds.batch(batch_size, per_batch_map=multi_scale_trans, input_columns=['image', 'annotation'],
-                          num_parallel_workers=num_parallel_workers2, drop_remainder=True)
+            ds = ds.batch(batch_size, per_batch_map=multi_scale_trans, input_columns=dataset_column_names,
+                          num_parallel_workers=min(32, num_parallel_workers), drop_remainder=True)
         else:
-            ds = de.GeneratorDataset(yolo_dataset, column_names=["image", "annotation"], sampler=distributed_sampler)
-            ds = ds.batch(batch_size, per_batch_map=multi_scale_trans, input_columns=['image', 'annotation'],
-                          num_parallel_workers=8, drop_remainder=True)
+            ds = de.GeneratorDataset(yolo_dataset, column_names=dataset_column_names, sampler=distributed_sampler)
+            ds = ds.batch(batch_size, per_batch_map=multi_scale_trans, input_columns=dataset_column_names,
+                          num_parallel_workers=min(8, num_parallel_workers), drop_remainder=True)
     else:
         ds = de.GeneratorDataset(yolo_dataset, column_names=["image", "img_id"],
                                  sampler=distributed_sampler)

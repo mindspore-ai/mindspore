@@ -15,6 +15,9 @@
 """Util class or function."""
 from mindspore.train.serialization import load_checkpoint
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
+
+from .yolo import YoloLossBlock
 
 
 class AverageMeter:
@@ -175,3 +178,10 @@ class ShapeRecord:
         for key in self.shape_record:
             rate = self.shape_record[key] / float(self.shape_record['total'])
             logger.info('shape {}: {:.2f}%'.format(key, rate*100))
+
+
+def keep_loss_fp32(network):
+    """Keep loss of network with float32"""
+    for _, cell in network.cells_and_names():
+        if isinstance(cell, (YoloLossBlock,)):
+            cell.to_float(mstype.float32)
