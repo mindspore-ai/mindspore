@@ -28,7 +28,7 @@ InceptionV3 by Google is the 3rd version in a series of Deep Learning Convolutio
 
 The overall network architecture of InceptionV3 is show below:
 
-[Link](https://arxiv.org/pdf/1905.02244)
+[Link](https://arxiv.org/pdf/1512.00567.pdf)
 
 
 # [Dataset](#contents)
