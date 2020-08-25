@@ -76,7 +76,7 @@ def test_cutmix_batch_success1(plot=False):
 
 def test_cutmix_batch_success2(plot=False):
     """
-    Test CutMixBatch op with default values for alpha and prob on a batch of HWC images
+    Test CutMixBatch op with default values for alpha and prob on a batch of rescaled HWC images
     """
     logger.info("test_cutmix_batch_success2")
 
@@ -95,6 +95,8 @@ def test_cutmix_batch_success2(plot=False):
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     one_hot_op = data_trans.OneHot(num_classes=10)
     data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    rescale_op = vision.Rescale((1.0/255.0), 0.0)
+    data1 = data1.map(input_columns=["image"], operations=rescale_op)
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
     data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)

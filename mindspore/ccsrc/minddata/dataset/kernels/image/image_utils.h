@@ -133,6 +133,17 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Tensor> *input, int x, int y, int width,
                       int height, ImageFormat image_format);
 
+/// \brief Copies a value from a source tensor into a destination tensor
+/// \note This is meant for images and therefore only works if tensor is uint8 or float32
+/// \param[in] source_tensor The tensor we take the value from
+/// \param[in] dest_tensor The pointer to the tensor we want to copy the value to
+/// \param[in] source_indx index of the value in the source tensor
+/// \param[in] dest_indx index of the value in the destination tensor
+/// \param[out] dest_tensor Copies the value to the given dest_tensor and returns it
+/// @return Status ok/error
+Status CopyTensorValue(const std::shared_ptr<Tensor> &source_tensor, std::shared_ptr<Tensor> *dest_tensor,
+                       const std::vector<int64_t> &source_indx, const std::vector<int64_t> &dest_indx);
+
 /// \brief Swap the red and blue pixels (RGB <-> BGR)
 /// \param input: Tensor of shape <H,W,3> and any OpenCv compatible type, see CVTensor.
 /// \param output: Swapped image of same shape and type
