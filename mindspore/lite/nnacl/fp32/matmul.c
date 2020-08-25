@@ -386,7 +386,7 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
         size_t ci = dst_r_offset + c8div * 8 * stride + c8mod;
         float value = 0;
         for (int d = 0; d < deep; ++d) {
-          size_t ai = src_r_offset + d * row;
+          size_t ai = src_r_offset + d * C12NUM;
           size_t bi = c8div * deep * 8 + d * 8 + c8mod;
           value = value + a[ai] * b[bi];
         }
@@ -403,8 +403,12 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
                int col, size_t stride, int out_type) {
 #ifdef ENABLE_ARM64
-  MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type == OutType_Nhwc),
-                       (int)(out_type == OutType_TileC8));
+  if (out_type == 2 && row <= 8) {
+    MatmulFloatNeon64OptRemain(a, b, c, deep, row, col, stride);
+  } else {
+    MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type == OutType_Nhwc),
+                         (int)(out_type == OutType_TileC8));
+  }
 #else
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
