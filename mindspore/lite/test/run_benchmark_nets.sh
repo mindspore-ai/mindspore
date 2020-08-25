@@ -332,16 +332,13 @@ process_unit_x86=${suffix[0]}
 
 # Unzip arm
 cd ${arm_path} || exit 1
-mkdir mindspore-lite-${version}-runtime-arm64-${process_unit_arm}
-tar -zxf mindspore-lite-${version}-runtime-arm64-${process_unit_arm}.tar.gz -C mindspore-lite-${version}-runtime-arm64-${process_unit_arm} --strip-components 1 || exit 1
+tar -zxf mindspore-lite-${version}-runtime-arm64-${process_unit_arm}.tar.gz || exit 1
 
 # Unzip x86 runtime and convertor
 cd ${convertor_path} || exit 1
-mkdir mindspore-lite-${version}-runtime-x86-${process_unit_x86}
-tar -zxf mindspore-lite-${version}-runtime-x86-${process_unit_x86}.tar.gz -C mindspore-lite-${version}-runtime-x86-${process_unit_x86} --strip-components 1 || exit 1
+tar -zxf mindspore-lite-${version}-runtime-x86-${process_unit_x86}.tar.gz || exit 1
 
-mkdir mindspore-lite-${version}-convert-ubuntu
-tar -zxf mindspore-lite-${version}-convert-ubuntu.tar.gz -C mindspore-lite-${version}-convert-ubuntu --strip-components 1 || exit 1
+tar -zxf mindspore-lite-${version}-convert-ubuntu.tar.gz || exit 1
 cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || exit 1
 cp converter/converter_lite ./ || exit 1
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib/:./third_party/protobuf/lib

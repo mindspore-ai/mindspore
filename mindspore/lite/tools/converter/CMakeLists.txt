@@ -187,5 +187,5 @@ target_link_libraries(converter_lite PRIVATE
 
 if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     install(TARGETS converter_lite
-            RUNTIME DESTINATION ${MAIN_DIR}/converter COMPONENT ${COMPONENT_NAME})
+            RUNTIME DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
 endif ()
