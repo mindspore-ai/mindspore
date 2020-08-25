@@ -16,16 +16,29 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_pretrain.sh DATA_DIR RANK_TABLE_FILE"
-echo "for example: bash run_distribute_pretrain.sh /path/dataset /path/hccl.json"
+echo "bash run_distributed_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR"
+echo "for example: bash run_distributed_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json"
 echo "It is better to use absolute path."
-echo "For hyper parameter, please note that you should customize the scripts:
-          '{CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini' "
 echo "=============================================================================================================="
-CUR_DIR=`pwd`
 
-python ${CUR_DIR}/scripts/ascend_distributed_launcher/run_distribute_pretrain.py \
-    --run_script_dir=${CUR_DIR}/run_pretrain.py \
-    --hyper_parameter_config_dir=${CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini \
-    --data_dir=$1 \
-    --hccl_config_dir=$2
+RANK_SIZE=$1
+EPOCH_SIZE=$2
+DATA_DIR=$3
+SCHEMA_DIR=$4
+
+mpirun --allow-run-as-root -n $RANK_SIZE \
+	python run_pretrain.py				\
+		--device_target="GPU"			\
+		--distribute="true"				\
+		--epoch_size=$EPOCH_SIZE		\
+		--enable_save_ckpt="true"		\
+		--enable_lossscale="false"		\
+		--do_shuffle="true"				\
+		--enable_data_sink="true"		\
+		--data_sink_steps=1				\
+		--load_checkpoint_path=""			\
+		--save_checkpoint_steps=10000	\
+		--save_checkpoint_num=1			\
+		--data_dir=$DATA_DIR			\
+		--schema_dir=$SCHEMA_DIR > log.txt 2>&1 &
+

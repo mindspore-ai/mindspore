@@ -16,26 +16,16 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distribute_gd_for_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR TEACHER_CKPT_PATH"
-echo "for example: bash run_distribute_gd_for_gpu.sh 8 3 /path/data/ /path/datasetSchema.json /path/bert_base.ckpt"
+echo "bash run_distributed_pretrain.sh DATA_DIR RANK_TABLE_FILE"
+echo "for example: bash run_distributed_pretrain.sh /path/dataset /path/hccl.json"
 echo "It is better to use absolute path."
+echo "For hyper parameter, please note that you should customize the scripts:
+          '{CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini' "
 echo "=============================================================================================================="
+CUR_DIR=`pwd`
 
-RANK_SIZE=$1
-EPOCH_SIZE=$2
-DATA_DIR=$3
-SCHEMA_DIR=$4
-TEACHER_CKPT_PATH=$5
-
-PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
-
-mpirun --allow-run-as-root -n $RANK_SIZE \
-	python ${PROJECT_DIR}/../run_general_distill.py  \
-	--distribute="true" \
-	--device_target="GPU" \
-	--epoch_size=$EPOCH_SIZE \
-	--save_ckpt_path="" \
-	--data_dir=$DATA_DIR \
-	--schema_dir=$SCHEMA_DIR \
-	--enable_data_sink=False \
-	--load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &
+python ${CUR_DIR}/scripts/ascend_distributed_launcher/run_distribute_pretrain.py \
+    --run_script_dir=${CUR_DIR}/run_pretrain.py \
+    --hyper_parameter_config_dir=${CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini \
+    --data_dir=$1 \
+    --hccl_config_dir=$2

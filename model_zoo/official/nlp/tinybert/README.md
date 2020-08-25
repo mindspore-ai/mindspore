@@ -1,83 +1,158 @@
-# TinyBERT Example
-## Description
-[TinyBERT](https://github.com/huawei-noah/Pretrained-Model/tree/master/TinyBERT) is 7.5x smalller and 9.4x faster on inference than [BERT-base](https://github.com/google-research/bert) (the base version of BERT model) and achieves competitive performances in the tasks of natural language understanding. It performs a novel transformer distillation at both the pre-training and task-specific learning stages.
+# Contents
+- [TinyBERT Description](#tinybert-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Dataset Preparation](#dataset-preparation)
+    - [Training Process](#training-process)
+    - [Evaluation Process](#evaluation-process)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
+- [Description of Random Situation](#description-of-random-situation)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
-## Requirements
-- Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download dataset for general distill and task distill such as GLUE.
-- Prepare a pre-trained bert model and a fine-tuned bert model for specific task such as GLUE.
+# [TinyBERT Description](#contents)
+[TinyBERT](https://github.com/huawei-noah/Pretrained-Language-Model/tree/master/TinyBERT) is 7.5x smalller and 9.4x faster on inference than [BERT-base](https://github.com/google-research/bert) (the base version of BERT model) and achieves competitive performances in the tasks of natural language understanding. It performs a novel transformer distillation at both the pre-training and task-specific learning stages.
 
-## Running the Example
-### General Distill
-- Set options in `src/gd_config.py`, including lossscale, optimizer and network.
+[Paper](https://arxiv.org/abs/1909.10351):  Xiaoqi Jiao, Yichun Yin, Lifeng Shang, Xin Jiang, Xiao Chen, Linlin Li, Fang Wang, Qun Liu. [TinyBERT: Distilling BERT for Natural Language Understanding](https://arxiv.org/abs/1909.10351). arXiv preprint arXiv:1909.10351. 
 
-- Set options in `scripts/run_standalone_gd.sh`, including device target, data sink config, checkpoint config and dataset. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) for more information about dataset and the json schema file.
+# [Model Architecture](#contents)
+The backbone structure of TinyBERT is transformer, the transformer contains four encoder modules, one encoder contains one selfattention module and one selfattention module contains one attention module.  
 
-- Run `run_standalone_gd.sh` for non-distributed general distill of BERT-base model.
+# [Dataset](#contents)
+- Download the zhwiki or enwiki dataset for general distillation. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format, please refer to create_pretraining_data.py which in [BERT](https://github.com/google-research/bert) repository.
+- Download glue dataset for task distillation. Convert dataset files from json format to tfrecord format, please refer to run_classifier.py which in [BERT](https://github.com/google-research/bert) repository.
 
-    ``` bash
-    bash scripts/run_standalone_gd.sh
-    ```
-- Run `run_distribute_gd.sh` for distributed general distill of BERT-base model.
+# [Environment Requirements](#contents)
+- Hardware（Ascend）
+  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Framework
+  - [MindSpore](https://gitee.com/mindspore/mindspore)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
 
-    ``` bash
-    bash scripts/run_distribute_gd.sh DEVICE_NUM EPOCH_SIZE RANK_TABLE_FILE
-    ```  
+# [Quick Start](#contents)
+After installing MindSpore via the official website, you can start general distill, task distill and evaluation as follows:
+```bash
+# run standalone general distill example
+bash scripts/run_standalone_gd_ascend.sh 
 
-### Task Distill
-Task distill has two phases, pre-distill and task distill.
-- Set options in `src/td_config.py`, including lossscale, optimizer config of phase 1 and 2, as well as network config.
+Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_standalone_gd_ascend.sh file first.
 
-- Run `run_standalone_td.py` for task distill of BERT-base model.
+# run distributed general distill example
+bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
 
-    ```bash
-    bash scripts/run_standalone_td.sh
-    ```
+Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_distributed_gd_ascend.sh file first.
 
-## Usage
+# run task distill and evaluation example
+bash scripts/run_standalone_td_ascend.sh 
+
+Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir` and `schema_dir` in the run_standalone_td_ascend.sh file first.
+```
+
+For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+Please follow the instructions in the link below:
+https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
+
+# [Script Description](#contents)
+## [Script and Sample Code](#contents)
+
+```shell
+.
+└─bert
+  ├─README.md
+  ├─scripts
+    ├─run_distributed_gd_ascend.sh       # shell script for distributed general distill phase
+    ├─run_distributed_gd_for_gpu.sh      # shell script for distributed general distill phase
+    ├─run_standalone_gd_ascend.sh        # shell script for standalone general distill phase
+    ├─run_standalone_td_ascend.sh        # shell script for standalone task distill phase
+  ├─src
+    ├─__init__.py
+    ├─assessment_method.py               # assessment method for evaluation
+    ├─dataset.py                         # data processing
+    ├─fused_layer_norm.py                # Layernormal is optimized for Ascend
+    ├─gd_config.py                       # parameter configuration for general distill phase
+    ├─td_config.py                       # parameter configuration for task distill phase
+    ├─tinybert_for_gd_td.py              # backbone code of network
+    ├─tinybert_model.py                  # backbone code of network
+    ├─utils.py                           # util function
+  ├─__init__.py
+  ├─run_general_distill.py               # train net for general distillation 
+  ├─run_task_distill.py                  # train and eval net for task distillation 
+```
+
+## [Script Parameters](#contents)
 ### General Distill
 ``` 
-usage: run_standalone_gd.py  [--distribute DISTRIBUTE] [--device_target DEVICE_TARGET]
-                             [--epoch_size N] [--device_id N]
-                             [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N]
-                             [--save_checkpoint_steps N] [--max_ckpt_num N]
-                             [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
-                             [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR]
+usage: run_general_distill_ascend.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
+                                      [--device_target DEVICE_TARGET] [--do_shuffle DO_SHUFFLE]
+                                      [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] 
+                                      [--save_ckpt_path SAVE_CKPT_PATH]
+                                      [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
+                                      [--save_checkpoint_step N] [--max_ckpt_num N] 
+                                      [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [train_steps N]
 
 options:
-    --distribute               whether to run distributely: "true" | "false"
-    --device_target            targeted device to run task: "Ascend" | "GPU"
+    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
+    --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
     --epoch_size               epoch size: N, default is 1
     --device_id                device id: N, default is 0
+    --device_num               number of used devices: N, default is 1
+    --save_ckpt_path           path to save checkpoint files: PATH, default is ""    
+    --max_ckpt_num             max number for saving checkpoint files: N, default is 1
+    --do_shuffle               enable shuffle: "true" | "false", default is "true"
     --enable_data_sink         enable data sink: "true" | "false", default is "true"
     --data_sink_steps          set data sink steps: N, default is 1
-    --load_teacher_ckpt_path   path of teacher checkpoint to load: PATH, default is ""
+    --save_checkpoint_step     steps for saving checkpoint files: N, default is 1000
+    --load_teacher_ckpt_path   path to load teacher checkpoint files: PATH, default is ""
     --data_dir                 path to dataset directory: PATH, default is ""
     --schema_dir               path to schema.json file, PATH, default is ""
-
-usage: run_distribute_gd.py  [--distribute DISTRIBUTE] [--device_target DEVICE_TARGET]
-                             [--epoch_size N] [--device_id N] [--device_num N]
-                             [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N]
-                             [--save_ckpt_steps N] [--max_ckpt_num N]
-                             [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
-                             [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR]
+```
+  
+### Task Distill
+``` 
+usage: run_general_task_ascend.py  [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [--do_eval DO_EVAL] 
+                                   [--td_phase1_epoch_size N] [--td_phase2_epoch_size N] 
+                                   [--device_id N] [--do_shuffle DO_SHUFFLE]
+                                   [--enable_data_sink ENABLE_DATA_SINK] [--save_ckpt_step N] 
+                                   [--max_ckpt_num N] [--data_sink_steps N] 
+                                   [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
+                                   [--load_gd_ckpt_path LOAD_GD_CKPT_PATH]
+                                   [--load_td1_ckpt_path LOAD_TD1_CKPT_PATH]
+                                   [--train_data_dir TRAIN_DATA_DIR]
+                                   [--eval_data_dir EVAL_DATA_DIR]
+                                   [--task_name TASK_NAME] [--schema_dir SCHEMA_DIR]
 
 options:
-    --distribute               whether to run distributely: "true" | "false"
-    --device_target            targeted device to run task: "Ascend" | "GPU"
-    --epoch_size               epoch size: N, default is 1
+    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
+    --do_train                 enable train task: "true" | "false", default is "true"
+    --do_eval                  enable eval task: "true" | "false", default is "true"
+    --td_phase1_epoch_size     epoch size for td phase1: N, default is 10
+    --td_phase2_epoch_size     epoch size for td phase2: N, default is 3
     --device_id                device id: N, default is 0
-    --device_num               device id to run task
-    --enable_data_sink         enable data sink: "true" | "false", default is "true"
+    --do_shuffle               enable shuffle: "true" | "false", default is "true"    
+    --enable_data_sink         enable data sink: "true" | "false", default is "true"    
+    --save_ckpt_step           steps for saving checkpoint files: N, default is 1000
+    --max_ckpt_num             max number for saving checkpoint files: N, default is 1
     --data_sink_steps          set data sink steps: N, default is 1
-    --load_teacher_ckpt_path   path of teacher checkpoint to load: PATH, default is ""
-    --data_dir                 path to dataset directory: PATH, default is ""
+    --load_teacher_ckpt_path   path to load teacher checkpoint files: PATH, default is ""
+    --load_gd_ckpt_path        path to load checkpoint files which produced by general distill: PATH, default is ""
+    --load_td1_ckpt_path       path to load checkpoint files which produced by task distill phase 1: PATH, default is ""
+    --train_data_dir           path to train dataset directory: PATH, default is ""
+    --eval_data_dir            path to eval dataset directory: PATH, default is ""
+    --task_name                classification task: "SST-2" | "QNLI" | "MNLI", default is ""
     --schema_dir               path to schema.json file, PATH, default is ""
-
 ```
 
 ## Options and Parameters
-`gd_config.py` and `td_config.py` Contain parameters of BERT model and options for optimizer and lossscale.
+`gd_config.py` and `td_config.py` contain parameters of BERT model and options for optimizer and lossscale.
 ### Options:
 ```
 Parameters for lossscale:
@@ -85,12 +160,12 @@ Parameters for lossscale:
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 50 
 
-Parameters for task-specific config:
-    load_teacher_ckpt_path          teacher checkpoint to load
-    load_student_ckpt_path          student checkpoint to load
-    data_dir                        training data dir
-    eval_data_dir                   evaluation data dir
-    schema_dir                      data schema path
+Parameters for optimizer:
+    learning_rate                   value of learning rate: Q
+    end_learning_rate               value of end learning rate: Q, must be positive
+    power                           power: Q
+    weight_decay                    weight decay: Q
+    eps                             term added to the denominator to improve numerical stability: Q
 ```
 
 ### Parameters:
@@ -117,13 +192,128 @@ Parameters for bert network:
     dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float16
     enable_fused_layernorm          use batchnorm instead of layernorm to improve performance, default is False
-
-Parameters for optimizer:
-    optimizer                       optimizer used in the network: AdamWeightDecay
-    learning_rate                   value of learning rate: Q
-    end_learning_rate               value of end learning rate: Q, must be positive
-    power                           power: Q
-    weight_decay                    weight decay: Q
-    eps                             term added to the denominator to improve numerical stability: Q
+```
+## [Training Process](#contents)
+### Training
+#### running on Ascend
+Before running the command below, please check `load_teacher_ckpt_path`, `data_dir` and `schma_dir` has been set. Please set the path to be the absolute full path, e.g:"/username/checkpoint_100_300.ckpt".
+```
+bash scripts/run_standalone_gd_ascend.sh
+```
+The command above will run in the background, you can view the results the file log.txt. After training, you will get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
+```
+# grep "epoch" log.txt
+epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.2093), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 2, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
 ```
 
+### Distributed Training
+#### running on Ascend
+Before running the command below, please check `load_teacher_ckpt_path`, `data_dir` and `schma_dir` has been set. Please set the path to be the absolute full path, e.g:"/username/checkpoint_100_300.ckpt".
+```
+bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
+```
+The command above will run in the background, you can view the results the file log.txt. After training, you will get some checkpoint files under the LOG* folder by default. The loss value will be achieved as follows:
+```
+# grep "epoch" LOG*/log.txt
+epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.1478), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 30.5901), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+```
+
+## [Evaluation Process](#contents)
+### Evaluation
+If you want to after running and continue to eval, please set `do_train=true` and `do_eval=true`, If you want to run eval alone, please set `do_train=false` and `do_eval=true`.
+#### evaluation on SST-2 dataset when running on Ascend   
+```
+bash scripts/run_standalone_td_ascend.sh
+```
+The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:   
+```bash
+# grep "The best acc" log.txt
+The best acc is 0.872685
+The best acc is 0.893515
+The best acc is 0.899305
+...
+The best acc is 0.902777
+...
+```
+#### evaluation on MNLI dataset when running on Ascend
+Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
+```
+bash scripts/run_standalone_td_ascend.sh
+```
+The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:   
+```
+# grep "The best acc" log.txt
+The best acc is 0.803206
+The best acc is 0.803308
+The best acc is 0.810355
+...
+The best acc is 0.813929
+...
+```
+#### evaluation on QNLI dataset when running on Ascend
+Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
+```
+bash scripts/run_standalone_td_ascend.sh
+```
+The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:   
+```
+# grep "The best acc" log.txt
+The best acc is 0.870772
+The best acc is 0.871691
+The best acc is 0.875183
+...
+The best acc is 0.891176
+...
+```
+    
+## [Model Description](#contents)
+## [Performance](#contents)
+### training Performance
+| Parameters                 | TinyBERT                                                   | TinyBERT                  |
+| -------------------------- | ---------------------------------------------------------- | ------------------------- |
+| Model Version              |                                                            |                           |
+| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
+| MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
+| Dataset                    | cn-wiki-128                                                | ImageNet                  |
+| Training Parameters        | src/gd_config.py                                           | src/config.py             |
+| Optimizer                  | AdamWeightDecay                                            | AdamWeightDecay           |
+| Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
+| outputs                    | probability                                                |                           |
+| Loss                       | 6.541583                                                   | 1.913                     |
+| Speed                      | 35.4ms/step                                                |                      |
+| Total time                 | 17.3h                                                      |                           |
+| Params (M)                 | 15M                                                        |                           |
+| Checkpoint for task distill| 74M(.ckpt file)                                            |                           |    
+
+#### Inference Performance
+
+| Parameters                 |                               |                           |                      |
+| -------------------------- | ----------------------------- | ------------------------- | -------------------- |
+| Model Version              |                               |                           |                      |
+| Resource                   | Ascend 910                    | NV SMX2 V100-32G          | Ascend 310           |
+| uploaded Date              | 08/20/2020                    | 05/22/2020                |                      |
+| MindSpore Version          | 0.6.0                         | 0.2.0                     | 0.2.0                | 
+| Dataset                    | SST-2,                        | ImageNet, 1.2W            | ImageNet, 1.2W       |
+| batch_size                 | 32                            | 130(8P)                   |                      |
+| Accuracy                   | 0.902777                      | ACC1[72.07%] ACC5[90.90%] |                      |
+| Speed                      |                               |                           |                      |
+| Total time                 |                               |                           |                      |
+| Model for inference        | 74M(.ckpt file)               |                           |                      |
+
+# [Description of Random Situation](#contents)
+
+In run_standaloned_td.sh, we set do_shuffle to shuffle the dataset. 
+
+In gd_config.py and td_config.py, we set the hidden_dropout_prob and attention_pros_dropout_prob to dropout some network node.
+
+In run_general_distill.py, we set the random seed to make sure distribute training has the same init weight.
+
+# [ModelZoo Homepage](#contents)
+ 
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 

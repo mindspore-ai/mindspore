@@ -42,4 +42,4 @@ python ${PROJECT_DIR}/../run_squad.py  \
     --load_finetune_checkpoint_path="" \
     --train_data_file_path="" \
     --eval_data_file_path="" \
-    --schema_file_path="" > log.txt 2>&1 &
+    --schema_file_path="" > squad_log.txt 2>&1 &
