@@ -50,7 +50,7 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
 
 Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   if (input.size() < 2) {
-    RETURN_STATUS_UNEXPECTED("Both images and labels columns are required for this operation");
+    RETURN_STATUS_UNEXPECTED("Both images and labels columns are required for this operation.");
   }
 
   std::vector<std::shared_ptr<Tensor>> images;
@@ -59,10 +59,10 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batch before calling CutMixBatch.");
+    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batched before calling CutMixBatch.");
   }
   if (label_shape.size() != 2) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: Label's must be in one-hot format and in a batch");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: Label's must be in one-hot format and in a batch.");
   }
   if ((image_shape[1] != 1 && image_shape[1] != 3) && image_batch_format_ == ImageBatchFormat::kNCHW) {
     RETURN_STATUS_UNEXPECTED("CutMixBatch: Image doesn't match the given image format.");
