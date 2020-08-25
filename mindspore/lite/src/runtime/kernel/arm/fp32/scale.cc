@@ -35,11 +35,9 @@ ScaleCPUKernel::~ScaleCPUKernel() {
       scale_ = nullptr;
     }
   }
-  if (scale_param_->has_offset_) {
-    if (offset_ != nullptr) {
-      free(offset_);
-      offset_ = nullptr;
-    }
+  if (offset_ != nullptr) {
+    free(offset_);
+    offset_ = nullptr;
   }
 }
 
@@ -59,18 +57,15 @@ int ScaleCPUKernel::InitScaleOffset() {
     scale_ = nullptr;
   }
 
+  offset_ = reinterpret_cast<float *>(malloc(scale_param_->axis_size_ * sizeof(float)));
+  if (offset_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return RET_ERROR;
+  }
+  memset(offset_, 0, scale_param_->axis_size_ * sizeof(float));
   if (in_tensors_.size() == 3) {
     auto offset_tensor = in_tensors_.at(2);
-    offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
-    if (offset_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
     memcpy(offset_, offset_tensor->Data(), offset_tensor->ElementsNum() * sizeof(float));
-    scale_param_->has_offset_ = true;
-  } else {
-    offset_ = nullptr;
-    scale_param_->has_offset_ = false;
   }
   return RET_OK;
 }
@@ -101,6 +96,7 @@ int ScaleCPUKernel::InitParameter() {
   for (size_t i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
     scale_param_->inner_size_ *= in_shape[i];
   }
+  scale_param_->op_parameter_.thread_num_ = MSMIN(scale_param_->op_parameter_.thread_num_, scale_param_->outer_size_);
   return RET_OK;
 }
 
@@ -114,6 +110,11 @@ int ScaleCPUKernel::Init() {
     return RET_OK;
   }
 
+  ReSize();
+  return RET_OK;
+}
+
+int ScaleCPUKernel::ReSize() {
   auto ret = InitParameter();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
@@ -128,21 +129,8 @@ int ScaleCPUKernel::Init() {
   return RET_OK;
 }
 
-int ScaleCPUKernel::ReSize() {
-  auto ret = InitParameter();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int ScaleCPUKernel::Scale(int task_id) {
-  auto ret = DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
-  }
+  DoScale(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_);
   return RET_OK;
 }
 
