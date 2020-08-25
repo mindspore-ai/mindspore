@@ -1,3 +1,4 @@
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void conv2d_transpose2x2(__read_only image2d_t src_data, __global FLT16 *weight, __read_only image2d_t biases,
                                   __write_only image2d_t dst_data, int2 kernel_size, int2 stride, int2 padding,

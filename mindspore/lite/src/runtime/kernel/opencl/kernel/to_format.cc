@@ -128,11 +128,11 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     MS_LOG(ERROR) << "Unsupported format. " << out_tensors_[0]->GetFormat();
   }
   img_size->clear();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
+  auto enable_fp16_ = lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable();
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
   return RET_OK;

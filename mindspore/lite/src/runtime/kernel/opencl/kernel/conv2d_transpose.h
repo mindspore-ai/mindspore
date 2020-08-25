@@ -42,8 +42,9 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
  private:
   ConvParameter *parameter_;
   cl::Kernel kernel_;
-  FLOAT_t *padWeight_;
-  FLOAT_t *bias_;
+  void *padWeight_;
+  void *bias_;
+  bool enable_fp16_{false};
 };
 }  // namespace mindspore::kernel
 

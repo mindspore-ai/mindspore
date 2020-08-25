@@ -1,3 +1,4 @@
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void to_format_NCHW_to_NHWC4_IMG(__global FLT4 *src_data, __write_only image2d_t dst_data, int4 size,
                                           int4 shape) {

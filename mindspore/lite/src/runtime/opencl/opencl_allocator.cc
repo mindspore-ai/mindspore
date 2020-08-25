@@ -50,10 +50,12 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
   auto svm_capabilities = ocl_runtime->GetSVMCapabilities();
 
   size_t img_pitch = 0;
+  size_t dtype_size = 1;
   if (!img_size.empty()) {
+    dtype_size = img_size[2] == CL_FLOAT ? sizeof(cl_float4) : sizeof(cl_half4);
     uint32_t image_alignment = ocl_runtime->GetImagePitchAlignment();
     img_pitch = (img_size[0] + image_alignment - 1) / image_alignment * image_alignment;
-    size = img_pitch * img_size[1] * sizeof(cl_float4);
+    size = img_pitch * img_size[1] * dtype_size;
   }
   if (size > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
@@ -107,7 +109,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
     if (!img_size.empty()) {
       cl::ImageFormat image_format(CL_RGBA, img_size[2]);
       cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime->Context(), image_format, *buffer, img_size[0],
-                                                          img_size[1], img_pitch * sizeof(cl_float4), &ret);
+                                                          img_size[1], img_pitch * dtype_size, &ret);
       if (image == nullptr || ret != CL_SUCCESS) {
         delete buffer;
         UnLock();
