@@ -119,7 +119,7 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *
 
 KernelRegistry::~KernelRegistry() {
   for (auto op_parameter : op_parameters_) {
-    delete(op_parameter);
+    free(op_parameter);
   }
   op_parameters_.clear();
 }

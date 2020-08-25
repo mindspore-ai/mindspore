@@ -172,11 +172,12 @@ namespace mindspore::kernel {
 OpParameter *PopulateROIPoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
   const auto param =
     reinterpret_cast<mindspore::lite::ROIPooling *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *roi_pooling_param = new (std::nothrow) ROIPoolingParameter();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new PoolingParameter failed.";
+  ROIPoolingParameter *roi_pooling_param = reinterpret_cast<ROIPoolingParameter *>(malloc(sizeof(ROIPoolingParameter)));
+  if (roi_pooling_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ROIPoolingParameter failed.";
     return nullptr;
   }
+  memset(roi_pooling_param, 0, sizeof(ROIPoolingParameter));
   roi_pooling_param->op_parameter_.type_ = primitive->Type();
   roi_pooling_param->pooledH_ = param->GetPooledW();
   roi_pooling_param->pooledW_ = param->GetPooledW();
@@ -187,11 +188,12 @@ OpParameter *PopulateROIPoolingParameter(const mindspore::lite::PrimitiveC *prim
 OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
   const auto param =
     reinterpret_cast<mindspore::lite::BatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *batch_norm_param = new (std::nothrow) BatchNormParameter();
+  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
   if (batch_norm_param == nullptr) {
-    MS_LOG(ERROR) << "new BatchNormParameter failed.";
+    MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
     return nullptr;
   }
+  memset(batch_norm_param, 0, sizeof(BatchNormParameter));
   batch_norm_param->op_parameter_.type_ = primitive->Type();
   batch_norm_param->epsilon_ = param->GetEpsilon();
   batch_norm_param->fused_ = false;
@@ -200,11 +202,12 @@ OpParameter *PopulateBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
 
 OpParameter *PopulateFillParameter(const mindspore::lite::PrimitiveC *primitive) {
   const auto param = reinterpret_cast<mindspore::lite::Fill *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *fill_param = new (std::nothrow) FillParameter();
+  FillParameter *fill_param = reinterpret_cast<FillParameter *>(malloc(sizeof(FillParameter)));
   if (fill_param == nullptr) {
-    MS_LOG(ERROR) << "new FillParameter failed.";
+    MS_LOG(ERROR) << "malloc FillParameter failed.";
     return nullptr;
   }
+  memset(fill_param, 0, sizeof(FillParameter));
   fill_param->op_parameter_.type_ = primitive->Type();
   auto flatDims = param->GetDims();
   fill_param->num_dims_ = flatDims.size();
@@ -217,11 +220,12 @@ OpParameter *PopulateFillParameter(const mindspore::lite::PrimitiveC *primitive)
 
 OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto param = reinterpret_cast<mindspore::lite::ExpandDims *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *expand_dims_param = new (std::nothrow) ExpandDimsParameter();
+  ExpandDimsParameter *expand_dims_param = reinterpret_cast<ExpandDimsParameter *>(malloc(sizeof(ExpandDimsParameter)));
   if (expand_dims_param == nullptr) {
-    MS_LOG(ERROR) << "new ExpandDimsParameter failed.";
+    MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";
     return nullptr;
   }
+  memset(expand_dims_param, 0, sizeof(ExpandDimsParameter));
   expand_dims_param->op_parameter_.type_ = primitive->Type();
   expand_dims_param->dim_ = param->GetDim();
   return reinterpret_cast<OpParameter *>(expand_dims_param);
@@ -229,11 +233,12 @@ OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *prim
 
 OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto param = dynamic_cast<const mindspore::lite::CaffePReLU *>(primitive);
-  auto *prelu_param = new (std::nothrow) PReluParameter();
+  PReluParameter *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
   if (prelu_param == nullptr) {
-    MS_LOG(ERROR) << "new caffePReluParameter failed.";
+    MS_LOG(ERROR) << "malloc PReluParameter failed.";
     return nullptr;
   }
+  memset(prelu_param, 0, sizeof(PReluParameter));
   prelu_param->op_parameter_.type_ = primitive->Type();
   prelu_param->channelShared = param->GetChannelShared();
   return reinterpret_cast<OpParameter *>(prelu_param);
@@ -241,16 +246,18 @@ OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive
 
 OpParameter *PopulateLeakyReluParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto param = dynamic_cast<const mindspore::lite::Prelu *>(primitive);
-  LeakyReluParameter *leaky_relu_param = new (std::nothrow) LeakyReluParameter();
+  LeakyReluParameter *leaky_relu_param = reinterpret_cast<LeakyReluParameter *>(malloc(sizeof(LeakyReluParameter)));
   if (leaky_relu_param == nullptr) {
-    MS_LOG(ERROR) << "new LeakyReluParameter failed.";
+    MS_LOG(ERROR) << "malloc LeakyReluParameter failed.";
     return nullptr;
   }
+  memset(leaky_relu_param, 0, sizeof(LeakyReluParameter));
   leaky_relu_param->op_parameter_.type_ = primitive->Type();
   auto temp = param->GetSlope();
   leaky_relu_param->slope_ = reinterpret_cast<float *>(malloc(temp.size() * sizeof(float)));
   if (leaky_relu_param->slope_ == nullptr) {
     MS_LOG(ERROR) << "malloc relu slope fail!";
+    free(leaky_relu_param);
     return nullptr;
   }
   for (size_t i = 0; i < temp.size(); i++) {
@@ -263,17 +270,17 @@ OpParameter *PopulateLeakyReluParameter(const mindspore::lite::PrimitiveC *primi
 OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto pooling_primitive =
     reinterpret_cast<mindspore::lite::Pooling *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *pooling_param = new (std::nothrow) PoolingParameter();
+  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
-    MS_LOG(ERROR) << "new PoolingParameter failed.";
+    MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
+  memset(pooling_param, 0, sizeof(PoolingParameter));
   pooling_param->op_parameter_.type_ = primitive->Type();
   pooling_param->global_ = pooling_primitive->GetGlobal();
   pooling_param->window_w_ = pooling_primitive->GetWindowW();
   pooling_param->window_h_ = pooling_primitive->GetWindowH();
   auto pooling_lite_primitive = (lite::Pooling *)primitive;
-  MS_ASSERT(nullptr != pooling_lite_primitive);
   pooling_param->pad_u_ = pooling_lite_primitive->PadUp();
   pooling_param->pad_d_ = pooling_lite_primitive->PadDown();
   pooling_param->pad_l_ = pooling_lite_primitive->PadLeft();
@@ -328,11 +335,12 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
 OpParameter *PopulateFullconnectionParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto param =
     reinterpret_cast<mindspore::lite::FullConnection *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *matmul_param = new (std::nothrow) MatMulParameter();
+  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
-    MS_LOG(ERROR) << "new FullconnectionParameter failed.";
+    MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;
   }
+  memset(matmul_param, 0, sizeof(MatMulParameter));
   matmul_param->op_parameter_.type_ = primitive->Type();
   matmul_param->b_transpose_ = true;
   matmul_param->a_transpose_ = false;
@@ -350,11 +358,12 @@ OpParameter *PopulateFullconnectionParameter(const mindspore::lite::PrimitiveC *
 
 OpParameter *PopulateMatMulParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto param = reinterpret_cast<mindspore::lite::MatMul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *matmul_param = new (std::nothrow) MatMulParameter();
+  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
-    MS_LOG(ERROR) << "new FullconnectionParameter failed.";
+    MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;
   }
+  memset(matmul_param, 0, sizeof(MatMulParameter));
   matmul_param->op_parameter_.type_ = primitive->Type();
   matmul_param->b_transpose_ = param->GetTransposeB();
   matmul_param->a_transpose_ = param->GetTransposeA();
@@ -364,11 +373,12 @@ OpParameter *PopulateMatMulParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *conv_param = new (std::nothrow) ConvParameter();
+  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
-    MS_LOG(ERROR) << "new ConvParameter failed.";
+    MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
+  memset(conv_param, 0, sizeof(ConvParameter));
   conv_param->op_parameter_.type_ = primitive->Type();
   auto conv_primitive =
     reinterpret_cast<mindspore::lite::Conv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -379,7 +389,6 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 
   auto conv2d_lite_primitive = (lite::Conv2D *)primitive;
-  MS_ASSERT(nullptr != conv2d_lite_primitive);
   conv_param->pad_u_ = conv2d_lite_primitive->PadUp();
   conv_param->pad_d_ = conv2d_lite_primitive->PadDown();
   conv_param->pad_l_ = conv2d_lite_primitive->PadLeft();
@@ -405,11 +414,12 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *conv_param = new (std::nothrow) ConvParameter();
+  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
-    MS_LOG(ERROR) << "new ConvParameter failed.";
+    MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
+  memset(conv_param, 0, sizeof(ConvParameter));
   conv_param->op_parameter_.type_ = primitive->Type();
 
   auto conv_primitive =
@@ -420,7 +430,6 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 
   auto convdw_lite_primitive = (lite::DepthwiseConv2D *)primitive;
-  MS_ASSERT(nullptr != convdw_lite_primitive);
   conv_param->pad_u_ = convdw_lite_primitive->PadUp();
   conv_param->pad_d_ = convdw_lite_primitive->PadDown();
   conv_param->pad_l_ = convdw_lite_primitive->PadLeft();
@@ -443,11 +452,12 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *conv_param = new ConvParameter();
+  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
-    MS_LOG(ERROR) << "new ConvParameter failed.";
+    MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
+  memset(conv_param, 0, sizeof(ConvParameter));
   conv_param->op_parameter_.type_ = primitive->Type();
   auto conv_primitive =
     reinterpret_cast<mindspore::lite::DeDepthwiseConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -457,7 +467,6 @@ OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primit
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 
   auto deconvdw_lite_primitive = (mindspore::lite::DeDepthwiseConv2D *)primitive;
-  MS_ASSERT(nullptr != deconvdw_lite_primitive);
   conv_param->pad_u_ = deconvdw_lite_primitive->PadUp();
   conv_param->pad_d_ = deconvdw_lite_primitive->PadDown();
   conv_param->pad_l_ = deconvdw_lite_primitive->PadLeft();
@@ -480,11 +489,12 @@ OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primit
 }
 
 OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *conv_param = new ConvParameter();
+  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
-    MS_LOG(ERROR) << "new ConvParameter failed.";
+    MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
+  memset(conv_param, 0, sizeof(ConvParameter));
   conv_param->op_parameter_.type_ = primitive->Type();
   auto conv_primitive =
     reinterpret_cast<mindspore::lite::DeConv2D *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -494,7 +504,6 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->stride_w_ = conv_primitive->GetStrideW();
 
   auto deconv_lite_primitive = (lite::DeConv2D *)primitive;
-  MS_ASSERT(nullptr != deconvdw_lite_primitive);
   conv_param->pad_u_ = deconv_lite_primitive->PadUp();
   conv_param->pad_d_ = deconv_lite_primitive->PadDown();
   conv_param->pad_l_ = deconv_lite_primitive->PadLeft();
@@ -519,29 +528,31 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
 OpParameter *PopulateSoftmaxParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto softmax_primitive =
     reinterpret_cast<mindspore::lite::SoftMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *softmax_param = new (std::nothrow) SoftmaxParameter();
+  SoftmaxParameter *softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
   if (softmax_param == nullptr) {
-    MS_LOG(ERROR) << "new SoftmaxParameter failed.";
+    MS_LOG(ERROR) << "malloc SoftmaxParameter failed.";
     return nullptr;
   }
+  memset(softmax_param, 0, sizeof(SoftmaxParameter));
   softmax_param->op_parameter_.type_ = primitive->Type();
   softmax_param->axis_ = softmax_primitive->GetAxis();
   return reinterpret_cast<OpParameter *>(softmax_param);
 }
 
 OpParameter *PopulateReduceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *reduce_param = new (std::nothrow) ReduceParameter();
+  ReduceParameter *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
   if (reduce_param == nullptr) {
-    MS_LOG(ERROR) << "new ReduceParameter failed.";
+    MS_LOG(ERROR) << "malloc ReduceParameter failed.";
     return nullptr;
   }
+  memset(reduce_param, 0, sizeof(ReduceParameter));
   reduce_param->op_parameter_.type_ = primitive->Type();
   auto reduce = reinterpret_cast<mindspore::lite::Reduce *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   reduce_param->keep_dims_ = reduce->GetKeepDims();
   auto axisVector = reduce->GetAxes();
   if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
     MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
-    delete (reduce_param);
+    free(reduce_param);
     return nullptr;
   }
   reduce_param->num_axes_ = static_cast<int>(axisVector.size());
@@ -554,18 +565,19 @@ OpParameter *PopulateReduceParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateMeanParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *mean_param = new (std::nothrow) ReduceParameter();
+  ReduceParameter *mean_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
   if (mean_param == nullptr) {
-    MS_LOG(ERROR) << "new ReduceParameter failed.";
+    MS_LOG(ERROR) << "malloc ReduceParameter failed.";
     return nullptr;
   }
+  memset(mean_param, 0, sizeof(ReduceParameter));
   mean_param->op_parameter_.type_ = primitive->Type();
   auto mean = reinterpret_cast<mindspore::lite::Mean *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   mean_param->keep_dims_ = mean->GetKeepDims();
   auto axisVector = mean->GetAxis();
   if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
     MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
-    delete (mean_param);
+    free(mean_param);
     return nullptr;
   }
   mean_param->num_axes_ = static_cast<int>(axisVector.size());
@@ -578,11 +590,12 @@ OpParameter *PopulateMeanParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulatePadParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *pad_param = new (std::nothrow) PadParameter();
+  PadParameter *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
   if (pad_param == nullptr) {
-    MS_LOG(ERROR) << "new PadParameter failed.";
+    MS_LOG(ERROR) << "malloc PadParameter failed.";
     return nullptr;
   }
+  memset(pad_param, 0, sizeof(PadParameter));
   pad_param->op_parameter_.type_ = primitive->Type();
   auto pad_node = reinterpret_cast<mindspore::lite::Pad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   pad_param->pad_mode_ = pad_node->GetPaddingMode();
@@ -590,14 +603,14 @@ OpParameter *PopulatePadParameter(const mindspore::lite::PrimitiveC *primitive) 
     pad_param->constant_value_ = pad_node->GetConstantValue();
   } else {
     MS_LOG(ERROR) << "Invalid padding mode: " << pad_param->pad_mode_;
-    delete (pad_param);
+    free(pad_param);
     return nullptr;
   }
 
   auto size = pad_node->GetPaddings().size();
   if (size > MAX_PAD_SIZE) {
     MS_LOG(ERROR) << "Invalid padding size: " << size;
-    delete (pad_param);
+    free(pad_param);
     return nullptr;
   }
 
@@ -608,11 +621,12 @@ OpParameter *PopulatePadParameter(const mindspore::lite::PrimitiveC *primitive) 
 }
 
 OpParameter *PopulateActivationParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *act_param = new (std::nothrow) ActivationParameter();
+  ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (act_param == nullptr) {
-    MS_LOG(ERROR) << "new ActivationParameter failed.";
+    MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
+  memset(act_param, 0, sizeof(ActivationParameter));
   auto activation =
     reinterpret_cast<mindspore::lite::Activation *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   act_param->type_ = static_cast<int>(activation->GetType());
@@ -621,11 +635,12 @@ OpParameter *PopulateActivationParameter(const mindspore::lite::PrimitiveC *prim
 }
 
 OpParameter *PopulateFusedBatchNorm(const mindspore::lite::PrimitiveC *primitive) {
-  auto *batch_norm_param = new (std::nothrow) BatchNormParameter();
+  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
   if (batch_norm_param == nullptr) {
-    MS_LOG(ERROR) << "new FusedBatchNormParameter failed.";
+    MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
     return nullptr;
   }
+  memset(batch_norm_param, 0, sizeof(BatchNormParameter));
   batch_norm_param->op_parameter_.type_ = primitive->Type();
   auto param =
     reinterpret_cast<mindspore::lite::FusedBatchNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -635,11 +650,12 @@ OpParameter *PopulateFusedBatchNorm(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive) {
-  auto *arithmetic_param = new (std::nothrow) ArithmeticParameter();
+  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "new ArithmeticParameter failed.";
+    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
+  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
   arithmetic_param->op_parameter_.type_ = primitive->Type();
   arithmetic_param->broadcasting_ = ((lite::Arithmetic *)primitive)->Broadcasting();
   arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
@@ -678,11 +694,12 @@ OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive) {
 }
 
 OpParameter *PopulateEltwiseParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *arithmetic_param = new (std::nothrow) ArithmeticParameter();
+  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "new ArithmeticParameter failed.";
+    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
+  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
   auto eltwise = reinterpret_cast<mindspore::lite::Eltwise *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   switch (eltwise->GetMode()) {
     case schema::EltwiseMode_PROD:
@@ -695,28 +712,31 @@ OpParameter *PopulateEltwiseParameter(const mindspore::lite::PrimitiveC *primiti
       arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_Maximum;
       break;
     default:
-      delete arithmetic_param;
+      free(arithmetic_param);
       return nullptr;
   }
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
 OpParameter *PopulateArithmeticSelf(const mindspore::lite::PrimitiveC *primitive) {
-  auto *arithmetic_self_param = new (std::nothrow) ArithmeticSelfParameter();
+  ArithmeticSelfParameter *arithmetic_self_param =
+      reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
   if (arithmetic_self_param == nullptr) {
-    MS_LOG(ERROR) << "new ArithmeticParameter failed.";
+    MS_LOG(ERROR) << "malloc ArithmeticSelfParameter failed.";
     return nullptr;
   }
+  memset(arithmetic_self_param, 0, sizeof(ArithmeticSelfParameter));
   arithmetic_self_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(arithmetic_self_param);
 }
 
 OpParameter *PopulatePowerParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *power_param = new (std::nothrow) PowerParameter();
+  PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
   if (power_param == nullptr) {
-    MS_LOG(ERROR) << "new PowerParameter failed.";
+    MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;
   }
+  memset(power_param, 0, sizeof(PowerParameter));
   power_param->op_parameter_.type_ = primitive->Type();
   auto power = reinterpret_cast<mindspore::lite::Power *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   power_param->power_ = power->GetPower();
@@ -726,11 +746,12 @@ OpParameter *PopulatePowerParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateArgMaxParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *arg_param = new (std::nothrow) ArgMinMaxParameter();
+  ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
   if (arg_param == nullptr) {
-    MS_LOG(ERROR) << "new ArgMinMaxParameter failed.";
+    MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
     return nullptr;
   }
+  memset(arg_param, 0, sizeof(ArgMinMaxParameter));
   arg_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::ArgMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   arg_param->axis_ = param->GetAxis();
@@ -742,11 +763,12 @@ OpParameter *PopulateArgMaxParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateArgMinParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *arg_param = new (std::nothrow) ArgMinMaxParameter();
+  ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
   if (arg_param == nullptr) {
-    MS_LOG(ERROR) << "new ArgMinMaxParameter failed.";
+    MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
     return nullptr;
   }
+  memset(arg_param, 0, sizeof(ArgMinMaxParameter));
   arg_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::ArgMin *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   arg_param->axis_ = param->GetAxis();
@@ -758,11 +780,12 @@ OpParameter *PopulateArgMinParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateCastParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *cast_param = new (std::nothrow) CastParameter();
+  CastParameter *cast_param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
   if (cast_param == nullptr) {
-    MS_LOG(ERROR) << "new CastParameter failed.";
+    MS_LOG(ERROR) << "malloc CastParameter failed.";
     return nullptr;
   }
+  memset(cast_param, 0, sizeof(CastParameter));
   cast_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Cast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   cast_param->src_type_ = param->GetSrcT();
@@ -773,11 +796,13 @@ OpParameter *PopulateCastParameter(const mindspore::lite::PrimitiveC *primitive)
 OpParameter *PopulateLocalResponseNormParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto local_response_norm_attr = reinterpret_cast<mindspore::lite::LocalResponseNormalization *>(
     const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *lrn_param = new (std::nothrow) LocalResponseNormParameter();
+  LocalResponseNormParameter *lrn_param =
+      reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
   if (lrn_param == nullptr) {
-    MS_LOG(ERROR) << "new LocalResponseNormParameter failed.";
+    MS_LOG(ERROR) << "malloc LocalResponseNormParameter failed.";
     return nullptr;
   }
+  memset(lrn_param, 0, sizeof(LocalResponseNormParameter));
   lrn_param->op_parameter_.type_ = primitive->Type();
   lrn_param->depth_radius_ = local_response_norm_attr->GetDepthRadius();
   lrn_param->bias_ = local_response_norm_attr->GetBias();
@@ -788,11 +813,12 @@ OpParameter *PopulateLocalResponseNormParameter(const mindspore::lite::Primitive
 
 OpParameter *PopulateRangeParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto range_attr = reinterpret_cast<mindspore::lite::Range *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *range_param = new (std::nothrow) RangeParameter();
+  RangeParameter *range_param = reinterpret_cast<RangeParameter *>(malloc(sizeof(RangeParameter)));
   if (range_param == nullptr) {
-    MS_LOG(ERROR) << "new RangeParameter failed.";
+    MS_LOG(ERROR) << "malloc RangeParameter failed.";
     return nullptr;
   }
+  memset(range_param, 0, sizeof(RangeParameter));
   range_param->op_parameter_.type_ = primitive->Type();
   range_param->start_ = range_attr->GetStart();
   range_param->limit_ = range_attr->GetLimit();
@@ -802,11 +828,12 @@ OpParameter *PopulateRangeParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateConcatParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *concat_param = new (std::nothrow) ConcatParameter();
+  ConcatParameter *concat_param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
   if (concat_param == nullptr) {
-    MS_LOG(ERROR) << "new ConcatParameter failed.";
+    MS_LOG(ERROR) << "malloc ConcatParameter failed.";
     return nullptr;
   }
+  memset(concat_param, 0, sizeof(ConcatParameter));
   concat_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Concat *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   concat_param->axis_ = param->GetAxis();
@@ -814,11 +841,12 @@ OpParameter *PopulateConcatParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *tile_param = new (std::nothrow) TileParameter();
+  TileParameter *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
   if (tile_param == nullptr) {
-    MS_LOG(ERROR) << "new TileParameter failed.";
+    MS_LOG(ERROR) << "malloc TileParameter failed.";
     return nullptr;
   }
+  memset(tile_param, 0, sizeof(TileParameter));
   tile_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Tile *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto multiples = param->GetMultiples();
@@ -830,11 +858,12 @@ OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulateTopKParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *topk_param = new (std::nothrow) TopkParameter();
+  TopkParameter *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
   if (topk_param == nullptr) {
-    MS_LOG(ERROR) << "new TopkParameter failed.";
+    MS_LOG(ERROR) << "malloc TopkParameter failed.";
     return nullptr;
   }
+  memset(topk_param, 0, sizeof(TopkParameter));
   topk_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::TopK *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   topk_param->k_ = param->GetK();
@@ -843,31 +872,34 @@ OpParameter *PopulateTopKParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulateNhwc2NchwParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *parameter = new (std::nothrow) OpParameter();
+  OpParameter *parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "new Nhwc2NchwParameter failed.";
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
+  memset(parameter, 0, sizeof(OpParameter));
   parameter->type_ = primitive->Type();
   return parameter;
 }
 
 OpParameter *PopulateNchw2NhwcParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *parameter = new (std::nothrow) OpParameter();
+  OpParameter *parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "new Nchw2NhwcParameter failed.";
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
+  memset(parameter, 0, sizeof(OpParameter));
   parameter->type_ = primitive->Type();
   return parameter;
 }
 
 OpParameter *PopulateTransposeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *transpose_param = new (std::nothrow) TransposeParameter();
+  TransposeParameter *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (transpose_param == nullptr) {
-    MS_LOG(ERROR) << "new TransposeParameter failed.";
+    MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
   }
+  memset(transpose_param, 0, sizeof(TransposeParameter));
   auto param = reinterpret_cast<mindspore::lite::Transpose *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   transpose_param->op_parameter_.type_ = primitive->Type();
   auto perm_vector_ = param->GetPerm();
@@ -881,11 +913,12 @@ OpParameter *PopulateTransposeParameter(const mindspore::lite::PrimitiveC *primi
 }
 
 OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *split_param = new (std::nothrow) SplitParameter();
+  SplitParameter *split_param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
   if (split_param == nullptr) {
-    MS_LOG(ERROR) << "new SplitParameter failed.";
+    MS_LOG(ERROR) << "malloc SplitParameter failed.";
     return nullptr;
   }
+  memset(split_param, 0, sizeof(SplitParameter));
   auto param = reinterpret_cast<mindspore::lite::Split *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   split_param->op_parameter_.type_ = primitive->Type();
   split_param->num_split_ = param->GetNumberSplit();
@@ -900,11 +933,12 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateSqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *squeeze_param = new (std::nothrow) SqueezeParameter();
+  SqueezeParameter *squeeze_param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
   if (squeeze_param == nullptr) {
-    MS_LOG(ERROR) << "new SqueezeParameter failed.";
+    MS_LOG(ERROR) << "malloc SqueezeParameter failed.";
     return nullptr;
   }
+  memset(squeeze_param, 0, sizeof(SqueezeParameter));
   squeeze_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(squeeze_param);
 }
@@ -914,11 +948,12 @@ OpParameter *PopulateScaleParameter(const mindspore::lite::PrimitiveC *primitive
     MS_LOG(ERROR) << "input primitive is nullptr";
     return nullptr;
   }
-  auto *scale_param = new (std::nothrow) ScaleParameter();
+  ScaleParameter *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
   if (scale_param == nullptr) {
-    MS_LOG(ERROR) << "new ScaleParameter failed.";
+    MS_LOG(ERROR) << "malloc ScaleParameter failed.";
     return nullptr;
   }
+  memset(scale_param, 0, sizeof(ScaleParameter));
   scale_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Scale *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   scale_param->axis_ = param->GetAxis();
@@ -927,11 +962,12 @@ OpParameter *PopulateScaleParameter(const mindspore::lite::PrimitiveC *primitive
 
 OpParameter *PopulateGatherParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto gather_attr = reinterpret_cast<mindspore::lite::Gather *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *gather_param = new (std::nothrow) GatherParameter();
+  GatherParameter *gather_param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
   if (gather_param == nullptr) {
-    MS_LOG(ERROR) << "new GatherParameter failed.";
+    MS_LOG(ERROR) << "malloc GatherParameter failed.";
     return nullptr;
   }
+  memset(gather_param, 0, sizeof(GatherParameter));
   gather_param->op_parameter_.type_ = primitive->Type();
   gather_param->axis_ = gather_attr->GetAxis();
   gather_param->batchDims_ = gather_attr->GetBatchDims();
@@ -939,11 +975,12 @@ OpParameter *PopulateGatherParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateGatherNdParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *gather_nd_param = new (std::nothrow) GatherNdParameter();
+  GatherNdParameter *gather_nd_param = reinterpret_cast<GatherNdParameter *>(malloc(sizeof(GatherNdParameter)));
   if (gather_nd_param == nullptr) {
-    MS_LOG(ERROR) << "new GatherNDParameter failed.";
+    MS_LOG(ERROR) << "malloc GatherNdParameter failed.";
     return nullptr;
   }
+  memset(gather_nd_param, 0, sizeof(GatherNdParameter));
   gather_nd_param->op_parameter_.type_ = primitive->Type();
   auto gatherNd_attr =
     reinterpret_cast<mindspore::lite::GatherNd *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -952,28 +989,29 @@ OpParameter *PopulateGatherNdParameter(const mindspore::lite::PrimitiveC *primit
 }
 
 OpParameter *PopulateScatterNDParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *scatter_nd_param = new (std::nothrow) ScatterNDParameter();
+  ScatterNDParameter *scatter_nd_param = reinterpret_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
   if (scatter_nd_param == nullptr) {
-    MS_LOG(ERROR) << "new ScatterNDParameter failed.";
+    MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
     return nullptr;
   }
+  memset(scatter_nd_param, 0, sizeof(ScatterNDParameter));
   scatter_nd_param->op_parameter_.type_ = primitive->Type();
-  MS_ASSERT(paramter != nullptr);
   return reinterpret_cast<OpParameter *>(scatter_nd_param);
 }
 
 OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *slice_param = new (std::nothrow) SliceParameter();
+  SliceParameter *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
   if (slice_param == nullptr) {
-    MS_LOG(ERROR) << "new SliceParameter failed.";
+    MS_LOG(ERROR) << "malloc SliceParameter failed.";
     return nullptr;
   }
+  memset(slice_param, 0, sizeof(SliceParameter));
   auto param = reinterpret_cast<mindspore::lite::Slice *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   slice_param->op_parameter_.type_ = primitive->Type();
   auto param_begin = param->GetBegin();
   auto param_size = param->GetSize();
   if (param_begin.size() != param_size.size()) {
-    delete slice_param;
+    free(slice_param);
     return nullptr;
   }
   slice_param->param_length_ = static_cast<int32_t>(param_begin.size());
@@ -985,11 +1023,13 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateBroadcastToParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *broadcast_param = new (std::nothrow) BroadcastToParameter();
+  BroadcastToParameter *broadcast_param =
+      reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
   if (broadcast_param == nullptr) {
-    MS_LOG(ERROR) << "new BroadcastToParameter failed.";
+    MS_LOG(ERROR) << "malloc BroadcastToParameter failed.";
     return nullptr;
   }
+  memset(broadcast_param, 0, sizeof(BroadcastToParameter));
   auto param = reinterpret_cast<mindspore::lite::BroadcastTo *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   broadcast_param->op_parameter_.type_ = primitive->Type();
   auto dst_shape = param->GetDstShape();
@@ -1001,21 +1041,23 @@ OpParameter *PopulateBroadcastToParameter(const mindspore::lite::PrimitiveC *pri
 }
 
 OpParameter *PopulateReshapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *reshape_param = new (std::nothrow) ReshapeParameter();
+  ReshapeParameter *reshape_param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
   if (reshape_param == nullptr) {
-    MS_LOG(ERROR) << "new ReshapeParameter failed.";
+    MS_LOG(ERROR) << "malloc ReshapeParameter failed.";
     return nullptr;
   }
+  memset(reshape_param, 0, sizeof(ReshapeParameter));
   reshape_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(reshape_param);
 }
 
 OpParameter *PopulateShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *shape_param = new (std::nothrow) ShapeParameter();
+  ShapeParameter *shape_param = reinterpret_cast<ShapeParameter *>(malloc(sizeof(ShapeParameter)));
   if (shape_param == nullptr) {
-    MS_LOG(ERROR) << "new ShapeParameter failed.";
+    MS_LOG(ERROR) << "malloc ShapeParameter failed.";
     return nullptr;
   }
+  memset(shape_param, 0, sizeof(ShapeParameter));
   shape_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(shape_param);
 }
@@ -1023,11 +1065,13 @@ OpParameter *PopulateShapeParameter(const mindspore::lite::PrimitiveC *primitive
 OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto attr =
     reinterpret_cast<mindspore::lite::ConstantOfShape *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  ConstantOfShapeParameter *param = new (std::nothrow) ConstantOfShapeParameter();
+  ConstantOfShapeParameter *param =
+      reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new ConstantOfShapeParameter failed.";
+    MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
     return nullptr;
   }
+  memset(param, 0, sizeof(ConstantOfShapeParameter));
   param->op_parameter_.type_ = primitive->Type();
   param->value_ = attr->GetValue();
   return reinterpret_cast<OpParameter *>(param);
@@ -1036,11 +1080,12 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
 OpParameter *PopulateReverseParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto reverse_attr =
     reinterpret_cast<mindspore::lite::Reverse *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  ReverseParameter *reverse_param = new (std::nothrow) ReverseParameter();
+  ReverseParameter *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
   if (reverse_param == nullptr) {
-    MS_LOG(ERROR) << "new ReverseParameter failed.";
+    MS_LOG(ERROR) << "malloc ReverseParameter failed.";
     return nullptr;
   }
+  memset(reverse_param, 0, sizeof(ReverseParameter));
   reverse_param->op_parameter_.type_ = primitive->Type();
   auto flatAxis = reverse_attr->GetAxis();
   reverse_param->num_axis_ = flatAxis.size();
@@ -1054,11 +1099,12 @@ OpParameter *PopulateReverseParameter(const mindspore::lite::PrimitiveC *primiti
 OpParameter *PopulateUnsqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto unsqueeze_attr =
     reinterpret_cast<mindspore::lite::Unsqueeze *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto *unsqueeze_param = new (std::nothrow) UnsqueezeParameter();
+  UnsqueezeParameter *unsqueeze_param = reinterpret_cast<UnsqueezeParameter *>(malloc(sizeof(UnsqueezeParameter)));
   if (unsqueeze_param == nullptr) {
-    MS_LOG(ERROR) << "new ReverseParameter failed.";
+    MS_LOG(ERROR) << "malloc UnsqueezeParameter failed.";
     return nullptr;
   }
+  memset(unsqueeze_param, 0, sizeof(UnsqueezeParameter));
   unsqueeze_param->op_parameter_.type_ = primitive->Type();
   auto flatAxis = unsqueeze_attr->GetAxis();
   unsqueeze_param->num_dim_ = flatAxis.size();
@@ -1070,11 +1116,12 @@ OpParameter *PopulateUnsqueezeParameter(const mindspore::lite::PrimitiveC *primi
 }
 
 OpParameter *PopulateStackParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *stack_param = new (std::nothrow) StackParameter();
+  StackParameter *stack_param = reinterpret_cast<StackParameter *>(malloc(sizeof(StackParameter)));
   if (stack_param == nullptr) {
-    MS_LOG(ERROR) << "new StackParameter failed.";
+    MS_LOG(ERROR) << "malloc StackParameter failed.";
     return nullptr;
   }
+  memset(stack_param, 0, sizeof(StackParameter));
   auto param = reinterpret_cast<mindspore::lite::Stack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   stack_param->op_parameter_.type_ = primitive->Type();
   stack_param->axis_ = param->GetAxis();
@@ -1082,11 +1129,12 @@ OpParameter *PopulateStackParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateUnstackParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *unstack_param = new (std::nothrow) UnstackParameter();
+  UnstackParameter *unstack_param = reinterpret_cast<UnstackParameter *>(malloc(sizeof(UnstackParameter)));
   if (unstack_param == nullptr) {
-    MS_LOG(ERROR) << "new UnstackParameter failed.";
+    MS_LOG(ERROR) << "malloc UnstackParameter failed.";
     return nullptr;
   }
+  memset(unstack_param, 0, sizeof(UnstackParameter));
   auto param = reinterpret_cast<mindspore::lite::Unstack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   unstack_param->op_parameter_.type_ = primitive->Type();
   unstack_param->num_ = param->GetNum();
@@ -1095,11 +1143,13 @@ OpParameter *PopulateUnstackParameter(const mindspore::lite::PrimitiveC *primiti
 }
 
 OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *reverse_sequence_param = new (std::nothrow) ReverseSequenceParameter();
+  ReverseSequenceParameter *reverse_sequence_param =
+      reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
   if (reverse_sequence_param == nullptr) {
-    MS_LOG(ERROR) << "new ReverseSequenceParameter failed.";
+    MS_LOG(ERROR) << "malloc ReverseSequenceParameter failed.";
     return nullptr;
   }
+  memset(reverse_sequence_param, 0, sizeof(ReverseSequenceParameter));
   auto param =
     reinterpret_cast<mindspore::lite::ReverseSequence *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   reverse_sequence_param->op_parameter_.type_ = primitive->Type();
@@ -1109,21 +1159,24 @@ OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC 
 }
 
 OpParameter *PopulateUniqueParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *unique_param = new (std::nothrow) UniqueParameter();
+  UniqueParameter *unique_param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
   if (unique_param == nullptr) {
-    MS_LOG(ERROR) << "new PopulateUniqueParam failed.";
+    MS_LOG(ERROR) << "malloc UniqueParameter failed.";
     return nullptr;
   }
+  memset(unique_param, 0, sizeof(UniqueParameter));
   unique_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(unique_param);
 }
 
 OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *depth_space_param = new (std::nothrow) DepthToSpaceParameter();
+  DepthToSpaceParameter *depth_space_param =
+      reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
   if (depth_space_param == nullptr) {
-    MS_LOG(ERROR) << "new DepthToSpaceParameter failed.";
+    MS_LOG(ERROR) << "malloc DepthToSpaceParameter failed.";
     return nullptr;
   }
+  memset(depth_space_param, 0, sizeof(DepthToSpaceParameter));
   auto param = reinterpret_cast<mindspore::lite::DepthToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   depth_space_param->op_parameter_.type_ = primitive->Type();
   depth_space_param->block_size_ = param->GetBlockSize();
@@ -1131,28 +1184,33 @@ OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *pr
 }
 
 OpParameter *PopulateSpaceToDepthParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *space_depth_param = new (std::nothrow) SpaceToDepthParameter();
+  SpaceToDepthParameter *space_depth_param =
+      reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
   if (space_depth_param == nullptr) {
-    MS_LOG(ERROR) << "new SpaceToDepthspace_depth_param failed.";
+    MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
     return nullptr;
   }
+  memset(space_depth_param, 0, sizeof(SpaceToDepthParameter));
   space_depth_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::SpaceToDepth *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   space_depth_param->op_parameter_.type_ = primitive->Type();
   space_depth_param->block_size_ = param->GetBlockSize();
   if (param->GetFormat() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "Currently only NHWC format is supported.";
+    free(space_depth_param);
     return nullptr;
   }
   return reinterpret_cast<OpParameter *>(space_depth_param);
 }
 
 OpParameter *PopulateSpaceToBatchParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *space_batch_param = new (std::nothrow) SpaceToBatchParameter();
+  SpaceToBatchParameter *space_batch_param =
+      reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
   if (space_batch_param == nullptr) {
-    MS_LOG(ERROR) << "new SpaceToBatchParameter failed.";
+    MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
   }
+  memset(space_batch_param, 0, sizeof(SpaceToBatchParameter));
   space_batch_param->op_parameter_.type_ = primitive->Type();
   space_batch_param->op_parameter_.type_ = primitive->Type();
   auto block_sizes = ((mindspore::lite::SpaceToBatch *)primitive)->BlockSizes();
@@ -1167,11 +1225,12 @@ OpParameter *PopulateSpaceToBatchParameter(const mindspore::lite::PrimitiveC *pr
 }
 
 OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *resize_param = new (std::nothrow) ResizeParameter();
+  ResizeParameter *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
   if (resize_param == nullptr) {
-    MS_LOG(ERROR) << "new ResizeParameter failed.";
+    MS_LOG(ERROR) << "malloc ResizeParameter failed.";
     return nullptr;
   }
+  memset(resize_param, 0, sizeof(ResizeParameter));
   resize_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Resize *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   resize_param->method_ = static_cast<int>(param->GetMethod());
@@ -1183,22 +1242,26 @@ OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *batch_space_param = new (std::nothrow) BatchToSpaceParameter();
+  BatchToSpaceParameter *batch_space_param =
+      reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
   if (batch_space_param == nullptr) {
-    MS_LOG(ERROR) << "New BatchToSpaceParameter fail!";
+    MS_LOG(ERROR) << "malloc BatchToSpaceParameter failed.";
     return nullptr;
   }
+  memset(batch_space_param, 0, sizeof(BatchToSpaceParameter));
   batch_space_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::BatchToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto block_shape = param->GetBlockShape();
   if (block_shape.size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
     MS_LOG(ERROR) << "batch_to_space blockShape size should be " << BATCH_TO_SPACE_BLOCK_SHAPE_SIZE;
+    free(batch_space_param);
     return nullptr;
   }
 
   auto crops = param->GetCrops();
   if (crops.size() != BATCH_TO_SPACE_CROPS_SIZE) {
     MS_LOG(ERROR) << "batch_to_space crops size should be " << BATCH_TO_SPACE_CROPS_SIZE;
+    free(batch_space_param);
     return nullptr;
   }
 
@@ -1219,11 +1282,12 @@ OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive)
     MS_LOG(ERROR) << "crop_param offset size(" << param_offset.size() << ") should <= " << CROP_OFFSET_MAX_SIZE;
     return nullptr;
   }
-  auto *crop_param = new (std::nothrow) CropParameter();
+  CropParameter *crop_param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
   if (crop_param == nullptr) {
-    MS_LOG(ERROR) << "new CropParameter fail!";
+    MS_LOG(ERROR) << "malloc CropParameter failed.";
     return nullptr;
   }
+  memset(crop_param, 0, sizeof(CropParameter));
   crop_param->op_parameter_.type_ = primitive->Type();
   crop_param->axis_ = param->GetAxis();
   crop_param->offset_size_ = param_offset.size();
@@ -1234,15 +1298,16 @@ OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulateOneHotParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *one_hot_param = new (std::nothrow) OneHotParameter();
+  OneHotParameter *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
   if (one_hot_param == nullptr) {
-    MS_LOG(ERROR) << "new OneHotParameter fail!";
+    MS_LOG(ERROR) << "malloc OneHotParameter failed.";
     return nullptr;
   }
+  memset(one_hot_param, 0, sizeof(OneHotParameter));
   one_hot_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::OneHot *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   if (param == nullptr) {
-    delete (one_hot_param);
+    free(one_hot_param);
     MS_LOG(ERROR) << "get OneHot param nullptr.";
     return nullptr;
   }
@@ -1251,21 +1316,24 @@ OpParameter *PopulateOneHotParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 OpParameter *PopulateFlattenParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *flatten_param = new (std::nothrow) FlattenParameter();
+  FlattenParameter *flatten_param = reinterpret_cast<FlattenParameter *>(malloc(sizeof(FlattenParameter)));
   if (flatten_param == nullptr) {
-    MS_LOG(ERROR) << "new FlattenParameter fail!";
+    MS_LOG(ERROR) << "malloc FlattenParameter failed.";
     return nullptr;
   }
+  memset(flatten_param, 0, sizeof(FlattenParameter));
   flatten_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(flatten_param);
 }
 
 OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *parameter = new (std::nothrow) QuantDTypeCastParameter();
+  QuantDTypeCastParameter *parameter =
+      reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
   if (parameter == nullptr) {
-    MS_LOG(ERROR) << "new QuantDTypeCastParameter fail!";
+    MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
     return nullptr;
   }
+  memset(parameter, 0, sizeof(QuantDTypeCastParameter));
   parameter->op_parameter_.type_ = primitive->Type();
   auto quant_dtype_cast_param =
     reinterpret_cast<mindspore::lite::QuantDTypeCast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -1275,11 +1343,13 @@ OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *
 }
 
 OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *strided_slice_param = new (std::nothrow) StridedSliceParameter();
+  StridedSliceParameter *strided_slice_param =
+      reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
   if (strided_slice_param == nullptr) {
-    MS_LOG(ERROR) << "new StridedSliceParameter failed.";
+    MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
     return nullptr;
   }
+  memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
   strided_slice_param->op_parameter_.type_ = primitive->Type();
   auto n_dims = ((lite::StridedSlice *)primitive)->NDims();
   strided_slice_param->num_axes_ = n_dims;
@@ -1295,21 +1365,23 @@ OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *pr
 }
 
 OpParameter *PopulateAddNParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto addn_param = new (std::nothrow) OpParameter();
+  OpParameter *addn_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (addn_param == nullptr) {
-    MS_LOG(ERROR) << "new OpParameter fail!";
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
+  memset(addn_param, 0, sizeof(OpParameter));
   addn_param->type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(addn_param);
 }
 
 OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *prior_box_param = new (std::nothrow) PriorBoxParameter();
+  PriorBoxParameter *prior_box_param = reinterpret_cast<PriorBoxParameter *>(malloc(sizeof(PriorBoxParameter)));
   if (prior_box_param == nullptr) {
-    MS_LOG(ERROR) << "new PriorBoxParameter failed.";
+    MS_LOG(ERROR) << "malloc PriorBoxParameter failed.";
     return nullptr;
   }
+  memset(prior_box_param, 0, sizeof(PriorBoxParameter));
   prior_box_param->op_parameter_.type_ = primitive->Type();
   auto prior_box_attr =
     reinterpret_cast<mindspore::lite::PriorBox *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -1317,14 +1389,14 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   if (prior_box_attr->GetMinSizes().size() > PRIOR_BOX_MAX_NUM) {
     MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
                   << prior_box_attr->GetMinSizes();
-    delete (prior_box_param);
+    free(prior_box_param);
     return nullptr;
   }
   prior_box_param->min_sizes_size = prior_box_attr->GetMinSizes().size();
   if (prior_box_attr->GetMaxSizes().size() > PRIOR_BOX_MAX_NUM) {
     MS_LOG(ERROR) << "PriorBox max_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
                   << prior_box_attr->GetMaxSizes();
-    delete (prior_box_param);
+    free(prior_box_param);
     return nullptr;
   }
   prior_box_param->max_sizes_size = prior_box_attr->GetMaxSizes().size();
@@ -1336,7 +1408,7 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   if (prior_box_attr->GetAspectRatios().size() > PRIOR_BOX_MAX_NUM) {
     MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
                   << prior_box_attr->GetAspectRatios();
-    delete (prior_box_param);
+    free(prior_box_param);
     return nullptr;
   }
   prior_box_param->aspect_ratios_size = prior_box_attr->GetAspectRatios().size();
@@ -1345,7 +1417,7 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   if (prior_box_attr->GetVariances().size() != PRIOR_BOX_VAR_NUM) {
     MS_LOG(ERROR) << "PriorBox variances size should be " << PRIOR_BOX_VAR_NUM << ", got "
                   << prior_box_attr->GetVariances().size();
-    delete (prior_box_param);
+    free(prior_box_param);
     return nullptr;
   }
   (void)memcpy(prior_box_param->variances, prior_box_attr->GetVariances().data(), PRIOR_BOX_VAR_NUM * sizeof(float));
@@ -1360,15 +1432,16 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
 }
 
 OpParameter *PopulateLstmParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *lstm_param = new (std::nothrow) LstmParameter();
+  LstmParameter *lstm_param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
   if (lstm_param == nullptr) {
-    MS_LOG(ERROR) << "new LstmParameter fail!";
+    MS_LOG(ERROR) << "malloc LstmParameter failed.";
     return nullptr;
   }
+  memset(lstm_param, 0, sizeof(LstmParameter));
   lstm_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Lstm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   if (param == nullptr) {
-    delete (lstm_param);
+    free(lstm_param);
     MS_LOG(ERROR) << "get Lstm param nullptr.";
     return nullptr;
   }
@@ -1377,11 +1450,13 @@ OpParameter *PopulateLstmParameter(const mindspore::lite::PrimitiveC *primitive)
 }
 
 OpParameter *PopulateEmbeddingLookupParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *embedding_lookup_parameter = new (std::nothrow) EmbeddingLookupParameter();
+  EmbeddingLookupParameter *embedding_lookup_parameter =
+      reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
   if (embedding_lookup_parameter == nullptr) {
-    MS_LOG(ERROR) << "new EmbeddingLookupParameter failed";
+    MS_LOG(ERROR) << "malloc EmbeddingLookupParameter failed.";
     return nullptr;
   }
+  memset(embedding_lookup_parameter, 0, sizeof(EmbeddingLookupParameter));
   embedding_lookup_parameter->op_parameter_.type_ = primitive->Type();
   auto param =
     reinterpret_cast<mindspore::lite::EmbeddingLookup *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
@@ -1389,28 +1464,31 @@ OpParameter *PopulateEmbeddingLookupParameter(const mindspore::lite::PrimitiveC 
   if (embedding_lookup_parameter->max_norm_ < 0) {
     MS_LOG(ERROR) << "Embedding lookup max norm should be positive number, got "
                   << embedding_lookup_parameter->max_norm_;
+    free(embedding_lookup_parameter);
     return nullptr;
   }
   return reinterpret_cast<OpParameter *>(embedding_lookup_parameter);
 }
 
 OpParameter *PopulateBiasAddParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *arithmetic_param = new (std::nothrow) ArithmeticParameter();
+  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "new Bias Add Parameter failed";
+    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
+  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
   arithmetic_param->op_parameter_.type_ = primitive->Type();
 
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
 OpParameter *PopulateEluParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *elu_parameter = new (std::nothrow) EluParameter();
+  EluParameter *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
   if (elu_parameter == nullptr) {
-    MS_LOG(ERROR) << "new EluParameter failed";
+    MS_LOG(ERROR) << "malloc EluParameter failed.";
     return nullptr;
   }
+  memset(elu_parameter, 0, sizeof(EluParameter));
   elu_parameter->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Elu *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   elu_parameter->alpha_ = param->GetAlpha();
