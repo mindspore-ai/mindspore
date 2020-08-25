@@ -1694,6 +1694,12 @@ class ApplyMomentum(PrimitiveWithInfer):
     Refer to the paper `On the importance of initialization and momentum in deep
     learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
 
+    Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
+
     Args:
         use_locking (bool): Enable a lock to protect the update of variable and accumlation tensors. Default: False.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
@@ -3076,6 +3082,11 @@ class FusedSparseAdam(PrimitiveWithInfer):
     `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
     `epsilon`.
 
+    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
             If true, updates of the var, m, and v tensors will be protected by a lock.
@@ -3210,6 +3221,11 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
     `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
     `epsilon`.
 
+    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
             If true, updates of the var, m, and v tensors will be protected by a lock.
@@ -3325,6 +3341,11 @@ class FusedSparseFtrl(PrimitiveWithInfer):
     """
     Merge the duplicate value of the gradient and then update relevant entries according to the FTRL-proximal scheme.
 
+    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         lr (float): The learning rate value, must be positive.
         l1 (float): l1 regularization strength, must be greater than or equal to zero.
@@ -3422,6 +3443,11 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
             \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}}
     .. math::
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+
+    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
@@ -3669,6 +3695,12 @@ class ApplyAdaMax(PrimitiveWithInfer):
     :math:`beta_1^t` represent `beta1_power`, :math:`var` represents Variable to be updated,
     :math:`\epsilon` represents `epsilon`.
 
+    Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
         - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same shape and type as `var`.
@@ -3791,6 +3823,12 @@ class ApplyAdadelta(PrimitiveWithInfer):
     .. math::
             var -= lr * update
 
+    Inputs of `var`, `accum`, `accum_update` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
         - **accum** (Parameter) - Accum to be updated, has the same shape and type as `var`.
@@ -3888,6 +3926,12 @@ class ApplyAdagrad(PrimitiveWithInfer):
     .. math::
             var -= lr * grad * \frac{1}{\sqrt{accum}}
 
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent..
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
 
@@ -3962,6 +4006,12 @@ class ApplyAdagradV2(PrimitiveWithInfer):
             accum += grad * grad
     .. math::
             var -= lr * grad * \frac{1}{\sqrt{accum} + \epsilon}
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         epsilon (float): A small value added for numerical stability.
@@ -4039,6 +4089,12 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
             accum += grad * grad
     .. math::
             var -= lr * grad * (1 / sqrt(accum))
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         lr (float): Learning rate.
@@ -4118,6 +4174,12 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
             accum += grad * grad
     .. math::
             var -= lr * grad * \frac{1}{\sqrt{accum} + \epsilon}
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         lr (float): Learning rate.
@@ -4201,6 +4263,12 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
             \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}}
     .. math::
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
@@ -4298,6 +4366,12 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
     .. math::
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
 
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
 
@@ -4311,7 +4385,6 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
         - **l2** (Union[Number, Tensor]) - l2 regularization strength. should be a float number or
           a scalar tensor with float16 or float32 data type..
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-          The data type must be float16 or float32.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
 
     Outputs:
@@ -4389,6 +4462,12 @@ class ApplyAddSign(PrimitiveWithInfer):
 
     :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
     is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -4491,6 +4570,13 @@ class ApplyPowerSign(PrimitiveWithInfer):
     :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
     is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
 
+    All of inputs comply with the implicit type conversion rules to make the data types consistent.
+    If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
+    and the data type is consistent with the Tensor data type involved in the operation.
+    If inputs are tensors and have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
           If data type of `var` is float16, all inputs must have the same data type as `var`.
@@ -4587,6 +4673,11 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     .. math::
         var = var - \alpha * \delta
 
+    Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
         - **alpha** (Union[Number, Tensor]) - Scaling factor, should be a scalar. With float32 or float16 data type.
@@ -4648,6 +4739,11 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         \text{prox_v} = var - \alpha * \delta
     .. math::
         var = \frac{sign(\text{prox_v})}{1 + \alpha * l2} * \max(\left| \text{prox_v} \right| - alpha * l1, 0)
+
+    Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -4886,6 +4982,11 @@ class SparseApplyFtrl(PrimitiveWithInfer):
     """
     Update relevant entries according to the FTRL-proximal scheme.
 
+    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         lr (float): The learning rate value, must be positive.
         l1 (float): l1 regularization strength, must be greater than or equal to zero.
@@ -4972,6 +5073,11 @@ class SparseApplyFtrl(PrimitiveWithInfer):
 class SparseApplyFtrlV2(PrimitiveWithInfer):
     """
     Update relevant entries according to the FTRL-proximal scheme.
+
+    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         lr (float): The learning rate value, must be positive.
