@@ -163,7 +163,7 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   float relu_clip1 = 6.0;
   cl_int2 kernel_size = {parameter->kernel_h_, parameter->kernel_w_};
   cl_int2 stride = {parameter->stride_h_, parameter->stride_w_};
-  cl_int2 padding = {-parameter->pad_h_, -parameter->pad_w_};
+  cl_int2 padding = {-parameter->pad_u_, -parameter->pad_l_};
   cl_int2 dilation = {parameter->dilation_h_, parameter->dilation_w_};
   cl_int4 src_size = {in_tensors_[0]->Width(), in_tensors_[0]->Height(), (cl_int)CI4, in_tensors_[0]->Batch()};
   cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,

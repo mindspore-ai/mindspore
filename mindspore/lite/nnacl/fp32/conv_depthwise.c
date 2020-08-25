@@ -38,13 +38,15 @@ void ConvDw(float *output_data, const float *input_data, const float *weight_dat
   int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
   int h_start = h_step * task_id;
   int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   for (int b = 0; b < conv_param->output_batch_; b++) {
     const float *src = input_data + b * conv_param->input_h_ * conv_param->input_w_ * conv_param->input_channel_;
     float *dst = output_data + b * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
     for (int oh = h_start; oh < h_end; oh++) {
       float *dst_data = dst + oh * conv_param->output_w_ * conv_param->output_channel_;
 
-      int ih_origin = oh * conv_param->stride_h_ - conv_param->pad_h_;
+      int ih_origin = oh * conv_param->stride_h_ - conv_param->pad_u_;
       int start_kh = MSMAX(0, UP_DIV(-ih_origin, conv_param->dilation_h_));
       int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih_origin, conv_param->dilation_h_));
 
@@ -60,13 +62,13 @@ void ConvDw(float *output_data, const float *input_data, const float *weight_dat
         int in_sw_step = conv_param->stride_w_ * conv_param->input_channel_;
         for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
           int out_w_start = MSMAX(
-            0, (conv_param->pad_w_ - conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) / conv_param->stride_w_);
-          int out_w_end = MSMIN(conv_param->output_w_, (conv_param->input_w_ + conv_param->pad_w_ -
+            0, (conv_param->pad_l_ - conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) / conv_param->stride_w_);
+          int out_w_end = MSMIN(conv_param->output_w_, (conv_param->input_w_ + conv_param->pad_l_ -
                                                         conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) /
                                                          conv_param->stride_w_);
 
           float *dst_w = dst_data + out_w_start * conv_param->output_channel_;
-          int iw_origin = (out_w_start * conv_param->stride_w_) - conv_param->pad_w_ + conv_param->dilation_w_ * kw;
+          int iw_origin = (out_w_start * conv_param->stride_w_) - conv_param->pad_l_ + conv_param->dilation_w_ * kw;
 
           const float *src_kw = src_kh + iw_origin * conv_param->input_channel_;
           int num_pixels = out_w_end - out_w_start;
@@ -75,10 +77,10 @@ void ConvDw(float *output_data, const float *input_data, const float *weight_dat
           weight_kh += conv_param->output_channel_;
         }
       }
-      if (conv_param->is_relu_) {
+      if (relu) {
         ReluFp32(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
       }
-      if (conv_param->is_relu6_) {
+      if (relu6) {
         Relu6Fp32(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
       }
     }
@@ -91,16 +93,16 @@ void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_par
   int top = 0;
   int bottom = conv_param->output_h_;
 
-  for (; left * conv_param->stride_w_ < conv_param->pad_w_; left++) {
+  for (; left * conv_param->stride_w_ < conv_param->pad_l_; left++) {
   }
-  for (; (right - 1) * conv_param->stride_w_ - conv_param->pad_w_ + conv_param->kernel_w_ * conv_param->dilation_w_ >
+  for (; (right - 1) * conv_param->stride_w_ - conv_param->pad_l_ + conv_param->kernel_w_ * conv_param->dilation_w_ >
            conv_param->input_w_ &&
          right > left;
        right--) {
   }
-  for (; top * conv_param->stride_h_ < conv_param->pad_h_; top++) {
+  for (; top * conv_param->stride_h_ < conv_param->pad_u_; top++) {
   }
-  for (; (bottom - 1) * conv_param->stride_h_ - conv_param->pad_h_ + conv_param->kernel_h_ * conv_param->dilation_h_ >
+  for (; (bottom - 1) * conv_param->stride_h_ - conv_param->pad_u_ + conv_param->kernel_h_ * conv_param->dilation_h_ >
            conv_param->input_h_ &&
          bottom > top;
        bottom--) {
@@ -181,16 +183,18 @@ void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, con
 
 void DepthwiseBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom,
                      int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   float *dst_h = dst + top * sliding->out_h_step_;
   for (int oh = top; oh < bottom; oh++) {
-    int ih = oh * conv_param->stride_h_ - conv_param->pad_h_;
+    int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
     int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
     int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
     const float *src_h = src + ih * sliding->in_h_step_;
 
     float *dst_kernel = dst_h + left * sliding->block_channel_;
     for (int ow = left; ow < right; ow++) {
-      int iw = ow * conv_param->stride_w_ - conv_param->pad_w_;
+      int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
       int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
       int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
       const float *src_w = src_h + iw * sliding->block_channel_;
@@ -201,11 +205,10 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
 #ifdef ENABLE_ARM64
       ConvDwFp32Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
                        sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
-                       conv_param->kernel_w_ * C4NUM * sizeof(float), conv_param->is_relu_, conv_param->is_relu6_);
+                       conv_param->kernel_w_ * C4NUM * sizeof(float), relu, relu6);
 #else
       DepthwiseBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
-                           sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM,
-                           conv_param->is_relu_, conv_param->is_relu6_);
+                           sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM, relu, relu6);
 #endif
       dst_kernel += sliding->block_channel_;
     }  // width loop
@@ -259,6 +262,8 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
 // conv depthwise fp32: sliding window
 void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   const float *src = input_data;
   float *dst = output_data;
   for (int b = 0; b < conv_param->output_batch_; b++) {
@@ -277,8 +282,8 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
                       conv_param->output_w_, conv_param, sliding);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
-        int in_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_h_;
-        int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_w_;
+        int in_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
+        int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const float *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         float *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
 #ifdef ENABLE_ARM64
@@ -286,12 +291,12 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
                          conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(float),
                          sliding->block_channel_ * sizeof(float), sliding->in_sh_step_ * sizeof(float),
                          sliding->in_sw_step_ * sizeof(float), sliding->in_kh_step_ * sizeof(float),
-                         sliding->in_kw_step_ * sizeof(float), conv_param->is_relu_, conv_param->is_relu6_);
+                         sliding->in_kw_step_ * sizeof(float), relu, relu6);
 #else
         DepthwiseCenter(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                         conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_, sliding->block_channel_,
-                        sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_,
-                        conv_param->is_relu_, conv_param->is_relu6_);
+                        sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_, relu,
+                        relu6);
 #endif
       }
     }  // output C4 loop
@@ -454,11 +459,11 @@ void ConvDw3x3Fp32InputTrans(const float *input_data, float *trans_input, float 
   memset(trans_input, 0, out_h_block * out_h_block * 16 * C4NUM * sizeof(float));
 
   for (int oh = 0; oh < out_h_block; oh++) {
-    int ih = oh * 2 - conv_param->pad_h_;
+    int ih = oh * 2 - conv_param->pad_u_;
     int real_h_start = ih > 0 ? 0 : -ih;
     int real_h_end = (ih + input_unit) < conv_param->input_h_ ? input_unit : (conv_param->input_h_ - ih);
     for (int ow = 0; ow < out_w_block; ow++) {
-      int iw = ow * 2 - conv_param->pad_w_;
+      int iw = ow * 2 - conv_param->pad_l_;
       int real_w_start = iw > 0 ? 0 : -iw;
       int real_w_end = (iw + input_unit) < conv_param->input_w_ ? input_unit : (conv_param->input_w_ - iw);
 
@@ -642,6 +647,8 @@ void ConvDw3x3Fp32OutputUnit(float *src_buf, float *dst_output, const float *bia
 
 void ConvDw3x3Fp32OutputTrans(float *trans_buffer, float *output_data, const float *bias, int out_h_block,
                               int out_w_block, const ConvParameter *conv_param) {
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
   bool h_in_range = true;
   for (int oh = 0; oh < out_h_block; oh++) {
@@ -661,8 +668,8 @@ void ConvDw3x3Fp32OutputTrans(float *trans_buffer, float *output_data, const flo
       float *buf_ow = buf_oh + ow * 16 * C4NUM;
       float *output_ow = output_oh + real_ow * oc4 * C4NUM;
 
-      ConvDw3x3Fp32OutputUnit(buf_ow, output_ow, bias, oc4 * C4NUM, conv_param->output_w_, h_in_range, w_in_range,
-                              conv_param->is_relu_, conv_param->is_relu6_);
+      ConvDw3x3Fp32OutputUnit(buf_ow, output_ow, bias, oc4 * C4NUM, conv_param->output_w_, h_in_range, w_in_range, relu,
+                              relu6);
     }
   }
 }
@@ -727,14 +734,14 @@ void DeconvDepthwiseBorder(float *dst, const float *src, const float *weight, in
                            const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
   const float *src_h = src + top * sliding->out_h_step_;
   for (int ih = top; ih < bottom; ih++) {
-    int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
+    int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
     int start_kh = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
     int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
     float *dst_h = dst + oh * sliding->in_h_step_;
 
     const float *src_kernel = src_h + left * sliding->block_channel_;
     for (int iw = left; iw < right; iw++) {
-      int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
+      int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
       int start_kw = MSMAX(0, UP_DIV(-ow, conv_param->dilation_w_));
       int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->output_w_ - ow, conv_param->dilation_w_));
       float *dst_w = dst_h + ow * sliding->block_channel_;
@@ -790,12 +797,14 @@ void DeconvDepthwiseCenter(float *dst, const float *src, const float *weight, in
 #endif
 
 void DeconvDepthwisePostFunc(float *dst, const float *bias, int block_channel, const ConvParameter *conv_param) {
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
   float *dst_k = dst;
   for (int k = 0; k < conv_param->output_h_ * conv_param->output_w_; k++) {
     for (int c = 0; c < C4NUM; c++) {
       dst_k[c] += bias[c];
-      dst_k[c] = (conv_param->is_relu_) ? (MSMAX(0, dst_k[c])) : (dst_k[c]);
-      dst_k[c] = (conv_param->is_relu6_) ? (MSMIN(6, MSMAX(0, dst_k[c]))) : (dst_k[c]);
+      dst_k[c] = (relu) ? (MSMAX(0, dst_k[c])) : (dst_k[c]);
+      dst_k[c] = (relu6) ? (MSMIN(6, MSMAX(0, dst_k[c]))) : (dst_k[c]);
     }
     dst_k += block_channel;
   }
@@ -821,8 +830,8 @@ void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *we
                             conv_param->input_w_, conv_param, sliding);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
-        int oh_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_h_;
-        int oh_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_w_;
+        int oh_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
+        int oh_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         float *out_t = dst_data + oh_h_start * sliding->in_h_step_ + oh_w_start * sliding->block_channel_;
         const float *in_t = src_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
 

@@ -376,10 +376,18 @@ void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output
     *output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(stride_h));
     auto pad_h_all = ((*output_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - input_h);
     auto pad_w_all = ((*output_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - input_w);
-    pad_u_ = pad_h_all / 2;
-    pad_d_ = pad_h_all - pad_u_;
-    pad_l_ = pad_w_all / 2;
-    pad_r_ = pad_w_all - pad_l_;
+    if (pad_h_all < 0) {
+      pad_u_ = pad_d_ = 0;
+    } else {
+      pad_u_ = pad_h_all / 2;
+      pad_d_ = pad_h_all - pad_u_;
+    }
+    if (pad_w_all < 0) {
+      pad_l_ = pad_r_ = 0;
+    } else {
+      pad_l_ = pad_w_all / 2;
+      pad_r_ = pad_w_all - pad_l_;
+    }
   } else {
     *output_w = std::ceil((static_cast<float>(input_w) + pad_l_ + pad_r_ -
                            (static_cast<float>(kernel_w) - 1) * static_cast<float>(dilate_w)) /

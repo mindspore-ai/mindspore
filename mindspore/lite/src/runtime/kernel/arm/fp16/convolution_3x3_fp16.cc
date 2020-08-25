@@ -237,8 +237,8 @@ int Convolution3x3FP16CPUKernel::Run() {
   }
 
   // get real output
-  bool relu = conv_param_->is_relu_;
-  bool relu6 = conv_param_->is_relu6_;
+  bool relu = conv_param_->act_type_ == ActType_Relu;
+  bool relu6 = conv_param_->act_type_ == ActType_Relu6;
   if (relu) {
     UnPack3x3ReluOutputFp16(tmp_out_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
                             conv_param_->output_w_, conv_param_->output_channel_);

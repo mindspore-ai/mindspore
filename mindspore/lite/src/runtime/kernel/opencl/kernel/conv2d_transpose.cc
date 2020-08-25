@@ -36,7 +36,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "only support kh=kw=2 and stride_h=stride_w=2.";
     return RET_ERROR;
   }
-  if (param->pad_h_ != 0 || param->pad_w_ != 0) {
+  if (param->pad_u_ != 0 || param->pad_l_ != 0) {
     MS_LOG(ERROR) << "only support pad =0.";
     return RET_ERROR;
   }
@@ -170,7 +170,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   int co = out_tensors_[0]->Channel();
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
-  int pad = param->pad_h_;
+  int pad = param->pad_u_;
   int oh = out_tensors_[0]->Height();
   int ow = out_tensors_[0]->Width();
   int h = in_tensors_[0]->Height();

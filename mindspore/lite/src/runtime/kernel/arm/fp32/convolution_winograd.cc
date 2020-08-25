@@ -76,7 +76,7 @@ int WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int 
     int out_c_block = i / oc_block;
     int out_c_res = i % oc_block;
     int input_oz_offset = i * kernel_unit * kernel_unit * channel_in;
-    int output_oz_offset = out_c_block * strides[1] * input_unit * input_unit + out_c_res;
+    int output_oz_offset = out_c_block * strides[1] + out_c_res;
     for (int j = 0; j < channel_in; j++) {
       int ic4_block = j / C4NUM;
       int ic4_res = j % C4NUM;
@@ -93,7 +93,7 @@ int WinogradFilterTransform(const float *weight_data, Matrix *trans_weight, int 
       MatrixMultiply(tmp_data, matrix_gt_data, trans_out_data, input_unit, kernel_unit, input_unit, row);
 
       for (int z = 0; z < input_unit_square; z++) {
-        int output_xy_offset = output_iz_offset + z * strides[1];
+        int output_xy_offset = output_iz_offset + z * strides[0];
         *(trans_weight_data + output_xy_offset) = trans_out_data[z];
       }
     }
@@ -151,7 +151,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 
 int ConvolutionWinogradCPUKernel::MallocFilterMatrix(int oc_block, int oc_block_num) {
   int channel_in = conv_param_->input_channel_;
-  int ic4 = UP_DIV(channel_in, BLOCK);
+  int ic4 = UP_DIV(channel_in, C4NUM);
 
   // set data
   auto trans_matrix_data_size = input_unit_ * input_unit_ * ic4 * C4NUM * oc_block_num * oc_block * sizeof(float);
@@ -196,10 +196,12 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   int output_h = conv_param_->output_h_;
   int output_w = conv_param_->output_w_;
   int oc4 = UP_DIV(channel_out, C4NUM);
+  int oc8 = UP_DIV(channel_out, C8NUM);
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
 
   gemm_out_ = reinterpret_cast<float *>(
-    ctx_->allocator->Malloc(thread_count_ * TILE_NUM * input_unit_ * input_unit_ * oc4 * C4NUM * sizeof(float)));
+    ctx_->allocator->Malloc(thread_count_ * C12NUM * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float)));
   if (gemm_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc gemm_out_ failed.";
     return RET_ERROR;
@@ -222,10 +224,18 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
+  col_buffer_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(thread_count_ * C12NUM * ic4 * C4NUM * sizeof(float)));
+  if (col_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc col_buffer_ failed.";
+    return RET_ERROR;
+  }
+
   tmp_buffer_address_list_[0] = trans_input_;
   tmp_buffer_address_list_[1] = gemm_out_;
   tmp_buffer_address_list_[2] = tmp_out_data_;
   tmp_buffer_address_list_[3] = tmp_data_;
+  tmp_buffer_address_list_[4] = col_buffer_;
   return RET_OK;
 }
 
@@ -306,7 +316,7 @@ int ConvolutionWinogradCPUKernel::ReSize() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  size_t tile_buffer_size = thread_count_ * TILE_NUM * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
+  size_t tile_buffer_size = thread_count_ * C12NUM * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
   trans_input_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
   if (trans_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc trans_input_ failed.";
@@ -370,10 +380,10 @@ int ConvolutionWinogradCPUKernel::Run() {
   // get real output
   auto out_tensor = out_tensors_.front();
   auto out_data = reinterpret_cast<float *>(out_tensor->Data());
-  if (conv_param_->is_relu_) {
+  if (conv_param_->act_type_ == ActType_Relu) {
     UnPackWinogradReluOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
                              conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else if (conv_param_->is_relu6_) {
+  } else if (conv_param_->act_type_ == ActType_Relu6) {
     UnPackWinogradRelu6Output(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
                               conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   } else {

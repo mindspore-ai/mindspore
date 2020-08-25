@@ -382,9 +382,9 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolution() {
     "    }\n\n";
   code += "    FLT4 out0_c4_bias = out0_c4 + bias[co_slice];\n";
 
-  if (param->is_relu_) {
+  if (param->act_type_ == ActType_Relu) {
     code += "    out0_c4_bias = max(out0_c4_bias, (FLT4)(0.0f));\n";
-  } else if (param->is_relu6_) {
+  } else if (param->act_type_ == ActType_Relu6) {
     code += "    out0_c4_bias = clamp(out0_c4_bias, (FLT4)(0.0f), (FLT4)(6.0f));\n";
   }
 
@@ -609,9 +609,9 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
     "        acc += bias[slice];\n";
 
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  if (param->is_relu_) {
+  if (param->act_type_ == ActType_Relu) {
     code += "    acc = max(acc, (float4)(0.0f));\n";
-  } else if (param->is_relu6_) {
+  } else if (param->act_type_ == ActType_Relu6) {
     code += "    acc = clamp(acc, (float4)(0.0f), (float4)(6.0f));\n";
   }
 

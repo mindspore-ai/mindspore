@@ -391,10 +391,10 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   }
 
   // get real output
-  if (conv_param_->is_relu_) {
+  if (conv_param_->act_type_ == ActType_Relu) {
     UnPackWinogradReluOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
                                  conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else if (conv_param_->is_relu6_) {
+  } else if (conv_param_->act_type_ == ActType_Relu6) {
     UnPackWinogradRelu6OutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
                                   conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
   } else {

@@ -376,8 +376,6 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
   conv_param->pad_d_ = conv2d_lite_primitive->PadDown();
   conv_param->pad_l_ = conv2d_lite_primitive->PadLeft();
   conv_param->pad_r_ = conv2d_lite_primitive->PadRight();
-  conv_param->pad_h_ = conv2d_lite_primitive->PadUp();
-  conv_param->pad_w_ = conv2d_lite_primitive->PadLeft();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
   conv_param->input_channel_ = conv_primitive->GetChannelIn();
@@ -386,16 +384,13 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:
-      conv_param->is_relu_ = true;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_Relu;
       break;
     case schema::ActivationType_RELU6:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = true;
+      conv_param->act_type_ = ActType_Relu6;
       break;
     default:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_No;
       break;
   }
   return reinterpret_cast<OpParameter *>(conv_param);
@@ -422,23 +417,18 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->pad_d_ = convdw_lite_primitive->PadDown();
   conv_param->pad_l_ = convdw_lite_primitive->PadLeft();
   conv_param->pad_r_ = convdw_lite_primitive->PadRight();
-  conv_param->pad_h_ = convdw_lite_primitive->PadUp();
-  conv_param->pad_w_ = convdw_lite_primitive->PadLeft();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:
-      conv_param->is_relu_ = true;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_Relu;
       break;
     case schema::ActivationType_RELU6:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = true;
+      conv_param->act_type_ = ActType_Relu6;
       break;
     default:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_No;
       break;
   }
   return reinterpret_cast<OpParameter *>(conv_param);
@@ -464,23 +454,18 @@ OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primit
   conv_param->pad_d_ = deconvdw_lite_primitive->PadDown();
   conv_param->pad_l_ = deconvdw_lite_primitive->PadLeft();
   conv_param->pad_r_ = deconvdw_lite_primitive->PadRight();
-  conv_param->pad_h_ = deconvdw_lite_primitive->PadUp();
-  conv_param->pad_w_ = deconvdw_lite_primitive->PadLeft();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:
-      conv_param->is_relu_ = true;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_Relu;
       break;
     case schema::ActivationType_RELU6:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = true;
+      conv_param->act_type_ = ActType_Relu6;
       break;
     default:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_No;
       break;
   }
   return reinterpret_cast<OpParameter *>(conv_param);
@@ -506,23 +491,18 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->pad_d_ = deconv_lite_primitive->PadDown();
   conv_param->pad_l_ = deconv_lite_primitive->PadLeft();
   conv_param->pad_r_ = deconv_lite_primitive->PadRight();
-  conv_param->pad_h_ = deconv_lite_primitive->PadH();
-  conv_param->pad_w_ = deconv_lite_primitive->PadW();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:
-      conv_param->is_relu_ = true;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_Relu;
       break;
     case schema::ActivationType_RELU6:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = true;
+      conv_param->act_type_ = ActType_Relu6;
       break;
     default:
-      conv_param->is_relu_ = false;
-      conv_param->is_relu6_ = false;
+      conv_param->act_type_ = ActType_No;
       break;
   }
   return reinterpret_cast<OpParameter *>(conv_param);

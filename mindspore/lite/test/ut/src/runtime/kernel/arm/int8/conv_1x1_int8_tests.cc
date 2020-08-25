@@ -34,7 +34,7 @@ TEST_F(TestConv1x1Int8, Input1x1PrePack1) {
   conv_param->input_h_ = conv_param->input_w_ = 3;
   conv_param->output_h_ = conv_param->output_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
   int8_t in[] = {4,  13,  -3, 16, 19, 8,  19, -6, -2, -9, 9,  18, 23, 8,  47, -14, 15, 4,
                  -0, 37,  -0, 6,  0,  -1, 37, 13, 11, 1,  -1, 41, 9,  14, 3,  0,   8,  9,
                  14, -14, -8, -8, -8, 7,  19, 17, 13, 3,  9,  18, -1, -0, 18, 0,   4,  -2};
@@ -61,7 +61,7 @@ TEST_F(TestConv1x1Int8, Input1x1PrePack2) {
   conv_param->output_h_ = 4;
   conv_param->output_w_ = 5;
   conv_param->stride_h_ = conv_param->stride_w_ = 4;
-  conv_param->pad_h_ = conv_param->pad_w_ = 2;
+  conv_param->pad_u_ = conv_param->pad_l_ = 2;
 
   int8_t out[20] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(int8_t));
@@ -111,8 +111,8 @@ int Conv1x1Int8TestInit1_perchannel(std::vector<lite::tensor::Tensor *> *inputs_
   conv_param->kernel_h_ = conv_param->kernel_w_ = 1;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
-  conv_param->is_relu_ = conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->act_type_ = ActType_No;
   return out_t->ElementsNum();
 }
 
@@ -178,8 +178,8 @@ int Conv1x1Int8TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vect
   conv_param->kernel_h_ = conv_param->kernel_w_ = 1;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
-  conv_param->is_relu_ = conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->act_type_ = ActType_No;
   return out_t->ElementsNum();
 }
 
@@ -253,8 +253,8 @@ int Conv1x1Int8TestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vect
   conv_param->kernel_h_ = conv_param->kernel_w_ = 1;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
-  conv_param->is_relu_ = conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->act_type_ = ActType_No;
   return out_t->ElementsNum();
 }
 

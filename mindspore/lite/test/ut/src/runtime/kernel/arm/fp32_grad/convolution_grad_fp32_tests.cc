@@ -52,12 +52,11 @@ void InitConvParamGroup1FP32(ConvParameter *conv_param) {
   conv_param->dilation_h_ = 1;
   conv_param->dilation_w_ = 1;
 
-  conv_param->pad_h_ = 1;
-  conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = 1;
+  conv_param->pad_l_ = 1;
 
   conv_param->group_ = 1;
-  conv_param->is_relu_ = false;
-  conv_param->is_relu6_ = false;
+  conv_param->act_type_ = ActType_No;
   conv_param->thread_num_ = 1;
 }
 

@@ -146,7 +146,7 @@ int Convolution1x1Int8CPUKernel::Init() {
 }
 
 int Convolution1x1Int8CPUKernel::InitParam() {
-  pre_trans_input_ = (conv_param_->pad_h_ != 0 || conv_param_->pad_w_ != 0 || conv_param_->stride_h_ != 1 ||
+  pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
 
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;

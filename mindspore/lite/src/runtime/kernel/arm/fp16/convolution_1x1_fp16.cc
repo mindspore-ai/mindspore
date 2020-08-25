@@ -38,8 +38,7 @@ int Convolution1x1FP16CPUKernel::InitMatmulParam() {
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->row_16_ = UP_ROUND(matmul_param_->row_, C16NUM);
   matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
-  matmul_param_->act_type_ = (conv_param_->is_relu6_) ? ActType_Relu6 : ActType_No;
-  matmul_param_->act_type_ = (conv_param_->is_relu_) ? ActType_Relu : matmul_param_->act_type_;
+  matmul_param_->act_type_ = conv_param_->act_type_;
   return RET_OK;
 }
 
@@ -57,7 +56,7 @@ Convolution1x1FP16CPUKernel::~Convolution1x1FP16CPUKernel() {
 }
 
 int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
-  pre_trans_input_ = (conv_param_->pad_h_ != 0 || conv_param_->pad_w_ != 0 || conv_param_->stride_h_ != 1 ||
+  pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));

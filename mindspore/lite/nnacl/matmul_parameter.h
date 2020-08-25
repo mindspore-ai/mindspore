@@ -29,9 +29,7 @@ typedef void (*MATMUL_OPT_R_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst,
 
 typedef void (*MAT_TRANS_FUNC)(void *dst, void *a, int row, int col);
 
-typedef enum ActType { ActType_No, ActType_Relu, ActType_Relu6 } ActType;
-
-typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_C4 = 2 } OutType;
+typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2 } OutType;
 
 typedef struct MatMulParameter {
   OpParameter op_parameter_;

@@ -232,34 +232,31 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int dilation_h = conv_param->dilation_h_;
-  int dilation_w = conv_param->dilation_w_;
   conv_param->input_h_ = inputs.front()->Height();
   conv_param->input_w_ = inputs.front()->Width();
+  conv_param->input_channel_ = inputs.front()->Channel();
   conv_param->output_h_ = outputs.front()->Height();
   conv_param->output_w_ = outputs.front()->Width();
+  conv_param->output_channel_ = outputs.front()->Channel();
+  conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
   bool use_winograd = false;
-  bool use_sw = false;
   int out_unit;
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;
   if (primitive != nullptr && primitive->GetInferFlag()) {
     CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
-    use_sw = CheckIfUseSlideWindow(conv_param);
   }
 
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   } else if (use_winograd) {
-    kernel =
-      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
-  } else if (use_sw) {
-    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    if (kernel_h == 3 && kernel_w == 3 && out_unit == 2) {
+      kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    } else {
+      kernel = new (std::nothrow)
+        kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
+    }
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   }
