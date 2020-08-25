@@ -117,6 +117,75 @@ static bool IsCContiguous(const py::array &input) {
   return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
 }
 
+// TensorDataNumpy implements TensorData using numpy array.
+class TensorDataNumpy : public TensorData {
+ public:
+  explicit TensorDataNumpy(const py::array &input) : data_(input) {}
+
+  /// Total number of elements.
+  ssize_t size() const override { return data_.size(); }
+
+  /// Byte size of a single element.
+  ssize_t itemsize() const override { return data_.itemsize(); }
+
+  /// Total number of bytes.
+  ssize_t nbytes() const override { return data_.nbytes(); }
+
+  /// Number of dimensions.
+  ssize_t ndim() const override { return data_.ndim(); }
+
+  /// Data pointer.
+  void *data() override {
+    EnsureDataContiguous();
+    return data_.request(true).ptr;
+  }
+
+  const void *const_data() const override {
+    EnsureDataContiguous();
+    return data_.request(false).ptr;
+  }
+
+  /// Is data equals.
+  bool equals(const TensorData &other) const override {
+    auto ptr = dynamic_cast<const TensorDataNumpy *>(&other);
+    if (ptr == nullptr) {
+      // Not same type, compare data byte by byte.
+      return TensorData::equals(other);
+    }
+    return NumpyEquals(*ptr);
+  }
+
+  bool NumpyEquals(const TensorDataNumpy &other) const {
+    auto all_data_equal = [&other, this]() -> bool {
+      auto np = py::module::import("numpy");
+      auto equal = np.attr("equal")(data_, other.data_);
+      auto all_equal = np.attr("all")(equal);
+      return all_equal.cast<bool>();
+    };
+    return this == &other || data_.is(other.data_) || all_data_equal();
+  }
+
+  /// To string.
+  std::string ToString(const TypeId type, const std::vector<int> &shape) const override {
+    return std::string(py::str(data_));
+  }
+
+  /// Data.
+  py::array data() const { return data_; }
+
+ private:
+  void EnsureDataContiguous() const {
+    if (!IsCContiguous(data_)) {
+      // Call numpy.ascontiguousarray() to convert data to C contiguous if it is not.
+      auto np = py::module::import("numpy");
+      auto convert = np.attr("ascontiguousarray");
+      data_ = convert(data_);
+    }
+  }
+
+  mutable py::array data_;
+};
+
 TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) {
   // Get input buffer info.
   py::buffer_info buf = input.request();
@@ -129,6 +198,13 @@ TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) 
   // Use buf type as data type if type_ptr not set.
   if (data_type == TypeId::kTypeUnknown) {
     data_type = buf_type;
+  }
+  // Get tensor shape.
+  std::vector<int> shape(buf.shape.begin(), buf.shape.end());
+  if (data_type == buf_type) {
+    // Make a tensor with shared data with numpy if no type convertion needed.
+    auto tensor_data = std::make_shared<TensorDataNumpy>(input);
+    return std::make_shared<Tensor>(data_type, shape, tensor_data);
   }
   // Convert input array to C contiguous if need.
   std::unique_ptr<char[]> tmp_buf;
@@ -144,8 +220,6 @@ TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) 
     PyBuffer_Release(&pybuf);
     buf.ptr = tmp_buf.get();
   }
-  // Get tensor shape.
-  std::vector<int> shape(buf.shape.begin(), buf.shape.end());
   if (data_type == buf_type) {
     // Use memory copy if input data type is the same as the required type.
     return std::make_shared<Tensor>(data_type, shape, buf.ptr, buf.size * buf.itemsize);
@@ -186,12 +260,16 @@ py::tuple TensorPy::GetPyTupleShape(const Tensor &tensor) {
 
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   tensor.data_sync();
-  auto info = GetPyBufferInfo(tensor);
-  py::object self = py::cast(&tensor);
-  return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
+  return AsNumpy(tensor);
 }
 
 py::array TensorPy::AsNumpy(const Tensor &tensor) {
+  auto data_numpy = dynamic_cast<const TensorDataNumpy *>(&tensor.data());
+  if (data_numpy) {
+    // Return internal numpy array if tensor data is implemented base on it.
+    return data_numpy->data();
+  }
+  // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);
   py::object self = py::cast(&tensor);
   return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
