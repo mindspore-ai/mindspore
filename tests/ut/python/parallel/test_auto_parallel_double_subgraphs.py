@@ -23,7 +23,7 @@ from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.parallel import _cost_model_context as cost_model_context
+from mindspore.parallel import set_multi_subgraphs
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
 
@@ -103,7 +103,7 @@ class TrainStepWarp(nn.Cell):
 
 
 def test_double_subgraphs():
-    cost_model_context.set_cost_model_context(multi_subgraphs=True)
+    set_multi_subgraphs()
     context.set_context(save_graphs=True)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

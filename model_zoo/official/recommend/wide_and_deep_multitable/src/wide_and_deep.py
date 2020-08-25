@@ -16,7 +16,7 @@
 import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore import nn
+from mindspore import nn, context
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
@@ -24,7 +24,6 @@ from mindspore.ops import operations as P
 from mindspore.nn import Dropout, Flatten
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.common.initializer import Uniform, initializer
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
@@ -552,13 +551,13 @@ class TrainStepWrap(nn.Cell):
         self.reducer_flag = False
         self.grad_reducer_w = None
         self.grad_reducer_d = None
-        parallel_mode = _get_parallel_mode()
+        parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if parallel_mode in (ParallelMode.DATA_PARALLEL,
                              ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_mirror_mean()
-            degree = _get_device_num()
+            mean = context.get_auto_parallel_context("mirror_mean")
+            degree = context.get_auto_parallel_context("device_num")
             self.grad_reducer_w = DistributedGradReducer(
                 self.optimizer_w.parameters, mean, degree)
             self.grad_reducer_d = DistributedGradReducer(

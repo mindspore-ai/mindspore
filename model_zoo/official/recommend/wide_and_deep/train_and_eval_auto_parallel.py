@@ -22,7 +22,7 @@ from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
-from mindspore.parallel import _cost_model_context as cost_model_context
+from mindspore.parallel import set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
-    cost_model_context.set_cost_model_context(multi_subgraphs=True)
+    set_multi_subgraphs()
     if wide_deep_config.device_target == "Ascend":
         init("hccl")
     elif wide_deep_config.device_target == "GPU":
