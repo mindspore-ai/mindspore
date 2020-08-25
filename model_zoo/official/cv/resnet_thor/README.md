@@ -79,27 +79,25 @@ sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ### Script Code Structure
 
 ```shell
-├── model_zoo
-	├──README.md                                      # descriptions about all the models
-	├── resnet_thor
-		├── README.md                                 # descriptions about resnet_thor
-		├── scripts                     
-		│	├── run_distribute_train.sh               # launch distributed training for Ascend
-		│	└── run_eval.sh                           # launch infering for Ascend
-		│	├── run_distribute_train_gpu.sh           # launch distributed training for GPU
-		│	└── run_eval_gpu.sh                       # launch infering for GPU
-		├──src                                  
-		│	├── crossentropy.py                       # CrossEntropy loss function
-		│	├── config.py                             # parameter configuration
-		│	├── dataset_helper.py                     # dataset help for minddata dataset
-		│	├── grad_reducer_thor.py                  # grad reducer for thor
-		│	├── model_thor.py                         # model for train
-		│	├── resnet_thor.py                        # resnet50_thor backone
-		│	├── thor.py                               # thor optimizer
-		│	├── thor_layer.py                         # thor layer
-		│	└── dataset.py                            # data preprocessing    
-		├── eval.py                                   # infer script
-    	└── train.py                                  # train script
+└── resnet_thor
+    ├── README.md                                 # descriptions about resnet_thor
+    ├── scripts                     
+    │	├── run_distribute_train.sh               # launch distributed training for Ascend
+    │	└── run_eval.sh                           # launch inference for Ascend
+    │	├── run_distribute_train_gpu.sh           # launch distributed training for GPU
+    │	└── run_eval_gpu.sh                       # launch inference for GPU
+    ├──src                                  
+    │	├── crossentropy.py                       # CrossEntropy loss function
+    │	├── config.py                             # parameter configuration
+    │	├── dataset_helper.py                     # dataset help for minddata dataset
+    │	├── grad_reducer_thor.py                  # grad reducer for thor
+    │	├── model_thor.py                         # model for train
+    │	├── resnet_thor.py                        # resnet50_thor backone
+    │	├── thor.py                               # thor optimizer
+    │	├── thor_layer.py                         # thor layer
+    │	└── dataset.py                            # data preprocessing    
+    ├── eval.py                                   # infer script
+    └── train.py                                  # train script
 ```
 
 ### Script Parameters
