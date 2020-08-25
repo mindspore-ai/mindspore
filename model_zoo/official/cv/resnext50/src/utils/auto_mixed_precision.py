@@ -44,9 +44,6 @@ def auto_mixed_precision(network):
         elif name == 'fc':
             network.insert_child_to_cell(name, OutputTo(subcell, mstype.float32))
             change = True
-        elif name == 'conv2':
-            subcell.to_float(mstype.float32)
-            change = True
         elif isinstance(subcell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             network.insert_child_to_cell(name, OutputTo(subcell.to_float(mstype.float32), mstype.float16))
             change = True
