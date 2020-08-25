@@ -22,7 +22,7 @@ from mindspore.ops.operations import BiasAdd, MatMul
 import mindspore.ops.composite as C
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 class Net(Cell):

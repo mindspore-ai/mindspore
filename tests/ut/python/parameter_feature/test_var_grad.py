@@ -25,11 +25,11 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
-grad_by_list_with_sens = C.GradOperation('grad_by_list_with_sens', get_by_list=True, sens_param=True)
-grad_all = C.GradOperation('get_all', get_all=True)
-grad_with_sens = C.GradOperation('grad_with_sens', sens_param=True)
+grad_by_list = C.GradOperation(get_by_list=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
+grad_by_list_with_sens = C.GradOperation(get_by_list=True, sens_param=True)
+grad_all = C.GradOperation(get_all=True)
+grad_with_sens = C.GradOperation(sens_param=True)
 
 
 def test_net_vargs_expand():
@@ -200,7 +200,7 @@ def test_grad_with_param_sens():
             self.weights = ParameterTuple(net.trainable_params())
             self.net = net
             self.sens = Parameter(Tensor(np.ones([3, 4, 5]), dtype=mstype.float32), name='sens', requires_grad=False)
-            self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+            self.grad = C.GradOperation(get_by_list=True, sens_param=True)
 
         def construct(self, x, y):
             return self.grad(self.net, self.weights)(x, y, self.sens)
@@ -290,8 +290,7 @@ def test_grad_within_if_else():
             super(GradNet, self).__init__()
             self.weights = ParameterTuple(net.trainable_params())
             self.net = net
-            grad_op = C.GradOperation(
-                name='grad', get_all=False, get_by_list=True, sens_param=True)
+            grad_op = C.GradOperation(get_all=False, get_by_list=True, sens_param=True)
             sens = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
             self.grad = Bprop(self.net, True, self.weights, grad_op, sens)
 
@@ -312,8 +311,7 @@ def test_grad_for_concat():
             super(GradNet, self).__init__()
             self.weights = ParameterTuple(net.trainable_params())
             self.net = net
-            grad_op = C.GradOperation(
-                name='grad', get_all=True, get_by_list=False, sens_param=True)
+            grad_op = C.GradOperation(get_all=True, get_by_list=False, sens_param=True)
             self.grad = Bprop(self.net, False, self.weights, grad_op)
 
         def construct(self, *inputs):

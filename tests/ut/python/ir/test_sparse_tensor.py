@@ -28,7 +28,7 @@ from mindspore import Tensor, SparseTensor, context
 
 context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
 
-grad_op = C.GradOperation('get_all', get_all=True)
+grad_op = C.GradOperation(get_all=True)
 
 class MakeSparseTensor(nn.Cell):
     def __init__(self, dense_shape):

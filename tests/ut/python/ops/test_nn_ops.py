@@ -45,8 +45,8 @@ def conv1x1(in_channels, out_channels, stride=1, padding=0):
                      kernel_size=1, stride=stride, padding=padding)
 
 
-grad = C.GradOperation('grad')
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad = C.GradOperation()
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 class ResidualBlock(nn.Cell):
@@ -230,7 +230,7 @@ class FusedBatchNormGrad(nn.Cell):
 
     def __init__(self, network):
         super(FusedBatchNormGrad, self).__init__()
-        self.grad = C.GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
         self.network = network
 
     def construct(self, inp, output_grad):

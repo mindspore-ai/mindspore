@@ -58,7 +58,7 @@ def test_mirror_pad():
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
     def construct(self, input_, output_grad):
         return self.grad(self.network)(input_, output_grad)

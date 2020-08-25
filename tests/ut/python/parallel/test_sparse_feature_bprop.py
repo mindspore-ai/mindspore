@@ -26,7 +26,7 @@ from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, Adam
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 class GradWrap(nn.Cell):

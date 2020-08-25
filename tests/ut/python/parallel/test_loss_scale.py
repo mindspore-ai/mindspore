@@ -61,8 +61,7 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         self.network = network
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
         self.grad_reducer = F.identity

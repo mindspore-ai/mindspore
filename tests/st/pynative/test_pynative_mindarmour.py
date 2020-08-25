@@ -87,7 +87,7 @@ class LeNet(nn.Cell):
 class GradWithSens(Cell):
     def __init__(self, network):
         super(GradWithSens, self).__init__()
-        self.grad = GradOperation(name="grad", get_all=False,
+        self.grad = GradOperation(get_all=False,
                                   sens_param=True)
         self.network = network
 
@@ -99,8 +99,7 @@ class GradWithSens(Cell):
 class GradWrapWithLoss(Cell):
     def __init__(self, network):
         super(GradWrapWithLoss, self).__init__()
-        self._grad_all = GradOperation(name="get_all",
-                                       get_all=True,
+        self._grad_all = GradOperation(get_all=True,
                                        sens_param=False)
         self._network = network
 

@@ -171,8 +171,7 @@ class TrainOneStepCell(nn.Cell):
         self.backbone = network_backbone
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.sens = Tensor((np.ones((1,)) * sens).astype(np.float16))
         self.reduce_flag = reduce_flag

@@ -36,7 +36,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context.reset_auto_parallel_context()
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 class Dataset(MindData):
@@ -419,8 +419,7 @@ class TrainOneStepCell(nn.Cell):
         self.network.add_flags(defer_inline=True)
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.sens = sens
 

@@ -286,7 +286,7 @@ class TrainStepWrap(nn.Cell):
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = Adam(self.weights, learning_rate=lr, eps=eps, loss_scale=loss_scale)
         self.hyper_map = C.HyperMap()
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = loss_scale
 
     def construct(self, batch_ids, batch_wts, label):

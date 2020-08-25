@@ -239,7 +239,7 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad', get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
         self.all_reduce = P.AllReduce()

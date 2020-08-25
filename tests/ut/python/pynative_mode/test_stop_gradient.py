@@ -31,8 +31,8 @@ from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.bprop_util import bprop
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_by_list = C.GradOperation(get_by_list=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 def setup_module(module):

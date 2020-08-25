@@ -38,7 +38,7 @@ context.set_context(mode=context.GRAPH_MODE)
 # W0613: unused-argument
 # W0231: super-init-not-called
 
-grad = C.GradOperation('grad')
+grad = C.GradOperation()
 
 def test_multiply():
     """ test_multiply """

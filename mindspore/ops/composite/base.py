@@ -106,12 +106,11 @@ class GradOperation(GradOperation_):
             a 'ones_like(outputs)' sensitivity will be attached automatically. Default: False.
     """
 
-    def __init__(self, name,
-                 get_all=False, get_by_list=False, sens_param=False):
+    def __init__(self, get_all=False, get_by_list=False, sens_param=False):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, name, get_all, get_by_list, sens_param)
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param)
         self.grad_fn = None
         self.fn = None
         self.need_forward = False
@@ -139,7 +138,7 @@ class GradOperation(GradOperation_):
                 fn.already_run = False
 
     def __call__(self, fn, weights=None):
-        grad_ = GradOperation('grad', self.get_all, self.get_by_list, self.sens_param)
+        grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
         if self.grad_fn is None or self.fn != fn:
             if context.get_context("mode") == context.GRAPH_MODE:
                 if self.get_by_list:

@@ -537,11 +537,9 @@ class TrainStepWrap(nn.Cell):
 
         self.hyper_map = C.HyperMap()
 
-        self.grad_w = C.GradOperation('grad_w',
-                                      get_by_list=True,
+        self.grad_w = C.GradOperation(get_by_list=True,
                                       sens_param=True)
-        self.grad_d = C.GradOperation('grad_d',
-                                      get_by_list=True,
+        self.grad_d = C.GradOperation(get_by_list=True,
                                       sens_param=True)
 
         self.sens = sens

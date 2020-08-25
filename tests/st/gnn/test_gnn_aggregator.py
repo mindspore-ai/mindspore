@@ -25,7 +25,7 @@ from mindspore.common.api import _executor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 class MeanAggregatorGrad(nn.Cell):

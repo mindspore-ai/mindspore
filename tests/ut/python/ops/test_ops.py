@@ -36,7 +36,7 @@ from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
 from ....ops_common import convert
 
 
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 class InputBackward(nn.Cell):

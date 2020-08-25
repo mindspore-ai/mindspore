@@ -331,7 +331,7 @@ def create_funcs(verification_set, block_generator, block_runner, grad_op=None, 
             # gradient
             if grad_op:
                 if num_outputs == 0:
-                    grad_op_ = GradOperation('grad', get_all=grad_op.get_all,
+                    grad_op_ = GradOperation(get_all=grad_op.get_all,
                                              get_by_list=grad_op.get_by_list, sens_param=False)
                     b = block_generator(block, grad_op_, len(inputs), desc_const=desc_const,
                                         const_first=const_first, add_fake_input=add_fake_input)

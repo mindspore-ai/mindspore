@@ -46,5 +46,5 @@ class CompileBackwardBlockWrtInputsBC(IBuilderComponent):
     """
 
     def __call__(self):
-        grad_op = GradOperation('grad', get_all=True, sens_param=True)
+        grad_op = GradOperation(get_all=True, sens_param=True)
         return create_funcs(self.verification_set, gen_grad_net, compile_block, grad_op)

@@ -581,8 +581,7 @@ class Grad(nn.Cell):
         super(Grad, self).__init__()
         self.network = network
         self.weights = ParameterTuple(network.trainable_params())
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
 
     @ms_function

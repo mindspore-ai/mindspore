@@ -28,7 +28,7 @@ var_hook_done = False
 cell_bprop_done = False
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -135,7 +135,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, label):
         weights = self.weights
-        return C.GradOperation('get_by_list', get_by_list=True)(self.network, weights)(x, label)
+        return C.GradOperation(get_by_list=True)(self.network, weights)(x, label)
 
 
 def test_hook():

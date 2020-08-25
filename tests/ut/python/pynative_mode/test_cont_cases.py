@@ -26,8 +26,8 @@ from mindspore.ops import operations as P
 # from tests.vm_impl.vm_interface import *
 # from tests.vm_impl import *
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_by_list = C.GradOperation(get_by_list=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 def setup_module():

@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 def setup_module(module):

@@ -31,7 +31,7 @@ from tests.mindspore_test_framework.pipeline.forward.compile_forward \
 context.set_context(mode=context.GRAPH_MODE)
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 def test_list_equal():

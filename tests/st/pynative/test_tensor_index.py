@@ -24,7 +24,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import composite as C
 
 
-grad_by_list_with_sens = C.GradOperation('grad_by_list_with_sens', get_by_list=True, sens_param=True)
+grad_by_list_with_sens = C.GradOperation(get_by_list=True, sens_param=True)
 
 
 def setup_module():

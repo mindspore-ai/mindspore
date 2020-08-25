@@ -337,9 +337,9 @@ class TrainStepWrap(nn.Cell):
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
                                     l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
         self.hyper_map = C.HyperMap()
-        self.grad_w = C.GradOperation('grad_w', get_by_list=True,
+        self.grad_w = C.GradOperation(get_by_list=True,
                                       sens_param=True)
-        self.grad_d = C.GradOperation('grad_d', get_by_list=True,
+        self.grad_d = C.GradOperation(get_by_list=True,
                                       sens_param=True)
         self.sens = sens
         self.loss_net_w = IthOutputCell(network, output_index=0)

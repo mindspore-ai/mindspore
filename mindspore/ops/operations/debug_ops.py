@@ -216,7 +216,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         >>>     return ret
         >>>
         >>> clip = P.InsertGradientOf(clip_gradient)
-        >>> grad_all = C.GradOperation('get_all', get_all=True)
+        >>> grad_all = C.GradOperation(get_all=True)
         >>> def InsertGradientOfClipDemo():
         >>>     def clip_test(x, y):
         >>>         x = clip(x)
@@ -268,7 +268,7 @@ class HookBackward(PrimitiveWithInfer):
         >>> def hook_fn(grad_out):
         >>>     print(grad_out)
         >>>
-        >>> grad_all = GradOperation('get_all', get_all=True)
+        >>> grad_all = GradOperation(get_all=True)
         >>> hook = P.HookBackward(hook_fn)
         >>>
         >>> def hook_test(x, y):

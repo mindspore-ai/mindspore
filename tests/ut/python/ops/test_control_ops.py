@@ -30,9 +30,9 @@ from mindspore.common import ms_function
 context.set_context(mode=context.GRAPH_MODE)
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
-grad_all = C.GradOperation('get_all', get_all=True)
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_by_list = C.GradOperation(get_by_list=True)
+grad_all = C.GradOperation(get_all=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 def cond_data_test(x_init, y_init):
@@ -564,7 +564,7 @@ def test_switch_layer_env_eliminate():
     class NetGrad(nn.Cell):
         def __init__(self, net):
             super(NetGrad, self).__init__()
-            self.grad_op = C.GradOperation('grad', get_by_list=True, sens_param=False)
+            self.grad_op = C.GradOperation(get_by_list=True, sens_param=False)
             self.net = net
             self.weights = ParameterTuple(self.net.trainable_params())
 
@@ -593,7 +593,7 @@ def test_switch_layer_single_layer():
     class NetGrad(nn.Cell):
         def __init__(self, net):
             super(NetGrad, self).__init__()
-            self.grad_op = C.GradOperation('grad', get_by_list=True, sens_param=False)
+            self.grad_op = C.GradOperation(get_by_list=True, sens_param=False)
             self.net = net
             self.weights = ParameterTuple(self.net.trainable_params())
 

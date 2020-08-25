@@ -383,7 +383,7 @@ class TrainingWrapper(nn.Cell):
         self.network = network
         self.weights = ms.ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
         self.grad_reducer = None

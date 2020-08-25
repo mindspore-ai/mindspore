@@ -64,7 +64,7 @@ def test_kw_grad():
         def __init__(self, net):
             super(GradKwNet, self).__init__()
             self.net = net
-            self.grad_all_wit_sense = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+            self.grad_all_wit_sense = C.GradOperation(get_all=True, sens_param=True)
 
         def construct(self, x, y, *arg, **kwargs):
             return self.grad_all_wit_sense(self.net)(x, y, *arg, **kwargs)
@@ -112,7 +112,7 @@ def test_grad():
         def __init__(self, net):
             super(GradNet, self).__init__()
             self.net = net
-            self.grad_all_wit_sense = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+            self.grad_all_wit_sense = C.GradOperation(get_all=True, sens_param=True)
 
         def construct(self, x, y, z, sens):
             return self.grad_all_wit_sense(self.net)(x, y, z, sens)

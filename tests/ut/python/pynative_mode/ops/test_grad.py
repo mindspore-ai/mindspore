@@ -29,8 +29,8 @@ def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
 
-grad = C.GradOperation('grad')
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad = C.GradOperation()
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 def mul(x, y):

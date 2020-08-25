@@ -85,7 +85,7 @@ def bprop(func, *inputs, grads_wrt_outputs=None, wrt: list = None, params: list 
         if not params:
             params = func.trainable_params()
 
-    grad_op = GradOperation(name='grad', get_all=wrt_inputs, get_by_list=wrt_params, sens_param=with_sens_param)
+    grad_op = GradOperation(get_all=wrt_inputs, get_by_list=wrt_params, sens_param=with_sens_param)
     grad = Bprop(func, wrt_params, params, grad_op, grads_wrt_outputs)
 
     if context.get_context("mode") == context.PYNATIVE_MODE:
