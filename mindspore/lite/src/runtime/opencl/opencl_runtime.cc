@@ -35,39 +35,17 @@ using mindspore::kernel::CLErrorCode;
 
 namespace mindspore::lite::opencl {
 
-std::map<std::string, std::string> g_opencl_program_map;
-
+static std::map<std::string, std::string> g_opencl_program_map;
 static std::mutex g_mtx;
 static std::mutex g_init_mtx;
 
-// magic number
-static std::map<int, int> AdrenoSubGroup{
-  {640, 128}, {630, 128}, {616, 128}, {612, 64}, {610, 64}, {540, 32}, {530, 32},
-  {512, 32},  {510, 32},  {509, 32},  {506, 32}, {505, 32}, {405, 32}, {330, 16},
-};
-
-#ifdef USE_OPENCL_WRAPPER
-std::shared_ptr<OpenCLWrapper> OpenCLWrapper::opencl_wrapper_singleton_ = nullptr;
-#endif
-std::shared_ptr<OpenCLRuntime> OpenCLRuntime::opencl_runtime_singleton_ = nullptr;
 bool OpenCLRuntime::init_done_ = false;
 
 OpenCLRuntime *OpenCLRuntime::GetInstance() {
   std::unique_lock<std::mutex> lck(g_mtx);
-  if (opencl_runtime_singleton_.get() == nullptr) {
-    opencl_runtime_singleton_.reset(new OpenCLRuntime());
-    opencl_runtime_singleton_->Init();
-  }
-  return opencl_runtime_singleton_.get();
-}
-
-void OpenCLRuntime::DeleteInstance() {
-  std::unique_lock<std::mutex> lck(g_mtx);
-  init_done_ = false;
-  if (opencl_runtime_singleton_ != nullptr) {
-    opencl_runtime_singleton_.reset();
-    opencl_runtime_singleton_ = nullptr;
-  }
+  static OpenCLRuntime ocl_runtime;
+  ocl_runtime.Init();
+  return &ocl_runtime;
 }
 
 OpenCLRuntime::OpenCLRuntime() { default_build_opts_ = " -cl-mad-enable -cl-fast-relaxed-math -Werror"; }
@@ -88,7 +66,7 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "CL_HPP_MINIMUM_OPENCL_VERSION " << CL_HPP_MINIMUM_OPENCL_VERSION;
 
 #ifdef USE_OPENCL_WRAPPER
-  if (false == OpenCLWrapper::GetInstance()->LoadOpenCLLibrary()) {
+  if (OpenCLWrapper::GetInstance()->LoadOpenCLLibrary() == false) {
     MS_LOG(ERROR) << "Load OpenCL symbols failed!";
     return RET_ERROR;
   }
@@ -123,7 +101,11 @@ int OpenCLRuntime::Init() {
     return RET_ERROR;
   }
 
-  device_ = std::make_shared<cl::Device>();
+  device_ = new (std::nothrow) cl::Device();
+  if (device_ == nullptr) {
+    MS_LOG(ERROR) << "Create OpenCL device failed!";
+    return RET_ERROR;
+  }
   *device_ = devices[0];
   max_work_item_sizes_ = device_->getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>();
   const std::string device_name = device_->getInfo<CL_DEVICE_NAME>();
@@ -144,20 +126,21 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
   cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
                                           CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
-  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
+  context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
 
-  if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create special OpenCL context falied, Create common OpenCL context then.";
-    context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+  if (ret != CL_SUCCESS || context_ == nullptr) {
+    MS_LOG(ERROR) << "Create special OpenCL context failed, Create common OpenCL context then.";
+    context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+    if (context_ == nullptr) {
+      MS_LOG(ERROR) << "Create OpenCL context failed!";
+      return RET_ERROR;
+    }
   }
 #else
   MS_LOG(INFO) << "Create common opencl context";
-  //  cl_context_properties context_prop[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platforms[0](),
-  //                                          CL_PRINTF_CALLBACK_ARM, (cl_context_properties)printf_callback, 0};
-  //  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &err);
-  context_ = std::make_shared<cl::Context>(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+  context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
 #endif
-  if (ret != CL_SUCCESS) {
+  if (ret != CL_SUCCESS || context_ == nullptr) {
     MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
@@ -203,13 +186,17 @@ int OpenCLRuntime::Init() {
   properties |= CL_QUEUE_PROFILING_ENABLE;
 #endif
 
-  default_command_queue_ = std::make_shared<cl::CommandQueue>(*context_, *device_, properties, &ret);
-  if (ret != CL_SUCCESS) {
+  default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, properties, &ret);
+  if (ret != CL_SUCCESS || default_command_queue_ == nullptr) {
     MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
 
-  allocator_ = std::make_shared<OpenCLAllocator>();
+  allocator_ = new (std::nothrow) OpenCLAllocator();
+  if (allocator_ == nullptr) {
+    MS_LOG(ERROR) << "Command OpenCL allocator failed!";
+    return RET_ERROR;
+  }
 #ifdef PROGRAM_WITH_IL
   std::string flag = "";
   binary_program_ = CreateProgramFromIL(g_program_binary, flag);
@@ -221,17 +208,18 @@ int OpenCLRuntime::Init() {
 }
 
 OpenCLRuntime::~OpenCLRuntime() {
+  init_done_ = false;
   program_map_.clear();
-  // allocator_->Clear();
-  allocator_.reset();
-  default_command_queue_.reset();
-  context_.reset();
-  device_.reset();
+  delete allocator_;
+  delete default_command_queue_;
+  delete context_;
+  delete device_;
+  OpenCLWrapper::GetInstance()->UnLoadOpenCLLibrary();
 }
 
-cl::Context *OpenCLRuntime::Context() { return context_.get(); }
+cl::Context *OpenCLRuntime::Context() { return context_; }
 
-cl::Device *OpenCLRuntime::Device() { return device_.get(); }
+cl::Device *OpenCLRuntime::Device() { return device_; }
 
 uint64_t OpenCLRuntime::DeviceGlobalMemoryCacheSize() const { return global_memery_cachesize_; }
 
@@ -262,9 +250,7 @@ uint32_t OpenCLRuntime::GetSubGroupSize(const cl::Kernel &kernel, const cl::NDRa
       sub_group_size = 0;
     }
 #else
-    if (AdrenoSubGroup.find(gpu_info_.model_num) != AdrenoSubGroup.end()) {
-      sub_group_size = AdrenoSubGroup[gpu_info_.model_num];
-    }
+    sub_group_size = 0;
 #endif
   }
 
@@ -337,7 +323,7 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
 int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t> &global,
                              const std::vector<size_t> &local, cl::CommandQueue *command_queue) {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   MS_ASSERT(local.size() == 0 || local.size() == global.size());
   std::vector<size_t> internal_global_ws = global;
@@ -462,7 +448,7 @@ bool OpenCLRuntime::BuildProgram(const std::string &build_options, const cl::Pro
 bool OpenCLRuntime::CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue,
                                         bool sync) const {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   cl_int cl_ret = CL_SUCCESS;
   const cl::Buffer *buffer = static_cast<const cl::Buffer *>(src);
@@ -475,7 +461,7 @@ bool OpenCLRuntime::CopyDeviceMemToHost(void *dst, const void *src, size_t size,
 bool OpenCLRuntime::CopyHostMemToDevice(const void *dst, const void *src, size_t size, cl::CommandQueue *command_queue,
                                         bool sync) const {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   cl_int cl_ret = CL_SUCCESS;
   const cl::Buffer *buffer = static_cast<const cl::Buffer *>(dst);
@@ -488,7 +474,7 @@ bool OpenCLRuntime::CopyHostMemToDevice(const void *dst, const void *src, size_t
 void *OpenCLRuntime::MapBuffer(const cl::Buffer &buffer, int flags, size_t size, cl::CommandQueue *command_queue,
                                bool sync) const {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   return command_queue->enqueueMapBuffer(buffer, sync, flags, 0, size);
 }
@@ -498,7 +484,7 @@ int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::Command
     return RET_OK;
   }
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   return command_queue->enqueueMapSVM(host_ptr, sync, flags, size);
 }
@@ -506,7 +492,7 @@ int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::Command
 void *OpenCLRuntime::MapBuffer(const cl::Image2D &buffer, bool sync, int flags, const std::vector<size_t> &region,
                                cl::CommandQueue *command_queue) const {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   cl::size_type row_pitch;
   cl::size_type slice_pitch;
@@ -517,7 +503,7 @@ void *OpenCLRuntime::MapBuffer(const cl::Image2D &buffer, bool sync, int flags, 
 
 int OpenCLRuntime::UnmapBuffer(const cl::Memory &buffer, void *host_ptr, cl::CommandQueue *command_queue) const {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   return command_queue->enqueueUnmapMemObject(buffer, host_ptr);
 }
@@ -527,14 +513,14 @@ int OpenCLRuntime::UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue) 
     return RET_OK;
   }
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   return command_queue->enqueueUnmapSVM(host_ptr);
 }
 
 bool OpenCLRuntime::SyncCommandQueue(cl::CommandQueue *command_queue) {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_.get();
+    command_queue = default_command_queue_;
   }
   cl_int ret = command_queue->finish();
   if (ret != CL_SUCCESS) {

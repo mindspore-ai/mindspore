@@ -106,7 +106,6 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
 
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 
   MS_LOG(INFO) << "Test TransposeFp32 passed";
 }

@@ -183,6 +183,5 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   delete param;
   delete prelu_kernel;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

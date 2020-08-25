@@ -144,6 +144,5 @@ TEST_F(TestSliceOpenCL, Sliceinput_dim4) {
   }
   delete slice_kernel;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

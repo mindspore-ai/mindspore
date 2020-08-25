@@ -173,7 +173,6 @@ TEST_F(TestActivationOpenCL, ReluFp32_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCL, Relu6Fp32_dim4) {
@@ -276,7 +275,6 @@ TEST_F(TestActivationOpenCL, Relu6Fp32_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
@@ -379,7 +377,6 @@ TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
@@ -483,6 +480,5 @@ TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

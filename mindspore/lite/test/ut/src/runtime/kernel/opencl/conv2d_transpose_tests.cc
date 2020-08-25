@@ -175,7 +175,6 @@ void RunTestCase(const std::vector<int> shape, const std::vector<std::string> fi
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
   MS_LOG(INFO) << "Test Conv2dTransposeFp32 passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   int pad = 0;

@@ -66,19 +66,13 @@ static const std::vector<std::string> g_opencl_library_paths = {
 };
 
 OpenCLWrapper *OpenCLWrapper::GetInstance() {
-  static std::once_flag opencl_wrapper_once;
-  std::call_once(opencl_wrapper_once,
-                 []() { opencl_wrapper_singleton_ = std::shared_ptr<OpenCLWrapper>(new OpenCLWrapper()); });
-
-  return opencl_wrapper_singleton_.get();
+  static OpenCLWrapper ocl_wrapper;
+  return &ocl_wrapper;
 }
 
 OpenCLWrapper::OpenCLWrapper() {}
 
-OpenCLWrapper::~OpenCLWrapper() {
-  if (nullptr == opencl_wrapper_singleton_.get()) return;
-  opencl_wrapper_singleton_->UnLoadOpenCLLibrary();
-}
+OpenCLWrapper::~OpenCLWrapper() {}
 
 // load default library path
 bool OpenCLWrapper::LoadOpenCLLibrary() {

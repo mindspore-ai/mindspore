@@ -20,7 +20,6 @@ j* you may not use this file except in compliance with the License.
 #include <vector>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -38,9 +37,6 @@ struct GpuInfo {
   float opencl_version = 0;
 };
 
-// Base GPU cache size used for computing local work group size.
-const int32_t g_base_gpu_mem_cachesize = 16384;
-
 class OpenCLRuntime {
  public:
   static OpenCLRuntime *GetInstance();
@@ -54,8 +50,8 @@ class OpenCLRuntime {
 
   cl::Context *Context();
   cl::Device *Device();
-  OpenCLAllocator *GetAllocator() { return allocator_.get(); }
-  cl::CommandQueue *GetDefaultCommandQueue() { return default_command_queue_.get(); }
+  OpenCLAllocator *GetAllocator() { return allocator_; }
+  cl::CommandQueue *GetDefaultCommandQueue() { return default_command_queue_; }
   uint64_t DeviceGlobalMemoryCacheSize() const;
   int DeviceMaxWorkGroupSize() const;
   uint32_t DeviceComputeUnits() const;
@@ -146,13 +142,12 @@ class OpenCLRuntime {
   bool BuildProgram(const std::string &build_options, const cl::Program &program);
 
  private:
-  static std::shared_ptr<OpenCLRuntime> opencl_runtime_singleton_;
   static bool init_done_;
-  std::shared_ptr<cl::CommandQueue> default_command_queue_{nullptr};
-  std::shared_ptr<cl::Context> context_{nullptr};
-  std::shared_ptr<cl::Device> device_{nullptr};
-  std::shared_ptr<OpenCLAllocator> allocator_{nullptr};
-  std::map<std::string, cl::Program> program_map_{};
+  cl::CommandQueue *default_command_queue_{nullptr};
+  cl::Context *context_{nullptr};
+  cl::Device *device_{nullptr};
+  OpenCLAllocator *allocator_{nullptr};
+  std::map<std::string, cl::Program> program_map_;
   cl::Program binary_program_{0};
   uint64_t global_memery_cachesize_{0};
   int max_work_group_size;
@@ -169,5 +164,4 @@ class OpenCLRuntime {
 };
 
 }  // namespace mindspore::lite::opencl
-
 #endif  // MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_

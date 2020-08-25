@@ -104,7 +104,6 @@ TEST_F(TestReshapeOpenCL, ReshapeFp32) {
 
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 
   MS_LOG(INFO) << "Test ReshapeFp32 passed";
 }

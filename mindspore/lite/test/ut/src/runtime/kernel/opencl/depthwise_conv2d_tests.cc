@@ -195,7 +195,6 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
   DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
@@ -268,7 +267,6 @@ TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
   DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
@@ -314,7 +312,6 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
   DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
@@ -387,7 +384,6 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
   DepthWiseTestMain(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
@@ -512,7 +508,6 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwNoPadFp32) {
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
   MS_LOG(INFO) << "TestConvolutionDwNoPadFp32 passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
@@ -673,7 +668,6 @@ TEST_F(TestConvolutionDwOpenCL, ConvDwPadFp32) {
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
   MS_LOG(INFO) << "TestConvolutionDwPadFp32 passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
@@ -739,7 +733,6 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2) {
       DepthWiseTestMain(conv_param.get(), input_data.get(), weight_data.get(), nullptr, schema::Format_NHWC4, false);
     }
   }
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionDwOpenCL, Buffer2Image) {
@@ -788,6 +781,5 @@ TEST_F(TestConvolutionDwOpenCL, Buffer2Image) {
   }
   //      DepthWiseTestMain(conv_param, input_data, weight_data, gnd_data, schema::Format_NC4HW4, true);
   DepthWiseTestMain(conv_param.get(), input_data.get(), weight_data.get(), gnd_data.get(), schema::Format_NHWC4, true);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

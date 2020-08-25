@@ -115,7 +115,6 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   CompareOutputData(output_data, correct_data, co, 0.0001);
   tensor_x->SetData(nullptr);
   tensor_out->SetData(nullptr);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   MS_LOG(INFO) << "TestMatMulFp32 passed";
 }
 }  // namespace mindspore
