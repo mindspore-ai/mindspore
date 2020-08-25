@@ -21,7 +21,6 @@ Pre-defined combination of operators.
 
 
 from .base import GradOperation, HyperMap, Map, MultitypeFuncGraph, add_flags, \
-                  grad, grad_all, grad_all_with_sens, grad_by_list, grad_by_list_with_sens, grad_with_sens, \
                   core, env_get, tail, zip_operation
 from .clip_ops import clip_by_value
 from .multitype_ops.add_impl import hyper_add
@@ -31,12 +30,6 @@ from .random_ops import set_seed, normal, uniform, gamma, poisson, multinomial
 
 
 __all__ = [
-    'grad',
-    'grad_by_list_with_sens',
-    'grad_all',
-    'grad_by_list',
-    'grad_all_with_sens',
-    'grad_with_sens',
     'env_get',
     'core',
     'add_flags',

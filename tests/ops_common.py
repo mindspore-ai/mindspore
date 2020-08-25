@@ -23,6 +23,9 @@ from mindspore import Tensor
 from mindspore.common.api import _executor
 
 
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 class InputBackward(nn.Cell):
     """ InputBackward definition """
 
@@ -30,7 +33,7 @@ class InputBackward(nn.Cell):
         super(InputBackward, self).__init__()
         self.network = network
         self.network.set_train()
-        self.grad = C.grad_all_with_sens
+        self.grad = grad_all_with_sens
         self.c1 = c1
         self.c2 = c2
 

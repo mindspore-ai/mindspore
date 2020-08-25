@@ -29,6 +29,10 @@ from mindspore.train import Model, ParallelMode
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 device_num = 16
 device_id = 2
 
@@ -233,7 +237,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x, b):
-        return C.grad_all(self.network)(x, b)
+        return grad_all(self.network)(x, b)
 
 
 def bn_with_initialize(out_channels):

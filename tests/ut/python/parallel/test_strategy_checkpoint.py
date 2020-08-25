@@ -25,6 +25,9 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 # model_parallel test
 def test_six_matmul_save():
     class NetWithLoss(nn.Cell):
@@ -43,7 +46,7 @@ def test_six_matmul_save():
             self.network = network
 
         def construct(self, x1, x6):
-            return C.grad_all(self.network)(x1, x6)
+            return grad_all(self.network)(x1, x6)
 
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3, strategy4, strategy5, strategy6):
@@ -105,7 +108,7 @@ def test_six_matmul_load():
             self.network = network
 
         def construct(self, x1, x6, x7):
-            return C.grad_all(self.network)(x1, x6, x7)
+            return grad_all(self.network)(x1, x6, x7)
 
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy3, strategy4, strategy5, strategy6, strategy7):
@@ -167,7 +170,7 @@ def test_six_matmul_save_auto():
             self.network = network
 
         def construct(self, x1, x6):
-            return C.grad_all(self.network)(x1, x6)
+            return grad_all(self.network)(x1, x6)
 
     class Net(nn.Cell):
         def __init__(self):
@@ -223,7 +226,7 @@ def test_six_matmul_load_auto():
             self.network = network
 
         def construct(self, x1, x6, x7):
-            return C.grad_all(self.network)(x1, x6, x7)
+            return grad_all(self.network)(x1, x6, x7)
 
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy3, strategy4, strategy5):

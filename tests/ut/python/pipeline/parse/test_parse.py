@@ -37,6 +37,9 @@ from ...ut_filter import non_graph_engine
 # W0613: unused-argument
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
 context.set_context(mode=context.GRAPH_MODE)
@@ -176,7 +179,7 @@ def test_bprop_with_wrong_output_num():
             return BpropWithWrongOutputNum()(x, y)
 
     with pytest.raises(ValueError):
-        C.grad_all(BpropWithWrongOutputNumCell())(1, 2)
+        grad_all(BpropWithWrongOutputNumCell())(1, 2)
 
 def test_bprop_with_wrong_output_type():
     context.set_context(check_bprop=True)
@@ -211,7 +214,7 @@ def test_bprop_with_wrong_output_type():
             return BpropWithWrongOutputType()(x)
 
     with pytest.raises(TypeError):
-        C.grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
+        grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
 
 
 def test_bprop_with_wrong_output_shape():
@@ -250,4 +253,4 @@ def test_bprop_with_wrong_output_shape():
     with pytest.raises(ValueError):
         net = BpropWithWrongOutputShapeCell()
         net.set_grad()
-        C.grad_all(net)(Tensor(np.ones([64, 10]).astype(np.int32)))
+        grad_all(net)(Tensor(np.ones([64, 10]).astype(np.int32)))

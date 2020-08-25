@@ -24,6 +24,9 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class NetWithLossNoBias(nn.Cell):
     def __init__(self, network):
         super(NetWithLossNoBias, self).__init__()
@@ -52,7 +55,7 @@ class GradWrapNoBias(nn.Cell):
         self.network = network
 
     def construct(self, x, y):
-        return C.grad_all(self.network)(x, y)
+        return grad_all(self.network)(x, y)
 
 
 class GradWrap(nn.Cell):
@@ -61,7 +64,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x, y, b):
-        return C.grad_all(self.network)(x, y, b)
+        return grad_all(self.network)(x, y, b)
 
 
 def compile_net_no_bias(net, x, y):

@@ -28,6 +28,9 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
 
+grad_by_list_with_sens = C.GradOperation('grad_by_list_with_sens', get_by_list=True, sens_param=True)
+
+
 class DisOrderTest1(nn.Cell):
     """ DisOrderTest1 definition """
 
@@ -72,7 +75,7 @@ class GradNetWrap(nn.Cell):
         self.weights = ParameterTuple(net.get_parameters())
 
     def construct(self, x, sens):
-        return C.grad_by_list_with_sens(self.net, self.weights)(x, sens)
+        return grad_by_list_with_sens(self.net, self.weights)(x, sens)
 
 
 test_case_ops = [

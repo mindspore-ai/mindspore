@@ -28,6 +28,10 @@ from mindspore.ops import operations as P
 # context.set_context(save_graphs=True)
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 def test_while_forward():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -70,7 +74,7 @@ def test_while_grad():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_all(self.net)(*inputs)
+            return grad_all(self.net)(*inputs)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -157,7 +161,7 @@ def test_while_with_param_grad():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -222,7 +226,7 @@ def test_while_opt_endless():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_all(self.net)(*inputs)
+            return grad_all(self.net)(*inputs)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -285,7 +289,7 @@ def test_while_with_param_grad_with_const_branch():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -325,7 +329,7 @@ def test_for_while_with_param_grad_with_const_branch():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -362,7 +366,7 @@ def test_for_while_with_param_grad_basic():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -399,7 +403,7 @@ def test_for_while_with_param_grad_normal():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -433,7 +437,7 @@ def test_while_with_param_basic_grad():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -467,7 +471,7 @@ def test_while_with_param_basic_grad_mul():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -502,7 +506,7 @@ def test_while_with_param_basic_grad_two():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -538,7 +542,7 @@ def test_while_with_param_basic_grad_three():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -575,7 +579,7 @@ def test_while_if_with_param_grad():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -608,7 +612,7 @@ def test_while_with_param_grad_not_enter_while():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, a, b, c):
-            return C.grad_by_list(self.net, self.weights)(a, b, c)
+            return grad_by_list(self.net, self.weights)(a, b, c)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     while_net = MyWhileNet()
@@ -670,7 +674,7 @@ def test_with_param_if_by_if_grad_inputs():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_all(self.net)(*inputs)
+            return grad_all(self.net)(*inputs)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
@@ -704,7 +708,7 @@ def test_with_param_if_by_if_grad_parameter():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, *inputs):
-            return C.grad_by_list(self.net, self.weights)(*inputs)
+            return grad_by_list(self.net, self.weights)(*inputs)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
@@ -736,7 +740,7 @@ def test_with_param_if_by_if_grad_param_excute_null():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, *inputs):
-            return C.grad_by_list(self.net, self.weights)(*inputs)
+            return grad_by_list(self.net, self.weights)(*inputs)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()
@@ -770,7 +774,7 @@ def test_if_by_if_return_inside_grad():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, *inputs):
-            return C.grad_by_list(self.net, self.weights)(*inputs)
+            return grad_by_list(self.net, self.weights)(*inputs)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     if_net = MyIfByIfNet()

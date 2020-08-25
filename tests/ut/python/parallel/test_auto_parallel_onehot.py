@@ -30,6 +30,9 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 context.set_context(mode=context.GRAPH_MODE)
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -68,7 +71,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x, y, b):
-        return C.grad_all(self.network)(x, y, b)
+        return grad_all(self.network)(x, y, b)
 
 
 def test_auto_parallel_arithmetic():

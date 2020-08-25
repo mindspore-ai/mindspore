@@ -24,6 +24,9 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -41,7 +44,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, x, y, z, w, a):
-        return C.grad_all(self.network)(x, y, z, w, a)
+        return grad_all(self.network)(x, y, z, w, a)
 
     # model_parallel test
 

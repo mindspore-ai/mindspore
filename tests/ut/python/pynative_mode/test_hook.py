@@ -28,6 +28,9 @@ var_hook_done = False
 cell_bprop_done = False
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
     """weight initial for conv layer"""
     weight = weight_variable()
@@ -175,7 +178,7 @@ def test_custom_bprop():
     mul_add.bprop_debug = True
     x = Tensor(np.array([1, 2, 3]).astype(np.int32))
     y = Tensor(np.array([2, 3, 4]).astype(np.int32))
-    C.grad_all(mul_add)(x, y)
+    grad_all(mul_add)(x, y)
     assert bprop_debug
 
 
@@ -190,7 +193,7 @@ def test_grad_all():
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.int32))
     y = Tensor(np.array([2, 3, 4]).astype(np.int32))
-    res = C.grad_all(net)(x, y)
+    res = grad_all(net)(x, y)
     print(res)
 
 def test_check_input():

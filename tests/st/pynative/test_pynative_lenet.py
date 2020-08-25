@@ -29,6 +29,9 @@ from mindspore.ops import operations as P
 np.random.seed(1)
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+
+
 def weight_variable():
     """weight initial"""
     return TruncatedNormal(0.02)
@@ -122,7 +125,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, label):
         weights = self.weights
-        return C.grad_by_list(self.network, weights)(x, label)
+        return grad_by_list(self.network, weights)(x, label)
 
 
 @pytest.mark.level0

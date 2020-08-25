@@ -45,6 +45,10 @@ def conv1x1(in_channels, out_channels, stride=1, padding=0):
                      kernel_size=1, stride=stride, padding=padding)
 
 
+grad = C.GradOperation('grad')
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 class ResidualBlock(nn.Cell):
     """
     residual Block
@@ -169,7 +173,7 @@ class SoftMaxGrad(nn.Cell):
         self.network = network
 
     def construct(self, x):
-        return C.grad(self.network)(x)
+        return grad(self.network)(x)
 
 
 class DropoutGrad(nn.Cell):
@@ -180,7 +184,7 @@ class DropoutGrad(nn.Cell):
         self.network = network
 
     def construct(self, x):
-        return C.grad(self.network)(x)
+        return grad(self.network)(x)
 
 
 class ScalarSummaryNet(nn.Cell):
@@ -255,7 +259,7 @@ class Grad(nn.Cell):
         self.network.set_train()
 
     def construct(self, x, label):
-        return C.grad(self.network)(x, label)
+        return grad(self.network)(x, label)
 
 
 class BatchnormNet(nn.Cell):
@@ -418,7 +422,7 @@ class GradWrapUnfold(nn.Cell):
         self.sens = Tensor(np.ones([1, 4, 2, 2], np.float32))
 
     def construct(self, x):
-        return C.grad_all_with_sens(self.network)(x, self.sens)
+        return grad_all_with_sens(self.network)(x, self.sens)
 
 
 class UnfoldNetValid(nn.Cell):

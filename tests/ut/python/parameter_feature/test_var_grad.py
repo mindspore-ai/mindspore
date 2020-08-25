@@ -25,6 +25,13 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_by_list_with_sens = C.GradOperation('grad_by_list_with_sens', get_by_list=True, sens_param=True)
+grad_all = C.GradOperation('get_all', get_all=True)
+grad_with_sens = C.GradOperation('grad_with_sens', sens_param=True)
+
+
 def test_net_vargs_expand():
     class AddNet(Cell):
         def __init__(self):
@@ -39,7 +46,7 @@ def test_net_vargs_expand():
     y = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
     sens = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
     net = AddNet()
-    _ = C.grad_all_with_sens(net, net.trainable_params())(x, y, sens)
+    _ = grad_all_with_sens(net, net.trainable_params())(x, y, sens)
 
 
 class VarNet(Cell):
@@ -104,7 +111,7 @@ def test_all_var_args_grad_with_sens():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_by_list_with_sens(self.net, self.weights)(*inputs)
+            return grad_by_list_with_sens(self.net, self.weights)(*inputs)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
@@ -122,7 +129,7 @@ def test_grad_list_var_args():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_by_list(self.net, self.weights)(*inputs)
+            return grad_by_list(self.net, self.weights)(*inputs)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
@@ -139,7 +146,7 @@ def test_grad_all_var_args():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_all(self.net)(*inputs)
+            return grad_all(self.net)(*inputs)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
@@ -156,7 +163,7 @@ def test_grad_all_var_args_with_sens():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_all_with_sens(self.net)(*inputs)
+            return grad_all_with_sens(self.net)(*inputs)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
@@ -174,7 +181,7 @@ def test_grad_var_args_with_sens():
             self.net = net
 
         def construct(self, *inputs):
-            return C.grad_with_sens(self.net)(*inputs)
+            return grad_with_sens(self.net)(*inputs)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
@@ -233,7 +240,7 @@ def test_var_args_grad():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, x, y, sens):
-            return C.grad_by_list_with_sens(self.net, self.weights)(x, y, sens)
+            return grad_by_list_with_sens(self.net, self.weights)(x, y, sens)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
@@ -268,7 +275,7 @@ def test_var_args_positional():
             self.weights = ParameterTuple(net.trainable_params())
 
         def construct(self, x, y):
-            return C.grad_all(self.net)(x, y)
+            return grad_all(self.net)(x, y)
 
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)

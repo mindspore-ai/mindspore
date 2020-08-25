@@ -28,6 +28,10 @@ from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
+
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class MulAdd(nn.Cell):
     def construct(self, x, y):
         return 2 * x + y
@@ -43,7 +47,7 @@ def test_grad_mul_add():
     mul_add = MulAdd()
     x = Tensor(1, dtype=ms.int32)
     y = Tensor(2, dtype=ms.int32)
-    assert C.grad_all(mul_add)(x, y) == (2, 4)
+    assert grad_all(mul_add)(x, y) == (2, 4)
 
 
 class InlineMulADD(nn.Cell):
@@ -62,7 +66,7 @@ def test_grad_inline_mul_add():
     inline_mul_add = InlineMulADD()
     x = Tensor(1, dtype=ms.int32)
     y = Tensor(2, dtype=ms.int32)
-    assert C.grad_all(inline_mul_add)(x, y) == (3, 6)
+    assert grad_all(inline_mul_add)(x, y) == (3, 6)
 
 
 class WithParameter(nn.Cell):
@@ -84,7 +88,7 @@ class WithParameter(nn.Cell):
 def test_with_param():
     with_param = WithParameter()
     with pytest.raises(RuntimeError):
-        C.grad_all(with_param)(1, 2)
+        grad_all(with_param)(1, 2)
 
 
 class WithNoBprop(nn.Cell):
@@ -98,7 +102,7 @@ def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
     x = Tensor(1, dtype=ms.int32)
     y = Tensor(2, dtype=ms.int32)
-    assert C.grad_all(with_no_bprop)(x, y) == (2, 1)
+    assert grad_all(with_no_bprop)(x, y) == (2, 1)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -118,10 +122,10 @@ def test_grad_in_bprop_1():
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
-            return self.f(x, y), C.grad_all(self.f)(x, y)
+            return self.f(x, y), grad_all(self.f)(x, y)
 
         def bprop(self, x, y, out, dout):
-            grads = C.grad_all(self.f)(x, y)
+            grads = grad_all(self.f)(x, y)
             return out[1][0], grads[1]
 
     class GradInBprop_3(nn.Cell):
@@ -133,8 +137,8 @@ def test_grad_in_bprop_1():
             return self.f(x, y)
 
     grad_in_bprop = GradInBprop_3()
-    grads = C.grad_all(grad_in_bprop)(Tensor(np.ones([2, 2]).astype(np.float32)),
-                                      Tensor(np.ones([2, 2]).astype(np.float32)))
+    grads = grad_all(grad_in_bprop)(Tensor(np.ones([2, 2]).astype(np.float32)),
+                                    Tensor(np.ones([2, 2]).astype(np.float32)))
     assert (grads[0].asnumpy() == np.ones([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
@@ -159,10 +163,10 @@ def test_grad_in_bprop_2():
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
-            return self.f(x, y), C.grad_all(self.f)(x, y)
+            return self.f(x, y), grad_all(self.f)(x, y)
 
         def bprop(self, x, y, out, dout):
-            grads = C.grad_all(self.f)(x, y)
+            grads = grad_all(self.f)(x, y)
             return out[1][0], grads[1]
 
     class GradInBprop_3(nn.Cell):
@@ -174,8 +178,8 @@ def test_grad_in_bprop_2():
             return self.f(x, y)
 
     grad_in_bprop = GradInBprop_3()
-    grads = C.grad_all(grad_in_bprop)(Tensor(np.ones([2, 2]).astype(np.float32)),
-                                      Tensor(np.ones([2, 2]).astype(np.float32)))
+    grads = grad_all(grad_in_bprop)(Tensor(np.ones([2, 2]).astype(np.float32)),
+                                    Tensor(np.ones([2, 2]).astype(np.float32)))
     assert (grads[0].asnumpy() == np.ones([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[2, 2], [2, 2]]).astype(np.float32)).all()
 
@@ -197,10 +201,10 @@ def test_grad_in_bprop_3():
             self.f = GradInBprop_1()
 
         def construct(self, x, y):
-            return self.f(x, y), C.grad_all(self.f)(x, y)
+            return self.f(x, y), grad_all(self.f)(x, y)
 
         def bprop(self, x, y, out, dout):
-            grads = C.grad_all(self.f)(x, y)
+            grads = grad_all(self.f)(x, y)
             return out[1][0], grads[1]
 
     class GradInBprop_3(nn.Cell):
@@ -215,8 +219,8 @@ def test_grad_in_bprop_3():
             return x + y + y + out[0], x + x + y + y + dout[0]
 
     grad_in_bprop = GradInBprop_3()
-    grads = C.grad_all(grad_in_bprop)(Tensor(np.ones([2, 2]).astype(np.float32)),
-                                      Tensor(np.ones([2, 2]).astype(np.float32)))
+    grads = grad_all(grad_in_bprop)(Tensor(np.ones([2, 2]).astype(np.float32)),
+                                    Tensor(np.ones([2, 2]).astype(np.float32)))
     assert (grads[0].asnumpy() == np.array([[4, 4], [4, 4]]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[5, 5], [5, 5]]).astype(np.float32)).all()
 
@@ -238,7 +242,7 @@ class OneInputBprop(nn.Cell):
 def test_grad_one_input_bprop():
     net = OneInputBprop()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
-    grad = C.grad_all(net)(input1)
+    grad = grad_all(net)(input1)
     assert (grad[0].asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
@@ -253,10 +257,10 @@ class InlineBpropTwoInput(nn.Cell):
         self.f = TwoInput()
 
     def construct(self, x, y):
-        return self.f(x, y), C.grad_all(self.f)(x, y)
+        return self.f(x, y), grad_all(self.f)(x, y)
 
     def bprop(self, x, y, out, dout):
-        grads = C.grad_all(self.f)(x, y)
+        grads = grad_all(self.f)(x, y)
         return grads[0] * 2, grads[1] * 2
 
 @pytest.mark.level0
@@ -266,7 +270,7 @@ def test_grad_inline_bprop_two_input():
     net = InlineBpropTwoInput()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
     input2 = Tensor(np.ones([2, 2]).astype(np.float32))
-    grads = C.grad_all(net)(input1, input2)
+    grads = grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
     assert len(grads) == 2
@@ -328,7 +332,7 @@ def test_grad_inline_bprop_multi_input():
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
     input2 = Tensor(np.ones([2, 2]).astype(np.float32))
     net.init_parameters_data()
-    grads = C.grad_all(net)(input1, input2)
+    grads = grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([[12, 12], [12, 12]]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[19, 19], [19, 19]]).astype(np.float32)).all()
     assert len(grads) == 2
@@ -378,7 +382,7 @@ def test_grad_mul_add_with_wrong_output_num():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputNum()
     with pytest.raises(TypeError):
-        C.grad_all(mul_add)(1, 2)
+        grad_all(mul_add)(1, 2)
 
 
 class MulAddWithWrongOutputType(nn.Cell):
@@ -395,7 +399,7 @@ def test_grad_mul_add_with_wrong_output_type():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputType()
     with pytest.raises(TypeError):
-        C.grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
+        grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
 
 
 class MulAddWithWrongOutputShape(nn.Cell):
@@ -416,4 +420,4 @@ def test_grad_mul_add_with_wrong_output_shape():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputShape()
     with pytest.raises(TypeError):
-        C.grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
+        grad_all(mul_add)(1, Tensor(np.ones([2, 2])))

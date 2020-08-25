@@ -34,12 +34,16 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
+
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 class InputBackward(nn.Cell):
     def __init__(self, network):
         super(InputBackward, self).__init__()
         self.network = network
         self.network.set_train()
-        self.grad = C.grad_all_with_sens
+        self.grad = grad_all_with_sens
 
     def construct(self, x1, x2, x3, sens):
         return self.grad(self.network)(x1, x2, x3, sens)

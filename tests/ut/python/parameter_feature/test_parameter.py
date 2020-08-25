@@ -23,6 +23,10 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 def test_parser_three_default_mixed_args_subnet():
     class SubNetDefaultMixedArgs(Cell):
         def __init__(self):
@@ -216,7 +220,7 @@ def test_net_vargs_expand():
             super(InputBackward, self).__init__()
             self.network = network
             self.network.set_train()
-            self.grad = C.grad_all_with_sens
+            self.grad = grad_all_with_sens
             self.c1 = c1
             self.c2 = c2
 

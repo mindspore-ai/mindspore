@@ -30,6 +30,9 @@ from mindspore.common.initializer import TruncatedNormal
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 def weight_variable():
     """weight initial"""
     return TruncatedNormal(0.02)
@@ -121,9 +124,6 @@ class test_custom_cell_base():
 
 
 class MulAdd(nn.Cell):
-    def __init__(self):
-        super(MulAdd, self).__init__()
-
     def construct(self, x, y):
         return 2 * x + y
 
@@ -181,8 +181,8 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
     custom_cell = test_custom_cell_base()
     mul_add = custom_cell.test_custom_cell_function(MulAdd())
     mul_add.bprop_debug = True
-    C.grad_all(mul_add)(Tensor(1, mstype.float32), Tensor(2, mstype.float32))
-    assert C.grad_all(mul_add)(Tensor(1, mstype.float32), Tensor(2, mstype.float32)) == \
+    grad_all(mul_add)(Tensor(1, mstype.float32), Tensor(2, mstype.float32))
+    assert grad_all(mul_add)(Tensor(1, mstype.float32), Tensor(2, mstype.float32)) == \
            (Tensor(1.0, mstype.float32), Tensor(2.0, mstype.float32))
 
 
@@ -194,5 +194,5 @@ def test_pynative_custom_bprop_and_Cell_Ms_Cell():
     custom_cell = test_custom_cell_base()
     ms_Cell = custom_cell.test_custom_cell_function(Ms_Cell())
     ms_Cell.bprop_debug = True
-    assert C.grad_all(ms_Cell)(Tensor(1, mstype.float32)) == (Tensor(1.0, mstype.float32),)
+    assert grad_all(ms_Cell)(Tensor(1, mstype.float32)) == (Tensor(1.0, mstype.float32),)
     

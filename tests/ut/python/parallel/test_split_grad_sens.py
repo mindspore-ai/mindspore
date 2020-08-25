@@ -24,13 +24,17 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
 
     def construct(self, x, y, b, sens):
-        return C.grad_all_with_sens(self.network)(x, y, b, sens)
+        return grad_all_with_sens(self.network)(x, y, b, sens)
 
 
 class GradWrap2(nn.Cell):
@@ -41,7 +45,7 @@ class GradWrap2(nn.Cell):
     def construct(self, x, y, b):
         loss = self.network(x, y, b)
         sens = P.Fill()(mstype.float32, P.Shape()(loss), 1.0)
-        return C.grad_all_with_sens(self.network)(x, y, b, sens)
+        return grad_all_with_sens(self.network)(x, y, b, sens)
 
 
 class GradWrap3(nn.Cell):
@@ -50,7 +54,7 @@ class GradWrap3(nn.Cell):
         self.network = network
 
     def construct(self, x, y, bias):
-        return C.grad_all(self.network)(x, y, bias)
+        return grad_all(self.network)(x, y, bias)
 
 class GradWrap4(nn.Cell):
     def __init__(self, network):
@@ -58,7 +62,7 @@ class GradWrap4(nn.Cell):
         self.network = network
 
     def construct(self, x, y):
-        return C.grad_all(self.network)(x, y)
+        return grad_all(self.network)(x, y)
 
 def compile_net(net, x, y, b):
     net.set_auto_parallel()

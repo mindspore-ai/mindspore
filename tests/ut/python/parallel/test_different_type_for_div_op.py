@@ -23,13 +23,16 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
 
     def construct(self, x, y):
-        return C.grad_all(self.network)(x, y)
+        return grad_all(self.network)(x, y)
 
 
 def compile_net(net, x, y):

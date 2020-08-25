@@ -21,6 +21,9 @@ from mindspore import dtype as mstype
 from mindspore.ops import composite as C
 
 
+grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+
+
 def test_user_define_bprop_check_ok():
     class Net(nn.Cell):
         def __init__(self):
@@ -40,7 +43,7 @@ def test_user_define_bprop_check_ok():
             self.net = net
 
         def construct(self, x, sens):
-            return C.grad_all_with_sens(self.net)(x, sens)
+            return grad_all_with_sens(self.net)(x, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
@@ -72,7 +75,7 @@ def test_user_define_bprop_no_check_dtype():
             self.net = net
 
         def construct(self, x, sens):
-            return C.grad_all_with_sens(self.net)(x, sens)
+            return grad_all_with_sens(self.net)(x, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
@@ -104,7 +107,7 @@ def test_user_define_bprop_check_shape():
             self.net = net
 
         def construct(self, x, sens):
-            return C.grad_all_with_sens(self.net)(x, sens)
+            return grad_all_with_sens(self.net)(x, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
@@ -135,7 +138,7 @@ def test_user_define_bprop_check_dtype():
             self.net = net
 
         def construct(self, x, sens):
-            return C.grad_all_with_sens(self.net)(x, sens)
+            return grad_all_with_sens(self.net)(x, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
@@ -167,7 +170,7 @@ def test_user_define_bprop_check_parameter():
             self.net = net
 
         def construct(self, x, sens):
-            return C.grad_all_with_sens(self.net)(x, sens)
+            return grad_all_with_sens(self.net)(x, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     sens = Tensor(np.array([[1.0, 2.0, 0.0], [0.0, 3.0, 4.0]], dtype=np.float32))
@@ -198,7 +201,7 @@ def test_user_define_bprop_check_number():
             self.net = net
 
         def construct(self, x, y, sens):
-            return C.grad_all_with_sens(self.net)(x, y, sens)
+            return grad_all_with_sens(self.net)(x, y, sens)
 
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))

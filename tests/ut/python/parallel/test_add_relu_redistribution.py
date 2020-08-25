@@ -23,6 +23,9 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
+grad_all = C.GradOperation('get_all', get_all=True)
+
+
 class AddRelu(nn.Cell):
     def __init__(self, strategy0=None, strategy1=None):
         super(AddRelu, self).__init__()
@@ -51,7 +54,7 @@ class Grad(nn.Cell):
         self.network = network
 
     def construct(self, x, y):
-        return C.grad_all(self.network)(x, y)
+        return grad_all(self.network)(x, y)
 
 
 def compile_net(net, x, y):

@@ -24,6 +24,9 @@ from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 
 
+grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+
+
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -38,7 +41,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, label):
         weights = self.weights
-        return C.grad_by_list(self.network, weights)(x, label)
+        return grad_by_list(self.network, weights)(x, label)
 
 
 @non_graph_engine
