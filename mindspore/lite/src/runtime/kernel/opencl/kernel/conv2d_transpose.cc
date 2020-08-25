@@ -16,7 +16,7 @@
 
 #include <string>
 #include <set>
-#include "src/common/utils.h"
+#include "nnacl/fp32/common_func.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/conv2d_transpose.h"
@@ -73,10 +73,6 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   int div_co = UP_DIV(co, C4NUM);
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
   auto data_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
-  using FLT = float;
-  if (enable_fp16_) {
-    using FLT = float16_t;
-  }
 
   // IHWO to OHWI4(I)4(O)(converter format is IHWO)
   // init padWeight_(buffer mem)
@@ -97,8 +93,8 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
                 int ori_index = ((ci_offset * kh + kh_i) * kw + kw_i) * ci + co_offset;
                 if (enable_fp16_) {
                   if (weight_dtype == kNumberTypeFloat32) {
-                    reinterpret_cast<float16_t *>(padWeight_)[index++] =
-                      lite::Float32ToShort(reinterpret_cast<float *>(origin_weight)[ori_index]);
+                    reinterpret_cast<uint16_t *>(padWeight_)[index++] =
+                      Float32ToShort(reinterpret_cast<float *>(origin_weight)[ori_index]);
                   } else {
                     reinterpret_cast<float16_t *>(padWeight_)[index++] =
                       reinterpret_cast<float16_t *>(origin_weight)[ori_index];
@@ -107,7 +103,11 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
                   reinterpret_cast<float *>(padWeight_)[index++] = reinterpret_cast<float *>(origin_weight)[ori_index];
                 }
               } else {
-                reinterpret_cast<FLT *>(padWeight_)[index++] = 0.;
+                if (enable_fp16_) {
+                  reinterpret_cast<float16_t *>(padWeight_)[index++] = 0.;
+                } else {
+                  reinterpret_cast<float *>(padWeight_)[index++] = 0.;
+                }
               }
             }
           }
@@ -134,7 +134,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       auto fdata = reinterpret_cast<float *>(in_tensors_[2]->Data());
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float16_t *>(bias_)[i] = lite::Float32ToShort(fdata[i]);
+        reinterpret_cast<uint16_t *>(bias_)[i] = Float32ToShort(fdata[i]);
       }
     } else {
       memcpy(bias_, in_tensors_[2]->Data(), co * data_size);

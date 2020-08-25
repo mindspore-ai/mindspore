@@ -16,6 +16,7 @@
 
 #include <set>
 #include <string>
+#include "nnacl/fp32/common_func.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "nnacl/fp32/matmul.h"
@@ -34,7 +35,7 @@ namespace mindspore::kernel {
 int MatMulOpenCLKernel::Init() {
   std::string kernel_name = "MatMul";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
@@ -74,11 +75,12 @@ int MatMulOpenCLKernel::ReSize() { return RET_OK; }
 
 void MatMulOpenCLKernel::PadWeight() {
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
-  padWeight_ =
-    reinterpret_cast<FLOAT_t *>(allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * sizeof(FLOAT_t)));
-  padWeight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true));
 
-  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_.at(kWeightIndex)->Data());
+  size_t dtype_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
+  padWeight_ = allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);
+  padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+
+  auto origin_weight = in_tensors_.at(kWeightIndex)->Data();
   int divCI = sizeCI.s[1];
   int divCO = sizeCO.s[1];
   int co = sizeCO.s[0];
@@ -90,9 +92,29 @@ void MatMulOpenCLKernel::PadWeight() {
           int src_x = i * C4NUM + l;
           int src_y = j * C4NUM + k;
           if (src_x < sizeCI.s[0] && src_y < sizeCO.s[0]) {
-            padWeight_[index++] = origin_weight[src_y * sizeCI.s[0] + src_x];
+            if (enable_fp16_) {
+              if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
+                reinterpret_cast<uint16_t *>(padWeight_)[index++] =
+                  Float32ToShort(reinterpret_cast<float *>(origin_weight)[src_y * sizeCI.s[0] + src_x]);
+              } else {
+                reinterpret_cast<uint16_t *>(padWeight_)[index++] =
+                  reinterpret_cast<uint16_t *>(origin_weight)[src_y * sizeCI.s[0] + src_x];
+              }
+            } else {
+              if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
+                reinterpret_cast<float *>(padWeight_)[index++] =
+                  ShortToFloat32(reinterpret_cast<uint16_t *>(origin_weight)[src_y * sizeCI.s[0] + src_x]);
+              } else {
+                reinterpret_cast<float *>(padWeight_)[index++] =
+                  reinterpret_cast<float *>(origin_weight)[src_y * sizeCI.s[0] + src_x];
+              }
+            }
           } else {
-            padWeight_[index++] = 0;
+            if (enable_fp16_) {
+              reinterpret_cast<float16_t *>(padWeight_)[index++] = 0;
+            } else {
+              reinterpret_cast<float *>(padWeight_)[index++] = 0;
+            }
           }
         }
       }
@@ -102,17 +124,23 @@ void MatMulOpenCLKernel::PadWeight() {
   size_t im_dst_x, im_dst_y;
   im_dst_x = divCO;
   im_dst_y = 1;
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   std::vector<size_t> img_size{im_dst_x, im_dst_y, img_dtype};
-  bias_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(im_dst_x * im_dst_y * C4NUM * sizeof(FLOAT_t), img_size));
-  bias_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true));
-  memset(bias_, 0x00, divCO * C4NUM * sizeof(FLOAT_t));
+  bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * dtype_size, img_size);
+  bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
+  memset(bias_, 0x00, divCO * C4NUM * dtype_size);
   if (in_tensors_.size() >= 3) {
-    memcpy(bias_, in_tensors_[2]->Data(), co * sizeof(FLOAT_t));
+    if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
+      auto fdata = reinterpret_cast<float *>(in_tensors_[2]->Data());
+      for (int i = 0; i < co; i++) {
+        reinterpret_cast<uint16_t *>(bias_)[i] = Float32ToShort(fdata[i]);
+      }
+    } else {
+      memcpy(bias_, in_tensors_[2]->Data(), co * dtype_size);
+    }
   }
   allocator->UnmapBuffer(bias_);
 }
@@ -121,11 +149,10 @@ int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   size_t im_dst_x, im_dst_y;
   im_dst_x = sizeCO.s[1];
   im_dst_y = 1;
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;

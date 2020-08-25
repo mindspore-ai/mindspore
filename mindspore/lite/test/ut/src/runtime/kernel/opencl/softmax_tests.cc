@@ -83,7 +83,7 @@ void RunTestCase(std::vector<int> input_shape, std::vector<int> output_shape, st
   pGraph->Run();
 
   MS_LOG(INFO) << "compare result";
-  CompareOutput(output_tensor, expect_file);
+  CompareOutput(output_tensor, expect_file, static_cast<float>(1e-5));
   for (auto tensor : inputs) {
     delete tensor;
   }

@@ -35,34 +35,4 @@ void LoadTestData(void *dst, size_t dst_size, const std::string &file_path) {
   }
 }
 
-void CompareOutput(lite::tensor::Tensor *output_tensor, const std::string &file_path) {
-  float *output_data = reinterpret_cast<float *>(output_tensor->Data());
-  size_t output_size = output_tensor->Size();
-  float *expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
-
-  printf("output[0:12]:");
-  for (int i = 0; i < 12; i++) {
-    printf("[%d]:%.3f ", i, output_data[i]);
-  }
-  printf("\n");
-  printf("expect[0:12]:");
-  for (int i = 0; i < 12; i++) {
-    printf("[%d]:%.3f ", i, expect_data[i]);
-  }
-  printf("\n");
-
-  constexpr float atol = 1e-5;
-  for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
-    if (std::fabs(output_data[i] - expect_data[i]) > atol) {
-      printf("error at idx[%d] expect=%.3f output=%.3f \n", i, expect_data[i], output_data[i]);
-      printf("error at idx[%d] expect=%.3f output=%.3f \n", i, expect_data[i], output_data[i]);
-      printf("error at idx[%d] expect=%.3f output=%.3f \n", i, expect_data[i], output_data[i]);
-      return;
-    }
-  }
-  printf("compare success!\n");
-  printf("compare success!\n");
-  printf("compare success!\n\n\n");
-}
-
 }  // namespace mindspore

@@ -109,7 +109,7 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
 
   MS_LOG(INFO) << "compare result";
   std::cout << "compare result" << std::endl;
-  CompareOutput(output_tensor, expect_file);
+  CompareOutput(output_tensor, expect_file, static_cast<float>(1e-5));
   for (auto tensor : inputs) {
     delete tensor;
   }
