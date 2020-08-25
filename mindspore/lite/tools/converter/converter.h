@@ -34,7 +34,7 @@ class Converter {
   Converter();
   virtual ~Converter();
   virtual schema::MetaGraphT *Convert(const lite::converter::Flags *flags);
-  void CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *flags);
+  void CreateQuantizer(FuncGraphPtr func_graph, const converter::Flags *flags);
   void FreeFuncGraph(const FuncGraphPtr &func_graph);
 
  protected:

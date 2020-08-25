@@ -15,9 +15,9 @@
  */
 
 #include "tools/converter/converter.h"
+#include <memory>
 #include <vector>
 #include <utility>
-#include <memory>
 #include "tools/converter/converter_flags.h"
 #include "src/common/common.h"
 #include "src/common/file_utils.h"
@@ -141,31 +141,11 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   return meta_graph;
 }
 
-void Converter::CreateQuantizer(FuncGraphPtr funcGraph, const converter::Flags *flags) {
+void Converter::CreateQuantizer(FuncGraphPtr func_graph, const converter::Flags *flags) {
   auto type = flags->quantType;
-  switch (type) {
-    case mindspore::schema::QuantType_AwareTraining: {
-      // mQuantizer.reset(new AwareQuantizer(graphDefT, flags->inputInferenceTypeIn, flags->stdDev, flags->mean));
-      break;
-    }
-      //    case mindspore::schema::QuantType_WeightQuant: {
-      //      MS_LOG(INFO) << "create WeightQuantizer!";
-      //      mQuantizer.reset(
-      //        new quant::WeightQuantizer(funcGraph, flags->quantSize, flags->convWeightQuantChannelThreshold,
-      //        flags->bitNum));
-      //      break;
-      //    }
-    case mindspore::schema::QuantType_PostTraining: {
-      MS_LOG(INFO) << "create PostTrainningQuantizer!";
-      mQuantizer.reset(new quant::PostTrainingQuantizer(funcGraph, flags->configFile, 8));
-      break;
-    }
-    case mindspore::schema::QuantType_QUANT_NONE:
-      MS_LOG(INFO) << "Not do quantization for model!";
-      break;
-    default:
-      MS_LOG(INFO) << "will support quntizer type " << flags->quantTypeIn.c_str() << " in the future!";
-      break;
+  if (type == mindspore::schema::QuantType_PostTraining) {
+    MS_LOG(INFO) << "create post training quantizer.";
+    mQuantizer.reset(new quant::PostTrainingQuantizer(func_graph, flags->configFile, 8));
   }
 }
 int RunConverter(int argc, const char **argv) {
