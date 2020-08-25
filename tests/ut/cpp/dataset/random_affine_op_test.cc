@@ -33,8 +33,9 @@ TEST_F(MindDataTestRandomAffineOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomAffineOp.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomAffineOp> op(new RandomAffineOp({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0, 10.0, 20.0, 20.0},
-                                                        InterpolationMode::kNearestNeighbour, {255, 0, 0}));
+  std::unique_ptr<RandomAffineOp> op(new RandomAffineOp({30.0, 30.0}, {0.0, 0.0, 0.0, 0.0}, {2.0, 2.0},
+                                                        {10.0, 10.0, 20.0, 20.0}, InterpolationMode::kNearestNeighbour,
+                                                        {255, 0, 0}));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

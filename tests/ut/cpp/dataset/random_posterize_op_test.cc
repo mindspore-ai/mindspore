@@ -33,7 +33,7 @@ TEST_F(MindDataTestRandomPosterizeOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomPosterize.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomPosterizeOp> op(new RandomPosterizeOp(1, 1));
+  std::unique_ptr<RandomPosterizeOp> op(new RandomPosterizeOp({1, 1}));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

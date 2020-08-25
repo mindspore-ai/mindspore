@@ -620,10 +620,10 @@ TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
   std::shared_ptr<TensorOperation> affine = vision::RandomAffine({0.0, 0.0}, {});
   EXPECT_EQ(affine, nullptr);
   // Invalid number of values for translate
-  affine = vision::RandomAffine({0.0, 0.0}, {1, 1, 1, 1});
+  affine = vision::RandomAffine({0.0, 0.0}, {1, 1, 1, 1, 1});
   EXPECT_EQ(affine, nullptr);
   // Invalid number of values for shear
-  affine = vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0, 10.0});
+  affine = vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0});
   EXPECT_EQ(affine, nullptr);
 }
 
@@ -642,7 +642,7 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorOperation> affine =
-    vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0, 10.0, 20.0, 20.0});
+    vision::RandomAffine({30.0, 30.0}, {-1.0, 1.0, -1.0, 1.0}, {2.0, 2.0}, {10.0, 10.0, 20.0, 20.0});
   EXPECT_NE(affine, nullptr);
 
   // Create a Map operation on ds
@@ -844,13 +844,16 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeFail) {
 
   // Create objects for the tensor ops
   // Invalid max > 8
-  std::shared_ptr<TensorOperation> posterize = vision::RandomPosterize(1, 9);
+  std::shared_ptr<TensorOperation> posterize = vision::RandomPosterize({1, 9});
   EXPECT_EQ(posterize, nullptr);
   // Invalid min < 1
-  posterize = vision::RandomPosterize(0, 8);
+  posterize = vision::RandomPosterize({0, 8});
   EXPECT_EQ(posterize, nullptr);
   // min > max
-  posterize = vision::RandomPosterize(8, 1);
+  posterize = vision::RandomPosterize({8, 1});
+  EXPECT_EQ(posterize, nullptr);
+  // empty
+  posterize = vision::RandomPosterize({});
   EXPECT_EQ(posterize, nullptr);
 }
 
@@ -869,7 +872,7 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorOperation> posterize =
-    vision::RandomPosterize(1, 4);
+    vision::RandomPosterize({1, 4});
   EXPECT_NE(posterize, nullptr);
 
   // Create a Map operation on ds

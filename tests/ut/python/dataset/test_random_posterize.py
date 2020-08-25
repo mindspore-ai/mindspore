@@ -114,6 +114,47 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
         visualize_list(image_original, image_posterize)
 
 
+def test_random_posterize_default_c_md5(plot=False, run_golden=True):
+    """
+    Test RandomPosterize C Op (default params) with md5 comparison
+    """
+    logger.info("test_random_posterize_default_c_md5")
+    original_seed = config_get_set_seed(5)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    # define map operations
+    transforms1 = [
+        c_vision.Decode(),
+        c_vision.RandomPosterize()
+    ]
+
+    #  First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    #  Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = data2.map(input_columns=["image"], operations=[c_vision.Decode()])
+
+    image_posterize = []
+    image_original = []
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        image1 = item1["image"]
+        image2 = item2["image"]
+        image_posterize.append(image1)
+        image_original.append(image2)
+
+    if run_golden:
+        # check results with md5 comparison
+        filename = "random_posterize_01_default_result_c.npz"
+        save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+    if plot:
+        visualize_list(image_original, image_posterize)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
 def test_random_posterize_exception_bit():
     """
     Test RandomPosterize: out of range input bits and invalid type
@@ -150,6 +191,7 @@ def test_random_posterize_exception_bit():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Size of bits should be a single integer or a list/tuple (min, max) of length 2."
 
+
 def test_rescale_with_random_posterize():
     """
     Test RandomPosterize: only support CV_8S/CV_8U
@@ -171,8 +213,10 @@ def test_rescale_with_random_posterize():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input image data type can not be float" in str(e)
 
+
 if __name__ == "__main__":
     test_random_posterize_op_c(plot=False, run_golden=False)
     test_random_posterize_op_fixed_point_c(plot=False)
+    test_random_posterize_default_c_md5(plot=False)
     test_random_posterize_exception_bit()
     test_rescale_with_random_posterize()

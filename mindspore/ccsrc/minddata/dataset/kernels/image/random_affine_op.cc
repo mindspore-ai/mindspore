@@ -27,7 +27,7 @@ namespace mindspore {
 namespace dataset {
 
 const std::vector<float_t> RandomAffineOp::kDegreesRange = {0.0, 0.0};
-const std::vector<float_t> RandomAffineOp::kTranslationPercentages = {0.0, 0.0};
+const std::vector<float_t> RandomAffineOp::kTranslationPercentages = {0.0, 0.0, 0.0, 0.0};
 const std::vector<float_t> RandomAffineOp::kScaleRange = {1.0, 1.0};
 const std::vector<float_t> RandomAffineOp::kShearRanges = {0.0, 0.0, 0.0, 0.0};
 const InterpolationMode RandomAffineOp::kDefInterpolation = InterpolationMode::kNearestNeighbour;
@@ -50,14 +50,16 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   IO_CHECK(input, output);
   dsize_t height = input->shape()[0];
   dsize_t width = input->shape()[1];
-  float_t max_dx = translate_range_[0] * height;
-  float_t max_dy = translate_range_[1] * width;
+  float_t min_dx = translate_range_[0] * width;
+  float_t max_dx = translate_range_[1] * width;
+  float_t min_dy = translate_range_[2] * height;
+  float_t max_dy = translate_range_[3] * height;
   float_t degrees = 0.0;
   RETURN_IF_NOT_OK(GenerateRealNumber(degrees_range_[0], degrees_range_[1], &rnd_, &degrees));
   float_t translation_x = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(-1 * max_dx, max_dx, &rnd_, &translation_x));
+  RETURN_IF_NOT_OK(GenerateRealNumber(min_dx, max_dx, &rnd_, &translation_x));
   float_t translation_y = 0.0;
-  RETURN_IF_NOT_OK(GenerateRealNumber(-1 * max_dy, max_dy, &rnd_, &translation_y));
+  RETURN_IF_NOT_OK(GenerateRealNumber(min_dy, max_dy, &rnd_, &translation_y));
   float_t scale = 1.0;
   RETURN_IF_NOT_OK(GenerateRealNumber(scale_range_[0], scale_range_[1], &rnd_, &scale));
   float_t shear_x = 0.0;

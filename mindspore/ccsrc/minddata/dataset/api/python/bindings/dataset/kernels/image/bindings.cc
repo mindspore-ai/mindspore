@@ -131,7 +131,7 @@ PYBIND_REGISTER(RandomResizeWithBBoxOp, 1, ([](const py::module *m) {
 PYBIND_REGISTER(RandomPosterizeOp, 1, ([](const py::module *m) {
                   (void)py::class_<RandomPosterizeOp, TensorOp, std::shared_ptr<RandomPosterizeOp>>(*m,
                                                                                                     "RandomPosterizeOp")
-                    .def(py::init<uint8_t, uint8_t>());
+                    .def(py::init<std::vector<uint8_t>>());
                 }));
 
 PYBIND_REGISTER(UniformAugOp, 1, ([](const py::module *m) {
