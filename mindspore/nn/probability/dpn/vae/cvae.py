@@ -99,7 +99,7 @@ class ConditionalVAE(Cell):
         Randomly sample from latent space to generate sample.
 
         Args:
-            sample_y (Tensor): Define the label of sample, int tensor, the shape is (generate_nums, ).
+            sample_y (Tensor): Define the label of sample. Tensor of shape (generate_nums, ) and type mindspore.int32.
             generate_nums (int): The number of samples to generate.
             shape(tuple): The shape of sample, it should be (generate_nums, C, H, W) or (-1, C, H, W).
 

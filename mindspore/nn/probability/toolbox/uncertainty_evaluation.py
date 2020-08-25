@@ -68,6 +68,10 @@ class UncertaintyEvaluation:
         >>>                                    save_model=False)
         >>> epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
         >>> aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
+        >>> epistemic_uncertainty.shape
+        (32, 10)
+        >>> aleatoric_uncertainty.shape
+        (32,)
     """
 
     def __init__(self, model, train_dataset, task_type, num_classes=None, epochs=1,
