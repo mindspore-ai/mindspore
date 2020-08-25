@@ -28,6 +28,8 @@ from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
 import mindspore as ms
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore import amp
+from mindspore.train.loss_scale_manager import FixedLossScaleManager
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
@@ -37,13 +39,7 @@ from src.lr_scheduler import warmup_step_lr, warmup_cosine_annealing_lr, \
 from src.yolo_dataset import create_yolo_dataset
 from src.initializer import default_recurisive_init
 from src.config import ConfigYOLOV3DarkNet53
-from src.transforms import batch_preprocess_true_box, batch_preprocess_true_box_single
-from src.util import ShapeRecord
-
-
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                    device_target="Ascend", save_graphs=True, device_id=devid)
+from src.util import keep_loss_fp32
 
 
 class BuildTrainNetwork(nn.Cell):
@@ -61,6 +57,10 @@ class BuildTrainNetwork(nn.Cell):
 def parse_args():
     """Parse train arguments."""
     parser = argparse.ArgumentParser('mindspore coco training')
+
+    # device related
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
+                        help='device where the code will be implemented. (Default: Ascend)')
 
     # dataset related
     parser.add_argument('--data_dir', type=str, help='Train dataset directory.')
@@ -136,9 +136,16 @@ def train():
     """Train function."""
     args = parse_args()
 
+    devid = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+                        device_target=args.device_target, save_graphs=True, device_id=devid)
+
     # init distributed
     if args.is_distributed:
-        init()
+        if args.device_target == "Ascend":
+            init()
+        else:
+            init("nccl")
         args.rank = get_rank()
         args.group_size = get_group_size()
 
@@ -259,9 +266,19 @@ def train():
                    momentum=args.momentum,
                    weight_decay=args.weight_decay,
                    loss_scale=args.loss_scale)
-
-    network = TrainingWrapper(network, opt)
-    network.set_train()
+    enable_amp = False
+    is_gpu = context.get_context("device_target") == "GPU"
+    if is_gpu:
+        enable_amp = True
+    if enable_amp:
+        loss_scale_value = 1.0
+        loss_scale = FixedLossScaleManager(loss_scale_value, drop_overflow_update=False)
+        network = amp.build_train_network(network, optimizer=opt, loss_scale_manager=loss_scale,
+                                          level="O2", keep_batchnorm_fp32=True)
+        keep_loss_fp32(network)
+    else:
+        network = TrainingWrapper(network, opt)
+        network.set_train()
 
     if args.rank_save_ckpt_flag:
         # checkpoint save
@@ -282,28 +299,19 @@ def train():
     t_end = time.time()
     data_loader = ds.create_dict_iterator()
 
-    shape_record = ShapeRecord()
     for i, data in enumerate(data_loader):
         images = data["image"]
         input_shape = images.shape[2:4]
         args.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
-        shape_record.set(input_shape)
 
         images = Tensor(images)
-        annos = data["annotation"]
-        if args.group_size == 1:
-            batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1, batch_gt_box2 = \
-                batch_preprocess_true_box(annos, config, input_shape)
-        else:
-            batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1, batch_gt_box2 = \
-                batch_preprocess_true_box_single(annos, config, input_shape)
 
-        batch_y_true_0 = Tensor(batch_y_true_0)
-        batch_y_true_1 = Tensor(batch_y_true_1)
-        batch_y_true_2 = Tensor(batch_y_true_2)
-        batch_gt_box0 = Tensor(batch_gt_box0)
-        batch_gt_box1 = Tensor(batch_gt_box1)
-        batch_gt_box2 = Tensor(batch_gt_box2)
+        batch_y_true_0 = Tensor(data['bbox1'])
+        batch_y_true_1 = Tensor(data['bbox2'])
+        batch_y_true_2 = Tensor(data['bbox3'])
+        batch_gt_box0 = Tensor(data['gt_box1'])
+        batch_gt_box1 = Tensor(data['gt_box2'])
+        batch_gt_box2 = Tensor(data['gt_box3'])
 
         input_shape = Tensor(tuple(input_shape[::-1]), ms.float32)
         loss = network(images, batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1,
