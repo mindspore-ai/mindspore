@@ -16,8 +16,9 @@
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param
+from ._utils.utils import calc_broadcast_shape_from_param, check_scalar_from_param, cast_type_for_device
 from ._utils.utils import CheckTuple, CheckTensor
+
 
 class Distribution(Cell):
     """
@@ -43,12 +44,12 @@ class Distribution(Cell):
         new distribution specified by the dist_spec_args. But it won't change the
         original distribuion.
     """
+
     def __init__(self,
                  seed,
                  dtype,
                  name,
                  param):
-
         """
         Constructor of distribution class.
         """
@@ -58,7 +59,7 @@ class Distribution(Cell):
 
         self._name = name
         self._seed = seed
-        self._dtype = dtype
+        self._dtype = cast_type_for_device(dtype)
         self._parameters = {}
         # parsing parameters
         for k in param.keys():
@@ -435,7 +436,6 @@ class Distribution(Cell):
             dist_spec_args are optional.
         """
         return self._sample(*args, **kwargs)
-
 
     def construct(self, name, *args, **kwargs):
         """
