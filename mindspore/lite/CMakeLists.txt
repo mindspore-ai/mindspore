@@ -31,7 +31,7 @@ endif()
 set(RUN_X86_COMPONENT_NAME runtime-x86-${PROCESS_UNIT})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+string(REPLACE "/mindspore/lite" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CORE_DIR ${TOP_DIR}/mindspore/core)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
 include_directories(${TOP_DIR})
