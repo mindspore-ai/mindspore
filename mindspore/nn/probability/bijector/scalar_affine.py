@@ -16,7 +16,7 @@
 from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
 from ..distribution._utils.utils import cast_to_tensor, CheckTensor
-from ..distribution._utils.custom_ops import log_by_step
+from ..distribution._utils.custom_ops import log_generic
 from .bijector import Bijector
 
 
@@ -69,7 +69,7 @@ class ScalarAffine(Bijector):
             param=param)
 
         self.abs = P.Abs()
-        self.log = log_by_step
+        self.log = log_generic
 
         self.checktensor = CheckTensor()
 

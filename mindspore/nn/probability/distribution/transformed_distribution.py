@@ -18,7 +18,7 @@ from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 from .distribution import Distribution
 from ._utils.utils import check_type, raise_not_impl_error
-from ._utils.custom_ops import exp_by_step, log_by_step
+from ._utils.custom_ops import exp_generic, log_generic
 
 class TransformedDistribution(Distribution):
     """
@@ -55,8 +55,8 @@ class TransformedDistribution(Distribution):
         self._bijector = bijector
         self._distribution = distribution
         self._is_linear_transformation = bijector.is_constant_jacobian
-        self.exp = exp_by_step
-        self.log = log_by_step
+        self.exp = exp_generic
+        self.log = log_generic
 
     @property
     def bijector(self):
