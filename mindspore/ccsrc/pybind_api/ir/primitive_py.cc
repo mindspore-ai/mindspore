@@ -178,7 +178,7 @@ py::function PrimitivePy::GetComputeFunction() const {
   py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   py::function vm_fn = get_fn(python_obj_);
   if (py::isinstance<py::none>(vm_fn)) {
-    MS_LOG(WARNING) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
+    MS_LOG(INFO) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();
     vm_fn = mindspore::GetComputeFunction(Primitive::name());
   }
   return vm_fn;
