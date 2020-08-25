@@ -43,6 +43,8 @@ include_directories(${CMAKE_BINARY_DIR}) # for protobuf generated .h
 
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/mindrecord/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
+
 ######################################################################
 
 ####################### Flags ########################################
@@ -94,6 +96,7 @@ set(submodules
     $<TARGET_OBJECTS:utils>
     $<TARGET_OBJECTS:kernels>
     $<TARGET_OBJECTS:kernels-image>
+    $<TARGET_OBJECTS:lite-cv>
     $<TARGET_OBJECTS:kernels-data>
     $<TARGET_OBJECTS:cpp-API>
     $<TARGET_OBJECTS:kernels-soft-dvpp-image>

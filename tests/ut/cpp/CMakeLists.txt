@@ -33,12 +33,14 @@ if(ENABLE_MINDDATA)
 endif()
 # fetch ut test files
 if(ENABLE_MINDDATA)
+    include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
     file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             ./stub/*.cc
             ./common/*.cc
             ./abstract/*.cc
             ./base/*.cc
             ./dataset/*.cc
+            ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv/*.cc
             ./debug/*.cc
             ./device/*.cc
             ./ir/*.cc
@@ -55,6 +57,7 @@ if(ENABLE_MINDDATA)
             ./utils/*.cc
             ./vm/*.cc
             )
+   
     if(NOT ENABLE_PYTHON)
         set(PYTHON_RELATED_SRCS
             dataset/filter_op_test.cc
@@ -159,6 +162,11 @@ endif()
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads mindspore_gvar ${PYTHON_LIBRARIES} pthread util dl)
     if (ENABLE_MINDDATA)
+      
+        # AUX_SOURCE_DIRECTORY(LITE_CV_FILES)
+        # message(STATUS "xxxxxxxxxxxxxxxxx"${LITE_CV_FILES} )
+        # add_library(_live_cv OBJECT ${LITE_CV_FILES})
+
         target_link_libraries(ut_tests PRIVATE _c_dataengine _c_mindrecord)
     endif()
 else()
