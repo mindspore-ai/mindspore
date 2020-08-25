@@ -53,9 +53,27 @@ int PoolingCPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   if (pooling_param_->max_pooling_) {
-    MaxPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    switch (pooling_param_->act_type_) {
+      case ActType_Relu:
+        MaxPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      case ActType_Relu6:
+        MaxPoolingRelu6(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      default:
+        MaxPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    }
   } else {
-    AvgPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    switch (pooling_param_->act_type_) {
+      case ActType_Relu:
+        AvgPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      case ActType_Relu6:
+        AvgPoolingRelu6(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      default:
+        AvgPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    }
   }
   return RET_OK;
 }

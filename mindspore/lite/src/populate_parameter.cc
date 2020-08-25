@@ -314,6 +314,14 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
       pooling_param->round_ceil_ = false;
       break;
   }
+
+  if (pooling_primitive->GetActivationType() == schema::ActivationType_RELU) {
+    pooling_param->act_type_ = ActType_Relu;
+  } else if (pooling_primitive->GetActivationType() == schema::ActivationType_RELU6) {
+    pooling_param->act_type_ = ActType_Relu6;
+  } else {
+    pooling_param->act_type_ = ActType_No;
+  }
   return reinterpret_cast<OpParameter *>(pooling_param);
 }
 

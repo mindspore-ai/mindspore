@@ -36,6 +36,7 @@ int Pooling::GetPadDown() const { return this->primitive_->value.AsPooling()->pa
 int Pooling::GetPadLeft() const { return this->primitive_->value.AsPooling()->padLeft; }
 int Pooling::GetPadRight() const { return this->primitive_->value.AsPooling()->padRight; }
 int Pooling::GetRoundMode() const { return this->primitive_->value.AsPooling()->roundMode; }
+int Pooling::GetActivationType() const { return this->primitive_->value.AsPooling()->activationType; }
 
 void Pooling::SetFormat(int format) { this->primitive_->value.AsPooling()->format = (schema::Format)format; }
 void Pooling::SetPoolingMode(int pooling_mode) {
@@ -53,6 +54,9 @@ void Pooling::SetPadLeft(int pad_left) { this->primitive_->value.AsPooling()->pa
 void Pooling::SetPadRight(int pad_right) { this->primitive_->value.AsPooling()->padRight = pad_right; }
 void Pooling::SetRoundMode(int round_mode) {
   this->primitive_->value.AsPooling()->roundMode = (schema::RoundMode)round_mode;
+}
+void Pooling::SetActivationType(int activation_type) {
+  this->primitive_->value.AsPooling()->activationType = (schema::ActivationType)activation_type;
 }
 
 int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
@@ -130,6 +134,7 @@ int Pooling::GetPadDown() const { return this->primitive_->value_as_Pooling()->p
 int Pooling::GetPadLeft() const { return this->primitive_->value_as_Pooling()->padLeft(); }
 int Pooling::GetPadRight() const { return this->primitive_->value_as_Pooling()->padRight(); }
 int Pooling::GetRoundMode() const { return this->primitive_->value_as_Pooling()->roundMode(); }
+int Pooling::GetActivationType() const { return this->primitive_->value_as_Pooling()->activationType(); }
 
 #endif
 
