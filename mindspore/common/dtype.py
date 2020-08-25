@@ -227,7 +227,6 @@ def dtype_to_pytype(type_):
 
     return {
         bool_: bool,
-        int_: int,
         int8: int,
         int16: int,
         int32: int,
@@ -236,7 +235,6 @@ def dtype_to_pytype(type_):
         uint16: int,
         uint32: int,
         uint64: int,
-        float_: float,
         float16: float,
         float32: float,
         float64: float,
