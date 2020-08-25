@@ -1253,24 +1253,17 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
   pipeline::ReclaimOptimizer();
 }
 
-template <typename T>
-void MapClear(T map, const std::string &flag) {
-  for (auto it = map.begin(); it != map.end();) {
-    if (it->first.find(flag) != std::string::npos) {
-      it->second = nullptr;
-      it = map.erase(it);
-    } else {
-      it++;
-    }
-  }
-}
-
 void PynativeExecutor::Clear(const std::string &flag) {
   if (!flag.empty()) {
     MS_LOG(DEBUG) << "Clear res";
-    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(graph_map_, flag);
-    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(cell_graph_map_, flag);
-    MapClear<std::unordered_map<std::string, ResourcePtr>>(cell_resource_map_, flag);
+    auto key_value = std::find_if(graph_map_.begin(), graph_map_.end(),
+                                  [&flag](const auto &item) { return item.first.find(flag) != std::string::npos; });
+    if (key_value != graph_map_.end()) {
+      std::string key = key_value->first;
+      (void)graph_map_.erase(key);
+      (void)cell_graph_map_.erase(key);
+      (void)cell_resource_map_.erase(key);
+    }
     Clean();
     // Maybe exit in the pynative runing op, so need reset pynative flag.
     auto ms_context = MsContext::GetInstance();
@@ -1303,9 +1296,6 @@ void PynativeExecutor::Clean() {
 }
 
 void PynativeExecutor::ClearRes() {
-  (void)graph_map_.clear();
-  (void)cell_graph_map_.clear();
-  (void)cell_resource_map_.clear();
   Clean();
   resource_.reset();
 }
