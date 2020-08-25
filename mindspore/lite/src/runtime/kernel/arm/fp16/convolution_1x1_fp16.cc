@@ -83,7 +83,6 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
 }
 
 int Convolution1x1FP16CPUKernel::InitWeightBias() {
-  auto bias_tensor = in_tensors_.at(kBiasIndex);
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
@@ -96,6 +95,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
       memcpy(bias_data_, bias_tensor->Data(), output_channel * sizeof(float16_t));
     } else {
