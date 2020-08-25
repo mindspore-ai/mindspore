@@ -31,8 +31,8 @@ class NormalPrior(Cell):
     Args:
         dtype (:class:`mindspore.dtype`): The argument is used to define the data type of the output tensor.
             Default: mindspore.float32.
-        mean (int, float): Mean of normal distribution.
-        std (int, float): Standard deviation of normal distribution.
+        mean (int, float): Mean of normal distribution. Default: 0.
+        std (int, float): Standard deviation of normal distribution. Default: 0.1.
 
     Returns:
         Cell, a normal distribution.
