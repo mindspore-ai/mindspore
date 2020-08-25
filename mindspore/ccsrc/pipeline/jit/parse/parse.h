@@ -19,6 +19,7 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
 
+#include <limits>
 #include <vector>
 #include <string>
 #include <map>
@@ -50,7 +51,11 @@ enum ParseStatusCode : int {
 
 // max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 //  will be sunk(i.e. not unrolled)
-const int MAX_FOR_LOOP_COUNT = 600;
+// NOTE: Since when the for loop was unrolled, it depends backend operators `tuple_getitem` and `scalar_add` which were
+//  not implemented, so here set MAX_FOR_LOOP_COUNT to int max limit to override default value `600`. This will make
+//  the for loop will always be unrolled, but don't worry about the memory were exhausted, an exception will be raised
+//  when function call depth execeeds the limit `context.get_context('max_call_depth')`.
+const int MAX_FOR_LOOP_COUNT = std::numeric_limits<int>::max();
 
 class AstNodeType;
 class ParseAst;
