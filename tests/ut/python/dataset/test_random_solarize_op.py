@@ -62,7 +62,7 @@ def test_random_solarize_op(threshold=(10, 150), plot=False, run_golden=True):
     image_solarized = []
     image = []
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_solarized.append(item1["image"].copy())
         image.append(item2["image"].copy())
     if plot:

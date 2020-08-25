@@ -38,7 +38,7 @@ def test_on_tokenized_line():
     data = data.map(input_columns=["text"], operations=lookup)
     res = np.array([[10, 1, 11, 1, 12, 1, 15, 1, 13, 1, 14],
                     [11, 1, 12, 1, 10, 1, 14, 1, 13, 1, 15]], dtype=np.int32)
-    for i, d in enumerate(data.create_dict_iterator()):
+    for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(d["text"], res[i])
 
 
@@ -56,7 +56,7 @@ def test_on_tokenized_line_with_no_special_tokens():
     data = data.map(input_columns=["text"], operations=lookup)
     res = np.array([[8, 0, 9, 0, 10, 0, 13, 0, 11, 0, 12],
                     [9, 0, 10, 0, 8, 0, 12, 0, 11, 0, 13]], dtype=np.int32)
-    for i, d in enumerate(data.create_dict_iterator()):
+    for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(d["text"], res[i])
 
 

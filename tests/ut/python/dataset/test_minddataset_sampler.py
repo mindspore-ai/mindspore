@@ -70,7 +70,7 @@ def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
 
     assert data_set.get_dataset_size() == 6
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -90,7 +90,7 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
 
     assert data_set.get_dataset_size() == 6
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[data]: \
@@ -111,7 +111,7 @@ def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
 
     assert data_set.get_dataset_size() == 9
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -132,7 +132,7 @@ def test_cv_minddataset_pk_sample_shuffle_1(add_and_remove_cv_file):
 
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -152,7 +152,7 @@ def test_cv_minddataset_pk_sample_shuffle_2(add_and_remove_cv_file):
 
     assert data_set.get_dataset_size() == 9
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -172,7 +172,7 @@ def test_cv_minddataset_pk_sample_out_of_range_0(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 15
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -191,7 +191,7 @@ def test_cv_minddataset_pk_sample_out_of_range_1(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 15
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -210,7 +210,7 @@ def test_cv_minddataset_pk_sample_out_of_range_2(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
@@ -231,7 +231,7 @@ def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -254,7 +254,7 @@ def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 6
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -277,7 +277,7 @@ def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 0
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -300,7 +300,7 @@ def test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file
                               sampler=sampler)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -322,7 +322,7 @@ def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -345,7 +345,7 @@ def test_cv_minddataset_random_sampler_basic(add_and_remove_cv_file):
     assert data_set.get_dataset_size() == 10
     num_iter = 0
     new_dataset = []
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -371,7 +371,7 @@ def test_cv_minddataset_random_sampler_repeat(add_and_remove_cv_file):
     epoch1_dataset = []
     epoch2_dataset = []
     epoch3_dataset = []
-    for item in ds1.create_dict_iterator():
+    for item in ds1.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -400,7 +400,7 @@ def test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -422,7 +422,7 @@ def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
                               sampler=sampler)
     assert data_set.get_dataset_size() == 4
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -447,7 +447,7 @@ def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
     dataset_size = data_set.get_dataset_size()
     assert dataset_size == 10
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -473,7 +473,7 @@ def test_cv_minddataset_split_basic(add_and_remove_cv_file):
     assert d1.get_dataset_size() == 8
     assert d2.get_dataset_size() == 2
     num_iter = 0
-    for item in d1.create_dict_iterator():
+    for item in d1.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -485,7 +485,7 @@ def test_cv_minddataset_split_basic(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 8
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -509,7 +509,7 @@ def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
     assert d1.get_dataset_size() == 8
     assert d2.get_dataset_size() == 2
     num_iter = 0
-    for item in d1.create_dict_iterator():
+    for item in d1.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -521,7 +521,7 @@ def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 8
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -545,7 +545,7 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
     assert d1.get_dataset_size() == 4
     assert d2.get_dataset_size() == 6
     num_iter = 0
-    for item in d1.create_dict_iterator():
+    for item in d1.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -557,7 +557,7 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 4
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -585,7 +585,7 @@ def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
     d1_dataset = []
     d2_dataset = []
     num_iter = 0
-    for item in d1.create_dict_iterator():
+    for item in d1.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -596,7 +596,7 @@ def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 8
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -628,7 +628,7 @@ def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
 
     num_iter = 0
     d1_shard1 = []
-    for item in d1.create_dict_iterator():
+    for item in d1.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(
@@ -649,7 +649,7 @@ def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
     epoch2_dataset = []
     epoch3_dataset = []
     num_iter = 0
-    for item in d1s.create_dict_iterator():
+    for item in d1s.create_dict_iterator(num_epochs=1):
         logger.info(
             "-------------- item[data]: {}  -----------------------------".format(item["data"]))
         logger.info(

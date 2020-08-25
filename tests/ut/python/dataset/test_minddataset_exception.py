@@ -97,7 +97,7 @@ def test_invalid_mindrecord():
     with pytest.raises(Exception, match="MindRecordOp init failed"):
         data_set = ds.MindDataset('dummy.mindrecord', columns_list, num_readers)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
         try:
             assert num_iter == 0
@@ -116,7 +116,7 @@ def test_minddataset_lack_db():
     with pytest.raises(Exception, match="MindRecordOp init failed"):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
         try:
             assert num_iter == 0
@@ -135,7 +135,7 @@ def test_cv_minddataset_pk_sample_error_class_column():
     with pytest.raises(Exception, match="MindRecordOp launch failed"):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, sampler=sampler)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -150,7 +150,7 @@ def test_cv_minddataset_pk_sample_exclusive_shuffle():
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
                                   sampler=sampler, shuffle=False)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -165,7 +165,7 @@ def test_cv_minddataset_reader_different_schema():
         data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
                                   num_readers)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -182,7 +182,7 @@ def test_cv_minddataset_reader_different_page_size():
         data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
                                   num_readers)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -197,7 +197,7 @@ def test_minddataset_invalidate_num_shards():
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 1, 2)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
         assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info.value)
@@ -217,7 +217,7 @@ def test_minddataset_invalidate_shard_id():
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 1, -1)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
         assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info.value)
@@ -237,7 +237,7 @@ def test_minddataset_shard_id_bigger_than_num_shard():
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 2)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
         assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info.value)
@@ -249,7 +249,7 @@ def test_minddataset_shard_id_bigger_than_num_shard():
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 5)
         num_iter = 0
-        for _ in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
         assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info.value)
@@ -274,7 +274,7 @@ def test_cv_minddataset_partition_num_samples_equals_0():
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=0)
             num_iter = 0
-            for _ in data_set.create_dict_iterator():
+            for _ in data_set.create_dict_iterator(num_epochs=1):
                 num_iter += 1
     with pytest.raises(Exception) as error_info:
         partitions(5)

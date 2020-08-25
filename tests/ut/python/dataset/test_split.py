@@ -90,11 +90,11 @@ def test_unmappable_split():
     s1, s2 = d.split([4, 1], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(item["text"].item().decode("utf8"))
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(item["text"].item().decode("utf8"))
 
     assert s1_output == text_file_data[0:4]
@@ -104,11 +104,11 @@ def test_unmappable_split():
     s1, s2 = d.split([0.8, 0.2], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(item["text"].item().decode("utf8"))
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(item["text"].item().decode("utf8"))
 
     assert s1_output == text_file_data[0:4]
@@ -118,11 +118,11 @@ def test_unmappable_split():
     s1, s2 = d.split([0.33, 0.67], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(item["text"].item().decode("utf8"))
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(item["text"].item().decode("utf8"))
 
     assert s1_output == text_file_data[0:2]
@@ -143,11 +143,11 @@ def test_unmappable_randomize_deterministic():
 
     for _ in range(10):
         s1_output = []
-        for item in s1.create_dict_iterator():
+        for item in s1.create_dict_iterator(num_epochs=1):
             s1_output.append(item["text"].item().decode("utf8"))
 
         s2_output = []
-        for item in s2.create_dict_iterator():
+        for item in s2.create_dict_iterator(num_epochs=1):
             s2_output.append(item["text"].item().decode("utf8"))
 
         # note no overlap
@@ -172,11 +172,11 @@ def test_unmappable_randomize_repeatable():
     s2 = s2.repeat(num_epochs)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(item["text"].item().decode("utf8"))
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(item["text"].item().decode("utf8"))
 
     # note no overlap
@@ -208,7 +208,7 @@ def test_unmappable_multi_split():
     s1_correct_output = [text_file_data[0], text_file_data[2], text_file_data[1], text_file_data[4]]
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(item["text"].item().decode("utf8"))
     assert s1_output == s1_correct_output
 
@@ -216,15 +216,15 @@ def test_unmappable_multi_split():
     s1s1, s1s2, s1s3 = s1.split([1, 2, 1], randomize=False)
 
     s1s1_output = []
-    for item in s1s1.create_dict_iterator():
+    for item in s1s1.create_dict_iterator(num_epochs=1):
         s1s1_output.append(item["text"].item().decode("utf8"))
 
     s1s2_output = []
-    for item in s1s2.create_dict_iterator():
+    for item in s1s2.create_dict_iterator(num_epochs=1):
         s1s2_output.append(item["text"].item().decode("utf8"))
 
     s1s3_output = []
-    for item in s1s3.create_dict_iterator():
+    for item in s1s3.create_dict_iterator(num_epochs=1):
         s1s3_output.append(item["text"].item().decode("utf8"))
 
     assert s1s1_output == [s1_correct_output[0]]
@@ -232,7 +232,7 @@ def test_unmappable_multi_split():
     assert s1s3_output == [s1_correct_output[3]]
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(item["text"].item().decode("utf8"))
     assert s2_output == [text_file_data[3]]
 
@@ -243,15 +243,15 @@ def test_unmappable_multi_split():
     s1s1, s1s2, s1s3 = s1.split([1, 2, 1])
 
     s1s1_output = []
-    for item in s1s1.create_dict_iterator():
+    for item in s1s1.create_dict_iterator(num_epochs=1):
         s1s1_output.append(item["text"].item().decode("utf8"))
 
     s1s2_output = []
-    for item in s1s2.create_dict_iterator():
+    for item in s1s2.create_dict_iterator(num_epochs=1):
         s1s2_output.append(item["text"].item().decode("utf8"))
 
     s1s3_output = []
-    for item in s1s3.create_dict_iterator():
+    for item in s1s3.create_dict_iterator(num_epochs=1):
         s1s3_output.append(item["text"].item().decode("utf8"))
 
     assert s1s1_output == [s1_correct_output[shuffled_ids[0]]]
@@ -259,7 +259,7 @@ def test_unmappable_multi_split():
     assert s1s3_output == [s1_correct_output[shuffled_ids[3]]]
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(item["text"].item().decode("utf8"))
     assert s2_output == [text_file_data[3]]
 
@@ -285,11 +285,11 @@ def test_mappable_split_general():
     s1, s2 = d.split([4, 1], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1, 2, 3]
@@ -299,11 +299,11 @@ def test_mappable_split_general():
     s1, s2 = d.split([0.8, 0.2], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1, 2, 3]
@@ -313,11 +313,11 @@ def test_mappable_split_general():
     s1, s2 = d.split([0.33, 0.67], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1]
@@ -331,11 +331,11 @@ def test_mappable_split_optimized():
     s1, s2 = d.split([4, 1], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1, 2, 3]
@@ -345,11 +345,11 @@ def test_mappable_split_optimized():
     s1, s2 = d.split([0.8, 0.2], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1, 2, 3]
@@ -359,11 +359,11 @@ def test_mappable_split_optimized():
     s1, s2 = d.split([0.33, 0.67], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1]
@@ -379,11 +379,11 @@ def test_mappable_randomize_deterministic():
 
     for _ in range(10):
         s1_output = []
-        for item in s1.create_dict_iterator():
+        for item in s1.create_dict_iterator(num_epochs=1):
             s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
         s2_output = []
-        for item in s2.create_dict_iterator():
+        for item in s2.create_dict_iterator(num_epochs=1):
             s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
         # note no overlap
@@ -403,11 +403,11 @@ def test_mappable_randomize_repeatable():
     s2 = s2.repeat(num_epochs)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     # note no overlap
@@ -442,12 +442,12 @@ def test_mappable_sharding():
 
     # shard 0
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     # shard 1
     d2s1_output = []
-    for item in d2s1.create_dict_iterator():
+    for item in d2s1.create_dict_iterator(num_epochs=1):
         d2s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     rows_per_shard_per_epoch = 2
@@ -468,11 +468,11 @@ def test_mappable_sharding():
 
     # test other split
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     d2s2_output = []
-    for item in d2s2.create_dict_iterator():
+    for item in d2s2.create_dict_iterator(num_epochs=1):
         d2s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s2_output == [2]
@@ -498,7 +498,7 @@ def test_mappable_multi_split():
     s1_correct_output = [0, 1, 3, 4]
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
     assert s1_output == s1_correct_output
 
@@ -506,15 +506,15 @@ def test_mappable_multi_split():
     s1s1, s1s2, s1s3 = s1.split([1, 2, 1], randomize=False)
 
     s1s1_output = []
-    for item in s1s1.create_dict_iterator():
+    for item in s1s1.create_dict_iterator(num_epochs=1):
         s1s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s1s2_output = []
-    for item in s1s2.create_dict_iterator():
+    for item in s1s2.create_dict_iterator(num_epochs=1):
         s1s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s1s3_output = []
-    for item in s1s3.create_dict_iterator():
+    for item in s1s3.create_dict_iterator(num_epochs=1):
         s1s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1s1_output == [s1_correct_output[0]]
@@ -522,7 +522,7 @@ def test_mappable_multi_split():
     assert s1s3_output == [s1_correct_output[3]]
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
     assert s2_output == [2]
 
@@ -533,15 +533,15 @@ def test_mappable_multi_split():
     s1s1, s1s2, s1s3 = s1.split([1, 2, 1])
 
     s1s1_output = []
-    for item in s1s1.create_dict_iterator():
+    for item in s1s1.create_dict_iterator(num_epochs=1):
         s1s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s1s2_output = []
-    for item in s1s2.create_dict_iterator():
+    for item in s1s2.create_dict_iterator(num_epochs=1):
         s1s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s1s3_output = []
-    for item in s1s3.create_dict_iterator():
+    for item in s1s3.create_dict_iterator(num_epochs=1):
         s1s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1s1_output == [s1_correct_output[random_sampler_ids[0]]]
@@ -549,7 +549,7 @@ def test_mappable_multi_split():
     assert s1s3_output == [s1_correct_output[random_sampler_ids[3]]]
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
     assert s2_output == [2]
 
@@ -561,11 +561,11 @@ def test_rounding():
     s1, s2 = d.split([0.5, 0.5], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0, 1, 2]
@@ -575,15 +575,15 @@ def test_rounding():
     s1, s2, s3 = d.split([0.15, 0.55, 0.3], randomize=False)
 
     s1_output = []
-    for item in s1.create_dict_iterator():
+    for item in s1.create_dict_iterator(num_epochs=1):
         s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s2_output = []
-    for item in s2.create_dict_iterator():
+    for item in s2.create_dict_iterator(num_epochs=1):
         s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     s3_output = []
-    for item in s3.create_dict_iterator():
+    for item in s3.create_dict_iterator(num_epochs=1):
         s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
 
     assert s1_output == [0]

@@ -31,7 +31,7 @@ def test_from_list_tutorial():
     data = data.map(input_columns=["text"], operations=lookup)
     ind = 0
     res = [2, 1, 4, 5, 6, 7]
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         assert d["text"] == res[ind], ind
         ind += 1
 
@@ -43,7 +43,7 @@ def test_from_file_tutorial():
     data = data.map(input_columns=["text"], operations=lookup)
     ind = 0
     res = [10, 11, 12, 15, 13, 14]
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         assert d["text"] == res[ind], ind
         ind += 1
 
@@ -55,7 +55,7 @@ def test_from_dict_tutorial():
     data = data.map(input_columns=["text"], operations=lookup)
     res = [3, 6, 2, 4, 5, 6]
     ind = 0
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         assert d["text"] == res[ind], ind
         ind += 1
 
@@ -80,7 +80,7 @@ def test_from_list():
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
             data = data.map(input_columns=["text"], operations=text.Lookup(vocab, unknown_token))
             res = []
-            for d in data.create_dict_iterator():
+            for d in data.create_dict_iterator(num_epochs=1):
                 res.append(d["text"].item())
             return res
         except (ValueError, RuntimeError, TypeError) as e:
@@ -119,7 +119,7 @@ def test_from_file():
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
             data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "s2"))
             res = []
-            for d in data.create_dict_iterator():
+            for d in data.create_dict_iterator(num_epochs=1):
                 res.append(d["text"].item())
             return res
         except ValueError as e:

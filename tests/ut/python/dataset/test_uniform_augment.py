@@ -255,7 +255,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     ds1 = ds1.batch(batch_size, drop_remainder=True, num_parallel_workers=1)
     num_batches = 0
     try:
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_batches += 1
     except Exception as e:
         assert "Crop size" in str(e)

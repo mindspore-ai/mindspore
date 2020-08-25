@@ -27,7 +27,7 @@ def test_celeba_dataset_label():
         [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
          0, 0, 1]]
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("----------image--------")
         logger.info(item["image"])
         logger.info("----------attr--------")
@@ -50,7 +50,7 @@ def test_celeba_dataset_op():
     data = data.map(input_columns=["image"], operations=resize_op)
 
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("----------image--------")
         logger.info(item["image"])
         count = count + 1
@@ -63,7 +63,7 @@ def test_celeba_dataset_ext():
     expect_labels = [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1,
                      0, 1, 0, 1, 0, 0, 1],
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("----------image--------")
         logger.info(item["image"])
         logger.info("----------attr--------")
@@ -77,7 +77,7 @@ def test_celeba_dataset_ext():
 def test_celeba_dataset_distribute():
     data = ds.CelebADataset(DATA_DIR, decode=True, num_shards=2, shard_id=0)
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("----------image--------")
         logger.info(item["image"])
         logger.info("----------attr--------")

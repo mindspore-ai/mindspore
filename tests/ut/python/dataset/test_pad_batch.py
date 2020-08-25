@@ -62,7 +62,7 @@ def test_batch_padding_01():
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)})
     data1 = data1.repeat(2)
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal([[0, -1], [1, -1]], data["col1d"])
         np.testing.assert_array_equal([[[100, -2], [200, -2]], [[101, -2], [201, -2]]], data["col2d"])
 
@@ -71,7 +71,7 @@ def test_batch_padding_02():
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], -2)})
     data1 = data1.repeat(2)
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal([[0], [1]], data["col1d"])
         np.testing.assert_array_equal([[[100, -2]], [[101, -2]]], data["col2d"])
 
@@ -81,7 +81,7 @@ def test_batch_padding_03():
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, -1)})  # pad automatically
     data1 = data1.repeat(2)
     res = dict()
-    for ind, data in enumerate(data1.create_dict_iterator()):
+    for ind, data in enumerate(data1.create_dict_iterator(num_epochs=1)):
         res[ind] = data["col"].copy()
     np.testing.assert_array_equal(res[0], [[0, -1], [0, 1]])
     np.testing.assert_array_equal(res[1], [[0, 1, 2, -1], [0, 1, 2, 3]])
@@ -93,7 +93,7 @@ def test_batch_padding_04():
     data1 = ds.GeneratorDataset((lambda: gen_var_cols(2)), ["col1", "col2"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(data["col1"], [[0, 0], [0, 1]])
         np.testing.assert_array_equal(data["col2"], [[100, 0], [100, 101]])
 
@@ -102,7 +102,7 @@ def test_batch_padding_05():
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
     data1 = data1.batch(batch_size=3, drop_remainder=False,
                         pad_info={"col2": ([2, None], -2), "col1": (None, -1)})  # pad automatically
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(data["col1"], [[[0, -1, -1]], [[0, 1, -1]], [[0, 1, 2]]])
         np.testing.assert_array_equal(data["col2"], [[[100, -2, -2], [-2, -2, -2]], [[100, 101, -2], [-2, -2, -2]],
                                                      [[100, 101, 102], [-2, -2, -2]]])
@@ -117,7 +117,7 @@ def batch_padding_performance_3d():
     data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
     start_time = time.time()
     num_batches = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_batches += 1
     _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -133,7 +133,7 @@ def batch_padding_performance_1d():
     data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
     start_time = time.time()
     num_batches = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_batches += 1
     _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -149,7 +149,7 @@ def batch_pyfunc_padding_3d():
     data1 = data1.batch(batch_size=24, drop_remainder=True)
     start_time = time.time()
     num_batches = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_batches += 1
     _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -164,7 +164,7 @@ def batch_pyfunc_padding_1d():
     data1 = data1.batch(batch_size=24, drop_remainder=True)
     start_time = time.time()
     num_batches = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_batches += 1
     _ = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -180,7 +180,7 @@ def test_pad_via_map():
         data1 = data1.map(input_columns="image", operations=(lambda x: np.pad(x, (0, 816))))
         data1 = data1.batch(batch_size=25, drop_remainder=True)
         res = []
-        for data in data1.create_dict_iterator():
+        for data in data1.create_dict_iterator(num_epochs=1):
             res.append(data["image"])
         return res
 
@@ -189,7 +189,7 @@ def test_pad_via_map():
         data2 = data2.map(input_columns="image", operations=(lambda x: x.reshape(-1)))  # reshape to 1d
         data2 = data2.batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
         res = []
-        for data in data2.create_dict_iterator():
+        for data in data2.create_dict_iterator(num_epochs=1):
             res.append(data["image"])
         return res
 

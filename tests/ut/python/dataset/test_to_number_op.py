@@ -42,7 +42,7 @@ def test_to_number_typical_case_integral():
 
         expected_output = [int(string) for string in inputs]
         output = []
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             output.append(data["strings"])
 
         assert output == expected_output
@@ -58,7 +58,7 @@ def test_to_number_typical_case_non_integral():
 
         expected_output = [float(string) for string in inputs]
         output = []
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             output.append(data["strings"])
 
         for expected, actual, epsilon in zip(expected_output, output, epsilons):
@@ -72,7 +72,7 @@ def out_of_bounds_error_message_check(dataset, np_type, value_to_cast):
     type_name = str(np.dtype(np_type))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "String input " + value_to_cast + " will be out of bounds if casted to " + type_name in str(info.value)
     assert "valid range is: [" + type_min + ", " + type_max + "]" in str(info.value)
@@ -100,7 +100,7 @@ def test_to_number_out_of_bounds_non_integral():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[0]))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "outside of valid float16 range" in str(info.value)
 
@@ -109,7 +109,7 @@ def test_to_number_out_of_bounds_non_integral():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[1]))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "String input " + input_strings[0] + " will be out of bounds if casted to float32" in str(info.value)
 
@@ -118,7 +118,7 @@ def test_to_number_out_of_bounds_non_integral():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[2]))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "String input " + input_strings[0] + " will be out of bounds if casted to float64" in str(info.value)
 
@@ -129,7 +129,7 @@ def test_to_number_out_of_bounds_non_integral():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[0]))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "outside of valid float16 range" in str(info.value)
 
@@ -138,7 +138,7 @@ def test_to_number_out_of_bounds_non_integral():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[1]))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "String input " + input_strings[0] + " will be out of bounds if casted to float32" in str(info.value)
 
@@ -147,7 +147,7 @@ def test_to_number_out_of_bounds_non_integral():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[2]))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "String input " + input_strings[0] + " will be out of bounds if casted to float64" in str(info.value)
 
@@ -158,19 +158,19 @@ def test_to_number_boundaries_integral():
         input_strings = [str(type_info.max)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
         dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["strings"] == int(input_strings[0])
 
         input_strings = [str(type_info.min)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
         dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["strings"] == int(input_strings[0])
 
         input_strings = [str(0)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
         dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["strings"] == int(input_strings[0])
 
 
@@ -180,7 +180,7 @@ def test_to_number_invalid_input():
     dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(mstype.int32))
 
     with pytest.raises(RuntimeError) as info:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
     assert "It is invalid to convert " + input_strings[0] + " to a number" in str(info.value)
 

@@ -26,7 +26,7 @@ def test_manifest_dataset_train():
     count = 0
     cat_count = 0
     dog_count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
         if item["label"].size == 1 and item["label"] == 0:
@@ -41,7 +41,7 @@ def test_manifest_dataset_train():
 def test_manifest_dataset_eval():
     data = ds.ManifestDataset(DATA_FILE, "eval", decode=True)
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
         if item["label"] != 0 and item["label"] != 1:
@@ -55,7 +55,7 @@ def test_manifest_dataset_class_index():
     out_class_indexing = data.get_class_indexing()
     assert out_class_indexing == {"dog": 11}
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
         if item["label"] != 11:
@@ -71,7 +71,7 @@ def test_manifest_dataset_get_class_index():
     class_indexing = data.get_class_indexing()
     assert class_indexing == {'cat': 0, 'dog': 1, 'flower': 2}
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
     assert count == 4
@@ -81,7 +81,7 @@ def test_manifest_dataset_multi_label():
     data = ds.ManifestDataset(DATA_FILE, decode=True, shuffle=False)
     count = 0
     expect_label = [1, 0, 0, [0, 2]]
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         assert item["label"].tolist() == expect_label[count]
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
@@ -107,7 +107,7 @@ def test_manifest_dataset_multi_label_onehot():
     data = data.map(input_columns=["label"], operations=multi_label_hot)
     data = data.batch(2)
     count = 0
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         assert item["label"].tolist() == expect_label[count]
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1

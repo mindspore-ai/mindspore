@@ -129,7 +129,7 @@ def test_shuffle_06():
     data2 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(buffer_size=buffer_size)
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         np.testing.assert_equal(item1, item2)
 
 

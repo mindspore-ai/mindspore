@@ -80,7 +80,7 @@ class Vocab(cde.Vocab):
         if special_tokens is None:
             special_tokens = []
         root = copy.deepcopy(dataset).build_vocab(vocab, columns, freq_range, top_k, special_tokens, special_first)
-        for d in root.create_dict_iterator():
+        for d in root.create_dict_iterator(num_epochs=1):
             if d is not None:
                 raise ValueError("from_dataset should receive data other than None.")
         return vocab
@@ -167,7 +167,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         vocab = SentencePieceVocab()
         root = copy.deepcopy(dataset).build_sentencepiece_vocab(vocab, col_names, vocab_size, character_coverage,
                                                                 model_type, params)
-        for d in root.create_dict_iterator():
+        for d in root.create_dict_iterator(num_epochs=1):
             if d is None:
                 raise ValueError("from_dataset should receive data other than None.")
         return vocab

@@ -138,7 +138,7 @@ def test_zip_exception_01():
         dataz = ds.zip((data1, data1))
 
         num_iter = 0
-        for _, item in enumerate(dataz.create_dict_iterator()):
+        for _, item in enumerate(dataz.create_dict_iterator(num_epochs=1)):
             logger.info("item[input_mask] is {}".format(item["input_mask"]))
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
@@ -159,7 +159,7 @@ def test_zip_exception_02():
         dataz = ds.zip((data1, data2))
 
         num_iter = 0
-        for _, item in enumerate(dataz.create_dict_iterator()):
+        for _, item in enumerate(dataz.create_dict_iterator(num_epochs=1)):
             logger.info("item[input_mask] is {}".format(item["input_mask"]))
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
@@ -180,7 +180,7 @@ def test_zip_exception_03():
         dataz = dataz.repeat(2)
 
         num_iter = 0
-        for _, item in enumerate(dataz.create_dict_iterator()):
+        for _, item in enumerate(dataz.create_dict_iterator(num_epochs=1)):
             logger.info("item[input_mask] is {}".format(item["input_mask"]))
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
@@ -200,7 +200,7 @@ def test_zip_exception_04():
         dataz = dataz.repeat(2)
 
         num_iter = 0
-        for _, item in enumerate(dataz.create_dict_iterator()):
+        for _, item in enumerate(dataz.create_dict_iterator(num_epochs=1)):
             logger.info("item[input_mask] is {}".format(item["input_mask"]))
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
@@ -221,7 +221,7 @@ def test_zip_exception_05():
         dataz = ds.zip(data1, data2)
 
         num_iter = 0
-        for _, item in enumerate(dataz.create_dict_iterator()):
+        for _, item in enumerate(dataz.create_dict_iterator(num_epochs=1)):
             logger.info("item[input_mask] is {}".format(item["input_mask"]))
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))
@@ -241,7 +241,7 @@ def test_zip_exception_06():
         dataz = ds.zip(data1)
 
         num_iter = 0
-        for _, item in enumerate(dataz.create_dict_iterator()):
+        for _, item in enumerate(dataz.create_dict_iterator(num_epochs=1)):
             logger.info("item[input_mask] is {}".format(item["input_mask"]))
             num_iter += 1
         logger.info("Number of data in zipped dataz: {}".format(num_iter))

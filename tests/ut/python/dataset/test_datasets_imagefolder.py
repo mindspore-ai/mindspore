@@ -28,7 +28,7 @@ def test_imagefolder_basic():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -48,7 +48,7 @@ def test_imagefolder_numsamples():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -61,7 +61,7 @@ def test_imagefolder_numsamples():
     data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_parallel_workers=2, sampler=random_sampler)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     assert num_iter == 3
@@ -70,7 +70,7 @@ def test_imagefolder_numsamples():
     data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_parallel_workers=2, sampler=random_sampler)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     assert num_iter == 3
@@ -86,7 +86,7 @@ def test_imagefolder_numshards():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -106,7 +106,7 @@ def test_imagefolder_shardid():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -126,7 +126,7 @@ def test_imagefolder_noshuffle():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -147,7 +147,7 @@ def test_imagefolder_extrashuffle():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -171,7 +171,7 @@ def test_imagefolder_classindex():
               333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333]
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -196,7 +196,7 @@ def test_imagefolder_negative_classindex():
               -333, -333, -333, -333, -333, -333, -333, -333, -333, -333, -333]
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -218,7 +218,7 @@ def test_imagefolder_extensions():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -239,7 +239,7 @@ def test_imagefolder_decode():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -267,7 +267,7 @@ def test_sequential_sampler():
 
     result = []
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         result.append(item["label"])
         num_iter += 1
@@ -287,7 +287,7 @@ def test_random_sampler():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -308,7 +308,7 @@ def test_distributed_sampler():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -329,7 +329,7 @@ def test_pk_sampler():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -351,7 +351,7 @@ def test_subset_random_sampler():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -373,7 +373,7 @@ def test_weighted_random_sampler():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -393,7 +393,7 @@ def test_imagefolder_rename():
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -405,7 +405,7 @@ def test_imagefolder_rename():
     data1 = data1.rename(input_columns=["image"], output_columns="image2")
 
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image2"]))
         logger.info("label is {}".format(item["label"]))
@@ -430,7 +430,7 @@ def test_imagefolder_zip():
     data3 = ds.zip((data1, data2))
 
     num_iter = 0
-    for item in data3.create_dict_iterator():  # each data is a dictionary
+    for item in data3.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))

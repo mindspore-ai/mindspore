@@ -41,7 +41,7 @@ def test_whitespace_tokenizer_ch():
     tokenizer = text.PythonTokenizer(my_tokenizer)
     dataset = dataset.map(operations=tokenizer, num_parallel_workers=1)
     tokens = []
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         s = text.to_str(i['text']).tolist()
         tokens.append(s)
     logger.info("The out tokens is : {}".format(tokens))

@@ -51,7 +51,7 @@ def test_random_crop_op_c(plot=False):
 
     image_cropped = []
     image = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_cropped.append(image1)
@@ -85,7 +85,7 @@ def test_random_crop_op_py(plot=False):
 
     crop_images = []
     original_images = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         crop = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         crop_images.append(crop)
@@ -254,7 +254,7 @@ def test_random_crop_04_c():
     data = data.map(input_columns=["image"], operations=decode_op)
     data = data.map(input_columns=["image"], operations=random_crop_op)
     try:
-        data.create_dict_iterator().get_next()
+        data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size is greater than the image dim" in str(e)
@@ -277,7 +277,7 @@ def test_random_crop_04_py():
     transform = py_vision.ComposeOp(transforms)
     data = data.map(input_columns=["image"], operations=transform())
     try:
-        data.create_dict_iterator().get_next()
+        data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size" in str(e)
@@ -497,7 +497,7 @@ def test_random_crop_09():
     transform = py_vision.ComposeOp(transforms)
     data = data.map(input_columns=["image"], operations=transform())
     try:
-        data.create_dict_iterator().get_next()
+        data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should be PIL Image" in str(e)
@@ -528,7 +528,7 @@ def test_random_crop_comp(plot=False):
 
     image_c_cropped = []
     image_py_cropped = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_c_cropped.append(c_image)

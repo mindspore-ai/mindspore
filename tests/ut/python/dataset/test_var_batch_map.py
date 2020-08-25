@@ -25,12 +25,12 @@ def test_batch_corner_cases():
 
     def test_repeat_batch(gen_num, repeats, batch_size, drop, res):
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).repeat(repeats).batch(batch_size, drop)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
 
     def test_batch_repeat(gen_num, repeats, batch_size, drop, res):
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size, drop).repeat(repeats)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
 
     tst1, tst2, tst3, tst4 = [], [], [], []
@@ -81,7 +81,7 @@ def test_variable_size_batch():
     def test_repeat_batch(gen_num, r, drop, func, res):
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).repeat(r).batch(batch_size=func,
                                                                                      drop_remainder=drop)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
 
     # same as test_repeat_batch except each row is passed through via a map which makes a copy of each element
@@ -89,14 +89,14 @@ def test_variable_size_batch():
         res = []
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).repeat(r) \
             .batch(batch_size=func, drop_remainder=drop, input_columns=["num"], per_batch_map=simple_copy)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
         return res
 
     def test_batch_repeat(gen_num, r, drop, func, res):
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size=func, drop_remainder=drop).repeat(
             r)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
 
     # same as test_batch_repeat except each row is passed through via a map which makes a copy of each element
@@ -104,7 +104,7 @@ def test_variable_size_batch():
         res = []
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]) \
             .batch(batch_size=func, drop_remainder=drop, input_columns=["num"], per_batch_map=simple_copy).repeat(r)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
         return res
 
@@ -162,7 +162,7 @@ def test_basic_batch_map():
     def batch_map_config(num, r, batch_size, func, res):
         data1 = ds.GeneratorDataset((lambda: gen(num)), ["num"]) \
             .batch(batch_size=batch_size, input_columns=["num"], per_batch_map=func).repeat(r)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["num"])
 
     tst1, tst2, = [], []
@@ -201,7 +201,7 @@ def test_batch_multi_col_map():
     def batch_map_config(num, r, batch_size, func, col_names, res):
         data1 = ds.GeneratorDataset((lambda: gen(num)), ["num", "num_square"]) \
             .batch(batch_size=batch_size, input_columns=col_names, per_batch_map=func).repeat(r)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(np.array([item["num"], item["num_square"]]))
 
     tst1, tst2, tst3, tst4 = [], [], [], []
@@ -253,7 +253,7 @@ def test_var_batch_multi_col_map():
     def batch_map_config(num, r, fbatch, fmap, col_names, res):
         data1 = ds.GeneratorDataset((lambda: gen_3_cols(num)), ["col1", "col2", "col3"]) \
             .batch(batch_size=fbatch, input_columns=col_names, per_batch_map=fmap).repeat(r)
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(np.array([item["col1"], item["col2"], item["col3"]]))
 
     tst1 = []
@@ -277,7 +277,7 @@ def test_var_batch_var_resize():
     data1 = data1.batch(batch_size=add_one, drop_remainder=True, input_columns=["image"], per_batch_map=np_psedo_resize)
     # i-th batch has shape [i, i^2, i^2, 3]
     i = 1
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         assert item["image"].shape == (i, i ** 2, i ** 2, 3), "\ntest_var_batch_var_resize FAILED\n"
         i += 1
 
@@ -297,7 +297,7 @@ def test_exception():
 
     data1 = ds.GeneratorDataset((lambda: gen(100)), ["num"]).batch(bad_batch_size)
     try:
-        for _ in data1.create_dict_iterator():
+        for _ in data1.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError:
@@ -305,7 +305,7 @@ def test_exception():
 
     data2 = ds.GeneratorDataset((lambda: gen(100)), ["num"]).batch(4, input_columns=["num"], per_batch_map=bad_map_func)
     try:
-        for _ in data2.create_dict_iterator():
+        for _ in data2.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError:

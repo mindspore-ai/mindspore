@@ -111,7 +111,7 @@ def test_cache_map_basic3():
     logger.info("ds1.dataset_size is ", ds1.get_dataset_size())
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         logger.info("get data from dataset")
         num_iter += 1
 
@@ -136,7 +136,7 @@ def test_cache_map_basic4():
     shape = ds1.output_shapes()
     logger.info(shape)
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         logger.info("get data from dataset")
         num_iter += 1
 
@@ -172,7 +172,7 @@ def test_cache_map_failure1():
 
     try:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))

@@ -42,7 +42,7 @@ def test_multiple_ngrams():
     dataset = dataset.map(input_columns=["text"], operations=text.Ngram([1, 2, 3], ("_", 2), ("_", 2), " "))
 
     i = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         assert [d.decode("utf8") for d in data["text"]] == n_gram_mottos[i]
         i += 1
 
@@ -64,7 +64,7 @@ def test_simple_ngram():
     dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=" "))
 
     i = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         assert [d.decode("utf8") for d in data["text"]] == n_gram_mottos[i], i
         i += 1
 
@@ -79,7 +79,7 @@ def test_corner_cases():
         try:
             dataset = ds.GeneratorDataset(gen(input_line), column_names=["text"])
             dataset = dataset.map(input_columns=["text"], operations=text.Ngram(n, l_pad, r_pad, separator=sep))
-            for data in dataset.create_dict_iterator():
+            for data in dataset.create_dict_iterator(num_epochs=1):
                 return [d.decode("utf8") for d in data["text"]]
         except (ValueError, TypeError) as e:
             return str(e)

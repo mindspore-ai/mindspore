@@ -154,7 +154,7 @@ def test_rgb_hsv_pipeline():
     ds2 = ds2.map(input_columns=["image"], operations=transform2())
 
     num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(), ds2.create_dict_iterator()):
+    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         ori_img = data1["image"]
         cvt_img = data2["image"]

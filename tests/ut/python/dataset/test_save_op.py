@@ -109,7 +109,7 @@ def test_case_00(add_and_remove_cv_file):  # only bin data
                         shuffle=False)
     assert d2.get_dataset_size() == 5
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         assert len(item) == 5
         for field in item:
             if isinstance(item[field], np.ndarray):
@@ -152,7 +152,7 @@ def test_case_01(add_and_remove_cv_file):  # only raw data
                         shuffle=False)
     assert d2.get_dataset_size() == 6
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         logger.info(item)
         assert len(item) == 2
         for field in item:
@@ -289,7 +289,7 @@ def test_case_02(add_and_remove_cv_file):  # muti-bytes
                         shuffle=False)
     assert d2.get_dataset_size() == 6
     num_iter = 0
-    for item in d2.create_dict_iterator():
+    for item in d2.create_dict_iterator(num_epochs=1):
         assert len(item) == 13
         for field in item:
             if isinstance(item[field], np.ndarray):
@@ -322,7 +322,7 @@ def test_case_03(add_and_remove_cv_file):
                         shuffle=False)
 
     i = 0
-    for item in d2.create_dict_iterator():  # each data is a dictionary
+    for item in d2.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -351,7 +351,7 @@ def type_tester(t):
 
     i = 0
     num_repeat = 0
-    for item in d2.create_dict_iterator():  # each data is a dictionary
+    for item in d2.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         logger.info(item)
         np.testing.assert_array_equal(item["data"], golden)
@@ -409,14 +409,14 @@ def test_case_07():
         os.remove("{}.db".format(CV_FILE_NAME2))
     d1 = ds.TFRecordDataset(TFRECORD_FILES, shuffle=False)
     tf_data = []
-    for x in d1.create_dict_iterator():
+    for x in d1.create_dict_iterator(num_epochs=1):
         tf_data.append(x)
     d1.save(CV_FILE_NAME2, FILES_NUM)
     d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     mr_data = []
-    for x in d2.create_dict_iterator():
+    for x in d2.create_dict_iterator(num_epochs=1):
         mr_data.append(x)
     count = 0
     for x in tf_data:

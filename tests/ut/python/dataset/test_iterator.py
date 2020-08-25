@@ -28,7 +28,8 @@ def check(project_columns):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS, shuffle=False)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=project_columns, shuffle=False)
 
-    for data_actual, data_expected in zip(data1.create_tuple_iterator(project_columns), data2.create_tuple_iterator()):
+    for data_actual, data_expected in zip(data1.create_tuple_iterator(project_columns, num_epochs=1),
+                                          data2.create_tuple_iterator(num_epochs=1)):
         assert len(data_actual) == len(data_expected)
         assert all([np.array_equal(d1, d2) for d1, d2 in zip(data_actual, data_expected)])
 
@@ -48,9 +49,9 @@ def test_iterator_create_tuple():
 def test_iterator_weak_ref():
     ITERATORS_LIST.clear()
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
-    itr1 = data.create_tuple_iterator()
-    itr2 = data.create_tuple_iterator()
-    itr3 = data.create_tuple_iterator()
+    itr1 = data.create_tuple_iterator(num_epochs=1)
+    itr2 = data.create_tuple_iterator(num_epochs=1)
+    itr3 = data.create_tuple_iterator(num_epochs=1)
 
     assert len(ITERATORS_LIST) == 3
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 3
@@ -67,9 +68,9 @@ def test_iterator_weak_ref():
     assert len(ITERATORS_LIST) == 3
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 0
 
-    itr1 = data.create_tuple_iterator()
-    itr2 = data.create_tuple_iterator()
-    itr3 = data.create_tuple_iterator()
+    itr1 = data.create_tuple_iterator(num_epochs=1)
+    itr2 = data.create_tuple_iterator(num_epochs=1)
+    itr3 = data.create_tuple_iterator(num_epochs=1)
 
     _cleanup()
     with pytest.raises(AttributeError) as info:
@@ -102,7 +103,7 @@ def test_tree_copy():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS)
     data1 = data.map(operations=[MyDict()])
 
-    itr = data1.create_tuple_iterator()
+    itr = data1.create_tuple_iterator(num_epochs=1)
 
     assert id(data1) != id(itr.dataset)
     assert id(data) != id(itr.dataset.children[0])

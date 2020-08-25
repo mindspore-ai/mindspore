@@ -28,7 +28,7 @@ def test_sliding_window_string():
     dataset = dataset.map(input_columns=["text"], operations=text.SlidingWindow(2, 0))
 
     result = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         for i in range(data['text'].shape[0]):
             result.append([])
             for j in range(data['text'].shape[1]):
@@ -46,7 +46,7 @@ def test_sliding_window_number():
     dataset = ds.GeneratorDataset(gen(inputs), column_names=["number"])
     dataset = dataset.map(input_columns=["number"], operations=text.SlidingWindow(1, -1))
 
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(data['number'], expect)
 
 def test_sliding_window_big_width():
@@ -56,7 +56,7 @@ def test_sliding_window_big_width():
     dataset = ds.NumpySlicesDataset(inputs, column_names=["number"], shuffle=False)
     dataset = dataset.map(input_columns=["number"], operations=text.SlidingWindow(30, 0))
 
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(data['number'], expect)
 
 def test_sliding_window_exception():
@@ -82,7 +82,7 @@ def test_sliding_window_exception():
         inputs = [[1, 2, 3, 4, 5]]
         dataset = ds.NumpySlicesDataset(inputs, column_names=["text"], shuffle=False)
         dataset = dataset.map(input_columns=["text"], operations=text.SlidingWindow(3, -100))
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
@@ -92,7 +92,7 @@ def test_sliding_window_exception():
         inputs = ["aa", "bb", "cc"]
         dataset = ds.NumpySlicesDataset(inputs, column_names=["text"], shuffle=False)
         dataset = dataset.map(input_columns=["text"], operations=text.SlidingWindow(2, 0))
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:

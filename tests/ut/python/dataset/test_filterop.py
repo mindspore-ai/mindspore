@@ -35,7 +35,7 @@ def test_diff_predicate_func():
 
         num_iter = 0
         label_list = []
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             num_iter += 1
             label = data["label"]
             label_list.append(label)
@@ -64,7 +64,7 @@ def test_filter_by_generator_with_no():
     dataset_f = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
     num_iter = 0
     expected_rs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         assert item["data"] == expected_rs[num_iter]
         num_iter += 1
 
@@ -77,7 +77,7 @@ def test_filter_by_generator_with_repeat():
     num_iter = 0
     ret_data = []
     expected_rs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["data"])
     assert num_iter == 44
@@ -95,7 +95,7 @@ def test_filter_by_generator_with_repeat_after():
     num_iter = 0
     ret_data = []
     expected_rs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    for item in dataset_r.create_dict_iterator():
+    for item in dataset_r.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["data"])
     assert num_iter == 44
@@ -120,7 +120,7 @@ def test_filter_by_generator_with_batch():
     dataset_f = dataset_b.filter(predicate=filter_func_batch, num_parallel_workers=4)
     num_iter = 0
     ret_data = []
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["data"])
     assert num_iter == 3
@@ -136,7 +136,7 @@ def test_filter_by_generator_with_batch_after():
     dataset_b = dataset_f.batch(4)
     num_iter = 0
     ret_data = []
-    for item in dataset_b.create_dict_iterator():
+    for item in dataset_b.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["data"])
     assert num_iter == 6
@@ -155,7 +155,7 @@ def test_filter_by_generator_with_shuffle():
     dataset_s = dataset.shuffle(4)
     dataset_f = dataset_s.filter(predicate=filter_func_shuffle, num_parallel_workers=4)
     num_iter = 0
-    for _ in dataset_f.create_dict_iterator():
+    for _ in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 21
 
@@ -170,7 +170,7 @@ def test_filter_by_generator_with_shuffle_after():
     dataset_f = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
     dataset_s = dataset_f.shuffle(4)
     num_iter = 0
-    for _ in dataset_s.create_dict_iterator():
+    for _ in dataset_s.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 21
 
@@ -202,7 +202,7 @@ def test_filter_by_generator_with_zip():
     dataset_f = dataz.filter(predicate=filter_func_zip, num_parallel_workers=1)
     num_iter = 0
     ret_data = []
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append({"data1": item["data1"], "data2": item["data2"]})
     assert num_iter == 21
@@ -221,7 +221,7 @@ def test_filter_by_generator_with_zip_after():
     dataz = ds.zip((dt1, dt2))
     num_iter = 0
     ret_data = []
-    for item in dataz.create_dict_iterator():
+    for item in dataz.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append({"data1": item["data1"], "data2": item["data2"]})
     assert num_iter == 21
@@ -266,7 +266,7 @@ def test_filter_by_generator_with_map_all_col():
     dataset_f = dataset_map.filter(input_columns=["col1"], predicate=filter_func_map_part, num_parallel_workers=1)
     num_iter = 0
     ret_data = []
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["col1"])
     assert num_iter == 3
@@ -282,7 +282,7 @@ def test_filter_by_generator_with_map_part_col():
     dataset_f = dataset_map.filter(input_columns=["out1", "col2"], predicate=filter_func_map, num_parallel_workers=4)
     num_iter = 0
     ret_data = []
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         print(item)
         ret_data.append(item["out1"])
@@ -302,7 +302,7 @@ def test_filter_by_generator_with_rename():
     dataset_f = dataset_b.filter(predicate=filter_func_rename, num_parallel_workers=4)
     num_iter = 0
     ret_data = []
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["col1"])
     assert num_iter == 55
@@ -336,7 +336,7 @@ def test_filter_by_generator_with_input_column():
     dataset_f4 = dataset_f3.filter(predicate=filter_func_input_column1, num_parallel_workers=4)
     num_iter = 0
     ret_data = []
-    for item in dataset_f4.create_dict_iterator():
+    for item in dataset_f4.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item["out1"])
     assert num_iter == 8
@@ -370,7 +370,7 @@ def test_filter_by_generator_Partial0():
     dataset_zip = ds.zip((dataset1, dataset2))
     dataset_f1 = dataset_zip.filter(predicate=filter_func_Partial_0, num_parallel_workers=2)
     ret = []
-    for item in dataset_f1.create_dict_iterator():
+    for item in dataset_f1.create_dict_iterator(num_epochs=1):
         ret.append(item["col1"])
     assert ret[0] == 5
     assert ret[6] == 12
@@ -384,7 +384,7 @@ def test_filter_by_generator_Partial1():
     dataset_f1 = dataset_zip.filter(predicate=filter_func_Partial_0, num_parallel_workers=2)
     dataset_map = dataset_f1.map(input_columns=["col1"], output_columns=["out1"], operations=lambda x1: x1 + 400)
     ret = []
-    for item in dataset_map.create_dict_iterator():
+    for item in dataset_map.create_dict_iterator(num_epochs=1):
         ret.append(item["out1"])
     assert ret[0] == 405
     assert ret[6] == 412
@@ -403,7 +403,7 @@ def test_filter_by_generator_Partial2():
                                   operations=lambda x1, x3: (x1 + 400, x3 + 500))
     ret1 = []
     ret3 = []
-    for item in dataset_map.create_dict_iterator():
+    for item in dataset_map.create_dict_iterator(num_epochs=1):
         ret1.append(item["out1"])
         ret3.append(item["out3"])
     assert ret1[0] == 400
@@ -428,7 +428,7 @@ def test_filter_by_generator_Partial():
     dataset_s = dataset.shuffle(4)
     dataset_f1 = dataset_s.filter(input_columns=["col1", "col2"], predicate=filter_func_Partial, num_parallel_workers=1)
 
-    for item in dataset_f1.create_dict_iterator():
+    for item in dataset_f1.create_dict_iterator(num_epochs=1):
         assert item["col1"] % 3 == 0
 
 
@@ -442,7 +442,7 @@ def test_filte_case_dataset_cifar10():
     DATA_DIR_10 = "../data/dataset/testCifar10Data"
     dataset_c = ds.Cifar10Dataset(dataset_dir=DATA_DIR_10, num_samples=100000, shuffle=False)
     dataset_f1 = dataset_c.filter(input_columns=["image", "label"], predicate=filter_func_cifar, num_parallel_workers=1)
-    for item in dataset_f1.create_dict_iterator():
+    for item in dataset_f1.create_dict_iterator(num_epochs=1):
         # in this example, each dictionary has keys "image" and "label"
         assert item["label"] % 3 == 0
 
@@ -476,7 +476,7 @@ def test_filter_by_generator_with_map_all_sort():
     dataset_f = dataz.filter(predicate=filter_func_part_sort, num_parallel_workers=1)
     num_iter = 0
     ret_data = []
-    for item in dataset_f.create_dict_iterator():
+    for item in dataset_f.create_dict_iterator(num_epochs=1):
         num_iter += 1
         ret_data.append(item)
 
@@ -490,7 +490,7 @@ def test_filter_by_generator_get_dataset_size():
     data_sie = dataset.get_dataset_size()
 
     num_iter = 0
-    for _ in dataset.create_dict_iterator():
+    for _ in dataset.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert data_sie == num_iter
 

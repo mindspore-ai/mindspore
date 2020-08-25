@@ -26,7 +26,7 @@ def compare(array):
     array = np.array(array)
     data = data.map(input_columns=["x"], output_columns=["x", "y"], columns_order=["x", "y"],
                     operations=ops.Duplicate())
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(array, d["x"])
         np.testing.assert_array_equal(array, d["y"])
 

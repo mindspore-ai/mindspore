@@ -62,7 +62,7 @@ def test_numpy_slices_list_append():
     data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True), resize_op])
 
     res = []
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         res.append(data["image"])
 
     ds = de.NumpySlicesDataset(res, column_names=["col1"], shuffle=False)

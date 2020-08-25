@@ -33,7 +33,7 @@ def test_csv_dataset_basic():
         shuffle=False)
     data = data.repeat(2)
     data = data.skip(2)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append(d)
     assert len(buffer) == 4
 
@@ -45,7 +45,7 @@ def test_csv_dataset_one_file():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append(d)
     assert len(buffer) == 3
 
@@ -58,7 +58,7 @@ def test_csv_dataset_all_file():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append(d)
     assert len(buffer) == 10
 
@@ -70,7 +70,7 @@ def test_csv_dataset_num_samples():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False, num_samples=2)
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 2
 
@@ -83,7 +83,7 @@ def test_csv_dataset_distribution():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False, num_shards=2, shard_id=0)
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 2
 
@@ -96,7 +96,7 @@ def test_csv_dataset_quoted():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.extend([d['col1'].item().decode("utf8"),
                        d['col2'].item().decode("utf8"),
                        d['col3'].item().decode("utf8"),
@@ -113,7 +113,7 @@ def test_csv_dataset_separated():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.extend([d['col1'].item().decode("utf8"),
                        d['col2'].item().decode("utf8"),
                        d['col3'].item().decode("utf8"),
@@ -129,7 +129,7 @@ def test_csv_dataset_embedded():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.extend([d['col1'].item().decode("utf8"),
                        d['col2'].item().decode("utf8"),
                        d['col3'].item().decode("utf8"),
@@ -145,7 +145,7 @@ def test_csv_dataset_chinese():
         column_names=['col1', 'col2', 'col3', 'col4', 'col5'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.extend([d['col1'].item().decode("utf8"),
                        d['col2'].item().decode("utf8"),
                        d['col3'].item().decode("utf8"),
@@ -161,7 +161,7 @@ def test_csv_dataset_header():
         column_defaults=["", "", "", ""],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.extend([d['col1'].item().decode("utf8"),
                        d['col2'].item().decode("utf8"),
                        d['col3'].item().decode("utf8"),
@@ -177,7 +177,7 @@ def test_csv_dataset_number():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     buffer = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.extend([d['col1'].item(),
                        d['col2'].item(),
                        d['col3'].item(),
@@ -203,7 +203,7 @@ def test_csv_dataset_exception():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     with pytest.raises(Exception) as err:
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
     assert "Failed to parse file" in str(err.value)
 
@@ -216,7 +216,7 @@ def test_csv_dataset_type_error():
         column_names=['col1', 'col2', 'col3', 'col4'],
         shuffle=False)
     with pytest.raises(Exception) as err:
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
     assert "type does not match" in str(err.value)
 

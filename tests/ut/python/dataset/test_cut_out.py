@@ -59,7 +59,7 @@ def test_cut_out_op(plot=False):
     data2 = data2.map(input_columns=["image"], operations=transforms_2)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         # C image doesn't require transpose
@@ -106,7 +106,7 @@ def test_cut_out_op_multicut(plot=False):
 
     num_iter = 0
     image_list_1, image_list_2 = [], []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         # C image doesn't require transpose
@@ -187,7 +187,7 @@ def test_cut_out_comp(plot=False):
 
     num_iter = 0
     image_list_1, image_list_2 = [], []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         # C image doesn't require transpose

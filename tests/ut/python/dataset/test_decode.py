@@ -40,7 +40,7 @@ def test_decode_op():
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         actual = item1["image"]
         expected = cv2.imdecode(item2["image"], cv2.IMREAD_COLOR)
         expected = cv2.cvtColor(expected, cv2.COLOR_BGR2RGB)
@@ -59,13 +59,13 @@ def test_decode_op_tf_file_dataset():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.FILES)
     data1 = data1.map(input_columns=["image"], operations=vision.Decode(True))
 
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         logger.info('decode == {}'.format(item['image']))
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         actual = item1["image"]
         expected = cv2.imdecode(item2["image"], cv2.IMREAD_COLOR)
         expected = cv2.cvtColor(expected, cv2.COLOR_BGR2RGB)

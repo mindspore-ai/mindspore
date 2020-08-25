@@ -106,7 +106,7 @@ def test_normalize_op_c(plot=False):
     data2 = data2.map(input_columns=["image"], operations=decode_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_de_normalized = item1["image"]
         image_original = item2["image"]
         image_np_normalized = normalize_np(image_original, mean, std)
@@ -143,7 +143,7 @@ def test_normalize_op_py(plot=False):
     data2 = data2.map(input_columns=["image"], operations=transform())
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_de_normalized = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_np_normalized = (normalize_np(item2["image"].transpose(1, 2, 0), mean, std) * 255).astype(np.uint8)
         image_original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
@@ -171,7 +171,7 @@ def test_decode_op():
     data1 = data1.map(input_columns=["image"], operations=decode_op)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         logger.info("Looping inside iterator {}".format(num_iter))
         _ = item["image"]
         num_iter += 1
@@ -194,7 +194,7 @@ def test_decode_normalize_op():
     data1 = data1.map(input_columns=["image"], operations=[decode_op, normalize_op])
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         logger.info("Looping inside iterator {}".format(num_iter))
         _ = item["image"]
         num_iter += 1
@@ -263,7 +263,7 @@ def test_normalize_exception_invalid_size_py():
     logger.info("test_normalize_exception_invalid_size_py")
     data = util_test_normalize([0.75, 0.25], [0.18, 0.32], "python")
     try:
-        _ = data.create_dict_iterator().get_next()
+        _ = data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Length of mean and std must both be 1 or" in str(e)

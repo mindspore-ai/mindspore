@@ -279,7 +279,7 @@ def test_callbacks_non_sink():
                               'ms_step_end_2_6', 'ds_step_begin_2_7', 'ms_step_end_2_7', 'ds_step_begin_2_8',
                               'ms_step_end_2_8', 'ms_epoch_end_2_8']
 
-    assert events == expected_synced_events
+    assert events[:18] == expected_synced_events
 
 
 def test_callbacks_non_sink_batch_size2():
@@ -303,7 +303,7 @@ def test_callbacks_non_sink_batch_size2():
                               'ds_step_begin_2_5', 'ms_step_end_2_3', 'ds_step_begin_2_7',
                               'ms_step_end_2_4', 'ms_epoch_end_2_4']
 
-    assert events == expected_synced_events
+    assert events[:10] == expected_synced_events
 
 
 def test_callbacks_non_sink_mismatch_size():
@@ -443,7 +443,7 @@ def test_callbacks_one_cb():
     data = data.map(operations=(lambda x: x), callbacks=[my_epoch_begin, my_step_end])
     data = data.map(operations=(lambda x: x), callbacks=[my_epoch_end, my_step_begin])
 
-    itr = data.create_tuple_iterator()
+    itr = data.create_tuple_iterator(num_epochs=2)
     for _ in range(2):
         for _ in itr:
             pass

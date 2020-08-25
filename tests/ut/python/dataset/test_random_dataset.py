@@ -29,7 +29,7 @@ def test_randomdataset_basic1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("{} image: {}".format(num_iter, data["image"]))
         logger.info("{} label: {}".format(num_iter, data["label"]))
@@ -54,7 +54,7 @@ def test_randomdataset_basic2():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         # logger.info(data["image"])
         logger.info("printing the label: {}".format(data["label"]))
@@ -77,7 +77,7 @@ def test_randomdataset_basic3():
     ds1 = ds1.repeat(2)
 
     num_iter = 0
-    for _ in ds1.create_tuple_iterator():
+    for _ in ds1.create_tuple_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {}".format(num_iter))

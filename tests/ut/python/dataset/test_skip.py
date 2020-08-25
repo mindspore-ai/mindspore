@@ -38,7 +38,7 @@ def test_tf_skip():
     data1 = data1.skip(2)
 
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 1
 
@@ -205,7 +205,7 @@ def test_skip_exception_1():
     try:
         data1 = data1.skip(count=-1)
         num_iter = 0
-        for _ in data1.create_dict_iterator():
+        for _ in data1.create_dict_iterator(num_epochs=1):
             num_iter += 1
 
     except RuntimeError as e:

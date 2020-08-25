@@ -52,7 +52,7 @@ def test_random_crop_and_resize_op_c(plot=False):
     num_iter = 0
     crop_and_resize_images = []
     original_images = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         crop_and_resize = item1["image"]
         original = item2["image"]
         # Note: resize the original image with the same size as the one applied RandomResizedCrop()
@@ -94,7 +94,7 @@ def test_random_crop_and_resize_op_py(plot=False):
     num_iter = 0
     crop_and_resize_images = []
     original_images = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         crop_and_resize = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         original = cv2.resize(original, (512, 256))
@@ -326,7 +326,7 @@ def test_random_crop_and_resize_comp(plot=False):
 
     image_c_cropped = []
     image_py_cropped = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_c_cropped.append(c_image)

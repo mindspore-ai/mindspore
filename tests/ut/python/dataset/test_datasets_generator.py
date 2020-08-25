@@ -46,7 +46,7 @@ def test_generator_0():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -68,7 +68,7 @@ def test_generator_1():
     data1 = ds.GeneratorDataset(generator_md, ["data"])
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -90,7 +90,7 @@ def test_generator_2():
     data1 = ds.GeneratorDataset(generator_mc, ["col0", "col1"])
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["col0"], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
@@ -110,7 +110,7 @@ def test_generator_3():
     data1 = data1.repeat(4)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -130,7 +130,7 @@ def test_generator_4():
     data1 = data1.batch(4)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
@@ -150,7 +150,7 @@ def type_tester(t):
     data1 = data1.batch(4)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
@@ -177,7 +177,7 @@ def type_tester_with_type_check(t, c):
     data1 = data1.batch(4)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 4
@@ -212,7 +212,7 @@ def type_tester_with_type_check_2c(t, c):
     data1 = data1.batch(4)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         np.testing.assert_array_equal(item["data0"], golden)
         i = i + 4
@@ -249,7 +249,7 @@ def test_generator_8():
                       num_parallel_workers=2)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i * 3])
         np.testing.assert_array_equal(item["out0"], golden)
         golden = np.array([[i * 7, (i + 1) * 7], [(i + 2) * 7, (i + 3) * 7]])
@@ -303,7 +303,7 @@ def test_generator_10():
 
     # Expected column order is |col0|out1|out2|
     i = 0
-    for item in data1.create_tuple_iterator():
+    for item in data1.create_tuple_iterator(num_epochs=1):
         golden = np.array([i])
         np.testing.assert_array_equal(item[0], golden)
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
@@ -327,7 +327,7 @@ def test_generator_11():
 
     # Expected column order is |out1|out2|
     i = 0
-    for item in data1.create_tuple_iterator():
+    for item in data1.create_tuple_iterator(num_epochs=1):
         # len should be 2 because col0 is dropped (not included in columns_order)
         assert len(item) == 2
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
@@ -349,7 +349,7 @@ def test_generator_12():
 
     # Expected column order is |col0|col1|
     i = 0
-    for item in data1.create_tuple_iterator():
+    for item in data1.create_tuple_iterator(num_epochs=1):
         assert len(item) == 2
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item[0], golden)
@@ -362,7 +362,7 @@ def test_generator_12():
 
     # Expected column order is |col0|col1|
     i = 0
-    for item in data1.create_tuple_iterator():
+    for item in data1.create_tuple_iterator(num_epochs=1):
         assert len(item) == 2
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item[1], golden)
@@ -383,7 +383,7 @@ def test_generator_13():
 
     # Expected column order is |out0|col1|
     i = 0
-    for item in data1.create_tuple_iterator():
+    for item in data1.create_tuple_iterator(num_epochs=1):
         assert len(item) == 2
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item[0], golden)
@@ -391,7 +391,7 @@ def test_generator_13():
         np.testing.assert_array_equal(item[1], golden)
         i = i + 1
 
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # len should be 2 because col0 is dropped (not included in columns_order)
         assert len(item) == 2
         golden = np.array([i * 5])
@@ -410,7 +410,7 @@ def test_generator_14():
     source = [(np.array([x]),) for x in range(256)]
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_parallel_workers=4).repeat(2)
     i = 0
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(data["data"], golden)
         i = i + 1
@@ -428,7 +428,7 @@ def test_generator_15():
     source = [(np.array([x]),) for x in range(256)]
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=sampler, num_parallel_workers=4).repeat(2)
     i = 0
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(data["data"], golden)
         i = i + 1
@@ -447,7 +447,7 @@ def test_generator_16():
     data1 = ds.GeneratorDataset(source, ["col0", "col1"], sampler=ds.SequentialSampler())
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["col0"], golden)
         golden = np.array([i + 1])
@@ -467,7 +467,7 @@ def test_generator_17():
     data1 = ds.GeneratorDataset(source, ["col0", "col1"], sampler=sampler)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["col0"], golden)
         golden = np.array([i + 1])
@@ -527,7 +527,7 @@ def test_generator_sequential_sampler():
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler())
     i = 0
-    for data in ds1.create_dict_iterator():  # each data is a dictionary
+    for data in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(data["data"], golden)
         i = i + 1
@@ -536,7 +536,7 @@ def test_generator_sequential_sampler():
 def test_generator_random_sampler():
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], shuffle=True)
-    for _ in ds1.create_dict_iterator():  # each data is a dictionary
+    for _ in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         pass
 
 
@@ -545,7 +545,7 @@ def test_generator_distributed_sampler():
     for sid in range(8):
         ds1 = ds.GeneratorDataset(source, ["data"], shuffle=False, num_shards=8, shard_id=sid)
         i = sid
-        for data in ds1.create_dict_iterator():  # each data is a dictionary
+        for data in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             golden = np.array([i])
             np.testing.assert_array_equal(data["data"], golden)
             i = i + 8
@@ -559,17 +559,17 @@ def test_generator_num_samples():
     ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples=num_samples)
 
     count = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         count = count + 1
     assert count == num_samples
 
     count = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         count = count + 1
     assert count == num_samples
 
     count = 0
-    for _ in ds3.create_dict_iterator():
+    for _ in ds3.create_dict_iterator(num_epochs=1):
         count = count + 1
     assert count == num_samples
 
@@ -581,12 +581,12 @@ def test_generator_num_samples_underflow():
     ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples=num_samples)
 
     count = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         count = count + 1
     assert count == 64
 
     count = 0
-    for _ in ds3.create_dict_iterator():
+    for _ in ds3.create_dict_iterator(num_epochs=1):
         count = count + 1
     assert count == 64
 
@@ -604,7 +604,7 @@ def type_tester_with_type_check_2c_schema(t, c):
     data1 = data1.batch(4)
 
     i = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         np.testing.assert_array_equal(item["data0"], golden)
         i = i + 4
@@ -635,7 +635,7 @@ def test_generator_dataset_size_0():
     data_size = data1.get_dataset_size()
 
     num_rows = 0
-    for _ in data1.create_dict_iterator():  # each data is a dictionary
+    for _ in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         num_rows = num_rows + 1
     assert data_size == num_rows
 
@@ -652,7 +652,7 @@ def test_generator_dataset_size_1():
     data_size = data1.get_dataset_size()
 
     num_rows = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_rows = num_rows + 1
     assert data_size == num_rows
 
@@ -669,7 +669,7 @@ def test_generator_dataset_size_2():
     data_size = data1.get_dataset_size()
 
     num_rows = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_rows = num_rows + 1
     assert data_size == num_rows
 
@@ -686,7 +686,7 @@ def test_generator_dataset_size_3():
     data_size = data1.get_dataset_size()
 
     num_rows = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_rows += 1
     assert data_size == num_rows
 
@@ -702,7 +702,7 @@ def test_generator_dataset_size_4():
     data_size = data1.get_dataset_size()
 
     num_rows = 0
-    for _ in data1.create_dict_iterator():  # each data is a dictionary
+    for _ in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         num_rows = num_rows + 1
     assert data_size == num_rows
 
@@ -716,7 +716,7 @@ def test_generator_dataset_size_5():
     data1 = ds.GeneratorDataset(dataset_generator, ["data"], num_shards=3, shard_id=0)
 
     num_rows = 0
-    for _ in data1.create_dict_iterator():  # each data is a dictionary
+    for _ in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         num_rows = num_rows + 1
     data_size = data1.get_dataset_size()
     assert data_size == num_rows
@@ -737,7 +737,7 @@ def manual_test_generator_keyboard_interrupt():
             return 1024
 
     ds1 = ds.GeneratorDataset(MyDS(), ["data"], num_parallel_workers=4).repeat(2)
-    for _ in ds1.create_dict_iterator():  # each data is a dictionary
+    for _ in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         pass
 
 

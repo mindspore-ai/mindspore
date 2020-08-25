@@ -40,7 +40,7 @@ def test_apply_generator_case():
     data2 = data2.repeat(2)
     data2 = data2.batch(4)
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(item1["data"], item2["data"])
 
 
@@ -63,7 +63,7 @@ def test_apply_imagefolder_case():
     data2 = data2.map(operations=normalize_op)
     data2 = data2.repeat(2)
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(item1["image"], item2["image"])
 
 
@@ -85,7 +85,7 @@ def test_apply_flow_case_0(id_=0):
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter = num_iter + 1
 
     if id_ == 0:
@@ -116,7 +116,7 @@ def test_apply_flow_case_1(id_=1):
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter = num_iter + 1
 
     if id_ == 0:
@@ -147,7 +147,7 @@ def test_apply_flow_case_2(id_=2):
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter = num_iter + 1
 
     if id_ == 0:
@@ -178,7 +178,7 @@ def test_apply_flow_case_3(id_=3):
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter = num_iter + 1
 
     if id_ == 0:
@@ -204,7 +204,7 @@ def test_apply_exception_case():
 
     try:
         data1 = data1.apply("123")
-        for _ in data1.create_dict_iterator():
+        for _ in data1.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except TypeError:
@@ -212,7 +212,7 @@ def test_apply_exception_case():
 
     try:
         data1 = data1.apply(exception_fn)
-        for _ in data1.create_dict_iterator():
+        for _ in data1.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except TypeError:
@@ -221,7 +221,7 @@ def test_apply_exception_case():
     try:
         data2 = data1.apply(dataset_fn)
         _ = data1.apply(dataset_fn)
-        for _, _ in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        for _, _ in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
             pass
         assert False
     except ValueError as e:

@@ -30,6 +30,7 @@ from mindspore.dataset.transforms.vision import Inter
 from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
 from util import config_get_set_num_parallel_workers
 
+
 def test_imagefolder(remove_json_files=True):
     """
     Test simulating resnet50 dataset pipeline.
@@ -77,8 +78,10 @@ def test_imagefolder(remove_json_files=True):
     data4 = ds.deserialize(input_dict=ds1_dict)
     num_samples = 0
     # Iterate and compare the data in the original pipeline (data1) against the deserialized pipeline (data2)
-    for item1, item2, item3, item4 in zip(data1.create_dict_iterator(), data2.create_dict_iterator(),
-                                          data3.create_dict_iterator(), data4.create_dict_iterator()):
+    for item1, item2, item3, item4 in zip(data1.create_dict_iterator(num_epochs=1),
+                                          data2.create_dict_iterator(num_epochs=1),
+                                          data3.create_dict_iterator(num_epochs=1),
+                                          data4.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(item1['image'], item2['image'])
         np.testing.assert_array_equal(item1['image'], item3['image'])
         np.testing.assert_array_equal(item1['label'], item2['label'])
@@ -117,8 +120,8 @@ def test_mnist_dataset(remove_json_files=True):
     data3 = ds.deserialize(json_filepath="mnist_dataset_pipeline_1.json")
 
     num = 0
-    for data1, data2, data3 in zip(data1.create_dict_iterator(), data2.create_dict_iterator(),
-                                   data3.create_dict_iterator()):
+    for data1, data2, data3 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1),
+                                   data3.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(data1['image'], data2['image'])
         np.testing.assert_array_equal(data1['image'], data3['image'])
         np.testing.assert_array_equal(data1['label'], data2['label'])
@@ -197,8 +200,9 @@ def test_random_crop():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
     data2 = data2.map(input_columns="image", operations=decode_op)
 
-    for item1, item1_1, item2 in zip(data1.create_dict_iterator(), data1_1.create_dict_iterator(),
-                                     data2.create_dict_iterator()):
+    for item1, item1_1, item2 in zip(data1.create_dict_iterator(num_epochs=1),
+                                     data1_1.create_dict_iterator(num_epochs=1),
+                                     data2.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(item1['image'], item1_1['image'])
         _ = item2["image"]
 
@@ -251,7 +255,7 @@ def test_minddataset(add_and_remove_cv_file):
     _ = get_data(CV_DIR_NAME)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for _ in data_set.create_dict_iterator():
+    for _ in data_set.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 5
 

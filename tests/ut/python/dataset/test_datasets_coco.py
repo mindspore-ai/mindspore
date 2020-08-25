@@ -32,7 +32,7 @@ def test_coco_detection():
     image_shape = []
     bbox = []
     category_id = []
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
@@ -64,7 +64,7 @@ def test_coco_stuff():
     image_shape = []
     segmentation = []
     iscrowd = []
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         image_shape.append(data["image"].shape)
         segmentation.append(data["segmentation"])
         iscrowd.append(data["iscrowd"])
@@ -104,7 +104,7 @@ def test_coco_keypoint():
     image_shape = []
     keypoints = []
     num_keypoints = []
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         image_shape.append(data["image"].shape)
         keypoints.append(data["keypoints"])
         num_keypoints.append(data["num_keypoints"])
@@ -132,7 +132,7 @@ def test_coco_panoptic():
     category_id = []
     iscrowd = []
     area = []
-    for data in data1.create_dict_iterator():
+    for data in data1.create_dict_iterator(num_epochs=1):
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
@@ -175,7 +175,7 @@ def test_coco_case_0():
     data1 = data1.shuffle(10)
     data1 = data1.batch(3, pad_info={})
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 2
 
@@ -186,11 +186,11 @@ def test_coco_case_1():
     dataset1, dataset2 = data1.split(sizes=sizes, randomize=randomize)
 
     num_iter = 0
-    for _ in dataset1.create_dict_iterator():
+    for _ in dataset1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 3
     num_iter = 0
-    for _ in dataset2.create_dict_iterator():
+    for _ in dataset2.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 3
 

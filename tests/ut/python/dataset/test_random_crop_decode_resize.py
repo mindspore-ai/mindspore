@@ -46,7 +46,7 @@ def test_random_crop_decode_resize_op(plot=False):
 
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         if num_iter > 0:
             break
         image1 = item1["image"]

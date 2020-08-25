@@ -33,7 +33,7 @@ def test_sequential_sampler(print_res=False):
         if num_repeats is not None:
             data1 = data1.repeat(num_repeats)
         res = []
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             logger.info("item[image].shape[0]: {}, item[label].item(): {}"
                         .format(item["image"].shape[0], item["label"].item()))
             res.append(map_[(item["image"].shape[0], item["label"].item())])
@@ -55,7 +55,7 @@ def test_random_sampler(print_res=False):
         data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
         data1 = data1.repeat(num_repeats)
         res = []
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(map_[(item["image"].shape[0], item["label"].item())])
         if print_res:
             logger.info("image.shapes and labels: {}".format(res))
@@ -78,7 +78,7 @@ def test_random_sampler_multi_iter(print_res=False):
         data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
         while num_repeats > 0:
             res = []
-            for item in data1.create_dict_iterator():
+            for item in data1.create_dict_iterator(num_epochs=1):
                 res.append(map_[(item["image"].shape[0], item["label"].item())])
             if print_res:
                 logger.info("image.shapes and labels: {}".format(res))
@@ -135,7 +135,7 @@ def test_python_sampler():
         if num_repeats is not None:
             data1 = data1.repeat(num_repeats)
         res = []
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             logger.info("item[image].shape[0]: {}, item[label].item(): {}"
                         .format(item["image"].shape[0], item["label"].item()))
             res.append(map_[(item["image"].shape[0], item["label"].item())])
@@ -174,7 +174,7 @@ def test_subset_sampler():
         d = ds.ManifestDataset(manifest_file, sampler=sampler)
 
         res = []
-        for item in d.create_dict_iterator():
+        for item in d.create_dict_iterator(num_epochs=1):
             res.append(map_[(item["image"].shape[0], item["label"].item())])
 
         return res
@@ -202,7 +202,7 @@ def test_sampler_chain():
         data1 = ds.ManifestDataset(manifest_file, sampler=sampler)
 
         res = []
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             logger.info("item[image].shape[0]: {}, item[label].item(): {}"
                         .format(item["image"].shape[0], item["label"].item()))
             res.append(map_[(item["image"].shape[0], item["label"].item())])

@@ -50,7 +50,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
     transform_2 = vision.ComposeOp(transforms_2)
     data2 = data2.map(input_columns=["image"], operations=transform_2())
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_2 = item2["image"]
@@ -173,7 +173,7 @@ def test_ten_crop_wrong_img_error_msg():
     data = data.map(input_columns=["image"], operations=transform())
 
     with pytest.raises(RuntimeError) as info:
-        data.create_tuple_iterator().get_next()
+        data.create_tuple_iterator(num_epochs=1).get_next()
     error_msg = "TypeError: img should be PIL Image or Numpy array. Got <class 'tuple'>"
 
     # error msg comes from ToTensor()

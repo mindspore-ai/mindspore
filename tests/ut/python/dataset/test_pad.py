@@ -55,7 +55,7 @@ def test_pad_op():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(input_columns=["image"], operations=transform())
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
 
@@ -93,7 +93,7 @@ def test_pad_grayscale():
     pad_gray = c_vision.Pad(100, fill_value=(20, 20, 20))
     data1 = data1.map(input_columns=["image"], operations=pad_gray)
     dataset_shape_1 = []
-    for item1 in data1.create_dict_iterator():
+    for item1 in data1.create_dict_iterator(num_epochs=1):
         c_image = item1["image"]
         dataset_shape_1.append(c_image.shape)
 
@@ -107,7 +107,7 @@ def test_pad_grayscale():
 
     data2 = data2.map(input_columns=["image"], operations=ctrans)
 
-    for item2 in data2.create_dict_iterator():
+    for item2 in data2.create_dict_iterator(num_epochs=1):
         c_image = item2["image"]
         dataset_shape_2.append(c_image.shape)
 

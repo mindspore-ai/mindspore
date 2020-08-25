@@ -28,7 +28,7 @@ def test_demo_basic_from_dataset():
                                     special_first=True)
     data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "<unk>"))
     res = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         res.append(d["text"].item())
     assert res == [4, 5, 3, 6, 7, 2], res
 
@@ -41,7 +41,7 @@ def test_demo_basic_from_dataset_with_tokenizer():
                                     special_first=True)
     data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "<unk>"))
     res = []
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         res.append(list(d["text"]))
     assert res == [[13, 3, 7, 14, 9, 17, 3, 2, 19, 9, 2, 11, 3, 4, 16, 4, 8, 6, 5], [21, 20, 10, 25, 23, 26],
                    [24, 22, 10, 12, 8, 6, 7, 4, 18, 15, 5], [2, 2]]
@@ -62,7 +62,7 @@ def test_from_dataset():
                                         special_first=True)
         corpus_dataset = corpus_dataset.map(input_columns="text", operations=text.Lookup(vocab, "<unk>"))
         res = []
-        for d in corpus_dataset.create_dict_iterator():
+        for d in corpus_dataset.create_dict_iterator(num_epochs=1):
             res.append(list(d["text"]))
         return res
 
@@ -110,7 +110,7 @@ def test_from_dataset_special_token():
         data = ds.GeneratorDataset(gen_input(texts), column_names=["text"])
         data = data.map(input_columns="text", operations=text.Lookup(vocab, "<unk>"))
         res = []
-        for d in data.create_dict_iterator():
+        for d in data.create_dict_iterator(num_epochs=1):
             res.append(d["text"].item())
         return res
 

@@ -42,7 +42,7 @@ def test_soft_dvpp_decode_resize_jpeg(plot=False):
     data2 = data2.map(input_columns=["image"], operations=soft_dvpp_decode_resize_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         if num_iter > 0:
             break
         image1 = item1["image"]
@@ -72,7 +72,7 @@ def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
     data2 = data2.map(input_columns=["image"], operations=soft_dvpp_random_crop_decode_resize_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         if num_iter > 0:
             break
         image1 = item1["image"]
@@ -103,7 +103,7 @@ def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
     data2 = data2.map(input_columns=["image"], operations=soft_dvpp_decode_resize_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         if num_iter > 0:
             break
         image1 = item1["image"]
