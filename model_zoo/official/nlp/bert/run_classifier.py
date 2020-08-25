@@ -48,7 +48,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
                                        warmup_steps=int(steps_per_epoch * epoch_num * 0.1),
                                        decay_steps=steps_per_epoch * epoch_num,
                                        power=optimizer_cfg.AdamWeightDecay.power)
-        params = net_with_loss.trainable_params()
+        params = network.trainable_params()
         decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
         other_params = list(filter(lambda x: not optimizer_cfg.AdamWeightDecay.decay_filter(x), params))
         group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},

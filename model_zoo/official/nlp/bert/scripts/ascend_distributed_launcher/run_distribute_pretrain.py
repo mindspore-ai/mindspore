@@ -133,7 +133,7 @@ def distribute_pretrain():
         cmd += opt
         cmd += " --data_dir=" + data_dir
         cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
-               + str(rank_size) + ' >./log.txt 2>&1 &'
+               + str(rank_size) + ' >./pretraining_log.txt 2>&1 &'
 
         os.system(cmd)
         os.chdir(cur_dir)
