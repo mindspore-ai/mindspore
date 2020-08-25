@@ -16,7 +16,7 @@
 
 if [ $# != 2 ]
 then 
-    echo "Usage: sh run_train.sh [SRC_PATH] [DATASET_NAME]"
+    echo "Usage: sh run_train_ascend.sh [SRC_PATH] [DATASET_NAME]"
 exit 1
 fi
 
@@ -42,7 +42,7 @@ MINDRECORD_PATH=`pwd`/data_mr
 
 rm -f $MINDRECORD_PATH/*
 
-cd ../../utils/graph_to_mindrecord || exit
+cd ../../../../utils/graph_to_mindrecord || exit
 
 python writer.py --mindrecord_script $DATASET_NAME \
 --mindrecord_file "$MINDRECORD_PATH/$DATASET_NAME" \
