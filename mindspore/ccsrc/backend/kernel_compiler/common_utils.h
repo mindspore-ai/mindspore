@@ -57,8 +57,8 @@ class KernelMeta {
   void RemoveKernelCache();
   std::string Search(const std::string &kernel_name) const;
   bool Insert(const std::string &kernel_name, const std::string &kernel_json);
-  std::string GetKernelMetaPath() { return kernel_meta_path_; }
-
+  std::string kernel_meta_path() const { return kernel_meta_path_; }
+  bool initialized() const { return initialized_; }
   static KernelMeta *GetInstance() {
     static KernelMeta kernel_meta;
     return &kernel_meta;

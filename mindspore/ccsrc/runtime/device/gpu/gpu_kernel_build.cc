@@ -22,6 +22,7 @@
 #include "frontend/operator/ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_build_client.h"
+#include "runtime/device/gpu/cuda_env_checker.h"
 
 namespace mindspore {
 namespace device {
@@ -29,9 +30,8 @@ namespace gpu {
 void GpuBuild(const KernelGraphPtr &kernel_graph) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
-  auto pid = mindspore::kernel::GpuKernelBuildClient::Instance().AkgGetPid();
-  bin_map->Initialize(pid);
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  bool already_check_nvcc = false;
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
     std::string kernel_name = session::AnfRuntimeAlgorithm::GetCNodeName(kernel);
@@ -41,6 +41,19 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
     }
 
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
+      if (!bin_map->initialized()) {
+        auto pid = mindspore::kernel::GpuKernelBuildClient::Instance().AkgGetPid();
+        bin_map->Initialize(pid);
+      }
+      if (!already_check_nvcc) {
+        already_check_nvcc = true;
+        if (!CudaEnvChecker::GetInstance().CheckNvccInPath()) {
+          MS_LOG(EXCEPTION)
+            << "Failed to find nvcc compiler, please add nvcc position to the PATH environment variable, run "
+               "the command: export PATH=${CUDA_PATH}/bin:${PATH}, CUDA_PATH is the installation path of the "
+               "cuda library(eg. /usr/local/cuda).";
+        }
+      }
       auto gpu_kernel_ptr = kernel::AkgGpuKernelBuild(kernel);
       if (!gpu_kernel_ptr) {
         MS_LOG(EXCEPTION) << "Build akg kernel op[" << kernel_name << "] failed";

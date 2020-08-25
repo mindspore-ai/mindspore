@@ -177,7 +177,7 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
   if (processor == kProcessorAiCore || processor == kProcessorAiCpu) {
     kernel_json = kCceKernelMeta;
   } else {
-    kernel_json = bin_map->GetKernelMetaPath();
+    kernel_json = bin_map->kernel_meta_path();
   }
   (void)kernel_json.append(kernel_name).append(kJsonSuffix);
   KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
