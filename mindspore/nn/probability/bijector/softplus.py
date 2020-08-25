@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.nn.layer.activation import LogSigmoid
 from mindspore._checkparam import Validator as validator
-from ..distribution._utils.utils import cast_to_tensor, CheckTensor
+from ..distribution._utils.utils import cast_to_tensor
 from ..distribution._utils.custom_ops import exp_generic, expm1_generic, log_generic
 from .bijector import Bijector
 
@@ -57,7 +57,7 @@ class Softplus(Bijector):
                  sharpness=1.0,
                  name='Softplus'):
         param = dict(locals())
-        validator.check_value_type('sharpness', sharpness, [int, float], name)
+        validator.check_value_type('sharpness', sharpness, [int, float], type(self).__name__)
         super(Softplus, self).__init__(name=name, param=param)
         self._sharpness = cast_to_tensor(sharpness)
 
@@ -76,7 +76,6 @@ class Softplus(Bijector):
         self.softplus = self._softplus
         self.inverse_softplus = self._inverse_softplus
 
-        self.checktensor = CheckTensor()
         self.threshold = np.log(np.finfo(np.float32).eps) + 1
         self.tiny = np.exp(self.threshold)
 
@@ -119,7 +118,7 @@ class Softplus(Bijector):
         return shape
 
     def _forward(self, x):
-        self.checktensor(x, 'value')
+        x = self._check_value(x, 'value')
         scaled_value = self.sharpness * x
         return self.softplus(scaled_value) / self.sharpness
 
@@ -129,7 +128,7 @@ class Softplus(Bijector):
             f(x) = \frac{\log(1 + e^{kx}))}{k}
             f^{-1}(y) = \frac{\log(e^{ky} - 1)}{k}
         """
-        self.checktensor(y, 'value')
+        y = self._check_value(y, 'value')
         scaled_value = self.sharpness * y
         return self.inverse_softplus(scaled_value) / self.sharpness
 
@@ -140,7 +139,7 @@ class Softplus(Bijector):
             f'(x) = \frac{e^{kx}}{ 1 + e^{kx}}
             \log(f'(x)) =  kx - \log(1 + e^{kx}) = kx - f(kx)
         """
-        self.checktensor(x, 'value')
+        x = self._check_value(x, 'value')
         scaled_value = self.sharpness * x
         return self.log_sigmoid(scaled_value)
 
@@ -151,6 +150,6 @@ class Softplus(Bijector):
             f'(y) = \frac{e^{ky}}{e^{ky} - 1}
             \log(f'(y)) = ky - \log(e^{ky} - 1) = ky - f(ky)
         """
-        self.checktensor(y, 'value')
+        y = self._check_value(y, 'value')
         scaled_value = self.sharpness * y
         return scaled_value - self.inverse_softplus(scaled_value)

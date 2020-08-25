@@ -99,7 +99,7 @@ class Bernoulli(Distribution):
         """
         param = dict(locals())
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
-        check_type(dtype, valid_dtype, "Bernoulli")
+        check_type(dtype, valid_dtype, type(self).__name__)
         super(Bernoulli, self).__init__(seed, dtype, name, param)
         self.parameter_type = mstype.float32
         if probs is not None:
@@ -144,7 +144,10 @@ class Bernoulli(Distribution):
         Check availablity of distribution specific args probs1.
         """
         if probs1 is not None:
-            self.checktensor(probs1, 'probs1')
+            if self.context_mode == 0:
+                self.checktensor(probs1, 'probs1')
+            else:
+                probs1 = self.checktensor(probs1, 'probs1')
             return self.cast(probs1, self.parameter_type)
         return self.probs if self.probs is not None else raise_none_error('probs1')
 
@@ -210,7 +213,7 @@ class Bernoulli(Distribution):
             pmf(k) = probs1 if k = 1;
             pmf(k) = probs0 if k = 0;
         """
-        self.checktensor(value, 'value')
+        value = self._check_value(value, 'value')
         value = self.cast(value, mstype.float32)
         probs1 = self._check_param(probs1)
         probs0 = 1.0 - probs1
@@ -229,7 +232,7 @@ class Bernoulli(Distribution):
             cdf(k) = probs0 if 0 <= k <1;
             cdf(k) = 1 if k >=1;
         """
-        self.checktensor(value, 'value')
+        value = self._check_value(value, 'value')
         value = self.cast(value, mstype.float32)
         value = self.floor(value)
         probs1 = self._check_param(probs1)
@@ -257,7 +260,7 @@ class Bernoulli(Distribution):
                        probs0_a * \log(\frac{probs0_a}{probs0_b})
         """
         check_distribution_name(dist, 'Bernoulli')
-        self.checktensor(probs1_b, 'probs1_b')
+        probs1_b = self._check_value(probs1_b, 'probs1_b')
         probs1_b = self.cast(probs1_b, self.parameter_type)
         probs1_a = self._check_param(probs1)
         probs0_a = 1.0 - probs1_a
