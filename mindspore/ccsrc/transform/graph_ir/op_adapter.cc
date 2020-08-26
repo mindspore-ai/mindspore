@@ -276,12 +276,8 @@ OutHandler OpAdapterImpl::getNormalOutput(const OperatorPtr &op, int index) {
 }
 
 Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp,
-                                             const TypePtr &type) {
+                                             const TypePtr &type, const std::string &format) {
   MS_EXCEPTION_IF_NULL(type);
-  std::string format = "NCHW";
-  if (op->GetOpType() == kExtractImagePatchesOpName) {
-    format = "NHWC";
-  }
 
   auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(shp), type, format);
   if (desc == nullptr) {
@@ -340,7 +336,7 @@ std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateOutputDesc(const abstract::Sh
 }
 
 Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp,
-                                            const TypePtr &type) {
+                                            const TypePtr &type, const std::string &format) {
   auto tuple_shp = dyn_cast<abstract::TupleShape>(shp);
   MS_EXCEPTION_IF_NULL(tuple_shp);
 
@@ -361,10 +357,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     MS_LOG(ERROR) << "output_map is not equal tuple_shape size";
     return FAILED;
   }
-  std::string format = "NCHW";
-  if (op->GetOpType() == kTopKOpName) {
-    format = "NHWC";
-  }
+
   for (size_t i = 0; i < tuple_shp->shape().size(); ++i) {
     auto tuple_type = dyn_cast<Tuple>(type);
     MS_EXCEPTION_IF_NULL(tuple_type);
@@ -389,7 +382,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
   return SUCCESS;
 }
 
-std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &node) {
+std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &node, const std::string &format) {
   MS_EXCEPTION_IF_NULL(node);
   TypeId me_type = node->Type()->type_id();
   if (kObjectTypeTensorType == me_type) {
@@ -405,7 +398,7 @@ std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &no
     shape = shape_ptr->shape();
   }
 
-  auto desc = TransformUtil::GetGeTensorDesc(shape, me_type, "NCHW");
+  auto desc = TransformUtil::GetGeTensorDesc(shape, me_type, format);
   if (desc == nullptr) {
     MS_LOG(ERROR) << "Update output descriptor failed!";
     return nullptr;
@@ -413,7 +406,7 @@ std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &no
   return desc;
 }
 
-void OpAdapterImpl::UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr &node) {
+void OpAdapterImpl::UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr &node, const std::string format) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is nullptr";
     return;
@@ -424,19 +417,18 @@ void OpAdapterImpl::UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNode
   for (size_t i = 1; i < inputs.size(); ++i) {
     auto it = input_map_.find(i);
     if (it != input_map_.end()) {
-      auto desc = CreateNodeDesc(inputs[i]);
+      auto desc = CreateNodeDesc(inputs[i], format);
       if (desc == nullptr) {
         continue;
       }
-      if (op->GetOpType() == kExtractImagePatchesOpName) {
-        desc->SetFormat(ge::Format::FORMAT_NHWC);
-      }
+
       it->second.update_input_desc(op, *desc);
     }
   }
 }
 
-void OpAdapterImpl::UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node) {
+void OpAdapterImpl::UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node,
+                                            const std::string format) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is nullptr";
     return;
@@ -452,7 +444,7 @@ void OpAdapterImpl::UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfN
   auto inputs = node->cast<CNodePtr>()->inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
     if (input_map.find(i) != input_map.end()) {
-      auto desc = CreateNodeDesc(inputs[i]);
+      auto desc = CreateNodeDesc(inputs[i], format);
       if (desc == nullptr) {
         continue;
       }
@@ -464,11 +456,12 @@ void OpAdapterImpl::UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfN
 void OpAdapterImpl::updateInputDesc(const OperatorPtr &op, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(node);
+  std::string format = GetOpIOFormat(node);
   if (IsCustomOp(op)) {
     auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
-    UpdateCustomOpInputDesc(cus_op, node);
+    UpdateCustomOpInputDesc(cus_op, node, format);
   } else {
-    UpdateNormalOpInputDesc(op, node);
+    UpdateNormalOpInputDesc(op, node, format);
   }
 }
 
@@ -483,13 +476,14 @@ void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::Base
 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(shp);
   auto no_shape_ptr = dyn_cast<abstract::NoShape>(shp);
+  std::string format = GetOpIOFormat(node);
 
   if ((nullptr != normal_shape_ptr) || (nullptr != no_shape_ptr)) {
-    if (UpdateSingleOutputDesc(op, shp, type) != SUCCESS) {
+    if (UpdateSingleOutputDesc(op, shp, type, format) != SUCCESS) {
       return;
     }
   } else if (nullptr != dyn_cast<abstract::TupleShape>(shp)) {
-    if (UpdateMultiOutputDesc(op, shp, type) != SUCCESS) {
+    if (UpdateMultiOutputDesc(op, shp, type, format) != SUCCESS) {
       return;
     }
   } else {

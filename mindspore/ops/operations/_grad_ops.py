@@ -1537,6 +1537,7 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
     def __init__(self, forget_bias, activation):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.activation = validator.check_string("activation", activation, ['tanh'], self.name)
+        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, c_shape, dht_shape, dct_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape):
         # dhy and dcy should be same shape
@@ -1586,7 +1587,7 @@ class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        self.add_prim_attr("io_format", "HWCN")
 
     def infer_shape(self, x_shape, h_shape, dgate_shape):
         validator.check_integer("x rank", len(x_shape), 2, Rel.EQ, self.name)
@@ -1595,8 +1596,10 @@ class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
         validator.check("h_shape[0]", h_shape[0], "x_shape[0]", x_shape[0], Rel.EQ, self.name)
         validator.check("dgate_shape[0]", dgate_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
         validator.check("dgate_shape[1]", dgate_shape[1], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
-        dw_shape = (dgate_shape[1], x_shape[1] + h_shape[1], 1, 1)
-        db_shape = (dgate_shape[1], 1, 1, 1)
+        input_size = x_shape[1]
+        hidden_size = h_shape[1]
+        dw_shape = (input_size + hidden_size, 4 * hidden_size)
+        db_shape = (4 * hidden_size,)
         return (dw_shape, db_shape)
 
     def infer_dtype(self, x_dtype, h_dtype, dgate_dtype):
@@ -1616,13 +1619,17 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
     def __init__(self, keep_prob):
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_number_range("keep_prob", keep_prob, 0.0, 1.0, Rel.INC_BOTH, self.name)
+        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, dgate_shape, w_shape):
         validator.check_integer("dgate rank", len(dgate_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("w rank", len(w_shape), 4, Rel.EQ, self.name)
-        validator.check("dgate_shape[1]", dgate_shape[1], "w_shape[0]", w_shape[0], Rel.EQ, self.name)
-        dxt_shape = (dgate_shape[0], w_shape[1] - w_shape[0] // 4)
-        dht_shape = (dgate_shape[0], dgate_shape[1] // 4)
+        validator.check_integer("w rank", len(w_shape), 2, Rel.EQ, self.name)
+        validator.check("dgate_shape[1]", dgate_shape[1], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
+        batch_size = dgate_shape[0]
+        hidden_size = dgate_shape[1] // 4
+        input_size = w_shape[0] - hidden_size
+        dxt_shape = (batch_size, input_size)
+        dht_shape = (batch_size, hidden_size)
         return (dxt_shape, dht_shape)
 
     def infer_dtype(self, dgate_dtype, w_dtype):

@@ -735,7 +735,7 @@ TEST_F(TestConvert, TestConvertTensorError) {
   std::vector<int> dims2{2, 3, 4};
   auto type_id_2 = kNumberTypeFloat32;
   auto me_tensor_ptr_2 = std::make_shared<MeTensor>(type_id_2, dims2);
-  ASSERT_EQ(TransformUtil::ConvertTensor(me_tensor_ptr_2, "xyz"), nullptr);
+  ASSERT_NE(TransformUtil::ConvertTensor(me_tensor_ptr_2, "xyz"), nullptr);
 }
 
 TEST_F(TestConvert, TestUtilsConvertDataType) {

@@ -247,7 +247,7 @@ bool IsCustomCNode(const AnfNodePtr &anf) {
     return false;
   }
   if (node->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "length of node inputs is empty";
+    MS_LOG(EXCEPTION) << "Length of node inputs is empty";
   }
   MS_EXCEPTION_IF_NULL(node->inputs()[0]);
   if (!node->inputs()[0]->isa<ValueNode>()) {
@@ -259,6 +259,38 @@ bool IsCustomCNode(const AnfNodePtr &anf) {
   }
 
   return IsCustomPrim(cus_prim);
+}
+
+std::string GetOpIOFormat(const AnfNodePtr &anf) {
+  std::string ret;
+  if (anf == nullptr) {
+    MS_LOG(ERROR) << "The anf is nullptr";
+    return ret;
+  }
+  auto node = anf->cast<CNodePtr>();
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "The anf is not a cnode.";
+    return ret;
+  }
+  if (node->inputs().empty()) {
+    MS_LOG(EXCEPTION) << "Length of node inputs is empty.";
+  }
+  MS_EXCEPTION_IF_NULL(node->inputs()[0]);
+  if (!node->inputs()[0]->isa<ValueNode>()) {
+    MS_LOG(ERROR) << "The anf is not a value node.";
+    return ret;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(node->inputs()[0]);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "The anf is not a Primitive.";
+    return ret;
+  }
+  ValuePtr format = prim->GetAttr("io_format");
+  if (format == nullptr) {
+    return "NCHW";
+  }
+  ret = GetValue<std::string>(format);
+  return ret;
 }
 }  // namespace transform
 }  // namespace mindspore

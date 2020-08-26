@@ -198,6 +198,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
         _check_tuple_or_list("rate", rates, self.name)
         self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'], self.name)
         self.add_prim_attr("padding", self.padding)
+        self.add_prim_attr("io_format", "NHWC")
 
     def infer_shape(self, input_x):
         """infer shape"""

@@ -61,6 +61,7 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>);
 
 bool IsCustomPrim(const PrimitivePtr &prim);
 bool IsCustomCNode(const AnfNodePtr &node);
+std::string GetOpIOFormat(const AnfNodePtr &node);
 }  // namespace transform
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_UTIL_H_
