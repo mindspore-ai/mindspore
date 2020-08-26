@@ -342,7 +342,7 @@ class CheckTuple(PrimitiveWithInfer):
         # Pynative mode
         if isinstance(x, tuple):
             return x
-        raise TypeError(f"For {name['value']}, Input type should b a tuple.")
+        raise TypeError(f"For {name}, input type should be a tuple.")
 
 
 class CheckTensor(PrimitiveWithInfer):
@@ -365,4 +365,6 @@ class CheckTensor(PrimitiveWithInfer):
         return out
 
     def __call__(self, x, name):
-        return
+        if isinstance(x, Tensor):
+            return x
+        raise TypeError(f"For {name}, input type should be a Tensor.")

@@ -15,7 +15,7 @@
 """Scalar Affine Bijector"""
 from mindspore.ops import operations as P
 from mindspore._checkparam import Validator as validator
-from ..distribution._utils.utils import cast_to_tensor, CheckTensor
+from ..distribution._utils.utils import cast_to_tensor
 from ..distribution._utils.custom_ops import log_generic
 from .bijector import Bijector
 
@@ -57,8 +57,8 @@ class ScalarAffine(Bijector):
         Constructor of scalar affine bijector.
         """
         param = dict(locals())
-        validator.check_value_type('scale', scale, [int, float], name)
-        validator.check_value_type('shift', shift, [int, float], name)
+        validator.check_value_type('scale', scale, [int, float], type(self).__name__)
+        validator.check_value_type('shift', shift, [int, float], type(self).__name__)
         self._scale = cast_to_tensor(scale)
         self._shift = cast_to_tensor(shift)
         super(ScalarAffine, self).__init__(
@@ -70,8 +70,6 @@ class ScalarAffine(Bijector):
 
         self.abs = P.Abs()
         self.log = log_generic
-
-        self.checktensor = CheckTensor()
 
     @property
     def scale(self):
@@ -93,7 +91,7 @@ class ScalarAffine(Bijector):
         .. math::
             f(x) = a * x + b
         """
-        self.checktensor(x, 'value')
+        x = self._check_value(x, 'value')
         return self.scale * x + self.shift
 
     def _inverse(self, y):
@@ -101,7 +99,7 @@ class ScalarAffine(Bijector):
         .. math::
             f(y) = \frac{y - b}{a}
         """
-        self.checktensor(y, 'value')
+        y = self._check_value(y, 'value')
         return (y - self.shift) / self.scale
 
     def _forward_log_jacobian(self, x):
@@ -111,7 +109,7 @@ class ScalarAffine(Bijector):
             f'(x) = a
             \log(f'(x)) = \log(a)
         """
-        self.checktensor(x, 'value')
+        x = self._check_value(x, 'value')
         return self.log(self.abs(self.scale))
 
     def _inverse_log_jacobian(self, y):
@@ -121,5 +119,5 @@ class ScalarAffine(Bijector):
             f'(x) = \frac{1.0}{a}
             \log(f'(x)) = - \log(a)
         """
-        self.checktensor(y, 'value')
+        y = self._check_value(y, 'value')
         return -1. * self.log(self.abs(self.scale))

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """basic"""
+from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -54,7 +55,7 @@ class Distribution(Cell):
         Constructor of distribution class.
         """
         super(Distribution, self).__init__()
-        validator.check_value_type('name', name, [str], 'distribution_name')
+        validator.check_value_type('name', name, [str], type(self).__name__)
         validator.check_integer('seed', seed, 0, Rel.GE, name)
 
         self._name = name
@@ -81,6 +82,7 @@ class Distribution(Cell):
         self._set_log_survival()
         self._set_cross_entropy()
 
+        self.context_mode = context.get_context('mode')
         self.checktuple = CheckTuple()
         self.checktensor = CheckTensor()
 
@@ -107,6 +109,15 @@ class Distribution(Cell):
     @property
     def broadcast_shape(self):
         return self._broadcast_shape
+
+    def _check_value(self, value, name):
+        """
+        Check availability fo value as a Tensor.
+        """
+        if self.context_mode == 0:
+            self.checktensor(value, name)
+            return value
+        return self.checktensor(value, name)
 
     def _set_prob(self):
         """

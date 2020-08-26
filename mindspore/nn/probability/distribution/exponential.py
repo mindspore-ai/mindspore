@@ -100,7 +100,7 @@ class Exponential(Distribution):
         """
         param = dict(locals())
         valid_dtype = mstype.float_type
-        check_type(dtype, valid_dtype, "Exponential")
+        check_type(dtype, valid_dtype, type(self).__name__)
         super(Exponential, self).__init__(seed, dtype, name, param)
         self.parameter_type = dtype
         if rate is not None:
@@ -146,7 +146,10 @@ class Exponential(Distribution):
         Check availablity of distribution specific args rate.
         """
         if rate is not None:
-            self.checktensor(rate, 'rate')
+            if self.context_mode == 0:
+                self.checktensor(rate, 'rate')
+            else:
+                rate = self.checktensor(rate, 'rate')
             return self.cast(rate, self.parameter_type)
         return self.rate if self.rate is not None else raise_none_error('rate')
 
@@ -210,7 +213,7 @@ class Exponential(Distribution):
         .. math::
             pdf(x) = rate * \exp(-1 * \lambda * x) if x >= 0 else 0
         """
-        self.checktensor(value, "value")
+        value = self._check_value(value, "value")
         value = self.cast(value, self.dtype)
         rate = self._check_param(rate)
         prob = self.exp(self.log(rate) - rate * value)
@@ -232,7 +235,7 @@ class Exponential(Distribution):
         .. math::
             cdf(x) = 1.0 - \exp(-1 * \lambda * x) if x >= 0 else 0
         """
-        self.checktensor(value, 'value')
+        value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         rate = self._check_param(rate)
         cdf = 1.0 - self.exp(-1. * rate * value)
@@ -251,7 +254,7 @@ class Exponential(Distribution):
             rate_a (Tensor): rate of distribution a. Default: self.rate.
         """
         check_distribution_name(dist, 'Exponential')
-        self.checktensor(rate_b, 'rate_b')
+        rate_b = self._check_value(rate_b, 'rate_b')
         rate_b = self.cast(rate_b, self.parameter_type)
         rate_a = self._check_param(rate)
         return self.log(rate_a) - self.log(rate_b) + rate_b / rate_a - 1.0
