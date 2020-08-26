@@ -121,7 +121,8 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
     return RET_ERROR;
   }
   // NHWC
-  scaleParam->axis = -1;
+  int shape_size = graph->allTensors.at(addBiasIndex)->dims.size();
+  scaleParam->axis = 0 - shape_size;
   mulNode->primitive->value.value = scaleParam.release();
   mulNode->inputIndex.push_back(addBiasIndex);
   if (addNode->primitive->value.AsAdd()->activationType != ActivationType_NO_ACTIVATION) {

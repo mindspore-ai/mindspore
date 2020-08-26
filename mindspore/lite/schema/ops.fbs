@@ -457,6 +457,7 @@ table Min {
 
 table Slice {
     format: Format = 0;
+    axes: [int];
     begin: [int];
     size: [int];
 }

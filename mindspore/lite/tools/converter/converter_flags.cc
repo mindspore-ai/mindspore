@@ -24,8 +24,8 @@ namespace lite {
 namespace converter {
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TFLITE | CAFFE | MS", "");
-  AddFlag(&Flags::modelFile, "modelFile", "Input model file path. TFLITE: *.tflite | CAFFE: *.prototxt | MS: *.mindir",
-          "");
+  AddFlag(&Flags::modelFile, "modelFile",
+          "Input model file path. TFLITE: *.tflite | CAFFE: *.prototxt | MS: *.mindir | ONNX: *.onnx", "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
   AddFlag(&Flags::weightFile, "weightFile",
           "Input model weight file path. Needed when fmk is CAFFE. CAFFE: *.caffemodel", "");
@@ -41,6 +41,10 @@ Flags::Flags() {
 }
 
 int Flags::Init(int argc, const char **argv) {
+  if (argc == 1) {
+    std::cout << this->Usage() << std::endl;
+    return RET_SUCCESS_EXIT;
+  }
   Option<std::string> err = this->ParseFlags(argc, argv);
 
   if (err.IsSome()) {

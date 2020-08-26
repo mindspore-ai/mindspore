@@ -55,7 +55,12 @@ STATUS TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite
     MS_LOG(ERROR) << "get slice -> size failed";
     return RET_ERROR;
   }
-
+  std::vector<int> axes;
+  axes.clear();
+  for (size_t i = 0; i < attr->begin.size(); ++i) {
+    axes.push_back(i);
+  }
+  attr->axes = axes;
   op->primitive->value.type = schema::PrimitiveType_Slice;
   op->primitive->value.value = attr.release();
 

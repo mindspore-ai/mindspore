@@ -72,8 +72,7 @@ const std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
 }
 const ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   auto parameter = func_graph->add_parameter();
-  std::vector<int> shape;
-  std::copy(tensor->shape().begin(), tensor->shape().end(), std::back_inserter(shape));
+  std::vector<int> shape(tensor->shape());
   auto type_id = static_cast<TypeId>(tensor->data_type());
   auto type_ptr = TypeIdToType(type_id);
   auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
@@ -159,6 +158,15 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       if (lite_primitive == nullptr) {
         MS_LOG(ERROR) << "lite_primitive is nullptr";
         return nullptr;
+      }
+      // here, input_tensor's format need to be transposed nhwc according to fmkType,
+      // but for the time being, we only transpose the tensor with 0/1/2/3D.
+      // Others should be added in future.
+      for (size_t j = 0; j < input_tensors.size(); ++j) {
+          input_tensors[j]->SetFormat(schema::Format_NHWC);
+          if (input_tensors[j]->shape().size() == 4) {
+            MS_LOG(WARNING) << "init input_tensor format to nhwc";
+          }
       }
       lite_primitive->InferShape(input_tensors, output_tensors);
       auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, lite_primitive.get());

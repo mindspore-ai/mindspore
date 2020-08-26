@@ -41,6 +41,14 @@ class Slice : public PrimitiveC {
   int GetFormat() const;
   std::vector<int> GetBegin() const;
   std::vector<int> GetSize() const;
+  std::vector<int> GetAxes() const;
+  // due to difference between tflite and onnx, when inferring shape, construct new parameters of begin and size.
+  // when running graph, we need to obtain new begins and sizes using the two function as below.
+  std::vector<int> GetPostProcessBegin() const;
+  std::vector<int> GetPostProcessSize() const;
+ protected:
+    std::vector<int> begin = {0};
+    std::vector<int> size = {-1};
 };
 }  // namespace lite
 }  // namespace mindspore
