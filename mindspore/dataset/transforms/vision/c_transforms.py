@@ -153,8 +153,8 @@ class CutMixBatch(cde.CutMixBatchOp):
     Args:
         image_batch_format (Image Batch Format): The method of padding. Can be any of
             [ImageBatchFormat.NHWC, ImageBatchFormat.NCHW]
-        alpha (float): hyperparameter of beta distribution (default = 1.0).
-        prob (float): The probability by which CutMix is applied to each image (default = 1.0).
+        alpha (float, optional): hyperparameter of beta distribution (default = 1.0).
+        prob (float, optional): The probability by which CutMix is applied to each image (default = 1.0).
 
     Examples:
         >>> one_hot_op = data.OneHot(num_classes=10)
@@ -197,7 +197,7 @@ class MixUpBatch(cde.MixUpBatchOp):
     Note that you need to make labels into one-hot format and batch before calling this function.
 
     Args:
-        alpha (float): hyperparameter of beta distribution (default = 1.0).
+        alpha (float, optional): hyperparameter of beta distribution (default = 1.0).
 
     Examples:
         >>> one_hot_op = data.OneHot(num_classes=10)
@@ -463,7 +463,7 @@ class RandomPosterize(cde.RandomPosterizeOp):
     Reduce the number of bits for each color channel.
 
     Args:
-        bits (sequence or int): Range of random posterize to compress image.
+        bits (sequence or int, optional): Range of random posterize to compress image.
             bits values should always be in range of [1,8], and include at
             least one integer values in the given range. It should be in
             (min, max) or integer format. If min=max, then it is a single fixed
@@ -684,7 +684,7 @@ class RandomColor(cde.RandomColorOp):
     This operation works only with 3-channel color images.
 
     Args:
-         degrees (sequence): Range of random color adjustment degrees.
+         degrees (sequence, optional): Range of random color adjustment degrees.
             It should be in (min, max) format. If min=max, then it is a
             single fixed magnitude operation (default=(0.1,1.9)).
     """
@@ -897,7 +897,7 @@ class Pad(cde.PadOp):
         fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
             the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (Border mode): The method of padding (default=Border.CONSTANT). Can be any of
+        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
             - Border.CONSTANT, means it fills the border with constant values.
