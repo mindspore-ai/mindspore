@@ -83,7 +83,8 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   int out_channel = conv_param_->output_channel_;
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  tmp_output_block_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(TILE_NUM * out_channel * sizeof(float)));
+  tmp_output_block_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(thread_count_ * TILE_NUM * out_channel * sizeof(float)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp output block failed.";
     return RET_ERROR;

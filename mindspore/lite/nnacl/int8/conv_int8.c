@@ -199,7 +199,7 @@ void IndirectGemmInt8Opt(int8_t *dst, int32_t *tmp_dst, const int8_t *src, const
   }
 }
 
-void Conv3x3Uint8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
+void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, int oc, int ic8, size_t real_cal_num) {
   int oc4 = UP_DIV(oc, C4NUM);
 #ifdef ENABLE_ARM64
   IndirectGemmInt16to32_8x4(dst, src, weight, 16, ic8, oc4, oc4 * 4 * 16 * sizeof(int32_t));
@@ -298,9 +298,10 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
                          out_channel, tmp_input_sum, conv_param);
       } else {
         // res part
-        IndirectGemmInt8(tmp_out, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
+        int8_t *tmp_out_ptr = tmp_out + task_id * tile_n * out_channel;
+        IndirectGemmInt8(tmp_out_ptr, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
                          out_channel, tmp_input_sum, conv_param);
-        memcpy(output_data + out_offset, tmp_out, real_cal_num * out_channel);
+        memcpy(output_data + out_offset, tmp_out_ptr, real_cal_num * out_channel);
       }
     }
   }
@@ -360,9 +361,10 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
                             kernel_plane, out_channel, tmp_input_sum, conv_param, gemm_func);
       } else {
         // res part
-        IndirectGemmInt8Opt(tmp_out, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4, kernel_plane,
-                            out_channel, tmp_input_sum, conv_param, gemm_func);
-        memcpy(output_data + out_offset, tmp_out, real_cal_num * out_channel);
+        int8_t *tmp_out_ptr = tmp_out + task_id * tile_n * out_channel;
+        IndirectGemmInt8Opt(tmp_out_ptr, tmp_dst + tmp_dst_offset, gemm_input, packed_weight, bias_data, ic4,
+                            kernel_plane, out_channel, tmp_input_sum, conv_param, gemm_func);
+        memcpy(output_data + out_offset, tmp_out_ptr, real_cal_num * out_channel);
       }
     }
   }
@@ -412,15 +414,15 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
 
-      Conv3x3Uint8InputTransform(input_data + in_batch_offset, tile_buffer + task_id * tile_buffer_offset,
-                                 block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
-                                 out_w_block, conv_param);
+      Conv3x3Int8InputTransform(input_data + in_batch_offset, tile_buffer + task_id * tile_buffer_offset,
+                                block_unit_buffer + task_id * block_unit_buffer_offset, start_index, real_cal_num,
+                                out_w_block, conv_param);
 
-      Conv3x3Uint8Gemm(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tile_buffer + task_id * tile_buffer_offset,
-                       transed_weight, output_channel, ic8, real_cal_num);
+      Conv3x3Int8Gemm(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tile_buffer + task_id * tile_buffer_offset,
+                      transed_weight, output_channel, ic8, real_cal_num);
 
-      Conv3x3Uint8OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
-                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
+      Conv3x3Int8OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
+                                 bias_data, start_index, real_cal_num, out_w_block, conv_param);
     }
   }
 }

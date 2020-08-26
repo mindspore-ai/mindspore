@@ -248,9 +248,10 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
                   relu, relu6);
       } else {
         // res part
-        gemm_func(tmp_out_block, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel, output_offset, 0,
-                  0, relu, relu6);
-        memcpy(output_data + out_offset, tmp_out_block, real_cal_num * out_channel * sizeof(float));
+        float *tmp_out_ptr = tmp_out_block + task_id * TILE_NUM * out_channel;
+        gemm_func(tmp_out_ptr, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel, output_offset, 0, 0,
+                  relu, relu6);
+        memcpy(output_data + out_offset, tmp_out_ptr, real_cal_num * out_channel * sizeof(float));
       }
     }
   }
