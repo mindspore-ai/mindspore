@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <thread>
 
 const uint32_t yuv400UvValue = 0x80;
 const int32_t num2 = 2;
@@ -129,13 +130,17 @@ uint32_t SoftJpegd::AllocOutputBuffer(struct VpcInfo *vpc_input_info, int32_t *w
                                       int32_t *sub_sample) {
   CheckInputParam(*height, *width);
   uint32_t output_size = tjBufSizeYUV2(*width, decodePadding, *height, *sub_sample);
+  JPEGD_LOGD("In this case the format= %d, output size=%d, real width=%d, the real height=%d, thread_id=%lu.",
+             vpc_input_info->format, output_size, *width, *height, std::this_thread::get_id());
   if (output_size == zeroBufSize) {
     JPEGD_LOGE("get outbuffer size failed!");
     return decodeErr;
   }
 
   if (vpc_input_info->is_fake420) {
-    output_size = output_size * channel3 / num2;
+    *width = AlignUp(*width, num2);
+    *height = AlignUp(*height, num2);
+    output_size = (*width) * (*height) * channel3 / num2;
   }
 
   soft_decode_out_buf_ = new (std::nothrow) uint8_t[output_size];
@@ -172,7 +177,8 @@ uint32_t SoftJpegd::ConfigVpcInputData(struct VpcInfo *vpc_input_info, int32_t *
     int32_t uv_size = vpc_input_info->width * vpc_input_info->height / num2;
     int32_t safe_ret = memset_s(reinterpret_cast<void *>((uintptr_t)u_start), uv_size, yuv400UvValue, uv_size);
     if (safe_ret != 0) {
-      JPEGD_LOGE("config yuv400 uv memory failed.");
+      JPEGD_LOGE("config yuv400 uv memory failed.addr = 0x%llx, thread id = %lu", soft_decode_out_buf_,
+                 std::this_thread::get_id());
       delete[] soft_decode_out_buf_;
       soft_decode_out_buf_ = nullptr;
       vpc_input_info->addr = nullptr;
@@ -229,7 +235,8 @@ uint32_t SoftJpegd::JpegdSoftwareDecodeProcess(struct VpcInfo *vpc_input_info,
     tjDecompressToYUV2(handle, soft_dp_process_info->input_buffer, soft_dp_process_info->input_buffer_size,
                        soft_decode_out_buf_, width, decodePadding, height, JDCT_ISLOW);
   if (decode_res != decodeSucc) {
-    JPEGD_LOGE("Decompress jpeg failed.");
+    JPEGD_LOGE("Decompress jpeg failed, addr is 0x%llx, thread id= %lu.", soft_decode_out_buf_,
+               std::this_thread::get_id());
     delete[] soft_decode_out_buf_;
     soft_decode_out_buf_ = nullptr;
     DestoryLibjpegSource(&libjpeg_handler, handle);
