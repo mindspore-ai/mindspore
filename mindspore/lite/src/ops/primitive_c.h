@@ -20,6 +20,7 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include <map>
 #ifdef PRIMITIVE_WRITEABLE
 #include "ir/primitive.h"
 #include "schema/inner/model_generated.h"
@@ -44,6 +45,9 @@ const std::set<int> kSupportDataType = {kNumberTypeUInt8, kNumberTypeInt32, kNum
 constexpr int kAnfPopulaterOne = 1;
 constexpr int kAnfPopulaterTwo = 2;
 constexpr int kAnfPopulaterThree = 3;
+static std::map<std::string, schema::ActivationType> kActivationTypeMap{{"ReLU", schema::ActivationType_RELU},
+                                                                        {"ReLU6", schema::ActivationType_RELU6},
+                                                                        {"Sigmoid", schema::ActivationType_SIGMOID}};
 class PrimitiveC : public mindspore::Primitive {
  public:
   // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().
@@ -94,7 +98,7 @@ class PrimitiveC : public mindspore::Primitive {
 
   std::vector<std::vector<schema::QuantParamT>> GetOutputQuantParams() const;
 
-  void SetQuantType(schema::QuantType quant_type);
+  void SetQuantType(const schema::QuantType &quant_type);
 
   schema::QuantType GetQuantType() const;
 
@@ -110,7 +114,11 @@ class PrimitiveC : public mindspore::Primitive {
 
   static PrimitiveC *UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT *primitive);
 
-  static std::shared_ptr<PrimitiveC> UnPackFromPrimitive(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  static std::shared_ptr<PrimitiveC> UnPackFromPrimitive(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
+                                                         const schema::QuantType &quantType);
+  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
+  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
 
  protected:
   virtual int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) { return RET_ERROR; }

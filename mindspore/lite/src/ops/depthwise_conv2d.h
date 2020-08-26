@@ -51,10 +51,6 @@ class DepthwiseConv2D : public PrimitiveC {
   void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
 
- private:
-  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
-  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
 #else
 
  public:

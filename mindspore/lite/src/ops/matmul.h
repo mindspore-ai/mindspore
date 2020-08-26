@@ -36,10 +36,6 @@ class MatMul : public PrimitiveC {
   void SetTransposeA(bool transpose_a);
   void SetTransposeB(bool transpose_b);
 
- private:
-  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
-  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
 #else
 
  public:

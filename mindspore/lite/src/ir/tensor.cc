@@ -253,6 +253,16 @@ std::string Tensor::ToString() const {
         }
       }
     } break;
+    case kNumberTypeInt8: {
+      auto data = static_cast<int8_t *>(this->data_);
+      if (data == nullptr) {
+        return "Data of tensor is nullptr";
+      } else {
+        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
+          oss << " " << static_cast<int32_t >(data[i]);
+        }
+      }
+    } break;
     default:
       oss << "Unsupported data type to print";
       break;

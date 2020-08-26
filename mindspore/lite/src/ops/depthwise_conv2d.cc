@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/depthwise_conv2d.h"
+
 #include <memory>
 #include <string>
 #ifdef PRIMITIVE_WRITEABLE
@@ -69,96 +70,6 @@ void DepthwiseConv2D::SetActivationType(int activation_type) {
   this->primitive_->value.AsDepthwiseConv2D()->activationType = (schema::ActivationType)activation_type;
 }
 
-void DepthwiseConv2D::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
-  const float qmin = 0;
-  const float qmax = 255;
-  *mMin = static_cast<float>((qmin - mean) / stdDev);
-  *mMax = static_cast<float>((qmax - mean) / stdDev);
-}
-
-void DepthwiseConv2D::PopulaterQuantParam(const Primitive &prim,
-                                          std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                                          std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
-  auto narrow_range = prim.GetAttr("narrow_range");
-  bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
-  auto num_bits = prim.GetAttr("num_bits");
-  int32_t numbitsRangeQuantParam = GetValue<int32_t>(num_bits);
-
-  std::vector<schema::QuantParamT> quants;
-  schema::QuantParamT quantParam;
-  auto mean = prim.GetAttr("mean");
-  auto std_dev = prim.GetAttr("std_dev");
-  if (mean != nullptr && std_dev != nullptr) {
-    auto meanQuantOaram = GetValue<double>(mean);
-    double stddevQuantOaram = GetValue<double>(std_dev);
-    float mMin = 0.0;
-    float mMax = 0.0;
-    CalQuantParam(meanQuantOaram, stddevQuantOaram, &mMin, &mMax);
-    quantParam.min = mMin;
-    quantParam.max = mMax;
-  } else {
-    auto inputMin = prim.GetAttr("input_minq");
-    auto inputMax = prim.GetAttr("input_maxq");
-    auto inputMinPtr = inputMin->cast<lite::tensor::TensorPtr>();
-    auto inputMaxPtr = inputMax->cast<lite::tensor::TensorPtr>();
-    float *minBuf = static_cast<float *>(inputMinPtr->Data());
-    float *maxBuf = static_cast<float *>(inputMaxPtr->Data());
-    quantParam.min = *minBuf;
-    quantParam.max = *maxBuf;
-  }
-  quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
-                               numbitsRangeQuantParam);
-  quants.emplace_back(quantParam);
-  vecInputQuantParam->emplace_back(quants);
-
-  quants.clear();
-  int biasQuantSize = 0;
-  auto filterMin = prim.GetAttr("filter_minq");
-  auto filterMax = prim.GetAttr("filter_maxq");
-  if (filterMin != nullptr && filterMax != nullptr) {
-    auto filterMinPtr = filterMin->cast<lite::tensor::TensorPtr>();
-    auto filterMaxPtr = filterMax->cast<lite::tensor::TensorPtr>();
-    float *minBuf = static_cast<float *>(filterMinPtr->Data());
-    float *maxBuf = static_cast<float *>(filterMaxPtr->Data());
-    biasQuantSize = filterMinPtr->DataSize();
-    for (int i = 0; i < biasQuantSize; ++i) {
-      quantParam.min = *(minBuf++);
-      quantParam.max = *(maxBuf++);
-      quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
-                                   numbitsRangeQuantParam);
-      quants.emplace_back(quantParam);
-    }
-    vecInputQuantParam->emplace_back(quants);
-  }
-
-  quants.clear();
-  for (int i = 0; i < biasQuantSize; ++i) {
-    quantParam.min = 0.0;
-    quantParam.max = 0.0;
-    quantParam.zeroPoint = 0;
-
-    quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(i).scale;
-    quants.emplace_back(quantParam);
-  }
-  vecInputQuantParam->emplace_back(quants);
-
-  quants.clear();
-  auto outputMin = prim.GetAttr("output_minq");
-  auto outputMax = prim.GetAttr("output_maxq");
-  if (outputMin != nullptr && outputMax != nullptr) {
-    auto outputMinPtr = outputMin->cast<lite::tensor::TensorPtr>();
-    auto outputMaxPtr = outputMax->cast<lite::tensor::TensorPtr>();
-    float *minBuf = static_cast<float *>(outputMinPtr->Data());
-    float *maxBuf = static_cast<float *>(outputMaxPtr->Data());
-    quantParam.min = *minBuf;
-    quantParam.max = *maxBuf;
-    quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
-                                 numbitsRangeQuantParam);
-    quants.emplace_back(quantParam);
-    vecOutputQuantParam->emplace_back(quants);
-  }
-}
-
 int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   this->primitive_ = new (schema::PrimitiveT);
   auto attr = std::make_unique<schema::DepthwiseConv2DT>();
@@ -197,7 +108,14 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   } else {
     attr->padMode = schema::PadMode_NOTSET;
   }
-
+  if (prim.GetAttr("activation_name") != nullptr) {
+    std::string activate_name = GetValue<std::string>(prim.GetAttr("activation_name"));
+    attr->activationType = kActivationTypeMap[activate_name];
+  } else {
+    attr->activationType = schema::ActivationType_NO_ACTIVATION;
+  }
+  //  attr->padMode = schema::PadMode_SAME;
+  //  attr->activationType = schema::ActivationType_RELU;
   auto channel_multiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
   attr->channelMultiplier = channel_multiplier;
 

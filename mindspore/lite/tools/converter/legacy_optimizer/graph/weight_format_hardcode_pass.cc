@@ -155,11 +155,11 @@ STATUS WeightFormatHardCodePass::HardCodeMS(const std::unique_ptr<CNodeT> &node,
   switch (this->quantType) {
     case QuantType_AwareTraining: {
       if (opType == schema::PrimitiveType_Conv2D) {
-        weightTensor->format = schema::Format_HWCK;
+        weightTensor->format = schema::Format_KCHW;
       } else if (opType == PrimitiveType_DepthwiseConv2D) {
         weightTensor->format = Format_CKHW;
       } else {
-        weightTensor->format = schema::Format_HWKC;
+        weightTensor->format = schema::Format_KCHW;
       }
     } break;
     case QuantType_QUANT_NONE: {

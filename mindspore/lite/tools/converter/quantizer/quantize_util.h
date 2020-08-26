@@ -23,6 +23,7 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <limits>
 #include "tools/converter/quantizer/quantizer.h"
 #include "src/ops/primitive_c.h"
 #include "include/errorcode.h"
@@ -75,13 +76,15 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   const auto zeroPoint = quantParam->zeroPoint;
   const auto numBit = quantParam->numBits;
   const auto narrowRange = quantParam->narrowRange;
-  const double maxLimit = static_cast<float>((1 << (unsigned int)numBit) - 1 - zeroPoint) * scale;
+  double maxLimitTemp = static_cast<float>((1 << (unsigned int)numBit) - 1);
+  const double maxLimit = static_cast<float>(maxLimitTemp - zeroPoint + std::numeric_limits<int8_t>::min()) * scale;
   double minLimit;
   if (narrowRange) {
-    minLimit = static_cast<float>(1 - zeroPoint) * scale;
+    minLimit = static_cast<float>(std::numeric_limits<int8_t>::min() + 1 - zeroPoint) * scale;
   } else {
-    minLimit = static_cast<float>(0 - zeroPoint) * scale;
+    minLimit = static_cast<float>(std::numeric_limits<int8_t>::min() - zeroPoint) * scale;
   }
+
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
     double tmp = 0.0f;
     if (originData > maxLimit) {
@@ -91,10 +94,7 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
     } else {
       tmp = originData;
     }
-    auto quantData = static_cast<T>(std::round(tmp / scale + zeroPoint));
-    if (quantData == 0 && narrowRange) {
-      quantData++;
-    }
+    auto quantData = static_cast<T>(std::round(zeroPoint + tmp / scale));
     return quantData;
   }();
 }
