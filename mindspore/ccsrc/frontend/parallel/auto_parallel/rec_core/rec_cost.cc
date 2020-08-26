@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 // Compute redistributed cost
 double CostRedis(const Graph::NodeType &node,
                  const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
