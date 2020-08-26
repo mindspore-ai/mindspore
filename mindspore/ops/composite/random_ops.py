@@ -92,55 +92,55 @@ def normal(shape, mean, stddev, seed=0):
     value = random_normal * stddev + mean
     return value
 
-def uniform(shape, a, b, seed=0, dtype=mstype.float32):
+def uniform(shape, minval, maxval, seed=0, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.
 
     Note:
-        The number in tensor a should be strictly less than b at any position after broadcasting.
+        The number in tensor minval should be strictly less than maxval at any position after broadcasting.
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        a (Tensor): The a distribution parameter.
+        minval (Tensor): The a distribution parameter.
           It defines the minimum possibly generated value. With int32 or float32 data type.
           If dtype is int32, only one number is allowed.
-        b (Tensor): The b distribution parameter.
+        maxval (Tensor): The b distribution parameter.
           It defines the maximum possibly generated value. With int32 or float32 data type.
           If dtype is int32, only one number is allowed.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
           Must be non-negative. Default: 0.
 
     Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of a and b.
+        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of minval and maxval.
         The dtype is designated as the input `dtype`.
 
     Examples:
-        >>> For discrete uniform distribution, only one number is allowed for both a and b:
+        >>> For discrete uniform distribution, only one number is allowed for both minval and maxval:
         >>> shape = (4, 2)
-        >>> a = Tensor(1, mstype.int32)
-        >>> b = Tensor(2, mstype.int32)
-        >>> output = C.uniform(shape, a, b, seed=5)
+        >>> minval = Tensor(1, mstype.int32)
+        >>> maxval = Tensor(2, mstype.int32)
+        >>> output = C.uniform(shape, minval, maxval, seed=5)
         >>>
-        >>> For continuous uniform distribution, a and b can be multi-dimentional:
+        >>> For continuous uniform distribution, minval and maxval can be multi-dimentional:
         >>> shape = (4, 2)
-        >>> a = Tensor([1.0, 2.0], mstype.float32)
-        >>> b = Tensor([4.0, 5.0], mstype.float32)
-        >>> output = C.uniform(shape, a, b, seed=5)
+        >>> minval = Tensor([1.0, 2.0], mstype.float32)
+        >>> maxval = Tensor([4.0, 5.0], mstype.float32)
+        >>> output = C.uniform(shape, minval, maxval, seed=5)
     """
-    a_dtype = F.dtype(a)
-    b_dtype = F.dtype(b)
-    const_utils.check_tensors_dtype_same(a_dtype, dtype, "uniform")
-    const_utils.check_tensors_dtype_same(b_dtype, dtype, "uniform")
+    minval_dtype = F.dtype(minval)
+    maxval_dtype = F.dtype(maxval)
+    const_utils.check_tensors_dtype_same(minval_dtype, dtype, "uniform")
+    const_utils.check_tensors_dtype_same(maxval_dtype, dtype, "uniform")
     const_utils.check_non_negative("seed", seed, "uniform")
     seed1 = get_seed()
     seed2 = seed
     if const_utils.is_same_type(dtype, mstype.int32):
         random_uniform = P.UniformInt(seed1, seed2)
-        value = random_uniform(shape, a, b)
+        value = random_uniform(shape, minval, maxval)
     else:
         uniform_real = P.UniformReal(seed1, seed2)
         random_uniform = uniform_real(shape)
-        value = random_uniform * (b - a) + a
+        value = random_uniform * (maxval - minval) + minval
     return value
 
 def gamma(shape, alpha, beta, seed=0):
