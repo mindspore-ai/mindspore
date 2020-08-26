@@ -338,8 +338,13 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
   for (size_t i = 0; i < output_nodes.size(); ++i) {
     auto output_node_with_index = AnfAlgo::VisitKernel(output_nodes[i], 0);
     if (!output_node_with_index.first->isa<CNode>()) {
-      MS_LOG(EXCEPTION) << "The output node should be a cnode , but it is "
-                        << output_node_with_index.first->DebugString();
+      if (output_node_with_index.first->isa<Parameter>()) {
+        auto param = output_node_with_index.first->cast<ParameterPtr>();
+        if (!param->has_default()) {
+          MS_LOG(EXCEPTION) << "The output parameter should be real parameter!";
+        }
+      }
+      continue;
     }
     auto real_output_cnode = output_node_with_index.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(real_output_cnode);
