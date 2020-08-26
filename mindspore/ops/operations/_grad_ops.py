@@ -1125,7 +1125,7 @@ class ResizeBilinearGrad(PrimitiveWithInfer):
         return orig_shape
 
     def infer_dtype(self, dout_dtype, orig_type):
-        return dout_dtype
+        return orig_type
 
 
 class ResizeNearestNeighborGrad(PrimitiveWithInfer):
