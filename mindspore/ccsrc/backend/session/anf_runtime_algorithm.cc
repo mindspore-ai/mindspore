@@ -425,7 +425,7 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
                       << node->DebugString() << "]";
   }
   if (!IsRealKernel(node)) {
-    GetPrevNodeOutputFormat(node, input_idx);
+    return GetPrevNodeOutputFormat(node, input_idx);
   }
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
