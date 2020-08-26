@@ -349,16 +349,12 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
           quant_datas[index] = quant_data;
         }
       }
-      auto ret = memcpy_s(const_cast<float *>(raw_datas), weight->tensor_size(), quant_datas.data(),
+      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(),
                           elem_count * sizeof(int8_t));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;
       }
-      if (quantType == QuantType_WeightQuant) {
-        PostBitPack(const_cast<float *>(raw_datas), elem_count, bitNum);
-      }
-
       weight->set_tensor_size(elem_count * sizeof(int8_t));
     } else {
       // channel at first
@@ -407,9 +403,6 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;
       }
-      if (quantType == QuantType_WeightQuant) {
-        PostBitPack(const_cast<float *>(raw_datas), elem_count, bitNum);
-      }
       weight->set_tensor_size(elem_count * sizeof(int8_t));
     }
 
@@ -440,9 +433,6 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return RET_ERROR;
-    }
-    if (quantType == QuantType_WeightQuant) {
-      PostBitPack(raw_datas, elem_count, bitNum);
     }
     weight->set_tensor_size(elem_count * sizeof(int8_t));
   }

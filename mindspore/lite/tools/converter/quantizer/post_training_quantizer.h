@@ -39,14 +39,9 @@ struct MaxMin {
   float max;
 };
 
-enum ImageFormat {
-  RGB = 0,
-  GRAY = 1,
-  BGR = 2,
-};
-
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
+constexpr int kDefaultBinNumber = 2048;
 
 struct ConfigParam {
   // ImageFormat imageFormat;
@@ -78,7 +73,8 @@ class PostTrainingQuantizer : public Quantizer {
 
   STATUS PreProcess();
 
-  STATUS CheckTensorVec(const std::string &nodeName, const std::vector<mindspore::tensor::MSTensor *> &tensorVec) const;
+  STATUS CheckTensorVec(const std::string &node_name,
+                        const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const;
 
   STATUS DoInference();
 
@@ -105,7 +101,7 @@ struct DivergInfo;
 
 class Calibrator {
  public:
-  explicit Calibrator(std::string path, size_t quant_size, int quant_max, int quant_msin);
+  explicit Calibrator(std::string path, size_t bit_num, int quant_max, int quant_min);
 
   ~Calibrator() = default;
 
@@ -123,18 +119,18 @@ class Calibrator {
 
   STATUS AddQuantizedOp(CNodePtr node);
 
-  STATUS RecordMaxValue(std::string opName, std::vector<float> data,
+  STATUS RecordMaxValue(const std::string &op_name, const std::vector<float> &data,
                         std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
   STATUS UpdateDivergInverval(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  STATUS UpdateDataFrequency(std::string op_name, std::vector<float> data, std::vector<int> shape,
+  STATUS UpdateDataFrequency(const std::string& op_name, const std::vector<float>& data,
                              std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
   void Dump();
 
   STATUS ComputeThreshold();
 
-  std::unordered_map<CNodePtr, float> GetResult(
+  std::unordered_map<CNodePtr, float> GetScale(
     std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
   std::unordered_map<CNodePtr, int32_t> GetZeropoint(
