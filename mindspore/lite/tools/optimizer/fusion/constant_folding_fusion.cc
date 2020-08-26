@@ -83,6 +83,7 @@ const ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *ten
   MS_ASSERT(param_value != nullptr);
   param_value->set_tensor_shape(shape);
   param_value->set_tensor_type(type_id);
+  param_value->set_format(tensor->GetFormat());
   if (tensor->Data() != nullptr) {
     auto size = tensor->ElementsNum();
     auto tensor_data = new (std::nothrow) float[size];

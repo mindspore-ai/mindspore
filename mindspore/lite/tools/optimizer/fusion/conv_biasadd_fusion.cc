@@ -179,7 +179,8 @@ const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, cons
     MS_ASSERT(primc != nullptr);
     primc->SetHasBias(true);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported opType, " << type;
+    MS_LOG(ERROR) << "Unsupported opType, " << type;
+    return nullptr;
   }
   return conv_node;
 }
