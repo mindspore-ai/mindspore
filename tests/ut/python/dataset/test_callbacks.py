@@ -410,6 +410,22 @@ def test_callbacks_exceptions():
         assert "RuntimeError: Bad begin" in str(err.value)
 
 
+def test_callbacks_train_end():
+    logger.info("test_callback_sink_simulation")
+    # No asserts are needed, just test there is no deadlock or exceptions
+    events = []
+    epochs = 2
+
+    my_cb = MyWaitedCallback(events, 1)
+    data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
+    data = data.map(operations=(lambda x: x), callbacks=[my_cb])
+    data = data.to_device()
+    data.send(num_epochs=epochs)
+    time.sleep(0.5)
+    my_cb.end(run_context={})
+    time.sleep(0.5)
+
+
 def test_callbacks_one_cb():
     logger.info("test_callbacks_one_cb")
 
@@ -458,3 +474,4 @@ if __name__ == '__main__':
     test_callbacks_non_sink()
     test_callbacks_one_cb()
     test_callbacks_non_sink_mismatch_size()
+    test_callbacks_train_end()

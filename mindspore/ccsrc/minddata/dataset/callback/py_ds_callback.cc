@@ -53,7 +53,11 @@ Status PyDSCallback::ExecutePyfunc(py::function f, const CallbackParam &cb_param
     if (Py_IsInitialized() == 0) {
       return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
     }
-    f(cb_param);
+    try {
+      f(cb_param);
+    } catch (const py::error_already_set &e) {
+      return Status(StatusCode::kPyFuncException, e.what());
+    }
   }
   return Status::OK();
 }
