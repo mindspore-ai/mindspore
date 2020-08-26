@@ -129,7 +129,6 @@ TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {
     printf("%.3f ", output_data[i]);
   }
   printf("\n");
-  size_t output_size = tensor_out->Size();
   float expect[4] = {2.0f, 3.0f, 4.0f, 5.0f};
 
   for (int i = 0; i < tensor_out->ElementsNum(); ++i)

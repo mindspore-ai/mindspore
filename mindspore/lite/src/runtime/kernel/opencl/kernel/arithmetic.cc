@@ -131,7 +131,6 @@ int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
-  uint32_t element_num = out_tensors_[0]->ElementsC4Num();
   int arg_idx = 0;
 
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());

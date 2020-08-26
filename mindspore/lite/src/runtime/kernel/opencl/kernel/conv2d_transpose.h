@@ -40,7 +40,6 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
-  ConvParameter *parameter_;
   cl::Kernel kernel_;
   void *padWeight_;
   void *bias_;
