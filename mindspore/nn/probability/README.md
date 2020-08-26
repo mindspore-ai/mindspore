@@ -32,7 +32,7 @@ The objective of MDP is to integrate deep learning with Bayesian learning. On th
 - Context: context managers for models and layers.
 
  **Layer 3: Toolbox provides a set of BNN tools for some specific applications** 
-- Uncertainty Estimation([mindspore.nn.probability.toolbox.uncertainty_evaluate](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/toolbox/uncertainty_evaluate.py)): Interfaces to estimate epistemic uncertainty and aleatoric uncertainty.
+- Uncertainty Estimation([mindspore.nn.probability.toolbox.uncertainty_evaluation](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/toolbox/uncertainty_evaluation.py)): Interfaces to estimate epistemic uncertainty and aleatoric uncertainty.
 - OoD detection: Interfaces to detect out of distribution samples.
 
 ![Structure of MDP](https://images.gitee.com/uploads/images/2020/0820/115117_2a20da64_7825995.png "MDP.png")
