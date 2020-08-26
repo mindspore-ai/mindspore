@@ -1,4 +1,4 @@
-﻿![MindSpore标志](docs/MindSpore-logo.png "MindSpore logo")
+![MindSpore标志](docs/MindSpore-logo.png "MindSpore logo")
 ============================================================
 
 [View English](./README.md)
@@ -148,7 +148,23 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
     sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
     sudo systemctl restart docker
     ```
-
+    编辑文件 daemon.json:
+    ```
+    $ vim /etc/docker/daemon.json
+    {
+        "runtimes": {
+            "nvidia": {
+                "path": "nvidia-container-runtime",
+                "runtimeArgs": []
+            }
+        }
+    }
+    ```
+    再次重启docker:
+    ```
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    ```
     使用以下命令获取并运行最新的稳定镜像：
     ```
     docker pull mindspore/mindspore-gpu:0.7.0-beta
