@@ -19,6 +19,7 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 """
 
 import os
+import ast
 import argparse
 import mindspore.nn as nn
 from mindspore import context
@@ -37,7 +38,8 @@ if __name__ == "__main__":
                         help='path where the dataset is saved')
     parser.add_argument('--ckpt_path', type=str, default="", help='if mode is test, must provide\
                         path where the trained ckpt file')
-    parser.add_argument('--dataset_sink_mode', type=bool, default=False, help='dataset_sink_mode is False or True')
+    parser.add_argument('--dataset_sink_mode', type=ast.literal_eval,
+                        default=False, help='dataset_sink_mode is False or True')
 
     args = parser.parse_args()
 
