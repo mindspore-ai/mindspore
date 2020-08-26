@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/scale.h"
+#include "nnacl/fp32/scale.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
@@ -25,7 +25,7 @@ void ScaleInner(float *in_data, float *out_data, float *scale, float *offset, in
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM
+#ifdef ENABLE_ARM64
       for (; in_index < inner_size - 4; in_index += 4) {
         int in_offset = axis_offset + in_index;
         float32x4_t data = vld1q_f32(in_data + in_offset);
@@ -48,7 +48,7 @@ void ScaleAxis(float *in_data, float *out_data, float *scale, float *offset, int
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM
+#ifdef ENABLE_ARM64
     for (; index < axis_size - 4; index += 4) {
       int in_offset = out_offset + index;
       float32x4_t data = vld1q_f32(in_data + in_offset);

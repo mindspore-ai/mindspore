@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/scale.h"
+#include "nnacl/fp32/scale.h"
 
 namespace mindspore::kernel {
 
