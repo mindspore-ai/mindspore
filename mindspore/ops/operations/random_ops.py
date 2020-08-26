@@ -224,14 +224,14 @@ class Poisson(PrimitiveWithInfer):
 
 class UniformInt(PrimitiveWithInfer):
     r"""
-    Produces random integer values i, uniformly distributed on the closed interval [a, b), that is,
+    Produces random integer values i, uniformly distributed on the closed interval [minval, maxval), that is,
     distributed according to the discrete probability function:
 
     .. math::
         \text{P}(i|a,b) = \frac{1}{b-a+1},
 
     Note:
-        The number in tensor a should be strictly less than b at any position after broadcasting.
+        The number in tensor minval should be strictly less than maxval at any position after broadcasting.
 
     Args:
         seed (int): Random seed. Must be non-negative. Default: 0.
@@ -239,9 +239,9 @@ class UniformInt(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **a** (Tensor) - The a distribution parameter.
+        - **minval** (Tensor) - The a distribution parameter.
           It defines the minimum possibly generated value. With int32 data type. Only one number is supported.
-        - **b** (Tensor) - The b distribution parameter.
+        - **maxval** (Tensor) - The b distribution parameter.
           It defines the maximum possibly generated value. With int32 data type. Only one number is supported.
 
     Outputs:
@@ -249,32 +249,32 @@ class UniformInt(PrimitiveWithInfer):
 
     Examples:
         >>> shape = (4, 16)
-        >>> a = Tensor(1, mstype.int32)
-        >>> b = Tensor(5, mstype.int32)
+        >>> minval = Tensor(1, mstype.int32)
+        >>> maxval = Tensor(5, mstype.int32)
         >>> uniform_int = P.UniformInt(seed=10)
-        >>> output = uniform_int(shape, a, b)
+        >>> output = uniform_int(shape, minval, maxval)
     """
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Init UniformInt"""
-        self.init_prim_io_names(inputs=['shape', 'a', 'b'], outputs=['output'])
+        self.init_prim_io_names(inputs=['shape', 'minval', 'maxval'], outputs=['output'])
         validator.check_integer("seed", seed, 0, Rel.GE, self.name)
         validator.check_integer("seed2", seed2, 0, Rel.GE, self.name)
 
-    def __infer__(self, shape, a, b):
+    def __infer__(self, shape, minval, maxval):
         shape_v = shape["value"]
         if shape_v is None:
             raise ValueError(f"For {self.name}, shape must be const.")
         validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             validator.check_integer("shape[%d]" % i, shape_i, 0, Rel.GT, self.name)
-        validator.check_tensor_type_same({"a": a["dtype"]}, [mstype.int32], self.name)
-        validator.check_tensor_type_same({"b": b["dtype"]}, [mstype.int32], self.name)
-        a_shape = a['shape']
-        b_shape = b['shape']
-        validator.check("dim of a", len(a_shape), '0(scalar)', 0, Rel.EQ, self.name)
-        validator.check("dim of b", len(b_shape), '0(scalar)', 0, Rel.EQ, self.name)
+        validator.check_tensor_type_same({"minval": minval["dtype"]}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"maxval": maxval["dtype"]}, [mstype.int32], self.name)
+        minval_shape = minval['shape']
+        maxval_shape = maxval['shape']
+        validator.check("dim of minval", len(minval_shape), '0(scalar)', 0, Rel.EQ, self.name)
+        validator.check("dim of maxval", len(maxval_shape), '0(scalar)', 0, Rel.EQ, self.name)
         out = {
             'shape': shape_v,
             'dtype': mstype.int32,
