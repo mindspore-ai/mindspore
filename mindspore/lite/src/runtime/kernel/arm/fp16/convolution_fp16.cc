@@ -112,7 +112,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  tmp_output_block_ = reinterpret_cast<float16_t *>(malloc(cal_num * out_channel * sizeof(float16_t)));
+  tmp_output_block_ = reinterpret_cast<float16_t *>(malloc(thread_count_ * cal_num * out_channel * sizeof(float16_t)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_output_block_ failed.";
     return RET_ERROR;

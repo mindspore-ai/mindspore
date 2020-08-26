@@ -338,7 +338,7 @@ int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *mpenv, void *cdata) {
+int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   auto conv = reinterpret_cast<ConvolutionInt8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

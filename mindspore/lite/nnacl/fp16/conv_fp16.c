@@ -369,9 +369,10 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
                               out_channel * sizeof(float16_t), 0, 0, relu, relu6);
       } else {
         // res part
-        IndirectGemmFp16_16x8(tmp_out_block, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
+        float16_t *tmp_out_ptr = tmp_out_block + task_id * tile_n * out_channel;
+        IndirectGemmFp16_16x8(tmp_out_ptr, gemm_input, packed_weight, bias_data, conv_depth, ic4, out_channel,
                               out_channel * sizeof(float16_t), 0, 0, relu, relu6);
-        memcpy(output_data + out_offset, tmp_out_block, real_cal_num * out_channel * sizeof(float16_t));
+        memcpy(output_data + out_offset, tmp_out_ptr, real_cal_num * out_channel * sizeof(float16_t));
       }
     }
   }
