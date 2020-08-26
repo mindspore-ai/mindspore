@@ -129,14 +129,28 @@ void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col)
         dst_c[i] = src_c[i * col];
       }
     }
+    for (; ci < col4; ci++) {
+      float *dst_c = dst_r + ci * C12NUM;
+      for (size_t i = 0; i < C12NUM; i++) {
+        dst_c[i] = 0;
+      }
+    }
     src_r += C12NUM * col;
     dst_r += C12NUM * col;
   }
+
   for (; ri < row; ri++) {
     for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = src_r[i];
     }
     src_r += col;
+    dst_r += 1;
+  }
+
+  for (; ri < row12; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C12NUM] = 0;
+    }
     dst_r += 1;
   }
   return;

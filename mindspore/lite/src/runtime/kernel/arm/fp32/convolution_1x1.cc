@@ -35,10 +35,6 @@ Convolution1x1CPUKernel::~Convolution1x1CPUKernel() {
 }
 
 void Convolution1x1CPUKernel::FreeTmpBuffer() {
-  if (pack_input_ != nullptr) {
-    free(pack_input_);
-    pack_input_ = nullptr;
-  }
   if (pre_trans_input_ && input_ptr_ != nullptr) {
     free(input_ptr_);
     input_ptr_ = nullptr;
@@ -102,13 +98,6 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, C8NUM), thread_count_) * C8NUM;
-
-  pack_input_ = reinterpret_cast<float *>(malloc(matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float)));
-  if (pack_input_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
-    return RET_MEMORY_FAILED;
-  }
-  memset(pack_input_, 0, matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float));
 
   if (pre_trans_input_) {
     input_ptr_ = reinterpret_cast<float *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float)));
@@ -179,6 +168,13 @@ int Convolution1x1CPUKernel::Run() {
   auto src_in = reinterpret_cast<float *>(in_tensors_[0]->Data());
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->Data());
 
+  pack_input_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_12_ * matmul_param_->deep_ * sizeof(float)));
+  if (pack_input_ == nullptr) {
+    MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
+    return RET_MEMORY_FAILED;
+  }
+
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(src_in + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
                 src_out + batch_index * matmul_param_->row_ * matmul_param_->col_);
@@ -190,6 +186,10 @@ int Convolution1x1CPUKernel::Run() {
     }
   }
 
+  if (pack_input_ != nullptr) {
+    ctx_->allocator->Free(pack_input_);
+    pack_input_ = nullptr;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel
