@@ -52,6 +52,7 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int InitWeightBias();
   int InitTmpBuffer();
   void ConfigInputOutput();
+  int PostProcess();
 
  private:
   void FreeTmpBuffer() {

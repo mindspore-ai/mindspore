@@ -51,6 +51,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int MallocFilterMatrix(int oc_block, int oc_block_num);
   int InitTmpBuffer();
   int ConfigInputOutput();
+  int PostProcess();
 
  private:
   void FreeTmpBuffer() {

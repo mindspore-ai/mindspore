@@ -353,18 +353,43 @@ int ConvolutionWinogradImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata
   return RET_OK;
 }
 
+int ConvolutionWinogradCPUKernel::PostProcess() {
+  auto out_tensor = out_tensors_.front();
+  auto out_data = reinterpret_cast<float *>(out_tensor->Data());
+  auto act_type = conv_param_->act_type_;
+  switch (act_type) {
+    case ActType_No:
+      UnPackWinogradOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                           conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    case ActType_Relu:
+      UnPackWinogradReluOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                               conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    case ActType_Relu6:
+      UnPackWinogradRelu6Output(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
+                                conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupport activation type.";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ConvolutionWinogradCPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  // malloc tmp buffer
+
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
     return RET_ERROR;
   }
+
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = input_tensor->Data();
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
@@ -377,18 +402,10 @@ int ConvolutionWinogradCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  // get real output
-  auto out_tensor = out_tensors_.front();
-  auto out_data = reinterpret_cast<float *>(out_tensor->Data());
-  if (conv_param_->act_type_ == ActType_Relu) {
-    UnPackWinogradReluOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
-                             conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else if (conv_param_->act_type_ == ActType_Relu6) {
-    UnPackWinogradRelu6Output(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
-                              conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else {
-    UnPackWinogradOutput(tmp_out_data_, out_data, conv_param_->output_batch_, conv_param_->output_h_,
-                         conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+  ret = PostProcess();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Post process failed.";
+    return ret;
   }
   FreeTmpBuffer();
   return RET_OK;
