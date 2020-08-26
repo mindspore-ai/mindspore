@@ -29,8 +29,12 @@ class PowerTransform(Bijector):
 
     This bijector is equivalent to the `Exp` bijector when `c=0`
 
+    Raises:
+        ValueError: If the power is less than 0 or is not known statically.
+
     Args:
         power (int or float): scale factor. Default: 0.
+        name (str): name of the bijector. Default: 'PowerTransform'.
 
     Examples:
         >>> # To initialize a PowerTransform bijector of power 0.5
@@ -44,10 +48,12 @@ class PowerTransform(Bijector):
         >>>         self.p1 = msb.PowerTransform(0.5)
         >>>
         >>>     def construct(self, value):
-        >>>
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'forward' with the name of the function
-        >>>         ans = self.p1.forward(, value)
+        >>>         ans1 = self.s1.forward(value)
+        >>>         ans2 = self.s1.inverse(value)
+        >>>         ans3 = self.s1.forward_log_jacobian(value)
+        >>>         ans4 = self.s1.inverse_log_jacobian(value)
     """
 
     def __init__(self,

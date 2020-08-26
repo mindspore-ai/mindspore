@@ -29,6 +29,7 @@ class ScalarAffine(Bijector):
     Args:
         scale (float): scale factor. Default: 1.0.
         shift (float): shift factor. Default: 0.0.
+        name (str): name of the bijector. Default: 'ScalarAffine'.
 
     Examples:
         >>> # To initialize a ScalarAffine bijector of scale 1 and shift 2
@@ -43,10 +44,10 @@ class ScalarAffine(Bijector):
         >>>     def construct(self, value):
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'forward' with the name of the function
-        >>>         ans = self.s1.forward(value)
-        >>>         ans = self.s1.inverse(value)
-        >>>         ans = self.s1.forward_log_jacobian(value)
-        >>>         ans = self.s1.inverse_log_jacobian(value)
+        >>>         ans1 = self.s1.forward(value)
+        >>>         ans2 = self.s1.inverse(value)
+        >>>         ans3 = self.s1.forward_log_jacobian(value)
+        >>>         ans4 = self.s1.inverse_log_jacobian(value)
     """
 
     def __init__(self,
