@@ -40,7 +40,6 @@ class ConvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Execute(int task_id);
 
  private:
-  void FreeTmpBuffer();
   SlidingWindowParam *sliding = nullptr;
   int16_t *packed_weight_ = nullptr;
   int16_t *packed_input_ = nullptr;
