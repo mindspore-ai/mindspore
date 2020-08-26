@@ -362,7 +362,7 @@ int ArithmeticFP16CPUKernel::DoArithmetic(int task_id) {
   return RET_OK;
 }
 
-static int ArithmeticsRun_Fp16(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ArithmeticsRun_Fp16(void *cdata, int task_id) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticFP16CPUKernel *>(cdata);
   auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {
@@ -413,7 +413,7 @@ int ArithmeticFP16CPUKernel::Run() {
     Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[1]->Data()), input1_fp16_,
                      arithmeticParameter_->in_elements_num1_);
   }
-  ret = LiteBackendParallelLaunch(ArithmeticsRun_Fp16, this, context_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsRun_Fp16, this, context_->thread_num_);
   return ret;
 }
 

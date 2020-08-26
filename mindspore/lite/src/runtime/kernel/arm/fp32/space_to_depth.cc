@@ -74,7 +74,7 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
   return RET_OK;
 }
 
-int SpaceToDepthRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SpaceToDepthRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<SpaceToDepthCPUKernel *>(cdata);
   auto ret = g_kernel->SpaceToDepth(task_id);
   if (ret != RET_OK) {
@@ -93,7 +93,7 @@ int SpaceToDepthCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
   output_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
   if (in_tensors_[0]->GetFormat() == schema::Format_NHWC) {
-    ret = LiteBackendParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;

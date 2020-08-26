@@ -61,7 +61,7 @@ int EmbeddingLookupCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int EmbeddingLookupRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int EmbeddingLookupRun(void *cdata, int task_id) {
   auto EmbeddingLookupData = reinterpret_cast<EmbeddingLookupCPUKernel *>(cdata);
   auto ret = EmbeddingLookupData->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -102,7 +102,7 @@ int EmbeddingLookupCPUKernel::Run() {
   output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
   ids_addr_ = reinterpret_cast<int *>(in_tensors_.back()->Data());
 
-  auto ret = LiteBackendParallelLaunch(EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, EmbeddingLookupRun, this, embedding_lookup_parameter_->thread_num);
   context_->allocator->Free(input_addr_);
   context_->allocator->Free(embedding_lookup_parameter_->is_regulated_);
   if (ret != RET_OK) {

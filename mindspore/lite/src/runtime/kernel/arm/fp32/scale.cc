@@ -137,7 +137,7 @@ int ScaleCPUKernel::Scale(int task_id) {
   return RET_OK;
 }
 
-int ScaleRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ScaleRun(void *cdata, int task_id) {
   auto scale = reinterpret_cast<ScaleCPUKernel *>(cdata);
   auto ret = scale->Scale(task_id);
   if (ret != RET_OK) {
@@ -162,7 +162,7 @@ int ScaleCPUKernel::Run() {
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
 
-  ret = LiteBackendParallelLaunch(ScaleRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ScaleRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

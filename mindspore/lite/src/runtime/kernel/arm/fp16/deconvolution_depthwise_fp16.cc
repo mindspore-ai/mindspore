@@ -137,7 +137,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-static int DeconvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int DeconvDwFp16Run(void *cdata, int task_id) {
   auto deconv_dw_fp16 = reinterpret_cast<DeconvolutionDepthwiseFp16CPUKernel *>(cdata);
   auto ret = deconv_dw_fp16->Execute(task_id);
   if (ret != RET_OK) {
@@ -178,7 +178,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   if (!need_align_) {
     packed_output_ = execute_output_;
   }
-  ret = LiteBackendParallelLaunch(DeconvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;

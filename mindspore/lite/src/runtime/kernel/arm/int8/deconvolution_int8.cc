@@ -216,7 +216,7 @@ void DeConvInt8CPUKernel::FreeRunBuf() {
   return;
 }
 
-int DeConvInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int DeConvInt8Run(void *cdata, int task_id) {
   auto deconv = reinterpret_cast<DeConvInt8CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {
@@ -272,7 +272,7 @@ int DeConvInt8CPUKernel::Run() {
     DeConvPackInputSum(input_ptr_, input_sum_, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
                        UP_ROUND(matmul_param_->row_, C4NUM), UP_ROUND(matmul_param_->deep_, C16NUM), support_optimize_);
 
-    error_code = LiteBackendParallelLaunch(DeConvInt8Run, this, thread_count_);
+    error_code = ParallelLaunch(THREAD_POOL_DEFAULT, DeConvInt8Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv int8 run error! error_code[" << error_code << "]";
       return RET_ERROR;

@@ -147,7 +147,7 @@ int MatmulCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int MatmulFloatRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int MatmulFloatRun(void *cdata, int task_id) {
   auto op = reinterpret_cast<MatmulCPUKernel *>(cdata);
   auto error_code = op->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -178,7 +178,7 @@ int MatmulCPUKernel::Run() {
     a_ptr_ = a_c12_ptr_ + i * params_->row_12_ * params_->deep_;
     b_ptr_ = b_r8_ptr_ + i * params_->deep_ * params_->col_8_;
     c_ptr_ = c_src + i * params_->row_ * params_->col_;
-    LiteBackendParallelLaunch(MatmulFloatRun, this, thread_count_);
+    ParallelLaunch(THREAD_POOL_DEFAULT, MatmulFloatRun, this, thread_count_);
   }
   return RET_OK;
 }

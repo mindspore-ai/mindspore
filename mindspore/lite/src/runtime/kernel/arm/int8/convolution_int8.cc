@@ -338,7 +338,7 @@ int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvolutionInt8Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionInt8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -374,7 +374,7 @@ int ConvolutionInt8CPUKernel::Run() {
   convert_func_(ori_input_data, nhwc4_input_, conv_param_->input_batch_, conv_param_->input_h_ * conv_param_->input_w_,
                 conv_param_->input_channel_);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv int8 error error_code[" << error_code << "]";
     FreeTmpBuffer();

@@ -56,7 +56,7 @@ int ResizeInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int ResizeInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ResizeInt8Impl(void *cdata, int task_id) {
   auto resize = reinterpret_cast<ResizeInt8CPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -124,7 +124,7 @@ int ResizeInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = LiteBackendParallelLaunch(ResizeInt8Impl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ResizeInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

@@ -197,7 +197,7 @@ int Convolution3x3FP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int Convolution3x3Fp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int Convolution3x3Fp16Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<Convolution3x3FP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -251,7 +251,7 @@ int Convolution3x3FP16CPUKernel::Run() {
   int in_channel = conv_param_->input_channel_;
   PackNHWCToNHWC8Fp16(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
-  int error_code = LiteBackendParallelLaunch(Convolution3x3Fp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution3x3Fp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 fp16 error error_code[" << error_code << "]";
     FreeTmpBuffer();

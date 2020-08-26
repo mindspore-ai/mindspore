@@ -16,26 +16,22 @@
 
 #include <utility>
 #include "src/runtime/parallel_executor.h"
-using mindspore::predict::ThreadPool;
-using mindspore::predict::TvmEnv;
+#include "include/thread_pool_config.h"
+#include "src/runtime/runtime_api.h"
+
 #define MAX_THREAD_NUM 8
 namespace mindspore::lite {
-ParallelExecutor::~ParallelExecutor() {
-  delete pool;
-  pool = nullptr;
-}
+ParallelExecutor::~ParallelExecutor() {}
 int ParallelExecutor::Prepare(std::vector<mindspore::kernel::LiteKernel *> &kernels) {
-  pool = new ThreadPool();
-  if (pool == nullptr) {
+  int status = ConfigThreadPool(THREAD_POOL_DEFAULT, MAX_THREAD_NUM, NO_BIND);
+  if (status != 0) {
     MS_LOG(ERROR) << "Memory error: fail to new ThreadPool";
     return RET_ERROR;
   }
-  pool->ConfigMaxThreadNum(MAX_THREAD_NUM);
-  pool->ConfigThreadPool(NO_BIND, MAX_THREAD_NUM);
   return RET_OK;
 }
 
-static int RunKernel(int index, TvmEnv *env, void *data) {
+static int RunKernel(void *data, int index) {
   ParallelExecutor *executor = reinterpret_cast<ParallelExecutor *>(data);
   auto kernel = executor->GetReadyKernel(index);
   auto ret = kernel->Run();
@@ -84,7 +80,7 @@ int ParallelExecutor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector
   std::vector<kernel::LiteKernel *> newReadyKernels;
   while (readyKernels.size() > 0) {
     results.resize(readyKernels.size(), RET_OK);
-    pool->LaunchWork(RunKernel, this, readyKernels.size());
+    ParallelLaunch(THREAD_POOL_DEFAULT, RunKernel, this, readyKernels.size());
 
     if (std::find_if(results.begin(), results.end(), [](const int &ret) { return (ret != 0); }) != results.end()) {
       return RET_ERROR;

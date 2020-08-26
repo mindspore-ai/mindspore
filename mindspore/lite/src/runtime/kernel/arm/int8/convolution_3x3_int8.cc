@@ -213,7 +213,7 @@ int Convolution3x3Int8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int Convolution3x3Int8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int Convolution3x3Int8Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<Convolution3x3Int8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -238,7 +238,7 @@ int Convolution3x3Int8CPUKernel::Run() {
   auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
   PackInputToC8Int8(input_addr, input_data_, conv_param_);
 
-  int error_code = LiteBackendParallelLaunch(Convolution3x3Int8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution3x3Int8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 int8 error error_code[" << error_code << "]";
     FreeTmpBuffer();

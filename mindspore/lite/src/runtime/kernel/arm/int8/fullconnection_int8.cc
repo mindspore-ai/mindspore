@@ -118,7 +118,7 @@ int FullconnectionInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int FcInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int FcInt8Run(void *cdata, int task_id) {
   auto fc = reinterpret_cast<FullconnectionInt8CPUKernel *>(cdata);
   auto ret = fc->RunImpl(task_id);
   if (ret != RET_OK) {
@@ -137,7 +137,7 @@ int FullconnectionInt8CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
   RowMajor2Row4x16Major(input_ptr, fc_param_->row_, fc_param_->deep_, a_r4x16_ptr_, d16_);
   CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_);
-  LiteBackendParallelLaunch(FcInt8Run, this, thread_count_);
+  ParallelLaunch(THREAD_POOL_DEFAULT, FcInt8Run, this, thread_count_);
   return RET_OK;
 }
 

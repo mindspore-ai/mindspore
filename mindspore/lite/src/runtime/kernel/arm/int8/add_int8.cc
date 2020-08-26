@@ -102,17 +102,17 @@ int QuantizedAddCPUKernel::Run() {
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->Data()),
                         static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(input0_data_),
                         reinterpret_cast<uint8_t *>(input1_data_), &tile_para);
-    ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
   return ret;
 }
 
-int AddInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int AddInt8Run(void *cdata, int task_id) {
   auto add = reinterpret_cast<QuantizedAddCPUKernel *>(cdata);
   add->DoExecute(task_id);
   return lite::RET_OK;

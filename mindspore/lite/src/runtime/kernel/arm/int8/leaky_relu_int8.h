@@ -41,7 +41,7 @@ class LeakyReluInt8CPUKernel : public LeakyReluBaseCPUKernel {
  private:
   LeakyReluQuantArg quant_prelu_parm_;
 };
-int PreluInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int PreluInt8Run(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PRELU_INT8_H_

@@ -157,7 +157,7 @@ int SqueezeInt8CPUKernel::Run() {
     free(*(inputs_array + i));
   }
 
-  ret = LiteBackendParallelLaunch(SqueezeInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SqueezeInt8Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }
@@ -165,7 +165,7 @@ int SqueezeInt8CPUKernel::Run() {
   return ret;
 }
 
-int SqueezeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SqueezeInt8Run(void *cdata, int task_id) {
   auto Squeeze = reinterpret_cast<SqueezeInt8CPUKernel *>(cdata);
   Squeeze->DoExecute(task_id);
   return RET_OK;

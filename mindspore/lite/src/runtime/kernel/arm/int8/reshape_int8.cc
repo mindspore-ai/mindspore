@@ -60,11 +60,11 @@ int ReshapeInt8CPUKernel::Run() {
   elements_num_ = in_tensors_.at(kInputIndex)->ElementsNum();
   count_unit_ = op_parameter_->thread_num_ > 1 ? UP_DIV(elements_num_, op_parameter_->thread_num_) : elements_num_;
 
-  ret = LiteBackendParallelLaunch(ReshapeInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ReshapeInt8Run, this, op_parameter_->thread_num_);
   return ret;
 }
 
-int ReshapeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ReshapeInt8Run(void *cdata, int task_id) {
   auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
   reshape->DoExecute(task_id);
   return lite::RET_OK;

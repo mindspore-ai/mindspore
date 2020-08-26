@@ -68,7 +68,7 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/runtime_api.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.c
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/workspace_pool.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/allocator.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/executor.cc
@@ -122,7 +122,7 @@ set(LITE_SRC
         ${SRC_DIR}/common/ms_tensor_utils.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
-        ${SRC_DIR}/runtime/thread_pool.cc
+        ${SRC_DIR}/runtime/thread_pool.c
         ${SRC_DIR}/runtime/workspace_pool.cc
         ${SRC_DIR}/ir/tensor.cc
         ${SRC_DIR}/context.cc

@@ -29,13 +29,13 @@ using mindspore::schema::PrimitiveType_Slice;
 
 namespace mindspore::kernel {
 namespace {
-int SliceLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SliceLaunch(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_NULL_PTR;
   }
   auto kernel = reinterpret_cast<SliceCPUKernel *>(cdata);
-  return kernel->SliceParallelRun(thread_id);
+  return kernel->SliceParallelRun(task_id);
 }
 }  // namespace
 
@@ -97,7 +97,7 @@ int SliceCPUKernel::Run() {
     DoSliceNoParallel(input_data, output_data, param);
     return RET_OK;
   }
-  ret = LiteBackendParallelLaunch(SliceLaunch, this, param->op_parameter_.thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SliceLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
     return RET_ERROR;

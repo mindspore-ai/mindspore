@@ -46,7 +46,7 @@ int EluCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int EluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int EluRun(void *cdata, int task_id) {
   auto EluData = reinterpret_cast<EluCPUKernel *>(cdata);
   auto ret = EluData->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -65,7 +65,7 @@ int EluCPUKernel::Run() {
   input_addr = reinterpret_cast<float *>(in_tensors_.front()->Data());
   output_addr = reinterpret_cast<float *>(out_tensors_.front()->Data());
 
-  auto ret = LiteBackendParallelLaunch(EluRun, this, elu_parameter_->thread_num_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, EluRun, this, elu_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Elu error: error_code[" << ret << "]";
     return RET_ERROR;

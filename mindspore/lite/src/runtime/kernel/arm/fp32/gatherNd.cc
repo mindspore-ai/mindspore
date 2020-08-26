@@ -105,7 +105,7 @@ int GatherNdCPUKernel::DoGatherNd(int task_id) {
   return RET_OK;
 }
 
-int GatherNdRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int GatherNdRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<GatherNdCPUKernel *>(cdata);
   auto ret = g_kernel->DoGatherNd(task_id);
   if (ret != RET_OK) {
@@ -123,7 +123,7 @@ int GatherNdCPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
-  auto ret = LiteBackendParallelLaunch(GatherNdRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
     return ret;

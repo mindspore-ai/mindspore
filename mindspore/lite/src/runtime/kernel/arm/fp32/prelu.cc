@@ -28,7 +28,7 @@ using mindspore::schema::PrimitiveType_CaffePReLU;
 
 namespace mindspore::kernel {
 namespace {
-int PReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PReluRun(void *cdata, int task_id) {
   auto PRelu = reinterpret_cast<PReluCPUKernel *>(cdata);
   auto ret = PRelu->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -135,7 +135,7 @@ int PReluCPUKernel::Run() {
   auto negative_slope_tensor = in_tensors_.at(1);
   prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->Data());
 
-  auto ret = LiteBackendParallelLaunch(PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PRelu Run error: error_code[" << ret << "]";
     context_->allocator->Free(input_data_);

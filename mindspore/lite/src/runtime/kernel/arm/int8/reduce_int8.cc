@@ -235,7 +235,7 @@ int ReduceInt8CPUKernel::ReSize() {
   return ret;
 }
 
-int ReduceInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ReduceInt8Impl(void *cdata, int task_id) {
   auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {
@@ -284,7 +284,7 @@ int ReduceInt8CPUKernel::Run() {
       inner_size_ *= tmp_shape_[k];
     }
     axis_size_ = tmp_shape_[axis];
-    auto error_code = LiteBackendParallelLaunch(ReduceInt8Impl, this, context_->thread_num_);
+    auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -321,7 +321,7 @@ int ReduceInt8CPUKernel::Run() {
   axis_size_ = tmp_shape_[last_reduce_axis];
   last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
   is_last_axis_ = true;
-  auto error_code = LiteBackendParallelLaunch(ReduceInt8Impl, this, context_->thread_num_);
+  auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

@@ -30,13 +30,13 @@ using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
 namespace {
-int CropLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
+int CropLaunch(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_NULL_PTR;
   }
   auto kernel = reinterpret_cast<CropCPUKernel *>(cdata);
-  return kernel->CropParallelRun(thread_id);
+  return kernel->CropParallelRun(task_id);
 }
 }  // namespace
 
@@ -68,7 +68,7 @@ int CropCPUKernel::Run() {
     return RET_OK;
   }
 
-  auto ret = LiteBackendParallelLaunch(CropLaunch, this, param->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, CropLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;

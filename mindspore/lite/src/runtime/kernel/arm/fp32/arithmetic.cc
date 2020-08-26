@@ -163,7 +163,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   return RET_OK;
 }
 
-int ArithmeticsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ArithmeticsRun(void *cdata, int task_id) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticCPUKernel *>(cdata);
   auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {
@@ -193,7 +193,7 @@ int ArithmeticCPUKernel::Run() {
     ComputeStrides(arithmeticParameter_->out_shape_, arithmeticParameter_->out_strides_, arithmeticParameter_->ndim_);
   }
 
-  int error_code = LiteBackendParallelLaunch(ArithmeticsRun, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsRun, this, thread_count_);
 
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic function error error_code[" << error_code << "]";

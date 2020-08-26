@@ -110,7 +110,7 @@ int SubInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int SubInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SubInt8Run(void *cdata, int task_id) {
   auto sub_kernel = reinterpret_cast<SubInt8CPUKernel *>(cdata);
   auto ret = sub_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -147,7 +147,7 @@ int SubInt8CPUKernel::Run() {
                         static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(tile0_data_),
                         reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
   }
-  ret = LiteBackendParallelLaunch(SubInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SubInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
     context_->allocator->Free(tile0_data_);
     context_->allocator->Free(tile1_data_);

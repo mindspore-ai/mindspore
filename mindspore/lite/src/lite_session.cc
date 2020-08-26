@@ -247,7 +247,6 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { retu
 
 int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
   MS_EXCEPTION_IF_NULL(this->context_);
-  SetMaxWokerNum(context_->thread_num_);
   if (before == nullptr && after == nullptr) {
     return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {
@@ -264,7 +263,7 @@ int LiteSession::Init(Context *context) {
   }
   this->context_->float16_priority = context->float16_priority;
   this->context_->cpu_bind_mode_ = context->cpu_bind_mode_;
-  ConfigThreadPool(context->cpu_bind_mode_, context->thread_num_);
+  ConfigThreadPool(THREAD_POOL_DEFAULT, context->thread_num_, context->cpu_bind_mode_);
   auto ret = KernelRegistry::GetInstance()->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "KernelRegistry Init Failed.";
@@ -283,7 +282,7 @@ int LiteSession::Init(Context *context) {
 
 void LiteSession::BindThread(bool if_bind) {
   if (this->context_->cpu_bind_mode_ != NO_BIND) {
-    DoAllThreadBind(if_bind, static_cast<int>(this->context_->cpu_bind_mode_));
+    BindThreads(THREAD_POOL_DEFAULT, if_bind, this->context_->cpu_bind_mode_);
   }
 }
 

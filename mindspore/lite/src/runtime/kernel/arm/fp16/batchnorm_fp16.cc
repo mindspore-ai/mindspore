@@ -65,7 +65,7 @@ int BatchnormFp16CPUKernel::Run() {
     input_ = in_tensors_.at(0)->Data();
     output_ = out_tensors_.at(0)->Data();
   }
-  ret = LiteBackendParallelLaunch(BatchNormRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }

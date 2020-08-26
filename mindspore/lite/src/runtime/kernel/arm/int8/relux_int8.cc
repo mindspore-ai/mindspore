@@ -58,7 +58,7 @@ int ReluXInt8CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int ReluXInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ReluXInt8Run(void *cdata, int task_id) {
   auto activation_kernel = reinterpret_cast<ReluXInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
@@ -74,7 +74,7 @@ int ReluXInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  int error_code = LiteBackendParallelLaunch(ReluXInt8Run, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReluXInt8Run, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ReluXInt8Run function error error_code[" << error_code << "]";
     return RET_ERROR;

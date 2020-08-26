@@ -82,13 +82,13 @@ int LeakyReluInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  ret = LiteBackendParallelLaunch(PreluInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, PreluInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunPreluParam failed. errorcode: ";
   }
   return RET_OK;
 }
-int PreluInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PreluInt8Run(void *cdata, int task_id) {
   auto prelu = reinterpret_cast<LeakyReluInt8CPUKernel *>(cdata);
   prelu->DoExecute(task_id);
   return RET_OK;
