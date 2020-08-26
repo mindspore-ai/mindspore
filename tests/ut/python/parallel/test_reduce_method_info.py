@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 class NetWithLossNoBias(nn.Cell):

@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 class NetWithLoss(nn.Cell):

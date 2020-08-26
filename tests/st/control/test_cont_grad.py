@@ -28,8 +28,8 @@ from mindspore.ops import operations as P
 # context.set_context(save_graphs=True)
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_by_list = C.GradOperation(get_by_list=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 def test_while_forward():

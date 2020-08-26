@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True)
+        self.grad = GradOperation(get_all=True)
         self.network = network
 
     @ms_function

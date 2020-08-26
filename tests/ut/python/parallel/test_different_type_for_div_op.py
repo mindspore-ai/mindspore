@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 class GradWrap(nn.Cell):

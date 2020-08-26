@@ -26,7 +26,7 @@ from mindspore.ops import composite as C
 context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=True)
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()

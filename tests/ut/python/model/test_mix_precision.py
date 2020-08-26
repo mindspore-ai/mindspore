@@ -166,8 +166,7 @@ class GetParamGrad(nn.Cell):
         super(GetParamGrad, self).__init__(auto_prefix=False)
         self.network = network
         self.weights = ParameterTuple(network.trainable_params())
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
 
     def construct(self, data, sens):

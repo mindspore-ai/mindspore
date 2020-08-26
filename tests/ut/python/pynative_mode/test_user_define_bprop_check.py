@@ -21,7 +21,7 @@ from mindspore import dtype as mstype
 from mindspore.ops import composite as C
 
 
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 def test_user_define_bprop_check_ok():

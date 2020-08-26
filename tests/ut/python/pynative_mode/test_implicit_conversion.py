@@ -20,7 +20,7 @@ from mindspore import Tensor, nn
 from mindspore.ops import composite as C
 
 
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 def test_float_tensor_and_int_add():

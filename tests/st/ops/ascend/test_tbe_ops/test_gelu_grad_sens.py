@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Grad(Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
     def construct(self, input_, output_grad):
@@ -71,7 +71,7 @@ class MEGeluLargeIn(Cell):
 class GradLargeIn(Cell):
     def __init__(self, network):
         super(GradLargeIn, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
     def construct(self, x1, x2, output_grad):

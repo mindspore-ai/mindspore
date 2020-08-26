@@ -50,7 +50,7 @@ class Func(nn.Cell):
         return out
 
 
-grad_s = C.GradOperation('grad_with_sens', get_all=True, sens_param=True)
+grad_s = C.GradOperation(get_all=True, sens_param=True)
 
 
 class Net(nn.Cell):

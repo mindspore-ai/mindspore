@@ -30,7 +30,7 @@ from tests.ut.python.ops.test_math_ops import VirtualLoss
 context.set_context(mode=context.GRAPH_MODE)
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 class Dataset(MindData):

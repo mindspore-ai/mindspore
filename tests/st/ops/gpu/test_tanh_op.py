@@ -37,7 +37,7 @@ class TanhNet(nn.Cell):
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = C.GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
         self.network = network
 
     def construct(self, input_data, sens):

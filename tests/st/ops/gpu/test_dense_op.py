@@ -65,7 +65,7 @@ def test_biasadd():
 class GradData(nn.Cell):
     def __init__(self, network):
         super(GradData, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
     def construct(self, inputs, output_grad):
@@ -77,8 +77,7 @@ class GradWeight(nn.Cell):
         super(GradWeight, self).__init__()
         self.network = network
         self.weights = ParameterTuple(network.trainable_params())
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
 
     def construct(self, x, output_grad):
@@ -169,7 +168,7 @@ def test_dw():
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
     def construct(self, input_, bias, dy):

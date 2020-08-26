@@ -29,7 +29,7 @@ from mindspore.ops import operations as P
 np.random.seed(1)
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 def weight_variable():

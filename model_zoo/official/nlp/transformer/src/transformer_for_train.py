@@ -158,7 +158,7 @@ class TransformerTrainOneStepCell(nn.Cell):
         self.network = network
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
@@ -244,8 +244,7 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
         self.network.add_flags(defer_inline=True)
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
         self.allreduce = P.AllReduce()

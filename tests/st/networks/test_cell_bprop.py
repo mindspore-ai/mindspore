@@ -29,7 +29,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 class MulAdd(nn.Cell):
@@ -351,7 +351,7 @@ class MulAddWithParam(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_refkey_bprop():
-    grad_by_list = C.GradOperation('get_by_list', get_all=True, get_by_list=True)
+    grad_by_list = C.GradOperation(get_all=True, get_by_list=True)
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()

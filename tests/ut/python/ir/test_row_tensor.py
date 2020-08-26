@@ -248,7 +248,7 @@ def test_row_tensor_attr():
 
 
 def test_row_tensor_sparse_gatherv2_grad_all():
-    grad_all = C.GradOperation('get_all', get_all=True)
+    grad_all = C.GradOperation(get_all=True)
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()
@@ -269,7 +269,7 @@ def test_row_tensor_sparse_gatherv2_grad_all():
 
 
 def test_row_tensor_sparse_gatherv2_grad_with_pram():
-    grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+    grad_by_list = C.GradOperation(get_by_list=True)
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()

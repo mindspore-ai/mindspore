@@ -85,8 +85,8 @@ class TrainStepWarp(nn.Cell):
         self.optimizer_d = Adam(self.weights_d, learning_rate=3.5e-4, eps=1e-8,
                                 loss_scale=sens)
         self.hyper_map = C.HyperMap()
-        self.grad_w = C.GradOperation('grad_w', get_by_list=True, sens_param=True)
-        self.grad_d = C.GradOperation('grad_d', get_by_list=True, sens_param=True)
+        self.grad_w = C.GradOperation(get_by_list=True, sens_param=True)
+        self.grad_d = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.loss_net_w = IthOutputCell(network, output_index=0)
         self.loss_net_d = IthOutputCell(network, output_index=1)

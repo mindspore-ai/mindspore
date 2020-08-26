@@ -34,7 +34,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 run_opt = C.MultitypeFuncGraph("run_opt")
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 @run_opt.register("Function", "Tensor", "Tensor", "Tensor",

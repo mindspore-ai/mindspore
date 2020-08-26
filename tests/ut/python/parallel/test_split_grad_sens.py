@@ -24,8 +24,8 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad_all = C.GradOperation(get_all=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
 class GradWrap(nn.Cell):

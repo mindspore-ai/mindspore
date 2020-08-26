@@ -49,7 +49,7 @@ def test_net():
 
 
 def test_grad_addn_with_list():
-    grad_op = C.GradOperation('get_all', get_all=True)
+    grad_op = C.GradOperation(get_all=True)
     class AddN(nn.Cell):
         def __init__(self):
             super().__init__()

@@ -40,7 +40,7 @@ class Net(nn.Cell):
 class GradData(nn.Cell):
     def __init__(self, network):
         super(GradData, self).__init__()
-        self.grad = GradOperation(name="get_all", get_all=True, sens_param=False)
+        self.grad = GradOperation(get_all=True, sens_param=False)
         self.network = network
 
     def construct(self, probs, labels, input_lengths, label_lengths):

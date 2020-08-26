@@ -38,7 +38,7 @@ from ...ut_filter import non_graph_engine
 # W0613: unused-argument
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 log = logging.getLogger("test")

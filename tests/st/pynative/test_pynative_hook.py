@@ -30,7 +30,7 @@ from mindspore.common.initializer import TruncatedNormal
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 
-grad_all = C.GradOperation('get_all', get_all=True)
+grad_all = C.GradOperation(get_all=True)
 
 
 def weight_variable():
@@ -112,7 +112,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, label):
         weights = self.weights
-        return C.GradOperation('get_by_list', get_by_list=True)(self.network, weights)(x, label)
+        return C.GradOperation(get_by_list=True)(self.network, weights)(x, label)
 
 
 class test_custom_cell_base():

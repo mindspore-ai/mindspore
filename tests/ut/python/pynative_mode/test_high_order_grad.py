@@ -18,9 +18,9 @@ from mindspore.common.api import ms_function
 import mindspore.ops.composite as C
 
 
-grad = C.GradOperation('grad')
-grad_all = C.GradOperation('get_all', get_all=True)
-grad_all_with_sens = C.GradOperation('grad_all_with_sens', get_all=True, sens_param=True)
+grad = C.GradOperation()
+grad_all = C.GradOperation(get_all=True)
+grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE, check_bprop=False)

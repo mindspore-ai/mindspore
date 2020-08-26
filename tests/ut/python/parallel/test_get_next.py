@@ -25,7 +25,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE)
 
 
-grad_by_list = C.GradOperation('get_by_list', get_by_list=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 class NetWithLoss(nn.Cell):

@@ -52,8 +52,7 @@ class TrainOneStepWithLarsCell(nn.Cell):
         self.slice_index, self.params_len, weights = get_net_trainable_reordered_params(self.network)
         self.weights = ParameterTuple(weights)
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.sens = Parameter(Tensor([sens], mstype.float32), name='sens', requires_grad=False)
         self.weight_decay = 1.0

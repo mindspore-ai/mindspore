@@ -21,7 +21,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
-grad = C.GradOperation('get_all', get_all=True, sens_param=True)
+grad = C.GradOperation(get_all=True, sens_param=True)
 
 
 class MaxNetMe(Cell):

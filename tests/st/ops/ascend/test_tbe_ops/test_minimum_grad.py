@@ -21,7 +21,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.operations import Minimum
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-grad = C.GradOperation('get_all', get_all=True, sens_param=True)
+grad = C.GradOperation(get_all=True, sens_param=True)
 
 
 class MinNetMe(Cell):

@@ -32,7 +32,7 @@ class TrainStepWrap(nn.Cell):
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = nn.Momentum(self.weights, 0.1, 0.9)
         self.hyper_map = C.HyperMap()
-        self.grad = C.GradOperation('grad', get_by_list=True)
+        self.grad = C.GradOperation(get_by_list=True)
 
     def construct(self, x, label):
         weights = self.weights
@@ -71,7 +71,7 @@ class TrainStepWrap2(nn.Cell):
         self.weights = ParameterTuple(network.get_parameters())
         self.optimizer = nn.Momentum(self.weights, 0.1, 0.9)
         self.hyper_map = C.HyperMap()
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
 
     def construct(self, x):
@@ -93,7 +93,7 @@ class TrainStepWrapWithoutOpt(nn.Cell):
         super(TrainStepWrapWithoutOpt, self).__init__()
         self.network = network
         self.weights = ParameterTuple(network.trainable_params())
-        self.grad = C.GradOperation('grad', get_by_list=True)
+        self.grad = C.GradOperation(get_by_list=True)
 
     def construct(self, x, label):
         grads = self.grad(self.network, self.weights)(x, label)

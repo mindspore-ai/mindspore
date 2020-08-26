@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
-grad_with_sens = C.GradOperation('grad_with_sens', sens_param=True)
+grad_with_sens = C.GradOperation(sens_param=True)
 
 
 class Net(nn.Cell):

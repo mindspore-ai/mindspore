@@ -274,7 +274,7 @@ class BertTrainOneStepCell(nn.Cell):
         self.network = network
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
@@ -353,8 +353,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         self.network = network
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad',
-                                    get_by_list=True,
+        self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
         self.allreduce = P.AllReduce()
