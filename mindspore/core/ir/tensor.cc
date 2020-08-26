@@ -476,8 +476,8 @@ abstract::AbstractBasePtr Tensor::ToAbstract() {
   auto tensor_shape = tens->shape();
   auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
   // if is parameter always no value.
-  if (is_parameter()) {
-    auto param_name = param_info()->name();
+  if (is_parameter_) {
+    auto param_name = param_info_->name();
     auto ref_key = std::make_shared<RefKey>(param_name);
     auto abs_ref_key = ref_key->ToAbstract();
     abs_tensor = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_tensor);
