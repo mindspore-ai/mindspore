@@ -29,6 +29,7 @@
 #endif
 
 #ifdef ENABLE_GPUQUE
+#include "minddata/dataset/util/circular_pool.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 using mindspore::device::BlockQueueStatus_T;
 using mindspore::device::GpuBufferMgr;
@@ -162,6 +163,9 @@ class DeviceQueueOp : public PipelineOp {
   Status SendDataToGPU();
   Status RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row, uint32_t handle);
   Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row);
+  void ReleaseData(void *addr);
+
+  std::shared_ptr<MemoryPool> pool_;
 #endif
 
   Status SendDataToCPU();
