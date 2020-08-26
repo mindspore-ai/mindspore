@@ -200,6 +200,13 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
 
+  size_t tile_buffer_size = thread_count_ * C12NUM * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
+  trans_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (trans_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc trans_input_ failed.";
+    return RET_ERROR;
+  }
+
   gemm_out_ = reinterpret_cast<float *>(
     ctx_->allocator->Malloc(thread_count_ * C12NUM * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float)));
   if (gemm_out_ == nullptr) {
@@ -290,10 +297,6 @@ int ConvolutionWinogradCPUKernel::ReSize() {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
   }
-  if (trans_input_ != nullptr) {
-    free(trans_input_);
-    trans_input_ = nullptr;
-  }
 
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -315,14 +318,6 @@ int ConvolutionWinogradCPUKernel::ReSize() {
     return RET_ERROR;
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
-
-  size_t tile_buffer_size = thread_count_ * C12NUM * input_unit_ * input_unit_ * ic4 * C4NUM * sizeof(float);
-  trans_input_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
-  if (trans_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc trans_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(trans_input_, 0, tile_buffer_size);
 
   ret = ConfigInputOutput();
   if (ret != RET_OK) {

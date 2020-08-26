@@ -100,6 +100,13 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   const int k_plane = 16;
   MS_ASSERT(ctx_->allocator != nullptr);
 
+  size_t tile_buffer_size = thread_count_ * C12NUM * C16NUM * ic4 * C4NUM * sizeof(float);
+  tile_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (tile_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc tile buffer failed.";
+    return RET_ERROR;
+  }
+
   size_t block_unit_buffer_size = thread_count_ * k_plane * C4NUM * sizeof(float);
   block_unit_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
@@ -171,10 +178,6 @@ int Convolution3x3CPUKernel::ReSize() {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
   }
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
-  }
 
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -192,13 +195,6 @@ int Convolution3x3CPUKernel::ReSize() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  size_t tile_buffer_size = thread_count_ * C12NUM * C16NUM * iC4 * C4NUM * sizeof(float);
-  tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
-  if (tile_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tile buffer failed.";
-    return RET_ERROR;
-  }
-  memset(tile_buffer_, 0, tile_buffer_size);
   return RET_OK;
 }
 
