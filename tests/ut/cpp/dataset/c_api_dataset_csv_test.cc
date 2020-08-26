@@ -533,3 +533,14 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
   GlobalContext::config_manager()->set_seed(original_seed);
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
+
+TEST_F(MindDataTestPipeline, TestCSVDatasetDuplicateColumnName) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetDuplicateColumnName.";
+
+  // Create a CSVDataset, with single CSV file
+  std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
+  std::vector<std::string> column_names = {"col1", "col1", "col3", "col4"};
+  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, -1, ShuffleMode::kFalse);
+  // Expect failure: duplicate column names
+  EXPECT_EQ(ds, nullptr);
+}

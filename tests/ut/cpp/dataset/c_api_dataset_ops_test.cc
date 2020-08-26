@@ -311,6 +311,34 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestMapDuplicateColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapDuplicateColumn.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
+  EXPECT_NE(random_vertical_flip_op, nullptr);
+
+  // Create a Map operation on ds
+  auto ds1 = ds->Map({random_vertical_flip_op}, {"image", "image"}, {}, {});
+  // Expect failure: duplicate input column name
+  EXPECT_EQ(ds1, nullptr);
+
+  // Create a Map operation on ds
+  auto ds2 = ds->Map({random_vertical_flip_op}, {}, {"label", "label"}, {});
+  // Expect failure: duplicate output column name
+  EXPECT_EQ(ds2, nullptr);
+
+  // Create a Map operation on ds
+  auto ds3 = ds->Map({random_vertical_flip_op}, {}, {}, {"image", "image"});
+  // Expect failure: duplicate project column name
+  EXPECT_EQ(ds3, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline.TestProjectMapAutoInjection";
 
@@ -393,6 +421,24 @@ TEST_F(MindDataTestPipeline, TestRenameFail2) {
   // Create a Rename operation on ds
   ds = ds->Rename({"image", "label"}, {"col2", ""});
   EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRenameFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail3.";
+  // We expect this test to fail because duplicate column name
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Rename operation on ds
+  auto ds1 = ds->Rename({"image", "image"}, {"col1", "col2"});
+  EXPECT_EQ(ds1, nullptr);
+
+  // Create a Rename operation on ds
+  auto ds2 = ds->Rename({"image", "label"}, {"col1", "col1"});
+  EXPECT_EQ(ds2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRenameSuccess) {

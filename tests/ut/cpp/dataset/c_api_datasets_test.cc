@@ -118,24 +118,44 @@ TEST_F(MindDataTestPipeline, TestCelebAException) {
   EXPECT_EQ(ds1, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestImageFolderFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFail1.";
+TEST_F(MindDataTestPipeline, TestCelebADatasetWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADataset.";
 
-  // Create an ImageFolder Dataset
-  std::shared_ptr<Dataset> ds = ImageFolder("", true, nullptr);
+  // Create a CelebA Dataset
+  std::string folder_path = datasets_root_path_ + "/testCelebAData/";
+  std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", nullptr, false, {});
+  // Expect failure: sampler can not be nullptr
   EXPECT_EQ(ds, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestMnistFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFail1.";
+TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
 
   // Create a Mnist Dataset
   std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestImageFolderFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFail2.";
+TEST_F(MindDataTestPipeline, TestMnistFailWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithNullSampler.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderWithWrongDatasetDir) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderWithWrongDatasetDir.";
+
+  // Create an ImageFolder Dataset
+  std::shared_ptr<Dataset> ds = ImageFolder("", true, nullptr);
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtension) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithWrongExtension.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -150,8 +170,29 @@ TEST_F(MindDataTestPipeline, TestImageFolderFail2) {
   // Iterate the dataset and get each row
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
+  // Expect no data: can not find files with specified extension
   EXPECT_EQ(row.size(), 0);
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderFailWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithNullSampler.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithWrongSampler.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(-2, 5));
+  // Expect failure: sampler is not construnced correctly
+  EXPECT_EQ(ds, nullptr);
 }

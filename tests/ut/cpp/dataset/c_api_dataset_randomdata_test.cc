@@ -266,3 +266,27 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
   iter->Stop();
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetWithNullSampler.";
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  std::shared_ptr<Dataset> ds = RandomData(50, schema, {}, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetDuplicateColumnName.";
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  std::shared_ptr<Dataset> ds = RandomData(50, schema, {"image", "image"});
+  // Expect failure: duplicate column names
+  EXPECT_EQ(ds, nullptr);
+}
