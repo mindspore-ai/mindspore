@@ -44,11 +44,10 @@ const char kMethodKL[] = "KL";
 constexpr int kDefaultBinNumber = 2048;
 
 struct ConfigParam {
-  // ImageFormat imageFormat;
   std::string image_path;
   uint32_t batch_count{100};
   std::string method_x{kMethodKL};
-  uint32_t thread_num;
+  uint32_t thread_num{1};
 };
 
 class PostTrainingQuantizer : public Quantizer {
