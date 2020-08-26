@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "tools/optimizer/fusion/conv_activation_fusion.h"
+#include "tools/optimizer/fusion/pooling_activation_fusion.h"
 #include <memory>
 #include "src/ops/primitive_c.h"
-#include "src/ops/conv2d.h"
-#include "src/ops/depthwise_conv2d.h"
+#include "src/ops/pooling.h"
 #include "src/ops/activation.h"
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -27,18 +26,22 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kActivationInputsLength = 2;
 }
-const BaseRef ConvActivationFusion::DefinePattern() const {
-  auto conv_var = std::make_shared<CondVar>(IsConvNode);
+const BaseRef PoolingActivationFusion::DefinePattern() const {
+  auto pooling_var = std::make_shared<CondVar>(IsPoolingNode)();
   auto prim = new schema::PrimitiveT();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "new primitiveT failed";
+    return nullptr;
+  }
   prim->value.type = primitive_type;
   auto prim_value = std::make_shared<lite::PrimitiveC>(prim);
 
-  return VectorRef({prim_value, conv_var});
+  return VectorRef({prim_value, pooling_var});
 }
 
-const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                               const EquivPtr &) const {
-  MS_LOG(DEBUG) << "conv activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
+const AnfNodePtr PoolingActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                  const EquivPtr &) const {
+  MS_LOG(DEBUG) << "pooling activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
   CheckIfFuncGraphIsNull(func_graph);
 
   CheckIfAnfNodeIsNull(node);
@@ -59,28 +62,16 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     if (IsMultiOutputTensors(func_graph, pre_node)) {
       return node;
     }
-    auto conv_node = pre_node->cast<CNodePtr>();
-    auto node_type = GetCNodeType(conv_node);
-    auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_node->input(0));
+    auto pooling_node = pre_node->cast<CNodePtr>();
+    auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(pooling_node->input(0));
     MS_ASSERT(primitive_c);
-    if (node_type == schema::PrimitiveType_Conv2D) {
-      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c));
-      auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c);
-      MS_ASSERT(primc != nullptr);
-      if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(activation_type);
-        return pre_node;
-      }
-    } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
-      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c));
-      auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
-      MS_ASSERT(primc != nullptr);
-      if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(activation_type);
-        return pre_node;
-      }
-    } else {
-      MS_LOG(EXCEPTION) << "conv activation pass match only conv2d or depthwise_conv2d ";
+
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Pooling>>(primitive_c));
+    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Pooling>>(primitive_c);
+    MS_ASSERT(primc != nullptr);
+    if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
+      primc->SetActivationType(activation_type);
+      return pre_node;
     }
   }
   return node;
