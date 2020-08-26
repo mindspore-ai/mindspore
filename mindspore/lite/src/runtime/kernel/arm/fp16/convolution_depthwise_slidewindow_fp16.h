@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SW_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SW_FP16_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -25,31 +25,38 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
-                const float16_t *bias_data, const ConvParameter *conv_param, int task_id);
+void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
+                  const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
+                  int task_id);
 #ifdef __cplusplus
 }
 #endif
 
 namespace mindspore::kernel {
-class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
+class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
-  ConvolutionDepthwiseFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                                    const mindspore::lite::PrimitiveC *primitive)
+  ConvolutionDepthwiseSWFp16CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                                      const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionDepthwiseFp16CPUKernel() override;
+  ~ConvolutionDepthwiseSWFp16CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+  int InitBuffer();
   int InitWeightBias();
   int Execute(int task_id);
 
  private:
+  void FreeTmpBuffer();
+  SlidingWindowParam *sliding_ = nullptr;
   float16_t *packed_weight_ = nullptr;
+  float16_t *packed_input_ = nullptr;
+  float16_t *packed_output_ = nullptr;
+  bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SW_FP16_H_

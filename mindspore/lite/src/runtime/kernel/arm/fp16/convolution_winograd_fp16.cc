@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/convolution_winograd_fp16.h"
 #include "src/runtime/kernel/arm/fp16/matrix_fp16.h"
 #include "nnacl/fp16/conv_fp16.h"
-#include "nnacl/fp16/common_func.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/winograd_transform_fp16.h"

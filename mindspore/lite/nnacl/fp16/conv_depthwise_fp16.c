@@ -15,8 +15,62 @@
  */
 
 #include "nnacl/fp16/conv_depthwise_fp16.h"
-#include <arm_neon.h>
-#include "nnacl/fp16/common_func.h"
+#include <string.h>
+#include "nnacl/fp16/activation_fp16.h"
+
+void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
+                const float16_t *bias_data, const ConvParameter *conv_param, int task_id) {
+  int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
+  int h_start = h_step * task_id;
+  int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    const float16_t *src = input_data + b * conv_param->input_h_ * conv_param->input_w_ * conv_param->input_channel_;
+    float16_t *dst = output_data + b * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
+    for (int oh = h_start; oh < h_end; oh++) {
+      float16_t *dst_data = dst + oh * conv_param->output_w_ * conv_param->output_channel_;
+
+      int ih_origin = oh * conv_param->stride_h_ - conv_param->pad_u_;
+      int start_kh = MSMAX(0, UP_DIV(-ih_origin, conv_param->dilation_h_));
+      int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih_origin, conv_param->dilation_h_));
+
+      for (int ow = 0; ow < conv_param->output_w_; ow++) {
+        memcpy(dst_data + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(float16_t));
+      }
+      for (int kh = start_kh; kh < end_kh; kh++) {
+        int ih = ih_origin + conv_param->dilation_w_ * kh;
+
+        const float16_t *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
+        const float16_t *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
+
+        int in_sw_step = conv_param->stride_w_ * conv_param->input_channel_;
+        for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
+          int out_w_start = MSMAX(
+            0, (conv_param->pad_l_ - conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) / conv_param->stride_w_);
+          int out_w_end = MSMIN(conv_param->output_w_, (conv_param->input_w_ + conv_param->pad_l_ -
+                                                        conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) /
+                                                         conv_param->stride_w_);
+
+          float16_t *dst_w = dst_data + out_w_start * conv_param->output_channel_;
+          int iw_origin = (out_w_start * conv_param->stride_w_) - conv_param->pad_l_ + conv_param->dilation_w_ * kw;
+
+          const float16_t *src_kw = src_kh + iw_origin * conv_param->input_channel_;
+          int num_pixels = out_w_end - out_w_start;
+
+          ConvDwFp16Row(dst_w, src_kw, weight_kh, num_pixels, conv_param->output_channel_, in_sw_step);
+          weight_kh += conv_param->output_channel_;
+        }
+      }
+      if (relu) {
+        ReluFp16(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
+      }
+      if (relu6) {
+        Relu6Fp16(dst_data, dst_data, conv_param->output_w_ * conv_param->output_channel_);
+      }
+    }
+  }
+}
 
 /*conv depthwise fp16 begin*/
 void DepthwiseBorderPixelFp16(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,

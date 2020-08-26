@@ -220,6 +220,19 @@ void PackNCHWToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
+void PackNCHWToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel) {
+  for (int n = 0; n < batch; n++) {
+    for (int c = 0; c < channel; c++) {
+      for (int hw = 0; hw < plane; hw++) {
+        int nhwc_index = n * channel * plane + hw * channel + c;
+        int nchw_index = n * channel * plane + c * plane + hw;
+        ((float16_t *)(dst))[nhwc_index] = ((const float16_t *)(src))[nchw_index];
+      }
+    }
+  }
+  return;
+}
+
 void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel) {
   int ic4 = UP_DIV(channel, C4NUM);
   int nhwc4_batch_unit_offset = ic4 * C4NUM * plane;
