@@ -28,142 +28,175 @@ class SpaceToBatchTestFp32 : public mindspore::CommonTest {
   SpaceToBatchTestFp32() {}
 };
 
-void InitSpaceToBatchParameter(SpaceToBatchParameter *param) {
-  param->n_dims_ = 4;
-  param->n_space_dims_ = 2;
-
-  param->block_sizes_[0] = 2;
-  param->block_sizes_[1] = 2;
-
-  param->paddings_[0] = 2;
-  param->paddings_[1] = 0;
-  param->paddings_[2] = 2;
-  param->paddings_[3] = 2;
-
-  param->in_shape_[0] = 1;
-  param->in_shape_[1] = 4;
-  param->in_shape_[2] = 4;
-  param->in_shape_[3] = 1;
-
-  param->padded_in_shape_[0] = 1;
-  param->padded_in_shape_[1] = 6;
-  param->padded_in_shape_[2] = 8;
-  param->padded_in_shape_[3] = 1;
-
-  param->num_elements_ = 16;
-  param->num_elements_padded_ = 48;
-
-  param->need_paddings_ = true;
-}
-
-void InitSpaceToBatchParameter2(SpaceToBatchParameter *param) {
-  param->block_sizes_[0] = 2;
-  param->block_sizes_[1] = 2;
-
-  param->paddings_[0] = 2;
-  param->paddings_[1] = 0;
-  param->paddings_[2] = 2;
-  param->paddings_[3] = 2;
-
-  param->in_shape_[0] = 1;
-  param->in_shape_[1] = 4;
-  param->in_shape_[2] = 4;
-  param->in_shape_[3] = 1;
-
-  param->padded_in_shape_[0] = 1;
-  param->padded_in_shape_[1] = 6;
-  param->padded_in_shape_[2] = 8;
-  param->padded_in_shape_[3] = 1;
-}
-
-TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest1) {
-  float input[16] = {1, 2, 5, 6, 10, 20, 3, 8, 18, 10, 3, 4, 11, 55, 15, 25};
-  const int out_size = 16;
-  float expect_out[16] = {1, 5, 18, 3, 2, 6, 10, 4, 10, 3, 11, 15, 20, 8, 55, 25};
-
-  float output[16];
-  int in_shape[4] = {1, 4, 4, 1};
-  int out_shape[4] = {4, 2, 2, 1};
-  int block_sizes[2] = {2, 2};
-  SpaceToBatchForNHWC((const float *)input, output, in_shape, 4, block_sizes, 0, 4 / 2);
-  for (int i = 0; i < out_size; ++i) {
-    std::cout << output[i] << " ";
-  }
-  std::cout << "\n";
-  CompareOutputData(output, expect_out, out_size, 0.000001);
-}
-
-TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest2) {
-  SpaceToBatchParameter param;
-  InitSpaceToBatchParameter(&param);
-  float input[16] = {1, 2, 5, 6, 10, 20, 3, 8, 18, 10, 3, 4, 11, 55, 15, 25};
-  const int out_size = 48;
-  float expect_out[48] = {0, 0, 0, 0, 0, 1,  5, 0, 0, 18, 3,  0, 0, 0, 0, 0, 0, 2,  6, 0, 0, 10, 4,  0,
-                          0, 0, 0, 0, 0, 10, 3, 0, 0, 11, 15, 0, 0, 0, 0, 0, 0, 20, 8, 0, 0, 55, 25, 0};
-  float output[48];
-  int in_shape[4] = {1, 4, 4, 1};
-  int out_shape[4] = {4, 3, 4, 1};
-  int block_sizes[2] = {2, 2};
-
-  float padded_input[48]{}, tmp[48]{}, tmp_zero[48]{};
-  float *tmp_space[3] = {padded_input, tmp, tmp_zero};
-  // DoPadding
-  DoPadding(input, padded_input, param, tmp_space + 1);
-
-  auto ret = SpaceToBatch((const float *)padded_input, output, param, 0, 4 / 2);
-  std::cout << "return " << ret << std::endl;
-  for (int i = 0; i < out_size; ++i) {
-    std::cout << output[i] << " ";
-  }
-  std::cout << "\n";
-  CompareOutputData(output, expect_out, out_size, 0.000001);
-}
-
-TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest3) {
-  SpaceToBatchParameter param;
-  InitSpaceToBatchParameter2(&param);
-  param.op_parameter_.type_ = schema::PrimitiveType_SpaceToBatch;
-
-  std::vector<float> input = {1, 2, 5, 6, 10, 20, 3, 8, 18, 10, 3, 4, 11, 55, 15, 25};
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest4) {
+  std::vector<float> input = {1,  2,  3,  4,  5,  6,  7,  8,
+                              9, 10, 11, 12, 13, 14, 15, 16};
+  const size_t kOutSize = 16;
+  std::vector<float> expect_out = {1,  2,  3,  4,  9, 10, 11, 12,
+                                   5,  6,  7,  8, 13, 14, 15, 16};
+  float out[kOutSize];
   std::vector<int> in_shape = {1, 4, 4, 1};
-  lite::tensor::Tensor input_tensor;
-  input_tensor.SetData(input.data());
-  input_tensor.set_shape(in_shape);
-  input_tensor.SetFormat(schema::Format_NHWC);
-  input_tensor.set_data_type(kNumberTypeFloat32);
-  std::vector<lite::tensor::Tensor *> inputs_tensor;
-  inputs_tensor.emplace_back(&input_tensor);
-
-  const int out_size = 48;
-  float expect_out[48] = {0, 0, 0, 0, 0, 1,  5, 0, 0, 18, 3,  0, 0, 0, 0, 0, 0, 2,  6, 0, 0, 10, 4,  0,
-                          0, 0, 0, 0, 0, 10, 3, 0, 0, 11, 15, 0, 0, 0, 0, 0, 0, 20, 8, 0, 0, 55, 25, 0};
-  std::vector<float> output(48);
-  std::vector<int> out_shape = {4, 3, 4, 1};
-  lite::tensor::Tensor output_tensor;
-  output_tensor.SetData(output.data());
-  output_tensor.set_shape(out_shape);
-  output_tensor.SetFormat(schema::Format_NHWC);
-  output_tensor.set_data_type(kNumberTypeFloat32);
-  std::vector<lite::tensor::Tensor *> outputs_tensor;
-  outputs_tensor.emplace_back(&output_tensor);
-
-  lite::Context ctx;
-  ctx.thread_num_ = 2;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SpaceToBatch};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc, nullptr);
-  ASSERT_NE(kernel, nullptr);
-  kernel->Run();
-
-  for (int i = 0; i < out_size; ++i) {
-    std::cout << output[i] << " ";
+  std::vector<int> out_shape = {2, 2, 4, 1};
+  SpaceToBatchParameter param;
+  param.block_sizes_[0] = 2;
+  param.block_sizes_[1] = 1;
+  DoSpaceToBatchNHWC(input.data(), out, &param, in_shape.data(), out_shape.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output.data(), expect_out, out_size, 0.000001);
-  input_tensor.SetData(nullptr);
-  output_tensor.SetData(nullptr);
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
 }
 
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest5) {
+  std::vector<float> input = {1,  2,  3,  4,  5,  6,  7,  8,
+                              9, 10, 11, 12, 13, 14, 15, 16};
+  size_t kOutSize = 16;
+  std::vector<float> expect_out = {1, 3, 5, 7, 9, 11, 13, 15,
+                                   2, 4, 6, 8, 10, 12, 14, 16};
+  float out[kOutSize];
+  std::vector<int> in_shape = {1, 4, 4, 1};
+  std::vector<int> out_shape = {2, 4, 2, 1};
+  SpaceToBatchParameter param;
+  param.block_sizes_[0] = 1;
+  param.block_sizes_[1] = 2;
+  DoSpaceToBatchNHWC(input.data(), out, &param, in_shape.data(), out_shape.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
+}
+
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest6) {
+  std::vector<float> input = {1,  2,  3,  4,  5,  6,  7,  8,
+                              9, 10, 11, 12, 13, 14, 15, 16};
+  size_t kOutSize = 16;
+  std::vector<float> expect_out = {1, 3, 9, 11, 2, 4, 10, 12,
+                                   5, 7, 13, 15, 6, 8, 14, 16};
+  float out[kOutSize];
+  std::vector<int> in_shape = {1, 4, 4, 1};
+  std::vector<int> out_shape = {4, 2, 2, 1};
+  SpaceToBatchParameter param;
+  param.block_sizes_[0] = 2;
+  param.block_sizes_[1] = 2;
+  DoSpaceToBatchNHWC(input.data(), out, &param, in_shape.data(), out_shape.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
+}
+
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest7) {
+  std::vector<float> input = {1,  11,  2,  12,   3,  13,   4,  14,
+                              5,  15,  6,  16,   7,  17,   8,  18,
+                              9,  19, 10, 110,  11, 111,  12, 112,
+                             10,  11, 20,  12,  30,  13,  40,  14,
+                             50,  15, 60,  16,  70,  17,  80,  18,
+                             13, 113, 14, 114,  15, 115,  16, 116};
+  size_t kOutSize = 48;
+  std::vector<float> expect_out = {1,  11,   3,  13,  9,  19,  11, 111,
+                                  50,  15,  70,  17,  2,  12,   4,  14,
+                                  10, 110,  12, 112, 60,  16,  80,  18,
+                                   5,  15,   7,  17, 10,  11,  30,  13,
+                                  13, 113,  15, 115,  6,  16,   8,  18,
+                                  20,  12,  40,  14, 14, 114,  16, 116};
+  float out[kOutSize];
+  std::vector<int> in_shape = {1, 6, 4, 2};
+  std::vector<int> out_shape = {4, 3, 2, 2};
+  SpaceToBatchParameter param;
+  param.block_sizes_[0] = 2;
+  param.block_sizes_[1] = 2;
+  DoSpaceToBatchNHWC(input.data(), out, &param, in_shape.data(), out_shape.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
+}
+
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest8) {
+  std::vector<float> input = {1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8,
+                              9, -9, 10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16};
+  std::vector<float> expect_out = {1, -1, 2, -2, 3, -3, 4, -4, 0, 0, 5, -5, 6, -6, 7, -7, 8, -8, 0, 0,
+                                   9, -9, 10, -10, 11, -11, 12, -12, 0, 0, 13, -13, 14, -14, 15, -15, 16, -16, 0, 0,
+                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  size_t kOutSize = 50;
+  float out[kOutSize];
+  std::vector<int> in_shape = {1, 4, 4, 2};
+  std::vector<int> out_shape = {1, 5, 5, 2};
+  std::vector<int> padding = {0, 1, 0, 1};
+  std::vector<float> pedding_h(10, 0);
+  std::vector<float> pedding_w(2, 0);
+  DoSpaceToBatchPaddingNHWC(input.data(), out, in_shape.data(), padding.data(), out_shape.data(), pedding_h.data(),
+                            pedding_w.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
+}
+
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest9) {
+  std::vector<float> input = {1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8,
+                              9, -9, 10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16};
+  std::vector<float> expect_out = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                   0, 0, 1, -1, 2, -2, 3, -3, 4, -4, 0, 0,
+                                   0, 0, 5, -5, 6, -6, 7, -7, 8, -8, 0, 0,
+                                   0, 0, 9, -9, 10, -10, 11, -11, 12, -12, 0, 0,
+                                   0, 0, 13, -13, 14, -14, 15, -15, 16, -16, 0, 0,
+                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  size_t kOutSize = 72;
+  float out[kOutSize];
+  std::vector<int> in_shape = {1, 4, 4, 2};
+  std::vector<int> out_shape = {1, 6, 6, 2};
+  std::vector<int> padding = {1, 1, 1, 1};
+  std::vector<float> pedding_h(12, 0);
+  std::vector<float> pedding_w(2, 0);
+  DoSpaceToBatchPaddingNHWC(input.data(), out, in_shape.data(), padding.data(), out_shape.data(), pedding_h.data(),
+                            pedding_w.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
+}
+
+TEST_F(SpaceToBatchTestFp32, SpaceToBatchTest10) {
+  std::vector<float> input = {1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8,
+                              9, -9, 10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16};
+  std::vector<float> expect_out = {0, 0, 0, 0, 0, 0,
+                                   0, 0, 6, -6, 8, -8,
+                                   0, 0, 14, -14, 16, -16,
+                                   0, 0, 0, 0, 0, 0,
+                                   5, -5, 7, -7, 0, 0,
+                                   13, -13, 15, -15, 0, 0,
+                                   0, 0, 2, -2, 4, -4,
+                                   0, 0, 10, -10, 12, -12,
+                                   0, 0, 0, 0, 0, 0,
+                                   1, -1, 3, -3, 0, 0,
+                                   9, -9, 11, -11, 0, 0,
+                                   0, 0, 0, 0, 0, 0};
+  size_t kOutSize = 72;
+  float out[kOutSize];
+  float pedding_out[kOutSize];
+  std::vector<int> in_shape = {1, 4, 4, 2};
+  std::vector<int> pedding_out_shape = {1, 6, 6, 2};;
+  std::vector<int> out_shape = {4, 3, 3, 2};
+  std::vector<int> padding = {1, 1, 1, 1};
+  std::vector<float> pedding_h(12, 0);
+  std::vector<float> pedding_w(2, 0);
+  DoSpaceToBatchPaddingNHWC(input.data(), pedding_out, in_shape.data(), padding.data(), pedding_out_shape.data(),
+                            pedding_h.data(), pedding_w.data());
+  SpaceToBatchParameter param;
+  param.block_sizes_[0] = 2;
+  param.block_sizes_[1] = 2;
+  DoSpaceToBatchNHWC(pedding_out, out, &param, pedding_out_shape.data(), out_shape.data());
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, expect_out.data(), kOutSize, 0.000001);
+}
 }  // namespace mindspore

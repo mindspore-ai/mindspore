@@ -96,17 +96,13 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   auto input0_shape_without_axis = input0_shape;
   input0_shape_without_axis.erase(input0_shape_without_axis.begin() + axis);
   auto input0_data_type = inputs_.at(0)->data_type();
-  schema::Format input0_format = inputs_[0]->GetFormat();
   int output_axis_dim = input0_shape.at(axis);
   for (size_t i = 1; i < inputs_.size(); ++i) {
     if (inputs_.at(i)->data_type() != input0_data_type) {
       MS_LOG(ERROR) << "All inputs should have the same data type!";
       return RET_PARAM_INVALID;
     }
-    if (inputs_.at(i)->GetFormat() != input0_format) {
-      MS_LOG(ERROR) << "All input format should be the same!";
-      return RET_PARAM_INVALID;
-    }
+
     auto shape_tmp = inputs_.at(i)->shape();
     if (shape_tmp.size() != input0_shape.size()) {
       MS_LOG(ERROR) << "All inputs should have the same dim num!";

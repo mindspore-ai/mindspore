@@ -18,8 +18,6 @@
 #define LITE_MINDSPORE_LITE_C_OPS_SPACE_TO_BATCH_N_D_H_
 
 #include <vector>
-#include <set>
-#include <cmath>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -38,6 +36,7 @@ class SpaceToBatchND : public PrimitiveC {
 #endif
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) override;
 };
 }  // namespace lite
 }  // namespace mindspore

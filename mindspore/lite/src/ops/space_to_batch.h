@@ -36,7 +36,8 @@ class SpaceToBatch : public PrimitiveC {
 #else
   explicit SpaceToBatch(schema::Primitive *primitive) : PrimitiveC(primitive) {}
 #endif
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) override;
+
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;
 
