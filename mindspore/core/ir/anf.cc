@@ -31,7 +31,7 @@
 namespace mindspore {
 // namespace to support intermediate representation definition
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
-    : AnfNode(func_graph), inputs_(inputs), stop_gradient_(false) {}
+    : AnfNode(func_graph), inputs_(inputs), stop_gradient_(false), output_value_(std::make_pair(nullptr, "")) {}
 
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {

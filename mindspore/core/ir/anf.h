@@ -232,8 +232,15 @@ class CNode : public AnfNode {
   void set_input(size_t i, const AnfNodePtr &input);
   void set_inputs(const std::vector<AnfNodePtr> &inputs) { inputs_ = inputs; }
 
-  void set_forward(const ValuePtr &forward) { forward_ = forward; }
-  const ValuePtr &forward() const { return forward_; }
+  void add_input_value(const ValuePtr &input_value, const std::string &id) {
+    inputs_value_.push_back(std::make_pair(input_value, id));
+  }
+  void clear_inputs_value() { inputs_value_.clear(); }
+  void set_inputs_value(const std::vector<std::pair<ValuePtr, std::string>> &values) { inputs_value_ = values; }
+  const std::vector<std::pair<ValuePtr, std::string>> &inputs_value() const { return inputs_value_; }
+
+  void set_forward(const ValuePtr &forward, const std::string &id) { output_value_ = std::make_pair(forward, id); }
+  const std::pair<ValuePtr, std::string> &forward() const { return output_value_; }
 
   bool stop_gradient() const { return stop_gradient_; }
   void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
@@ -253,7 +260,10 @@ class CNode : public AnfNode {
   VarPtr func_graph_as_var_;
   bool stop_gradient_;
   bool in_forward_flag_ = false;
-  ValuePtr forward_ = nullptr;
+  // inputs_value_ store cnode input value and id in pynative mode
+  // output_value_ store cnode value and id in pynative mode
+  std::vector<std::pair<ValuePtr, std::string>> inputs_value_;
+  std::pair<ValuePtr, std::string> output_value_;
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.

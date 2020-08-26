@@ -724,18 +724,14 @@ void PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const py::ob
   set_pyobj(curr_g_, obj_id);
 }
 
-void PynativeExecutor::SaveOpForwardValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value) {
-  auto id = GetOpId(op_exec_info);
-  int graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int>();
-  auto op = std::to_string(graph_id) + id;
-  op.append(std::to_string(op_id_map_[id]));
-  auto iter = op_forward_map_.find(op);
+void PynativeExecutor::SaveOpForwardValue(const std::string &id, const ValuePtr &value) {
+  auto iter = op_forward_map_.find(id);
   if (iter != op_forward_map_.end()) {
     return;
   }
-  op_forward_map_[op] = value;
-  ++op_id_map_[id];
-  MS_LOG(DEBUG) << "Save: " << op_exec_info->op_name << "(" << op << "), " << value;
+  op_forward_map_[id] = value;
+  MS_LOG(DEBUG) << "Save op forward value: "
+                << "(" << id << "), " << value;
 }
 
 void PynativeExecutor::SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out) {
@@ -748,9 +744,25 @@ void PynativeExecutor::SaveAllResult(const OpExecInfoPtr &op_exec_info, const CN
   }
   auto value = PyAttrValue(out_real);
   if (cnode != nullptr) {
-    cnode->set_forward(value);
+    size_t size = op_exec_info->op_inputs.size();
+    for (size_t i = 0; i < size; i++) {
+      auto obj = op_exec_info->op_inputs[i];
+      auto obj_id = GetId(obj);
+      if (obj_to_forward_id_.find(obj_id) != obj_to_forward_id_.end()) {
+        cnode->add_input_value(PyAttrValue(obj), obj_to_forward_id_[obj_id]);
+      } else {
+        cnode->add_input_value(nullptr, "");
+      }
+    }
+    std::string id = GetOpId(op_exec_info);
+    int graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int>();
+    auto op_id = std::to_string(graph_id) + id;
+    op_id.append(std::to_string(op_id_map_[id]));
+    cnode->set_forward(value, op_id);
+    ++op_id_map_[id];
+    auto out_id = GetId(out_real);
+    obj_to_forward_id_[out_id] = op_id;
   }
-  SaveOpForwardValue(op_exec_info, value);
 }
 
 AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
@@ -775,7 +787,7 @@ AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
     node_abs_map_[id] = node->abstract();
   }
   MS_LOG(DEBUG) << "GetObjNode output" << node->DebugString(6);
-  node->cast<CNodePtr>()->set_forward(PyAttrValue(obj));
+  node->cast<CNodePtr>()->set_forward(PyAttrValue(obj), "");
   return node;
 }
 
@@ -1131,6 +1143,7 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
     }
   }
   auto newfg = ad::Grad(curr_g_, resource_, curr_g_ == top_g_);
+  graph_info_map_.erase(curr_g_);
   if (curr_g_ != top_g_) {
     Popp();
     for (size_t i = 0; i < args.size(); i++) {
@@ -1300,6 +1313,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
   curr_g_ = nullptr;
   graph_info_map_.clear();
   op_id_map_.clear();
+  obj_to_forward_id_.clear();
   std::stack<FuncGraphPtr>().swap(graph_p_);
   ConfigManager::GetInstance().ResetIterNum();
 }

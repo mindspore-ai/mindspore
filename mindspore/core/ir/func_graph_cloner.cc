@@ -88,7 +88,8 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   CNodePtr new_node = std::make_shared<CNode>(AnfNodePtrList{}, target);
   auto old_node = node->cast<CNodePtr>();
   new_node->set_abstract(old_node->abstract());
-  new_node->set_forward(old_node->forward());
+  new_node->set_forward(old_node->forward().first, old_node->forward().second);
+  new_node->set_inputs_value(old_node->inputs_value());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
   new_node->set_kernel_info(old_node->kernel_info_ptr());

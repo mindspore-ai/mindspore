@@ -108,7 +108,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
                        abstract::AbstractBasePtrList *args_spec_list);
   void MakeCNode(const OpExecInfoPtr &op_exec_info, const py::object &out, const AnfNodePtr &cnode);
   ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
-  void SaveOpForwardValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value);
+  void SaveOpForwardValue(const std::string &id, const ValuePtr &value);
   void SaveForwardResult(const CNodePtr &cnode, const py::object &out);
   void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
 
@@ -138,6 +138,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
   std::unordered_map<std::string, ValuePtr> op_forward_map_;
   std::unordered_map<std::string, size_t> op_id_map_;
+  std::unordered_map<std::string, std::string> obj_to_forward_id_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   std::stack<FuncGraphPtr> graph_p_;
   FuncGraphPtr top_g_;
