@@ -202,4 +202,6 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::tensor::Te
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FullConnection, OpenCLMatMulKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FullConnection, OpenCLMatMulKernelCreator)
 }  // namespace mindspore::kernel
