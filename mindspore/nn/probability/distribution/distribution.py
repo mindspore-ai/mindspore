@@ -26,8 +26,9 @@ class Distribution(Cell):
     Base class for all mathematical distributions.
 
     Args:
+        seed (int): random seed used in sampling.
         dtype (mindspore.dtype): type of the distribution.
-        name (str): name of the distribution.
+        name (str): Python str name prefixed to Ops created by this class. Default: subclass name.
         param (dict): parameters used to initialize the distribution.
 
     Note:

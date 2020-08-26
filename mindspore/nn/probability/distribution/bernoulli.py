@@ -32,7 +32,7 @@ class Bernoulli(Distribution):
         name (str): name of the distribution. Default: Bernoulli.
 
     Note:
-        probs should be proper probabilities (0 <= p <= 1).
+        probs should be proper probabilities (0 < p < 1).
         Dist_spec_args is probs.
 
     Examples:
