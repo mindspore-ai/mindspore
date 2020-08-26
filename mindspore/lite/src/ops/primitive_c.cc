@@ -17,6 +17,7 @@
 #include "src/ops/primitive_c.h"
 #include <memory>
 #include "src/ops/space_to_batch.h"
+#include "src/ops/space_to_batch_nd.h"
 #include "src/ops/conv2d.h"
 #include "src/ops/roi_pooling.h"
 #include "src/ops/topk.h"
@@ -414,6 +415,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new BatchToSpace(primitive);
     case schema::PrimitiveType_SpaceToBatch:
       return new SpaceToBatch(primitive);
+    case schema::PrimitiveType_SpaceToBatchND:
+      return new SpaceToBatchND(primitive);
     case schema::PrimitiveType_BroadcastTo:
       return new BroadcastTo(primitive);
     case schema::PrimitiveType_DepthToSpace:
@@ -620,6 +623,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new BatchToSpace(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_SpaceToBatch:
       return new SpaceToBatch(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_SpaceToBatchND:
+      return new SpaceToBatchND(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_BroadcastTo:
       return new BroadcastTo(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_DepthToSpace:

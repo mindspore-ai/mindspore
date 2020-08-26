@@ -20,6 +20,7 @@
 #include "schema/ops_generated.h"
 #include "src/ops/constant_of_shape.h"
 #include "src/ops/space_to_batch.h"
+#include "src/ops/space_to_batch_nd.h"
 #include "src/ops/conv2d.h"
 #include "src/ops/roi_pooling.h"
 #include "src/ops/topk.h"
@@ -1189,10 +1190,22 @@ OpParameter *PopulateSpaceToBatchParameter(const mindspore::lite::PrimitiveC *pr
   (void)memcpy(space_batch_param->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
   auto paddings = ((mindspore::lite::SpaceToBatch *)primitive)->Paddings();
   (void)memcpy(space_batch_param->paddings_, (paddings.data()), paddings.size() * sizeof(int));
-  auto in_shape = ((mindspore::lite::SpaceToBatch *)primitive)->InShape();
-  (void)memcpy(space_batch_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
-  auto padded_in_shape = ((mindspore::lite::SpaceToBatch *)primitive)->PaddedInShape();
-  (void)memcpy(space_batch_param->padded_in_shape_, (padded_in_shape.data()), padded_in_shape.size() * sizeof(int));
+  return reinterpret_cast<OpParameter *>(space_batch_param);
+}
+
+OpParameter *PopulateSpaceToBatchParameterND(const mindspore::lite::PrimitiveC *primitivec) {
+  auto *space_batch_param = new (std::nothrow) SpaceToBatchParameter();
+  if (space_batch_param == nullptr) {
+    MS_LOG(ERROR) << "new SpaceToBatchParameter failed.";
+    return nullptr;
+  }
+
+  mindspore::lite::SpaceToBatchND *primitive = (mindspore::lite::SpaceToBatchND *)primitivec;
+  space_batch_param->op_parameter_.type_ = primitive->Type();
+  auto block_sizes = primitive->GetBlockShape();
+  (void)memcpy(space_batch_param->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
+  auto paddings = primitive->GetPaddings();
+  (void)memcpy(space_batch_param->paddings_, (paddings.data()), paddings.size() * sizeof(int));
   return reinterpret_cast<OpParameter *>(space_batch_param);
 }
 
@@ -1525,6 +1538,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_BatchToSpace] = PopulateBatchToSpaceParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToDepth] = PopulateSpaceToDepthParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatch] = PopulateSpaceToBatchParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatchND] = PopulateSpaceToBatchParameterND;
   populate_parameter_funcs_[schema::PrimitiveType_Crop] = PopulateCropParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Unsqueeze] = PopulateUnsqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Flatten] = PopulateFlattenParameter;

@@ -75,19 +75,7 @@ class LiteKernel {
 
   virtual ~LiteKernel() = default;
 
-  virtual int Prepare() {
-    if (!InferShapeDone()) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
-      ReSize();
-    }
-
-    auto &outputs = this->out_tensors();
-    for (auto *output : outputs) {
-      MS_ASSERT(output != nullptr);
-      output->MallocData();
-    }
-    return RET_OK;
-  }
+  virtual int Prepare();
 
   virtual int Init() { return -1; }
 

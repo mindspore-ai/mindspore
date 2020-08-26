@@ -105,8 +105,8 @@ int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
 
   std::vector<int32_t> output_shape(input_shape.size());
   output_shape[NHWC_N] = input_shape[NHWC_N] * (block_sizes_[NHWC_N] * block_sizes_[NHWC_H]);
-  output_shape[NHWC_H] = input_shape[NHWC_H] / block_sizes_[NHWC_N];
-  output_shape[NHWC_W] = input_shape[NHWC_W] / block_sizes_[NHWC_H];
+  output_shape[NHWC_H] = (input_shape[NHWC_H] + paddings_[0] + paddings_[1]) / block_sizes_[NHWC_N];
+  output_shape[NHWC_W] = (input_shape[NHWC_W] + paddings_[2] + paddings_[3]) / block_sizes_[NHWC_H];
   output_shape[NHWC_C] = input_shape[NHWC_C];
   outputs[0]->set_shape(output_shape);
   return RET_OK;
