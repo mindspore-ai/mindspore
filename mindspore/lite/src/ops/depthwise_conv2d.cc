@@ -283,6 +283,7 @@ int DepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
   int input_channel = in_shape.at(3);
   int output_w = 0, output_h = 0;
 
+  input_channel_ = input_channel;
   pad_l_ = GetPadLeft();
   pad_u_ = GetPadUp();
   pad_d_ = GetPadDown();

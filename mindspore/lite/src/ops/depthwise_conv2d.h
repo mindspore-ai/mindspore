@@ -84,12 +84,14 @@ class DepthwiseConv2D : public PrimitiveC {
   int PadDown() const { return this->pad_d_; }
   int PadLeft() const { return this->pad_l_; }
   int PadRight() const { return this->pad_r_; }
+  int GetInputChannel() const { return this->input_channel_; }
 
  protected:
   int pad_u_ = 0;
   int pad_d_ = 0;
   int pad_l_ = 0;
   int pad_r_ = 0;
+  int input_channel_ = 0;
 };
 }  // namespace lite
 }  // namespace mindspore

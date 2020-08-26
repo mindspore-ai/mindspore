@@ -62,6 +62,10 @@ void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed
   }        // kernel plane loop
 }
 
+void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) {
+  return PackNCHWToNHWCFp32(src, dst, 1, plane, channel);
+}
+
 void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *packed_weight, int32_t *weight_sum) {
   // original weight format : ohwi
   int kernel_h = conv_param->kernel_h_;
