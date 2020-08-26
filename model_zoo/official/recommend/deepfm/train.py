@@ -34,11 +34,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 parser = argparse.ArgumentParser(description='CTR Prediction')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--ckpt_path', type=str, default=None, help='Checkpoint path')
-parser.add_argument('--eval_file_name', type=str, default="./auc.log", help='eval file path')
-parser.add_argument('--loss_file_name', type=str, default="./loss.log", help='loss file path')
-parser.add_argument('--do_eval', type=bool, default=True, help='Do evaluation or not.')
-parser.add_argument('--device_target', type=str, default="Ascend", help='Ascend, GPU, or CPU')
+parser.add_argument('--eval_file_name', type=str, default="./auc.log",
+                    help='Auc log file path. Default: "./auc.log"')
+parser.add_argument('--loss_file_name', type=str, default="./loss.log",
+                    help='Loss log file path. Default: "./loss.log"')
+parser.add_argument('--do_eval', type=str, default='True',
+                    help='Do evaluation or not, only support "True" or "False". Default: "True"')
+parser.add_argument('--device_target', type=str, default="Ascend", help='Ascend or GPU. Default: Ascend')
 args_opt, _ = parser.parse_known_args()
+args_opt.do_eval = args_opt.do_eval == 'True'
 rank_size = int(os.environ.get("RANK_SIZE", 1))
 
 random.seed(1)
