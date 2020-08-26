@@ -78,6 +78,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   // init padWeight_(buffer mem)
   padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+  memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   auto origin_weight = in_tensors_.at(kWeightIndex)->Data();
   auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
@@ -90,24 +91,20 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
               int co_offset = co_i * C4NUM + co4_i;
               int ci_offset = ci_i * C4NUM + ci4_i;
               if (co_offset < co && ci_offset < ci) {
-                int ori_index = ((ci_offset * kh + kh_i) * kw + kw_i) * ci + co_offset;
+                int ori_index = ((ci_offset * kh + kh_i) * kw + kw_i) * co + co_offset;
                 if (enable_fp16_) {
                   if (weight_dtype == kNumberTypeFloat32) {
                     reinterpret_cast<uint16_t *>(padWeight_)[index++] =
                       Float32ToShort(reinterpret_cast<float *>(origin_weight)[ori_index]);
                   } else {
-                    reinterpret_cast<float16_t *>(padWeight_)[index++] =
-                      reinterpret_cast<float16_t *>(origin_weight)[ori_index];
+                    reinterpret_cast<uint16_t *>(padWeight_)[index++] =
+                      reinterpret_cast<uint16_t *>(origin_weight)[ori_index];
                   }
                 } else {
                   reinterpret_cast<float *>(padWeight_)[index++] = reinterpret_cast<float *>(origin_weight)[ori_index];
                 }
               } else {
-                if (enable_fp16_) {
-                  reinterpret_cast<float16_t *>(padWeight_)[index++] = 0.;
-                } else {
-                  reinterpret_cast<float *>(padWeight_)[index++] = 0.;
-                }
+                index++;
               }
             }
           }
@@ -128,7 +125,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   std::vector<size_t> img_size{im_dst_x, im_dst_y, img_dtype};
   bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * data_size, img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
-  memset(bias_, 0x00, div_co * C4NUM * sizeof(data_size));
+  memset(bias_, 0x00, div_co * C4NUM * data_size);
   auto bias_dtype = in_tensors_[2]->data_type();
   if (in_tensors_.size() >= 3) {
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
@@ -145,7 +142,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
 
 int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  im_dst_x = UP_DIV(out_tensors_[0]->Channel() * out_tensors_[0]->Width(), C4NUM);
+  im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   im_dst_y = out_tensors_[0]->Height();
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -168,6 +165,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = in_tensors_[0]->Channel();
   int co = out_tensors_[0]->Channel();
+  int co4 = UP_DIV(co, C4NUM);
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
   int pad = param->pad_u_;
@@ -179,7 +177,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 1, 16};
   std::vector<size_t> global = {UP_ROUND((size_t)UP_ROUND(oh / 2, 2), local[0]),
-                                UP_ROUND((size_t)UP_ROUND(ow / 2, 2), local[1]), UP_ROUND((size_t)co / 4, local[2])};
+                                UP_ROUND((size_t)UP_ROUND(ow / 2, 2), local[1]), UP_ROUND(co4, local[2])};
 
   cl_int2 kernel_size = {kh, kw};
   cl_int2 stride = {2, 2};

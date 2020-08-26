@@ -30,10 +30,13 @@ class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
   TestConv2dTransposeOpenCL() {}
 };
 
-void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path, bool fp16) {
+void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data, void *weight_data, void *bias_data,
+                                void *output_data, bool fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  size_t dtype_size = sizeof(float);
   if (fp16) {
     ocl_runtime->SetFp16Enable(true);
+    dtype_size = sizeof(float16_t);
   }
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
@@ -47,30 +50,6 @@ void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<
   int co = shape[7];
   int oh = 2 * h - 1 + 2 * (kh - 1 - pad) - kh + 1;
   int ow = 2 * w - 1 + 2 * (kw - 1 - pad) - kw + 1;
-
-  size_t input_size;
-  std::string input_path = file_path[0];
-  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
-  }
-
-  size_t weight_size;
-  std::string weight_path = file_path[1];
-  auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
-  if (weight_data == nullptr) {
-    MS_LOG(ERROR) << "weight_data load error.";
-    return;
-  }
-
-  size_t bias_size;
-  std::string bias_path = file_path[2];
-  auto bias_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(bias_path.c_str(), &bias_size));
-  if (bias_data == nullptr) {
-    MS_LOG(ERROR) << "bias_data load error.";
-    return;
-  }
   std::vector<int> input_shape = {n, h, w, ci};
   auto tensor_x_ptr =
     std::make_unique<lite::tensor::Tensor>(TypeId(fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape);
@@ -145,18 +124,52 @@ void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<
   }
 
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->Data(), input_data, n * h * w * ci * dtype_size);
   pGraph->Run();
   if (fp16) {
-    CompareOutput(tensor_out, file_path[3], static_cast<float16_t>(1e-2), 2e-2);
+    CompareOutput(outputs[0]->Data(), output_data, n * oh * ow * co, static_cast<float16_t>(1e-3), 2e-2);
   } else {
-    CompareOutput(tensor_out, file_path[3], static_cast<float>(1e-5));
+    CompareOutput(outputs[0]->Data(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
   }
 
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
-  MS_LOG(INFO) << "Test Conv2dTransposeFp32 passed";
 }
+
+void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path, bool fp16) {
+  size_t input_size;
+  std::string input_path = file_path[0];
+  auto input_data = mindspore::lite::ReadFile(input_path.c_str(), &input_size);
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data load error.";
+    return;
+  }
+
+  size_t weight_size;
+  std::string weight_path = file_path[1];
+  auto weight_data = mindspore::lite::ReadFile(weight_path.c_str(), &weight_size);
+  if (weight_data == nullptr) {
+    MS_LOG(ERROR) << "weight_data load error.";
+    return;
+  }
+
+  size_t bias_size;
+  std::string bias_path = file_path[2];
+  auto bias_data = mindspore::lite::ReadFile(bias_path.c_str(), &bias_size);
+  if (bias_data == nullptr) {
+    MS_LOG(ERROR) << "bias_data load error.";
+    return;
+  }
+  size_t output_size;
+  std::string output_path = file_path[3];
+  auto output_data = mindspore::lite::ReadFile(output_path.c_str(), &output_size);
+  if (output_data == nullptr) {
+    MS_LOG(ERROR) << "output_data load error.";
+    return;
+  }
+  RunTestCaseConv2dTranspose(shape, input_data, weight_data, bias_data, output_data, fp16);
+}
+
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {
   int pad = 0;
   int n = 1;
@@ -189,5 +202,42 @@ TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16) {
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp16_bias.bin",
                                         "./test_data/conv2d_transpose/conv2d_transpose_fp16_output.bin"};
   RunTestCaseConv2dTranspose(shape, file_path, true);
+}
+
+TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32_2) {
+  int pad = 0;
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int kh = 2;
+  int kw = 2;
+  int ci = 2;
+  int co = 1;
+  std::vector<int> shape = {pad, n, h, w, kh, kw, ci, co};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
+  std::vector<float> weight_data = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f};
+  std::vector<float> bias_data = {0.5f};
+  std::vector<float> output_data = {5.5f,  6.5f,  17.5f, 22.5f, 7.5f,  8.5f,  27.5f, 32.5f,
+                                    29.5f, 38.5f, 41.5f, 54.5f, 47.5f, 56.5f, 67.5f, 80.5f};
+  RunTestCaseConv2dTranspose(shape, input_data.data(), weight_data.data(), bias_data.data(), output_data.data(), false);
+}
+
+TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp16_2) {
+  int pad = 0;
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int kh = 2;
+  int kw = 2;
+  int ci = 2;
+  int co = 1;
+  std::vector<int> shape = {pad, n, h, w, kh, kw, ci, co};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
+  std::vector<float16_t> weight_data = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f};
+  std::vector<float16_t> bias_data = {0.5f};
+  std::vector<float16_t> output_data = {5.5f,  6.5f,  17.5f, 22.5f, 7.5f,  8.5f,  27.5f, 32.5f,
+                                        29.5f, 38.5f, 41.5f, 54.5f, 47.5f, 56.5f, 67.5f, 80.5f};
+
+  RunTestCaseConv2dTranspose(shape, input_data.data(), weight_data.data(), bias_data.data(), output_data.data(), true);
 }
 }  // namespace mindspore
