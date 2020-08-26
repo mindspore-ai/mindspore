@@ -15,11 +15,12 @@
 """
 Testing RandomPosterize op in DE
 """
+import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
-    config_get_set_seed, config_get_set_num_parallel_workers
+    config_get_set_seed, config_get_set_num_parallel_workers, diff_mse
 
 GENERATE_GOLDEN = False
 
@@ -27,9 +28,10 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def skip_test_random_posterize_op_c(plot=False, run_golden=True):
+def test_random_posterize_op_c(plot=False, run_golden=False):
     """
-    Test RandomPosterize in C transformations
+    Test RandomPosterize in C transformations (uses assertion on mse as using md5 could have jpeg decoding
+    inconsistencies)
     """
     logger.info("test_random_posterize_op_c")
 
@@ -57,6 +59,12 @@ def skip_test_random_posterize_op_c(plot=False, run_golden=True):
         image_posterize.append(image1)
         image_original.append(image2)
 
+    # check mse as md5 can be inconsistent.
+    # mse = 2.9668956 is calculated from
+    # a thousand runs of diff_mse(np.array(image_original), np.array(image_posterize)) that all produced the same mse.
+    # allow for an error of 0.0000005
+    assert abs(2.9668956 - diff_mse(np.array(image_original), np.array(image_posterize))) <= 0.0000005
+
     if run_golden:
         # check results with md5 comparison
         filename = "random_posterize_01_result_c.npz"
@@ -70,7 +78,7 @@ def skip_test_random_posterize_op_c(plot=False, run_golden=True):
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def skip_test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
+def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
     """
     Test RandomPosterize in C transformations with fixed point
     """
@@ -164,7 +172,7 @@ def test_rescale_with_random_posterize():
         assert "Input image data type can not be float" in str(e)
 
 if __name__ == "__main__":
-    skip_test_random_posterize_op_c(plot=True)
-    skip_test_random_posterize_op_fixed_point_c(plot=True)
+    test_random_posterize_op_c(plot=False, run_golden=False)
+    test_random_posterize_op_fixed_point_c(plot=False)
     test_random_posterize_exception_bit()
     test_rescale_with_random_posterize()

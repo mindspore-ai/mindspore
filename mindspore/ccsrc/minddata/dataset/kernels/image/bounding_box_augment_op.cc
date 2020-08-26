@@ -17,6 +17,7 @@
 #include <vector>
 #include <utility>
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
+#include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
@@ -32,7 +33,7 @@ BoundingBoxAugmentOp::BoundingBoxAugmentOp(std::shared_ptr<TensorOp> transform, 
 
 Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  BOUNDING_BOX_CHECK(input);  // check if bounding boxes are valid
+  RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
   uint32_t num_of_boxes = input[1]->shape()[0];
   std::shared_ptr<Tensor> crop_out;
   std::shared_ptr<Tensor> res_out;
@@ -40,31 +41,25 @@ Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) 
   for (uint32_t i = 0; i < num_of_boxes; i++) {
     // using a uniform distribution to ensure op happens with probability ratio_
     if (uniform_(rnd_) < ratio_) {
-      float min_x = 0;
-      float min_y = 0;
-      float b_w = 0;
-      float b_h = 0;
-      // get the required items
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&min_x, {i, 0}));
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&min_y, {i, 1}));
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&b_w, {i, 2}));
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<float>(&b_h, {i, 3}));
-      RETURN_IF_NOT_OK(Crop(input_restore, &crop_out, static_cast<int>(min_x), static_cast<int>(min_y),
-                            static_cast<int>(b_w), static_cast<int>(b_h)));
+      std::shared_ptr<BoundingBox> bbox;
+      RETURN_IF_NOT_OK(BoundingBox::ReadFromTensor(input[1], i, &bbox));
+      RETURN_IF_NOT_OK(Crop(input_restore, &crop_out, static_cast<int>(bbox->x()), static_cast<int>(bbox->y()),
+                            static_cast<int>(bbox->width()), static_cast<int>(bbox->height())));
       // transform the cropped bbox region
       RETURN_IF_NOT_OK(transform_->Compute(crop_out, &res_out));
       // place the transformed region back in the restored input
       std::shared_ptr<CVTensor> res_img = CVTensor::AsCVTensor(res_out);
       // check if transformed crop is out of bounds of the box
-      if (res_img->mat().cols > b_w || res_img->mat().rows > b_h || res_img->mat().cols < b_w ||
-          res_img->mat().rows < b_h) {
+      if (res_img->mat().cols > bbox->width() || res_img->mat().rows > bbox->height() ||
+          res_img->mat().cols < bbox->width() || res_img->mat().rows < bbox->height()) {
         // if so, resize to fit in the box
         std::shared_ptr<TensorOp> resize_op =
-          std::make_shared<ResizeOp>(static_cast<int32_t>(b_h), static_cast<int32_t>(b_w));
+          std::make_shared<ResizeOp>(static_cast<int32_t>(bbox->height()), static_cast<int32_t>(bbox->width()));
         RETURN_IF_NOT_OK(resize_op->Compute(std::static_pointer_cast<Tensor>(res_img), &res_out));
         res_img = CVTensor::AsCVTensor(res_out);
       }
-      res_img->mat().copyTo(input_restore->mat()(cv::Rect(min_x, min_y, res_img->mat().cols, res_img->mat().rows)));
+      res_img->mat().copyTo(
+        input_restore->mat()(cv::Rect(bbox->x(), bbox->y(), res_img->mat().cols, res_img->mat().rows)));
     }
   }
   (*output).push_back(std::move(std::static_pointer_cast<Tensor>(input_restore)));

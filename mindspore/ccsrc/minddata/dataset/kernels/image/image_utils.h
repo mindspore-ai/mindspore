@@ -273,38 +273,6 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 /// \return Status code
 Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
-/// -------- BBOX OPERATIONS -------- ///
-/// \brief Updates and checks bounding boxes for new cropped region of image
-/// \param bboxList: A tensor contaning bounding box tensors
-/// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-/// \param CB_Xmin: Image's CropBox Xmin coordinate
-/// \param CB_Xmin: Image's CropBox Ymin coordinate
-/// \param CB_Xmax: Image's CropBox Xmax coordinate - (Xmin + width)
-/// \param CB_Xmax: Image's CropBox Ymax coordinate - (Ymin + height)
-Status UpdateBBoxesForCrop(std::shared_ptr<Tensor> *bboxList, size_t *bboxCount, int CB_Xmin, int CB_Ymin, int CB_Xmax,
-                           int CB_Ymax);
-
-/// \brief Updates bounding boxes with required Top and Left padding
-/// \note Top and Left padding amounts required to adjust bboxs min X,Y values according to padding 'push'
-///     Top/Left since images 0,0 coordinate is taken from top left
-/// \param bboxList: A tensor contaning bounding box tensors
-/// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-/// \param pad_top: Total amount of padding applied to image top
-/// \param pad_left: Total amount of padding applied to image left side
-Status PadBBoxes(const std::shared_ptr<Tensor> *bboxList, const size_t &bboxCount, int32_t pad_top, int32_t pad_left);
-
-/// \brief Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
-/// For e.g those that remain after a crop
-/// \param bboxList: A tensor contaning bounding box tensors
-/// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
-/// \param bboxList: A tensor contaning bounding box tensors
-/// \param target_width_: required width of image post resize
-/// \param target_width_: required height of image post resize
-/// \param orig_width: current width of image pre resize
-/// \param orig_height: current height of image pre resize
-Status UpdateBBoxesForResize(const std::shared_ptr<Tensor> &bboxList, const size_t &bboxCount, int32_t target_width_,
-                             int32_t target_height_, int orig_width, int orig_height);
-
 /// \brief Get jpeg image width and height
 /// \param input: CVTensor containing the not decoded image 1D bytes
 /// \param img_width: the jpeg image width
