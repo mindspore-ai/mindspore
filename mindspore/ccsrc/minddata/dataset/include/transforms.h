@@ -161,16 +161,21 @@ std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint
 /// \brief Function to create a RandomAffine TensorOperation.
 /// \notes Applies a Random Affine transformation on input image in RGB or Greyscale mode.
 /// \param[in] degrees A float vector size 2, representing the starting and ending degree
-/// \param[in] translate_range A float vector size 2, representing percentages of translation on x and y axes.
+/// \param[in] translate_range A float vector size 2 or 4, representing percentages of translation on x and y axes.
+///    if size is 2, (min_dx, max_dx, 0, 0)
+///    if size is 4, (min_dx, max_dx, min_dy, max_dy)
+///    all values are in range [-1, 1]
 /// \param[in] scale_range A float vector size 2, representing the starting and ending scales in the range.
-/// \param[in] shear_ranges A float vector size 4, representing the starting and ending shear degrees vertically and
-///    horizontally.
+/// \param[in] shear_ranges A float vector size 2 or 4, representing the starting and ending shear degrees vertically
+///    and horizontally.
+///    if size is 2, (min_shear_x, max_shear_x, 0, 0)
+///    if size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y)
 /// \param[in] interpolation An enum for the mode of interpolation
 /// \param[in] fill_value A uint8_t vector size 3, representing the pixel intensity of the borders, it is used to
 ///    fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomAffineOperation> RandomAffine(
-  const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range = {0.0, 0.0},
+  const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
   const std::vector<float_t> &scale_range = {1.0, 1.0}, const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
   InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
   const std::vector<uint8_t> &fill_value = {0, 0, 0});
@@ -223,10 +228,9 @@ std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob =
 
 /// \brief Function to create a RandomPosterize TensorOperation.
 /// \notes Tensor operation to perform random posterize.
-/// \param[in] min_bit - uint8_t representing the minimum bit in range. (Default=8)
-/// \param[in] max_bit - uint8_t representing the maximum bit in range. (Default=8)
+/// \param[in] bit_range - uint8_t vector representing the minimum and maximum bit in range. (Default={4, 8})
 /// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomPosterizeOperation> RandomPosterize(uint8_t min_bit = 8, uint8_t max_bit = 8);
+std::shared_ptr<RandomPosterizeOperation> RandomPosterize(const std::vector<uint8_t> &bit_range = {4, 8});
 
 /// \brief Function to create a RandomRotation TensorOp
 /// \notes Rotates the image according to parameters
@@ -530,7 +534,7 @@ class RandomHorizontalFlipOperation : public TensorOperation {
 
 class RandomPosterizeOperation : public TensorOperation {
  public:
-  explicit RandomPosterizeOperation(uint8_t min_bit = 8, uint8_t max_bit = 8);
+  explicit RandomPosterizeOperation(const std::vector<uint8_t> &bit_range = {4, 8});
 
   ~RandomPosterizeOperation() = default;
 
@@ -539,8 +543,7 @@ class RandomPosterizeOperation : public TensorOperation {
   bool ValidateParams() override;
 
  private:
-  uint8_t min_bit_;
-  uint8_t max_bit_;
+  std::vector<uint8_t> bit_range_;
 };
 
 class RandomRotationOperation : public TensorOperation {

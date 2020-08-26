@@ -523,10 +523,10 @@ def check_random_affine(method):
         if translate is not None:
             type_check(translate, (list, tuple), "translate")
             type_check_list(translate, (int, float), "translate")
-            if len(translate) != 2:
-                raise TypeError("translate should be a list or tuple of length 2.")
+            if len(translate) != 2 and len(translate) != 4:
+                raise TypeError("translate should be a list or tuple of length 2 or 4.")
             for i, t in enumerate(translate):
-                check_value(t, [0.0, 1.0], "translate at {0}".format(i))
+                check_value(t, [-1.0, 1.0], "translate at {0}".format(i))
 
         if scale is not None:
             type_check(scale, (tuple, list), "scale")

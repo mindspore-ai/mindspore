@@ -64,6 +64,7 @@ DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
 DE_C_IMAGE_BATCH_FORMAT = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
                            ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
 
+
 def parse_padding(padding):
     if isinstance(padding, numbers.Number):
         padding = [padding] * 4
@@ -237,11 +238,16 @@ class RandomAffine(cde.RandomAffineOp):
         degrees (int or float or sequence): Range of the rotation degrees.
             If degrees is a number, the range will be (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
-        translate (sequence, optional): Sequence (tx, ty) of maximum translation in
+        translate (sequence, optional): Sequence (tx_min, tx_max, ty_min, ty_max) of minimum/maximum translation in
             x(horizontal) and y(vertical) directions (default=None).
             The horizontal and vertical shift is selected randomly from the range:
-            (-tx*width, tx*width) and (-ty*height, ty*height), respectively.
-            If None, no translations gets applied.
+            (tx_min*width, tx_max*width) and (ty_min*height, ty_max*height), respectively.
+            If a tuple or list of size 2, then a translate parallel to the x axis in the range of
+            (translate[0], translate[1]) is applied.
+            If a tuple of list of size 4, then a translate parallel to x axis in the range of
+            (translate[0], translate[1]) and a translate parallel to y axis in the range of
+            (translate[2], translate[3]) are applied.
+            If None, no translation is applied.
         scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
         shear (int or float or sequence, optional): Range of shear factor (default=None).
             If a number 'shear', then a shear parallel to the x axis in the range of (-shear, +shear) is applied.
@@ -266,18 +272,18 @@ class RandomAffine(cde.RandomAffineOp):
 
     Raises:
         ValueError: If degrees is negative.
-        ValueError: If translation value is not between 0 and 1.
+        ValueError: If translation value is not between -1 and 1.
         ValueError: If scale is not positive.
         ValueError: If shear is a number but is not positive.
         TypeError: If degrees is not a number or a list or a tuple.
             If degrees is a list or tuple, its length is not 2.
-        TypeError: If translate is specified but is not list or a tuple of length 2.
+        TypeError: If translate is specified but is not list or a tuple of length 2 or 4.
         TypeError: If scale is not a list or tuple of length 2.''
         TypeError: If shear is not a list or tuple of length 2 or 4.
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
-        >>> c_transform.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1))
+        >>> c_transform.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0), scale=(0.9, 1.1))
     """
 
     @check_random_affine
@@ -300,7 +306,7 @@ class RandomAffine(cde.RandomAffineOp):
 
         # translation
         if translate is None:
-            translate = (0.0, 0.0)
+            translate = (0.0, 0.0, 0.0, 0.0)
 
         # scale
         if scale is None:
@@ -467,7 +473,7 @@ class RandomPosterize(cde.RandomPosterizeOp):
             bits values should always be in range of [1,8], and include at
             least one integer values in the given range. It should be in
             (min, max) or integer format. If min=max, then it is a single fixed
-            magnitude operation (default=8).
+            magnitude operation (default=[4,8]).
     """
 
     @check_posterize
@@ -475,7 +481,7 @@ class RandomPosterize(cde.RandomPosterizeOp):
         self.bits = bits
         if isinstance(bits, int):
             bits = (bits, bits)
-        super().__init__(bits[0], bits[1])
+        super().__init__(bits)
 
 
 class RandomVerticalFlip(cde.RandomVerticalFlipOp):

@@ -24,16 +24,16 @@
 namespace mindspore {
 namespace dataset {
 
-const uint8_t RandomPosterizeOp::kMinBit = 8;
-const uint8_t RandomPosterizeOp::kMaxBit = 8;
+const std::vector<uint8_t> RandomPosterizeOp::kBitRange = {4, 8};
 
-RandomPosterizeOp::RandomPosterizeOp(uint8_t min_bit, uint8_t max_bit)
-    : PosterizeOp(min_bit), min_bit_(min_bit), max_bit_(max_bit) {
+RandomPosterizeOp::RandomPosterizeOp(const std::vector<uint8_t> &bit_range)
+    : PosterizeOp(bit_range[0]), bit_range_(bit_range) {
   rnd_.seed(GetSeed());
 }
 
 Status RandomPosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  bit_ = (min_bit_ == max_bit_) ? min_bit_ : std::uniform_int_distribution<uint8_t>(min_bit_, max_bit_)(rnd_);
+  bit_ = (bit_range_[0] == bit_range_[1]) ? bit_range_[0]
+                                          : std::uniform_int_distribution<uint8_t>(bit_range_[0], bit_range_[1])(rnd_);
   return PosterizeOp::Compute(input, output);
 }
 }  // namespace dataset

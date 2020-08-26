@@ -75,7 +75,7 @@ def test_random_affine_op_c(plot=False):
     # define map operations
     transforms1 = [
         c_vision.Decode(),
-        c_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1))
+        c_vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0))
     ]
 
     transforms2 = [
@@ -139,7 +139,7 @@ def test_random_affine_c_md5():
     # define map operations
     transforms = [
         c_vision.Decode(),
-        c_vision.RandomAffine(degrees=(-5, 15), translate=(0.1, 0.3),
+        c_vision.RandomAffine(degrees=(-5, 15), translate=(-0.1, 0.1, -0.3, 0.3),
                               scale=(0.9, 1.1), shear=(-10, 10, -5, 5))
     ]
 
@@ -156,9 +156,35 @@ def test_random_affine_c_md5():
     ds.config.set_num_parallel_workers((original_num_parallel_workers))
 
 
+def test_random_affine_default_c_md5():
+    """
+    Test RandomAffine C Op (default params) with md5 comparison
+    """
+    logger.info("test_random_affine_default_c_md5")
+    original_seed = config_get_set_seed(1)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    # define map operations
+    transforms = [
+        c_vision.Decode(),
+        c_vision.RandomAffine(degrees=0)
+    ]
+
+    #  Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = data.map(input_columns=["image"], operations=transforms)
+
+    # check results with md5 comparison
+    filename = "random_affine_01_default_c_result.npz"
+    save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers((original_num_parallel_workers))
+
+
 def test_random_affine_py_exception_non_pil_images():
     """
-    Test RandomAffine: input img is ndarray and not PIL, expected to raise TypeError
+    Test RandomAffine: input img is ndarray and not PIL, expected to raise RuntimeError
     """
     logger.info("test_random_affine_exception_negative_degrees")
     dataset = ds.MnistDataset(MNIST_DATA_DIR, num_parallel_workers=3)
@@ -188,14 +214,20 @@ def test_random_affine_exception_negative_degrees():
 
 def test_random_affine_exception_translation_range():
     """
-    Test RandomAffine: translation value is not in [0, 1], expected to raise ValueError
+    Test RandomAffine: translation value is not in [-1, 1], expected to raise ValueError
     """
     logger.info("test_random_affine_exception_translation_range")
     try:
-        _ = py_vision.RandomAffine(degrees=15, translate=(0.1, 1.5))
+        _ = c_vision.RandomAffine(degrees=15, translate=(0.1, 1.5))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input translate at 1 is not within the required interval of (0.0 to 1.0)."
+        assert str(e) == "Input translate at 1 is not within the required interval of (-1.0 to 1.0)."
+    logger.info("test_random_affine_exception_translation_range")
+    try:
+        _ = c_vision.RandomAffine(degrees=15, translate=(-2, 1.5))
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert str(e) == "Input translate at 0 is not within the required interval of (-1.0 to 1.0)."
 
 
 def test_random_affine_exception_scale_value():
@@ -308,6 +340,7 @@ if __name__ == "__main__":
     test_random_affine_op_c(plot=True)
     test_random_affine_md5()
     test_random_affine_c_md5()
+    test_random_affine_default_c_md5()
     test_random_affine_py_exception_non_pil_images()
     test_random_affine_exception_negative_degrees()
     test_random_affine_exception_translation_range()

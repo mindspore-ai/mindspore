@@ -28,13 +28,11 @@ namespace dataset {
 class RandomPosterizeOp : public PosterizeOp {
  public:
   /// Default values
-  static const uint8_t kMinBit;
-  static const uint8_t kMaxBit;
+  static const std::vector<uint8_t> kBitRange;
 
   /// \brief Constructor
-  /// \param[in] min_bit: Minimum bit in range
-  /// \param[in] max_bit: Maximum bit in range
-  explicit RandomPosterizeOp(uint8_t min_bit = kMinBit, uint8_t max_bit = kMaxBit);
+  /// \param[in] bit_range: Minimum and maximum bits in range
+  explicit RandomPosterizeOp(const std::vector<uint8_t> &bit_range = kBitRange);
 
   ~RandomPosterizeOp() override = default;
 
@@ -45,8 +43,7 @@ class RandomPosterizeOp : public PosterizeOp {
   /// Member variables
  private:
   std::string kRandomPosterizeOp = "RandomPosterizeOp";
-  uint8_t min_bit_;
-  uint8_t max_bit_;
+  std::vector<uint8_t> bit_range_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset
