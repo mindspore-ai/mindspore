@@ -171,27 +171,27 @@ void Options::CreateOptions() {
 
 bool Options::CheckOptions() {
   if (args_->model_name == "" || args_->model_path == "") {
-    std::cout << "model_path and model_name should not be null" << std::endl;
+    std::cout << "Serving Error: model_path and model_name should not be null" << std::endl;
     return false;
   }
   if (args_->device_type != "Ascend") {
-    std::cout << "device_type only support Ascend right now" << std::endl;
+    std::cout << "Serving Error: device_type only support Ascend right now" << std::endl;
     return false;
   }
   if (args_->device_id > 7) {
-    std::cout << "the device_id should be in [0~7]" << std::endl;
+    std::cout << "Serving Error: the device_id should be in [0~7]" << std::endl;
     return false;
   }
   if (args_->grpc_port < 1 || args_->grpc_port > 65535) {
-    std::cout << "the port should be in [1~65535]" << std::endl;
+    std::cout << "Serving Error: the port should be in [1~65535]" << std::endl;
     return false;
   }
   if (args_->rest_api_port < 1 || args_->rest_api_port > 65535) {
-    std::cout << "the rest_api_port should be in [1~65535]" << std::endl;
+    std::cout << "Serving Error: the rest_api_port should be in [1~65535]" << std::endl;
     return false;
   }
   if (args_->rest_api_port == args_->grpc_port) {
-    std::cout << "the rest_api_port and grpc port should not be same" << std::endl;
+    std::cout << "Serving Error: the rest_api_port and grpc port should not be same" << std::endl;
     return false;
   }
   return true;
