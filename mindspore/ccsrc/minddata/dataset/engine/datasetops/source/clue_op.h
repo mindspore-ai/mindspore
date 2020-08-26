@@ -179,13 +179,6 @@ class ClueOp : public ParallelOp {
   // @return Status - the error code returned.
   Status WorkerEntry(int32_t worker_id) override;
 
-  // Parses a single row and puts the data into a tensor table.
-  // @param line - the content of the row.
-  // @param tensor_table - the tensor table to put the parsed data in.
-  // @param row - the id of the row filled in the tensor table.
-  // @return Status - the error code returned.
-  Status LoadTensor(const std::string &line, std::unique_ptr<TensorQTable> *tensor_table, int64_t row);
-
   // Reads a clue file and loads the data into multiple buffers.
   // @param file - the file to read.
   // @param start_offset - the start offset of file.

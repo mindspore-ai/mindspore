@@ -122,16 +122,6 @@ Status ClueOp::Reset() {
   return Status::OK();
 }
 
-Status ClueOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTable> *tensor_table, int64_t row) {
-  TensorRow tRow(1, nullptr);
-  (*tensor_table)->push_back(std::move(tRow));
-
-  std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
-  (**tensor_table)[row][0] = std::move(tensor);
-  return Status::OK();
-}
-
 Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_chain, std::shared_ptr<Tensor> *t) {
   nlohmann::json cursor = js;
   for (int i = 0; i < key_chain.size(); i++) {
@@ -191,25 +181,24 @@ Status ClueOp::LoadFile(const std::string &file, const int64_t start_offset, con
       continue;
     }
 
+    nlohmann::json js;
     try {
-      nlohmann::json js = nlohmann::json::parse(line);
-      int cols_count = cols_to_keyword_.size();
-      TensorRow tRow(cols_count, nullptr);
-      tensor_table->push_back(std::move(tRow));
-
-      int cout = 0;
-      for (auto &p : cols_to_keyword_) {
-        std::shared_ptr<Tensor> tensor;
-        RETURN_IF_NOT_OK(GetValue(js, p.second, &tensor));
-        (*tensor_table)[rows_each_buffer][cout] = std::move(tensor);
-        cout++;
-      }
+      js = nlohmann::json::parse(line);
     } catch (const std::exception &err) {
       // Catch any exception and convert to Status return code
       RETURN_STATUS_UNEXPECTED("Failed to load json file");
     }
+    int cols_count = cols_to_keyword_.size();
+    TensorRow tRow(cols_count, nullptr);
+    tensor_table->push_back(std::move(tRow));
+    int cout = 0;
+    for (auto &p : cols_to_keyword_) {
+      std::shared_ptr<Tensor> tensor;
+      RETURN_IF_NOT_OK(GetValue(js, p.second, &tensor));
+      (*tensor_table)[rows_each_buffer][cout] = std::move(tensor);
+      cout++;
+    }
 
-    // RETURN_IF_NOT_OK(LoadTensor(line, &tensor_table, rows_each_buffer));
     rows_each_buffer++;
     rows_total++;
     if (rows_each_buffer == rows_per_buffer_) {
