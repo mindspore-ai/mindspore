@@ -17,6 +17,8 @@
 DATA_DIR=$2
 export RANK_TABLE_FILE=$1
 export RANK_SIZE=8
+export HCCL_CONNECT_TIMEOUT=600
+echo "hccl connect time out has changed to 600 second" 
 PATH_CHECKPOINT=""
 if [ $# == 3 ]
 then
