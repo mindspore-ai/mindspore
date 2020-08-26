@@ -130,7 +130,7 @@ TEST_F(InferTest, TestConvNode) {
   memcpy(data, input_data, input_size);
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputs();
+  auto outputs = session->GetOutputMapByNode();
   ASSERT_EQ(outputs.size(), 1);
   ASSERT_EQ(outputs.begin()->second.size(), 1);
   auto outTensor = outputs.begin()->second.front();
@@ -222,7 +222,7 @@ TEST_F(InferTest, TestAddNode) {
   (void)inTensor1->MutableData();
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputs();
+  auto outputs = session->GetOutputMapByNode();
   ASSERT_EQ(outputs.size(), 1);
   ASSERT_EQ(outputs.begin()->second.size(), 1);
   auto outTensor = outputs.begin()->second.front();
@@ -325,7 +325,7 @@ TEST_F(InferTest, TestParallelExecutor) {
   (void)inTensor1->MutableData();
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputs();
+  auto outputs = session->GetOutputMapByNode();
   ASSERT_EQ(outputs.size(), 1);
   ASSERT_EQ(outputs.begin()->second.size(), 1);
   auto outTensor = outputs.begin()->second.front();
@@ -362,7 +362,7 @@ TEST_F(InferTest, TestModel) {
   (void)inTensor->MutableData();
   ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputs();
+  auto outputs = session->GetOutputMapByNode();
   MS_LOG(INFO) << "Passed";
 }
 

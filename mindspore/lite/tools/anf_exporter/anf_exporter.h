@@ -30,7 +30,7 @@ class AnfExporter {
  public:
   AnfExporter() = default;
   virtual ~AnfExporter() = default;
-  schema::MetaGraphT *Export(const FuncGraphPtr &func_graph);
+  schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false);
   void SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                        schema::CNodeT *fb_node);
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
@@ -55,6 +55,6 @@ class AnfExporter {
   std::vector<schema::CNodeT *> graph_input_nodes_;
 };
 
-schema::MetaGraphT *Export(const FuncGraphPtr &func_graph);
+schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_ANF_EXPORTER_ANF_EXPORTER_H_

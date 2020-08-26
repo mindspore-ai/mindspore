@@ -109,6 +109,7 @@
 #include "src/ops/round.h"
 #include "src/ops/unique.h"
 #include "src/ops/zeros_like.h"
+#include "src/ops/return.h"
 #include "src/ops/where.h"
 #include "src/ops/scatter_nd.h"
 #include "src/ops/constant_of_shape.h"
@@ -122,7 +123,7 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 schema::PrimitiveT *PrimitiveC::GetPrimitiveT() const { return this->primitive_; }
 
-void PrimitiveC::SetPrimitiveT(schema::PrimitiveT *prim) { this->primitive_ = prim; }
+void PrimitiveC::ClearPrimitiveT() { this->primitive_ = nullptr; }
 
 void PrimitiveC::SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param) {
   this->input_quant_param_ = input_quant_param;
@@ -155,21 +156,21 @@ std::shared_ptr<PrimitiveC> GetReturnPrim() {
   auto return_primitiveT = new schema::PrimitiveT;
   return_primitiveT->value.type = schema::PrimitiveType_Return;
   return_primitiveT->value.value = new schema::ReturnT;
-  return std::make_shared<PrimitiveC>(return_primitiveT);
+  return std::make_shared<Return>(return_primitiveT);
 }
 
 std::shared_ptr<PrimitiveC> GetMakeTuplePrim() {
   auto make_tuple_primitiveT = new schema::PrimitiveT;
   make_tuple_primitiveT->value.type = schema::PrimitiveType_MakeTuple;
   make_tuple_primitiveT->value.value = new schema::MakeTupleT;
-  return std::make_shared<PrimitiveC>(make_tuple_primitiveT);
+  return std::make_shared<MakeTuple>(make_tuple_primitiveT);
 }
 
 std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
   auto tuple_get_item_primitiveT = new schema::PrimitiveT();
   tuple_get_item_primitiveT->value.type = schema::PrimitiveType_TupleGetItem;
   tuple_get_item_primitiveT->value.value = new schema::TupleGetItemT;
-  return std::make_shared<PrimitiveC>(tuple_get_item_primitiveT);
+  return std::make_shared<TupleGetItem>(tuple_get_item_primitiveT);
 }
 
 template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
@@ -439,7 +440,7 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
 }
 #else
 PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
+  MS_ASSERT(primitive);
   auto op_type = primitive->value_type();
   switch (op_type) {
     case schema::PrimitiveType_SoftMax:
@@ -646,6 +647,9 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
 #endif
 
 int PrimitiveC::Type() const {
+  if (this->primitive_ == nullptr) {
+    return schema::PrimitiveType_NONE;
+  }
 #ifdef PRIMITIVE_WRITEABLE
   return this->primitive_->value.type;
 #else

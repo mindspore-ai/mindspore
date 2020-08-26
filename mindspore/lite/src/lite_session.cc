@@ -16,6 +16,7 @@
 
 #include "src/lite_session.h"
 #include <vector>
+#include <utility>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 #include "src/scheduler.h"
@@ -81,6 +82,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
 }
 
 void LiteSession::InitGraphInputTensors(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->inputs_.empty());
   MS_ASSERT(meta_graph != nullptr);
@@ -93,7 +95,7 @@ void LiteSession::InitGraphInputTensors(const lite::Model *model) {
   }
 }
 
-void LiteSession::InitGraphInputMSTensors(const lite::Model *model) {
+void LiteSession::InitGraphInputMSTensors() {
   MS_ASSERT(this->input_vec_.empty());
   for (auto &input_tensor : this->inputs_) {
     MS_ASSERT(input_tensor != nullptr);
@@ -102,6 +104,7 @@ void LiteSession::InitGraphInputMSTensors(const lite::Model *model) {
 }
 
 void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->outputs_.empty());
   MS_ASSERT(meta_graph != nullptr);
@@ -115,6 +118,7 @@ void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
 }
 
 void LiteSession::InitGraphInputMap(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->input_map_.empty());
   MS_ASSERT(meta_graph != nullptr);
@@ -145,9 +149,10 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
   }
 }
 
-void LiteSession::InitGraphOutputMap(const lite::Model *model) {
+void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
   auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(this->output_map_.empty());
+  MS_ASSERT(this->output_node_map_.empty());
   MS_ASSERT(meta_graph != nullptr);
   auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
   for (auto out_node_index : graph_output_node_indexes) {
@@ -171,17 +176,44 @@ void LiteSession::InitGraphOutputMap(const lite::Model *model) {
       MS_ASSERT(out_tensor != nullptr);
       auto *ms_tensor = new tensor::LiteTensor(out_tensor);
       MS_ASSERT(nullptr != ms_tensor);
-      this->output_map_[out_node->name()->str()].emplace_back(ms_tensor);
+      this->output_node_map_[out_node->name()->str()].emplace_back(ms_tensor);
     }
+  }
+}
+
+void LiteSession::InitGraphOutputTensorNames(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(this->output_tensor_names_.empty());
+  MS_ASSERT(meta_graph != nullptr);
+  for (auto output_index : *meta_graph->outputIndex()) {
+    this->output_tensor_names_.emplace_back(std::to_string(output_index));
+  }
+}
+
+void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(this->output_tensor_map_.empty());
+  MS_ASSERT(meta_graph != nullptr);
+  for (auto graph_out_index : *(meta_graph->outputIndex())) {
+    MS_ASSERT(graph_out_index < this->tensors_.size());
+    auto *out_tensor = this->tensors_.at(graph_out_index);
+    MS_ASSERT(out_tensor != nullptr);
+    auto *ms_tensor = new tensor::LiteTensor(out_tensor);
+    MS_ASSERT(nullptr != ms_tensor);
+    this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), ms_tensor));
   }
 }
 
 void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphInputTensors(model);
-  InitGraphInputMSTensors(model);
+  InitGraphInputMSTensors();
   InitGraphOutputTensors(model);
   InitGraphInputMap(model);
-  InitGraphOutputMap(model);
+  InitGraphOutputNodeMap(model);
+  InitGraphOutputTensorNames(model);
+  InitGraphOutputTensorMap(model);
 }
 
 int LiteSession::CompileGraph(Model *model) {
@@ -221,10 +253,6 @@ int LiteSession::RunGraph(const session::KernelCallBack &before, const session::
   } else {
     return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
   }
-}
-
-std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> LiteSession::GetOutputs() const {
-  return this->output_map_;
 }
 
 int LiteSession::Init(Context *context) {
@@ -276,14 +304,19 @@ LiteSession::~LiteSession() {
     iter.second.clear();
   }
   input_map_.clear();
-  for (auto iter : this->output_map_) {
+  for (auto iter : this->output_node_map_) {
     for (auto *ms_tensor : iter.second) {
       ((tensor::LiteTensor *)ms_tensor)->SetTensorImpl(nullptr);
       delete ms_tensor;
     }
     iter.second.clear();
   }
-  output_map_.clear();
+  output_node_map_.clear();
+  for (auto iter : this->output_tensor_map_) {
+    ((tensor::LiteTensor *)(iter.second))->SetTensorImpl(nullptr);
+    delete (iter.second);
+  }
+  output_tensor_map_.clear();
   for (auto *kernel : kernels_) {
     delete kernel;
   }
@@ -309,14 +342,33 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputsByName(const st
   return ret->second;
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByName(const std::string &name) const {
-  auto ret = output_map_.find(name);
-  if (ret == output_map_.end()) {
-    MS_LOG(WARNING) << "Node  " << name << " is not an output node";
+std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> LiteSession::GetOutputMapByNode() const {
+  return this->output_node_map_;
+}
+
+std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const std::string &node_name) const {
+  auto ret = output_node_map_.find(node_name);
+  if (ret == output_node_map_.end()) {
+    MS_LOG(WARNING) << "Node  " << node_name << " is not an output node";
     std::vector<mindspore::tensor::MSTensor *> empty_ret;
     return empty_ret;
   }
   return ret->second;
+}
+
+std::vector<std::string> LiteSession::GetOutputTensorNames() const { return this->output_tensor_names_; }
+
+mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::string &tensor_name) const {
+  auto ret = output_tensor_map_.find(tensor_name);
+  if (ret == output_tensor_map_.end()) {
+    MS_LOG(WARNING) << "Tensor  " << tensor_name << " is not an output node";
+    return nullptr;
+  }
+  return ret->second;
+}
+
+std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputMapByTensor() const {
+  return this->output_tensor_map_;
 }
 
 int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs) {

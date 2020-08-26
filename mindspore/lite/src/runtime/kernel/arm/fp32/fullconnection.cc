@@ -72,10 +72,10 @@ int FullconnectionCPUKernel::ReSize() {
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float));
 
-  fc_param_->a_const_ = false;
-  fc_param_->b_const_ = false;
-  InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c12_ptr_);
-  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
+  fc_param_->a_const_ = (in_tensors_[0]->Data() != nullptr);
+  fc_param_->b_const_ = (in_tensors_[1]->Data() != nullptr);
+  if (fc_param_->a_const_) InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c12_ptr_);
+  if (fc_param_->b_const_) InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
   return RET_OK;
 }
 
@@ -87,27 +87,11 @@ int FullconnectionCPUKernel::Init() {
 }
 
 void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
-  if (fc_param_->a_const_ == true) {
-    return;
-  }
-  if (src_ptr == nullptr) {
-    return;
-  }
-  fc_param_->a_const_ = true;
   RowMajor2Col12Major(src_ptr, a_c12_ptr_, fc_param_->row_, fc_param_->deep_);
-  return;
 }
 
 void FullconnectionCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
-  if (fc_param_->b_const_ == true) {
-    return;
-  }
-  if (src_ptr == nullptr) {
-    return;
-  }
-  fc_param_->b_const_ = true;
   RowMajor2Col8Major(src_ptr, dst_ptr, fc_param_->col_, fc_param_->deep_);
-  return;
 }
 
 int FcFp32MatmulRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
@@ -142,8 +126,8 @@ int FullconnectionCPUKernel::Run() {
   auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
   c_r_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  InitMatrixA(a_ptr, a_c12_ptr_);
-  InitMatrixB(b_ptr, b_r8_ptr_);
+  if (!fc_param_->a_const_) InitMatrixA(a_ptr, a_c12_ptr_);
+  if (!fc_param_->b_const_) InitMatrixB(b_ptr, b_r8_ptr_);
 
   LiteBackendParallelLaunch(FcFp32MatmulRun, this, thread_count_);
 

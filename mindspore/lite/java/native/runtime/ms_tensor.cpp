@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-
 #include <jni.h>
 #include "common/ms_log.h"
 #include "include/ms_tensor.h"
 #include "ir/dtype/type_id.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createMSTensor(JNIEnv *env, jobject thiz,
-                                                                                    jint data_type, jintArray shape,
-                                                                                    jint shape_len) {
+                                                                                   jint data_type, jintArray shape,
+                                                                                   jint shape_len) {
   jboolean is_copy = false;
   jint *local_shape_arr = env->GetIntArrayElements(shape, &is_copy);
   std::vector<int> local_shape(shape_len);
@@ -39,7 +38,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createMSTens
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getShape(JNIEnv *env, jobject thiz,
-                                                                                  jlong tensor_ptr) {
+                                                                                 jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -59,8 +58,8 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getShape
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setShape(JNIEnv *env, jobject thiz,
-                                                                                 jlong tensor_ptr, jintArray shape,
-                                                                                 jint shape_len) {
+                                                                                jlong tensor_ptr, jintArray shape,
+                                                                                jint shape_len) {
   jboolean is_copy = false;
   jint *local_shape_arr = env->GetIntArrayElements(shape, &is_copy);
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
@@ -78,7 +77,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setShape(
 }
 
 extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_lite_MSTensor_getDataType(JNIEnv *env, jobject thiz,
-                                                                                jlong tensor_ptr) {
+                                                                               jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -89,7 +88,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_lite_MSTensor_getDataType(J
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setDataType(JNIEnv *env, jobject thiz,
-                                                                                    jlong tensor_ptr, jint data_type) {
+                                                                                   jlong tensor_ptr, jint data_type) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -101,7 +100,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setDataTy
 }
 
 extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getData(JNIEnv *env, jobject thiz,
-                                                                                  jlong tensor_ptr) {
+                                                                                 jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -113,6 +112,11 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getData
     MS_LOGD("Tensor has no data");
     return env->NewByteArray(0);
   }
+
+  auto *float_local_data = reinterpret_cast<float *>(ms_tensor_ptr->MutableData());
+  for (size_t i = 0; i < ms_tensor_ptr->ElementsNum() && i < 5; i++) {
+    MS_LOGE("data[%zu] = %f", i, float_local_data[i]);
+  }
   auto local_data_size = ms_tensor_ptr->Size();
   auto ret = env->NewByteArray(local_data_size);
   env->SetByteArrayRegion(ret, 0, local_data_size, local_data);
@@ -120,8 +124,8 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getData
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setData(JNIEnv *env, jobject thiz,
-                                                                                jlong tensor_ptr, jbyteArray data,
-                                                                                jlong data_len) {
+                                                                               jlong tensor_ptr, jbyteArray data,
+                                                                               jlong data_len) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -150,7 +154,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_size(JNIEnv 
 }
 
 extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_lite_MSTensor_elementsNum(JNIEnv *env, jobject thiz,
-                                                                                jlong tensor_ptr) {
+                                                                               jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");

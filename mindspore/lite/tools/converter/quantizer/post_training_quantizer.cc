@@ -490,7 +490,7 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   this->target_type_ = target_type;
   if (target_type == kNumberTypeInt8) {
     quant_max = (1 << (this->bit_num - 1)) - 1;  // 127
-    quant_min = -quant_max;     // -127
+    quant_min = -quant_max;                      // -127
   } else if (target_type == kNumberTypeUInt8) {
     quant_max = (1 << this->bit_num) - 1;  // 255
     quant_min = 0;
@@ -538,8 +538,8 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c,
-                                            bool perchanel, bool depthwise) {
+STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchanel,
+                                            bool depthwise) {
   // const vector<int> dims = filter->dims;
   // perlayer
   if (!weight->isa<Parameter>()) {
@@ -556,8 +556,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_ERROR;
   }
-  auto status = QuantFilter(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num,
-                            perchanel, depthwise);
+  auto status =
+    QuantFilter(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num, perchanel, depthwise);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -954,7 +954,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
   }
 
   // anf -- fb
-  auto meta_graph = Export(funcGraph);
+  auto meta_graph = Export(funcGraph, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph return nullptr";
     return RET_ERROR;

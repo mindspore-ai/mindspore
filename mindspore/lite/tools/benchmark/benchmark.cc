@@ -239,7 +239,7 @@ int Benchmark::CompareOutput() {
   bool hasError = false;
   for (const auto &calibTensor : calibData) {
     std::string nodeName = calibTensor.first;
-    auto tensors = session->GetOutputsByName(nodeName);
+    auto tensors = session->GetOutputsByNodeName(nodeName);
     if (tensors.empty()) {
       MS_LOG(ERROR) << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail.";
       std::cerr << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail." << std::endl;

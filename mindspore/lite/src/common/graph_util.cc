@@ -27,18 +27,15 @@ namespace lite {
 std::vector<size_t> GetGraphInputNodes(const schema::MetaGraph *meta_graph) {
   MS_ASSERT(nullptr != meta_graph);
   std::vector<size_t> ret;
-  for (size_t i = 0; i < meta_graph->inputIndex()->size(); i++) {
-    auto input_index = meta_graph->inputIndex()->GetAs<uint32_t>(i);
+  for (auto graph_in_index : *(meta_graph->inputIndex())) {
     for (size_t j = 0; j < meta_graph->nodes()->size(); j++) {
       auto *cNode = meta_graph->nodes()->GetAs<schema::CNode>(j);
       MS_ASSERT(nullptr != cNode);
       MS_ASSERT(nullptr != cNode->inputIndex());
-      for (size_t k = 0; k < cNode->inputIndex()->size(); k++) {
-        if (cNode->inputIndex()->GetAs<uint32_t>(k) == input_index) {
-          if (!IsContain<size_t>(ret, j)) {
-            ret.emplace_back(j);
-          }
-          break;
+      if (std::any_of(cNode->inputIndex()->begin(), cNode->inputIndex()->end(),
+                      [&](const uint32_t &node_in_index) { return node_in_index == graph_in_index; })) {
+        if (!IsContain<size_t>(ret, j)) {
+          ret.emplace_back(j);
         }
       }
     }
@@ -49,33 +46,20 @@ std::vector<size_t> GetGraphInputNodes(const schema::MetaGraph *meta_graph) {
 std::vector<size_t> GetGraphOutputNodes(const schema::MetaGraph *meta_graph) {
   MS_ASSERT(nullptr != meta_graph);
   std::vector<size_t> ret;
-  for (size_t i = 0; i < meta_graph->outputIndex()->size(); i++) {
-    auto output_index = meta_graph->outputIndex()->GetAs<uint32_t>(i);
+  for (auto graph_out_index : *(meta_graph->outputIndex())) {
     for (size_t j = 0; j < meta_graph->nodes()->size(); j++) {
       auto *cNode = meta_graph->nodes()->GetAs<schema::CNode>(j);
       MS_ASSERT(nullptr != cNode);
-      for (size_t k = 0; k < cNode->outputIndex()->size(); k++) {
-        if (cNode->outputIndex()->GetAs<uint32_t>(k) == output_index) {
-          if (!IsContain<size_t>(ret, j)) {
-            ret.emplace_back(j);
-          }
-          break;
+      MS_ASSERT(nullptr != cNode->outputIndex());
+      if (std::any_of(cNode->outputIndex()->begin(), cNode->outputIndex()->end(),
+                      [&](const uint32_t &node_out_index) { return node_out_index == graph_out_index; })) {
+        if (!IsContain<size_t>(ret, j)) {
+          ret.emplace_back(j);
         }
       }
     }
   }
   return ret;
 }
-
-// NODE_ID OpNode::ID() { return id; }
-//
-// void OpNode::AddInEdge(NODE_ID nodeId) { inEdges.insert(nodeId); }
-//
-// void OpNode::AddOutEdge(NODE_ID nodeId) { outEdges.insert(nodeId); }
-//
-// std::unordered_set<NODE_ID> OpNode::GetAllInEdges() { return inEdges; }
-//
-// std::unordered_set<NODE_ID> OpNode::GetAllOutEdges() { return outEdges; }
 }  // namespace lite
 }  // namespace mindspore
-

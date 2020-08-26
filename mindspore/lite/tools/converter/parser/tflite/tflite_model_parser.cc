@@ -310,6 +310,10 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
 
   // load graph
   std::unique_ptr<tflite::ModelT> tflite_model = ReadTfliteModel(model_file.c_str());
+  if (tflite_model == nullptr) {
+    MS_LOG(ERROR) << "read tflite model failed";
+    return nullptr;
+  }
 
   if (tflite_model->subgraphs.size() != 1) {
     MS_LOG(ERROR) << "read tflite model subgraphs failed";

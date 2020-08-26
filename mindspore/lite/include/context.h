@@ -38,7 +38,7 @@ enum CpuBindMode {
 typedef enum {
   DT_CPU, /**< CPU device type */
   DT_GPU, /**< GPU device type */
-  DT_NPU  /**< NPU device type */
+  DT_NPU  /**< NPU device type, not supported yet */
 } DeviceType;
 
 /// \brief DeviceContext defined for holding DeviceType.

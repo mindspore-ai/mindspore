@@ -50,9 +50,15 @@ class LiteSession : public session::LiteSession {
   int RunGraph(const session::KernelCallBack &before = nullptr,
                const session::KernelCallBack &after = nullptr) override;
 
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputs() const override;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputMapByNode() const override;
 
-  std::vector<mindspore::tensor::MSTensor *> GetOutputsByName(const std::string &name) const override;
+  std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
+
+  std::vector<std::string> GetOutputTensorNames() const override;
+
+  mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
+
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputMapByTensor() const override;
 
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs) override;
 
@@ -63,13 +69,17 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphInputTensors(const lite::Model *model);
 
-  void InitGraphInputMSTensors(const lite::Model *model);
+  void InitGraphInputMSTensors();
 
   void InitGraphOutputTensors(const lite::Model *model);
 
   void InitGraphInputMap(const lite::Model *model);
 
-  void InitGraphOutputMap(const lite::Model *model);
+  void InitGraphOutputNodeMap(const lite::Model *model);
+
+  void InitGraphOutputTensorNames(const lite::Model *model);
+
+  void InitGraphOutputTensorMap(const lite::Model *model);
 
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs);
 
@@ -86,7 +96,11 @@ class LiteSession : public session::LiteSession {
   // graph input node name -- input tensors
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> input_map_;
   // graph output node name -- output tensors
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_map_;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_node_map_;
+
+  std::vector<std::string> output_tensor_names_;
+  // graph output tensor name -- output tensor
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
   Executor *executor = nullptr;
 };
 }  // namespace lite
