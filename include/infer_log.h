@@ -24,6 +24,7 @@
 #include <memory>
 #include <iostream>
 #include <chrono>
+#include <vector>
 
 #ifndef ENABLE_ACL
 #include "mindspore/core/utils/log_adapter.h"
@@ -41,6 +42,19 @@ class LogStream {
   template <typename T>
   LogStream &operator<<(const T &val) noexcept {
     (*sstream_) << val;
+    return *this;
+  }
+
+  template <typename T>
+  LogStream &operator<<(const std::vector<T> &val) noexcept {
+    (*sstream_) << "[";
+    for (size_t i = 0; i < val.size(); i++) {
+      (*this) << val[i];
+      if (i + 1 < val.size()) {
+        (*sstream_) << ", ";
+      }
+    }
+    (*sstream_) << "]";
     return *this;
   }
 
