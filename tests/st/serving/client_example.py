@@ -24,39 +24,13 @@ import mindspore.dataset as de
 from mindspore import Tensor, context
 from mindspore import log as logger
 from tests.st.networks.models.bert.src.bert_model import BertModel
-from .generate_model import AddNet, bert_net_cfg
+from .generate_model import bert_net_cfg
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 random.seed(1)
 np.random.seed(1)
 de.config.set_seed(1)
-
-def test_add():
-    channel = grpc.insecure_channel('localhost:5500')
-    stub = ms_service_pb2_grpc.MSServiceStub(channel)
-    request = ms_service_pb2.PredictRequest()
-
-    x = request.data.add()
-    x.tensor_shape.dims.extend([4])
-    x.tensor_type = ms_service_pb2.MS_FLOAT32
-    x.data = (np.ones([4]).astype(np.float32)).tobytes()
-
-    y = request.data.add()
-    y.tensor_shape.dims.extend([4])
-    y.tensor_type = ms_service_pb2.MS_FLOAT32
-    y.data = (np.ones([4]).astype(np.float32)).tobytes()
-
-    result = stub.Predict(request)
-    result_np = np.frombuffer(result.result[0].data, dtype=np.float32).reshape(result.result[0].tensor_shape.dims)
-    print("ms client received: ")
-    print(result_np)
-
-    net = AddNet()
-    net_out = net(Tensor(np.ones([4]).astype(np.float32)), Tensor(np.ones([4]).astype(np.float32)))
-    print("add net out: ")
-    print(net_out)
-    assert np.allclose(net_out.asnumpy(), result_np, 0.001, 0.001, equal_nan=True)
 
 def test_bert():
     MAX_MESSAGE_LENGTH = 0x7fffffff

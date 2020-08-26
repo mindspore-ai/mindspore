@@ -41,7 +41,7 @@ prepare_model()
   python3 generate_model.py &> generate_model_serving.log
   echo "### end to generate mode for serving test ###"
   result=`ls -l | grep -E '*mindir' | grep -v ".log" | wc -l`
-  if [ ${result} -ne 2 ]
+  if [ ${result} -ne 1 ]
   then
     cat generate_model_serving.log
     echo "### generate model for serving test failed ###" && exit 1
@@ -98,13 +98,6 @@ pytest_serving()
   echo "### $1 client end ###"
 }
 
-test_add_model()
-{
-  start_service 5500 add.mindir ${ENV_DEVICE_ID}
-  pytest_serving test_add
-  clean_pid
-}
-
 test_bert_model()
 {
   start_service 5500 bert.mindir ${ENV_DEVICE_ID}
@@ -115,5 +108,4 @@ test_bert_model()
 echo "-----serving start-----"
 rm -rf ms_serving *.log *.mindir *.dat ${CURRPATH}/model ${CURRPATH}/kernel_meta
 prepare_model
-test_add_model
 test_bert_model
