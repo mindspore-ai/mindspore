@@ -96,6 +96,9 @@ def uniform(shape, a, b, seed=0, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.
 
+    Note:
+        The number in tensor a should be strictly less than b at any position after broadcasting.
+
     Args:
         shape (tuple): The shape of random tensor to be generated.
         a (Tensor): The a distribution parameter.
