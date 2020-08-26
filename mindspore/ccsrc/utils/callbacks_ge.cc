@@ -22,6 +22,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/visible.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace callbacks {
@@ -36,7 +37,7 @@ using mindspore::transform::Status;
 using mindspore::transform::TransformUtil;
 
 bool GetParameterShape(const FuncGraphPtr &graph, const std::string &param_name,
-                       const std::shared_ptr<std::vector<int>> &shape) {
+                       const std::shared_ptr<ShapeVector> &shape) {
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Graph is null, can not get graph parameter";
     return false;
@@ -74,7 +75,7 @@ static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string &pa
     return nullptr;
   }
 
-  std::shared_ptr<std::vector<int>> parameter_shape_ptr = std::make_shared<std::vector<int>>();
+  std::shared_ptr<ShapeVector> parameter_shape_ptr = std::make_shared<ShapeVector>();
   if (!GetParameterShape(anf_graph, parameter_name, parameter_shape_ptr)) {
     MS_LOG(ERROR) << "Can not get parameter shape during callback";
     return nullptr;
@@ -133,7 +134,7 @@ static TensorPtr GetMeTensorForSummary(const std::string &name, const std::share
     // process the scalar type summary
     // Because the ge tensor is dim = 4, so set the (1,1,1,1)-->(1,)
     // We do the (1,) shape is scalar
-    auto shape = std::vector<int>({ONE_SHAPE});
+    auto shape = ShapeVector({ONE_SHAPE});
     return TransformUtil::ConvertGeTensor(ge_tensor_ptr, shape);
   }
   if (tname == "[:Tensor]" || tname == "[:Histogram]") {

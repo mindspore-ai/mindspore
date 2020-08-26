@@ -39,6 +39,7 @@
 #include "abstract/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -309,13 +310,13 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic["dtype"] = arg->BuildType();
     dic["value"] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
-    std::vector<int> shape;
+    ShapeVector shape;
     dic["shape"] = shape;
     dic["dtype"] = abs_base->BuildType();
     dic["value"] = BuildValue(abs_base->BuildValue());
   } else if (abs_base->isa<AbstractSlice>()) {
     auto arg_slice = dyn_cast<AbstractSlice>(abs_base);
-    std::vector<int> shape;
+    ShapeVector shape;
     dic["shape"] = shape;
     dic["dtype"] = arg_slice->BuildType();
     dic["value"] = BuildValue(arg_slice->BuildValue());

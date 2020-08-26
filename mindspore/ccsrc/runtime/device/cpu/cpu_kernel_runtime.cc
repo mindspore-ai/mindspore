@@ -25,6 +25,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/session_basic.h"
 #include "frontend/operator/ops.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -52,7 +53,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       }
       auto tensor = node_value->cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      std::vector<int> data_shape = tensor->shape();
+      ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       DeviceAddressPtr address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeFloat32);
       MS_EXCEPTION_IF_NULL(address);
@@ -135,7 +136,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
   tensor::TensorPtr tensor = kernel_graph->GetInternalOutputTensor(node, index);
   if (tensor == nullptr) {
     auto shape = AnfAlgo::GetOutputInferShape(node, index);
-    std::vector<int> temp_shape;
+    ShapeVector temp_shape;
     (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
     tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     bool is_internal_output = kernel_graph->IsInternalOutput(node, index);
@@ -149,7 +150,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
   } else {
     if (infer_type_id != device_type_id) {
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
-      std::vector<int> data_shape = tensor->shape();
+      ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = resource_manager_.MemMalloc(tensor_size);
       need_sync_outputs->emplace_back(tensor);
@@ -224,7 +225,7 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
           tensor->data_type() == kNumberTypeInt32) {
         address->ptr_ = tensor->data_c();
       } else {
-        std::vector<int> data_shape = tensor->shape();
+        ShapeVector data_shape = tensor->shape();
         size_t tensor_size =
           std::accumulate(data_shape.begin(), data_shape.end(), sizeof(float), std::multiplies<size_t>());
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);

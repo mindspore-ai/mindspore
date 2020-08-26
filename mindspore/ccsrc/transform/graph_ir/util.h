@@ -26,8 +26,8 @@
 #include "ir/dtype.h"
 #include "ir/tensor.h"
 #include "transform/graph_ir/types.h"
-
 #include "graph/tensor.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -73,7 +73,7 @@ class TransformUtil {
    * Return：
    *     [shared_ptr<GeTensorDesc>] the shared pointer of ge tensor description
    * */
-  static std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const std::vector<int> &shape, const MeDataType &me_type,
+  static std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const ShapeVector &shape, const MeDataType &me_type,
                                                        const std::string &format);
 
   /*
@@ -107,20 +107,20 @@ class TransformUtil {
   /*
    * Parameters:
    *     tensor: [GeTensor] the data tensor in GE
-   *     request_dims [std::vector<int>] the output Me tensors must adjust to this shapes
+   *     request_dims [ShapeVector] the output Me tensors must adjust to this shapes
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const std::vector<int> &request_dims);
+  static MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const ShapeVector &request_dims);
   /*
    * Parameters:
    *     ge_tensors: [std::vector<GeTensorPtr>] the data tensor in GE
-   *     request_dims [std::vector<std::vector<int>>] the output Me tensors must adjust to this shapes
+   *     request_dims [std::vector<ShapeVector>] the output Me tensors must adjust to this shapes
    * Return：
    *     [std::vector<MeTensorPtr>] the data tensor in ME
    * */
   static std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors,
-                                                   const std::vector<std::vector<int>> &request_dims);
+                                                   const std::vector<ShapeVector> &request_dims);
   /*
    * Parameters:
    *     ge_tensors: [std::vector<GeTensorPtr>] the data tensor in GE
@@ -131,13 +131,12 @@ class TransformUtil {
   /*
    * Parameters:
    *     ge_tensor: [GeTensor] the data tensor in GE
-   *     me_dims: [std::vector<int>] the shape of created Me tensor
+   *     me_dims: [ShapeVector] the shape of created Me tensor
    *     me_type: [TypeId] the type of created Me tensor
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr GenerateMeTensor(const GeTensorPtr &ge_tensor, const std::vector<int> &me_dims,
-                                      const TypeId &me_type);
+  static MeTensorPtr GenerateMeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &me_dims, const TypeId &me_type);
   /*
    * Parameters:
    *     type: [GeDataType] the ge tensor data type
@@ -148,11 +147,11 @@ class TransformUtil {
 
   /*
    * Parameters:
-   *     me_dims: [std::vector<int>] the me shape
+   *     me_dims: [ShapeVector] the me shape
    * Return：
    *     [GeShape] the ge shape
    * */
-  static GeShape ConvertMeShape(const std::vector<int> &me_dims);
+  static GeShape ConvertMeShape(const ShapeVector &me_dims);
 
   /*
    * Parameters:
@@ -160,7 +159,7 @@ class TransformUtil {
    * Return：
    *     [vector<int>] the me shape
    * */
-  static std::vector<int> ConvertGeShape(const GeShape &ge_shape);
+  static ShapeVector ConvertGeShape(const GeShape &ge_shape);
 
   /* Function:
    *     Convert GeShape to Me request shape, Support pattern:
@@ -176,11 +175,11 @@ class TransformUtil {
    * Return：
    *     [vector<int>] the me shape
    * */
-  static std::vector<int> ConvertGeShape(const GeShape &ge_shape, const std::vector<int> &request_dims);
+  static ShapeVector ConvertGeShape(const GeShape &ge_shape, const ShapeVector &request_dims);
 
   /*
    * Parameters:
-   *     vec: [std::vector<int>] the vector to print
+   *     vec: [ShapeVector] the vector to print
    * Return：
    *     [string] value string
    * */

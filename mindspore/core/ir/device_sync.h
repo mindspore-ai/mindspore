@@ -22,6 +22,7 @@
 #include <string>
 
 #include "ir/dtype/type.h"
+#include "utils/shape_utils.h"
 
 using std::string;
 
@@ -29,9 +30,8 @@ namespace mindspore {
 // Interface for data synchornize between device and host.
 class DeviceSync {
  public:
-  virtual bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const = 0;
-  virtual bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type,
-                                const void *host_ptr) const = 0;
+  virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const = 0;
+  virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const = 0;
   virtual void *GetMutablePtr() const = 0;
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;

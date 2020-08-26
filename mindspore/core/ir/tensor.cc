@@ -50,11 +50,11 @@ static TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId) {
   return data_type ? data_type->type_id() : defaultTypeId;
 }
 
-static size_t SizeOf(const std::vector<int> &shape) {
+static size_t SizeOf(const ShapeVector &shape) {
   return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
 }
 
-static std::string ShapeToString(const std::vector<int> &shape) {
+static std::string ShapeToString(const ShapeVector &shape) {
   std::string str = "[";
   const size_t count = shape.size();
   for (size_t i = 0; i < count; ++i) {
@@ -93,7 +93,7 @@ std::unique_ptr<T[]> NewData(Scalar scalar) {
 }
 
 template <typename T>
-std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *const data, TypeId data_type) {
+std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId data_type) {
   const size_t size = SizeOf(shape);
   switch (data_type) {
     case kNumberTypeBool: {
@@ -151,7 +151,7 @@ std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *const data, T
 }
 
 template <typename T>
-std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *const data, size_t data_len) {
+std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, size_t data_len) {
   size_t size = SizeOf(shape);
   if (size * sizeof(T) != data_len) {
     MS_LOG(EXCEPTION) << "Incorrect tensor input data length  " << data_len << ", expect " << size * sizeof(T)
@@ -165,21 +165,21 @@ std::unique_ptr<T[]> CopyData(const std::vector<int> &shape, void *const data, s
 template <typename T>
 class TensorDataImpl : public TensorData {
  public:
-  explicit TensorDataImpl(const std::vector<int> &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
+  explicit TensorDataImpl(const ShapeVector &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
   ~TensorDataImpl() = default;
 
-  TensorDataImpl(const std::vector<int> &shape, void *data, size_t data_len)
+  TensorDataImpl(const ShapeVector &shape, void *data, size_t data_len)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)) {}
 
-  TensorDataImpl(const std::vector<int> &shape, void *data, TypeId data_type)
+  TensorDataImpl(const ShapeVector &shape, void *data, TypeId data_type)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_type)) {}
 
   template <typename U>
-  TensorDataImpl(const std::vector<int> &shape, const U *input, size_t size)
+  TensorDataImpl(const ShapeVector &shape, const U *input, size_t size)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(input, size)) {}
 
   template <typename Scalar>
-  TensorDataImpl(const std::vector<int> &shape, Scalar scalar)
+  TensorDataImpl(const ShapeVector &shape, Scalar scalar)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(scalar)) {}
 
   ssize_t size() const override { return static_cast<ssize_t>(data_size_); }
@@ -219,7 +219,7 @@ class TensorDataImpl : public TensorData {
            std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get());
   }
 
-  std::string ToString(const TypeId type, const std::vector<int> &shape) const override {
+  std::string ToString(const TypeId type, const ShapeVector &shape) const override {
     constexpr auto valid =
       std::is_same<T, bool>::value || std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
       std::is_same<T, int16_t>::value || std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value ||
@@ -307,8 +307,7 @@ class TensorDataImpl : public TensorData {
     }
   }
 
-  void SummaryStringRecursive(std::ostringstream &ss, const std::vector<int> &shape, ssize_t *cursor,
-                              ssize_t depth) const {
+  void SummaryStringRecursive(std::ostringstream &ss, const ShapeVector &shape, ssize_t *cursor, ssize_t depth) const {
     if (depth >= static_cast<ssize_t>(ndim_)) {
       return;
     }
@@ -366,7 +365,7 @@ class TensorDataImpl : public TensorData {
 };
 
 template <typename... Args>
-TensorDataPtr MakeTensorData(TypeId data_type, const std::vector<int> &shape, const Args... args) {
+TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const Args... args) {
   switch (data_type) {
     case kNumberTypeBool:
       return std::make_shared<TensorDataImpl<bool>>(shape, args...);
@@ -416,16 +415,16 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       device_sync_(tensor.device_sync_),
       padding_type_(tensor.padding_type()) {}
 
-Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, TensorDataPtr data)
+Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
 
-Tensor::Tensor(TypeId data_type, const std::vector<int> &shape)
+Tensor::Tensor(TypeId data_type, const ShapeVector &shape)
     : Tensor(data_type, shape, MakeTensorData(data_type, shape)) {}
 
-Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, void *data, size_t data_len)
+Tensor::Tensor(TypeId data_type, const ShapeVector &shape, void *data, size_t data_len)
     : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, data_len)) {}
 
-Tensor::Tensor(TypeId data_type, const std::vector<int> &shape, void *data, TypeId src_data_type)
+Tensor::Tensor(TypeId data_type, const ShapeVector &shape, void *data, TypeId src_data_type)
     : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, src_data_type)) {}
 
 Tensor::Tensor(const std::vector<int64_t> &input, const TypePtr &data_type)

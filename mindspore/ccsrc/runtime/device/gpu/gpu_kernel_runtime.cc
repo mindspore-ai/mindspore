@@ -32,6 +32,7 @@
 #include "common/trans.h"
 #include "ir/dtype.h"
 #include "profiler/device/gpu/gpu_profiling.h"
+#include "utils/shape_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #endif
@@ -107,7 +108,7 @@ void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path,
       auto addr = AnfAlgo::GetOutputAddr(node, j);
       TypeId addr_type_id = addr->type_id();
       std::string addr_format = addr->format();
-      std::vector<int> int_shapes;
+      ShapeVector int_shapes;
       if (trans_flag) {
         int_shapes = trans::GetRuntimePaddingShape(node, j);
       } else {
@@ -153,7 +154,7 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
     auto addr = AnfAlgo::GetOutputAddr(item, PARAMETER_OUTPUT_INDEX);
     TypeId addr_type_id = addr->type_id();
     std::string addr_format = addr->format();
-    std::vector<int> int_shapes;
+    ShapeVector int_shapes;
     if (trans_flag) {
       int_shapes = trans::GetRuntimePaddingShape(item, PARAMETER_OUTPUT_INDEX);
     } else {
@@ -251,7 +252,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     auto format = kOpFormat_DEFAULT;
     auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
     string input_tensor_name = input_kernel_name + ':' + "0";
-    std::vector<int> int_shapes;
+    ShapeVector int_shapes;
     auto shape = AnfAlgo::GetOutputDeviceShape(input_kernel, PARAMETER_OUTPUT_INDEX);
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });
@@ -270,7 +271,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     auto format = kOpFormat_DEFAULT;
     auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
     string tensor_name = kernel_name + ':' + std::to_string(j);
-    std::vector<int> int_shapes;
+    ShapeVector int_shapes;
     auto shape = AnfAlgo::GetOutputDeviceShape(kernel, j);
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });
@@ -310,7 +311,7 @@ void LoadParameters(const session::KernelGraph *graph, Debugger *debugger, bool 
     auto format = kOpFormat_DEFAULT;
     string tensor_name = parameter_name + ':' + "0";
     auto gpu_addr = dynamic_cast<const mindspore::device::gpu::GPUDeviceAddress *>(addr);
-    std::vector<int> int_shapes;
+    ShapeVector int_shapes;
     auto shape = AnfAlgo::GetOutputDeviceShape(item, PARAMETER_OUTPUT_INDEX);
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });

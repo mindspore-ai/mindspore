@@ -31,6 +31,7 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "runtime/base.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
+#include "utils/shape_utils.h"
 
 namespace {
 constexpr auto kProfilingGraphId = "PROFILING_GRAPH_ID";
@@ -320,7 +321,7 @@ void KernelAdjust::CreateSwitchOpParameters(const std::shared_ptr<session::Kerne
                                             std::map<std::string, mindspore::ParameterPtr> *switch_loop_input) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(switch_loop_input);
-  std::vector<int> shp = {1};
+  ShapeVector shp = {1};
   tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   mindspore::abstract::AbstractBasePtr paremeter_abstract_ptr = tensor_ptr->ToAbstract();
@@ -559,7 +560,7 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   MS_LOG(INFO) << "---------------- LoadSwitchInputs---";
   MS_EXCEPTION_IF_NULL(inputs);
   // current loop count
-  std::vector<int> shp = {1};
+  ShapeVector shp = {1};
   tensor::TensorPtr cur_loop_count = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(cur_loop_count);
   int32_t *val = nullptr;

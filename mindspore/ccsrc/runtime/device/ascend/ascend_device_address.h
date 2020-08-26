@@ -25,6 +25,7 @@
 #include "runtime/device/ascend/ascend_memory_pool.h"
 #include "ir/dtype.h"
 #include "backend/kernel_compiler/kernel.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 #ifdef ENABLE_DEBUGGER
@@ -38,23 +39,22 @@ class AscendDeviceAddress : public DeviceAddress {
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
   ~AscendDeviceAddress() override;
-  bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const override;
-  bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type, const void *host_ptr) const override;
+  bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
+  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override;
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kAscend; }
 #ifdef ENABLE_DUMP_E2E
   bool DumpMemToFile(bool dump_mode, const std::string &filepath, const std::string &host_fmt,
-                     const std::vector<int> &host_shape, TypeId host_type) const;
+                     const ShapeVector &host_shape, TypeId host_type) const;
 #endif
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(bool dump_mode, const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                     const std::vector<int> &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
+                     const ShapeVector &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
                      bool keep_prev) const;
 #endif
 
  private:
-  bool SyncDeviceToHostAndConvertFormat(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const;
-  bool ConvertFormatAndSyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type,
-                                        const void *host_ptr) const;
+  bool SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const;
+  bool ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const;
   bool SyncDeviceToHostAndConvertFormatBasedOnTransData(const std::vector<size_t> &host_shape,
                                                         const std::vector<size_t> &device_shape, size_t size,
                                                         mindspore::TypeId type, void *host_ptr) const;

@@ -26,6 +26,7 @@
 #include "abstract/abstract_value.h"
 #include "proto/onnx.pb.h"
 #include "utils/log_adapter.h"
+#include "utils/shape_utils.h"
 
 using std::string;
 
@@ -96,7 +97,7 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
     return false;
   }
   const onnx::TensorShapeProto &tensor_shape = tensor_typeproto.shape();
-  std::vector<int> shape;
+  ShapeVector shape;
   for (int i = 0; i < tensor_shape.dim_size(); ++i) {
     shape.push_back(tensor_shape.dim(i).dim_value());
   }
@@ -241,7 +242,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const onnx
 bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node_name,
                                                    const onnx::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
-  std::vector<int> shape;
+  ShapeVector shape;
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
     shape.push_back(attr_tensor.dims(i));
   }
@@ -355,7 +356,7 @@ bool MSANFModelParser::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_pr
 }
 
 AbstractBasePtr MSANFModelParser::GetAbstractForCNode(const onnx::AttributeProto &attr_proto) {
-  std::vector<int> shape_vec;
+  ShapeVector shape_vec;
   const onnx::TensorProto &attr_tensor = attr_proto.t();
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
     shape_vec.push_back(attr_tensor.dims(i));
@@ -471,7 +472,7 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     const onnx::ValueInfoProto &output_node = importProto.output(0);
     const onnx::TypeProto &output_typeproto = output_node.type();
     int output_type = output_typeproto.tensor_type().elem_type();
-    std::vector<int> output_shape;
+    ShapeVector output_shape;
     for (int i = 0; i < output_typeproto.tensor_type().shape().dim_size(); ++i) {
       output_shape.push_back(output_typeproto.tensor_type().shape().dim(i).dim_value());
     }

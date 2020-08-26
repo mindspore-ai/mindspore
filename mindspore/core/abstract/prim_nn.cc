@@ -18,6 +18,7 @@
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -82,7 +83,7 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
 
   int h_out = ((h_input + 2 * padding - (window - 1) - 1) / stride) + 1;
   int w_out = ((w_input + 2 * padding - (window - 1) - 1) / stride) + 1;
-  std::vector<int> shape_out = {input_shape->shape()[0], input_shape->shape()[1], h_out, w_out};
+  ShapeVector shape_out = {input_shape->shape()[0], input_shape->shape()[1], h_out, w_out};
   AbstractBasePtr ret = input_tensor->Broaden();
   ret->set_shape(std::make_shared<Shape>(shape_out));
   return ret;
@@ -271,11 +272,11 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   ShapePtr shape_y = dyn_cast<Shape>(args_spec_list[0]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_y);
-  std::vector<int> y_dims = shape_y->shape();
+  ShapeVector y_dims = shape_y->shape();
   if (y_dims.size() < 2) {
     MS_LOG(EXCEPTION) << primitive->name() << " input y backprop, dim should >= 2, while " << y_dims.size() << ".";
   }
-  std::vector<int> bias_dims = {y_dims[1]};
+  ShapeVector bias_dims = {y_dims[1]};
   ShapePtr ret_shape = std::make_shared<Shape>(bias_dims);
   AbstractBasePtr ret = args_spec_list[0]->Broaden();
   ret->set_shape(ret_shape);

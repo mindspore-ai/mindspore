@@ -25,6 +25,7 @@
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -215,7 +216,7 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
   auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(dense_shape_value);
   auto shp = dense_shape_value->value();
-  std::vector<int> dense_shape_vec;
+  ShapeVector dense_shape_vec;
   (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
                        [](const ValuePtr &e) -> int {
                          auto elem = GetValue<int>(e);
@@ -309,7 +310,7 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
   auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(dense_shape_value);
   auto shp = dense_shape_value->value();
-  std::vector<int> dense_shape_vec;
+  ShapeVector dense_shape_vec;
   (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
                        [](const ValuePtr &e) -> int {
                          auto elem = GetValue<int>(e);

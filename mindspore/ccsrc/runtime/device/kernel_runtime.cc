@@ -27,6 +27,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 #include "ir/value.h"
+#include "utils/shape_utils.h"
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 
@@ -681,7 +682,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
-      std::vector<int> shape = {1, SizeToInt(tensor_size)};
+      ShapeVector shape = {1, SizeToInt(tensor_size)};
       if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value.data())) {
         MS_LOG(EXCEPTION) << "kValueNode SyncHostToDevice fail!";
       }

@@ -39,6 +39,7 @@
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "debug/tensor_load.h"
+#include "utils/shape_utils.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #endif
@@ -231,7 +232,7 @@ void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path,
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     for (size_t j = 0; j < output_size; ++j) {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
-      std::vector<int> int_shapes;
+      ShapeVector int_shapes;
       if (trans_flag) {
         int_shapes = trans::GetRuntimePaddingShape(node, j);
       } else {
@@ -266,7 +267,7 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    std::vector<int> int_shapes;
+    ShapeVector int_shapes;
     if (trans_flag) {
       int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
     } else {
@@ -351,7 +352,7 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
       auto format = kOpFormat_DEFAULT;
       string tensor_name = kernel_name + ':' + std::to_string(j);
       auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
-      std::vector<int> int_shapes;
+      ShapeVector int_shapes;
       if (trans_flag) {
         int_shapes = trans::GetRuntimePaddingShape(node, j);
       } else {
@@ -387,7 +388,7 @@ void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) 
     auto format = kOpFormat_DEFAULT;
     string tensor_name = parameter_name + ':' + "0";
     auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
-    std::vector<int> int_shapes;
+    ShapeVector int_shapes;
     if (trans_flag) {
       int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
     } else {

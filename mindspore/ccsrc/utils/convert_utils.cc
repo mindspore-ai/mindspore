@@ -33,6 +33,7 @@
 #include "ir/param_info.h"
 #include "utils/base_ref_extends.h"
 #include "utils/ms_context.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -394,7 +395,7 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
                                            const py::object &min_shape, const py::object &max_shape) {
   if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
-    auto ret_vec = shape_obj.cast<std::vector<int>>();
+    auto ret_vec = shape_obj.cast<ShapeVector>();
     auto ret_dtype = type_obj.cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(ret_dtype);
     // if the size of shape list is empty, return an scalar abstract
@@ -403,13 +404,13 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
       return abs_scalar;
     }
     AbstractBasePtr tensor = nullptr;
-    std::vector<int> min_shape_vec;
-    std::vector<int> max_shape_vec;
+    ShapeVector min_shape_vec;
+    ShapeVector max_shape_vec;
     if (!min_shape.is_none()) {
-      min_shape_vec = min_shape.cast<std::vector<int>>();
+      min_shape_vec = min_shape.cast<ShapeVector>();
     }
     if (!max_shape.is_none()) {
-      max_shape_vec = max_shape.cast<std::vector<int>>();
+      max_shape_vec = max_shape.cast<ShapeVector>();
     }
     auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
     if (ret_dtype->isa<TensorType>()) {

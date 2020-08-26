@@ -275,7 +275,7 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(INFO) << "Finish!";
 }
 
-bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t size, mindspore::TypeId type,
+bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size, mindspore::TypeId type,
                                            void *host_ptr) const {
   MS_LOG(INFO) << "SyncDeviceToHost, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
@@ -462,7 +462,7 @@ std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *hos
   return device_shape;
 }
 
-bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int> &shape, size_t size,
+bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size,
                                                            mindspore::TypeId type, void *host_ptr) const {
   MS_LOG(INFO) << "SyncDeviceToHostAndConvertFormat, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
@@ -513,7 +513,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
   return sync_ok;
 }
 
-bool AscendDeviceAddress::SyncHostToDevice(const std::vector<int> &shape, size_t size, mindspore::TypeId type,
+bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size, mindspore::TypeId type,
                                            const void *host_ptr) const {
   MS_LOG(INFO) << "SyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
@@ -557,7 +557,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const std::vector<int> &shape, size_t
   return sync_ok;
 }
 
-bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int> &shape, size_t size,
+bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size,
                                                            mindspore::TypeId type, const void *host_ptr) const {
   bool sync_ok = false;
   MS_LOG(INFO) << "ConvertFormatAndSyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
@@ -622,7 +622,7 @@ AscendDeviceAddress::~AscendDeviceAddress() {
 
 #ifdef ENABLE_DUMP_E2E
 bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &filepath, const std::string &host_fmt,
-                                        const std::vector<int> &host_shape, TypeId host_type) const {
+                                        const ShapeVector &host_shape, TypeId host_type) const {
   bool ret = false;
   if (filepath.empty()) {
     MS_LOG(ERROR) << "Dump file path is null!";
@@ -666,8 +666,8 @@ bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &file
 
 #ifdef ENABLE_DEBUGGER
 bool AscendDeviceAddress::LoadMemToHost(bool trans_flag, const std::string &tensor_name, int execution_order,
-                                        const std::string &host_fmt, const std::vector<int> &host_shape,
-                                        TypeId host_type, size_t slot, Debugger *debugger, bool keep_prev) const {
+                                        const std::string &host_fmt, const ShapeVector &host_shape, TypeId host_type,
+                                        size_t slot, Debugger *debugger, bool keep_prev) const {
   bool ret = false;
   DebugServices *debug_services = debugger->debug_services();
   TensorLoader *tensor_loader = debug_services->tensor_loader();

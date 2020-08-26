@@ -23,6 +23,7 @@
 #include <memory>
 #include "utils/symbolic.h"
 #include "abstract/param_validator.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -62,7 +63,7 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
     MS_EXCEPTION(ValueError) << "Unsupported shape join. shape1 = " << shape1->ToString()
                              << ", shape2 = " << shape2->ToString();
   }
-  std::vector<int> dims;
+  ShapeVector dims;
   bool has_dynamic_shape = false;
   dims.resize(shape1->shape().size());
   for (std::size_t i = 0; i < shape1->shape().size(); i++) {
@@ -80,8 +81,8 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
     return std::make_shared<Shape>(dims);
   }
   // calculate dynamic shape
-  std::vector<int> min_dims(dims.size());
-  std::vector<int> max_dims(dims.size());
+  ShapeVector min_dims(dims.size());
+  ShapeVector max_dims(dims.size());
   for (size_t i = 0; i < dims.size(); ++i) {
     if (dims[i] != Shape::SHP_ANY) {
       min_dims[i] = max_dims[i] = dims[i];
@@ -213,7 +214,7 @@ int GetPositiveAxis(int axis_value, size_t increment) {
 
 // Return if two shapes can be broadcast.
 // Broadcast shape is placed in broadcast_output_shape.
-std::vector<int> RealBroadcast(const std::string &op, std::vector<int> x_shape, std::vector<int> y_shape) {
+ShapeVector RealBroadcast(const std::string &op, ShapeVector x_shape, ShapeVector y_shape) {
   std::reverse(x_shape.begin(), x_shape.end());
   std::reverse(y_shape.begin(), y_shape.end());
   // Fill a placeholder value 1 which will be replaced later.
@@ -221,7 +222,7 @@ std::vector<int> RealBroadcast(const std::string &op, std::vector<int> x_shape, 
   y_shape.resize(std_len, 1);
   x_shape.resize(std_len, 1);
 
-  std::vector<int> broadcast_shape;
+  ShapeVector broadcast_shape;
   for (size_t i = 0; i < std_len; i++) {
     int x_i = x_shape[i];  // i-th dimension of x
     int y_i = y_shape[i];  // i-th dimension of y

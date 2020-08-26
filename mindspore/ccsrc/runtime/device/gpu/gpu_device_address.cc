@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, TypeId, void *host_ptr) const {
+bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
@@ -50,7 +50,7 @@ bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, T
   return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, ptr_, size);
 }
 
-bool GPUDeviceAddress::SyncHostToDevice(const std::vector<int> &, size_t size, TypeId, const void *host_ptr) const {
+bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
@@ -80,8 +80,8 @@ GPUDeviceAddress::~GPUDeviceAddress() {
 }
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
-                                     const std::vector<int> &host_shape, TypeId host_type, size_t slot,
-                                     Debugger *debugger, bool keep_prev) const {
+                                     const ShapeVector &host_shape, TypeId host_type, size_t slot, Debugger *debugger,
+                                     bool keep_prev) const {
   bool ret = false;
   if (size_ == 0) {
     return true;

@@ -24,6 +24,7 @@
 
 #include "ir/visitor.h"
 #include "base/core_ops.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 ///
@@ -599,7 +600,7 @@ class PConstant : public PBase<PConstant<T> > {
 
     auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
     TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-    std::vector<int> tensor_shape = tensor_abstract->shape()->shape();
+    ShapeVector tensor_shape = tensor_abstract->shape()->shape();
 
     auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
@@ -619,7 +620,7 @@ class PConstant : public PBase<PConstant<T> > {
         return nullptr;
       }
       auto x_abstract = x->abstract()->cast<abstract::AbstractTensorPtr>();
-      std::vector<int> x_shape = x_abstract->shape()->shape();
+      ShapeVector x_shape = x_abstract->shape()->shape();
       if (x_shape != tensor_shape) {
         return nullptr;
       }
@@ -664,7 +665,7 @@ class PConstant : public PBase<PConstant<T> > {
 
     auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
     TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-    std::vector<int> tensor_shape = tensor_abstract->shape()->shape();
+    ShapeVector tensor_shape = tensor_abstract->shape()->shape();
 
     auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
@@ -744,7 +745,7 @@ class PConstant : public PBase<PConstant<T> > {
       return nullptr;
     }
 
-    std::vector<int> tensor_out_shape = tensor_3_abstract->shape()->shape();
+    ShapeVector tensor_out_shape = tensor_3_abstract->shape()->shape();
     int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
     if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
       return nullptr;

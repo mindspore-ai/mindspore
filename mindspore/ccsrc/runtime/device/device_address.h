@@ -22,6 +22,7 @@
 #include <memory>
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -60,7 +61,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   size_t GetSize() const { return size_; }
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
-  void set_host_shape(const std::vector<int> &shape) { host_shape_ = shape; }
+  void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
@@ -77,7 +78,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   TypeId type_id_{kNumberTypeFloat16};
   bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
-  std::vector<int> host_shape_{};
+  ShapeVector host_shape_{};
   friend class KernelRuntime;
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;
