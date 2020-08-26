@@ -16,9 +16,27 @@
 
 #include "nnacl/fp32/topk.h"
 
-int DescendCmp(const void *a, const void *b) { return ((const TopkNode *)b)->element - ((const TopkNode *)a)->element; }
+int DescendCmp(const void *a, const void *b) {
+  float sub = ((const TopkNode *)b)->element - ((const TopkNode *)a)->element;
+  if (sub > 0) {
+    return 1;
+  } else if (sub < 0) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
-int AscendCmp(const void *a, const void *b) { return ((const TopkNode *)a)->element - ((const TopkNode *)b)->element; }
+int AscendCmp(const void *a, const void *b) {
+  float sub = ((const TopkNode *)a)->element - ((const TopkNode *)b)->element;
+  if (sub > 0) {
+    return 1;
+  } else if (sub < 0) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
 void Topk(float *input_data, float *output_data, int32_t *output_index, TopkParameter *parameter) {
   int last_dim_size = parameter->last_dim_size_;
