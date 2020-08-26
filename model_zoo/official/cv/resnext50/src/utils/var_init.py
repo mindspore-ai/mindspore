@@ -15,11 +15,13 @@
 """
 Initialize.
 """
+import os
 import math
 from functools import reduce
 import numpy as np
 import mindspore.nn as nn
 from mindspore.common import initializer as init
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 def _calculate_gain(nonlinearity, param=None):
     r"""
@@ -208,3 +210,19 @@ def default_recurisive_init(custom_cell):
                                                     cell.bias.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass
+
+
+def load_pretrain_model(ckpt_file, network, args):
+    """load pretrain model."""
+    if os.path.isfile(ckpt_file):
+        param_dict = load_checkpoint(ckpt_file)
+        param_dict_new = {}
+        for key, values in param_dict.items():
+            if key.startswith('moments.'):
+                continue
+            elif key.startswith('network.'):
+                param_dict_new[key[8:]] = values
+            else:
+                param_dict_new[key] = values
+        load_param_into_net(network, param_dict_new)
+        args.logger.info('load model {} success'.format(ckpt_file))

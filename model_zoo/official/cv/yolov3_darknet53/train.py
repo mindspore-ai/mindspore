@@ -27,18 +27,16 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
 import mindspore as ms
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore import amp
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import set_seed
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
-from src.util import AverageMeter, load_backbone, get_param_groups
-from src.lr_scheduler import warmup_step_lr, warmup_cosine_annealing_lr, \
-    warmup_cosine_annealing_lr_V2, warmup_cosine_annealing_lr_sample
+from src.util import AverageMeter, get_param_groups
+from src.lr_scheduler import get_lr
 from src.yolo_dataset import create_yolo_dataset
-from src.initializer import default_recurisive_init
+from src.initializer import default_recurisive_init, load_yolov3_params
 from src.config import ConfigYOLOV3DarkNet53
 from src.util import keep_loss_fp32
 
@@ -126,22 +124,6 @@ def parse_args():
     args.data_root = os.path.join(args.data_dir, 'train2014')
     args.annFile = os.path.join(args.data_dir, 'annotations/instances_train2014.json')
 
-    return args
-
-
-def conver_training_shape(args):
-    training_shape = [int(args.training_shape), int(args.training_shape)]
-    return training_shape
-
-
-def train():
-    """Train function."""
-    args = parse_args()
-
-    devid = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=args.device_target, save_graphs=True, device_id=devid)
-
     # init distributed
     if args.is_distributed:
         if args.device_target == "Ascend":
@@ -165,6 +147,20 @@ def train():
     args.logger = get_logger(args.outputs_dir, args.rank)
     args.logger.save_args(args)
 
+    return args
+
+
+def conver_training_shape(args):
+    training_shape = [int(args.training_shape), int(args.training_shape)]
+    return training_shape
+
+
+def train():
+    """Train function."""
+    args = parse_args()
+    devid = int(os.getenv('DEVICE_ID', '0'))
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+                        device_target=args.device_target, save_graphs=True, device_id=devid)
     if args.need_profiler:
         from mindspore.profiler.profiling import Profiler
         profiler = Profiler(output_path=args.outputs_dir, is_detail=True, is_show_op_path=True)
@@ -172,40 +168,17 @@ def train():
     loss_meter = AverageMeter('loss')
 
     context.reset_auto_parallel_context()
+    parallel_mode = ParallelMode.STAND_ALONE
+    degree = 1
     if args.is_distributed:
         parallel_mode = ParallelMode.DATA_PARALLEL
         degree = get_group_size()
-    else:
-        parallel_mode = ParallelMode.STAND_ALONE
-        degree = 1
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
 
     network = YOLOV3DarkNet53(is_training=True)
     # default is kaiming-normal
     default_recurisive_init(network)
-
-    if args.pretrained_backbone:
-        network = load_backbone(network, args.pretrained_backbone, args)
-        args.logger.info('load pre-trained backbone {} into network'.format(args.pretrained_backbone))
-    else:
-        args.logger.info('Not load pre-trained backbone, please be careful')
-
-    if args.resume_yolov3:
-        param_dict = load_checkpoint(args.resume_yolov3)
-        param_dict_new = {}
-        for key, values in param_dict.items():
-            if key.startswith('moments.'):
-                continue
-            elif key.startswith('yolo_network.'):
-                param_dict_new[key[13:]] = values
-                args.logger.info('in resume {}'.format(key))
-            else:
-                param_dict_new[key] = values
-                args.logger.info('in resume {}'.format(key))
-
-        args.logger.info('resume finished')
-        load_param_into_net(network, param_dict_new)
-        args.logger.info('load_model {} success'.format(args.resume_yolov3))
+    load_yolov3_params(args, network)
 
     network = YoloWithLossCell(network)
     args.logger.info('finish get network')
@@ -230,49 +203,15 @@ def train():
     if not args.ckpt_interval:
         args.ckpt_interval = args.steps_per_epoch
 
-    # lr scheduler
-    if args.lr_scheduler == 'exponential':
-        lr = warmup_step_lr(args.lr,
-                            args.lr_epochs,
-                            args.steps_per_epoch,
-                            args.warmup_epochs,
-                            args.max_epoch,
-                            gamma=args.lr_gamma,
-                            )
-    elif args.lr_scheduler == 'cosine_annealing':
-        lr = warmup_cosine_annealing_lr(args.lr,
-                                        args.steps_per_epoch,
-                                        args.warmup_epochs,
-                                        args.max_epoch,
-                                        args.T_max,
-                                        args.eta_min)
-    elif args.lr_scheduler == 'cosine_annealing_V2':
-        lr = warmup_cosine_annealing_lr_V2(args.lr,
-                                           args.steps_per_epoch,
-                                           args.warmup_epochs,
-                                           args.max_epoch,
-                                           args.T_max,
-                                           args.eta_min)
-    elif args.lr_scheduler == 'cosine_annealing_sample':
-        lr = warmup_cosine_annealing_lr_sample(args.lr,
-                                               args.steps_per_epoch,
-                                               args.warmup_epochs,
-                                               args.max_epoch,
-                                               args.T_max,
-                                               args.eta_min)
-    else:
-        raise NotImplementedError(args.lr_scheduler)
+    lr = get_lr(args)
 
     opt = Momentum(params=get_param_groups(network),
                    learning_rate=Tensor(lr),
                    momentum=args.momentum,
                    weight_decay=args.weight_decay,
                    loss_scale=args.loss_scale)
-    enable_amp = False
     is_gpu = context.get_context("device_target") == "GPU"
     if is_gpu:
-        enable_amp = True
-    if enable_amp:
         loss_scale_value = 1.0
         loss_scale = FixedLossScaleManager(loss_scale_value, drop_overflow_update=False)
         network = amp.build_train_network(network, optimizer=opt, loss_scale_manager=loss_scale,

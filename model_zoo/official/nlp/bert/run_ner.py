@@ -139,8 +139,9 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
         eval_result_print(assessment_method, callback)
         print("==============================================================")
 
-def run_ner():
-    """run ner task"""
+
+def parse_args():
+    """set and check parameters."""
     parser = argparse.ArgumentParser(description="run classifier")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="Device type, default is Ascend")
@@ -171,12 +172,6 @@ def run_ner():
     parser.add_argument("--schema_file_path", type=str, default="",
                         help="Schema path, it is better to use absolute path")
     args_opt = parser.parse_args()
-    epoch_num = args_opt.epoch_num
-    assessment_method = args_opt.assessment_method.lower()
-    load_pretrain_checkpoint_path = args_opt.load_pretrain_checkpoint_path
-    save_finetune_checkpoint_path = args_opt.save_finetune_checkpoint_path
-    load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
-
     if args_opt.do_train.lower() == "false" and args_opt.do_eval.lower() == "false":
         raise ValueError("At least one of 'do_train' or 'do_eval' must be true")
     if args_opt.do_train.lower() == "true" and args_opt.train_data_file_path == "":
@@ -189,7 +184,17 @@ def run_ner():
         raise ValueError("'label2id_file_path' must be set to use crf")
     if args_opt.assessment_method.lower() == "clue_benchmark" and args_opt.label2id_file_path == "":
         raise ValueError("'label2id_file_path' must be set to do clue benchmark")
+    return args_opt
 
+
+def run_ner():
+    """run ner task"""
+    args_opt = parse_args()
+    epoch_num = args_opt.epoch_num
+    assessment_method = args_opt.assessment_method.lower()
+    load_pretrain_checkpoint_path = args_opt.load_pretrain_checkpoint_path
+    save_finetune_checkpoint_path = args_opt.save_finetune_checkpoint_path
+    load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
     target = args_opt.device_target
     if target == "Ascend":
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)

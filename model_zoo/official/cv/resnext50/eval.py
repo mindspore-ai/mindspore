@@ -22,14 +22,15 @@ import numpy as np
 import mindspore.nn as nn
 
 from mindspore import Tensor, context
+from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size, release
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 from src.utils.logging import get_logger
 from src.utils.auto_mixed_precision import auto_mixed_precision
+from src.utils.var_init import load_pretrain_model
 from src.image_classification import get_network
 from src.dataset import classification_dataset
 from src.config import config
@@ -79,6 +80,22 @@ def parse_args(cloud_args=None):
 
     args.image_size = list(map(int, args.image_size.split(',')))
 
+    # init distributed
+    if args.is_distributed:
+        if args.platform == "Ascend":
+            init()
+        elif args.platform == "GPU":
+            init("nccl")
+        args.rank = get_rank()
+        args.group_size = get_group_size()
+    else:
+        args.rank = 0
+        args.group_size = 1
+
+    args.outputs_dir = os.path.join(args.log_path,
+                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+
+    args.logger = get_logger(args.outputs_dir, args.rank)
     return args
 
 
@@ -102,6 +119,53 @@ def merge_args(args, cloud_args):
                 args_dict[key] = val
     return args
 
+
+def get_result(args, model, top1_correct, top5_correct, img_tot):
+    """calculate top1 and top5 value."""
+    results = [[top1_correct], [top5_correct], [img_tot]]
+    args.logger.info('before results={}'.format(results))
+    if args.is_distributed:
+        model_md5 = model.replace('/', '')
+        tmp_dir = '/cache'
+        if not os.path.exists(tmp_dir):
+            os.mkdir(tmp_dir)
+        top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(args.rank, model_md5)
+        top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(args.rank, model_md5)
+        img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(args.rank, model_md5)
+        np.save(top1_correct_npy, top1_correct)
+        np.save(top5_correct_npy, top5_correct)
+        np.save(img_tot_npy, img_tot)
+        while True:
+            rank_ok = True
+            for other_rank in range(args.group_size):
+                top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
+                top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
+                img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
+                if not os.path.exists(top1_correct_npy) or not os.path.exists(top5_correct_npy) or \
+                   not os.path.exists(img_tot_npy):
+                    rank_ok = False
+            if rank_ok:
+                break
+
+        top1_correct_all = 0
+        top5_correct_all = 0
+        img_tot_all = 0
+        for other_rank in range(args.group_size):
+            top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
+            top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
+            img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
+            top1_correct_all += np.load(top1_correct_npy)
+            top5_correct_all += np.load(top5_correct_npy)
+            img_tot_all += np.load(img_tot_npy)
+        results = [[top1_correct_all], [top5_correct_all], [img_tot_all]]
+        results = np.array(results)
+    else:
+        results = np.array(results)
+
+    args.logger.info('after results={}'.format(results))
+    return results
+
+
 def test(cloud_args=None):
     """test"""
     args = parse_args(cloud_args)
@@ -112,20 +176,10 @@ def test(cloud_args=None):
 
     # init distributed
     if args.is_distributed:
-        init()
-        args.rank = get_rank()
-        args.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
                                           parameter_broadcast=True, gradients_mean=True)
-    else:
-        args.rank = 0
-        args.group_size = 1
 
-    args.outputs_dir = os.path.join(args.log_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-
-    args.logger = get_logger(args.outputs_dir, args.rank)
     args.logger.save_args(args)
 
     # network
@@ -151,18 +205,7 @@ def test(cloud_args=None):
         if network is None:
             raise NotImplementedError('not implement {}'.format(args.backbone))
 
-        param_dict = load_checkpoint(model)
-        param_dict_new = {}
-        for key, values in param_dict.items():
-            if key.startswith('moments.'):
-                continue
-            elif key.startswith('network.'):
-                param_dict_new[key[8:]] = values
-            else:
-                param_dict_new[key] = values
-
-        load_param_into_net(network, param_dict_new)
-        args.logger.info('load model {} success'.format(model))
+        load_pretrain_model(model, network, args)
 
         img_tot = 0
         top1_correct = 0
@@ -193,47 +236,7 @@ def test(cloud_args=None):
             time_used = time.time() - t_end
             fps = (img_tot - args.per_batch_size) * args.group_size / time_used
             args.logger.info('Inference Performance: {:.2f} img/sec'.format(fps))
-        results = [[top1_correct], [top5_correct], [img_tot]]
-        args.logger.info('before results={}'.format(results))
-        if args.is_distributed:
-            model_md5 = model.replace('/', '')
-            tmp_dir = '/cache'
-            if not os.path.exists(tmp_dir):
-                os.mkdir(tmp_dir)
-            top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(args.rank, model_md5)
-            top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(args.rank, model_md5)
-            img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(args.rank, model_md5)
-            np.save(top1_correct_npy, top1_correct)
-            np.save(top5_correct_npy, top5_correct)
-            np.save(img_tot_npy, img_tot)
-            while True:
-                rank_ok = True
-                for other_rank in range(args.group_size):
-                    top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
-                    top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
-                    img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
-                    if not os.path.exists(top1_correct_npy) or not os.path.exists(top5_correct_npy) or \
-                       not os.path.exists(img_tot_npy):
-                        rank_ok = False
-                if rank_ok:
-                    break
-
-            top1_correct_all = 0
-            top5_correct_all = 0
-            img_tot_all = 0
-            for other_rank in range(args.group_size):
-                top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
-                top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
-                img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
-                top1_correct_all += np.load(top1_correct_npy)
-                top5_correct_all += np.load(top5_correct_npy)
-                img_tot_all += np.load(img_tot_npy)
-            results = [[top1_correct_all], [top5_correct_all], [img_tot_all]]
-            results = np.array(results)
-        else:
-            results = np.array(results)
-
-        args.logger.info('after results={}'.format(results))
+        results = get_result(args, model, top1_correct, top5_correct, img_tot)
         top1_correct = results[0, 0]
         top5_correct = results[1, 0]
         img_tot = results[2, 0]
