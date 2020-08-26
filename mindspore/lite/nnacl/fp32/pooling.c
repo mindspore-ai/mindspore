@@ -488,8 +488,7 @@ void AvgPoolingRelu6(const float *input_ptr, float *output_ptr, PoolingParameter
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
-          float32x4_t count = vdupq_n_f32(real_count);
-          tmp_avg = vdivq_f32(tmp_avg, count);
+          tmp_avg = tmp_avg / vdupq_n_f32(real_count);
           tmp_avg = vmaxq_f32(tmp_avg, zeros);
           tmp_avg = vminq_f32(tmp_avg, bounds);
           vst1q_f32(output_ptr + out_channel_offset, tmp_avg);

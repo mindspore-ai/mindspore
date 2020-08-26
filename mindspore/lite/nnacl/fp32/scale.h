@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_SCALE_H_
-#define MINDSPORE_LITE_NNACL_SCALE_H_
+#ifndef MINDSPORE_LITE_NNACL_SCALE_FP32_H_
+#define MINDSPORE_LITE_NNACL_SCALE_FP32_H_
 
 #include "nnacl/op_base.h"
-typedef struct ScaleParameter {
-  OpParameter op_parameter_;
-  int outer_size_;
-  int axis_size_;
-  int inner_size_;
-  int axis_;
-  bool const_scale_;
-} ScaleParameter;
+#include "nnacl/scale.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+void DoScale(float *in_data, float *out_data, float *scale, float *offset, int task_id, ScaleParameter *scale_param);
+#ifdef __cplusplus
+}
+#endif
 
-#endif  // MINDSPORE_LITE_NNACL_SCALE_H_
+#endif  // MINDSPORE_LITE_NNACL_SCALE_FP32_H_
