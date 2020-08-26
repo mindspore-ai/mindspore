@@ -103,7 +103,7 @@ def test_random_sharpness_py_md5():
     # define map operations
     transforms = [
         F.Decode(),
-        F.RandomSharpness((0.1, 1.9)),
+        F.RandomSharpness((20.0, 25.0)),
         F.ToTensor()
     ]
     transform = F.ComposeOp(transforms)
@@ -193,7 +193,7 @@ def test_random_sharpness_c_md5():
     # define map operations
     transforms = [
         C.Decode(),
-        C.RandomSharpness((0.1, 1.9))
+        C.RandomSharpness((10.0, 15.0))
     ]
 
     #  Generate dataset
@@ -337,14 +337,16 @@ def test_random_sharpness_invalid_params():
 
 if __name__ == "__main__":
     test_random_sharpness_py(plot=True)
-    test_random_sharpness_py(None, plot=True)  # test with default values
+    test_random_sharpness_py(None, plot=True)  # Test with default values
+    test_random_sharpness_py(degrees=(20.0, 25.0), plot=True)  # Test with degree values that show more obvious transformation
     test_random_sharpness_py_md5()
     test_random_sharpness_c(plot=True)
     test_random_sharpness_c(None, plot=True)  # test with default values
+    test_random_sharpness_c(degrees=[10, 15], plot=True)  # Test with degrees values that show more obvious transformation
     test_random_sharpness_c_md5()
     test_random_sharpness_c_py(degrees=[1.5, 1.5], plot=True)
     test_random_sharpness_c_py(degrees=[1, 1], plot=True)
     test_random_sharpness_c_py(degrees=[10, 10], plot=True)
     test_random_sharpness_one_channel_c(degrees=[1.7, 1.7], plot=True)
-    test_random_sharpness_one_channel_c(degrees=None, plot=True)  # test with default values
+    test_random_sharpness_one_channel_c(degrees=None, plot=True)  # Test with default values
     test_random_sharpness_invalid_params()

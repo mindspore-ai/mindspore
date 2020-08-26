@@ -149,7 +149,7 @@ def test_random_color_py_md5():
     data = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms = F.ComposeOp([F.Decode(),
-                              F.RandomColor((0.1, 1.9)),
+                              F.RandomColor((2.0, 2.5)),
                               F.ToTensor()])
 
     data = data.map(input_columns="image", operations=transforms())
@@ -244,12 +244,12 @@ def test_random_color_c_errors():
 if __name__ == "__main__":
     test_random_color_py()
     test_random_color_py(plot=True)
-    test_random_color_py(degrees=(0.5, 1.5), plot=True)
+    test_random_color_py(degrees=(2.0, 2.5), plot=True)  # Test with degree values that show more obvious transformation
     test_random_color_py_md5()
 
     test_random_color_c()
     test_random_color_c(plot=True)
-    test_random_color_c(degrees=(0.5, 1.5), plot=True, run_golden=False)
+    test_random_color_c(degrees=(2.0, 2.5), plot=True, run_golden=False)  # Test with degree values that show more obvious transformation
     test_random_color_c(degrees=(0.1, 0.1), plot=True, run_golden=False)
     test_compare_random_color_op(plot=True)
     test_random_color_c_errors()

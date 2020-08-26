@@ -328,7 +328,7 @@ def check_from_dataset(method):
     return new_method
 
 def check_slidingwindow(method):
-    """A wrapper that wrap a parameter checker to the original function(sliding window operation)."""
+    """A wrapper that wraps a parameter checker to the original function(sliding window operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -496,4 +496,3 @@ def check_save_model(method):
         return method(self, *args, **kwargs)
 
     return new_method
-    

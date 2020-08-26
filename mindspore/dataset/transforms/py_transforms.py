@@ -27,8 +27,9 @@ class OneHotOp:
     Apply one hot encoding transformation to the input label, make label be more smoothing and continuous.
 
     Args:
-        num_classes (int): Num class of object in dataset, type is int and value over 0.
-        smoothing_rate (float): The adjustable Hyper parameter decides the label smoothing level , 0.0 means not do it.
+        num_classes (int): Number of classes of objects in dataset. Value must be larger than 0.
+        smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
+            (Default=0.0 means no smoothing is applied.)
     """
 
     @check_one_hot_op

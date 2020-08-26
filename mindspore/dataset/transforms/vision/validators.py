@@ -152,7 +152,7 @@ def check_erasing_value(value):
 
 
 def check_crop(method):
-    """A wrapper that wraps a parameter checker to the original function(crop operation)."""
+    """A wrapper that wraps a parameter checker around the original function(crop operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -165,7 +165,7 @@ def check_crop(method):
 
 
 def check_posterize(method):
-    """"A wrapper that wraps a parameter checker to the original function(posterize operation)."""
+    """A wrapper that wraps a parameter checker around the original function(posterize operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -187,7 +187,7 @@ def check_posterize(method):
 
 
 def check_resize_interpolation(method):
-    """A wrapper that wraps a parameter checker to the original function(resize interpolation operation)."""
+    """A wrapper that wraps a parameter checker around the original function(resize interpolation operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -202,7 +202,7 @@ def check_resize_interpolation(method):
 
 
 def check_resize(method):
-    """A wrapper that wraps a parameter checker to the original function(resize operation)."""
+    """A wrapper that wraps a parameter checker around the original function(resize operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -235,7 +235,7 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
 
 
 def check_random_resize_crop(method):
-    """A wrapper that wraps a parameter checker to the original function(random resize crop operation)."""
+    """A wrapper that wraps a parameter checker around the original function(random resize crop operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -250,7 +250,7 @@ def check_random_resize_crop(method):
 
 
 def check_prob(method):
-    """A wrapper that wraps a parameter checker(check the probability) to the original function."""
+    """A wrapper that wraps a parameter checker (to confirm probability) around the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -264,7 +264,7 @@ def check_prob(method):
 
 
 def check_normalize_c(method):
-    """A wrapper that wraps a parameter checker to the original function(normalize operation written in C++)."""
+    """A wrapper that wraps a parameter checker around the original function(normalize operation written in C++)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -277,7 +277,7 @@ def check_normalize_c(method):
 
 
 def check_normalize_py(method):
-    """A wrapper that wraps a parameter checker to the original function(normalize operation written in Python)."""
+    """A wrapper that wraps a parameter checker around the original function(normalize operation written in Python)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

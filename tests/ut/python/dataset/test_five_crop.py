@@ -86,8 +86,13 @@ def test_five_crop_error_msg():
     transform = vision.ComposeOp(transforms)
     data = data.map(input_columns=["image"], operations=transform())
 
-    with pytest.raises(RuntimeError):
-        data.create_tuple_iterator().__next__()
+    with pytest.raises(RuntimeError) as info:
+        for _ in data:
+            pass
+    error_msg = "TypeError: img should be PIL Image or Numpy array. Got <class 'tuple'>"
+
+    # error msg comes from ToTensor()
+    assert error_msg in str(info.value)
 
 
 def test_five_crop_md5():
