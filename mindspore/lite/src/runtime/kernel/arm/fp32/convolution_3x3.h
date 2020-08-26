@@ -45,6 +45,7 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
   int InitWeightBias();
   int InitTmpBuffer();
   void ConfigInputOutput();
+  int PostProcess();
 
  private:
   void FreeTmpBuffer() {

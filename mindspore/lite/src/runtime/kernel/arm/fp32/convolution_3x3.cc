@@ -207,9 +207,8 @@ int Convolution3x3CPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "gemm_func is nullptr.";
     return RET_ERROR;
   }
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   Conv3x3Fp32(reinterpret_cast<float *>(nhwc4_input_), transformed_filter_addr_, reinterpret_cast<float *>(bias_data_),
-              output_addr, tmp_buffer_address_list_, task_id, conv_param_, gemm_func_);
+              tmp_buffer_address_list_, task_id, conv_param_, gemm_func_);
   return RET_OK;
 }
 
@@ -219,6 +218,29 @@ int Convolution3x3Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution3x3 Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int Convolution3x3CPUKernel::PostProcess() {
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  auto act_type = conv_param_->act_type_;
+  switch (act_type) {
+    case ActType_No:
+      PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                           conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+      break;
+    case ActType_Relu:
+      PackNC4HW4ToNHWCReluFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                               conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+      break;
+    case ActType_Relu6:
+      PackNC4HW4ToNHWCRelu6Fp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                                conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupport activation type.";
+      return RET_ERROR;
   }
   return RET_OK;
 }
@@ -247,18 +269,10 @@ int Convolution3x3CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto is_relu = conv_param_->act_type_ == ActType_Relu;
-  auto is_relu6 = conv_param_->act_type_ == ActType_Relu6;
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  if (is_relu) {
-    PackNC4HW4ToNHWCReluFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                             conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-  } else if (is_relu6) {
-    PackNC4HW4ToNHWCRelu6Fp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                              conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-  } else {
-    PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  ret = PostProcess();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Post process failed.";
+    return ret;
   }
   FreeTmpBuffer();
   return RET_OK;

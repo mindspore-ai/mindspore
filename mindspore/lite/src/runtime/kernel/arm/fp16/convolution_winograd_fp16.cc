@@ -358,6 +358,28 @@ static int ConvolutionWinogradFp16Impl(int task_id, LiteParallelGroupEnv *penv, 
   return RET_OK;
 }
 
+int ConvolutionWinogradFP16CPUKernel::PostProcess() {
+  auto act_type = conv_param_->act_type_;
+  switch (act_type) {
+    case ActType_No:
+      UnPackWinogradOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                               conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    case ActType_Relu:
+      UnPackWinogradReluOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                                   conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    case ActType_Relu6:
+      UnPackWinogradRelu6OutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                                    conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupport activation type.";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ConvolutionWinogradFP16CPUKernel::Run() {
   auto prepare_ret = Prepare();
   if (prepare_ret != RET_OK) {
@@ -390,16 +412,10 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  // get real output
-  if (conv_param_->act_type_ == ActType_Relu) {
-    UnPackWinogradReluOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                                 conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else if (conv_param_->act_type_ == ActType_Relu6) {
-    UnPackWinogradRelu6OutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                                  conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else {
-    UnPackWinogradOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                             conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+  ret = PostProcess();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Post process failed.";
+    return ret;
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();

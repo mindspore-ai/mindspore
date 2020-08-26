@@ -307,8 +307,8 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       }
 
       // step 4 : output transform
-      WinogradOutputTransform(gemm_out + task_id * gemm_out_offset, tmp_out_data + tmp_out_batch_offset, bias_data,
-                              cal_num, out_tile_index, out_w_block, conv_param, output_trans_func);
+      WinogradOutputTransform(dst_ptr, tmp_out_data + tmp_out_batch_offset, bias_data, cal_num, out_tile_index,
+                              out_w_block, conv_param, output_trans_func);
     }
   }
 }
@@ -449,8 +449,8 @@ void UnPackWinogradRelu6Output(const float *src, float *dst, int batch, int heig
 }
 
 // fp32 conv3x3
-void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, float *output_data,
-                 TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func) {
+void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_data, TmpBufferAddress *buffer_list,
+                 int task_id, ConvParameter *conv_param, GEMM_FUNC_FP32 gemm_func) {
   int thread_count = conv_param->thread_num_;
   int ic4 = UP_DIV(conv_param->input_channel_, C4NUM);
   int output_channel = conv_param->output_channel_;
@@ -461,6 +461,7 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, C12NUM);
   const int input_unit_square = 4 * 4;
+
   float *tile_buffer = buffer_list[0];
   float *block_unit_buffer = buffer_list[1];
   float *tmp_dst_buffer = buffer_list[2];
@@ -491,8 +492,8 @@ void Conv3x3Fp32(float *input_data, float *transed_weight, const float *bias_dat
         MatMulOpt(tmp_col_ptr, transed_weight + i * ic4 * C4NUM * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0,
                   ic4 * C4NUM, real_cal_num, oc8 * C8NUM, input_unit_square, 2);
       }
-      Conv3x3Fp32OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, nc4hw4_out + nc4hw4_buffer_offset,
-                                 bias_data, start_index, real_cal_num, out_w_block, conv_param);
+      Conv3x3Fp32OutputTransform(dst_ptr, nc4hw4_out + nc4hw4_buffer_offset, bias_data, start_index, real_cal_num,
+                                 out_w_block, conv_param);
     }
   }
 }
