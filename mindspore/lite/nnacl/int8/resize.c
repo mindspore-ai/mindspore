@@ -86,6 +86,62 @@ int ResizeBilinearInt8(const int8_t *input_data, int8_t *output_data, const int 
   return NNACL_OK;
 }
 
+int ResizeBilinearInt8WithFloatWeight(const int8_t *input_data, int8_t *output_data, const int *input_shape,
+                                      const int *output_shape, const bool align_corners, QuantArg *quant_in,
+                                      QuantArg *quant_out, const QuantMulArg *mul_arg, int tid, int thread_num) {
+  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL) {
+    return NNACL_NULL_PTR;
+  }
+
+  int32_t in_n = input_shape[0];
+  int32_t in_h = input_shape[1];
+  int32_t in_w = input_shape[2];
+  int32_t in_c = input_shape[3];
+
+  int32_t new_height = output_shape[1];
+  int32_t new_width = output_shape[2];
+  float height_scale, width_scale;
+  ComputeScaleFloat(in_h, new_height, align_corners, &height_scale);
+  ComputeScaleFloat(in_w, new_width, align_corners, &width_scale);
+
+  int n, h, w, c;
+  for (n = 0; n < in_n; n++) {
+    for (h = tid; h < new_height; h += thread_num) {
+      float actual_y;
+      int bottom, top;
+      float bottom_weight, top_weight;
+      ComputeInterpolationArgsFloatWeight(h, height_scale, in_h, &actual_y, &bottom, &bottom_weight, &top, &top_weight);
+      for (w = 0; w < new_width; w++) {
+        float actual_x;
+        int left, right;
+        float left_weight, right_weight;
+        ComputeInterpolationArgsFloatWeight(w, width_scale, in_w, &actual_x, &left, &left_weight, &right,
+                                            &right_weight);
+        for (c = 0; c < in_c; c++) {
+          float bottom_left_value = ((int32_t)input_data[offset(input_shape, n, bottom, left, c)] - quant_in->zp_) *
+                                    bottom_weight * left_weight;
+          float bottom_right_value = ((int32_t)input_data[offset(input_shape, n, bottom, right, c)] - quant_in->zp_) *
+                                     bottom_weight * right_weight;
+          float top_left_value =
+            ((int32_t)input_data[offset(input_shape, n, top, left, c)] - quant_in->zp_) * top_weight * left_weight;
+          float top_right_value =
+            ((int32_t)input_data[offset(input_shape, n, top, right, c)] - quant_in->zp_) * top_weight * right_weight;
+          float interp_value = bottom_left_value + bottom_right_value + top_left_value + top_right_value;
+
+          const int out_interp_value = MultiplyByQuantizedMultiplier((int32_t)interp_value, mul_arg->multiplier_,
+                                                                     mul_arg->left_shift_, mul_arg->right_shift_) +
+                                       quant_out->zp_;
+          int8_t out_value;
+          out_value = out_interp_value > INT8_MAX ? INT8_MAX : out_interp_value;
+          out_value = out_value < INT8_MIN ? INT8_MIN : out_value;
+          output_data[offset(output_shape, n, h, w, c)] = out_value;
+        }
+      }
+    }
+  }
+  return NNACL_OK;
+}
+
 int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_data, const int *input_shape,
                                     const int *output_shape, const bool align_corners, int tid, int thread_num) {
   int batch, y, x, c;
@@ -131,6 +187,22 @@ void ComputeInterpolationArgs(const int32_t pos, const int32_t scale, const int3
   *scaled_low_weight = (1 << 10) - (*scaled_pos - (1 << 10) * (*low));
   *high = scale_back + 1 < size ? scale_back + 1 : size - 1;
   *scaled_high_weight = *scaled_pos - (1 << 10) * (*low);
+}
+
+void ComputeScaleFloat(const int32_t in_value, const int32_t out_value, const bool align_corners, float *scale) {
+  *scale = (float)in_value / out_value;
+  if (align_corners && out_value > 1) {
+    *scale = (float)(in_value - 1) / (out_value - 1);
+  }
+}
+
+void ComputeInterpolationArgsFloatWeight(const int32_t pos, const float scale, const int32_t size, float *actual_pos,
+                                         int32_t *low, float *low_weight, int32_t *high, float *high_weight) {
+  *actual_pos = pos * scale;
+  *low = *actual_pos > 0 ? floor(*actual_pos) : 0;
+  *low_weight = 1.0 - (*actual_pos - *low);
+  *high = *low + 1 < size ? *low + 1 : size - 1;
+  *high_weight = *actual_pos - (*low);
 }
 
 void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32_t new_size, const bool align_corners,
