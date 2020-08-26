@@ -26,6 +26,7 @@ from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_se
 
 DATA_DIR = "../data/dataset/testCifar10Data"
 DATA_DIR2 = "../data/dataset/testImageNetData2/train/"
+DATA_DIR3 = "../data/dataset/testCelebAData/"
 
 GENERATE_GOLDEN = False
 
@@ -162,6 +163,55 @@ def test_mixup_batch_success3(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 
+def test_mixup_batch_success4(plot=False):
+    """
+    Test MixUpBatch op on a dataset where OneHot returns a 2D vector.
+    Alpha parameter will be selected by default in this case
+    """
+    logger.info("test_mixup_batch_success4")
+
+    # Original Images
+    ds_original = ds.CelebADataset(DATA_DIR3, shuffle=False)
+    decode_op = vision.Decode()
+    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.batch(2, drop_remainder=True)
+
+    images_original = None
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = image
+        else:
+            images_original = np.append(images_original, image, axis=0)
+
+    # MixUp Images
+    data1 = ds.CelebADataset(DATA_DIR3, shuffle=False)
+
+    decode_op = vision.Decode()
+    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+
+    one_hot_op = data_trans.OneHot(num_classes=100)
+    data1 = data1.map(input_columns=["attr"], operations=one_hot_op)
+
+    mixup_batch_op = vision.MixUpBatch()
+    data1 = data1.batch(2, drop_remainder=True)
+    data1 = data1.map(input_columns=["image", "attr"], operations=mixup_batch_op)
+
+    images_mixup = np.array([])
+    for idx, (image, _) in enumerate(data1):
+        if idx == 0:
+            images_mixup = image
+        else:
+            images_mixup = np.append(images_mixup, image, axis=0)
+    if plot:
+        visualize_list(images_original, images_mixup)
+
+    num_samples = images_original.shape[0]
+    mse = np.zeros(num_samples)
+    for i in range(num_samples):
+        mse[i] = diff_mse(images_mixup[i], images_original[i])
+    logger.info("MSE= {}".format(str(np.mean(mse))))
+
+
 def test_mixup_batch_md5():
     """
     Test MixUpBatch with MD5:
@@ -218,7 +268,7 @@ def test_mixup_batch_fail1():
                 images_mixup = image
             else:
                 images_mixup = np.append(images_mixup, image, axis=0)
-        error_message = "You must make sure images are HWC or CHW and batch"
+        error_message = "You must make sure images are HWC or CHW and batched"
         assert error_message in str(error.value)
 
 
@@ -316,12 +366,50 @@ def test_mixup_batch_fail4():
         assert error_message in str(error.value)
 
 
+def test_mixup_batch_fail5():
+    """
+    Test MixUpBatch Fail 5
+    We expect this to fail because labels are not OntHot encoded
+    """
+    logger.info("test_mixup_batch_fail5")
+
+    # Original Images
+    ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
+    ds_original = ds_original.batch(5)
+
+    images_original = np.array([])
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = image
+        else:
+            images_original = np.append(images_original, image, axis=0)
+
+    # MixUp Images
+    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
+
+    mixup_batch_op = vision.MixUpBatch()
+    data1 = data1.batch(5, drop_remainder=True)
+    data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+
+    with pytest.raises(RuntimeError) as error:
+        images_mixup = np.array([])
+        for idx, (image, _) in enumerate(data1):
+            if idx == 0:
+                images_mixup = image
+            else:
+                images_mixup = np.append(images_mixup, image, axis=0)
+    error_message = "MixUpBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC"
+    assert error_message in str(error.value)
+
+
 if __name__ == "__main__":
     test_mixup_batch_success1(plot=True)
     test_mixup_batch_success2(plot=True)
     test_mixup_batch_success3(plot=True)
+    test_mixup_batch_success4(plot=True)
     test_mixup_batch_md5()
     test_mixup_batch_fail1()
     test_mixup_batch_fail2()
     test_mixup_batch_fail3()
     test_mixup_batch_fail4()
+    test_mixup_batch_fail5()
