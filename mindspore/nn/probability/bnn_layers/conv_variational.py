@@ -229,7 +229,7 @@ class ConvReparam(_ConvVariational):
         weight_prior_fn: prior distribution for weight.
             It should return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
-            normal distribution). The current version only supports NormalPrior.
+            normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: posterior distribution for sampling weight.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
