@@ -128,6 +128,29 @@ Parameters for both training and evaluation can be set in config.py.
 "lr": 0.1                         # base learning rate
 ```
 
+- config for SE-ResNet-50, ImageNet2012 dataset
+
+```
+"class_num": 1001,                # dataset class number
+"batch_size": 32,                 # batch size of input tensor
+"loss_scale": 1024,               # loss scale
+"momentum": 0.9,                  # momentum optimizer
+"weight_decay": 1e-4,             # weight decay
+"epoch_size": 28 ,                # epoch size for creating learning rate
+"train_epoch_size": 24            # actual train epoch size
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
+"save_checkpoint": True,          # whether save checkpoint or not
+"save_checkpoint_epochs": 4,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
+"keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
+"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
+"warmup_epochs": 3,               # number of warmup epoch
+"lr_decay_mode": "cosine"         # decay mode for generating learning rate
+"label_smooth": True,             # label_smooth
+"label_smooth_factor": 0.1,       # label_smooth_factor
+"lr_init": 0.0,                   # initial learning rate
+"lr_max": 0.3,                    # maximum learning rate
+"lr_end": 0.0001,                 # end learning rate
+```
 
 
 ## Running the example
@@ -138,12 +161,11 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```
 # distributed training
-Usage: sh run_distribute_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
-       [PRETRAINED_CKPT_PATH](optional)
+Usage: sh run_distribute_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training
-Usage: sh run_standalone_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH]  
-       [PRETRAINED_CKPT_PATH](optional)
+Usage: sh run_standalone_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
+[PRETRAINED_CKPT_PATH](optional)
 ```
 
 
@@ -203,14 +225,24 @@ epoch: 69 step: 5004, loss is 2.0665488
 epoch: 70 step: 5004, loss is 1.8717369
 ...
 ```
+- training SE-ResNet-50 with ImageNet2012 dataset
 
+```
+# distribute training result(8 pcs)
+epoch: 1 step: 5004, loss is 5.1779146
+epoch: 2 step: 5004, loss is 4.139395
+epoch: 3 step: 5004, loss is 3.9240637
+epoch: 4 step: 5004, loss is 3.5011306
+epoch: 5 step: 5004, loss is 3.3501816
+...
+```
 ### Evaluation
 
 #### Usage
 
 ```
 # evaluation
-Usage: sh run_eval.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: sh run_eval.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 #### Launch
@@ -242,6 +274,12 @@ result: {'acc': 0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 
 ```
 result: {'top_5_accuracy': 0.9429417413572343, 'top_1_accuracy': 0.7853513124199744} ckpt=train_parallel0/resnet-120_5004.ckpt
+```
+
+- evaluating SE-ResNet-50 with ImageNet2012 dataset
+
+```
+result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.768065781049936} ckpt=train_parallel0/resnet-24_5004.ckpt
 ```
 
 ### Running on GPU
