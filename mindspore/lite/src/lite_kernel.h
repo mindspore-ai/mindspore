@@ -73,7 +73,9 @@ class LiteKernel {
     this->out_kernels_.clear();
   }
 
-  virtual ~LiteKernel() = default;
+  virtual ~LiteKernel() {
+    free(op_parameter_);
+  }
 
   virtual int Prepare();
 
