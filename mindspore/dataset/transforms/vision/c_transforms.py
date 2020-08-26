@@ -105,7 +105,7 @@ class RandomSharpness(cde.RandomSharpnessOp):
 
     Raises:
         TypeError : If degrees is not a list or tuple.
-        ValueError: If degrees is not positive.
+        ValueError: If degrees is negative.
         ValueError: If degrees is in (max, min) format instead of (min, max).
 
     Examples:

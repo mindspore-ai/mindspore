@@ -224,7 +224,7 @@ class Normalize:
     """
     Normalize the input Numpy image array of shape (C, H, W) with the given mean and standard deviation.
 
-    The values of the array need to be in range [0.0, 1.0].
+    The values of the array need to be in range (0.0, 1.0].
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, w.r.t channel order.
