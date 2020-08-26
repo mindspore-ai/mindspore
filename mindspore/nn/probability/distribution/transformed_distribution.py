@@ -46,10 +46,10 @@ class TransformedDistribution(Distribution):
         Constructor of transformed_distribution class.
         """
         param = dict(locals())
-        validator.check_value_type('bijector', bijector, [nn.probability.bijector.Bijector], name)
-        validator.check_value_type('distribution', distribution, [Distribution], name)
+        validator.check_value_type('bijector', bijector, [nn.probability.bijector.Bijector], type(self).__name__)
+        validator.check_value_type('distribution', distribution, [Distribution], type(self).__name__)
         valid_dtype = mstype.number_type
-        check_type(dtype, valid_dtype, "transformed_distribution")
+        check_type(dtype, valid_dtype, type(self).__name__)
         super(TransformedDistribution, self).__init__(seed, dtype, name, param)
 
         self._bijector = bijector

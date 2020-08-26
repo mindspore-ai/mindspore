@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Bijector"""
+from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
+from ..distribution._utils.utils import CheckTensor
 from ..distribution import Distribution
 from ..distribution import TransformedDistribution
 
@@ -40,7 +42,7 @@ class Bijector(Cell):
         Constructor of bijector class.
         """
         super(Bijector, self).__init__()
-        validator.check_value_type('name', name, [str], 'Bijector')
+        validator.check_value_type('name', name, [str], type(self).__name__)
         validator.check_value_type('is_constant_jacobian', is_constant_jacobian, [bool], name)
         validator.check_value_type('is_injective', is_injective, [bool], name)
         self._name = name
@@ -52,6 +54,9 @@ class Bijector(Cell):
                 self._parameters[k] = param[k]
         self._is_constant_jacobian = is_constant_jacobian
         self._is_injective = is_injective
+
+        self.context_mode = context.get_context('mode')
+        self.checktensor = CheckTensor()
 
     @property
     def name(self):
@@ -72,6 +77,15 @@ class Bijector(Cell):
     @property
     def is_injective(self):
         return self._is_injective
+
+    def _check_value(self, value, name):
+        """
+        Check availability fo value as a Tensor.
+        """
+        if self.context_mode == 0:
+            self.checktensor(value, name)
+            return value
+        return self.checktensor(value, name)
 
     def forward(self, *args, **kwargs):
         """

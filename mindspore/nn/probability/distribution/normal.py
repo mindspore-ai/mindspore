@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
-from ._utils.utils import convert_to_batch, check_greater_zero, check_type, check_distribution_name,\
+from ._utils.utils import cast_to_tensor, check_greater_zero, check_type, check_distribution_name,\
                           raise_none_error
 from ._utils.custom_ops import exp_generic, expm1_generic, log_generic, erf_generic
 
@@ -102,12 +102,12 @@ class Normal(Distribution):
         """
         param = dict(locals())
         valid_dtype = mstype.float_type
-        check_type(dtype, valid_dtype, "Normal")
+        check_type(dtype, valid_dtype, type(self).__name__)
         super(Normal, self).__init__(seed, dtype, name, param)
         self.parameter_type = dtype
         if  mean is not None and sd is not None:
-            self._mean_value = convert_to_batch(mean, self.broadcast_shape, self.parameter_type)
-            self._sd_value = convert_to_batch(sd, self.broadcast_shape, self.parameter_type)
+            self._mean_value = cast_to_tensor(mean, self.parameter_type)
+            self._sd_value = cast_to_tensor(sd, self.parameter_type)
             check_greater_zero(self._sd_value, "Standard deviation")
         else:
             self._mean_value = mean
@@ -139,12 +139,18 @@ class Normal(Distribution):
         Check availablity of distribution specific args mean and sd.
         """
         if mean is not None:
-            self.checktensor(mean, 'mean')
+            if self.context_mode == 0:
+                self.checktensor(mean, 'mean')
+            else:
+                mean = self.checktensor(mean, 'mean')
             mean = self.cast(mean, self.parameter_type)
         else:
             mean = self._mean_value if self._mean_value is not None else raise_none_error('mean')
         if sd is not None:
-            self.checktensor(sd, 'sd')
+            if self.context_mode == 0:
+                self.checktensor(sd, 'sd')
+            else:
+                sd = self.checktensor(sd, 'sd')
             sd = self.cast(sd, self.parameter_type)
         else:
             sd = self._sd_value if self._sd_value is not None else raise_none_error('sd')
@@ -210,7 +216,7 @@ class Normal(Distribution):
         .. math::
             L(x) = -1* \frac{(x - \mu)^2}{2. * \sigma^2} - \log(\sqrt(2* \pi * \sigma^2))
         """
-        self.checktensor(value, 'value')
+        value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         mean, sd = self._check_param(mean, sd)
         unnormalized_log_prob = -1. * (self.sq(value - mean)) / (2. * self.sq(sd))
@@ -229,7 +235,7 @@ class Normal(Distribution):
         .. math::
             cdf(x) = 0.5 * (1+ Erf((x - \mu) / ( \sigma * \sqrt(2))))
         """
-        self.checktensor(value, 'value')
+        value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         mean, sd = self._check_param(mean, sd)
         sqrt2 = self.sqrt(self.const(2.0))
@@ -252,8 +258,8 @@ class Normal(Distribution):
                        0.5 * EXPM1(2 * (\log(STD(a)) - \log(STD(b))) - (\log(STD(a)) - \log(STD(b)))
         """
         check_distribution_name(dist, 'Normal')
-        self.checktensor(mean_b, 'mean_b')
-        self.checktensor(sd_b, 'sd_b')
+        mean_b = self._check_value(mean_b, 'mean_b')
+        sd_b = self._check_value(sd_b, 'sd_b')
         mean_b = self.cast(mean_b, self.parameter_type)
         sd_b = self.cast(sd_b, self.parameter_type)
         mean_a, sd_a = self._check_param(mean, sd)
