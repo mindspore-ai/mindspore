@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_OPTIMIZER_INFO_H_
 
 #include <vector>
+#include <memory>
 #include "backend/kernel_compiler/kernel.h"
 #include "frontend/parallel/ps/common.h"
 
@@ -33,12 +34,14 @@ class OptimizerInfo {
   virtual void Update(const Values &values, const Lengths &lengths) {}
   virtual void UpdateWeight(const WeightPtr &weight);
   virtual void Accumulate(const Values &values, const Lengths &lengths) = 0;
-  virtual void ComputeMean(size_t n) {}
+  virtual void ComputeMean(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes, size_t n,
+                           size_t server_num, size_t rank_id) {}
   virtual void Reset() {}
   void AddWorkspace(const AddressPtr &workspace);
 
   virtual const AddressPtr &gradient() = 0;
   virtual const AddressPtr &indices() = 0;
+  virtual const size_t indice_size() const;
   const std::vector<AddressPtr> &inputs();
   const std::vector<AddressPtr> &workspaces();
   const std::vector<AddressPtr> &outputs();
@@ -59,7 +62,8 @@ class DenseOptimInfo : public OptimizerInfo {
   ~DenseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
-  void ComputeMean(size_t n) override;
+  void ComputeMean(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes, size_t n,
+                   size_t server_num, size_t rank_id) override;
   void Reset() override;
 };
 
@@ -69,7 +73,10 @@ class SparseOptimInfo : public OptimizerInfo {
   ~SparseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
+  void ComputeMean(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes, size_t n,
+                   size_t server_num, size_t rank_id) override;
   void Reset() override;
+  const size_t indice_size() const override;
 
  protected:
   size_t grads_offset_{0};

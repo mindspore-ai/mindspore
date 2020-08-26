@@ -136,15 +136,21 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
 
   const std::shared_ptr<std::vector<size_t>> &indices_shape = (*inputs_shape)[10];
   size_t total_indice_size =
-    std::accumulate((*indices_shape).begin(), (*indices_shape).end(), sizeof(float), std::multiplies<size_t>());
+    std::accumulate((*indices_shape).begin(), (*indices_shape).end(), sizeof(int), std::multiplies<size_t>());
   AddressPtr indices = std::make_shared<kernel::Address>();
-  indices->addr = new float[total_indice_size * worker_num];
-  ret = memcpy_s(indices->addr, lens[7] * sizeof(float), reinterpret_cast<float *>(epsilon->addr) + lens[5] + lens[6],
-                 lens[7] * sizeof(float));
+  indices->addr = new int[total_indice_size * worker_num];
+  int *converted_indices = new int[lens[7]];
+  size_t indices_data_size = lens[7] * sizeof(int);
+  float *indices_data = reinterpret_cast<float *>(epsilon->addr) + lens[5] + lens[6];
+  for (int i = 0; i < lens[7]; i++) {
+    converted_indices[i] = static_cast<int>(indices_data[i]);
+  }
+  ret = memcpy_s(indices->addr, indices_data_size, converted_indices, indices_data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
-  indices->size = lens[7] * sizeof(int);
+  indices->size = indices_data_size;
+  delete[] converted_indices;
 
   return new SparseAdamOptimInfo(weight_addr, m, v, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
                                  grad, indices);
@@ -185,13 +191,19 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   size_t total_indice_size =
     std::accumulate((*indices_shape).begin(), (*indices_shape).end(), 1, std::multiplies<size_t>());
   AddressPtr indices = std::make_shared<kernel::Address>();
-  indices->addr = new float[total_indice_size * worker_num];
-  ret = memcpy_s(indices->addr, lens[1] * sizeof(float), reinterpret_cast<float *>(values.data()) + lens[0],
-                 lens[1] * sizeof(float));
+  indices->addr = new int[total_indice_size * worker_num];
+  int *converted_indices = new int[lens[1]];
+  size_t indices_data_size = lens[1] * sizeof(int);
+  float *indices_data = reinterpret_cast<float *>(values.data()) + lens[0];
+  for (int i = 0; i < lens[1]; i++) {
+    converted_indices[i] = static_cast<int>(indices_data[i]);
+  }
+  ret = memcpy_s(indices->addr, indices_data_size, converted_indices, indices_data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
-  indices->size = lens[1] * sizeof(int);
+  indices->size = indices_data_size;
+  delete[] converted_indices;
 
   return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices);
 }

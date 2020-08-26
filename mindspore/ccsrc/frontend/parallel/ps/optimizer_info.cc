@@ -16,6 +16,7 @@
 
 #include "frontend/parallel/ps/optimizer_info.h"
 #include <memory>
+#include "frontend/parallel/ps/util.h"
 
 namespace mindspore {
 namespace parallel {
@@ -29,6 +30,8 @@ const std::vector<AddressPtr> &OptimizerInfo::workspaces() { return workspaces_;
 const std::vector<AddressPtr> &OptimizerInfo::outputs() { return outputs_; }
 
 bool OptimizerInfo::IsSparse() const { return false; }
+
+const size_t OptimizerInfo::indice_size() const { return 0; }
 
 size_t OptimizerInfo::grad_index() { return 0; }
 
@@ -57,7 +60,8 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
 }
 
-void DenseOptimInfo::ComputeMean(size_t n) {
+void DenseOptimInfo::ComputeMean(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &, size_t n,
+                                 size_t server_num, size_t rank_id) {
   if (n > 1) {
     float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
     size_t size = gradient()->size / sizeof(float);
@@ -96,15 +100,88 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   for (size_t i = 0; i < indices_index; i++) {
     indice_offset += lengths[i];
   }
-  int *incr_indice_data = reinterpret_cast<int *>(values.data() + indice_offset);
-  size_t incr_indice_size = lengths[indices_index] * sizeof(float);
+  float *incr_indice_data = values.data() + indice_offset;
+  size_t incr_indice_size = lengths[indices_index];
+  size_t incr_indice_data_size = incr_indice_size * sizeof(int);
+  int *converted_indices = new int[incr_indice_size];
+  for (size_t i = 0; i < incr_indice_size; i++) {
+    converted_indices[i] = static_cast<int>(incr_indice_data[i]);
+  }
 
-  auto ret2 = memcpy_s(accum_indices_data + indices_offset_, incr_indice_size, incr_indice_data, incr_indice_size);
+  auto ret2 =
+    memcpy_s(accum_indices_data + indices_offset_, incr_indice_data_size, converted_indices, incr_indice_data_size);
   if (ret2 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
   }
+  delete[] converted_indices;
   indices_offset_ += lengths[indices_index];
-  indices()->size += incr_indice_size;
+  indices()->size += incr_indice_data_size;
+}
+
+void SparseOptimInfo::ComputeMean(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
+                                  size_t n, size_t server_num, size_t rank_id) {
+  size_t indices_size = static_cast<size_t>(indices()->size / sizeof(int));
+  int segment_size = gradient()->size / indices()->size;
+
+  float *new_grad = new float[indices_size * segment_size];
+  int *new_indices = new int[indices_size];
+  mindspore::kernel::SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size});
+
+  const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
+  if (shape_vec.size() < 2 || shape_vec[1] == nullptr) {
+    MS_LOG(EXCEPTION) << "No input shape found";
+  }
+  auto input_shapes = shape_vec.size() > 0 ? shape_vec[1] : nullptr;
+  MS_EXCEPTION_IF_NULL(input_shapes);
+  if (input_shapes->size() == 0) {
+    MS_LOG(EXCEPTION) << "Invalid input shapes";
+  }
+  int first_dim_size = input_shapes->front();
+  int outer_dim_size = segment_size;
+
+  if (first_dim_size == 0 || outer_dim_size == 0) {
+    MS_LOG(ERROR) << "Invalid first dim size";
+  }
+
+  float *grad_data = reinterpret_cast<float *>(gradient()->addr);
+  int *indices_data = reinterpret_cast<int *>(indices()->addr);
+
+  size_t original_row_count = input_shapes->front();
+  if (original_row_count > 0) {
+    size_t offset = 0;
+    if ((original_row_count % server_num) == 0) {
+      offset = original_row_count / server_num * rank_id;
+    } else {
+      offset = std::round((static_cast<float>(original_row_count)) / server_num) * rank_id;
+    }
+    for (size_t i = 0; i < indices_size; i++) {
+      indices_data[i] -= offset;
+    }
+  }
+
+  Util::ReduceSparseGradient(grad_data, indices_data, indices_size, segment_size, first_dim_size, outer_dim_size,
+                             &unique_sparse_grad);
+
+  int reduced_grad_size = unique_sparse_grad.indices_size_ * segment_size * sizeof(float);
+  auto ret = memcpy_s(gradient()->addr, reduced_grad_size, unique_sparse_grad.value_, reduced_grad_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+  int reduced_indice_size = unique_sparse_grad.indices_size_ * sizeof(int);
+  ret = memcpy_s(indices()->addr, reduced_indice_size, unique_sparse_grad.indices_, reduced_indice_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  gradient()->size = reduced_grad_size;
+  indices()->size = reduced_indice_size;
+
+  for (size_t i = 0; i < unique_sparse_grad.indices_size_ * segment_size; i++) {
+    grad_data[i] = grad_data[i] / n;
+  }
+
+  delete[] new_grad;
+  delete[] new_indices;
 }
 
 void SparseOptimInfo::Reset() {
@@ -134,6 +211,8 @@ void MomentumOptimInfo::Update(const Values &values, const Lengths &lens) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
 }
+
+const size_t SparseOptimInfo::indice_size() const { return indices_offset_; }
 
 const AddressPtr &MomentumOptimInfo::gradient() { return inputs_[3]; }
 
