@@ -37,25 +37,7 @@ DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
-  FreeTmpBuffer();
   FreeQuantParam();
-}
-
-void DeconvolutionDepthwiseInt8CPUKernel::FreeTmpBuffer() {
-  if (packed_input_ != nullptr) {
-    delete packed_input_;
-    packed_input_ = nullptr;
-  }
-  if (need_align_) {
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
-  if (output_buffer_ != nullptr) {
-    delete output_buffer_;
-    output_buffer_ = nullptr;
-  }
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
@@ -111,7 +93,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
 int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
   int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM *
                         UP_DIV(conv_param_->input_channel_, 4);
-  packed_input_ = reinterpret_cast<int16_t *>(malloc(pack_input_size * sizeof(int16_t)));
+  packed_input_ = reinterpret_cast<int16_t *>(context_->allocator->Malloc(pack_input_size * sizeof(int16_t)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -121,7 +103,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
     need_align_ = true;
     int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM *
                            UP_DIV(conv_param_->output_channel_, C4NUM);
-    packed_output_ = reinterpret_cast<int8_t *>(malloc(pack_output_size * sizeof(int8_t)));
+    packed_output_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(pack_output_size * sizeof(int8_t)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -129,8 +111,8 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
     memset(packed_output_, 0, pack_output_size * sizeof(int8_t));
   }
 
-  output_buffer_ =
-    reinterpret_cast<int32_t *>(malloc(conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * sizeof(int32_t)));
+  output_buffer_ = reinterpret_cast<int32_t *>(
+    context_->allocator->Malloc(conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * sizeof(int32_t)));
   if (output_buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -165,7 +147,6 @@ int DeconvolutionDepthwiseInt8CPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
-  FreeTmpBuffer();
   InitSlideParam();
   ConvolutionBaseCPUKernel::Init();
 
@@ -224,7 +205,10 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
   if (need_align_) {
     PackNHWC4ToNHWCInt8(packed_output_, output_addr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+    context_->allocator->Free(packed_output_);
   }
+  context_->allocator->Free(packed_input_);
+  context_->allocator->Free(output_buffer_);
   return RET_OK;
 }
 

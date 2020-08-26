@@ -36,20 +36,6 @@ DeconvolutionDepthwiseCPUKernel::~DeconvolutionDepthwiseCPUKernel() {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
-  FreeTmpBuffer();
-}
-
-void DeconvolutionDepthwiseCPUKernel::FreeTmpBuffer() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
 }
 
 int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
@@ -100,7 +86,7 @@ int DeconvolutionDepthwiseCPUKernel::InitBuffer() {
     need_align_ = true;
     int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
     int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM * IC4;
-    packed_input_ = reinterpret_cast<float *>(malloc(pack_input_size * sizeof(float)));
+    packed_input_ = reinterpret_cast<float *>(context_->allocator->Malloc(pack_input_size * sizeof(float)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -108,7 +94,7 @@ int DeconvolutionDepthwiseCPUKernel::InitBuffer() {
 
     int OC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
     int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * OC4;
-    packed_output_ = reinterpret_cast<float *>(malloc(pack_output_size * sizeof(float)));
+    packed_output_ = reinterpret_cast<float *>(context_->allocator->Malloc(pack_output_size * sizeof(float)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -137,15 +123,8 @@ int DeconvolutionDepthwiseCPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::ReSize() {
-  FreeTmpBuffer();
   InitSlideParam();
   ConvolutionBaseCPUKernel::Init();
-
-  auto ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.ret: " << ret;
-    return ret;
-  }
   return RET_OK;
 }
 
@@ -166,15 +145,23 @@ int DeconvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int DeconvolutionDepthwiseCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   if (conv_param_->input_channel_ != conv_param_->output_channel_) {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
+
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
+    return ret;
+  }
+
+  ret = InitBuffer();
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.ret: " << ret;
+    return ret;
+  }
+
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_addr = reinterpret_cast<float *>(input_tensor->Data());
 
@@ -191,7 +178,7 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  auto ret = LiteBackendParallelLaunch(DeconvDwRun, this, conv_param_->thread_num_);
+  ret = LiteBackendParallelLaunch(DeconvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -200,6 +187,8 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   if (need_align_) {
     PackNHWC4ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
   }
   return RET_OK;
 }

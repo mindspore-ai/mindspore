@@ -38,20 +38,6 @@ ConvolutionDepthwiseSWFp16CPUKernel::~ConvolutionDepthwiseSWFp16CPUKernel() {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
-  FreeTmpBuffer();
-}
-
-void ConvolutionDepthwiseSWFp16CPUKernel::FreeTmpBuffer() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::InitBuffer() {
@@ -59,14 +45,14 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitBuffer() {
     need_align_ = true;
     int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
     int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM * C8;
-    packed_input_ = reinterpret_cast<float16_t *>(malloc(pack_input_size * sizeof(float16_t)));
+    packed_input_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_input_size * sizeof(float16_t)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
 
     int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM * C8;
-    packed_output_ = reinterpret_cast<float16_t *>(malloc(pack_output_size * sizeof(float16_t)));
+    packed_output_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_output_size * sizeof(float16_t)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -129,18 +115,11 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::ReSize() {
-  FreeTmpBuffer();
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
   InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
-
-  ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp16 InitBuffer failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -161,13 +140,19 @@ static int ConvDwSWFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata)
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
+  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
+    MS_LOG(ERROR) << "Only support input channel equals output channel.";
+    return RET_ERROR;
+  }
+
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
+  ret = InitBuffer();
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Convolution depthwise fp16 InitBuffer failed.";
     return RET_ERROR;
   }
 
@@ -194,6 +179,8 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   if (need_align_) {
     PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
