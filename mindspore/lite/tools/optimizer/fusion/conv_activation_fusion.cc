@@ -51,13 +51,13 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   auto act_primitivec = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitivec);
   MS_ASSERT(act_primitivec != nullptr);
   if (act_primitivec->GetType() != activation_type) {
-    return node;
+    return nullptr;
   }
   AnfNodePtr pre_node = act_node->input(1);
   CheckIfAnfNodeIsNull(pre_node);
   if (pre_node != nullptr && pre_node->isa<CNode>()) {
     if (IsMultiOutputTensors(func_graph, pre_node)) {
-      return node;
+      return nullptr;
     }
     auto conv_node = pre_node->cast<CNodePtr>();
     auto node_type = GetCNodeType(conv_node);
@@ -80,9 +80,9 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
         return pre_node;
       }
     } else {
-      MS_LOG(EXCEPTION) << "conv activation pass match only conv2d or depthwise_conv2d ";
+      MS_LOG(ERROR) << "conv activation pass match only conv2d or depthwise_conv2d ";
     }
   }
-  return node;
+  return nullptr;
 }
 }  // namespace mindspore::opt

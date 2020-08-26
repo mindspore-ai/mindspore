@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/converter/legacy_optimizer/fusion/batchnorm_convert_scale_pass.h"
+#include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
 #include <cfloat>
 #include <memory>
 #include <string>
@@ -44,123 +44,56 @@ constexpr const float EPS_DEFAULT_FLOAT = 1e-8;
 constexpr const float POW_NUM = 0.5;
 constexpr const int32_t NCHW_DIM_C = 1;
 }
-STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) { return FusionPass::Run(graph); }
 
-STATUS BatchNormConvertScalePass::DefinePattern() {
-  // with preNode
-  {
-    auto inputOp = std::make_shared<PatternOp>();
-    inputOp->id = inputOpName;
-    inputOp->types = {schema::PrimitiveType_NONE};
-    inputOp->isPlaceHold = true;
-
-    auto bnOp = std::make_shared<PatternOp>();
-    bnOp->id = bnOpName;
-    bnOp->types = {schema::PrimitiveType_FusedBatchNorm, schema::PrimitiveType_BatchNorm};
-    bnOp->left = inputOp;
-
-    std::unique_ptr<FusionPattern> fusionPattern(new(std::nothrow) FusionPattern(bnPatternName));
-    if (fusionPattern == nullptr) {
-      MS_LOG(ERROR) << "new fusionPattern failed";
-      return RET_ERROR;
-    }
-    fusionPattern->AddPatternOp(inputOp);
-    fusionPattern->AddPatternOp(bnOp);
-    fusionPattern->Finish();
-
-    this->patterns.emplace_back(fusionPattern.release());
-  }
-
-  return RET_OK;
-}
-STATUS BatchNormConvertScalePass::DoFusion(MetaGraphT *graph, const std::string &patternName,
-                                           std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) {
+STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  if (patternName != bnPatternName) {
-    MS_LOG(ERROR) << "BatchNormConvertScale-Fusion match failed";
-    return RET_PARAM_INVALID;
-  }
-  auto status = FindNodes(graph, matchedPath);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "FindNodes failed: " << status;
-    return status;
-  }
-  auto type = bnNode->primitive->value.type;
-  if (type != schema::PrimitiveType_FusedBatchNorm && type != schema::PrimitiveType_BatchNorm) {
-    return RET_OK;
-  }
-  auto bnPath = matchedPath.at(bnOpName);
-  status = GenNewScaleTensor(graph, bnPath);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "GenNewScaleTensor failed: " << status;
-    delete[] transScale;
-    delete[] transBias;
-    transScale = nullptr;
-    transBias = nullptr;
-    return status;
-  }
 
-  status = ConvertBNToScale(graph, bnPath);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "GenNewScaleTensor failed: " << status;
-    delete[] transScale;
-    delete[] transBias;
-    transScale = nullptr;
-    transBias = nullptr;
-    return status;
+  for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
+    auto &node = *iter;
+    auto type = node->primitive->value.type;
+    if (type != schema::PrimitiveType_FusedBatchNorm && type != schema::PrimitiveType_BatchNorm) {
+      continue;
+    }
+
+    auto status = GenNewScaleTensor(graph, node);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "GenNewScaleTensor failed: " << status;
+      return status;
+    }
+    status = ConvertBNToScale(graph, node);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "GenNewScaleTensor failed: " << status;
+      return status;
+    }
   }
-  delete[] transScale;
-  delete[] transBias;
-  transScale = nullptr;
-  transBias = nullptr;
   return RET_OK;
 }
-STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std::shared_ptr<Path> &bnPath) {
-  auto scaleNode = std::unique_ptr<CNodeT>(new(std::nothrow) CNodeT);
-  if (scaleNode == nullptr) {
-    MS_LOG(ERROR) << "new TransNode failed";
-    return RET_ERROR;
-  }
-  scaleNode->name = bnNode->name;
-  scaleNode->primitive = std::make_unique<schema::PrimitiveT>();
-  if (scaleNode->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-  scaleNode->primitive->value.type = schema::PrimitiveType_Scale;
+STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(bnNode != nullptr);
+  bnNode->primitive->value.type = schema::PrimitiveType_Scale;
   std::unique_ptr<ScaleT> scaleParam(new ScaleT());
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new transposeParam failed";
     return RET_ERROR;
   }
   scaleParam->axis = NCHW_DIM_C;
-  scaleNode->primitive->value.value = scaleParam.release();
-  auto scaleIter = graph->nodes.begin() + bnPath->nodeIdx;
-  STATUS errorCode = RET_OK;
-  scaleIter =
-      InsertNode(graph, scaleIter, kBefore, 0, std::move(scaleNode), &errorCode, ScaleOpCopyer);
-  if (errorCode != RET_OK) {
-    MS_LOG(ERROR) << "InsertNode failed: %d";  // errorCode);
-    return errorCode;
-  }
-  auto &newScaleNode = *(scaleIter - 1);
+  bnNode->primitive->value.value = scaleParam.release();
+  auto input0 = bnNode->inputIndex.at(0);
+  bnNode->inputIndex.clear();
+  bnNode->inputIndex.push_back(input0);
   graph->allTensors.emplace_back(std::move(newScaleWeightTensor));
   auto weightTensorIdx = graph->allTensors.size() - 1;
   graph->allTensors.emplace_back(std::move(newScaleBiasTensor));
   auto biasTensorIdx = graph->allTensors.size() - 1;
-  newScaleNode->inputIndex.push_back(weightTensorIdx);
-  newScaleNode->inputIndex.push_back(biasTensorIdx);
-  // delete bn node
-  auto status = IsolateOneWayNode(graph, bnPath->nodeIdx + 1, true);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "IsolateOneWayNode " << bnNode->name.c_str() << " failed, error: " << status;
-    return status;
-  }
+  bnNode->inputIndex.push_back(weightTensorIdx);
+  bnNode->inputIndex.push_back(biasTensorIdx);
   return RET_OK;
 }
-STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std::shared_ptr<Path> &bnPath) {
+STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
-  GetTransParam(graph, bnPath);
+  MS_ASSERT(bnNode != nullptr);
+  GetTransParam(graph, bnNode);
   newScaleWeightTensor = std::unique_ptr<TensorT>(new(std::nothrow) TensorT);
   if (newScaleWeightTensor == nullptr) {
     MS_LOG(ERROR) << "new weightTensor failed";
@@ -175,8 +108,11 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   auto ret = memcpy_s(newScaleWeightTensor->data.data(), weightShapeSize * sizeof(float), transScale,
                       weightShapeSize * sizeof(float));
   if (ret != RET_OK) {
-    delete transScale;
     MS_LOG(ERROR) << "memcpy error: " << ret;
+    delete[] transScale;
+    delete[] transBias;
+    transScale = nullptr;
+    transBias = nullptr;
     return RET_ERROR;
   }
 
@@ -195,39 +131,25 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   ret = memcpy_s(newScaleBiasTensor->data.data(), weightShapeSize * sizeof(float), transBias,
                  weightShapeSize * sizeof(float));
   if (ret != RET_OK) {
-    delete transBias;
     MS_LOG(ERROR) << "memcpy error: " << ret;
+    delete[] transScale;
+    delete[] transBias;
+    transScale = nullptr;
+    transBias = nullptr;
     return RET_ERROR;
   }
+  delete[] transScale;
+  delete[] transBias;
+  transScale = nullptr;
+  transBias = nullptr;
   return RET_OK;
 }
-
-STATUS BatchNormConvertScalePass::FindNodes(MetaGraphT *graph,
-                                            const std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) {
+STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
-  auto inputPath = matchedPath.at(inputOpName);
-  auto bnPath = matchedPath.at(bnOpName);
-  MS_ASSERT(inputPath != nullptr);
-  MS_ASSERT(bnPath != nullptr);
-  if (inputPath->subGraphIdx != bnPath->subGraphIdx) {
-    MS_LOG(ERROR) << "matched nodes should from same subGraph";
-    return RET_ERROR;
-  }
-  MS_ASSERT(graph->nodes.size() > inputPath->nodeIdx);
-  MS_ASSERT(graph->nodes.size() > bnPath->nodeIdx);
-  inputNode = graph->nodes.at(inputPath->nodeIdx).get();
-  bnNode = graph->nodes.at(bnPath->nodeIdx).get();
-  MS_ASSERT(inputNode != nullptr);
   MS_ASSERT(bnNode != nullptr);
-  return RET_OK;
-}
-STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::shared_ptr<Path> &bnPath) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(bnPath != nullptr);
-
   BNWeightTensors bnWeightTensors;
 
-  auto status = GetBnWeightTensors(graph, bnPath, &bnWeightTensors);
+  auto status = GetBnWeightTensors(graph, &bnWeightTensors, bnNode);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetBnWeightTensors error";
     return status;
@@ -241,7 +163,7 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::sh
   auto *varianceData = reinterpret_cast<float *>(varianceTensor->data.data());
 
   eps = EPS_DEFAULT_FLOAT;
-  status = GetBnEpsilon(graph);
+  status = GetBnEpsilon(bnNode);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetBnEpsilon failed";
     return status;
@@ -298,12 +220,11 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::sh
 //   bias        --1
 //   estimated_mean  --2
 //   estimated_variance  --3
-STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, const std::shared_ptr<Path> &bnPath,
-                                                     BNWeightTensors* bnWeightTensors) {
-  if (graph == nullptr || bnPath == nullptr) {
-    MS_LOG(ERROR) << "null pointer dereferencing.";
-    return RET_NULL_PTR;
-  }
+STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeightTensors *bnWeightTensors,
+                                                     const std::unique_ptr<CNodeT> &bnNode) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(bnNode != nullptr);
+  MS_ASSERT(bnWeightTensors != nullptr);
   MS_ASSERT(graph->allTensors.size() > bnNode->inputIndex.at(1));
   auto bnWeightTensorIdxes = bnNode->inputIndex;
   bnWeightTensorIdxes.erase(bnWeightTensorIdxes.begin());
@@ -357,15 +278,9 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, const st
   return RET_OK;
 }
 
-STATUS BatchNormConvertScalePass::GetBnEpsilon(MetaGraphT *graph) {
-  if (graph == nullptr) {
-    MS_LOG(ERROR) << "null pointer dereferencing.";
-    return RET_NULL_PTR;
-  }
-  if (bnNode == nullptr) {
-    MS_LOG(ERROR) << "null pointer dereferencing.";
-    return RET_NULL_PTR;
-  }
+STATUS BatchNormConvertScalePass::GetBnEpsilon(const std::unique_ptr<CNodeT> &bnNode) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(bnNode != nullptr);
   if (bnNode->primitive->value.type == schema::PrimitiveType_FusedBatchNorm) {
     eps = bnNode->primitive->value.AsFusedBatchNorm()->epsilon;
   } else if (bnNode->primitive->value.type == schema::PrimitiveType_BatchNorm) {

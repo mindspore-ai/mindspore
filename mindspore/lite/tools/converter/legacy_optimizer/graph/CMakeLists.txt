@@ -8,4 +8,5 @@ add_library(graph_pass_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/weight_format_transform_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/topological_sort_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/unused_node_remove_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/batchnorm_convert_scale_pass.cc
         )
