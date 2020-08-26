@@ -79,7 +79,7 @@ void MatMulOpenCLKernel::PadWeight() {
   size_t dtype_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
-
+  memset(padWeight_, 0x00, sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);
   auto origin_weight = in_tensors_.at(kWeightIndex)->Data();
   int divCI = sizeCI.s[1];
   int divCO = sizeCO.s[1];
@@ -110,11 +110,7 @@ void MatMulOpenCLKernel::PadWeight() {
               }
             }
           } else {
-            if (enable_fp16_) {
-              reinterpret_cast<float16_t *>(padWeight_)[index++] = 0;
-            } else {
-              reinterpret_cast<float *>(padWeight_)[index++] = 0;
-            }
+            index++;
           }
         }
       }
