@@ -36,17 +36,21 @@ ANNO_PATH=$5
 PRE_TRAINED=$7
 PRE_TRAINED_EPOCH_SIZE=$8
 
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+cd $BASE_PATH/../ || exit
+
 # Before start distribute train, first create mindrecord files.
 python train.py --only_create_dataset=1 --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR  \
 --anno_path=$ANNO_PATH
+if [ $? -ne 0 ]
+then
+    exit 1
+fi
 
 echo "After running the scipt, the network runs in the background. The log will be generated in LOGx/log.txt"
 
 export RANK_TABLE_FILE=$6
 export RANK_SIZE=$1
-
-BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
-cd $BASE_PATH/../ || exit
 
 for((i=0;i<RANK_SIZE;i++))
 do
