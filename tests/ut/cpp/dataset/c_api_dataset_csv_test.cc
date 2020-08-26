@@ -359,8 +359,8 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetException) {
   EXPECT_EQ(ds5, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFiles) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetShuffleFiles.";
+TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetShuffleFilesA.";
 
   // Set configuration
   uint32_t original_seed = GlobalContext::config_manager()->seed();
@@ -369,7 +369,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFiles) {
   GlobalContext::config_manager()->set_seed(130);
   GlobalContext::config_manager()->set_num_parallel_workers(4);
 
-  // Create a CSVDataset, with single CSV file
+  // Create a CSVDataset, with 2 CSV files, 1.csv and append.csv in lexicographical order
   std::string file1 = datasets_root_path_ + "/testCSV/1.csv";
   std::string file2 = datasets_root_path_ + "/testCSV/append.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
@@ -401,6 +401,66 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFiles) {
       std::string_view sv;
       text->GetItemAt(&sv, {0});
       std::string ss(sv);
+      EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
+    }
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  // Expect 6 samples
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
+TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetShuffleFilesB.";
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(130);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  // Create a CSVDataset, with 2 CSV files, append.csv and 1.csv in non-lexicographical order
+  std::string file1 = datasets_root_path_ + "/testCSV/1.csv";
+  std::string file2 = datasets_root_path_ + "/testCSV/append.csv";
+  std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
+  std::shared_ptr<Dataset> ds = CSV({file2, file1}, ',', {}, column_names, -1, ShuffleMode::kFiles);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+  EXPECT_NE(row.find("col1"), row.end());
+  std::vector<std::vector<std::string>> expected_result = {
+    {"13", "14", "15", "16"},
+    {"1", "2", "3", "4"},
+    {"17", "18", "19", "20"},
+    {"5", "6", "7", "8"},
+    {"21", "22", "23", "24"},
+    {"9", "10", "11", "12"},
+  };
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (int j = 0; j < column_names.size(); j++) {
+      auto text = row[column_names[j]];
+      std::string_view sv;
+      text->GetItemAt(&sv, {0});
+      std::string ss(sv);
+      MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
     iter->GetNextRow(&row);

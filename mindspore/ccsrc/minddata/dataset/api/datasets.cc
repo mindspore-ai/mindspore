@@ -1009,9 +1009,14 @@ std::vector<std::shared_ptr<DatasetOp>> CLUEDataset::Build() {
   }
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+
+  // Sort the dataset files in a lexicographical order
+  std::vector<std::string> sorted_dataset_files = dataset_files_;
+  std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
+
   std::shared_ptr<ClueOp> clue_op =
     std::make_shared<ClueOp>(num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, ck_map,
-                             dataset_files_, connector_que_size_, shuffle_files, num_shards_, shard_id_);
+                             sorted_dataset_files, connector_que_size_, shuffle_files, num_shards_, shard_id_);
   RETURN_EMPTY_IF_ERROR(clue_op->Init());
   if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -1019,10 +1024,10 @@ std::vector<std::shared_ptr<DatasetOp>> CLUEDataset::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_EMPTY_IF_ERROR(ClueOp::CountAllFileRows(dataset_files_, &num_rows));
+    RETURN_EMPTY_IF_ERROR(ClueOp::CountAllFileRows(sorted_dataset_files, &num_rows));
 
     // Add the shuffle op after this op
-    RETURN_EMPTY_IF_ERROR(AddShuffleOp(dataset_files_.size(), num_shards_, num_rows, 0, connector_que_size_,
+    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
                                        rows_per_buffer_, &shuffle_op));
     node_ops.push_back(shuffle_op);
   }
@@ -1162,6 +1167,11 @@ std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+
+  // Sort the dataset files in a lexicographical order
+  std::vector<std::string> sorted_dataset_files = dataset_files_;
+  std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
+
   std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_list;
   for (auto v : column_defaults_) {
     if (v->type == CsvType::INT) {
@@ -1177,8 +1187,8 @@ std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
   }
 
   std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
-    dataset_files_, field_delim_, column_default_list, column_names_, num_workers_, rows_per_buffer_, num_samples_,
-    worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_);
+    sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_, rows_per_buffer_,
+    num_samples_, worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_);
   RETURN_EMPTY_IF_ERROR(csv_op->Init());
   if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -1186,10 +1196,10 @@ std::vector<std::shared_ptr<DatasetOp>> CSVDataset::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_EMPTY_IF_ERROR(CsvOp::CountAllFileRows(dataset_files_, column_names_.empty(), &num_rows));
+    RETURN_EMPTY_IF_ERROR(CsvOp::CountAllFileRows(sorted_dataset_files, column_names_.empty(), &num_rows));
 
     // Add the shuffle op after this op
-    RETURN_EMPTY_IF_ERROR(AddShuffleOp(dataset_files_.size(), num_shards_, num_rows, 0, connector_que_size_,
+    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
                                        rows_per_buffer_, &shuffle_op));
     node_ops.push_back(shuffle_op);
   }
@@ -1398,6 +1408,10 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
+  // Sort the dataset files in a lexicographical order
+  std::vector<std::string> sorted_dataset_files = dataset_files_;
+  std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
+
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
   RETURN_EMPTY_IF_ERROR(
@@ -1405,7 +1419,7 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
 
   // Create and initalize TextFileOp
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
-    num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), dataset_files_,
+    num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
     connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(nullptr));
   RETURN_EMPTY_IF_ERROR(text_file_op->Init());
 
@@ -1415,10 +1429,10 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_EMPTY_IF_ERROR(TextFileOp::CountAllFileRows(dataset_files_, &num_rows));
+    RETURN_EMPTY_IF_ERROR(TextFileOp::CountAllFileRows(sorted_dataset_files, &num_rows));
 
     // Add the shuffle op after this op
-    RETURN_EMPTY_IF_ERROR(AddShuffleOp(dataset_files_.size(), num_shards_, num_rows, 0, connector_que_size_,
+    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
                                        rows_per_buffer_, &shuffle_op));
     node_ops.push_back(shuffle_op);
   }
