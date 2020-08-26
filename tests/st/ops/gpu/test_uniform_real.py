@@ -27,17 +27,17 @@ class Net(nn.Cell):
         self.uniformreal = P.UniformReal(seed=seed)
         self.shape = shape
 
-    def construct(self, a, b):
-        return self.uniformreal(self.shape, a, b)
+    def construct(self, minval, maxval):
+        return self.uniformreal(self.shape, minval, maxval)
 
 
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
-    a = 0.0
-    b = 1.0
+    minval = 0.0
+    maxval = 1.0
     net = Net(shape, seed)
-    ta, tb = Tensor(a, mstype.float32), Tensor(b, mstype.float32)
-    output = net(ta, tb)
+    tminval, tmaxval = Tensor(minval, mstype.float32), Tensor(maxval, mstype.float32)
+    output = net(tminval, tmaxval)
     print(output.asnumpy())
     assert output.shape == (3, 2, 4)

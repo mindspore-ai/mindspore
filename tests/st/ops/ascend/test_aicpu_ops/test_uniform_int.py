@@ -28,28 +28,28 @@ class Net(nn.Cell):
         self.uniformint = P.UniformInt(seed=seed)
         self.shape = shape
 
-    def construct(self, a, b):
-        return self.uniformint(self.shape, a, b)
+    def construct(self, minval, maxval):
+        return self.uniformint(self.shape, minval, maxval)
 
 
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
-    a = 1
-    b = 5
+    minval = 1
+    maxval = 5
     net = Net(shape, seed=seed)
-    ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
-    output = net(ta, tb)
+    tminval, tmaxval = Tensor(minval, mstype.int32), Tensor(maxval, mstype.int32)
+    output = net(tminval, tmaxval)
     assert output.shape == (3, 2, 4)
 
 
 def test_net_ND():
     seed = 10
     shape = (3, 2, 1)
-    a = np.array([[[1, 2]], [[3, 4]], [[5, 6]]]).astype(np.int32)
-    b = np.array([10]).astype(np.int32)
+    minval = np.array([[[1, 2]], [[3, 4]], [[5, 6]]]).astype(np.int32)
+    maxval = np.array([10]).astype(np.int32)
     net = Net(shape, seed)
-    ta, tb = Tensor(a), Tensor(b)
-    output = net(ta, tb)
+    tminval, tmaxval = Tensor(minval), Tensor(maxval)
+    output = net(tminval, tmaxval)
     print(output.asnumpy())
     assert output.shape == (3, 2, 2)

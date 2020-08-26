@@ -250,10 +250,10 @@ class ConvReparam(_ConvVariational):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-    >>> net = ConvReparam(120, 240, 4, has_bias=False)
-    >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-    >>> net(input).shape
-    (1, 240, 1024, 640)
+        >>> net = ConvReparam(120, 240, 4, has_bias=False)
+        >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> net(input).shape
+        (1, 240, 1024, 640)
     """
 
     def __init__(
