@@ -75,6 +75,9 @@ Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer
     RETURN_STATUS_UNEXPECTED("Distributed Sampler Error");
   } else if (cnt_ == samples_per_buffer_ && (non_empty_ || !even_dist_)) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    if (!samples_per_buffer_) {
+      non_empty_ = false;
+    }
   } else if (!samples_per_buffer_ && !non_empty_) {
     // If the buffer is empty, we add samples with subscript 0 in the current dataset.
     // This step is to make up for the solution that the code default buffer is not empty before.
