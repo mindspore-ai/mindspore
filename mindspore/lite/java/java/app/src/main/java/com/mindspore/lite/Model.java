@@ -80,12 +80,19 @@ public class Model {
         return ret;
     }
 
+    public boolean loadModel(String modelPath) {
+        this.modelPtr = loadModelByPath(modelPath);
+        return this.modelPtr != 0;
+    }
+
     public void free() {
         this.free(this.modelPtr);
         this.modelPtr = 0;
     }
 
     private native long loadModel(MappedByteBuffer buffer);
+
+    private native long loadModelByPath(String modelPath);
 
     private native void free(long modelPtr);
 }

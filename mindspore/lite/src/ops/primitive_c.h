@@ -61,15 +61,13 @@ class PrimitiveC : public mindspore::Primitive {
 
   MS_DECLARE_PARENT(PrimitiveC, Primitive);
 
-  ~PrimitiveC() override {
-    //    delete this->primitive_;
-  }
+  ~PrimitiveC() override { delete this->primitive_; }
 
   int Type() const;
 
   schema::PrimitiveT *GetPrimitiveT() const;
 
-  void SetPrimitiveT(schema::PrimitiveT *prim);
+  void ClearPrimitiveT();
 
   bool operator==(const Value &rhs) const {
     if (rhs.isa<PrimitiveC>()) {

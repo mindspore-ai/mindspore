@@ -360,7 +360,7 @@ int TimeProfile::RunTimeProfile() {
       delete model;
       return RET_ERROR;
     }
-    auto outputs = session_->GetOutputs();
+    auto outputs = session_->GetOutputMapByNode();
 
     uint64_t run_end = GetTimeUs();
     uint64_t time = run_end - run_begin;

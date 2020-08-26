@@ -168,7 +168,7 @@ void AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_p
   }
 }
 
-schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
+schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   for (const auto &cnode : cnodes) {
@@ -177,17 +177,17 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "primitive_c is nullptr";
       return nullptr;
     }
-    auto primT = primitive_c->GetPrimitiveT();
     if (primitive_c->Type() == schema::PrimitiveType_TupleGetItem ||
         primitive_c->Type() == schema::PrimitiveType_MakeTuple) {
       continue;
     }
     RemoveIfMakeTuple(cnode);
 
+    auto primT = primitive_c->GetPrimitiveT();
     auto node = std::make_unique<schema::CNodeT>();
     if (node == nullptr) {
-        MS_LOG(ERROR) << "object failed to be constructed";
-        return nullptr;
+      MS_LOG(ERROR) << "object failed to be constructed";
+      return nullptr;
     }
     if (primT->value.type == schema::PrimitiveType_Return) {
       node->name = "return_node";
@@ -208,7 +208,9 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "ConvertQuantParam failed";
       return nullptr;
     }
-
+    if (!keep_graph) {
+      primitive_c->ClearPrimitiveT();
+    }
     meta_graphT->nodes.emplace_back(std::move(node));
   }
   // set graph input tensors
@@ -414,15 +416,15 @@ bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType
     return false;
   }
 
-  const auto &prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+  auto prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
   if (prim == nullptr) {
     return false;
   }
-  return (schema::PrimitiveType)prim->Type() == type;
+  return (schema::PrimitiveType)(prim->Type()) == type;
 }
 
-schema::MetaGraphT *Export(const FuncGraphPtr &func_graph) {
+schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph) {
   AnfExporter anf_exporter;
-  return anf_exporter.Export(func_graph);
+  return anf_exporter.Export(func_graph, keep_graph);
 }
 }  // namespace mindspore::lite

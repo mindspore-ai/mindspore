@@ -18,7 +18,7 @@ cd ${TOP_PATH}/output/
 rm -rf mindspore-lite-0.7.0
 tar -zxvf mindspore-lite-0.7.0-runtime-arm64-cpu.tar.gz
 mkdir -p ${BASE_PATH}/lib/
-cp ${TOP_PATH}/output/mindspore-lite-0.7.0/lib/libmindspore-lite.so ${BASE_PATH}/lib/
+cp ${TOP_PATH}/output/mindspore-lite-0.7.0-runtime-arm64-cpu/lib/libmindspore-lite.so ${BASE_PATH}/lib/
 cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${BASE_PATH}/lib/
 
 # build jni so

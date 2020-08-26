@@ -86,17 +86,34 @@ class MS_API LiteSession {
   /// \return STATUS as an error code of running graph, STATUS is defined in errorcode.h.
   virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) = 0;
 
-  /// \brief Get output MindSpore Lite MSTensors of model.
+  /// \brief Get output MindSpore Lite MSTensors of model mapped by node name.
   ///
   /// \return The map of output node name and MindSpore Lite MSTensor.
-  virtual std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputs() const = 0;
+  virtual std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> GetOutputMapByNode() const = 0;
 
   /// \brief Get output MindSpore Lite MSTensors of model by node name.
   ///
   /// \param[in] node_name Define node name.
   ///
   /// \return The vector of MindSpore Lite MSTensor.
-  virtual std::vector<tensor::MSTensor *> GetOutputsByName(const std::string &node_name) const = 0;
+  virtual std::vector<tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const = 0;
+
+  /// \brief Get output MindSpore Lite MSTensors of model mapped by tensor name.
+  ///
+  /// \return The map of output tensor name and MindSpore Lite MSTensor.
+  virtual std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputMapByTensor() const = 0;
+
+  /// \brief Get name of output tensors of model compiled by this session.
+  ///
+  /// \return The vector of string as output tensor names in order.
+  virtual std::vector<std::string> GetOutputTensorNames() const = 0;
+
+  /// \brief Get output MindSpore Lite MSTensors of model by tensor name.
+  ///
+  /// \param[in] tensor_name Define tensor name.
+  ///
+  /// \return Pointer of MindSpore Lite MSTensor.
+  virtual mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const = 0;
 
   /// \brief Resize inputs shape.
   ///

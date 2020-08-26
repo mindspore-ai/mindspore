@@ -47,8 +47,8 @@ class ModelParser {
   static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph) {
     MS_EXCEPTION_IF_NULL(meta_graph);
     auto func_graph = std::make_shared<FuncGraph>();
-    auto importer = new AnfImporterFromMetaGraphT(meta_graph, func_graph);
-    auto ret = importer->Import();
+    AnfImporterFromMetaGraphT importer(meta_graph, func_graph);
+    auto ret = importer.Import();
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "Import anf_graph from meta_graphT failed, ret: " << ret;
       return nullptr;

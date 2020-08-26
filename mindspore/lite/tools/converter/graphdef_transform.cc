@@ -57,7 +57,7 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
       break;
     }
     default:
-      //      MS_LOGI("will support quantizer type %s in the future!", flags->quantTypeIn.c_str());
+      MS_LOG(INFO) << "will support quantizer type " << flags->quantTypeIn << " in the future";
       break;
   }
 }

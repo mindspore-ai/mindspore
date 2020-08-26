@@ -58,27 +58,7 @@ class MindsporeImporter : public Converter {
 
   ~MindsporeImporter() override = default;
 };
-void Converter::FreeFuncGraph(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
-  auto cnodes = func_graph->GetOrderedCnodes();
-  for (auto &cnode : cnodes) {
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "primitive_c is nullptr";
-      return;
-    }
-    auto primT = primitive_c->GetPrimitiveT();
-    if (primT == nullptr) {
-      MS_LOG(ERROR) << "PrimitiveT is nullptr";
-      return;
-    }
-    if (primT->value.type == schema::PrimitiveType_TupleGetItem ||
-        primT->value.type == schema::PrimitiveType_MakeTuple || primT->value.type == schema::PrimitiveType_Return) {
-      delete primT;
-      primitive_c->SetPrimitiveT(nullptr);
-    }
-  }
-}
+
 MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   // parse the model and weight file to generate inference data structure
   FuncGraphPtr graph = nullptr;
@@ -137,7 +117,6 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     return nullptr;
   }
 
-  FreeFuncGraph(graph);
   return meta_graph;
 }
 

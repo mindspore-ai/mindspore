@@ -76,8 +76,8 @@ public class LiteSession {
         return tensors;
     }
 
-    public Map<String, List<MSTensor>> getOutputs() {
-        Map<String, List<Long>> ret = this.getOutputs(this.sessionPtr);
+    public Map<String, List<MSTensor>> getOutputMapByNode() {
+        Map<String, List<Long>> ret = this.getOutputMapByNode(this.sessionPtr);
         Map<String, List<MSTensor>> tensorMap = new HashMap<>();
         Set<Map.Entry<String, List<Long>>> entrySet = ret.entrySet();
         for (Map.Entry<String, List<Long>> entry : entrySet) {
@@ -93,14 +93,35 @@ public class LiteSession {
         return tensorMap;
     }
 
-    public List<MSTensor> getOutputsByName(String nodeName) {
-        List<Long> ret = this.getOutputsByName(this.sessionPtr, nodeName);
+    public List<MSTensor> getOutputsByNodeName(String nodeName) {
+        List<Long> ret = this.getOutputsByNodeName(this.sessionPtr, nodeName);
         ArrayList<MSTensor> tensors = new ArrayList<>();
         for (Long msTensorAddr : ret) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }
         return tensors;
+    }
+
+    public Map<String, MSTensor> getOutputMapByTensor() {
+        Map<String, Long> ret = this.getOutputMapByTensor(this.sessionPtr);
+        Map<String, MSTensor> tensorMap = new HashMap<>();
+        Set<Map.Entry<String, Long>> entrySet = ret.entrySet();
+        for (Map.Entry<String, Long> entry : entrySet) {
+            String name = entry.getKey();
+            Long msTensorAddr = entry.getValue();
+            tensorMap.put(name, new MSTensor(msTensorAddr));
+        }
+        return tensorMap;
+    }
+
+    public List<String> getOutputTensorNames() {
+        return getOutputTensorNames(this.sessionPtr);
+    }
+
+    public MSTensor getOutputByTensorName(String tensorName) {
+        Long tensor_addr = getOutputByTensorName(this.sessionPtr, tensorName);
+        return new MSTensor(tensor_addr);
     }
 
     public void free() {
@@ -120,9 +141,15 @@ public class LiteSession {
 
     private native List<Long> getInputsByName(long sessionPtr, String nodeName);
 
-    private native Map<String, List<Long>> getOutputs(long sessionPtr);
+    private native Map<String, List<Long>> getOutputMapByNode(long sessionPtr);
 
-    private native List<Long> getOutputsByName(long sessionPtr, String nodeName);
+    private native List<Long> getOutputsByNodeName(long sessionPtr, String nodeName);
+
+    private native Map<String, Long> getOutputMapByTensor(long sessionPtr);
+
+    private native List<String> getOutputTensorNames(long sessionPtr);
+
+    private native Long getOutputByTensorName(long sessionPtr, String tensorName);
 
     private native void free(long sessionPtr);
 }
