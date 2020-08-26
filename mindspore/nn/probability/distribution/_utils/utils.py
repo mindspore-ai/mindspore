@@ -368,3 +368,20 @@ class CheckTensor(PrimitiveWithInfer):
         if isinstance(x, Tensor):
             return x
         raise TypeError(f"For {name}, input type should be a Tensor.")
+
+def common_dtype(arg_a, name_a, arg_b, name_b, hint_type):
+    """
+    check if arg_a and arg_b have the same dtype.
+    """
+    if hasattr(arg_a, 'dtype') and hasattr(arg_b, 'dtype'):
+        if isinstance(arg_a, np.ndarray):
+            a_dtype = mstype.pytype_to_dtype(arg_a.dtype)
+        if isinstance(arg_a, np.ndarray):
+            b_dtype = mstype.pytype_to_dtype(arg_b.dtype)
+        if a_dtype != b_dtype:
+            raise TypeError(f"{name_a} and {name_b} should have the same dtype.")
+        int_type = mstype.int_type + mstype.uint_type
+        if a_dtype in int_type or a_dtype == mstype.float64:
+            return mstype.float32
+        return a_dtype
+    return hint_type

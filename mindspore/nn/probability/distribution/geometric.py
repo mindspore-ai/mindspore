@@ -35,7 +35,7 @@ class Geometric(Distribution):
         name (str): name of the distribution. Default: Geometric.
 
     Note:
-        probs should be proper probabilities (0 <= p <= 1).
+        probs should be proper probabilities (0 < p < 1).
         Dist_spec_args is probs.
 
     Examples:
@@ -141,7 +141,7 @@ class Geometric(Distribution):
     @property
     def probs(self):
         """
-        Returns the probability for the outcome is 1.
+        Returns the probability of success of the Bernoulli trail.
         """
         return self._probs
 
