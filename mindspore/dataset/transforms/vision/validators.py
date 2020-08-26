@@ -22,7 +22,7 @@ from mindspore._c_dataengine import TensorOp
 from .utils import Inter, Border, ImageBatchFormat
 from ...core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
-    check_tensor_op, UINT8_MAX
+    check_tensor_op, UINT8_MAX, check_value_normalize_std
 
 
 def check_crop_size(size):
@@ -92,7 +92,7 @@ def check_normalize_py_param(mean, std):
     for mean_value in mean:
         check_value(mean_value, [0., 1.], "mean_value")
     for std_value in std:
-        check_value(std_value, [0., 1.], "std_value")
+        check_value_normalize_std(std_value, [0., 1.], "std_value")
 
 
 def check_fill_value(fill_value):
