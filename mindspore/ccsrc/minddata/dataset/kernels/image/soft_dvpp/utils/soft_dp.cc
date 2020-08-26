@@ -31,7 +31,7 @@ uint32_t DecodeAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info) {
     return checkParamErr;
   }
   if (soft_dp_process_info->output_width % 2 == 1 || soft_dp_process_info->output_height % 2 == 1) {
-    API_LOGE("odd width and height dose not support");
+    API_LOGE("odd width and height dose not support in resize interface");
     return checkParamErr;
   }
   VpcInfo vpc_input_info;
@@ -63,6 +63,10 @@ uint32_t DecodeAndCropAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info, co
       soft_dp_process_info->input_buffer_size <= 0 || soft_dp_process_info->output_buffer == nullptr ||
       soft_dp_process_info->output_buffer_size <= 0) {
     API_LOGE("The input buffer or out buffer is null or size is 0");
+    return checkParamErr;
+  }
+  if (soft_dp_process_info->output_width % 2 == 1 || soft_dp_process_info->output_height % 2 == 1) {
+    API_LOGE("odd width and height dose not support in crop and resize interface");
     return checkParamErr;
   }
   VpcInfo vpc_input_info;
