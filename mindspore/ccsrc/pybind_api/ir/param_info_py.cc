@@ -21,7 +21,7 @@ namespace mindspore {
 namespace py = pybind11;
 
 REGISTER_PYBIND_DEFINE(ParamInfo, ([](const py::module *m) {
-                         (void)py::class_<ParamInfo, ParamValuePtr>(*m, "ParamInfo")
+                         (void)py::class_<ParamInfo, ParamInfoPtr>(*m, "ParamInfo")
                            .def(py::init())
                            .def("clone", &ParamInfo::Clone)
                            .def_property("name", &ParamInfo::name, &ParamInfo::set_name)
@@ -36,7 +36,7 @@ REGISTER_PYBIND_DEFINE(ParamInfo, ([](const py::module *m) {
                                if (t.size() != 6) {
                                  std::runtime_error("Invalid state for ParamInfo!");
                                }
-                               ParamValuePtr p = std::make_shared<ParamInfo>();
+                               ParamInfoPtr p = std::make_shared<ParamInfo>();
                                p->set_name(t[1].cast<std::string>());
                                p->set_requires_grad(t[2].cast<bool>());
                                p->set_layerwise_parallel(t[3].cast<bool>());

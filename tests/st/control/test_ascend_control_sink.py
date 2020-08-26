@@ -118,26 +118,31 @@ class ControlMixedWhileIf(nn.Cell):
         self.var = Parameter(initializer(1, (1), mstype.float32), name="var")
 
     def construct(self, x, y, z, c2, c4):
-        out = self.assign(self.var, c4)
+        out = c4
+        self.assign(self.var, c4)
         while x < c2:
-            y = self.assign(self.var, c4)
+            y = c4
+            self.assign(self.var, c4)
             while y < c2 and x < c2:
                 if 2 * y < c2:
                     y = y + 2
                 else:
                     y = y + 1
             out = out + y
-            z = self.assign(self.var, c4)
+            z = c4
+            self.assign(self.var, c4)
             while z < c2:
                 z = z + 1
             out = out + z
             x = x + 1
         out = out + x
         while x < 2 * c2:
-            y = self.assign(self.var, c4)
+            y = c4
+            self.assign(self.var, c4)
             x = x + 1
             while y < c2:
-                z = self.assign(self.var, c4)
+                z = c4
+                self.assign(self.var, c4)
                 while z < c2:
                     z = z + 1
                 if x < c2:

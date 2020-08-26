@@ -32,10 +32,11 @@
 #include "ir/named.h"
 
 #include "ir/dtype/type.h"
-#include "ir/dtype/ref.h"
 #include "ir/dtype/number.h"
 #include "ir/dtype/container.h"
 #include "ir/dtype/empty.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/ref.h"
 
 /* namespace to support intermediate representation definition */
 namespace mindspore {
@@ -107,98 +108,6 @@ class Slice : public Object {
   TypePtr step_;
 };
 using SlicePtr = std::shared_ptr<Slice>;
-
-class UndeterminedType : public Object {
- public:
-  UndeterminedType() : Object(kObjectTypeUndeterminedType) {}
-  explicit UndeterminedType(const TypePtr &ele)
-      : Object(kObjectTypeUndeterminedType, kMetaTypeObject, false), element_type_(ele) {}
-  ~UndeterminedType() override = default;
-  MS_DECLARE_PARENT(UndeterminedType, Object)
-
-  TypeId generic_type_id() const override { return kObjectTypeUndeterminedType; }
-  const TypePtr element() const { return element_type_; }
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
-  TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string ToReprString() const override;
-  std::string DumpText() const override;
-  bool operator==(const Type &other) const override;
-
- protected:
-  TypePtr element_type_;
-};
-using MetaTensorTypePtr = std::shared_ptr<UndeterminedType>;
-
-class TensorType : public Object {
- public:
-  TensorType() : Object(kObjectTypeTensorType, kObjectTypeUndeterminedType) {}
-  explicit TensorType(const TypePtr &ele)
-      : Object(kObjectTypeTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
-  ~TensorType() override = default;
-  MS_DECLARE_PARENT(TensorType, Object)
-
-  TypeId generic_type_id() const override { return kObjectTypeTensorType; }
-  const TypePtr element() const { return element_type_; }
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
-  TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string ToReprString() const override;
-  std::string DumpText() const override;
-  bool operator==(const Type &other) const override;
-
- private:
-  TypePtr element_type_;
-};
-using TensorTypePtr = std::shared_ptr<TensorType>;
-
-class RowTensorType : public Object {
- public:
-  RowTensorType() : Object(kObjectTypeRowTensorType, kObjectTypeUndeterminedType) {}
-  explicit RowTensorType(const TypePtr &ele)
-      : Object(kObjectTypeRowTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
-  ~RowTensorType() override = default;
-  MS_DECLARE_PARENT(RowTensorType, Object)
-
-  TypeId generic_type_id() const override { return kObjectTypeRowTensorType; }
-  const TypePtr element() const { return element_type_; }
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
-  TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string ToReprString() const override;
-  std::string DumpText() const override;
-  bool operator==(const Type &other) const override;
-
- private:
-  TypePtr element_type_;
-};
-using RowTensorTypePtr = std::shared_ptr<RowTensorType>;
-
-class SparseTensorType : public Object {
- public:
-  SparseTensorType() : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType) {}
-  explicit SparseTensorType(const TypePtr &ele)
-      : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
-  ~SparseTensorType() override = default;
-  MS_DECLARE_PARENT(SparseTensorType, Object)
-
-  TypeId generic_type_id() const override { return kObjectTypeSparseTensorType; }
-  const TypePtr element() const { return element_type_; }
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
-  TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string ToReprString() const override;
-  std::string DumpText() const override;
-  bool operator==(const Type &other) const override;
-
- private:
-  TypePtr element_type_;
-};
-using SparseTensorTypePtr = std::shared_ptr<SparseTensorType>;
 
 class Function : public Object {
  public:
@@ -353,6 +262,9 @@ extern const TypePtr kDict;
 extern const TypePtr kSlice;
 extern const TypePtr kKeyword;
 extern const TypePtr kTensorType;
+extern const TypePtr kTensorTypeFP16;
+extern const TypePtr kTensorTypeFP32;
+
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_

@@ -59,14 +59,13 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
   return func_graph;
 }
 
-ValuePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph, const AnfNodePtr &param) {
-  TypePtr dst_type;
+TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph) {
   if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
     return kFloat32;
   } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
     return kFloat16;
   } else {
-    return kNone;
+    return nullptr;
   }
 }
 

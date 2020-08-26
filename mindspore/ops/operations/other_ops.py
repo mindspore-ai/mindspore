@@ -23,7 +23,7 @@ from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
 
-class Assign(PrimitiveWithInfer):
+class Assign(Primitive):
     """
     Assign `Parameter` with a value.
 

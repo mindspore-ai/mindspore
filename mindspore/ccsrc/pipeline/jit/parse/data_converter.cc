@@ -425,9 +425,6 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     converted = env;
   } else if (py::hasattr(obj, PYTHON_CLASS_MEMBER_NAMESPACE)) {
     converted = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
-  } else if (py::hasattr(obj, "__parameter__")) {
-    auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
-    ret = ConvertData(to_convert, &converted);
   } else {
     ret = ConvertOtherObj(obj, &converted);
   }
@@ -555,9 +552,6 @@ void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name)
 
 ValuePtr PyDataToValue(const py::object &obj) {
   py::object to_convert = obj;
-  if (py::hasattr(obj, "__parameter__")) {
-    to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
-  }
   ValuePtr value = nullptr;
   (void)ConvertData(to_convert, &value);
   return value;

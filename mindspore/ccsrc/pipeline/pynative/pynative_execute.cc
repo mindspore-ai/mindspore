@@ -640,7 +640,14 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
   size_t size = op_exec_info->op_inputs.size();
   for (size_t i = 0; i < size; i++) {
     auto obj = op_exec_info->op_inputs[i];
-    bool op_mask = py::hasattr(obj, "__parameter__");
+    bool op_mask = false;
+    if (py::isinstance<tensor::MetaTensor>(obj)) {
+      auto meta_tensor = obj.cast<tensor::MetaTensorPtr>();
+      if (meta_tensor) {
+        op_mask = meta_tensor->is_parameter();
+      }
+    }
+
     (*op_masks).push_back(op_mask);
     MS_LOG(DEBUG) << "gen " << op_exec_info->op_name << " arg " << i << ": op mask " << op_mask << " grad_flag_ "
                   << grad_flag_;
@@ -990,8 +997,9 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, bool op_mask) {
     if (graph_info_map_[df_builder_].param_map.count(obj_id) == 0) {
       auto free_param = df_builder_->add_parameter();
       free_param->set_name(param_name);
-      free_param->set_default_param(py::cast<tensor::TensorPtr>(obj));
       free_param->debug_info()->set_name(param_name);
+      auto value = py::cast<tensor::TensorPtr>(obj);
+      free_param->set_default_param(value);
       MS_LOG(DEBUG) << "Top graph set free parameter " << obj_id;
       graph_info_map_[df_builder_].param_map[obj_id] = free_param;
       return free_param;
@@ -1159,17 +1167,12 @@ std::vector<AnfNodePtr> PynativeExecutor::GetWeightsArgs(const py::object &weigh
         auto param_name = py::cast<std::string>(name_attr);
         auto free_param = df_builder_->add_parameter();
         free_param->set_name(param_name);
-        free_param->set_default_param(py::cast<tensor::TensorPtr>(param));
+        auto value = py::cast<tensor::TensorPtr>(param);
+        free_param->set_default_param(value);
         free_param->debug_info()->set_name(param_name);
         para_node = free_param;
       }
-      ValuePtr target_type = parse::GetMixedPrecisionTargetType(df_builder_, para_node);
-      AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
-      auto refkey = std::make_shared<RefKey>(para_node->cast<ParameterPtr>()->name());
-      AnfNodePtr ref_key_node = NewValueNode(refkey);
-      AnfNodePtr target_type_node = NewValueNode(target_type);
-      AnfNodePtr ref_node = df_builder_->NewCNode({make_ref, ref_key_node, para_node, target_type_node});
-      w_args.push_back(ref_node);
+      w_args.push_back(para_node);
     }
   } else {
     MS_LOG(DEBUG) << "training not paramter_tuple";
@@ -1197,7 +1200,7 @@ abstract::AbstractBasePtrList PynativeExecutor::GetArgsSpec(const py::args &args
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
       ValuePtr value = param_node->default_param();
-      AbstractBasePtr ptr = abstract::FromValue(value, true);
+      auto ptr = value->ToAbstract();
       if (ptr == nullptr) {
         MS_LOG(EXCEPTION) << "Args convert error";
       }

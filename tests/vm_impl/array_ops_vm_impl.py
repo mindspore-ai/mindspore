@@ -22,7 +22,13 @@ from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
 
 # pylint: disable=unused-argument
-
+@vm_impl_getters.register(P.Assign)
+def vm_impl_assign(self):
+    """Generate vm_impl function for Assign"""
+    def vm_impl(x, value):
+        x.assign_value(value)
+        return x
+    return vm_impl
 
 @vm_impl_getters.register(P.ExpandDims)
 def vm_impl_expand_dims(self):

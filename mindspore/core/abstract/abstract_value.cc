@@ -459,10 +459,6 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   }
   auto other_tensor = dyn_cast<AbstractTensor>(other);
   if (other_tensor == nullptr) {
-    auto ref_tensor = dyn_cast<AbstractRef>(other);
-    if (ref_tensor != nullptr) {
-      return this->Join(ref_tensor->ref());
-    }
     MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
   }
   if (*this == *other) {
@@ -473,7 +469,7 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   return std::make_shared<AbstractTensor>(element, shape);
 }
 
-bool AbstractTensor::operator==(const AbstractTensor &other) const {
+bool AbstractTensor::equal_to(const AbstractTensor &other) const {
   if (&other == this) {
     return true;
   }
@@ -491,12 +487,14 @@ bool AbstractTensor::operator==(const AbstractTensor &other) const {
   return (*element_ == *other.element_) && (*shape() == *other.shape()) && is_value_equal;
 }
 
+bool AbstractTensor::operator==(const AbstractTensor &other) const { return equal_to(other); }
+
 bool AbstractTensor::operator==(const AbstractBase &other) const {
   if (&other == this) {
     return true;
   }
 
-  if (other.isa<AbstractTensor>()) {
+  if (other.tid() == tid()) {
     auto other_tensor = static_cast<const AbstractTensor *>(&other);
     return *this == *other_tensor;
   } else {
@@ -822,39 +820,21 @@ std::string AbstractJTagged::ToString() const {
   return buffer.str();
 }
 
-AbstractRef::AbstractRef(const AbstractBasePtr &ref_key, const AbstractBasePtr &ref_value, bool need_cast,
-                         TypePtr cast_target)
-    : ref_key_(ref_key), ref_(ref_value), need_cast_(false), target_type_(nullptr), ref_key_value_(nullptr) {
+AbstractRef::AbstractRef(const AbstractBasePtr &ref_key, const AbstractTensorPtr &ref_value)
+    : AbstractTensor(*ref_value), ref_key_(ref_key), ref_key_value_(nullptr) {
   set_type(std::make_shared<RefType>());
-  auto origin_type = ref_value->BuildType();
-  if (need_cast && cast_target && origin_type && origin_type->isa<TensorType>()) {
-    auto tensor_dtype = origin_type->cast<TensorTypePtr>()->element();
-    if (tensor_dtype && IsSubType(tensor_dtype, kFloat)) {
-      if (cast_target != tensor_dtype) {
-        need_cast_ = true;
-        target_type_ = cast_target;
-      }
-    }
-  }
   if (ref_key && ref_key->isa<AbstractRefKey>()) {
     ref_key_value_ = ref_key->cast<AbstractRefKeyPtr>()->ref_key_value();
   }
 }
 
-BaseShapePtr AbstractRef::BuildShape() const { return ref_->BuildShape(); }
-
 TypePtr AbstractRef::BuildType() const {
-  TypePtr subtype = ref_->BuildType();
-  TypePtr subtype_origin = subtype;
-  if (need_cast_) {
-    subtype_origin = std::make_shared<TensorType>(target_type_);
-  }
-  return std::make_shared<RefType>(subtype, subtype_origin);
+  auto subtype = AbstractTensor::BuildType()->cast<TensorTypePtr>();
+  return std::make_shared<RefType>(subtype);
 }
 
 bool AbstractRef::operator==(const AbstractRef &other) const {
-  return (*ref_ == *other.ref_) && (need_cast_ == other.need_cast_) && (*ref_key_ == *other.ref_key_) &&
-         (!need_cast_ || (*target_type_ == *other.target_type_));
+  return AbstractTensor::equal_to(other) && (*ref_key_ == *other.ref_key_);
 }
 
 bool AbstractRef::operator==(const AbstractBase &other) const {
@@ -886,24 +866,20 @@ AbstractBasePtr AbstractRefKey::Join(const AbstractBasePtr &other) {
 AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
   auto other_ref = other->cast<AbstractRefPtr>();
   if (other_ref == nullptr) {
-    auto new_ref = ref_->Join(other);
-    return std::make_shared<AbstractRef>(ref_key_, new_ref);
+    return AbstractTensor::Join(other)->cast<AbstractTensorPtr>();
   }
   if ((*this == *other) && (*ref_key_ == *other_ref->ref_key_)) {
     return shared_from_base<AbstractBase>();
   }
   auto ref_key = ref_key_->Join(other_ref->ref_key_);
-  auto ref = ref_->Join(other_ref->ref());
+  auto ref = AbstractTensor::Join(other_ref->ref())->cast<AbstractTensorPtr>();
   return std::make_shared<AbstractRef>(ref_key, ref);
 }
 
 std::string AbstractRef::ToString() const {
   std::ostringstream buffer;
   buffer << type_name() << "("
-         << "key: " << ref_key_->ToString() << " ref_value: " << ref_->ToString();
-  if (need_cast_) {
-    buffer << " cast to: " << target_type_->ToString();
-  }
+         << "key: " << ref_key_->ToString() << " ref_value: " << AbstractTensor::ToString();
   auto value = GetValueTrack();
   if (value) {
     buffer << ", value: " << value->ToString();

@@ -18,7 +18,6 @@
 import inspect
 import copy
 from mindspore.common.api import _wrap_func
-from mindspore.common import Parameter
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore import context
 from .._c_expression import Primitive_, real_run_op, prim_type
@@ -410,16 +409,12 @@ def _run_op(obj, op_name, args):
     if op_name == "Cast" or obj.update_parameter:
         cast_args = args
     else:
-        cast_args = list()
-        for arg in args:
-            if isinstance(arg, Parameter):
-                if arg.cast_type:
-                    cast_args.append(cast(arg, arg.cast_type))
-                else:
-                    cast_args.append(arg)
-            else:
-                cast_args.append(arg)
-    output = real_run_op(obj, op_name, tuple(cast_args))
+        cast_args = args
+        for idx, arg in enumerate(args):
+            cast_type = getattr(arg, "cast_type", None)
+            if cast_type:
+                cast_args[idx] = cast(arg, cast_type)
+    output = real_run_op(obj, op_name, cast_args)
     if not output:
         raise RuntimeError("Pynative run op %s failed!" % op_name)
     if len(output) == 1:

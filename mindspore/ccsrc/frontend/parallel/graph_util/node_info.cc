@@ -20,6 +20,7 @@
 
 #include "ir/anf.h"
 #include "ir/param_info.h"
+#include "ir/meta_tensor.h"
 #include "pipeline/jit/parse/python_adapter.h"
 
 namespace mindspore {
@@ -38,8 +39,7 @@ bool ParameterRequireGrad(const AnfNodePtr &node_ptr) {
   if (!para_ptr->has_default()) {
     return false;
   }
-  auto obj = py::cast(para_ptr->default_param());
-  auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+  auto param_value = para_ptr->param_info();
   if (param_value == nullptr) {
     return false;
   }

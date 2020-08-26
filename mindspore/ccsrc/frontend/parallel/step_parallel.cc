@@ -1356,8 +1356,7 @@ bool ParameterIsCloned(const AnfNodePtr &parameter_node) {
   if (!cloned_parameter->has_default()) {
     return false;
   }
-  auto obj = py::cast(cloned_parameter->default_param());
-  auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+  auto param_value = cloned_parameter->param_info();
   if (param_value == nullptr) {
     return false;
   }
@@ -1380,8 +1379,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
     if (!ParameterIsCloned(cloned_parameter_node)) {
       continue;
     }
-    auto obj = py::cast(cloned_parameter->default_param());
-    auto param_value = py::cast<ParamValuePtr>(obj.attr("_value"));
+    auto param_value = cloned_parameter->param_info();
     if (param_value == nullptr) {
       continue;
     }
@@ -1400,10 +1398,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
         continue;
       }
 
-      const auto &param_value_cloned = be_cloned_parameter->default_param();
-
-      auto obj_in = py::cast(param_value_cloned);
-      auto param_value_in = py::cast<ParamValuePtr>(obj_in.attr("_value"));
+      auto param_value_in = be_cloned_parameter->param_info();
       if (param_value_in == nullptr) {
         continue;
       }

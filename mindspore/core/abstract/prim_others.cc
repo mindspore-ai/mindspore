@@ -113,17 +113,8 @@ AbstractBasePtr InferImplMakeRef(const AnalysisEnginePtr &, const PrimitivePtr &
     MS_LOG(EXCEPTION) << "make_ref evaluator requires 3 parameters, while the input size is " << args_spec_list.size()
                       << ".";
   }
-  TypePtr type = args_spec_list[0]->GetTypeTrack();
-  ValuePtr tensor_target_v = args_spec_list[2]->BuildValue();
-  if (type->type_id() != kObjectTypeRefKey) {
-    MS_LOG(EXCEPTION) << "First input of make_ref should be a RefKey but a " << type->ToString();
-  }
-  auto need_cast = !tensor_target_v->isa<None>();
-  if (need_cast && !tensor_target_v->isa<Type>()) {
-    MS_LOG(EXCEPTION) << "Third input of make_ref should be a Type but a " << tensor_target_v->ToString();
-  }
-  TypePtr cast_target = tensor_target_v->cast<TypePtr>();
-  return std::make_shared<AbstractRef>(args_spec_list[0], args_spec_list[1], need_cast, cast_target);
+  auto tensor = args_spec_list[1]->cast<abstract::AbstractTensorPtr>();
+  return std::make_shared<AbstractRef>(args_spec_list[0], tensor);
 }
 
 AbstractBasePtr InferImplGetRefKey(const AnalysisEnginePtr &, const PrimitivePtr &,

@@ -467,6 +467,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
   }
   return *this;
 }
+
 abstract::AbstractBasePtr Tensor::ToAbstract() {
   auto tens = shared_from_base<Tensor>();
   auto dtype = tens->Dtype();
@@ -475,7 +476,15 @@ abstract::AbstractBasePtr Tensor::ToAbstract() {
   }
   auto tensor_shape = tens->shape();
   auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
-  abs_tensor->set_value(shared_from_base<Tensor>());
+  // if is parameter always no value.
+  if (is_parameter()) {
+    auto param_name = param_info()->name();
+    auto ref_key = std::make_shared<RefKey>(param_name);
+    auto abs_ref_key = ref_key->ToAbstract();
+    abs_tensor = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_tensor);
+  } else {
+    abs_tensor->set_value(shared_from_base<Tensor>());
+  }
   return abs_tensor;
 }
 

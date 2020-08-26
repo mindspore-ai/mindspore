@@ -29,6 +29,8 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/scope.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/value_extends.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/ref.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/tensor_type.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/container.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/empty.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/number.cc

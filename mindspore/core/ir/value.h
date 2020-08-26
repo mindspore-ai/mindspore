@@ -224,28 +224,21 @@ using StringImmPtr = std::shared_ptr<StringImm>;
 IMM_TRAITS(StringImmPtr, std::string)
 IMM_TRAITS(StringImmPtr, const char *)
 
-class RefKey : public Value {
+class RefKey : public Named {
  public:
-  explicit RefKey(const std::string &tag) : Value(kRefKeyType), tag_(tag), hash_(std::hash<std::string>{}(tag)) {}
+  explicit RefKey(const std::string &tag) : Named(tag) {}
 
   ~RefKey() override = default;
-  MS_DECLARE_PARENT(RefKey, Value)
-  std::size_t hash() const override { return hash_; }
-  const std::string &tag() const { return tag_; }
-  bool operator==(const Value &other) const override;
-  bool operator==(const RefKey &other) const;
+  MS_DECLARE_PARENT(RefKey, Named)
+  const std::string &tag() const { return name(); }
   abstract::AbstractBasePtr ToAbstract() override;
-  std::string ToString() const override { return "RefKey[" + tag_ + "]"; }
+  std::string ToString() const override { return "RefKey[" + name() + "]"; }
 
   std::string DumpText() const override {
     std::ostringstream oss;
-    oss << "RefKey[\"" << tag_ << "\"]";
+    oss << "RefKey[\"" << name() << "\"]";
     return oss.str();
   }
-
- private:
-  std::string tag_;
-  std::size_t hash_ = 0;
 };
 using RefKeyPtr = std::shared_ptr<RefKey>;
 

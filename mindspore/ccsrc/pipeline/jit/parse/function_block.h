@@ -101,9 +101,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // keeps all removable phis which will be removed in one pass.
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis_;
 
-  // set state nodes need to insert before function return nodes.
-  OrderedMap<AnfNodePtr, std::string> state_assign_;
-
   // hold declared global variables in function
   std::set<std::string> global_vars_;
 

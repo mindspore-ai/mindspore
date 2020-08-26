@@ -81,12 +81,6 @@ void MultitypeFuncGraph::PyRegister(const py::tuple &tuple, const py::function &
   }
   Register(types_name, py_fn);
 }
-static TypePtr UnwrapRef(const TypePtr &type) {
-  if (type->isa<RefType>()) {
-    return type->cast<RefTypePtr>()->subtype();
-  }
-  return type;
-}
 
 // Return Exact match if exists,  else return non ambiguous sub class match
 // Return py::none() if matching is ambiguous
@@ -99,7 +93,7 @@ const py::function MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
     }
     auto match = true;
     for (size_t i = 0; i < sign.size(); ++i) {
-      if (!IsIdentidityOrSubclass(UnwrapRef(types[i]), sign[i])) {
+      if (!IsIdentidityOrSubclass(types[i], sign[i])) {
         match = false;
         break;
       }

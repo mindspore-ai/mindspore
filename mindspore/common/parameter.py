@@ -42,7 +42,7 @@ class Parameter(MetaTensor):
     In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
     an `Initializer`, the type of Parameter will be `MetaTensor` not `Tensor`. `MetaTensor`
     only saves the shape and type info of a tensor with no memory usage. The shape can be changed while
-    compile for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
+    compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
 
     Note:
         Each parameter of Cell is represented by Parameter class.
@@ -108,7 +108,7 @@ class Parameter(MetaTensor):
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
     def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False):
-        self._value = ParamInfo()
+        self._param_info = ParamInfo()
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
@@ -156,13 +156,13 @@ class Parameter(MetaTensor):
         value_str = MetaTensor.__str__(self)
         if isinstance(self, Tensor):
             value_str = Tensor.__str__(self)
-        return f'Parameter (name={self._value.name}, value={value_str})'
+        return f'Parameter (name={self._param_info.name}, value={value_str})'
 
     def __repr__(self):
         value_str = MetaTensor.__repr__(self)
         if isinstance(self, Tensor):
             value_str = Tensor.__repr__(self)
-        return f'Parameter (name={self._value.name}, value={value_str})'
+        return f'Parameter (name={self._param_info.name}, value={value_str})'
 
     def __parameter__(self):
         """For parse check."""
@@ -181,7 +181,7 @@ class Parameter(MetaTensor):
     @property
     def name(self):
         """Get the name of the parameter."""
-        return self._value.name
+        return self._param_info.name
 
     @name.setter
     def name(self, name_):
@@ -203,7 +203,7 @@ class Parameter(MetaTensor):
                                  format(name_, PARAMETER_NAME_PREFIX_MAX_LEN))
         else:
             raise ValueError("The type of the name should be `str` or `None`.")
-        self._value.name = name_
+        self._param_info.name = name_
 
     @property
     def cast_type(self):
@@ -254,8 +254,8 @@ class Parameter(MetaTensor):
         _check_str_by_regular(prefix)
         x = copy(self)
         # pylint: disable=protected-access
-        x._value = self._value.clone()
-        x._value.name = prefix + '.' + self._value.name
+        x._param_info = self._param_info.clone()
+        x._param_info.name = prefix + '.' + self._param_info.name
         x.is_init = False
         if init != 'same':
             shape = self.shape
@@ -265,24 +265,24 @@ class Parameter(MetaTensor):
 
     @property
     def layerwise_parallel(self):
-        return self._value.layerwise_parallel
+        return self._param_info.layerwise_parallel
 
     @layerwise_parallel.setter
     def layerwise_parallel(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`layerwise_parallel` parameter must be bool type")
-        self._value.layerwise_parallel = value
+        self._param_info.layerwise_parallel = value
 
     @property
     def requires_grad(self):
         """Return whether the parameter requires gradient."""
-        return self._value.requires_grad
+        return self._param_info.requires_grad
 
     @requires_grad.setter
     def requires_grad(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`requires_grad` parameter must be bool type")
-        self._value.requires_grad = value
+        self._param_info.requires_grad = value
 
     @property
     def data(self):

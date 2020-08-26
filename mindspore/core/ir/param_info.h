@@ -21,10 +21,13 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "ir/anf.h"
-#include "ir/tensor.h"
+
+#include "ir/dtype.h"
 
 namespace mindspore {
+class ParamInfo;
+using ParamInfoPtr = std::shared_ptr<ParamInfo>;
+
 class ParamInfo {
  public:
   ParamInfo() {}
@@ -55,7 +58,7 @@ class ParamInfo {
   int32_t cloned_index() const { return cloned_index_; }
 
   // Make a cloned parameter and update clone info.
-  ParamValuePtr Clone() {
+  ParamInfoPtr Clone() {
     static std::atomic<int32_t> parameter_cloned_index{1};
     int32_t index = parameter_cloned_index.fetch_add(1, std::memory_order_relaxed);
     auto clone = std::make_shared<ParamInfo>(*this);
