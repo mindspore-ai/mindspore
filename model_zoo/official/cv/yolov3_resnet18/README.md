@@ -1,16 +1,50 @@
-# YOLOv3 Example
+# Contents
 
-## Description
+- [YOLOv3_ResNet18 Description](#yolov3_resnet18-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)    
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training Process](#training-process)
+        - [Training](#training)
+    - [Evaluation Process](#evaluation-process)
+        - [Evaluation](#evaluation)
+- [Model Description](#model-description)
+    - [Performance](#performance)  
+        - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#evaluation-performance)
+- [Description of Random Situation](#description-of-random-situation)
+- [ModelZoo Homepage](#modelzoo-homepage)
+
+
+# [YOLOv3_ResNet18 Description](#contents)
 
 YOLOv3 network based on ResNet-18, with support for training and evaluation.
 
-## Requirements
+[Paper](https://arxiv.org/abs/1804.02767):  Joseph Redmon, Ali Farhadi. arXiv preprint arXiv:1804.02767, 2018. 2, 4, 7, 11.
 
-- Install [MindSpore](https://www.mindspore.cn/install/en).
+# [Model Architecture](#contents)
+
+The overall network architecture of YOLOv3 is show below:
+
+And we use ResNet18 as the backbone of YOLOv3_ResNet18. The architecture of ResNet18 has 4 stages. The ResNet architecture performs the initial convolution and max-pooling using 7×7 and 3×3 kernel sizes respectively. Afterward,  every stage of the network has different Residual blocks (2, 2, 2, 2) containing two 3×3 conv layers. Finally, the network has an Average Pooling layer followed by a fully connected layer. 
+
+
+# [Dataset](#contents)
+
+Dataset used: [COCO2017](<http://images.cocodataset.org/>) 
+
+- Dataset size：19G
+  - Train：18G，118000 images  
+  - Val：1G，5000 images 
+  - Annotations：241M，instances，captions，person_keypoints etc
+- Data format：image and json files
+  - Note：Data will be processed in dataset.py
 
 - Dataset
-
-    We use coco2017 as training dataset.
 
     1. The directory structure is as follows:
         > ```
@@ -29,17 +63,84 @@ YOLOv3 network based on ResNet-18, with support for training and evaluation.
         Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. `dataset.py` is the parsing script, we read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are external inputs.
 
 
-## Running the Example
+# [Environment Requirements](#contents)
 
-### Training
+- Hardware（Ascend）
+  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Framework
+  - [MindSpore](https://www.mindspore.cn/install/en)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
 
+
+
+# [Quick Start](#contents)
+
+After installing MindSpore via the official website, you can start training and evaluation on Ascend as follows: 
+
+- runing on Ascend
+
+    ```shell script
+    #run standalone training example
+    sh run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
+    
+    #run distributed training example
+    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH] [RANK_TABLE_FILE]
+   
+    #run evaluation example
+    sh run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
+    ```
+# [Script Description](#contents)
+
+## [Script and Sample Code](#contents)
+
+```
+└── model_zoo
+    ├── README.md                           // descriptions about all the models
+    └── yolov3_resnet18        
+        ├── README.md                       // descriptions about yolov3_resnet18
+        ├── scripts 
+            ├── run_distribute_train.sh     // shell script for distributed on Ascend
+            ├── run_standalone_train.sh     // shell script for distributed on Ascend
+            └── run_eval.sh                 // shell script for evaluation on Ascend
+        ├── src 
+            ├── dataset.py                  // creating dataset
+            ├── yolov3.py                   // yolov3 architecture
+            ├── config.py                   // parameter configuration 
+            └── utils.py                    // util function
+        ├── train.py                        // training script 
+        └── eval.py                         // evaluation script  
+```
+
+## [Script Parameters](#contents)
+
+  ```
+  Major parameters in train.py and config.py as follows:
+
+    evice_num: Use device nums, default is 1.
+    lr: Learning rate, default is 0.001.
+    epoch_size: Epoch size, default is 10.
+    batch_size: Batch size, default is 32.
+    pre_trained: Pretrained Checkpoint file path.
+    pre_trained_epoch_size: Pretrained epoch size.
+    mindrecord_dir: Mindrecord directory.
+    image_dir: Dataset path.
+    anno_path: Annotation path.
+
+    img_shape: Image height and width used as input to the model.
+  ```
+
+
+## [Training Process](#contents)
+
+### Training on Ascend
 To train the model, run `train.py` with the dataset `image_dir`, `anno_path` and `mindrecord_dir`. If the `mindrecord_dir` is empty, it wil generate [mindrecord](https://www.mindspore.cn/tutorial/en/master/use/data_preparation/converting_datasets.html) file by `image_dir` and `anno_path`(the absolute image path is joined by the `image_dir` and the relative path in `anno_path`). **Note if `mindrecord_dir` isn't empty, it will use `mindrecord_dir` rather than `image_dir` and `anno_path`.**
 
 - Stand alone mode
 
     ```
     sh run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt
-
     ```
 
     The input variables are device id, epoch size, mindrecord directory path, dataset directory path and train TXT file path.
@@ -55,40 +156,84 @@ To train the model, run `train.py` with the dataset `image_dir`, `anno_path` and
 
 You will get the loss value and time of each step as following:
 
-```
-epoch: 145 step: 156, loss is 12.202981
-epoch time: 25599.22742843628, per step time: 164.0976117207454
-epoch: 146 step: 156, loss is 16.91706
-epoch time: 23199.971675872803, per step time: 148.7177671530308
-epoch: 147 step: 156, loss is 13.04007
-epoch time: 23801.95164680481, per step time: 152.57661312054364
-epoch: 148 step: 156, loss is 10.431475
-epoch time: 23634.241580963135, per step time: 151.50154859591754
-epoch: 149 step: 156, loss is 14.665991
-epoch time: 24118.8325881958, per step time: 154.60790120638333 
-epoch: 150 step: 156, loss is 10.779521
-epoch time: 25319.57221031189, per step time: 162.30495006610187
-```
+  ```
+  epoch: 145 step: 156, loss is 12.202981
+  epoch time: 25599.22742843628, per step time: 164.0976117207454
+  epoch: 146 step: 156, loss is 16.91706
+  epoch time: 23199.971675872803, per step time: 148.7177671530308
+  epoch: 147 step: 156, loss is 13.04007
+  epoch time: 23801.95164680481, per step time: 152.57661312054364
+  epoch: 148 step: 156, loss is 10.431475
+  epoch time: 23634.241580963135, per step time: 151.50154859591754
+  epoch: 149 step: 156, loss is 14.665991
+  epoch time: 24118.8325881958, per step time: 154.60790120638333 
+  epoch: 150 step: 156, loss is 10.779521
+  epoch time: 25319.57221031189, per step time: 162.30495006610187
+  ```
 
 Note the results is two-classification(person and face) used our own annotations with coco2017, you can change `num_classes` in `config.py` to train your dataset. And we will suport 80 classifications in coco2017 the near future.
 
-### Evaluation
+## [Evaluation Process](#contents)
+### Evaluation on Ascend
 
 To eval, run `eval.py` with the dataset `image_dir`, `anno_path`(eval txt), `mindrecord_dir` and `ckpt_path`. `ckpt_path` is the path of [checkpoint](https://www.mindspore.cn/tutorial/en/master/use/saving_and_loading_model_parameters.html) file.
 
-```
-sh run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt
-```
+  ```
+  sh run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt
+  ```
 
 The input variables are device id, checkpoint path, mindrecord directory path, dataset directory path and train TXT file path.
 
 You will get the precision and recall value of each class:
 
-```
-class 0 precision is 88.18%, recall is 66.00%
-class 1 precision is 85.34%, recall is 79.13%
-```
+  ```
+  class 0 precision is 88.18%, recall is 66.00%
+  class 1 precision is 85.34%, recall is 79.13%
+  ```
 
 Note the precision and recall values are results of two-classification(person and face) used our own annotations with coco2017.
 
+
+# [Model Description](#contents)
+## [Performance](#contents)
+
+### Evaluation Performance 
+
+| Parameters                 | Ascend                                                      | 
+| -------------------------- | ----------------------------------------------------------- |
+| Model Version              | Inception V1                                                |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | 
+| uploaded Date              | 06/01/2020 (month/day/year)                                 | 
+| MindSpore Version          | 0.2.0-alpha                                                 | 
+| Dataset                    | COCO2017                                                    | 
+| Training Parameters        | epoch = 150, batch_size = 32, lr = 0.001                    |
+| Optimizer                  | Adam                                                        | 
+| Loss Function              | Sigmoid Cross Entropy                                       |
+| outputs                    | probability                                                 | 
+| Speed                      | 1pc: 120 ms/step;  8pcs: 160 ms/step                        | 
+| Total time                 | 1pc: 150 mins;  8pcs: 70 mins                               | 
+| Parameters (M)             | 189                                                         | 
+| Scripts                    | [yolov3_resnet18 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_resnet18) | [yolov3_resnet18 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_resnet18) |
+
+
+### Inference Performance
+
+| Parameters          | Ascend                                          | 
+| ------------------- | ----------------------------------------------- |
+| Model Version       | Inception V1                                    | 
+| Resource            | Ascend 910                                      |
+| Uploaded Date       | 06/01/2020 (month/day/year)                     |
+| MindSpore Version   | 0.2.0-alpha                                     |
+| Dataset             | COCO2017                                        |
+| batch_size          | 1                                               |
+| outputs             | presion and recall                              |
+| Accuracy            | class 0: 88.18%/66.00%; class 1: 85.34%/79.13%  | 
+
+# [Description of Random Situation](#contents)
+
+In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py. 
+
+
+# [ModelZoo Homepage](#contents)  
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
 
