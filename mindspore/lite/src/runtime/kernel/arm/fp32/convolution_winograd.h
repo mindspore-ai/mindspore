@@ -38,10 +38,6 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
       delete trans_weight_;
       trans_weight_ = nullptr;
     }
-    if (trans_input_ != nullptr) {
-      free(trans_input_);
-      trans_input_ = nullptr;
-    }
   };
   int Init() override;
   int ReSize() override;
@@ -55,6 +51,10 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
+    if (trans_input_ != nullptr) {
+      ctx_->allocator->Free(trans_input_);
+      trans_input_ = nullptr;
+    }
     if (tmp_data_ != nullptr) {
       ctx_->allocator->Free(tmp_data_);
       tmp_data_ = nullptr;

@@ -33,10 +33,6 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
     if (transformed_filter_addr_ != nullptr) {
       free(transformed_filter_addr_);
     }
-    if (tile_buffer_ != nullptr) {
-      free(tile_buffer_);
-      tile_buffer_ = nullptr;
-    }
   }
   int Init() override;
   int ReSize() override;
@@ -49,6 +45,10 @@ class Convolution3x3CPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   void FreeTmpBuffer() {
+    if (tile_buffer_ != nullptr) {
+      ctx_->allocator->Free(tile_buffer_);
+      tile_buffer_ = nullptr;
+    }
     if (block_unit_buffer_ != nullptr) {
       ctx_->allocator->Free(block_unit_buffer_);
       block_unit_buffer_ = nullptr;
