@@ -164,6 +164,20 @@ class Net(nn.Cell):
         out = self.mean(out, -1)
         return out
 
+
+class Net2(nn.Cell):
+    def __init__(self):
+        super(Net2, self).__init__()
+        self.matmul = P.MatMul()
+        self.relu = P.ReLU()
+        self.matmul_weight = Parameter(Tensor(np.ones([64, 64]), dtype=ms.float32), name="weight")
+
+    def construct(self, x, b):
+        out = self.matmul(x, self.matmul_weight)
+        out = self.relu(out)
+        return out
+
+
 def test_loss_scale():
     context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
@@ -173,5 +187,18 @@ def test_loss_scale():
     net = Net()
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     net = TrainOneStepWithLossScaleCell(net, opt, update_cell)
+    model = Model(network=net)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_loss_scale2():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
+    predict = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64,]), dtype=ms.int32)
+    dataset = DatasetLenet(predict, label)
+    net = Net2()
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
+    net = nn.TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
