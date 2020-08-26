@@ -435,6 +435,7 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->pad_d_ = convdw_lite_primitive->PadDown();
   conv_param->pad_l_ = convdw_lite_primitive->PadLeft();
   conv_param->pad_r_ = convdw_lite_primitive->PadRight();
+  conv_param->input_channel_ = convdw_lite_primitive->GetInputChannel();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
   auto act_type = conv_primitive->GetActivationType();
