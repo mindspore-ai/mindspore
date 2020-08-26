@@ -18,9 +18,10 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "nnacl/pack.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/convolution.h"
+#include "nnacl/pack.h"
+#include "nnacl/fp32/common_func.h"
 
 using mindspore::kernel::ConvolutionOpenCLKernel;
 using mindspore::kernel::LiteKernel;
@@ -34,22 +35,37 @@ void LoadData(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
     memset(dst, 0x00, dst_size);
   } else {
-    auto src_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &dst_size));
+    auto src_data = mindspore::lite::ReadFile(file_path.c_str(), &dst_size);
     memcpy(dst, src_data, dst_size);
   }
 }
 
-void MyCompareOutput(lite::tensor::Tensor *output_tensor, const std::string &file_path) {
-  auto *output_data = reinterpret_cast<float *>(output_tensor->Data());
+void MyCompareOutput(lite::tensor::Tensor *output_tensor, const std::string &file_path, const TypeId data_type,
+                     const float atol) {
+  size_t output_size = output_tensor->Size();
+  auto output_data_ori = output_tensor->Data();
+  auto expect_data_ori = mindspore::lite::ReadFile(file_path.c_str(), &output_size);
+  std::vector<float> output_data_vec(output_tensor->ElementsC4Num());
+  std::vector<float> expect_data_vec(output_tensor->ElementsC4Num());
+  float *output_data, *expect_data;
+  if (data_type == kNumberTypeFloat16) {
+    for (int i = 0; i < output_data_vec.size(); ++i) {
+      output_data_vec[i] = ShortToFloat32(reinterpret_cast<uint16_t *>(output_data_ori)[i]);
+      expect_data_vec[i] = ShortToFloat32(reinterpret_cast<uint16_t *>(expect_data_ori)[i]);
+    }
+    output_data = output_data_vec.data();
+    expect_data = expect_data_vec.data();
+  } else {
+    output_data = reinterpret_cast<float *>(output_data_ori);
+    expect_data = reinterpret_cast<float *>(expect_data_ori);
+  }
+
   printf("\noutput[0:10]:");
   for (int i = 0; i < 10; i++) {
     printf("%d:%.3f ", i, output_data[i]);
   }
   printf("\n");
 
-  size_t output_size = output_tensor->Size();
-  auto expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
-  constexpr float atol = 0.5;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
     if (std::fabs(output_data[i] - expect_data[i]) > atol) {
       printf("error at idx[%d] expect=%.3f output=%.3f\n", i, expect_data[i], output_data[i]);
@@ -61,8 +77,8 @@ void MyCompareOutput(lite::tensor::Tensor *output_tensor, const std::string &fil
   printf("COMPARE SUCCESS!\n\n\n");
 }
 
-void TEST_MAIN(schema::Format input_format, schema::Format output_format, const std::string &data_path,
-               std::string attr_str) {
+void TEST_MAIN(schema::Format input_format, schema::Format output_format, const TypeId data_type,
+               const std::string &data_path, std::string attr_str) {
   auto param = new (std::nothrow) ConvParameter;
   if (param == nullptr) {
     return;
@@ -87,6 +103,7 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   std::cout << "initialize OpenCLRuntime and OpenCLAllocator";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   auto allocator = ocl_runtime->GetAllocator();
 
   std::cout << "create Tensors";
@@ -94,7 +111,6 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
   std::vector<int> output_shape = {param->output_batch_, param->output_h_, param->output_w_, param->output_channel_};
-  auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
   auto input_tensor = lite::tensor::Tensor(data_type, input_shape, input_format, tensor_type);
   auto weight_tensor = lite::tensor::Tensor(data_type, weight_shape, schema::Format_KHWC, tensor_type);
@@ -121,11 +137,17 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   input_tensor.MallocData(allocator);  // before MapBuffer()
   sub_graph->Init();
   LoadData(input_tensor.Data(), input_tensor.Size(), input_file);  // after MapBuffer()
-  printf("input[0-2] =%.3f\n", reinterpret_cast<float *>(input_tensor.Data())[0]);
-  printf("weight[0-2]=%.3f\n", reinterpret_cast<float *>(weight_tensor.Data())[0]);
-  printf("bias[0-2]  =%.3f\n", reinterpret_cast<float *>(bias_tensor.Data())[0]);
+  if (data_type == kNumberTypeFloat16) {
+    printf("input[0] =%.3f\n", ShortToFloat32(reinterpret_cast<uint16_t *>(input_tensor.Data())[0]));
+    printf("weight[0]=%.3f\n", ShortToFloat32(reinterpret_cast<uint16_t *>(weight_tensor.Data())[0]));
+    printf("bias[0]  =%.3f\n", ShortToFloat32(reinterpret_cast<uint16_t *>(bias_tensor.Data())[0]));
+  } else {
+    printf("input[0] =%.3f\n", reinterpret_cast<float *>(input_tensor.Data())[0]);
+    printf("weight[0]=%.3f\n", reinterpret_cast<float *>(weight_tensor.Data())[0]);
+    printf("bias[0]  =%.3f\n", reinterpret_cast<float *>(bias_tensor.Data())[0]);
+  }
   sub_graph->Run();
-  MyCompareOutput(&output_tensor, expect_file);
+  MyCompareOutput(&output_tensor, expect_file, data_type, (data_type == kNumberTypeFloat16 ? 0.7f : 0.1f));
 
   std::cout << "release resources";
   weight_tensor.FreeData();
@@ -138,72 +160,30 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   delete sub_graph;
 }
 
-TEST_F(TestConvolutionOpenCL, in1x1x64x512_out1x1x64x7358_k11_s11_p0000) {
-  // change W/H
+TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101_fp32) {
   TEST_MAIN(
-    schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-    "inputNHWC_1x1x64x512_outputNHWC_1x1x64x7358_kernelHW_1x1_strideHW_1x1_padTopBottomLeftRight_0x0x0x0_dilationHW_"
-    "1x1");
-}
-
-TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x1_outputNHWC_1x32x512x50) {
-  // speed up
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
-            "inputNHWC_1x32x512x1_outputNHWC_1x32x512x50_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-            "dilationHW_1x1");
-}
-
-TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101) {
-  TEST_MAIN(
-    schema::Format_NHWC, schema::Format_NHWC4, "testcases/mobilenetv2_fp32/",
+    schema::Format_NHWC, schema::Format_NHWC4, kNumberTypeFloat32, "testcases/mobilenetv2_fp32/",
     "inputNHWC_1x224x224x3_outputNHWC_1x112x112x32_kernelHW_3x3_strideHW_2x2_padTopBottomLeftRight_0x1x0x1_dilationHW_"
     "1x1");
 }
 
-TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
+TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101_fp16) {
+  TEST_MAIN(
+    schema::Format_NHWC, schema::Format_NHWC4, kNumberTypeFloat16, "testcases/mobilenetv2_fp16/",
+    "inputNHWC_1x224x224x3_outputNHWC_1x112x112x32_kernelHW_3x3_strideHW_2x2_padTopBottomLeftRight_0x1x0x1_dilationHW_"
+    "1x1");
+}
+
+TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_fp32) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, kNumberTypeFloat32, "testcases/test_fp32/",
             "inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
             "dilationHW_1x1");
 }
-TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x100_outputNHWC_1x16x256x96) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
-            "inputNHWC_1x16x256x100_outputNHWC_1x16x256x96_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-            "dilationHW_1x1");
-}
 
-TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x32x512x50_outputNHWC_1x32x512x48) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-            "inputNHWC_1x32x512x50_outputNHWC_1x32x512x48_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
+TEST_F(TestConvolutionOpenCL, winograd_02_origin_inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_fp16) {
+  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, kNumberTypeFloat16, "testcases/test_fp16/",
+            "inputNHWC_1x16x256x96_outputNHWC_1x16x256x80_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
             "dilationHW_1x1");
-}
-
-TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x8x128x100_outputNHWC_1x8x128x250) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-            "inputNHWC_1x8x128x100_outputNHWC_1x8x128x250_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-            "dilationHW_1x1");
-}
-
-TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x8x128x100_outputNHWC_1x8x128x300) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-            "inputNHWC_1x8x128x100_outputNHWC_1x8x128x300_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-            "dilationHW_1x1");
-}
-
-TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x4x64x150_outputNHWC_1x4x64x350) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-            "inputNHWC_1x4x64x150_outputNHWC_1x4x64x350_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-            "dilationHW_1x1");
-}
-TEST_F(TestConvolutionOpenCL, winograd_02_other_inputNHWC_1x4x64x150_outputNHWC_1x4x64x400) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/02_fp32/",
-            "inputNHWC_1x4x64x150_outputNHWC_1x4x64x400_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_1x1x1x1_"
-            "dilationHW_1x1");
-}
-
-TEST_F(TestConvolutionOpenCL, winograd_08_origin_inputNHWC_1x480x480x128_outputNHWC_1x480x480x128) {
-  TEST_MAIN(schema::Format_NHWC, schema::Format_NHWC4, "testcases/test_fp32/",
-            "inputNHWC_1x480x480x128_outputNHWC_1x480x480x128_kernelHW_3x3_strideHW_1x1_padTopBottomLeftRight_"
-            "1x1x1x1_dilationHW_1x1");
 }
 
 }  // namespace mindspore
