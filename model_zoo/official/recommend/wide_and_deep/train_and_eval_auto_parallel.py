@@ -111,10 +111,11 @@ def train_and_eval(config):
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config, host_device_mix=host_device_mix)
 
     callback = LossCallBack(config=config, per_print_times=20)
-    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
+    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*epochs,
+                                  keep_checkpoint_max=5, integrated_save=False)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path, config=ckptconfig)
-    context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_train.ckpt")
+    context.set_auto_parallel_context(strategy_ckpt_save_file=config.stra_ckpt)
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
     if not host_device_mix:
         callback_list.append(ckpoint_cb)

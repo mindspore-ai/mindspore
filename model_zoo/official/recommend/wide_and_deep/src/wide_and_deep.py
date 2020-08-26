@@ -200,6 +200,7 @@ class WideDeepModel(nn.Cell):
             self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
+            self.dense_layer_1.matmul.add_prim_attr("field_size", config.field_size)
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
                                                            slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_COLUMN_SLICE)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
@@ -207,6 +208,10 @@ class WideDeepModel(nn.Cell):
             self.deep_mul.set_strategy(((1, 1, get_group_size()), (1, 1, 1)))
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
             self.reduce_sum.add_prim_attr("cross_batch", True)
+            self.embedding_table = self.deep_embeddinglookup.embedding_table
+        elif host_device_mix:
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
         elif parameter_server:
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
