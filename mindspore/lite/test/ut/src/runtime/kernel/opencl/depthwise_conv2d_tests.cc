@@ -54,7 +54,6 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   }
 
   // pack weight
-  int OC4 = UP_DIV(conv_param->output_channel_, C4NUM);
   int pack_weight_size = conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_;
   T1 *packed_weight = weight_data;
 
@@ -103,7 +102,6 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
 
   std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
   std::vector<lite::tensor::Tensor *> inputs_{&tensor_a};
-  size_t C4 = UP_DIV(inputs[0]->Channel(), C4NUM);
   auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
   if (pGraph.get() == nullptr) {
     delete[] packed_input;
