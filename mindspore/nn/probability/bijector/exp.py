@@ -20,6 +20,9 @@ class Exp(PowerTransform):
     Exponential Bijector.
     This Bijector performs the operation: Y = exp(x).
 
+    Args:
+        name (str): name of the bijector. Default: 'Exp'.
+
     Examples:
         >>> # To initialize a Exp bijector
         >>> import mindspore.nn.probability.bijector as msb
@@ -32,11 +35,12 @@ class Exp(PowerTransform):
         >>>         self.e1 = msb.Exp()
         >>>
         >>>     def construct(self, value):
-        >>>
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'forward' with the name of the function
-        >>>         ans1 = self.e1.forward(value)
-        >>>         ans2 = self.e1.backward(value)
+        >>>         ans1 = self.s1.forward(value)
+        >>>         ans2 = self.s1.inverse(value)
+        >>>         ans3 = self.s1.forward_log_jacobian(value)
+        >>>         ans4 = self.s1.inverse_log_jacobian(value)
     """
     def __init__(self,
                  name='Exp'):
