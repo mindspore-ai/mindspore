@@ -99,8 +99,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setDataTy
   return ret == data_type;
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getData(JNIEnv *env, jobject thiz,
-                                                                                 jlong tensor_ptr) {
+extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getByteData(JNIEnv *env, jobject thiz,
+                                                                                     jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -113,13 +113,92 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getData
     return env->NewByteArray(0);
   }
 
-  auto *float_local_data = reinterpret_cast<float *>(ms_tensor_ptr->MutableData());
-  for (size_t i = 0; i < ms_tensor_ptr->ElementsNum() && i < 5; i++) {
-    MS_LOGE("data[%zu] = %f", i, float_local_data[i]);
+  if (ms_tensor_ptr->data_type() != mindspore::kNumberTypeUInt8) {
+    MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
+    return env->NewByteArray(0);
   }
+
   auto local_data_size = ms_tensor_ptr->Size();
   auto ret = env->NewByteArray(local_data_size);
   env->SetByteArrayRegion(ret, 0, local_data_size, local_data);
+  return ret;
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL Java_com_mindspore_lite_MSTensor_getLongData(JNIEnv *env, jobject thiz,
+                                                                                     jlong tensor_ptr) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return env->NewLongArray(0);
+  }
+
+  auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
+
+  auto *local_data = static_cast<jlong *>(ms_tensor_ptr->MutableData());
+  if (local_data == nullptr) {
+    MS_LOGD("Tensor has no data");
+    return env->NewLongArray(0);
+  }
+
+  if (ms_tensor_ptr->data_type() != mindspore::kNumberTypeInt64) {
+    MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
+    return env->NewLongArray(0);
+  }
+  auto local_data_size = ms_tensor_ptr->Size();
+  auto ret = env->NewLongArray(local_data_size);
+  env->SetLongArrayRegion(ret, 0, local_data_size, local_data);
+  return ret;
+}
+
+extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getIntData(JNIEnv *env, jobject thiz,
+                                                                                   jlong tensor_ptr) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return env->NewIntArray(0);
+  }
+
+  auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
+
+  auto *local_data = static_cast<jint *>(ms_tensor_ptr->MutableData());
+  if (local_data == nullptr) {
+    MS_LOGD("Tensor has no data");
+    return env->NewIntArray(0);
+  }
+
+  if (ms_tensor_ptr->data_type() != mindspore::kNumberTypeInt32) {
+    MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
+    return env->NewIntArray(0);
+  }
+  auto local_data_size = ms_tensor_ptr->Size();
+  auto ret = env->NewIntArray(local_data_size);
+  env->SetIntArrayRegion(ret, 0, local_data_size, local_data);
+  return ret;
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_lite_MSTensor_getFloatData(JNIEnv *env, jobject thiz,
+                                                                                       jlong tensor_ptr) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return env->NewFloatArray(0);
+  }
+
+  auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
+
+  auto *local_data = static_cast<jfloat *>(ms_tensor_ptr->MutableData());
+  if (local_data == nullptr) {
+    MS_LOGD("Tensor has no data");
+    return env->NewFloatArray(0);
+  }
+
+  if (ms_tensor_ptr->data_type() != mindspore::kNumberTypeFloat32) {
+    MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
+    return env->NewFloatArray(0);
+  }
+  auto local_data_size = ms_tensor_ptr->Size();
+  auto ret = env->NewFloatArray(local_data_size);
+  env->SetFloatArrayRegion(ret, 0, local_data_size, local_data);
   return ret;
 }
 
@@ -131,6 +210,36 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setData(J
     MS_LOGE("Tensor pointer from java is nullptr");
     return static_cast<jboolean>(false);
   }
+  auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
+  if (data_len != ms_tensor_ptr->Size()) {
+    MS_LOGE("data_len(%ld) not equal to Size of ms_tensor(%zu)", data_len, ms_tensor_ptr->Size());
+    return static_cast<jboolean>(false);
+  }
+  jboolean is_copy = false;
+  auto *data_arr = env->GetByteArrayElements(data, &is_copy);
+  auto *local_data = ms_tensor_ptr->MutableData();
+  memcpy(local_data, data_arr, data_len);
+  return static_cast<jboolean>(true);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBufferData(JNIEnv *env, jobject thiz,
+                                                                                         jlong tensor_ptr,
+                                                                                         jobject buffer) {
+  jbyte *p_data = reinterpret_cast<jbyte *>(env->GetDirectBufferAddress(buffer));  // get buffer poiter
+  jlong data_len = env->GetDirectBufferCapacity(buffer);                           // get buffer capacity
+  if (!p_data) {
+    MS_LOGE("GetDirectBufferAddress return null");
+    return NULL;
+  }
+  jbyteArray data = env->NewByteArray(data_len);       // create byte[]
+  env->SetByteArrayRegion(data, 0, data_len, p_data);  // copy data to byte[]
+
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return static_cast<jboolean>(false);
+  }
+
   auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
   if (data_len != ms_tensor_ptr->Size()) {
     MS_LOGE("data_len(%ld) not equal to Size of ms_tensor(%zu)", data_len, ms_tensor_ptr->Size());
