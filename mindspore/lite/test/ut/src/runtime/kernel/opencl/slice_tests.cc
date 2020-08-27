@@ -148,6 +148,7 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   }
   delete slice_kernel;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   MS_LOG(INFO) << "begin test";
@@ -258,5 +259,6 @@ TEST_F(TestSliceOpenCLfp16, Slicefp16input_dim4) {
   }
   delete slice_kernel;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

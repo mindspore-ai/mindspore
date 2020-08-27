@@ -106,5 +106,6 @@ TEST_F(TestReshapeOpenCL, ReshapeFp32) {
   outputs[0]->SetData(nullptr);
 
   MS_LOG(INFO) << "Test ReshapeFp32 passed";
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

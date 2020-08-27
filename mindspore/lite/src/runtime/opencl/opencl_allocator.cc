@@ -24,7 +24,7 @@
 namespace mindspore::lite::opencl {
 
 OpenCLAllocator::OpenCLAllocator() {}
-OpenCLAllocator::~OpenCLAllocator() {}
+OpenCLAllocator::~OpenCLAllocator() { Clear(); }
 
 void OpenCLAllocator::SetContext(const AllocatorContext &ctx) {
   lock_flag_ = ctx.lockFlag;

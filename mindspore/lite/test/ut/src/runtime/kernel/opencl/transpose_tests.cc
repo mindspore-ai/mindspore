@@ -108,5 +108,6 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
   outputs[0]->SetData(nullptr);
 
   MS_LOG(INFO) << "Test TransposeFp32 passed";
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

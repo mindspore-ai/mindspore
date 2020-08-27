@@ -118,6 +118,7 @@ TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
   }
   delete pooling_kernel;
   delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 }  // namespace mindspore

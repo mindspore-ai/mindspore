@@ -158,6 +158,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   delete param;
   delete batchnorm_kernel;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   MS_LOG(INFO) << "begin test";
@@ -277,5 +278,6 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   delete param;
   delete batchnorm_kernel;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

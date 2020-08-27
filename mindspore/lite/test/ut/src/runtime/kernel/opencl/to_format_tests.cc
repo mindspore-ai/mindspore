@@ -103,5 +103,6 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
   // compare
   CompareOutputData(output_data, correct_data, h * w * c, 0.00001);
   MS_LOG(INFO) << "Test TransposeFp32 passed";
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore
