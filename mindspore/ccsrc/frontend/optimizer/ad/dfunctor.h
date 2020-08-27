@@ -95,7 +95,7 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Update k hole with adjoint_definition, only applied in recursive case.
   void UpdateAdjoint(const AdjointPtr &adjoint_definition);
   void CallDoutHoleOnTape();
-  void ReplaceEquivdout(const CNodePtr &cnode, const ValuePtr &forward);
+  void ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_morph);
 
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_;
   // Cache for indirect fv backpropagation, K o K can only do backprop layer by layer.
