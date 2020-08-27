@@ -204,14 +204,15 @@ def multinomial(inputs, num_sample, replacement=True, seed=0):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        input (Tensor) - the input tensor containing probabilities, must be 1 or 2 dims.
-        num_samples (int) - number of samples to draw.
-        replacement (bool, optional) - whether to draw with replacement or not, default True.
-        seed (int, optional) - used as entropy source for Random number engines generating pseudo-random numbers.
+        inputs (Tensor): the input tensor containing probabilities, must be 1 or 2 dims. With float32 data type.
+        num_sample (int): number of samples to draw.
+        replacement (bool, optional): whether to draw with replacement or not, default True.
+        seed (int, optional): used as entropy source for Random number engines generating pseudo-random numbers.
           Must be non-negative. Default: 0.
 
     Outputs:
         Tensor. have the same rows with input, each row has num_samples sampled indices.
+        The dtype is float32.
 
     Examples:
         >>> input = Tensor([0, 9, 4, 0], mstype.float32)
