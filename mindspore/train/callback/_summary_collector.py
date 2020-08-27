@@ -111,7 +111,7 @@ class SummaryCollector(Callback):
             and float. Default: None, it means there is no custom data.
         collect_tensor_freq (Optional[int]): The same semantics as the `collect_freq`, but controls TensorSummary only.
             Because TensorSummary data is too large to be compared with other summary data, this parameter is used to
-            reduce its collection. By default, The maximum number of steps for collecting TensorSummary data is 21,
+            reduce its collection. By default, The maximum number of steps for collecting TensorSummary data is 20,
             but it will not exceed the number of steps for collecting other summary data.
             Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
             when the total steps is 600, TensorSummary will be collected 20 steps, while other summary data 61 steps,
