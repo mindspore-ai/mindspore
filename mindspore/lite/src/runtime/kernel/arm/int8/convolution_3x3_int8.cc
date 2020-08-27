@@ -44,6 +44,10 @@ void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParamete
 }
 
 void Convolution3x3Int8CPUKernel::FreeTmpBuffer() {
+  if (tile_buffer_ != nullptr) {
+    ctx_->allocator->Free(tile_buffer_);
+    tile_buffer_ = nullptr;
+  }
   if (block_unit_buffer_ != nullptr) {
     ctx_->allocator->Free(block_unit_buffer_);
     block_unit_buffer_ = nullptr;
@@ -66,10 +70,6 @@ Convolution3x3Int8CPUKernel::~Convolution3x3Int8CPUKernel() {
   if (input_data_ != nullptr) {
     free(input_data_);
     input_data_ = nullptr;
-  }
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
   }
   FreeQuantParam();
 }
@@ -115,7 +115,15 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   int output_batch = conv_param_->output_batch_;
   int output_w = conv_param_->output_w_;
   int output_h = conv_param_->output_h_;
+  int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
+
+  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * ic8 * C8NUM * sizeof(int16_t);
+  tile_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (tile_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
+    return RET_ERROR;
+  }
 
   size_t block_unit_buffer_size = thread_count_ * 4 * 4 * C8NUM * sizeof(int16_t);
   block_unit_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(block_unit_buffer_size));
@@ -175,10 +183,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
     free(input_data_);
     input_data_ = nullptr;
   }
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
-  }
 
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -196,13 +200,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
   }
   memset(input_data_, 0, c8_input_size);
 
-  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * ic8 * C8NUM * sizeof(int16_t);
-  tile_buffer_ = reinterpret_cast<int16_t *>(malloc(tile_buffer_size));
-  if (tile_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
-    return RET_ERROR;
-  }
-  memset(tile_buffer_, 0, tile_buffer_size);
   return RET_OK;
 }
 

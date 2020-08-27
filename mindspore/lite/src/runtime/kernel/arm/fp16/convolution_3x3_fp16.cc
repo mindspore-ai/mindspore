@@ -95,7 +95,15 @@ int Convolution3x3FP16CPUKernel::InitTmpBuffer() {
   const int tile_num = 16;
   const int k_plane = 36;
   int oC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
+  int iC8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
+
+  size_t tile_buffer_size = thread_count_ * tile_num * k_plane * iC8 * C8NUM * sizeof(float16_t);
+  tile_buffer_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
+  if (tile_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
+    return RET_ERROR;
+  }
 
   size_t block_unit_buffer_size = thread_count_ * k_plane * C8NUM * sizeof(float16_t);
   block_unit_buffer_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(block_unit_buffer_size));
@@ -152,10 +160,6 @@ int Convolution3x3FP16CPUKernel::ReSize() {
     return ret;
   }
 
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
-  }
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
@@ -166,10 +170,8 @@ int Convolution3x3FP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return ret;
   }
-  const int tile_num = 16;
-  const int k_plane = 36;
-  int iC8 = UP_DIV(conv_param_->input_channel_, C8NUM);
 
+  int iC8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   size_t nhwc8_input_size =
     iC8 * C8NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = malloc(nhwc8_input_size);
@@ -178,14 +180,6 @@ int Convolution3x3FP16CPUKernel::ReSize() {
     return RET_ERROR;
   }
   memset(nhwc4_input_, 0, nhwc8_input_size);
-
-  size_t tile_buffer_size = thread_count_ * tile_num * k_plane * iC8 * C8NUM * sizeof(float16_t);
-  tile_buffer_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
-  if (tile_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
-    return RET_ERROR;
-  }
-  memset(tile_buffer_, 0, tile_buffer_size);
 
   return RET_OK;
 }

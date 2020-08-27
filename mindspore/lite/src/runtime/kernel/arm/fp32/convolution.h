@@ -35,10 +35,6 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
       free(packed_weight_);
       packed_weight_ = nullptr;
     }
-    if (packed_input_ != nullptr) {
-      free(packed_input_);
-      packed_input_ = nullptr;
-    }
   }
 
   int Init() override;
@@ -54,6 +50,14 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
     if (tmp_output_block_ != nullptr) {
       ctx_->allocator->Free(tmp_output_block_);
       tmp_output_block_ = nullptr;
+    }
+    if (nhwc4_input_ != nullptr) {
+      ctx_->allocator->Free(nhwc4_input_);
+      nhwc4_input_ = nullptr;
+    }
+    if (packed_input_ != nullptr) {
+      ctx_->allocator->Free(packed_input_);
+      packed_input_ = nullptr;
     }
   }
   float *packed_input_ = nullptr;
