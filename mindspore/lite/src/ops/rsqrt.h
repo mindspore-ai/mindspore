@@ -33,6 +33,26 @@ class Rsqrt : public ArithmeticSelf {
   explicit Rsqrt(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
   explicit Rsqrt(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto val_offset = schema::CreateRsqrt(fbb);
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Rsqrt, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
 };
 }  // namespace lite

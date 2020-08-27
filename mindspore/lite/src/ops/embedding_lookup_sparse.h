@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -36,6 +37,38 @@ class EmbeddingLookupSparse : public PrimitiveC {
   void SetMaxNortm(float max_nortm);
 #else
   explicit EmbeddingLookupSparse(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_EmbeddingLookupSparse();
+    MS_ASSERT(attr != nullptr);
+
+    auto spIds = std::make_unique<std::vector<int32_t>>();
+    for (int i = 0; i < static_cast<int>(attr->spIds()->size()); i++) {
+      spIds->push_back(attr->spIds()->data()[i]);
+    }
+    auto spWeights = std::make_unique<std::vector<float>>();
+    for (int i = 0; i < static_cast<int>(attr->spWeights()->size()); i++) {
+      spWeights->push_back(attr->spWeights()->data()[i]);
+    }
+
+    auto val_offset = schema:: CreateEmbeddingLookupSparseDirect(fbb, spIds.release(), spWeights.release());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_EmbeddingLookupSparse, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   std::vector<int> GetSpIds() const;
   std::vector<float> GetSpWeights() const;

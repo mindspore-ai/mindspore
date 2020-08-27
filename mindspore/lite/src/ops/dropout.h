@@ -35,6 +35,29 @@ class Dropout : public PrimitiveC {
 
 #else
   explicit Dropout(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_Dropout();
+    MS_ASSERT(attr != nullptr);
+
+    auto val_offset = schema::CreateDropout(fbb, attr->ratio());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Dropout, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   float GetRatio() const;
 };

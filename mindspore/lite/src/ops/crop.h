@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -35,6 +36,34 @@ class Crop : public PrimitiveC {
   void SetOffsets(const std::vector<int64_t> &offsets);
 #else
   explicit Crop(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_Crop();
+    MS_ASSERT(attr != nullptr);
+
+    auto offsets = std::make_unique<std::vector<int64_t>>();
+    for (int i = 0; i < static_cast<int>(attr->offsets()->size()); i++) {
+      offsets->push_back(attr->offsets()->data()[i]);
+    }
+
+    auto val_offset = schema::CreateCropDirect(fbb, attr->axis(), offsets.release());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Crop, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int64_t GetAxis() const;

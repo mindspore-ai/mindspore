@@ -21,6 +21,7 @@
 #include <set>
 #include <cmath>
 #include <string>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -36,6 +37,34 @@ class Upsample : public PrimitiveC {
   void SetScales(const std::vector<float> &scales);
 #else
   explicit Upsample(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_Upsample();
+    MS_ASSERT(attr != nullptr);
+
+    auto scales = std::make_unique<std::vector<float>>();
+    for (int i = 0; i < static_cast<int>(attr->scales()->size()); i++) {
+      scales->push_back(attr->scales()->data()[i]);
+    }
+
+    auto val_offset = schema::CreateUpsampleDirect(fbb, attr->mode()->c_str(), scales.release());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Upsample, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   std::string GetMode() const;
   std::vector<float> GetScales() const;

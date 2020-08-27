@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -37,6 +38,43 @@ class SparseToDense : public PrimitiveC {
   void SetValidateIndices(bool validate_indices);
 #else
   explicit SparseToDense(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_SparseToDense();
+    MS_ASSERT(attr != nullptr);
+
+    auto outputShape = std::make_unique<std::vector<int32_t>>();
+    for (int i = 0; i < static_cast<int>(attr->outputShape()->size()); i++) {
+      outputShape->push_back(attr->outputShape()->data()[i]);
+    }
+    auto sparseValue = std::make_unique<std::vector<int32_t>>();
+    for (int i = 0; i < static_cast<int>(attr->sparseValue()->size()); i++) {
+      sparseValue->push_back(attr->sparseValue()->data()[i]);
+    }
+    auto defaultValue = std::make_unique<std::vector<int32_t>>();
+    for (int i = 0; i < static_cast<int>(attr->defaultValue()->size()); i++) {
+      defaultValue->push_back(attr->defaultValue()->data()[i]);
+    }
+
+    auto val_offset = schema::CreateSparseToDenseDirect(fbb, outputShape.release(),
+                                                  sparseValue.release(), defaultValue.release());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_SparseToDense, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   std::vector<int> GetOutputShape() const;
   std::vector<int> GetSparseValue() const;

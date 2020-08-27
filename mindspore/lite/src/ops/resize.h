@@ -39,6 +39,31 @@ class Resize : public PrimitiveC {
   void SetPreserveAspectRatio(bool preserve_aspect_ratio);
 #else
   explicit Resize(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_Resize();
+    MS_ASSERT(attr != nullptr);
+
+    auto val_offset = schema::CreateResize(fbb, attr->format(), attr->method(),
+                                           attr->newHeight(), attr->newWidth(),
+                                           attr->alignCorners(), attr->preserveAspectRatio());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Resize, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;

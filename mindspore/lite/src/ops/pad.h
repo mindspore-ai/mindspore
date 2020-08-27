@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -36,6 +37,34 @@ class Pad : public PrimitiveC {
   void SetConstantValue(float constant_value);
 #else
   explicit Pad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_Pad();
+    MS_ASSERT(attr != nullptr);
+
+    auto paddings = std::make_unique<std::vector<int32_t>>();
+    for (int i = 0; i < static_cast<int>(attr->paddings()->size()); i++) {
+      paddings->push_back(attr->paddings()->data()[i]);
+    }
+
+    auto val_offset = schema::CreatePadDirect(fbb, paddings.release(), attr->paddingMode(), attr->constantValue());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Pad, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetPaddings() const;
