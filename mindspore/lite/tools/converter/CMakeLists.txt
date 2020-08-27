@@ -1,6 +1,6 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
-set(ANF_SRC
-        ${ANF_SRC}
+set(CORE_SRC
+        ${CORE_SRC}
         #core / abstract
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_function.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/analysis_context.cc
@@ -47,6 +47,8 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/info.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/profile.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/ms_context.cc
+        )
+set(CCSRC_SRC
         ## ccsrc
         ${CCSRC_DIR}/debug/draw.cc
         ${CCSRC_DIR}/pybind_api/export_flags.cc
@@ -55,8 +57,7 @@ set(ANF_SRC
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
-        )
+)
 
 if (WIN32)
     set(LITE_SRC
@@ -118,6 +119,8 @@ add_subdirectory(quantizer)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(LITE_SRC
+        ${SRC_DIR}/common/graph_utils_extends.cc
+        ${SRC_DIR}/common/log_adapter.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/ms_tensor_utils.cc
         ${SRC_DIR}/runtime/allocator.cc
@@ -163,7 +166,8 @@ endif()
 
 add_executable(converter_lite
         main.cc
-        ${ANF_SRC}
+        ${CORE_SRC}
+        ${CCSRC_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
         ${KERNEL_SRC}
@@ -172,7 +176,8 @@ add_executable(converter_lite
 
 if (WIN32)
     add_library(converter_mid OBJECT
-            ${ANF_SRC}
+            ${CORE_SRC}
+            ${CCSRC_SRC}
             ${CONVERTER_SRC}
             ${OPS_SRC}
             ${KERNEL_SRC}
