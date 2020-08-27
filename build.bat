@@ -55,6 +55,9 @@ IF "%1%" == "lite" (
     IF errorlevel 1 (
         echo "build fail."
         goto run_fail
+    ) ELSE (
+        cd %BASEPATH%/output
+        rd /s /q _CPack_Packages
     )
 ) ELSE (
     cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON ^
