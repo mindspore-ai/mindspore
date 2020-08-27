@@ -137,8 +137,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
-  std::list<WatchpointHit> CheckWatchpoints();
-  std::list<WatchpointHit> CheckSingleWatchpoint(std::string watchnode) const;
+  std::list<WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string());
 
   // send watchpoints that hit and enter command wait loop
   void SendWatchpointsAndSuspend(const std::list<WatchpointHit> &points);

@@ -66,11 +66,9 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
 
 void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
                                      std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
-                                     const std::vector<std::string> &op_overflows) {
+                                     const std::vector<std::string> &op_overflows,
+                                     const std::vector<std::shared_ptr<TensorData>> &tensor_list) {
   std::lock_guard<std::mutex> lg(lock_);
-
-  std::vector<std::shared_ptr<TensorData>> tensor_list = tensor_loader_->GetTensor();
-
   std::string current_tensor_name;
   std::unordered_map<unsigned int, watchpoint_t> watchpoints_to_check_table;
   const size_t location = 0;
@@ -195,61 +193,6 @@ void DebugServices::HandleWatchpointHits(const std::vector<unsigned int> &hit_en
       watchpoint_id->push_back(*it_hit_id);
     }
     watchpoints_to_check_table->erase(*it_hit_id);
-  }
-}
-
-void DebugServices::CheckSingleWatchpoint(std::shared_ptr<TensorData> watchtensor, std::string *name, std::string *slot,
-                                          char **data_ptr, unsigned int *data_size, int *condition,
-                                          unsigned int *wacthpoint_id) {
-  std::lock_guard<std::mutex> lg(lock_);
-
-  std::string current_watchtensor_name;
-  current_watchtensor_name = watchtensor->GetName();
-  mindspore::tensor::TensorPtr tensor_ptr = watchtensor->GetTensor();
-  int tensor_data_type = tensor_ptr->data_type_c();
-  watchpoint_t watchpoint_to_check;
-
-  for (auto w_table_item : watchpoint_table) {
-    auto check_node_list = std::get<1>(w_table_item).check_node_list;
-    for (auto check_node : check_node_list) {
-      std::string w_name = std::get<0>(check_node);
-      bool w_type = std::get<1>(check_node);
-      // get current the full info including condition, id..., for current watchtensor
-      std::string current_node_name = current_watchtensor_name.substr(0, current_watchtensor_name.find_first_of(":"));
-      if ((w_type == true && (current_watchtensor_name.find(w_name) != string::npos || w_name == "*")) ||
-          (w_type == false && current_node_name == w_name)) {
-        watchpoint_to_check = w_table_item.second;
-        // need to add support for float16 and float64, and other types when we support conditions beyond inf and nan
-        if (tensor_data_type != kNumberTypeFloat && tensor_data_type != kNumberTypeFloat32) {
-          return;
-        }
-        break;
-      }
-    }
-  }
-
-  float *start_addr = reinterpret_cast<float *>(tensor_ptr->data_c());
-  unsigned int num_elements = (tensor_ptr->data().nbytes()) / sizeof(float);
-
-  for (unsigned int index = 0; index < num_elements; index++) {
-    float x = start_addr[index];
-    if (((watchpoint_to_check.conditions.inf.enabled || watchpoint_to_check.conditions.neg_inf.enabled) && isinf(x)) ||
-        (watchpoint_to_check.conditions.nan.enabled && isnan(x))) {
-      std::string name_no_slot = current_watchtensor_name.substr(0, current_watchtensor_name.find_first_of(":"));
-      *name = name_no_slot;
-      *slot = std::to_string(watchtensor->GetSlot());
-      *data_ptr = reinterpret_cast<char *>(tensor_ptr->data_c());
-      *data_size = tensor_ptr->data().nbytes();
-      int condition_item = -1;
-      if (watchpoint_to_check.conditions.nan.enabled) {
-        condition_item = 0;
-      } else if (watchpoint_to_check.conditions.inf.enabled || watchpoint_to_check.conditions.neg_inf.enabled) {
-        condition_item = 1;
-      }
-      *condition = condition_item;
-
-      *wacthpoint_id = watchpoint_to_check.id;
-    }
   }
 }
 
