@@ -185,7 +185,7 @@ Status Server::BuildAndStart() {
   int32_t http_port = option_args->rest_api_port;
   std::string http_addr = "0.0.0.0";
 
-  evhttp_set_timeout(http_server, 5);
+  evhttp_set_timeout(http_server, 60);
   evhttp_set_gencb(http_server, http_handler_msg, nullptr);
 
   // grpc server
