@@ -126,13 +126,13 @@ void ConvolutionSWFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionSWFP16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   ConfigInputOutput();
   return ReSize();
