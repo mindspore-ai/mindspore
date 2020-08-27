@@ -250,11 +250,40 @@ std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &dataset
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 template <typename T = std::shared_ptr<SchemaObj>>
-std::shared_ptr<RandomDataset> RandomData(const int32_t &total_rows = 0, T schema = nullptr,
+std::shared_ptr<RandomDataset> RandomData(const int32_t &total_rows = 0, const T &schema = nullptr,
                                           const std::vector<std::string> &columns_list = {},
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler()) {
-  auto ds = std::make_shared<RandomDataset>(total_rows, schema, columns_list, std::move(sampler));
-  return ds->ValidateParams() ? ds : nullptr;
+  if (total_rows < 0) {
+    MS_LOG(ERROR) << "RandomDataset: total_rows must be greater than or equal 0, now get " << total_rows;
+    return nullptr;
+  }
+  if (sampler == nullptr) {
+    MS_LOG(ERROR) << "RandomDataset: Sampler is not constructed correctly, sampler: nullptr";
+    return nullptr;
+  }
+  if (!columns_list.empty()) {
+    for (uint32_t i = 0; i < columns_list.size(); ++i) {
+      if (columns_list[i].empty()) {
+        MS_LOG(ERROR) << "RandomDataset:columns_list"
+                      << "[" << i << "] should not be empty";
+        return nullptr;
+      }
+    }
+    std::set<std::string> columns_set(columns_list.begin(), columns_list.end());
+    if (columns_set.size() != columns_list.size()) {
+      MS_LOG(ERROR) << "RandomDataset:columns_list: Every column name should not be same with others";
+      return nullptr;
+    }
+  }
+  std::shared_ptr<RandomDataset> ds;
+  if constexpr (std::is_same<T, std::nullptr_t>::value || std::is_same<T, std::shared_ptr<SchemaObj>>::value) {
+    std::shared_ptr<SchemaObj> schema_obj = schema;
+    ds =
+      std::make_shared<RandomDataset>(total_rows, std::move(schema_obj), std::move(columns_list), std::move(sampler));
+  } else {
+    ds = std::make_shared<RandomDataset>(total_rows, std::move(schema), std::move(columns_list), std::move(sampler));
+  }
+  return ds;
 }
 
 /// \brief Function to create a TextFileDataset
