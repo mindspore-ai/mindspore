@@ -68,7 +68,8 @@ def parse_args():
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
     parser.add_argument("--task_name", type=str, default="", choices=["SST-2", "QNLI", "MNLI"],
                         help="The name of the task to train.")
-    parser.add_argument("--dataset_type", type=str, default="tfrecord", help="dataset type, default is tfrecord")
+    parser.add_argument("--dataset_type", type=str, default="tfrecord",
+                        help="dataset type tfrecord/mindrecord, default is tfrecord")
     args = parser.parse_args()
     return args
 

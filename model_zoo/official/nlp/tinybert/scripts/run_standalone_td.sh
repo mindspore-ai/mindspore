@@ -43,5 +43,6 @@ python ${PROJECT_DIR}/../run_task_distill.py \
     --load_td1_ckpt_path="" \
     --train_data_dir="" \
     --eval_data_dir="" \
-    --schema_dir="" > log.txt 2>&1 &
+    --schema_dir="" \
+    --dataset_type="tfrecord" > log.txt 2>&1 &
 

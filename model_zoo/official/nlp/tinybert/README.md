@@ -44,12 +44,12 @@ After installing MindSpore via the official website, you can start general disti
 # run standalone general distill example
 bash scripts/run_standalone_gd.sh 
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
+Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
 
 # For Ascend device, run distributed general distill example
 bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_distributed_gd_ascend.sh file first.
+Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_distributed_gd_ascend.sh file first.
 
 # For GPU device, run distributed general distill example
 bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
@@ -57,7 +57,7 @@ bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/t
 # run task distill and evaluation example
 bash scripts/run_standalone_td.sh 
 
-Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir` and `schema_dir` in the run_standalone_td.sh file first.
+Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir`, `schema_dir` and `dataset_type` in the run_standalone_td.sh file first.
 If running on GPU, please set the `device_target=GPU`.
 ```
 
@@ -101,7 +101,7 @@ usage: run_general_distill.py   [--distribute DISTRIBUTE] [--epoch_size N] [----
                                 [--save_ckpt_path SAVE_CKPT_PATH]
                                 [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
                                 [--save_checkpoint_step N] [--max_ckpt_num N] 
-                                [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [train_steps N]
+                                [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [--dataset_type DATASET_TYPE] [train_steps N]
 
 options:
     --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
@@ -118,6 +118,7 @@ options:
     --load_teacher_ckpt_path   path to load teacher checkpoint files: PATH, default is ""
     --data_dir                 path to dataset directory: PATH, default is ""
     --schema_dir               path to schema.json file, PATH, default is ""
+    --dataset_type             the dataset type which can be tfrecord/mindrecord, default is tfrecord
 ```
   
 ### Task Distill
@@ -132,7 +133,7 @@ usage: run_general_task.py  [--device_target DEVICE_TARGET] [--do_train DO_TRAIN
                             [--load_td1_ckpt_path LOAD_TD1_CKPT_PATH]
                             [--train_data_dir TRAIN_DATA_DIR]
                             [--eval_data_dir EVAL_DATA_DIR]
-                            [--task_name TASK_NAME] [--schema_dir SCHEMA_DIR]
+                            [--task_name TASK_NAME] [--schema_dir SCHEMA_DIR] [--dataset_type DATASET_TYPE]
 
 options:
     --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
@@ -153,6 +154,7 @@ options:
     --eval_data_dir            path to eval dataset directory: PATH, default is ""
     --task_name                classification task: "SST-2" | "QNLI" | "MNLI", default is ""
     --schema_dir               path to schema.json file, PATH, default is ""
+    --dataset_type             the dataset type which can be tfrecord/mindrecord, default is tfrecord
 ```
 
 ## Options and Parameters

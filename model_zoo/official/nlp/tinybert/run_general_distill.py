@@ -55,7 +55,8 @@ def run_general_distill():
     parser.add_argument("--load_teacher_ckpt_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--data_dir", type=str, default="", help="Data path, it is better to use absolute path")
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
-    parser.add_argument("--dataset_type", type=str, default="tfrecord", help="dataset type, default is tfrecord")
+    parser.add_argument("--dataset_type", type=str, default="tfrecord",
+                        help="dataset type tfrecord/mindrecord, default is tfrecord")
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
