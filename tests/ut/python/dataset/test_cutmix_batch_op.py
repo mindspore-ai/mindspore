@@ -27,6 +27,7 @@ from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_se
 
 DATA_DIR = "../data/dataset/testCifar10Data"
 DATA_DIR2 = "../data/dataset/testImageNetData2/train/"
+DATA_DIR3 = "../data/dataset/testCelebAData/"
 
 GENERATE_GOLDEN = False
 
@@ -36,7 +37,6 @@ def test_cutmix_batch_success1(plot=False):
     Test CutMixBatch op with specified alpha and prob parameters on a batch of CHW images
     """
     logger.info("test_cutmix_batch_success1")
-
     # Original Images
     ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     ds_original = ds_original.batch(5, drop_remainder=True)
@@ -147,6 +147,53 @@ def test_cutmix_batch_success3(plot=False):
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(4, pad_info={}, drop_remainder=True)
     data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+
+    images_cutmix = None
+    for idx, (image, _) in enumerate(data1):
+        if idx == 0:
+            images_cutmix = image
+        else:
+            images_cutmix = np.append(images_cutmix, image, axis=0)
+    if plot:
+        visualize_list(images_original, images_cutmix)
+
+    num_samples = images_original.shape[0]
+    mse = np.zeros(num_samples)
+    for i in range(num_samples):
+        mse[i] = diff_mse(images_cutmix[i], images_original[i])
+    logger.info("MSE= {}".format(str(np.mean(mse))))
+
+
+def test_cutmix_batch_success4(plot=False):
+    """
+    Test CutMixBatch on a dataset where OneHot returns a 2D vector
+    """
+    logger.info("test_cutmix_batch_success4")
+
+    ds_original = ds.CelebADataset(DATA_DIR3, shuffle=False)
+    decode_op = vision.Decode()
+    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.batch(2, drop_remainder=True)
+
+    images_original = None
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = image
+        else:
+            images_original = np.append(images_original, image, axis=0)
+
+    # CutMix Images
+    data1 = ds.CelebADataset(dataset_dir=DATA_DIR3, shuffle=False)
+
+    decode_op = vision.Decode()
+    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+
+    one_hot_op = data_trans.OneHot(num_classes=100)
+    data1 = data1.map(input_columns=["attr"], operations=one_hot_op)
+
+    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 0.5, 0.9)
+    data1 = data1.batch(2, drop_remainder=True)
+    data1 = data1.map(input_columns=["image", "attr"], operations=cutmix_batch_op)
 
     images_cutmix = None
     for idx, (image, _) in enumerate(data1):
@@ -368,7 +415,7 @@ def test_cutmix_batch_fail7():
                 images_cutmix = image
             else:
                 images_cutmix = np.append(images_cutmix, image, axis=0)
-    error_message = "CutMixBatch: Label's must be in one-hot format and in a batch"
+    error_message = "CutMixBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC"
     assert error_message in str(error.value)
 
 
@@ -394,6 +441,7 @@ if __name__ == "__main__":
     test_cutmix_batch_success1(plot=True)
     test_cutmix_batch_success2(plot=True)
     test_cutmix_batch_success3(plot=True)
+    test_cutmix_batch_success4(plot=True)
     test_cutmix_batch_nchw_md5()
     test_cutmix_batch_nhwc_md5()
     test_cutmix_batch_fail1()

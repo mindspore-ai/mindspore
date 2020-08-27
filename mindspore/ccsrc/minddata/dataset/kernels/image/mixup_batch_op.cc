@@ -38,10 +38,17 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED("You must make sure images are HWC or CHW and batched before calling MixUpBatch.");
+    RETURN_STATUS_UNEXPECTED(
+      "MixUpBatch:You must make sure images are HWC or CHW and batched before calling MixUpBatch.");
   }
-  if (label_shape.size() != 2) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: Label's must be in one-hot format and in a batch.");
+  if (!input.at(1)->type().IsInt()) {
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: Wrong labels type. The second column (labels) must only include int types.");
+  }
+  if (label_shape.size() != 2 && label_shape.size() != 3) {
+    RETURN_STATUS_UNEXPECTED(
+      "MixUpBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC where N is the batch "
+      "size, L is the number of labels in each row, "
+      "and C is the number of classes. labels must be in one-hot format and in a batch.");
   }
   if ((image_shape[1] != 1 && image_shape[1] != 3) && (image_shape[3] != 1 && image_shape[3] != 3)) {
     RETURN_STATUS_UNEXPECTED("MixUpBatch: Images must be in the shape of HWC or CHW.");
@@ -65,23 +72,31 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Compute labels
   std::shared_ptr<Tensor> out_labels;
-  RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), &out_labels, DataType("float32")));
+  RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), &out_labels, DataType(DataType::DE_FLOAT32)));
+
+  int64_t row_labels = label_shape.size() == 3 ? label_shape[1] : 1;
+  int64_t num_classes = label_shape.size() == 3 ? label_shape[2] : label_shape[1];
+
   for (int64_t i = 0; i < label_shape[0]; i++) {
-    for (int64_t j = 0; j < label_shape[1]; j++) {
-      if (input.at(1)->type().IsSignedInt()) {
-        int64_t first_value, second_value;
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i], j}));
-        RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, lam * first_value + (1 - lam) * second_value));
-      } else {
-        uint64_t first_value, second_value;
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, {i, j}));
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, {rand_indx[i], j}));
-        RETURN_IF_NOT_OK(out_labels->SetItemAt({i, j}, lam * first_value + (1 - lam) * second_value));
+    for (int64_t j = 0; j < row_labels; j++) {
+      for (int64_t k = 0; k < num_classes; k++) {
+        std::vector<int64_t> first_index = label_shape.size() == 3 ? std::vector{i, j, k} : std::vector{i, k};
+        std::vector<int64_t> second_index =
+          label_shape.size() == 3 ? std::vector{rand_indx[i], j, k} : std::vector{rand_indx[i], k};
+        if (input.at(1)->type().IsSignedInt()) {
+          int64_t first_value, second_value;
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, second_index));
+          RETURN_IF_NOT_OK(out_labels->SetItemAt(first_index, lam * first_value + (1 - lam) * second_value));
+        } else {
+          uint64_t first_value, second_value;
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
+          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, second_index));
+          RETURN_IF_NOT_OK(out_labels->SetItemAt(first_index, lam * first_value + (1 - lam) * second_value));
+        }
       }
     }
   }
-
   // Compute images
   for (int64_t i = 0; i < images.size(); i++) {
     TensorShape remaining({-1});
