@@ -55,8 +55,8 @@ class GraphData:
             set the number of clients expected to connect, and the server will allocate corresponding
             resources according to this parameter (default=1).
         auto_shutdown (bool, optional): Valid when working_mode is set to 'server',
-            Control when all clients have connected and no client connected to the server,
-            automatically exit the server (default=True).
+            when the number of connected clients reaches num_client and no client is being connected,
+            the server automatically exits (default=True).
     """
 
     @check_gnn_graphdata
@@ -69,14 +69,15 @@ class GraphData:
 
         def stop():
             self._graph_data.stop()
-        atexit.register(stop)
 
         if working_mode in ['local', 'client']:
             self._graph_data = GraphDataClient(dataset_file, num_parallel_workers, working_mode, hostname, port)
+            atexit.register(stop)
 
         if working_mode == 'server':
             self._graph_data = GraphDataServer(
                 dataset_file, num_parallel_workers, hostname, port, num_client, auto_shutdown)
+            atexit.register(stop)
             try:
                 while self._graph_data.is_stoped() is not True:
                     time.sleep(1)
