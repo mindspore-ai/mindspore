@@ -32,16 +32,16 @@ class ModelParser {
 
   virtual ~ModelParser() {}
 
-  virtual FuncGraphPtr ParseToAnf(const std::string &modelFile, const std::string &weightFile) {
-    auto *meta_graph = Parse(modelFile, weightFile);
-    if (meta_graph == nullptr) {
-      MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
-      return nullptr;
-    }
-    return Fb2Anf(Parse(modelFile, weightFile));
+  FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile,
+                                    const QuantType &quantType = QuantType_QUANT_NONE) {
+    auto *meta_graph = ParseToFb(modelFile, weightFile, quantType);
+    auto func_graph = this->Fb2Anf(meta_graph);
+    delete(meta_graph);
+    return func_graph;
   }
-  virtual schema::MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile,
-                                    const QuantType &quantType = QuantType_QUANT_NONE) = 0;
+
+  virtual schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
+                             const QuantType &quantType = QuantType_QUANT_NONE) = 0;
 
  public:
   static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph) {

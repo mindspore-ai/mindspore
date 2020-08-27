@@ -74,7 +74,7 @@ class MatMulBiasAddFusionPass : public FusionPass {
     std::transform(inParam->perm.begin(), inParam->perm.end(), transposeParam->perm.begin(),
                    [](const int32_t ele) { return ele; });
     newOpDef->primitive->value.value = transposeParam;
-    return std::move(newOpDef);
+    return newOpDef;
   };
 };
 }  // namespace lite

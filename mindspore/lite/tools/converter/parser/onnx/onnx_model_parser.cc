@@ -507,14 +507,14 @@ void OnnxModelParser::FindGraphInputAndConst(const onnx::GraphProto &onnx_graph)
   }
 }
 
-MetaGraphT *OnnxModelParser::Parse(const std::string &modelFile,
+schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile,
                                    const std::string &weightFile,
                                    const QuantType &quantType) {
   if (ValidateFileStr(modelFile, ".onnx") != RET_OK) {
     MS_LOG(ERROR) << "Input illegal: modelFile must be *.onnx";
     return nullptr;
   }
-  std::unique_ptr<schema::MetaGraphT> dst_graph = std::make_unique<schema::MetaGraphT>();
+  auto dst_graph = std::make_unique<schema::MetaGraphT>();
   onnx::ModelProto onnx_model;
   if (ReadOnnxModelFromBinary(modelFile, &onnx_model) != RET_OK) {
     MS_LOG(ERROR) << "read onnx model fail";

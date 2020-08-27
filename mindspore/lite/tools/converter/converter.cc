@@ -70,41 +70,23 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_ASSERT(nullptr != modelParser);
     const std::string modelFile = flag->modelFile;
     const std::string weightFile = flag->weightFile;
-    auto meta_graph = modelParser->Parse(modelFile, weightFile, flag->quantType);
-    if (meta_graph == nullptr) {
-      MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
-      return nullptr;
-    }
-    graph = ModelParser::Fb2Anf(meta_graph);
+    graph = modelParser->Parse(modelFile, weightFile, flag->quantType);
   }
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
   }
 
-  graph = anfTransform->Transform(graph);
-
-  CreateQuantizer(graph, flag);
-  if (mQuantizer != nullptr) {
-    mQuantizer->flags = *flag;
-    auto status = mQuantizer->DoQuantize(graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Quant failed " << status;
-      return nullptr;
-    }
-    quant::QuantCast quant_cast;
-    quant_cast.SetInputDataDType(kNumberTypeFloat32);
-    status = quant_cast.Run(graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "add QuantCast error";
-      return nullptr;
-    }
+  graph = anfTransform->Transform(graph, flag);
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Transform anf graph return nullptr";
+    return nullptr;
   }
 
   // anf -- fb
   auto meta_graph = Export(graph);
   if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "Export to meta_graph return nullptr";
+    MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
   }
 
@@ -113,20 +95,13 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   transform->CreateQuantizer(flag);
   auto status = transform->Transform(*flag);
   if (status != 0) {
-    MS_LOG(ERROR) << "FBTransform model failed " << status;
+    MS_LOG(ERROR) << "Transform meta graph failed " << status;
     return nullptr;
   }
 
   return meta_graph;
 }
 
-void Converter::CreateQuantizer(FuncGraphPtr func_graph, const converter::Flags *flags) {
-  auto type = flags->quantType;
-  if (type == mindspore::schema::QuantType_PostTraining) {
-    MS_LOG(INFO) << "create post training quantizer.";
-    mQuantizer.reset(new quant::PostTrainingQuantizer(func_graph, flags->configFile, 8));
-  }
-}
 int RunConverter(int argc, const char **argv) {
   std::unique_ptr<converter::Flags> flags(new (std::nothrow) converter::Flags);
   if (flags == nullptr) {

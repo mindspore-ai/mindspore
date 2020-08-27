@@ -31,8 +31,8 @@ class ParamValueLite : public Value {
   ParamValueLite() : tensor_addr_(nullptr), tensor_size_(0) {}
   virtual ~ParamValueLite() {
     if (tensor_addr_ != nullptr) {
-      auto tensor_mem = reinterpret_cast<char*>(tensor_addr_);
-      delete tensor_mem;
+      auto tensor_mem = reinterpret_cast<char *>(tensor_addr_);
+      delete[](tensor_mem);
       tensor_addr_ = nullptr;
       tensor_size_ = 0;
     }

@@ -77,10 +77,10 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
 }
 
 int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *> *tensors) {
-  MS_EXCEPTION_IF_NULL(model);
-  MS_EXCEPTION_IF_NULL(tensors);
+  MS_ASSERT(nullptr != model);
+  MS_ASSERT(nullptr != tensors);
   auto meta_graph = model->GetMetaGraph();
-  MS_EXCEPTION_IF_NULL(meta_graph);
+  MS_ASSERT(nullptr != meta_graph);
   bool infer_shape_interrupt = false;
   uint32_t kernelCount = meta_graph->nodes()->size();
   for (uint32_t i = 0; i < kernelCount; i++) {
@@ -121,10 +121,10 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
 
 int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                              std::vector<kernel::LiteKernel *> *kernels) {
-  MS_EXCEPTION_IF_NULL(model);
-  MS_EXCEPTION_IF_NULL(tensors);
+  MS_ASSERT(nullptr != model);
+  MS_ASSERT(nullptr != tensors);
   auto meta_graph = model->GetMetaGraph();
-  MS_EXCEPTION_IF_NULL(meta_graph);
+  MS_ASSERT(nullptr != meta_graph);
   uint32_t kernelCount = meta_graph->nodes()->size();
   auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
   for (uint32_t i = 0; i < kernelCount; i++) {

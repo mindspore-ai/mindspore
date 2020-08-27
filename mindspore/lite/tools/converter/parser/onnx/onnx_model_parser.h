@@ -40,7 +40,7 @@ class OnnxModelParser : public ModelParser {
 
   virtual ~OnnxModelParser();
 
-  MetaGraphT *Parse(const std::string &modelFile, const std::string &weightFile,
+  schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
                     const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:

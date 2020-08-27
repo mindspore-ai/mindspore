@@ -18,6 +18,7 @@
 #include <jni.h>
 #include "common/ms_log.h"
 #include "include/context.h"
+#include "include/thread_pool_config.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_context_Context_createContext(JNIEnv *env, jobject thiz,
                                                                                           jint device_type,
@@ -44,13 +45,13 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_context_Context_creat
   }
   switch (cpu_bind_mode) {
     case -1:
-      context->cpu_bind_mode_ = mindspore::lite::MID_CPU;
+      context->cpu_bind_mode_ = MID_CPU;
       break;
     case 0:
-      context->cpu_bind_mode_ = mindspore::lite::NO_BIND;
+      context->cpu_bind_mode_ = NO_BIND;
       break;
     case 1:
-      context->cpu_bind_mode_ = mindspore::lite::HIGHER_CPU;
+      context->cpu_bind_mode_ = HIGHER_CPU;
       break;
     default:
       MS_LOGE("Invalid cpu_bind_mode : %d", cpu_bind_mode);

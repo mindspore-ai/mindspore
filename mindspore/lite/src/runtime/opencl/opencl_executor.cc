@@ -65,7 +65,7 @@ int OpenCLExecutor::Run(std::vector<tensor::Tensor *> &inputs, std::vector<tenso
       }
     }
     for (auto input_kernel : kernel->in_kernels()) {
-      MS_EXCEPTION_IF_NULL(input_kernel);
+      MS_ASSERT(nullptr != input_kernel);
       ret = input_kernel->DecOutTensorRefCount();
       if (0 != ret) {
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";

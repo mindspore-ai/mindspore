@@ -118,9 +118,9 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getByte
     return env->NewByteArray(0);
   }
 
-  auto local_data_size = ms_tensor_ptr->Size();
-  auto ret = env->NewByteArray(local_data_size);
-  env->SetByteArrayRegion(ret, 0, local_data_size, local_data);
+  auto local_element_num = ms_tensor_ptr->ElementsNum();
+  auto ret = env->NewByteArray(local_element_num);
+  env->SetByteArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
 }
 
@@ -144,9 +144,9 @@ extern "C" JNIEXPORT jlongArray JNICALL Java_com_mindspore_lite_MSTensor_getLong
     MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
     return env->NewLongArray(0);
   }
-  auto local_data_size = ms_tensor_ptr->Size();
-  auto ret = env->NewLongArray(local_data_size);
-  env->SetLongArrayRegion(ret, 0, local_data_size, local_data);
+  auto local_element_num = ms_tensor_ptr->ElementsNum();
+  auto ret = env->NewLongArray(local_element_num);
+  env->SetLongArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
 }
 
@@ -170,9 +170,9 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getIntDa
     MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
     return env->NewIntArray(0);
   }
-  auto local_data_size = ms_tensor_ptr->Size();
-  auto ret = env->NewIntArray(local_data_size);
-  env->SetIntArrayRegion(ret, 0, local_data_size, local_data);
+  auto local_element_num = ms_tensor_ptr->ElementsNum();
+  auto ret = env->NewIntArray(local_element_num);
+  env->SetIntArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
 }
 
@@ -196,9 +196,9 @@ extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_lite_MSTensor_getFlo
     MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
     return env->NewFloatArray(0);
   }
-  auto local_data_size = ms_tensor_ptr->Size();
-  auto ret = env->NewFloatArray(local_data_size);
-  env->SetFloatArrayRegion(ret, 0, local_data_size, local_data);
+  auto local_element_num = ms_tensor_ptr->ElementsNum();
+  auto ret = env->NewFloatArray(local_element_num);
+  env->SetFloatArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
 }
 
