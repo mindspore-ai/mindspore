@@ -71,42 +71,6 @@ class KernelMeta {
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
 
-struct SparseGradient {
-  float *value_{nullptr};
-  int *indices_{nullptr};
-  size_t indices_size_{0};
-};
-
-struct ReduceSparseGradientParam {
-  SparseGradient *input_grad_{nullptr};
-  SparseGradient *workspace_grad_{nullptr};
-  SparseGradient *output_grad_{nullptr};
-  size_t max_index_{0};
-  size_t value_stride_{0};
-  bool use_sort_reduce_{false};
-};
-
-struct MultiThreadComputeParams {
-  float *var_;
-  float *accum_;
-  float *linear_;
-  float *m_;
-  float *m_t_;
-  float *v_;
-  float lr_;
-  float l1_;
-  float l2_;
-  float lr_power_;
-  float beta1_;
-  float beta2_;
-  float epsilon_;
-  SparseGradient sparse_grad_;
-  size_t var_first_dim_size_;
-  size_t var_outer_dim_size_;
-  bool use_nesterov_;
-};
-using MultiThreadComputeFunc = std::function<void(MultiThreadComputeParams *param, size_t start, size_t end)>;
-
 bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
@@ -132,9 +96,6 @@ void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr>
 bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json);
 void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list);
 bool IsWeightBoundary(const AnfNodePtr &node);
-void MultiThreadCompute(const MultiThreadComputeFunc &func, MultiThreadComputeParams *params,
-                        size_t total_compute_size);
-void BucketReduceSparseGradient(const ReduceSparseGradientParam &param);
 std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode);
 }  // namespace kernel
 }  // namespace mindspore

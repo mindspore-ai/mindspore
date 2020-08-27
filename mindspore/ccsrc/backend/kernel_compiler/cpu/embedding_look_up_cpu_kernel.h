@@ -31,6 +31,9 @@ class EmbeddingLookUpCPUKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+  template <typename T>
+  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                    const std::vector<kernel::AddressPtr> &outputs) const;
 
  protected:
   void CheckParam(const CNodePtr &kernel_node);
@@ -38,11 +41,17 @@ class EmbeddingLookUpCPUKernel : public CPUKernel {
   size_t indices_lens_{1};
   size_t first_dim_size_{1};
   size_t outer_dim_size_{1};
+  TypeId indices_data_type_{kNumberTypeInt32};
 };
 
 MS_REG_CPU_KERNEL(
   EmbeddingLookup,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  EmbeddingLookUpCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  EmbeddingLookup,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
   EmbeddingLookUpCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

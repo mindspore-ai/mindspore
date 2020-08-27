@@ -21,8 +21,8 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSparseApplyFtrlInputSize = 5;
-
-void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+template <typename T>
+void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
   MS_EXCEPTION_IF_NULL(input_params);
   auto var = input_params->var_;
   auto accum = input_params->accum_;
@@ -35,8 +35,8 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
   const auto var_first_dim_size = input_params->var_first_dim_size_;
   const auto var_outer_dim_size = input_params->var_outer_dim_size_;
   for (size_t i = start; i < end; ++i) {
-    int index = unique_sparse_grad.indices_[i];
-    if (index < 0 || IntToSize(index) >= var_first_dim_size) {
+    T index = unique_sparse_grad.indices_[i];
+    if (index < 0 || LongToSize(index) >= var_first_dim_size) {
       MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
     }
     size_t start_index = var_outer_dim_size * index;
@@ -61,13 +61,21 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
 }
 }  // namespace
 
+template <typename T>
+void SparseApplyFtrlCPUKernel::InitWorkspaceSize() {
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+}
+
 void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+  if (indices_data_type_ == kNumberTypeInt32) {
+    InitWorkspaceSize<int>();
+  } else {
+    InitWorkspaceSize<int64_t>();
+  }
 }
 
 void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -116,29 +124,26 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (lr_power_ > 0) {
     MS_LOG(EXCEPTION) << "lr_power should be a non-positive scalar";
   }
+  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 4);
 }
 
-bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> & /*outputs*/) {
-  if (inputs.size() < kSparseApplyFtrlInputSize) {
-    MS_LOG(EXCEPTION) << "error input output size!";
-  }
-
+template <typename T>
+void SparseApplyFtrlCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &workspace) const {
   auto var = reinterpret_cast<float *>(inputs[0]->addr);
   auto accum = reinterpret_cast<float *>(inputs[1]->addr);
   auto linear = reinterpret_cast<float *>(inputs[2]->addr);
   auto grad = reinterpret_cast<float *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<int *>(inputs[4]->addr);
+  auto indices = reinterpret_cast<T *>(inputs[4]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
+  auto new_indices = reinterpret_cast<T *>(workspace[1]->addr);
   auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto workspace_indices = reinterpret_cast<int *>(workspace[3]->addr);
+  auto workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
 
-  SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
-  SparseGradient workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
-  SparseGradient input_sparse_grad({grad, indices, indices_size_});
-  ReduceSparseGradientParam param;
+  SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
+  SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
+  SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
+  ReduceSparseGradientParam<T> param;
   param.input_grad_ = &input_sparse_grad;
   param.workspace_grad_ = &workspace_sparse_grad;
   param.output_grad_ = &unique_sparse_grad;
@@ -146,7 +151,7 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   param.value_stride_ = var_outer_dim_size_;
   BucketReduceSparseGradient(param);
 
-  MultiThreadComputeParams input_params;
+  MultiThreadComputeParams<T> input_params;
   input_params.var_ = var;
   input_params.accum_ = accum;
   input_params.linear_ = linear;
@@ -157,7 +162,21 @@ bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   input_params.sparse_grad_ = unique_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  MultiThreadCompute(ComputeFtrl, &input_params, unique_sparse_grad.indices_size_);
+  MultiThreadCompute<T>(ComputeFtrl<T>, &input_params, unique_sparse_grad.indices_size_);
+}
+
+bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &workspace,
+                                      const std::vector<kernel::AddressPtr> & /*outputs*/) {
+  if (inputs.size() < kSparseApplyFtrlInputSize) {
+    MS_LOG(EXCEPTION) << "error input output size!";
+  }
+
+  if (indices_data_type_ == kNumberTypeInt32) {
+    LaunchKernel<int>(inputs, workspace);
+  } else {
+    LaunchKernel<int64_t>(inputs, workspace);
+  }
   return true;
 }
 }  // namespace kernel

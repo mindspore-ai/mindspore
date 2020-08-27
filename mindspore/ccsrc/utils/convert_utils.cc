@@ -638,8 +638,10 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   tensor::TensorPtr tensor = nullptr;
   if (scalar->isa<FloatImm>()) {
     tensor = std::make_shared<tensor::Tensor>(static_cast<double>(GetValue<float>(scalar)), kFloat32);
-  } else if (scalar->isa<IntergerImm>()) {
+  } else if (scalar->isa<Int32Imm>()) {
     tensor = std::make_shared<tensor::Tensor>(static_cast<int64_t>(GetValue<int>(scalar)), kInt32);
+  } else if (scalar->isa<Int64Imm>()) {
+    tensor = std::make_shared<tensor::Tensor>(GetValue<int64_t>(scalar), kInt64);
   } else if (scalar->isa<BoolImm>()) {
     const int64_t bool_value = GetValue<bool>(scalar) ? 1 : 0;
     tensor = std::make_shared<tensor::Tensor>(bool_value, kBool);

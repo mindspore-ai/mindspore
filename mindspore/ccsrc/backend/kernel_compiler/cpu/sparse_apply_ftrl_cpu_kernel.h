@@ -17,12 +17,11 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_FTRL_CPU_KERNEL_H_
 
 #include <vector>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "backend/kernel_compiler/cpu/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyFtrlCPUKernel : public CPUKernel {
+class SparseApplyFtrlCPUKernel : public SparseOptimizerCPUKernel {
  public:
   SparseApplyFtrlCPUKernel() = default;
   ~SparseApplyFtrlCPUKernel() override = default;
@@ -31,11 +30,13 @@ class SparseApplyFtrlCPUKernel : public CPUKernel {
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+  template <typename T>
+  void InitWorkspaceSize();
+  template <typename T>
+  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                    const std::vector<kernel::AddressPtr> &workspace) const;
 
  protected:
-  size_t indices_size_{0};
-  size_t var_first_dim_size_{0};
-  size_t var_outer_dim_size_{1};
   float lr_{0};
   float l1_{0};
   float l2_{0};
@@ -49,6 +50,18 @@ MS_REG_CPU_KERNEL(FusedSparseFtrl,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt32)
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  SparseApplyFtrlCPUKernel);
+
+MS_REG_CPU_KERNEL(FusedSparseFtrl,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),

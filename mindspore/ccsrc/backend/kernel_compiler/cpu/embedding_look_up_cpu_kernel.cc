@@ -22,11 +22,12 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-void LookUpTableTask(const float *input_addr, const int *indices_addr, float *output_addr, size_t indices_lens,
-                     size_t outer_dim_size, int offset, size_t first_dim_size) {
+template <typename T>
+void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, size_t indices_lens,
+                     size_t outer_dim_size, T offset, size_t first_dim_size) {
   size_t lens = outer_dim_size * sizeof(float);
   for (size_t i = 0; i < indices_lens; ++i) {
-    int index = indices_addr[i] - offset;
+    T index = indices_addr[i] - offset;
     if (index >= 0 && index < SizeToInt(first_dim_size)) {
       size_t pos = index * outer_dim_size;
       auto ret = memcpy_s(output_addr, lens, input_addr + pos, lens);
@@ -61,13 +62,14 @@ void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
     offset_ = AnfAlgo::GetNodeAttr<int>(kernel_node, kAttrOffset);
   }
+  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
 }
 
-bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+template <typename T>
+void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) const {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
+  auto indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   const size_t thread_num = 16;
   std::thread threads[16];
@@ -80,9 +82,9 @@ bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
       break;
     }
     MS_LOG(DEBUG) << "task_offset: " << task_offset << " task_proc_lenss:" << task_proc_lens;
-    threads[i] =
-      std::thread(LookUpTableTask, input_addr, indices_addr + task_offset, output_addr + task_offset * outer_dim_size_,
-                  task_proc_lens, outer_dim_size_, offset_, first_dim_size_);
+    threads[i] = std::thread(LookUpTableTask<T>, input_addr, indices_addr + task_offset,
+                             output_addr + task_offset * outer_dim_size_, task_proc_lens, outer_dim_size_, offset_,
+                             first_dim_size_);
     task_offset += task_proc_lens;
     if (task_offset + task_proc_lens > indices_lens_) {
       task_proc_lens = indices_lens_ - task_offset;
@@ -90,6 +92,16 @@ bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   }
   for (size_t j = 0; j < i; j++) {
     threads[j].join();
+  }
+}
+
+bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
+  if (indices_data_type_ == kNumberTypeInt32) {
+    LaunchKernel<int>(inputs, outputs);
+  } else {
+    LaunchKernel<int64_t>(inputs, outputs);
   }
   return true;
 }

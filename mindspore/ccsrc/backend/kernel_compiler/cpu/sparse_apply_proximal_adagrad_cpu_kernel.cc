@@ -22,7 +22,8 @@ namespace kernel {
 namespace {
 constexpr size_t kSparseApplyProximalAdagradInputSize = 7;
 
-void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+template <typename T>
+void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
   MS_EXCEPTION_IF_NULL(input_params);
   auto var = input_params->var_;
   auto accum = input_params->accum_;
@@ -33,8 +34,8 @@ void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start
   const auto var_first_dim_size = input_params->var_first_dim_size_;
   const auto var_outer_dim_size = input_params->var_outer_dim_size_;
   for (size_t i = start; i < end; ++i) {
-    int index = unique_sparse_grad.indices_[i];
-    if (index < 0 || IntToSize(index) >= var_first_dim_size) {
+    T index = unique_sparse_grad.indices_[i];
+    if (index < 0 || LongToSize(index) >= var_first_dim_size) {
       MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
     }
     size_t start_index = var_outer_dim_size * index;
@@ -56,13 +57,21 @@ void ComputeProximalAdagrad(MultiThreadComputeParams *input_params, size_t start
 }
 }  // namespace
 
+template <typename T>
+void SparseApplyProximalAdagradCPUKernel::InitWorkspaceSize() {
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+}
+
 void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int));
+  if (indices_data_type_ == kNumberTypeInt32) {
+    InitWorkspaceSize<int>();
+  } else {
+    InitWorkspaceSize<int64_t>();
+  }
 }
 
 void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -103,31 +112,28 @@ void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node
   if (!l2_shape.empty()) {
     MS_LOG(EXCEPTION) << "l2 is not a scalar";
   }
+  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 6);
 }
 
-bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &workspace,
-                                                 const std::vector<kernel::AddressPtr> & /*outputs*/) {
-  if (inputs.size() < kSparseApplyProximalAdagradInputSize) {
-    MS_LOG(EXCEPTION) << "Wrong input size!";
-  }
-
+template <typename T>
+void SparseApplyProximalAdagradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> &workspace) const {
   auto var = reinterpret_cast<float *>(inputs[0]->addr);
   auto accum = reinterpret_cast<float *>(inputs[1]->addr);
   auto lr = reinterpret_cast<float *>(inputs[2]->addr)[0];
   auto l1 = reinterpret_cast<float *>(inputs[3]->addr)[0];
   auto l2 = reinterpret_cast<float *>(inputs[4]->addr)[0];
   auto grad = reinterpret_cast<float *>(inputs[5]->addr);
-  auto indices = reinterpret_cast<int *>(inputs[6]->addr);
+  auto indices = reinterpret_cast<T *>(inputs[6]->addr);
   auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto new_indices = reinterpret_cast<int *>(workspace[1]->addr);
+  auto new_indices = reinterpret_cast<T *>(workspace[1]->addr);
   auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto workspace_indices = reinterpret_cast<int *>(workspace[3]->addr);
+  auto workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
 
-  SparseGradient unique_sparse_grad({new_grad, new_indices, indices_size_});
-  SparseGradient workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
-  SparseGradient input_sparse_grad({grad, indices, indices_size_});
-  ReduceSparseGradientParam param;
+  SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
+  SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
+  SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
+  ReduceSparseGradientParam<T> param;
   param.input_grad_ = &input_sparse_grad;
   param.workspace_grad_ = &workspace_sparse_grad;
   param.output_grad_ = &unique_sparse_grad;
@@ -135,7 +141,7 @@ bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::Addre
   param.value_stride_ = var_outer_dim_size_;
   BucketReduceSparseGradient(param);
 
-  MultiThreadComputeParams input_params;
+  MultiThreadComputeParams<T> input_params;
   input_params.var_ = var;
   input_params.accum_ = accum;
   input_params.lr_ = lr;
@@ -144,7 +150,20 @@ bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::Addre
   input_params.sparse_grad_ = unique_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  MultiThreadCompute(ComputeProximalAdagrad, &input_params, unique_sparse_grad.indices_size_);
+  MultiThreadCompute<T>(ComputeProximalAdagrad<T>, &input_params, unique_sparse_grad.indices_size_);
+}
+
+bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &workspace,
+                                                 const std::vector<kernel::AddressPtr> & /*outputs*/) {
+  if (inputs.size() < kSparseApplyProximalAdagradInputSize) {
+    MS_LOG(EXCEPTION) << "Wrong input size!";
+  }
+  if (indices_data_type_ == kNumberTypeInt32) {
+    LaunchKernel<int>(inputs, workspace);
+  } else {
+    LaunchKernel<int64_t>(inputs, workspace);
+  }
   return true;
 }
 }  // namespace kernel
