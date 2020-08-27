@@ -50,8 +50,6 @@ class ArithmeticFP16CPUKernel : public LiteKernel {
   int break_pos_;
   int out_thread_stride_;
   int out_count_;
-  float16_t *tile_data0_ = nullptr;
-  float16_t *tile_data1_ = nullptr;
   float16_t *input0_fp16_ = nullptr;
   float16_t *input1_fp16_ = nullptr;
   float16_t *output_fp16_ = nullptr;
