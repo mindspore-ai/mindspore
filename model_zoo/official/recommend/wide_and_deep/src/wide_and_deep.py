@@ -143,6 +143,7 @@ class WideDeepModel(nn.Cell):
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         if is_auto_parallel:
             self.batch_size = self.batch_size * get_group_size()
+        is_field_slice = config.field_slice
         self.field_size = config.field_size
         self.vocab_size = config.vocab_size
         self.emb_dim = config.emb_dim
@@ -196,11 +197,10 @@ class WideDeepModel(nn.Cell):
         self.tile = P.Tile()
         self.concat = P.Concat(axis=1)
         self.cast = P.Cast()
-        if is_auto_parallel and host_device_mix:
+        if is_auto_parallel and host_device_mix and not is_field_slice:
             self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
             self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
-            self.dense_layer_1.matmul.add_prim_attr("field_size", config.field_size)
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
                                                            slice_mode=nn.EmbeddingLookUpSplitMode.TABLE_COLUMN_SLICE)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
@@ -209,9 +209,20 @@ class WideDeepModel(nn.Cell):
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
             self.reduce_sum.add_prim_attr("cross_batch", True)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
-        elif host_device_mix:
-            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
-            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1)
+        elif is_auto_parallel and host_device_mix and is_field_slice and config.full_batch and config.manual_shape:
+            manual_shapes = tuple((s[0] for s in config.manual_shape))
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
+                                                           slice_mode=nn.EmbeddingLookUpSplitMode.FIELD_SLICE,
+                                                           manual_shapes=manual_shapes)
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
+                                                           slice_mode=nn.EmbeddingLookUpSplitMode.FIELD_SLICE,
+                                                           manual_shapes=manual_shapes)
+            self.deep_mul.set_strategy(((1, get_group_size(), 1), (1, get_group_size(), 1)))
+            self.wide_mul.set_strategy(((1, get_group_size(), 1), (1, get_group_size(), 1)))
+            self.reduce_sum.set_strategy(((1, get_group_size(), 1),))
+            self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
+            self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
+            self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
             self.embedding_table = self.deep_embeddinglookup.embedding_table
         elif parameter_server:
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
@@ -263,7 +274,7 @@ class NetWithLossClass(nn.Cell):
         parameter_server = bool(config.parameter_server)
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        self.no_l2loss = (is_auto_parallel if host_device_mix else parameter_server)
+        self.no_l2loss = (is_auto_parallel if (host_device_mix or config.field_slice) else parameter_server)
         self.network = network
         self.l2_coef = config.l2_coef
         self.loss = P.SigmoidCrossEntropyWithLogits()

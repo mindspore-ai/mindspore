@@ -103,14 +103,13 @@ def train_and_eval(config):
 
     callback = LossCallBack(config=config)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
-    if config.device_target == "Ascend":
-        ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
-                                     directory=config.ckpt_path, config=ckptconfig)
-    elif config.device_target == "GPU":
-        ckpoint_cb = ModelCheckpoint(prefix='widedeep_train_' + str(get_rank()),
-                                     directory=config.ckpt_path, config=ckptconfig)
+    ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
+                                 directory=config.ckpt_path, config=ckptconfig)
+    callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
+    if get_rank() == 0:
+        callback_list.append(ckpoint_cb)
     model.train(epochs, ds_train,
-                callbacks=[TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb],
+                callbacks=callback_list,
                 dataset_sink_mode=(not parameter_server))
 
 

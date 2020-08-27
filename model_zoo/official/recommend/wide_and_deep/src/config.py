@@ -25,7 +25,7 @@ def argparse_init():
     parser.add_argument("--data_path", type=str, default="./test_raw_data/",
                         help="This should be set to the same directory given to the data_download's data_dir argument")
     parser.add_argument("--epochs", type=int, default=15, help="Total train epochs")
-    parser.add_argument("--full_batch", type=bool, default=False, help="Enable loading the full batch ")
+    parser.add_argument("--full_batch", type=int, default=0, help="Enable loading the full batch ")
     parser.add_argument("--batch_size", type=int, default=16000, help="Training batch size.")
     parser.add_argument("--eval_batch_size", type=int, default=16000, help="Eval batch size.")
     parser.add_argument("--field_size", type=int, default=39, help="The number of features.")
@@ -46,6 +46,7 @@ def argparse_init():
     parser.add_argument("--host_device_mix", type=int, default=0, help="Enable host device mode or not")
     parser.add_argument("--dataset_type", type=str, default="tfrecord", help="tfrecord/mindrecord/hd5")
     parser.add_argument("--parameter_server", type=int, default=0, help="Open parameter server of not")
+    parser.add_argument("--field_slice", type=int, default=0, help="Enable split field mode or not")
     return parser
 
 
@@ -81,6 +82,8 @@ class WideDeepConfig():
         self.host_device_mix = 0
         self.dataset_type = "tfrecord"
         self.parameter_server = 0
+        self.field_slice = False
+        self.manual_shape = None
 
     def argparse_init(self):
         """
@@ -91,7 +94,7 @@ class WideDeepConfig():
         self.device_target = args.device_target
         self.data_path = args.data_path
         self.epochs = args.epochs
-        self.full_batch = args.full_batch
+        self.full_batch = bool(args.full_batch)
         self.batch_size = args.batch_size
         self.eval_batch_size = args.eval_batch_size
         self.field_size = args.field_size
@@ -114,3 +117,4 @@ class WideDeepConfig():
         self.host_device_mix = args.host_device_mix
         self.dataset_type = args.dataset_type
         self.parameter_server = args.parameter_server
+        self.field_slice = bool(args.field_slice)
