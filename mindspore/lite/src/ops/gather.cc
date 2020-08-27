@@ -65,10 +65,6 @@ int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   }
   auto indices_shape = indices->shape();
   int indices_rank = indices_shape.size();
-  if (indices_rank < batch_dims + 1) {
-    MS_LOG(ERROR) << "input[1]'s rank is less than batchDim + 1";
-    return RET_ERROR;
-  }
   if (batch_dims != 0) {
     MS_LOG(ERROR) << "batchDims  " << batch_dims << " != 0, which is not support";
     return RET_ERROR;

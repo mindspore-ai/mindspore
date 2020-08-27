@@ -38,22 +38,38 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     return RET_NULL_PTR;
   }
 
+  std::vector<int> axes;
+  std::vector<int> starts;
+  std::vector<int> ends;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {
-      const int size = onnx_node_attr.ints_size();
-      MS_LOG(INFO) << "SLICE starts size " << size;
-      for (int i = 0; i < size; ++i) {
-        attr->begin.emplace_back(static_cast<int32_t>(onnx_node_attr.ints(i)));
+      const int num = onnx_node_attr.ints_size();
+      starts.clear();
+      for (int i = 0; i < num; ++i) {
+        starts.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+      }
+    } else if (attribute_name == "axes") {
+      const int num = onnx_node_attr.ints_size();
+      axes.clear();
+      for (int i = 0; i < num; ++i) {
+        axes.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
       }
     } else if (attribute_name == "ends") {
-      const int size = onnx_node_attr.ints_size();
-      for (int i = 0; i < size; ++i) {
-        attr->size.emplace_back(static_cast<int32_t>(onnx_node_attr.ints(i)));
+      const int num = onnx_node_attr.ints_size();
+      ends.clear();
+      for (int i = 0; i < num; ++i) {
+        ends.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
       }
     }
   }
-
+  std::vector<int> sizes(starts.size(), -1);
+  for (size_t i = 0; i < starts.size(); ++i) {
+      sizes[i] = (ends[i] < 0 ? ends[i] : ends[i] - starts[i]);
+  }
+  attr->axes = axes;
+  attr->begin = starts;
+  attr->size = sizes;
   op->primitive->value.type = schema::PrimitiveType_Slice;
   op->primitive->value.value = attr.release();
   return RET_OK;

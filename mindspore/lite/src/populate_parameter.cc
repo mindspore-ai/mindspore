@@ -1010,8 +1010,8 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
   memset(slice_param, 0, sizeof(SliceParameter));
   auto param = reinterpret_cast<mindspore::lite::Slice *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   slice_param->op_parameter_.type_ = primitive->Type();
-  auto param_begin = param->GetBegin();
-  auto param_size = param->GetSize();
+  auto param_begin = param->GetPostProcessBegin();
+  auto param_size = param->GetPostProcessSize();
   if (param_begin.size() != param_size.size()) {
     free(slice_param);
     return nullptr;
