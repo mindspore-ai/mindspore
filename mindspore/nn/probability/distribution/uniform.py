@@ -18,7 +18,7 @@ from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_greater, check_type, check_distribution_name,\
-                          raise_none_error
+                          raise_none_error, common_dtype
 from ._utils.custom_ops import exp_generic, log_generic
 
 class Uniform(Distribution):
@@ -103,7 +103,7 @@ class Uniform(Distribution):
         valid_dtype = mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Uniform, self).__init__(seed, dtype, name, param)
-        self.parameter_type = dtype
+        self.parameter_type = common_dtype(low, 'low', high, 'high', self.dtype)
         if low is not None and high is not None:
             self._low = cast_to_tensor(low, dtype)
             self._high = cast_to_tensor(high, dtype)
@@ -130,6 +130,8 @@ class Uniform(Distribution):
         self.zeroslike = P.ZerosLike()
         self.uniform = C.uniform
 
+        self.sametypeshape = P.SameTypeShape()
+
     def extend_repr(self):
         if self.is_scalar_batch:
             str_info = f'low = {self.low}, high = {self.high}'
@@ -146,7 +148,6 @@ class Uniform(Distribution):
                 self.checktensor(low, 'low')
             else:
                 low = self.checktensor(low, 'low')
-            low = self.cast(low, self.parameter_type)
         else:
             low = self.low if self.low is not None else raise_none_error('low')
         if high is not None:
@@ -154,12 +155,14 @@ class Uniform(Distribution):
                 self.checktensor(high, 'high')
             else:
                 high = self.checktensor(high, 'high')
-            high = self.cast(high, self.parameter_type)
         else:
             high = self.high if self.high is not None else raise_none_error('high')
         batch_shape = self.shape(high - low)
-        high = high * self.fill(self.dtype, batch_shape, 1.0)
-        low = low * self.fill(self.dtype, batch_shape, 1.0)
+        high = high * self.fill(self.dtypeop(high), batch_shape, 1.0)
+        low = low * self.fill(self.dtypeop(low), batch_shape, 1.0)
+        self.sametypeshape(high, low)
+        low = self.cast(low, self.parameter_type)
+        high = self.cast(high, self.parameter_type)
         return low, high
 
     @property
