@@ -36,10 +36,10 @@ class MatchResult;
 using MatchResultPtr = std::shared_ptr<MatchResult>;
 class Pattern;
 using PatternPtr = std::shared_ptr<Pattern>;
-class IsPrimTypeOf;
-using IsPrimTypeOfPtr = std::shared_ptr<IsPrimTypeOf>;
-class CallWith;
-using CallWithPtr = std::shared_ptr<CallWith>;
+class Prim;
+using PrimPtr = std::shared_ptr<Prim>;
+class Call;
+using CallPtr = std::shared_ptr<Call>;
 class NewTensor;
 using NewTensorPtr = std::shared_ptr<NewTensor>;
 class NewParameter;
@@ -58,8 +58,6 @@ class Pattern : public Base {
   virtual bool operator==(const Pattern &other) const { return unique_name_ == other.unique_name_; }
   string unique_name() const { return unique_name_; }
   vector<PatternPtr> inputs() { return inputs_; }
-  bool should_replace() { return should_replace_; }
-  void set_should_replace(bool should_replace) { should_replace_ = should_replace; }
   virtual void reset() {}
 
  protected:
@@ -67,7 +65,6 @@ class Pattern : public Base {
   // NOTE: To ensure uniqueness of the name, raise g_id_ by 1 every time a pattern got constructed
   string unique_name_;
   vector<PatternPtr> inputs_;
-  bool should_replace_ = true;
 };
 
 struct PatternEqual {
@@ -85,70 +82,61 @@ struct PatternHasher {
   }
 };
 
-class IsPrimTypeOf : public Pattern {
+class Prim : public Pattern {
  public:
-  IsPrimTypeOf() { unique_name_ = std::to_string(g_id_++); }
-  ~IsPrimTypeOf() = default;
-  IsPrimTypeOf(vector<PrimitivePyPtr> prims, string name, bool should_replace)
-      : primitives_(prims), name_(name), matched_prim_(nullptr) {
-    unique_name_ = std::to_string(g_id_++) + "IsPrimTypeOf_" + name;
-    should_replace_ = should_replace;
-    if (!should_replace) {
-      matched_prim_ = prims[0];
-    }
+  Prim() { unique_name_ = std::to_string(g_id_++); }
+  ~Prim() = default;
+  Prim(vector<PrimitivePyPtr> prims, string name) : primitives_(prims), name_(name) {
+    unique_name_ = std::to_string(g_id_++) + "Prim_" + name;
+    // Default using the first prim to build target
+    matched_prim_ = primitives_[0];
   }
-  IsPrimTypeOf(vector<string> types, string name, bool should_replace) : types_(types), name_(name) {
-    unique_name_ = std::to_string(g_id_++) + "IsPrimTypeOf_" + name;
+  Prim(vector<string> types, string name) : types_(types), name_(name) {
+    unique_name_ = std::to_string(g_id_++) + "Prim_" + name;
     // Make primitives_
     for (auto &iter : types) {
       primitives_.push_back(std::make_shared<PrimitivePy>(iter, py::cast(nullptr)));
     }
-    should_replace_ = should_replace;
-    if (!should_replace) {
-      matched_prim_ = primitives_[0];
-    }
+    // Default using the first prim to build target
+    matched_prim_ = primitives_[0];
   }
-  MS_DECLARE_PARENT(IsPrimTypeOf, Pattern);
+  MS_DECLARE_PARENT(Prim, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
   PrimitivePyPtr matched_primitive() { return matched_prim_; }
   void reset() override {
-    if (should_replace_) {
-      matched_prim_ = nullptr;
-    }
+    // Init before reset
+    MS_EXCEPTION_IF_NULL(matched_prim_);
+    matched_prim_ = primitives_[0];
   }
 
  private:
   vector<string> types_;
   vector<PrimitivePyPtr> primitives_;
   string name_;
-  PrimitivePyPtr matched_prim_;
+  PrimitivePyPtr matched_prim_{nullptr};
 };
 
-class CallWith : public Pattern {
+class Call : public Pattern {
  public:
-  CallWith() { unique_name_ = std::to_string(g_id_++); }
-  ~CallWith() = default;
-  CallWith(PatternPtr prim_pattern, vector<PatternPtr> inputs, bool should_replace) {
+  Call() { unique_name_ = std::to_string(g_id_++); }
+  ~Call() = default;
+  Call(PatternPtr prim_pattern, vector<PatternPtr> inputs) {
     // NOTE: should_replace is ignored in this case, since each sub-pattern has its own setting
     prim_pattern_ = prim_pattern;
-    unique_name_ = std::to_string(g_id_++) + "CallWithPattern_" + prim_pattern->unique_name();
+    unique_name_ = std::to_string(g_id_++) + "Call_" + prim_pattern->unique_name();
     inputs_ = inputs;
-    // NOTE: should_replace_ is overrided by it prim_pattern(if exists) silently.
-    should_replace_ = prim_pattern->should_replace();
   }
-  CallWith(PrimitivePyPtr prim, vector<PatternPtr> inputs, bool should_replace) {
+  Call(PrimitivePyPtr prim, vector<PatternPtr> inputs) {
     prim_ = prim;
-    unique_name_ = std::to_string(g_id_++) + "CallWithPrim_" + prim_->ToString();
+    unique_name_ = std::to_string(g_id_++) + "Call_" + prim_->ToString();
     inputs_ = inputs;
-    should_replace_ = should_replace;
   }
-  CallWith(string prim_str, vector<PatternPtr> inputs, bool should_replace) {
+  Call(string prim_str, vector<PatternPtr> inputs) {
     prim_ = std::make_shared<PrimitivePy>(prim_str, py::cast(nullptr));
-    unique_name_ = std::to_string(g_id_++) + "CallWithStr_" + prim_->ToString();
+    unique_name_ = std::to_string(g_id_++) + "CallStr_" + prim_->ToString();
     inputs_ = inputs;
-    should_replace_ = should_replace;
   }
-  MS_DECLARE_PARENT(CallWith, Pattern);
+  MS_DECLARE_PARENT(Call, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
   PrimitivePtr prim_value() { return prim_; }
   PatternPtr prim_pattern() { return prim_pattern_; }
@@ -160,45 +148,45 @@ class CallWith : public Pattern {
   string name_;
 };
 
-class IsIn : public Pattern {
+class OneOf : public Pattern {
  public:
-  IsIn() { unique_name_ = std::to_string(g_id_++); }
-  ~IsIn() = default;
-  explicit IsIn(vector<PatternPtr> patterns) : patterns_(patterns) {
-    unique_name_ = std::to_string(g_id_++) + "IsIn";
+  OneOf() { unique_name_ = std::to_string(g_id_++); }
+  ~OneOf() = default;
+  explicit OneOf(vector<PatternPtr> patterns) : patterns_(patterns) {
+    unique_name_ = std::to_string(g_id_++) + "OneOf";
     for (auto &iter : patterns) {
       unique_name_ = unique_name_ + "_" + iter->unique_name();
     }
   }
-  MS_DECLARE_PARENT(IsIn, Pattern);
+  MS_DECLARE_PARENT(OneOf, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
 
  private:
   vector<PatternPtr> patterns_;
 };
 
-class IsNot : public Pattern {
+class NoneOf : public Pattern {
  public:
-  IsNot() { unique_name_ = std::to_string(g_id_++); }
-  ~IsNot() = default;
-  explicit IsNot(vector<PatternPtr> patterns) : patterns_(patterns) {
-    unique_name_ = std::to_string(g_id_++) + "IsNot";
+  NoneOf() { unique_name_ = std::to_string(g_id_++); }
+  ~NoneOf() = default;
+  explicit NoneOf(vector<PatternPtr> patterns) : patterns_(patterns) {
+    unique_name_ = std::to_string(g_id_++) + "NoneOf";
     for (auto &iter : patterns) {
       unique_name_ = unique_name_ + "_" + iter->unique_name();
     }
   }
-  MS_DECLARE_PARENT(IsNot, Pattern);
+  MS_DECLARE_PARENT(NoneOf, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
 
  private:
   vector<PatternPtr> patterns_;
 };
 
-class AnyPattern : public Pattern {
+class Any : public Pattern {
  public:
-  AnyPattern() { unique_name_ = std::to_string(g_id_++) + "_AnyPattern"; }
-  ~AnyPattern() = default;
-  MS_DECLARE_PARENT(AnyPattern, Pattern);
+  Any() { unique_name_ = std::to_string(g_id_++) + "_Any"; }
+  ~Any() = default;
+  MS_DECLARE_PARENT(Any, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
 };
 
@@ -207,7 +195,6 @@ class NewTensor : public Pattern {
   NewTensor() { unique_name_ = std::to_string(g_id_++); }
   ~NewTensor() = default;
   explicit NewTensor(tensor::TensorPtr input_tensor) : input_tensor_(input_tensor) {
-    should_replace_ = false;
     unique_name_ = std::to_string(g_id_++) + "NewTensor";
   }
   MS_DECLARE_PARENT(NewTensor, Pattern);
@@ -223,10 +210,8 @@ class NewTensor : public Pattern {
 class NewParameter : public Pattern {
  public:
   NewParameter() { unique_name_ = std::to_string(g_id_++); }
-  explicit NewParameter(string para_name, tensor::TensorPtr default_tensor, bool requires_grad, bool layerwise_parallel,
-                        bool should_replace)
+  explicit NewParameter(string para_name, tensor::TensorPtr default_tensor, bool requires_grad, bool layerwise_parallel)
       : para_name_(para_name), requires_grad_(requires_grad), layerwise_parallel_(layerwise_parallel) {
-    should_replace_ = should_replace;
     unique_name_ = std::to_string(g_id_++) + "NewParameter_" + para_name;
     // clone input tensor
     default_tensor_ = std::make_shared<tensor::Tensor>(*default_tensor.get());
@@ -243,11 +228,14 @@ class NewParameter : public Pattern {
   bool built() { return built_; }
   void set_built(bool built) { built_ = built; }
   void reset() override { built_ = false; }
+  bool should_last() { return last_across_passes_; }
+  void set_last(bool last) { last_across_passes_ = last; }
 
  private:
   string para_name_;
   bool requires_grad_;
   bool layerwise_parallel_;
+  bool last_across_passes_{false};
   bool built_;
   tensor::TensorPtr default_tensor_;
 };
@@ -255,13 +243,9 @@ class NewParameter : public Pattern {
 class Imm : public Pattern {
  public:
   Imm() { unique_name_ = std::to_string(g_id_++); }
-  explicit Imm(int value) : value_(value) {
-    should_replace_ = false;
-    unique_name_ = std::to_string(g_id_++) + "Imm_" + std::to_string(value);
-  }
+  explicit Imm(int value) : value_(value) { unique_name_ = std::to_string(g_id_++) + "Imm_" + std::to_string(value); }
   MS_DECLARE_PARENT(Imm, Pattern);
-  // NOTE: Doesn't support Imm in src pattern currently.
-  MatchResultPtr match(const AnfNodePtr &node) override { return nullptr; }
+  MatchResultPtr match(const AnfNodePtr &node) override;
   int value() { return value_; }
 
  private:

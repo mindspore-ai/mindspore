@@ -21,25 +21,23 @@ namespace opt {
 namespace python_pass {
 int Pattern::g_id_ = 0;
 
-MatchResultPtr IsPrimTypeOf::match(const AnfNodePtr &node) {
+MatchResultPtr Prim::match(const AnfNodePtr &node) {
   if (!IsValueNode<Primitive>(node)) {
     return nullptr;
   }
   MatchResultPtr res = std::make_shared<MatchResult>();
-  if (IsValueNode<Primitive>(node)) {
-    // iterate over all primitives
-    for (auto &iter : primitives_) {
-      if (IsPrimitive(node, iter) || iter->name() == "*") {
-        matched_prim_ = iter;
-        res->add_entry(shared_from_base<IsPrimTypeOf>(), node);
-        return res;
-      }
+  // iterate over all primitives
+  for (auto &iter : primitives_) {
+    if (IsPrimitive(node, iter) || iter->name() == "*") {
+      matched_prim_ = iter;
+      res->add_entry(shared_from_base<Prim>(), node);
+      return res;
     }
   }
   return nullptr;
 }
 
-MatchResultPtr CallWith::match(const AnfNodePtr &node) {
+MatchResultPtr Call::match(const AnfNodePtr &node) {
   if (!IsPrimitiveCNode(node)) {
     return nullptr;
   }
@@ -71,7 +69,7 @@ MatchResultPtr CallWith::match(const AnfNodePtr &node) {
   }
   // If inputs is not specified, add node without looking into its inputs
   if (p_inputs_size == 0) {
-    res->add_entry(shared_from_base<CallWith>(), cnode->input(0));
+    res->add_entry(shared_from_base<Call>(), cnode->input(0));
     return res;
   }
   bool failed = false;
@@ -86,24 +84,24 @@ MatchResultPtr CallWith::match(const AnfNodePtr &node) {
     res->merge(input_match_result);
   }
   if (!failed) {
-    res->add_entry(shared_from_base<CallWith>(), cnode->input(0));
+    res->add_entry(shared_from_base<Call>(), cnode->input(0));
     return res;
   }
   return nullptr;
 }
 
-MatchResultPtr IsIn::match(const AnfNodePtr &node) {
+MatchResultPtr OneOf::match(const AnfNodePtr &node) {
   for (auto &iter : patterns_) {
     auto res = iter->match(node);
     if (res != nullptr) {
-      res->add_entry(shared_from_base<IsIn>(), node);
+      res->add_entry(shared_from_base<OneOf>(), node);
       return res;
     }
   }
   return nullptr;
 }
 
-MatchResultPtr IsNot::match(const AnfNodePtr &node) {
+MatchResultPtr NoneOf::match(const AnfNodePtr &node) {
   for (auto &iter : patterns_) {
     auto res = iter->match(node);
     if (res != nullptr) {
@@ -111,14 +109,31 @@ MatchResultPtr IsNot::match(const AnfNodePtr &node) {
     }
   }
   auto res = std::make_shared<MatchResult>();
-  res->add_entry(shared_from_base<IsNot>(), node);
+  res->add_entry(shared_from_base<NoneOf>(), node);
   return res;
 }
 
-MatchResultPtr AnyPattern::match(const AnfNodePtr &node) {
+MatchResultPtr Any::match(const AnfNodePtr &node) {
   MatchResultPtr res = std::make_shared<MatchResult>();
-  res->add_entry(shared_from_base<AnyPattern>(), node);
+  res->add_entry(shared_from_base<Any>(), node);
   return res;
+}
+
+MatchResultPtr Imm::match(const AnfNodePtr &node) {
+  if (!IsValueNode<Int32Imm>(node)) {
+    return nullptr;
+  }
+  // Check value
+  auto value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value_ptr = value_node->value()->cast<Int32ImmPtr>();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if ((int32_t)value_ptr->value() == value_) {
+    MatchResultPtr res = std::make_shared<MatchResult>();
+    res->add_entry(shared_from_base<Imm>(), node);
+    return res;
+  }
+  return nullptr;
 }
 
 AnfNodePtr MatchResult::get_node(const PatternPtr &pattern) {
@@ -140,20 +155,20 @@ void MatchResult::merge(const MatchResultPtr &other_result) {
 REGISTER_PYBIND_DEFINE(
   Pattern, ([](const py::module *m) {
     (void)py::class_<Pattern, std::shared_ptr<Pattern>>(*m, "Pattern").def(py::init<>());
-    (void)py::class_<IsIn, std::shared_ptr<IsIn>, Pattern>(*m, "IsIn_").def(py::init<vector<PatternPtr>>());
-    (void)py::class_<IsPrimTypeOf, std::shared_ptr<IsPrimTypeOf>, Pattern>(*m, "IsPrimTypeOf_", py::dynamic_attr())
-      .def(py::init<vector<PrimitivePyPtr>, string, bool>())
-      .def(py::init<vector<string>, string, bool>());
-    (void)py::class_<CallWith, std::shared_ptr<CallWith>, Pattern>(*m, "CallWith_")
-      .def(py::init<PatternPtr, vector<PatternPtr>, bool>())
-      .def(py::init<PrimitivePyPtr, vector<PatternPtr>, bool>())
-      .def(py::init<string, vector<PatternPtr>, bool>());
-    (void)py::class_<IsNot, std::shared_ptr<IsNot>, Pattern>(*m, "IsNot_").def(py::init<vector<PatternPtr>>());
-    (void)py::class_<AnyPattern, std::shared_ptr<AnyPattern>, Pattern>(*m, "AnyPattern").def(py::init<>());
+    (void)py::class_<OneOf, std::shared_ptr<OneOf>, Pattern>(*m, "OneOf_").def(py::init<vector<PatternPtr>>());
+    (void)py::class_<Prim, std::shared_ptr<Prim>, Pattern>(*m, "Prim_", py::dynamic_attr())
+      .def(py::init<vector<PrimitivePyPtr>, string>())
+      .def(py::init<vector<string>, string>());
+    (void)py::class_<Call, std::shared_ptr<Call>, Pattern>(*m, "Call_")
+      .def(py::init<PatternPtr, vector<PatternPtr>>())
+      .def(py::init<PrimitivePyPtr, vector<PatternPtr>>())
+      .def(py::init<string, vector<PatternPtr>>());
+    (void)py::class_<NoneOf, std::shared_ptr<NoneOf>, Pattern>(*m, "NoneOf_").def(py::init<vector<PatternPtr>>());
+    (void)py::class_<Any, std::shared_ptr<Any>, Pattern>(*m, "Any").def(py::init<>());
     (void)py::class_<NewTensor, std::shared_ptr<NewTensor>, Pattern>(*m, "NewTensor_")
       .def(py::init<tensor::TensorPtr>());
     (void)py::class_<NewParameter, std::shared_ptr<NewParameter>, Pattern>(*m, "NewParameter_")
-      .def(py::init<string, tensor::TensorPtr, bool, bool, bool>());
+      .def(py::init<string, tensor::TensorPtr, bool, bool>());
     (void)py::class_<Imm, std::shared_ptr<Imm>, Pattern>(*m, "Imm").def(py::init<int>());
   }));
 }  // namespace python_pass
