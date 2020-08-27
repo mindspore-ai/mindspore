@@ -49,7 +49,6 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   void FreeRunBuf();
   int InitParam();
   int InitWeightBias();
-  void FreeTmpBuffer();
 
  private:
   MatMulParameter *matmul_param_ = nullptr;

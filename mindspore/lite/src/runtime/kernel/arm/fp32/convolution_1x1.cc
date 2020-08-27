@@ -125,14 +125,13 @@ void Convolution1x1CPUKernel::Pre1x1Trans(float *src_input, float *src_output) {
 }
 
 int Convolution1x1CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-
   int error_code = InitConv1x1BiasWeight();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution base init failed.";
     return error_code;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   return ReSize();
 }
