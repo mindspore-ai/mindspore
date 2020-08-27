@@ -275,20 +275,23 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
     // fp16 enable, kernel will use half and read_imageh and write_imageh.
     build_options_str =
       "-DFLT=half -DFLT4=half4 -DFLT16=half16 "
-      "-DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT4=convert_half4";
+      "-DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT4=convert_half4 ";
   } else {
     // fp16 not enable, kernel will use float and read_imagef and write_imagef.
     build_options_str =
       "-DFLT=float -DFLT4=float4 -DFLT16=float16 "
-      "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT4=convert_float4";
+      "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT4=convert_float4 ";
   }
 
-  build_options_str = std::accumulate(
-    build_options.begin(), build_options.end(), build_options_str,
-    [](const std::string &options, const std::string &option) -> std::string { return options + " " + option; });
+  auto build_options_ext = std::accumulate(
+    build_options.begin(), build_options.end(), std::string(""),
+    [](const std::string &options, const std::string &option) -> std::string {
+       auto res = options + " " + option;
+       return res;
+       });
   build_options_str += default_build_opts_;
   // program identifier = program_name + build_options
-  std::string build_program_key = program_name + build_options_str;
+  std::string build_program_key = program_name + build_options_str + build_options_ext;
 
   auto build_program_it = program_map_.find(build_program_key);
   cl::Program program;
@@ -409,9 +412,7 @@ GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_
 
 bool OpenCLRuntime::LoadSource(const std::string &program_name, const std::string &source) {
   auto it_source = g_opencl_program_map.find(program_name);
-  if (it_source != g_opencl_program_map.end()) {
-    it_source->second = source;
-  } else {
+  if (it_source == g_opencl_program_map.end()) {
     g_opencl_program_map.emplace(program_name, source);
   }
   return true;

@@ -35,7 +35,8 @@ class Scheduler {
  protected:
   kernel::LiteKernel *ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
                                    const std::vector<tensor::Tensor *> &out_tensors,
-                                   const mindspore::lite::PrimitiveC *primitive);
+                                   const mindspore::lite::PrimitiveC *primitive,
+                                   const schema::CNode *cnode);
 
  private:
   int InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,

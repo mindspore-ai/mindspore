@@ -186,8 +186,8 @@ int Conv2dTransposeOpenCLKernel::Run() {
   cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), 1};
   int arg_cnt = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padWeight_);
-  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_, lite::opencl::MemType::BUF);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);

@@ -273,6 +273,7 @@ int LiteSession::Init(Context *context) {
   if (context_->device_ctx_.type == DT_GPU) {
     auto opencl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
     opencl_runtime->Init();
+    MS_LOG(INFO) << "Init OpenCL runtime.";
   }
 #endif
   executor = new Executor();

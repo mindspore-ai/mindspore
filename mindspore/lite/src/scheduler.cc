@@ -16,6 +16,8 @@
 
 #include "src/scheduler.h"
 #include <vector>
+#include <string>
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/common/graph_util.h"
@@ -140,7 +142,7 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tenso
       outputs.emplace_back(tensors->at(size_t(outIndexes->GetAs<uint32_t>(j))));
     }
     auto *primitive = model->GetOp(cNode->name()->str());
-    auto *kernel = this->ScheduleNode(inputs, outputs, primitive);
+    auto *kernel = this->ScheduleNode(inputs, outputs, primitive, cNode);
     if (nullptr == kernel) {
       MS_LOG(ERROR) << "ScheduleNode return nullptr, name: " << cNode->name()->str()
                     << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
@@ -176,6 +178,7 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
   }
 
   std::vector<kernel::LiteKernel *> subgraph_kernels;
+  size_t sub_cnt{0};
   for (auto temp_kernels : sub_kernels_list) {
     kernel::KERNEL_ARCH arch = temp_kernels.front()->desc().arch;
     if (arch == kernel::KERNEL_ARCH::kCPU) {
@@ -194,7 +197,10 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
     } else {
       auto subgraph_kernel = CreateSubKernel(temp_kernels, arch);
       subgraph_kernels.emplace_back(subgraph_kernel);
+      std::string arch_name = (arch == kernel::KERNEL_ARCH::kGPU) ? "GPU" : "NPU";
+      MS_LOG(INFO) << arch_name << " subgraph id" << sub_cnt << " created.";
     }
+    ++sub_cnt;
   }
   kernels->clear();
   kernels->insert(kernels->begin(), subgraph_kernels.begin(), subgraph_kernels.end());
@@ -223,7 +229,7 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
 
 kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
                                             const std::vector<tensor::Tensor *> &out_tensors,
-                                            const mindspore::lite::PrimitiveC *primitive) {
+                                            const mindspore::lite::PrimitiveC *primitive, const schema::CNode *cnode) {
   MS_ASSERT(nullptr != primitive);
   auto data_type = in_tensors.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
@@ -233,6 +239,10 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> 
     if (nullptr != kernel) {
       kernel->set_desc(desc);
       return kernel;
+    } else {
+      MS_LOG(ERROR) << "Not supported GPU Op "
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type())) << " "
+                   << (cnode->name()->str());
     }
   }
 
