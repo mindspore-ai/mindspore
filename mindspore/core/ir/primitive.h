@@ -109,8 +109,12 @@ class Primitive : public Named {
   bool is_base() const { return is_base_; }
   virtual BaseRef RunHookFunction(const VectorRef &args) const { MS_LOG(EXCEPTION) << "call a empty function!"; }
   virtual void CopyHookFunction(const PrimitivePtr &primitive) { MS_LOG(EXCEPTION) << "call a empty function!"; }
-  void set_is_const_value(bool value) { is_const_value_ = value; }
-  bool is_const_value() const { return is_const_value_; }
+  void set_const_prim(bool is_const_prim) { is_const_prim_ = is_const_prim; }
+  bool is_const_prim() const { return is_const_prim_; }
+  void set_const_input_indexes(const std::vector<size_t> &const_input_indexes) {
+    const_input_indexes_ = const_input_indexes;
+  }
+  std::vector<size_t> &get_const_input_indexes() { return const_input_indexes_; }
   std::string id() const { return id_; }
 
  protected:
@@ -123,7 +127,8 @@ class Primitive : public Named {
   bool has_signature_;
   PrimType prim_type_;
   bool record_evaluate_add_attr_;
-  bool is_const_value_;
+  bool is_const_prim_;
+  std::vector<size_t> const_input_indexes_;
   std::string id_{""};
 };
 

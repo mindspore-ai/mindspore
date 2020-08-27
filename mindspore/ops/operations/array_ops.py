@@ -1089,7 +1089,7 @@ class InvertPermutation(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init InvertPermutation"""
-        self.set_is_const_value(True)
+        self.set_const_prim(True)
 
     def __infer__(self, x):
         x_shp = x['shape']

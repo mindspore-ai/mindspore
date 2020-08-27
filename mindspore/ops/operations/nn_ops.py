@@ -2866,6 +2866,7 @@ class MirrorPad(PrimitiveWithInfer):
         """Init Pad"""
         validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'], self.name)
         self.mode = mode
+        self.set_const_input_indexes([1])
 
     def __infer__(self, input_x, paddings):
         validator.check_subclass("input_x", input_x['dtype'], mstype.tensor, self.name)

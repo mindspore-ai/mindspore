@@ -645,6 +645,9 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
   inputs.push_back(NewValueNode(prim));
 
   size_t size = op_exec_info->op_inputs.size();
+  auto const_input_index = prim->get_const_input_indexes();
+  bool have_const_input = !const_input_index.empty();
+  bool is_const_prim = prim->is_const_prim();
   for (size_t i = 0; i < size; i++) {
     auto obj = op_exec_info->op_inputs[i];
     bool op_mask = false;
@@ -672,12 +675,13 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
       abs = node->abstract();
     }
     MS_LOG(DEBUG) << prim->ToString() << " abs is nullptr " << (abs == nullptr) << " is_const_value "
-                  << prim->is_const_value();
-    if (abs == nullptr || prim->is_const_value()) {
+                  << prim->is_const_prim();
+    bool is_const_input = have_const_input && std::count(const_input_index.begin(), const_input_index.end(), i);
+    if (abs == nullptr || is_const_prim || is_const_input) {
       MS_LOG(DEBUG) << "MakeCnode get node no in map" << id;
       ValuePtr input_value = PyAttrValue(obj);
       abs = input_value->ToAbstract();
-      if (!prim->is_const_value()) {
+      if (!is_const_prim && !is_const_input) {
         auto config = abstract::AbstractBase::kBroadenTensorOnly;
         abs = abs->Broaden(config);
         MS_LOG(DEBUG) << "broaden for " << prim->ToString() << " " << config;
@@ -888,7 +892,7 @@ py::tuple PynativeExecutor::RunOpInner(const py::args &args) {
       value_ret[0] = output["value"];
       return value_ret;
     }
-    if (op_exec_info->py_primitive->is_const_value()) {
+    if (op_exec_info->py_primitive->is_const_prim()) {
       py::tuple value_ret(1);
       value_ret[0] = "";
       return value_ret;
@@ -1041,7 +1045,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, bool op_mask) {
     auto tuple = obj.cast<py::tuple>();
 
     // cell((1,2)): support not mix (scalar, tensor)
-    if (tuple.size() > 0 && !py::isinstance<tensor::Tensor>(tuple[0])) {
+    if (!tuple.empty() && !py::isinstance<tensor::Tensor>(tuple[0])) {
       return MakeValueNode(obj, obj_id);
     }
 
