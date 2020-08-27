@@ -50,7 +50,7 @@ bool KernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 #endif
-  bool is_task_sink = context_ptr->enable_task_sink();
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   if (is_task_sink) {
     ret = RunTask(graph);
   } else {
@@ -502,7 +502,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
       MS_LOG(INFO) << "communication op addr exist";
       continue;
     }
-    if (context_ptr->enable_hccl()) {
+    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
       mem_size = mem_manager_->GetCommonAlignSize(mem_size);
     }
     total_size += mem_size;
@@ -646,7 +646,8 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     DeviceAddressPtr address = nullptr;
     address = CreateDeviceAddress(nullptr, node_size, output_format, output_type_id);
     MS_EXCEPTION_IF_NULL(address);
-    if (ms_context->enable_pynative_infer() && !mem_manager_->MallocMemFromMemPool(address, node_size)) {
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
+        !mem_manager_->MallocMemFromMemPool(address, node_size)) {
       MS_LOG(EXCEPTION) << "Cannot alloc address from memory pool when tensor size is: " << node_size;
     } else if (mem_manager_->MallocMem(kStaticMem, node_size, address) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << node_size;
@@ -682,7 +683,8 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       DeviceAddressPtr address = nullptr;
       address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
       MS_EXCEPTION_IF_NULL(address);
-      if (ms_context->enable_pynative_infer() && !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
+      if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
+          !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
         MS_LOG(EXCEPTION) << "Cannot alloc address from memory pool when tensor size is: " << tensor_size;
       } else if (mem_manager_->MallocMem(kStaticMem, tensor_size, address) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
@@ -701,7 +703,7 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_enable_mem_reuse = context_ptr->enable_mem_reuse();
+  bool is_enable_mem_reuse = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE);
   auto mem_type = kDynamicMem;
   if (is_enable_mem_reuse) {
     mem_manager_->MallocReusedDynamicMem(graph);

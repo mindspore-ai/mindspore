@@ -32,49 +32,50 @@ std::map<std::string, MsBackendPolicy> MsContext::policy_map_ = {{"ge", kMsBacke
                                                                  {"vm_prior", kMsBackendVmPrior}};
 
 MsContext::MsContext(const std::string &policy, const std::string &target) {
-  save_graphs_flag_ = false;
-  save_graphs_path_ = ".";
-  enable_dump_ = false;
-  save_dump_path_ = ".";
-  tsd_ref_ = 0;
-  ge_ref_ = 0;
-  is_multi_graph_sink_ = false;
-  is_pynative_ge_init_ = false;
-  enable_reduce_precision_ = true;
+  set_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG, false);
+  set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
+  set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
+  set_param<uint32_t>(MS_CTX_TSD_REF, 0);
+  set_param<uint32_t>(MS_CTX_GE_REF, 0);
+  set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+  set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
+  set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
   auto env_device = common::GetEnv("DEVICE_ID");
   if (!env_device.empty()) {
-    device_id_ = UlongToUint(std::stoul(env_device.c_str()));
+    uint32_t device_id = UlongToUint(std::stoul(env_device.c_str()));
+    set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   } else {
-    device_id_ = 0;
+    set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
   }
-  max_call_depth_ = MAX_CALL_DEPTH_DEFAULT;
-  backend_policy_ = policy_map_[policy];
-  device_target_ = target;
-  execution_mode_ = kPynativeMode;
-  enable_task_sink_ = true;
-  ir_fusion_flag_ = true;
-  enable_hccl_ = false;
+  set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
+  set_param<std::string>(MS_CTX_DEVICE_TARGET, target);
+  set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
+  set_param<bool>(MS_CTX_ENABLE_TASK_SINK, true);
+  set_param<bool>(MS_CTX_IR_FUSION_FLAG, true);
+  set_param<bool>(MS_CTX_ENABLE_HCCL, false);
 #ifdef ENABLE_DEBUGGER
-  enable_mem_reuse_ = false;
+  set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, false);
 #else
-  enable_mem_reuse_ = true;
+  set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, true);
 #endif
-  enable_gpu_summary_ = true;
-  precompile_only_ = false;
-  auto_mixed_precision_flag_ = false;
-  enable_pynative_infer_ = false;
-  enable_pynative_hook_ = false;
-  enable_dynamic_mem_pool_ = true;
-  graph_memory_max_size_ = "0";
-  variable_memory_max_size_ = "0";
-  enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
-  profiling_mode_ = false;
-  profiling_options_ = "training_trace";
-  check_bprop_flag_ = false;
-  max_device_memory_ = kDefaultMaxDeviceMemory;
-  print_file_path_ = "";
-  enable_graph_kernel_ = false;
-  enable_sparse_ = false;
+  set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
+  set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
+  set_param<bool>(MS_CTX_AUTO_MIXED_PRECISION_FLAG, false);
+  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
+  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
+  set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);
+  set_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE, "0");
+  set_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE, "0");
+  set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, target == kAscendDevice || target == kDavinciDevice);
+  set_param<bool>(MS_CTX_ENABLE_PROFILING, false);
+  set_param<std::string>(MS_CTX_PROFILING_OPTIONS, "training_trace");
+  set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
+  set_param<float>(MS_CTX_MAX_DEVICE_MEMORY, kDefaultMaxDeviceMemory);
+  set_param<std::string>(MS_CTX_PRINT_FILE_PATH, "");
+  set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
+  set_param<bool>(MS_CTX_ENABLE_SPARSE, false);
+
+  backend_policy_ = policy_map_[policy];
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -105,55 +106,5 @@ std::string MsContext::backend_policy() const {
     return res->first;
   }
   return "unknown";
-}
-
-void MsContext::set_execution_mode(int execution_mode) {
-  if (execution_mode != kGraphMode && execution_mode != kPynativeMode) {
-    MS_LOG(EXCEPTION) << "The execution mode is invalid!";
-  }
-  execution_mode_ = execution_mode;
-}
-
-bool MsContext::set_device_target(const std::string &target) {
-  if (kTargetSet.find(target) == kTargetSet.end()) {
-    MS_LOG(ERROR) << "invalid device target name: " << target;
-    return false;
-  }
-  if (target == kDavinciDevice) {
-    device_target_ = kAscendDevice;
-  } else {
-    device_target_ = target;
-  }
-  if (seter_) {
-    seter_(device_target_);
-  }
-  MS_LOG(INFO) << "ms set context device target:" << target;
-  return true;
-}
-
-bool MsContext::set_device_id(uint32_t device_id) {
-  device_id_ = device_id;
-  MS_LOG(INFO) << "ms set context device id:" << device_id;
-  return true;
-}
-
-void MsContext::set_tsd_ref(const std::string &op) {
-  if (op == "--") {
-    tsd_ref_--;
-  } else if (op == "++") {
-    tsd_ref_++;
-  } else {
-    tsd_ref_ = 0;
-  }
-}
-
-void MsContext::set_ge_ref(const std::string &op) {
-  if (op == "--") {
-    ge_ref_--;
-  } else if (op == "++") {
-    ge_ref_++;
-  } else {
-    ge_ref_ = 0;
-  }
 }
 }  // namespace mindspore

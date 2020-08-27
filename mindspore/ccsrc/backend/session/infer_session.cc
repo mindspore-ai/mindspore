@@ -268,7 +268,7 @@ void MSInferSession::RegAllOp() {
     return;
   }
   Initialized = true;
-  MsContext::GetInstance()->set_execution_mode(kGraphMode);
+  MsContext::GetInstance()->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   Py_Initialize();
   auto c_expression = PyImport_ImportModule("mindspore._c_expression");
   if (c_expression == nullptr) {
@@ -357,13 +357,13 @@ Status MSInferSession::InitEnv(const std::string &device, uint32_t device_id) {
     MS_LOG(ERROR) << "Get Context failed!";
     return FAILED;
   }
-  ms_context->set_execution_mode(kGraphMode);
-  ms_context->set_device_id(device_id);
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   auto ajust_device = AjustTargetName(device);
   if (ajust_device == "") {
     return FAILED;
   }
-  ms_context->set_device_target(device);
+  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, device);
   if (!context::OpenTsd(ms_context)) {
     MS_LOG(ERROR) << "Session init OpenTsd failed!";
     return FAILED;

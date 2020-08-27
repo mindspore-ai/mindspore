@@ -104,7 +104,7 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_fraz_nchw) {
    */
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->set_execution_mode(kGraphMode);
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transdata_split_fraz_nchw", "before");
   std::vector<int> shp{2, 4, 8, 16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);

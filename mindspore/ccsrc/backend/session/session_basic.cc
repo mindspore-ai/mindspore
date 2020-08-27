@@ -93,10 +93,11 @@ tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_o
   // if in paynative mode,data only copyed to host when user want to print data
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() != kPynativeMode && ms_context->device_target() != kGPUDevice) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+      ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
     tensor->set_need_sync(true);
   }
-  if (ms_context->execution_mode() != kPynativeMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     tensor->SetNeedWait(true);
   }
   tensor->set_dirty(false);
@@ -938,7 +939,7 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_address = AnfAlgo::GetMutableOutputAddr(parameter, 0);
-  if (ms_context->enable_pynative_infer()) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
     return tensor->device_address().get() == nullptr || tensor->device_address() != device_address;
   }
   if (tensor->is_dirty()) {
@@ -979,7 +980,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
-      if (ms_context->execution_mode() == kPynativeMode ||
+      if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
           AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>())) {
         tensor->set_device_address(device_address);
       }
@@ -1177,7 +1178,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
     if (backend_anf != nullptr) {
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
-      if (context_ptr->execution_mode() == kPynativeMode) {
+      if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
         return backend_anf;
       }
 

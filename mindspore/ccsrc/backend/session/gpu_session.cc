@@ -76,7 +76,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
-  if (!CheckInModeBlackList(kernel_graph) && context_ptr->execution_mode() != kPynativeMode) {
+  if (!CheckInModeBlackList(kernel_graph) && context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
     pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
     pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
@@ -154,7 +154,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
       bool need_sync = false;
-      if (ms_context->enable_pynative_infer()) {
+      if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
         if (tensor_address == nullptr || tensor_address != device_address) {
           need_sync = true;
         }
@@ -223,7 +223,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   // Prepare ms context info for dump .pb graph
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   // Optimize
   Optimize(graph);
   // Select kernel build info
@@ -290,7 +290,7 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->enable_gpu_summary()) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY)) {
     Summary(kernel_graph.get());
   }
 #ifdef ENABLE_DEBUGGER

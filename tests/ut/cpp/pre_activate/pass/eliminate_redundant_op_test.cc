@@ -76,7 +76,7 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_5to4_4to5) {
    */
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->set_execution_mode(kGraphMode);
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_eliminate_5to4_4to5", "before");
   // Renormalize func_graph to infer and set shape and type information.
   std::vector<int> shp{2, 32, 224, 224};

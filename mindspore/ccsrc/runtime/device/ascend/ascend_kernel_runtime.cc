@@ -158,7 +158,7 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
 bool AscendKernelRuntime::NeedDestroyHccl() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->enable_hccl()) {
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
     MS_LOG(INFO) << "Hccl is not enabled";
     return false;
   }
@@ -177,7 +177,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto ret = rtSetDevice(context_ptr->device_id());
+  auto ret = rtSetDevice(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
@@ -461,12 +461,12 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_task_sink = context_ptr->enable_task_sink();
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   if (!is_task_sink) {
     return true;
   }
 #ifdef MEM_REUSE_DEBUG
-  if (!context_ptr->enable_mem_reuse()) {
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE)) {
     // Get normal graph ir for memreuse
     mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(graph);
   }
@@ -518,7 +518,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "LoadTask start. GraphId:" << graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_task_sink = context_ptr->enable_task_sink();
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   if (!is_task_sink) {
     return true;
   }
@@ -658,7 +658,7 @@ bool AscendKernelRuntime::InitDevice() {
     MS_LOG(ERROR) << "Get MsContext instance failed";
     return false;
   }
-  if (context_ptr->enable_hccl()) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
     if (!HcclInit()) {
       MS_LOG(ERROR) << "HcclInit init failed";
       return false;
@@ -746,7 +746,7 @@ bool AscendKernelRuntime::DestroyHccl() {
     return false;
   }
   MS_LOG(INFO) << "Hccl destroy successful, status = " << res << ".";
-  context_ptr->set_enable_hccl(false);
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_HCCL, false);
   return true;
 }
 

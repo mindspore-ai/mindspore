@@ -271,7 +271,7 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (!(context_ptr->enable_graph_kernel())) {
+    if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
       g_pass_opts["opt_graph_kernel_a"]->set_enable(false);
       g_pass_opts["opt_graph_kernel_b"]->set_enable(false);
     }

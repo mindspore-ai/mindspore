@@ -271,7 +271,7 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
       if (!result) {
         MS_LOG(EXCEPTION) << "Pass running to end, failed in pass:" << pass.first;
       }
-      if (MsContext::GetInstance()->save_graphs_flag() && res->func_graph() != nullptr) {
+      if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && res->func_graph() != nullptr) {
         auto fg_name = "opt_pass_" + std::to_string(counter) + "_" + pass.first;
         auto func_graph = res->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
@@ -295,20 +295,20 @@ bool PynativeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res,
 
 static bool IsCtrlSink() {
   auto ms_ctx = MsContext::GetInstance();
-  if (ms_ctx->execution_mode() != kGraphMode) {
+  if (ms_ctx->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
     return false;
   }
 
-  std::string device_target = ms_ctx->device_target();
+  std::string device_target = ms_ctx->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device_target != kAscendDevice) {
     return false;
   }
 
-  if (!ms_ctx->enable_task_sink()) {
+  if (!ms_ctx->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     return false;
   }
 
-  if (!ms_ctx->is_multi_graph_sink()) {
+  if (!ms_ctx->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     return false;
   }
   return true;
@@ -325,13 +325,13 @@ bool TaskEmitAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (CompileGraphs::ContainMixedTarget(func_graph)) {
     bc_ptr->set_is_multi_graph_sink(false);
-    context_ptr->set_is_multi_graph_sink(false);
-    context_ptr->set_loop_sink_flag(false);
-  } else if (context_ptr->execution_mode() != kPynativeMode) {
-    std::string device_target = context_ptr->device_target();
+    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
+  } else if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     if (device_target == kAscendDevice && backend != kMsVm) {
       bc_ptr->set_is_multi_graph_sink(true);
-      context_ptr->set_is_multi_graph_sink(true);
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
     }
   }
 

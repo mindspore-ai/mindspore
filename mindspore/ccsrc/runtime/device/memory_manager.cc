@@ -54,7 +54,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
   uint8_t *ptr = nullptr;
   if (AnfAlgo::IsCommunicationOp(node)) {
     bool communication_mem = false;
-    if (context_ptr->enable_hccl()) {
+    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
       communication_mem = true;
     }
     if (type == kStaticMem) {

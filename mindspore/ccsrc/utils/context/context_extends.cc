@@ -41,13 +41,13 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
 
-  if (ms_context_ptr->is_pynative_ge_init()) {
+  if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return true;
   }
 
-  if (ms_context_ptr->tsd_ref()) {
+  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF)) {
     MS_LOG(DEBUG) << "TDT Dataset client is already opened.";
-    ms_context_ptr->set_tsd_ref("++");
+    ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
     return true;
   }
 
@@ -59,7 +59,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   unsigned int device_id;
   unsigned int rank_size = 1;
 
-  device_id = ms_context_ptr->device_id();
+  device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
   auto rank_size_env = common::GetEnv("RANK_SIZE");
   if (rank_size_env.empty()) {
@@ -79,7 +79,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " is occupied, open tsd failed, status = " << status << ".";
     return false;
   }
-  ms_context_ptr->set_tsd_ref("++");
+  ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 #ifdef ENABLE_TDTQUE
   int32_t initStatus = tdt::TdtHostInit(device_id);
   if (initStatus != TDT_OK_CODE) {
@@ -88,7 +88,8 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
   ms_context_ptr->tdt_print_ = std::thread(TensorPrint());
 #endif
-  MS_LOG(INFO) << "Open and init tsd successful, tsd reference = " << ms_context_ptr->tsd_ref() << ".";
+  MS_LOG(INFO) << "Open and init tsd successful, tsd reference = "
+               << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   return true;
 }
 
@@ -96,12 +97,12 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  if (ms_context_ptr->tsd_ref() == 0) {
+  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     return true;
   }
-  ms_context_ptr->set_tsd_ref("--");
-  if (force || ms_context_ptr->tsd_ref() == 0) {
-    ms_context_ptr->set_tsd_ref(" ");
+  ms_context_ptr->decrease_param<uint32_t>(MS_CTX_TSD_REF);
+  if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
+    ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
 #ifdef ENABLE_TDTQUE
     int32_t stopStatus = tdt::TdtHostStop(KNpuLog);
     if (stopStatus != TDT_OK_CODE) {
@@ -123,17 +124,17 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
       MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
     }
 #endif
-    auto device_id = ms_context_ptr->device_id();
+    auto device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     TDT_StatusT status = TsdClose(device_id);
     if (status != TDT_OK) {
       MS_LOG(EXCEPTION) << "Close tsd failed, status = " << status << ".";
       return false;
     }
-    ms_context_ptr->set_pynative_ge_init(false);
+    ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Destroy and close tsd successful, status = " << status << ".";
   } else {
-    MS_LOG(DEBUG) << "TDT Dataset client is used, no need to close, tsd reference = " << ms_context_ptr->tsd_ref()
-                  << ".";
+    MS_LOG(DEBUG) << "TDT Dataset client is used, no need to close, tsd reference = "
+                  << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   }
 
   return true;
@@ -159,14 +160,14 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   }
 #ifdef ENABLE_GE
   (*ge_options)["device_id"] = "0";
-  (*ge_options)["ge.exec.enableDump"] = std::to_string(ms_context_ptr->enable_dump());
-  (*ge_options)["ge.exec.dumpPath"] = ms_context_ptr->save_dump_path();
+  (*ge_options)["ge.exec.enableDump"] = std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_DUMP));
+  (*ge_options)["ge.exec.dumpPath"] = ms_context_ptr->get_param<std::string>(MS_CTX_SAVE_DUMP_PATH);
   (*ge_options)["ge.exec.dumpMode"] = "output";
-  MS_LOG(INFO) << "The enable dump state is " << std::to_string(ms_context_ptr->enable_dump())
-               << " and save dump path is " << ms_context_ptr->save_dump_path() << ".";
-  (*ge_options)["ge.exec.profilingMode"] = std::to_string(ms_context_ptr->enable_profiling());
-  if (ms_context_ptr->enable_profiling()) {
-    (*ge_options)["ge.exec.profilingOptions"] = ms_context_ptr->profiling_options();
+  MS_LOG(INFO) << "The enable dump state is " << std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_DUMP))
+               << " and save dump path is " << ms_context_ptr->get_param<std::string>(MS_CTX_SAVE_DUMP_PATH) << ".";
+  (*ge_options)["ge.exec.profilingMode"] = std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_PROFILING));
+  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+    (*ge_options)["ge.exec.profilingOptions"] = ms_context_ptr->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
   }
 
   (*ge_options)["rank_table_file"] = "";
@@ -178,12 +179,12 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   }
   (*ge_options)["graphType"] = "1";
 
-  if (ms_context_ptr->graph_memory_max_size() != "0") {
-    (*ge_options)["ge.graphMemoryMaxSize"] = ms_context_ptr->graph_memory_max_size();
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE) != "0") {
+    (*ge_options)["ge.graphMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE);
   }
 
-  if (ms_context_ptr->variable_memory_max_size() != "0") {
-    (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->variable_memory_max_size();
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE) != "0") {
+    (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
 
 #if ENABLE_TRAIN == 1
@@ -224,7 +225,7 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   }
 
   // Enable auto mixed precision according to the context options
-  if (ms_context_ptr->auto_mixed_precision_flag()) {
+  if (ms_context_ptr->get_param<bool>(MS_CTX_AUTO_MIXED_PRECISION_FLAG)) {
     (*ge_options)["ge.exec.precision_mode"] = "allow_mix_precision";
   } else {
     (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
@@ -240,7 +241,7 @@ void SetHcclOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<s
   }
   auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
   auto env_rank_id = common::GetEnv("RANK_ID");
-  auto env_device_id = std::to_string(ms_context_ptr->device_id());
+  auto env_device_id = std::to_string(ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   if (!(env_table_file.empty() || env_rank_id.empty())) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
     MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
@@ -275,12 +276,12 @@ bool InitGe(const std::shared_ptr<MsContext> &ms_context_ptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
 #ifdef ENABLE_GE
-  if (ms_context_ptr->is_pynative_ge_init()) {
+  if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return true;
   }
 
-  if (ms_context_ptr->ge_ref()) {
-    ms_context_ptr->set_ge_ref("++");
+  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF)) {
+    ms_context_ptr->increase_param<uint32_t>(MS_CTX_GE_REF);
     return true;
   }
 
@@ -293,8 +294,8 @@ bool InitGe(const std::shared_ptr<MsContext> &ms_context_ptr) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
   }
-  ms_context_ptr->set_ge_ref("++");
-  MS_LOG(INFO) << "Init ge successful, ge reference = " << ms_context_ptr->ge_ref() << ".";
+  ms_context_ptr->increase_param<uint32_t>(MS_CTX_GE_REF);
+  MS_LOG(INFO) << "Init ge successful, ge reference = " << ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
 #endif
   return true;
 }
@@ -303,12 +304,13 @@ bool PynativeInitGe(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  if (ms_context_ptr->is_pynative_ge_init() || ms_context_ptr->ge_ref() || ms_context_ptr->tsd_ref()) {
+  if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT) ||
+      ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF)) {
     return true;
   }
   (void)OpenTsd(ms_context_ptr);
   (void)InitGe(ms_context_ptr);
-  ms_context_ptr->set_pynative_ge_init(true);
+  ms_context_ptr->set_param(MS_CTX_IS_PYNATIVE_GE_INIT, true);
   return true;
 }
 
@@ -317,12 +319,12 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
 #ifdef ENABLE_GE
-  if (ms_context_ptr->ge_ref() == 0) {
+  if (ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
     return true;
   }
-  ms_context_ptr->set_ge_ref("--");
-  if (force || ms_context_ptr->ge_ref() == 0) {
-    ms_context_ptr->set_ge_ref(" ");
+  ms_context_ptr->decrease_param<uint32_t>(MS_CTX_GE_REF);
+  if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
+    ms_context_ptr->set_param<uint32_t>(MS_CTX_GE_REF, 0);
     try {
       DfGraphManager::GetInstance().DeleteGraphRunner();
       DfGraphManager::GetInstance().DeleteGeSession();
@@ -337,7 +339,8 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     }
     ms_context_ptr->set_pynative_ge_init(false);
   } else {
-    MS_LOG(INFO) << "Ge is used, no need to finalize, tsd reference = " << ms_context_ptr->ge_ref() << ".";
+    MS_LOG(INFO) << "Ge is used, no need to finalize, tsd reference = "
+                 << ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   }
 #endif
   return true;
@@ -347,14 +350,14 @@ bool IsTsdOpened(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  return ms_context_ptr->IsTsdOpened();
+  return ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) > 0;
 }
 
 bool IsGeInited(const std::shared_ptr<MsContext> &ms_context_ptr) {
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  return ms_context_ptr->IsGeInited();
+  return ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) > 0;
 }
 
 // Register for device type.

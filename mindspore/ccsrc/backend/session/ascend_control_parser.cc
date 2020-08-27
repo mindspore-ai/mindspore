@@ -359,11 +359,11 @@ void AscendControlParser::ExecutorValidate(NotNull<KernelGraphPtr> root_graph) {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
-  if (context_ptr->save_graphs_flag()) {
+  if (context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     std::string file_path = save_graphs_path + "/after_erase_label_and_parameter.ir";
     DumpIR(file_path, root_graph.get());
   }

@@ -43,7 +43,7 @@ void AscendMemoryManager::MallocDeviceMemory() {
 uint64_t AscendMemoryManager::GetDeviceMemSizeFromContext() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  auto variable_memory_max_size = context->variable_memory_max_size();
+  auto variable_memory_max_size = context->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   if (variable_memory_max_size == "0") {
     return 0;
   }

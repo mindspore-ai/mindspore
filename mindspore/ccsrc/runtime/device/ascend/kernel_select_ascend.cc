@@ -363,7 +363,7 @@ void PrecisionReduce(const std::vector<int> &node_mix_precision_datatype_index,
     *precision_reduce = false;
     return;
   }
-  if (context_ptr->enable_reduce_precision()) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION)) {
     selected_ret = RaiseOrReduceDataTypePrecisionSelect(node_mix_precision_datatype_index, node_mix_precision_datatype,
                                                         kernel_support_datatype, &kernel_match_datatype_idx_copy);
   }

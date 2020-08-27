@@ -652,7 +652,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
     new_func_graph->set_param_default_value(item.first, cloner[item.second]);
   }
 
-  if (MsContext::GetInstance()->is_multi_graph_sink()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
       new_func_graph->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
     }

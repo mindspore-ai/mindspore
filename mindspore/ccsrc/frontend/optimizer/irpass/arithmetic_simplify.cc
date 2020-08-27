@@ -29,7 +29,7 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
   PConstant const_2(node);
   PConstant any_const(node);
 
-  if (MsContext::GetInstance()->execution_mode() != kPynativeMode) {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     MATCH_REPLACE(node, x + zero_, x);                                                           // Add by zero
     MATCH_REPLACE(node, x + zero_scalar_, x);                                                    // Add by zero
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarAdd, x, zero_scalar_, true), x);          // Scalar Add by zero
@@ -41,7 +41,7 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
   }
   // Prim Eliminate (identity)
   MATCH_REPLACE(node, PPrimitive(prim::kPrimIdentity, x), x);
-  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return nullptr;
   }
 
@@ -75,7 +75,7 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
 }
 
 AnfNodePtr ArithmeticSimplify2::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return nullptr;
   }
   PatternNode x, y;

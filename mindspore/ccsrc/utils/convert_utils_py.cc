@@ -353,7 +353,7 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     // When sparse enabled, the undetermined might be raised and eliminated in opt passes
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    bool enable_sparse = context->enable_sparse();
+    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
     if (enable_sparse) {
       return std::make_shared<abstract::AbstractUndetermined>();
     }

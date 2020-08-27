@@ -56,7 +56,7 @@ namespace {
 bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string last_target = context_ptr->device_target();
+  std::string last_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (auto &node : nodes) {
     if (node->isa<CNode>()) {
       std::string cur_target = GetCNodeTarget(node);
@@ -348,7 +348,7 @@ bool CompileGraph::IsCut(const AnfNodePtr &node) {
         if (prim->name() == prim::kPrimBpropCut->name()) {
           auto ms_context = MsContext::GetInstance();
           MS_EXCEPTION_IF_NULL(ms_context);
-          ms_context->set_enable_pynative_hook(true);
+          ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, true);
         }
 
         if (backend_->name() == kMsConvert && prim->name() == prim::kPrimMakeTuple->name()) {
@@ -412,7 +412,7 @@ VectorRef CompileGraph::SplitNodes(const FuncGraphPtr &graph) {
   if (ContainMultiTarget(nodes)) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    std::string default_target = context_ptr->device_target();
+    std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     nodes = SplitSort(graph, default_target);
     return SplitNodesWithTarget(nodes, graph);
   }
@@ -920,17 +920,17 @@ BackendPtr CreateBackend() {
   }
 
   if (name == kMsConvert) {
-    std::string target = context_ptr->device_target();
-    uint32_t device_id = context_ptr->device_id();
+    std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto backend = std::make_shared<MsBackend>(name, target, device_id);
-    std::string device_target = MsContext::GetInstance()->device_target();
+    std::string device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     if (device_target == kAscendDevice) {
-      if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+      if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
         backend->set_is_multi_graph_sink(false);
-        context_ptr->set_is_multi_graph_sink(false);
+        context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
       } else {
         backend->set_is_multi_graph_sink(true);
-        context_ptr->set_is_multi_graph_sink(true);
+        context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
       }
     }
     return backend;

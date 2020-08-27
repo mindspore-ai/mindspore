@@ -24,7 +24,7 @@ bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const st
                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->enable_task_sink()) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     return true;
   }
   if (inputs.empty() || hccl_data_type_list_.empty()) {

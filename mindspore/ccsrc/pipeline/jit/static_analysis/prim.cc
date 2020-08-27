@@ -290,7 +290,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
   if (abs_base->isa<AbstractTensor>()) {
     auto arg_tensor = dyn_cast<AbstractTensor>(abs_base);
     dic["shape"] = arg_tensor->shape()->shape();
-    if (MsContext::GetInstance()->execution_mode() == kGraphMode) {
+    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
       const auto &min_shape = arg_tensor->shape()->min_shape();
       const auto &max_shape = arg_tensor->shape()->max_shape();
       if (!min_shape.empty() && !max_shape.empty()) {

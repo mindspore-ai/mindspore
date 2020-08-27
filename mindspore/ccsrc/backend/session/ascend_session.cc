@@ -253,7 +253,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
     debugger_->PreExecute(graph);
   }
 #endif
-  if (ms_context->precompile_only()) {
+  if (ms_context->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     MS_LOG(INFO) << "Precompile only, stop in build kernel step";
   } else {
     // alloc memory, including static memory and dynamic memory
@@ -278,8 +278,8 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   child_graph->SetExecOrderByDefault();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -436,7 +436,7 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() == kGraphMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     if (raise_precision_count > 0) {
       MS_LOG(WARNING) << "There has " << raise_precision_count
                       << " node/nodes used raise precision to selected the kernel!";
@@ -481,8 +481,8 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   device::KernelAdjust::GetInstance().InsertSwitchLoop(kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -601,11 +601,11 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (!save_graphs) {
     return;
   }
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -733,7 +733,7 @@ void AscendSession::MergeGraphExecOrder() {
   if (graph_order.size() > 1) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (!context_ptr->enable_task_sink()) {
+    if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
       MS_LOG(EXCEPTION) << "Control sink network should run with task-sink mode!";
     }
   }
@@ -920,8 +920,8 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs) {
     if (save_graphs_path.empty()) {
       save_graphs_path = ".";
@@ -947,7 +947,7 @@ void AscendSession::SelectKernel(NotNull<KernelGraphPtr> root_graph) {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() == kGraphMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     if (raise_precision_count > 0) {
       MS_LOG(WARNING) << "There are " << raise_precision_count
                       << " node/nodes used raise precision to selected the kernel!";
@@ -992,8 +992,8 @@ void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs) {
     if (save_graphs_path.empty()) {
       save_graphs_path = ".";

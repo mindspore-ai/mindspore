@@ -232,7 +232,7 @@ std::string GetMaketupleNodeTarget(const CNodePtr &cnode) {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string default_target = context_ptr->device_target();
+  std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   return default_target;
 }
 
@@ -248,7 +248,7 @@ std::string GetTupleGetItemTarget(const CNodePtr &cnode, const PrimitivePtr &pri
 std::string GetCNodeTarget(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string default_target = context_ptr->device_target();
+  std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (!node->isa<CNode>()) {
     return default_target;
   }

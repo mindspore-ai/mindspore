@@ -71,15 +71,15 @@ OpExecInfoPtr ConstructOpExecInfo() {
 TEST_F(TestPynativeExecute, TestCreateContext) {
   auto ctx3 = MsContext::GetInstance();
   ASSERT_EQ(ctx3->backend_policy(), "vm");
-  ASSERT_EQ(ctx3->device_target(), "CPU");
+  ASSERT_EQ(ctx3->get_param<std::string>(MS_CTX_DEVICE_TARGET), "CPU");
 
   ctx3->set_backend_policy("ge_only");
-  ctx3->set_device_target("GPU");
+  ctx3->set_param<std::string>(MS_CTX_DEVICE_TARGET, "GPU");
   auto ctx4 = MsContext::GetInstance();
 
   ASSERT_EQ(ctx3.get(), ctx4.get());
   ASSERT_EQ(ctx4->backend_policy(), "ge_only");
-  ASSERT_EQ(ctx4->device_target(), "GPU");
+  ASSERT_EQ(ctx4->get_param<std::string>(MS_CTX_DEVICE_TARGET), "GPU");
 }
 
 TEST_F(TestPynativeExecute, TestDefaultContext) {

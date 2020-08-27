@@ -117,7 +117,7 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   if (!dump_path.has_value()) {
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
-  auto device_id = context_ptr->device_id();
+  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   dump_info->set_dump_path("/" + dump_path.value() + "_" + std::to_string(device_id) + "/");
   MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path.value();
 

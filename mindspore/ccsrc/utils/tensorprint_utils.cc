@@ -273,7 +273,7 @@ void TensorPrint::operator()() {
   prntpb::Print print;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::string print_file_path = ms_context->print_file_path();
+  std::string print_file_path = ms_context->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
   if (print_file_path == "") {
     while (true) {
       std::vector<tdt::DataItem> bundle;

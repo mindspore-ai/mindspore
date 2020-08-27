@@ -37,7 +37,7 @@ void GPUMemoryManager::MallocDeviceMemory() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   // If use the dynamic memory pool, then alloc the first memory block to init.
-  if (context_ptr->enable_dynamic_mem_pool()) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
     auto device_addr = MallocMemFromMemPool(1);
     if (!device_addr) {
       MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
@@ -65,7 +65,7 @@ void GPUMemoryManager::FreeDeviceMemory() {
 uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->enable_dynamic_mem_pool()) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
     auto device_ptr = MallocMemFromMemPool(size);
     MS_EXCEPTION_IF_NULL(device_ptr);
     return AddressOffset(device_ptr, 0);

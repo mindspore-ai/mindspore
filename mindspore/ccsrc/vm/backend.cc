@@ -59,7 +59,7 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
     graph_id = target_sess_->CompileGraphAsync(lst, outputs);
   }
 
-  if (MsContext::GetInstance()->precompile_only()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return result;
   }
@@ -180,7 +180,7 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  uint32_t device_id = context_ptr->device_id();
+  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   other_sess_->Init(device_id);
   other_sess_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
   other_device_ = target;

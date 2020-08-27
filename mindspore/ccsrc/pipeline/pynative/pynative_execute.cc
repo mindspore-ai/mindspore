@@ -558,8 +558,8 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(INFO) << "Start run op[" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
-  ms_context->set_enable_pynative_infer(true);
-  std::string device_target = ms_context->device_target();
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device_target != kAscendDevice && device_target != kGPUDevice) {
     MS_EXCEPTION(ArgumentError) << "Device target [" << device_target << "] is not supported in Pynative mode";
   }
@@ -567,7 +567,7 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   if (session == nullptr) {
     session = session::SessionFactory::Get().Create(device_target);
     MS_EXCEPTION_IF_NULL(session);
-    session->Init(ms_context->device_id());
+    session->Init(ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   }
 
   std::vector<tensor::TensorPtr> input_tensors;
@@ -578,7 +578,7 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   session->BuildOpAsync(op_exec_info.get(), graph_info, input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, &input_tensors);
   py::tuple result = session->RunOpAsync(op_exec_info.get(), graph_info, input_tensors);
-  ms_context->set_enable_pynative_infer(false);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   *status = PYNATIVE_SUCCESS;
   MS_LOG(INFO) << "End run op[" << op_exec_info->op_name << "] with backend policy ms";
   return result;
@@ -1308,7 +1308,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
     // Maybe exit in the pynative runing op, so need reset pynative flag.
     auto ms_context = MsContext::GetInstance();
     if (ms_context != nullptr) {
-      ms_context->set_enable_pynative_infer(false);
+      ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
     }
     ConfigManager::GetInstance().ResetIterNum();
     return;
