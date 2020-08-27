@@ -130,6 +130,13 @@ static std::string GetId(const py::object &obj) {
     }
     return prefix + key;
   }
+  if (py::isinstance<mindspore::Type>(to_process)) {
+    auto type_ptr = py::cast<mindspore::TypePtr>(to_process);
+    return prefix + type_ptr->ToString();
+  }
+  if (py::isinstance<py::str>(to_process)) {
+    return prefix + std::string(py::str(to_process));
+  }
   if (py::isinstance<py::int_>(to_process)) {
     return prefix + std::string(py::str(to_process));
   }
@@ -1258,17 +1265,24 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
   pipeline::ReclaimOptimizer();
 }
 
+template <typename T>
+void MapClear(T map, const std::string &flag) {
+  for (auto it = map.begin(); it != map.end();) {
+    if (it->first.find(flag) != std::string::npos) {
+      it->second = nullptr;
+      it = map.erase(it);
+    } else {
+      it++;
+    }
+  }
+}
+
 void PynativeExecutor::Clear(const std::string &flag) {
   if (!flag.empty()) {
     MS_LOG(DEBUG) << "Clear res";
-    auto key_value = std::find_if(graph_map_.begin(), graph_map_.end(),
-                                  [&flag](const auto &item) { return item.first.find(flag) != std::string::npos; });
-    if (key_value != graph_map_.end()) {
-      std::string key = key_value->first;
-      (void)graph_map_.erase(key);
-      (void)cell_graph_map_.erase(key);
-      (void)cell_resource_map_.erase(key);
-    }
+    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(graph_map_, flag);
+    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(cell_graph_map_, flag);
+    MapClear<std::unordered_map<std::string, ResourcePtr>>(cell_resource_map_, flag);
     Clean();
     // Maybe exit in the pynative runing op, so need reset pynative flag.
     auto ms_context = MsContext::GetInstance();
@@ -1286,7 +1300,6 @@ void PynativeExecutor::Clear(const std::string &flag) {
   curr_g_ = nullptr;
   graph_info_map_.clear();
   op_id_map_.clear();
-  // node_abs_map_.clear();
   std::stack<FuncGraphPtr>().swap(graph_p_);
   ConfigManager::GetInstance().ResetIterNum();
 }
@@ -1300,7 +1313,18 @@ void PynativeExecutor::Clean() {
   pipeline::ReclaimOptimizer();
 }
 
+template <typename T>
+void MapErase(T map) {
+  for (auto it = map.begin(); it != map.end();) {
+    it = map.erase(it++);
+  }
+}
+
 void PynativeExecutor::ClearRes() {
+  MapErase<std::unordered_map<std::string, FuncGraphPtr>>(graph_map_);
+  MapErase<std::unordered_map<std::string, FuncGraphPtr>>(cell_graph_map_);
+  MapErase<std::unordered_map<std::string, ResourcePtr>>(cell_resource_map_);
+  MapErase<std::unordered_map<std::string, abstract::AbstractBasePtr>>(node_abs_map_);
   Clean();
   resource_.reset();
 }
