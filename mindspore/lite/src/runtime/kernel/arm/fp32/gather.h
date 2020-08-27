@@ -28,7 +28,7 @@ class GatherCPUKernel : public LiteKernel {
                   const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~GatherCPUKernel() override = default;
+  ~GatherCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
