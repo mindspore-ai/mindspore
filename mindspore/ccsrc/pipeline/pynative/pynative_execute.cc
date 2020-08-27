@@ -130,6 +130,10 @@ static std::string GetId(const py::object &obj) {
     }
     return prefix + key;
   }
+  if (py::isinstance<mindspore::Type>(to_process)) {
+    auto type_ptr = py::cast<mindspore::TypePtr>(to_process);
+    return prefix + type_ptr->ToString();
+  }
   if (py::isinstance<py::str>(to_process)) {
     return prefix + std::string(py::str(to_process));
   }
@@ -1257,11 +1261,11 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
 }
 
 template <typename T>
-void MapClear(T map, const std::string &flag) {
-  for (auto it = map.begin(); it != map.end();) {
+void MapClear(T *map, const std::string &flag) {
+  for (auto it = map->begin(); it != map->end();) {
     if (it->first.find(flag) != std::string::npos) {
       it->second = nullptr;
-      it = map.erase(it);
+      it = map->erase(it);
     } else {
       it++;
     }
@@ -1271,9 +1275,9 @@ void MapClear(T map, const std::string &flag) {
 void PynativeExecutor::Clear(const std::string &flag) {
   if (!flag.empty()) {
     MS_LOG(DEBUG) << "Clear res";
-    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(graph_map_, flag);
-    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(cell_graph_map_, flag);
-    MapClear<std::unordered_map<std::string, ResourcePtr>>(cell_resource_map_, flag);
+    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(&graph_map_, flag);
+    MapClear<std::unordered_map<std::string, FuncGraphPtr>>(&cell_graph_map_, flag);
+    MapClear<std::unordered_map<std::string, ResourcePtr>>(&cell_resource_map_, flag);
     Clean();
     // Maybe exit in the pynative runing op, so need reset pynative flag.
     auto ms_context = MsContext::GetInstance();
@@ -1305,17 +1309,17 @@ void PynativeExecutor::Clean() {
 }
 
 template <typename T>
-void MapErase(T map) {
-  for (auto it = map.begin(); it != map.end();) {
-    it = map.erase(it++);
+void MapErase(T *map) {
+  for (auto it = map->begin(); it != map->end();) {
+    it = map->erase(it++);
   }
 }
 
 void PynativeExecutor::ClearRes() {
-  MapErase<std::unordered_map<std::string, FuncGraphPtr>>(graph_map_);
-  MapErase<std::unordered_map<std::string, FuncGraphPtr>>(cell_graph_map_);
-  MapErase<std::unordered_map<std::string, ResourcePtr>>(cell_resource_map_);
-  MapErase<std::unordered_map<std::string, abstract::AbstractBasePtr>>(node_abs_map_);
+  MapErase<std::unordered_map<std::string, FuncGraphPtr>>(&graph_map_);
+  MapErase<std::unordered_map<std::string, FuncGraphPtr>>(&cell_graph_map_);
+  MapErase<std::unordered_map<std::string, ResourcePtr>>(&cell_resource_map_);
+  MapErase<std::unordered_map<std::string, abstract::AbstractBasePtr>>(&node_abs_map_);
   Clean();
   resource_.reset();
 }
