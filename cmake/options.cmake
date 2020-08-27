@@ -40,7 +40,7 @@ endif()
 
 if (ENABLE_ASAN)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -static-libasan -fsanitize=undefined")
+        set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer -fsanitize=undefined")
     else()
         set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -static-libsan -fsanitize=undefined")
     endif()
