@@ -131,12 +131,51 @@ class LogSoftmaxInfo : public Softmax {
   ~LogSoftmaxInfo() override = default;
 };
 
+class EluInfo : public ActivationOther {
+ public:
+  EluInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~EluInfo() override = default;
+};
+
 class ReLUInfo : public ActivationOther {
  public:
   ReLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~ReLUInfo() override = default;
+};
+
+class ReLU6Info : public ActivationOther {
+ public:
+  ReLU6Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~ReLU6Info() override = default;
+};
+
+class ReLUV2Info : public ActivationOther {
+ public:
+  ReLUV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~ReLUV2Info() override = default;
+};
+
+class SoftsignInfo : public ActivationOther {
+ public:
+  SoftsignInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SoftsignInfo() override = default;
+};
+
+class SoftplusInfo : public ActivationOther {
+ public:
+  SoftplusInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SoftplusInfo() override = default;
 };
 
 class CastInfo : public ActivationOther {

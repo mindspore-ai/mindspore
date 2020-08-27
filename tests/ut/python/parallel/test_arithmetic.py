@@ -122,17 +122,39 @@ def test_matmul_mul():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
-
-def test_matmul_div():
+def test_matmul_mod():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().set_strategy(strategy1)
-            self.div = P.Div().set_strategy(strategy2)
+            self.mod = P.Mod().set_strategy(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
-            out = self.div(out, b)
+            out = self.mod(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+def test_matmul_floormod():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.floormod = P.FloorMod().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.floormod(out, b)
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
@@ -147,16 +169,122 @@ def test_matmul_div():
     compile_net(net, x, y, b)
 
 
-def test_matmul_greater():
+def test_matmul_atan2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().set_strategy(strategy1)
-            self.greater = P.Greater().set_strategy(strategy2)
+            self.atan2 = P.Atan2().set_strategy(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
-            out = self.greater(out, b)
+            out = self.atan2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_divNoNan():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.divNoNan = P.DivNoNan().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.divNoNan(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_logicaland():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.equal = P.Equal().set_strategy(strategy2)
+            self.notequal = P.NotEqual().set_strategy(strategy2)
+            self.logical = P.LogicalAnd().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out1 = self.equal(out, b)
+            out = self.matmul(x, y)
+            out2 = self.notequal(out, b)
+            out = self.logical(out1, out2)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_logicalor():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.equal = P.Equal().set_strategy(strategy2)
+            self.notequal = P.NotEqual().set_strategy(strategy2)
+            self.logical = P.LogicalOr().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out1 = self.equal(out, b)
+            out = self.matmul(x, y)
+            out2 = self.notequal(out, b)
+            out = self.logical(out1, out2)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_div():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.div = P.Div().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.div(out, b)
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
@@ -488,6 +616,100 @@ def test_assign_sub():
         def __init__(self):
             super().__init__()
             self.assign_sub = P.AssignSub()
+            self.mul = P.Mul()
+            self.mul_weight = Parameter(Tensor(np.full([128, 32],
+                                                       0.5, dtype=np.float32)),
+                                        name="mul_weight")
+            self.assignsub_weight = Parameter(Tensor(np.full([128, 32],
+                                                             1.1, dtype=np.float32)),
+                                              name="assignsub_weight")
+
+        def construct(self, x):
+            out = self.mul(x, self.mul_weight)
+            out = self.assign_sub(self.assignsub_weight, out)
+            return out
+
+    class SubNetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(SubNetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x):
+            predict = self.network(x,)
+            return self.loss(predict)
+
+    class SubGradWrap(nn.Cell):
+        def __init__(self, network):
+            super(SubGradWrap, self).__init__()
+            self.network = network
+
+        def construct(self, x):
+            return grad_all(self.network)(x)
+
+    def compile_sub_net(net, x):
+        net.set_auto_parallel()
+        _executor.compile(net, x)
+
+    context.set_auto_parallel_context(device_num=64, global_rank=15)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = SubGradWrap(SubNetWithLoss(Net()))
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    compile_sub_net(net, x)
+
+
+def test_assign_add():
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign_sub = P.AssignAdd()
+            self.mul = P.Mul()
+            self.mul_weight = Parameter(Tensor(np.full([128, 32],
+                                                       0.5, dtype=np.float32)),
+                                        name="mul_weight")
+            self.assignsub_weight = Parameter(Tensor(np.full([128, 32],
+                                                             1.1, dtype=np.float32)),
+                                              name="assignsub_weight")
+
+        def construct(self, x):
+            out = self.mul(x, self.mul_weight)
+            out = self.assign_sub(self.assignsub_weight, out)
+            return out
+
+    class SubNetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(SubNetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x):
+            predict = self.network(x,)
+            return self.loss(predict)
+
+    class SubGradWrap(nn.Cell):
+        def __init__(self, network):
+            super(SubGradWrap, self).__init__()
+            self.network = network
+
+        def construct(self, x):
+            return grad_all(self.network)(x)
+
+    def compile_sub_net(net, x):
+        net.set_auto_parallel()
+        _executor.compile(net, x)
+
+    context.set_auto_parallel_context(device_num=64, global_rank=15)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = SubGradWrap(SubNetWithLoss(Net()))
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    compile_sub_net(net, x)
+
+
+def test_assign():
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign_sub = P.Assign()
             self.mul = P.Mul()
             self.mul_weight = Parameter(Tensor(np.full([128, 32],
                                                        0.5, dtype=np.float32)),

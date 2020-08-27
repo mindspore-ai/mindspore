@@ -98,6 +98,126 @@ def test_matmul_not_equal():
     compile_net(net, x, y, b)
 
 
+def test_matmul_approximateEqual():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.approximateEqual = P.ApproximateEqual(tolerance=0.5).set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.approximateEqual(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_greater():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.greater = P.Greater().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.greater(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_greaterEqual():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.greaterEqual = P.GreaterEqual().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.greaterEqual(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_less():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.less = P.Less().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.less(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_lessEqual():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.lessEqual = P.LessEqual().set_strategy(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.lessEqual(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
 def test_matmul_not_equal_repeated_calculation():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):

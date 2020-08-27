@@ -36,6 +36,14 @@ class EqualInfo : public ArithmeticBase {
   ~EqualInfo() override = default;
 };
 
+class ApproximateEqualInfo : public ArithmeticBase {
+ public:
+  ApproximateEqualInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                       const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+  ~ApproximateEqualInfo() override = default;
+};
+
 class NotEqualInfo : public ArithmeticBase {
  public:
   NotEqualInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
@@ -58,6 +66,38 @@ class MinimumInfo : public ArithmeticBase {
               const PrimitiveAttrs &attrs)
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
   ~MinimumInfo() override = default;
+};
+
+class GreaterInfo : public ArithmeticBase {
+ public:
+  GreaterInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+  ~GreaterInfo() override = default;
+};
+
+class GreaterEqualInfo : public ArithmeticBase {
+ public:
+  GreaterEqualInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                   const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+  ~GreaterEqualInfo() override = default;
+};
+
+class LessInfo : public ArithmeticBase {
+ public:
+  LessInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+  ~LessInfo() override = default;
+};
+
+class LessEqualInfo : public ArithmeticBase {
+ public:
+  LessEqualInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+  ~LessEqualInfo() override = default;
 };
 }  // namespace parallel
 }  // namespace mindspore

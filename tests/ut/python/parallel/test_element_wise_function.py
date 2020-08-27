@@ -129,6 +129,652 @@ def test_matmul_log():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
+def test_matmul_abs():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.abs = P.Abs().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.abs(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+def test_matmul_sign():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.sign = P.Sign().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.sign(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_floor():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.floor = P.Floor().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.floor(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+def test_matmul_round():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.round = P.Round().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.round(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_reciprocal():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.reciprocal = P.Reciprocal().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.reciprocal(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_inv():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.inv = P.Inv().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.inv(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_rsqrt():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.rsqrt = P.Rsqrt().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.rsqrt(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_tan():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.tan = P.Tan().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.tan(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_sin():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.sin = P.Sin().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.sin(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_sinh():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.sinh = P.Sinh().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.sinh(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_log1p():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.log1p = P.Log1p().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.log1p(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_expm1():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.expm1 = P.Expm1().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.expm1(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_cosh():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.cosh = P.Cosh().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.cosh(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+def test_matmul_erf():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.erf = P.Erf().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.erf(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(1, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(1, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(1, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_erfc():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.erfc = P.Erfc().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.erfc(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(1, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(1, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(1, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_zeroslike():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.zeroslike = P.ZerosLike().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.zeroslike(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(1, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(1, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(1, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_oneslike():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.oneslike = P.OnesLike().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.oneslike(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(1, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(1, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(1, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_BesselI0e():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.BesselI0e = P.BesselI0e().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.BesselI0e(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(1, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(1, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(1, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_BesselI1e():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.BesselI1e = P.BesselI1e().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.BesselI1e(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(1, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(1, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(1, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_ceil():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.Ceil = P.Ceil().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.Ceil(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_atan():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.atan = P.Atan().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.atan(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_Atanh():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.atanh = P.Atanh().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.atanh(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_asin():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.asin = P.Asin().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.asin(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_asinh():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.asinh = P.Asinh().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.asinh(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_acosh():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().set_strategy(strategy1)
+            self.acosh = P.Acosh().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().set_strategy(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.acosh(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
 
 def test_matmul_logical_not():
     class Net(nn.Cell):
