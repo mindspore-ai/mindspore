@@ -168,7 +168,7 @@ class DenseReparam(_DenseVariational):
         weight_prior_fn: prior distribution for weight.
             It should return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
-            normal distribution). The current version only supports NormalPrior.
+            normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: posterior distribution for sampling weight.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
@@ -176,7 +176,7 @@ class DenseReparam(_DenseVariational):
         bias_prior_fn: prior distribution for bias vector. It should return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
-            only supports NormalPrior.
+            only supports normal distribution.
         bias_posterior_fn: posterior distribution for sampling bias vector.
             It should be a function handle which returns a mindspore
             distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).

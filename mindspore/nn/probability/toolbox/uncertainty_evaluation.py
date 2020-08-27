@@ -77,7 +77,7 @@ class UncertaintyEvaluation:
     def __init__(self, model, train_dataset, task_type, num_classes=None, epochs=1,
                  epi_uncer_model_path=None, ale_uncer_model_path=None, save_model=False):
         self.epi_model = model
-        self.ale_model = model
+        self.ale_model = deepcopy(model)
         self.epi_train_dataset = train_dataset
         self.ale_train_dataset = deepcopy(train_dataset)
         self.task_type = task_type

@@ -2,7 +2,7 @@
 
 ![MindSpore+ZhuSuan](https://images.gitee.com/uploads/images/2020/0814/172009_ff0cdc1a_6585083.png "MS-Zhusuan.PNG")
 
-MindSpore Deep Probabilistic Programming （MDP） is a programming library for Bayesian deep learning. MDP is cooperatively developed with [ZhuSuan](https://zhusuan.readthedocs.io/en/latest/), which provides deep learning style primitives and algorithms for building probabilistic models and applying Bayesian inference.
+MindSpore Deep Probabilistic Programming (MDP) is a programming library for Bayesian deep learning. MDP is cooperatively developed with [ZhuSuan](https://zhusuan.readthedocs.io/en/latest/), which provides deep learning style primitives and algorithms for building probabilistic models and applying Bayesian inference.
 
 The objective of MDP is to integrate deep learning with Bayesian learning. On the one hand, similar to other Deep Probabilistic Programming Languages (DPPL) (e.g., TFP, Pyro), for the professional Bayesian learning researchers, MDP provides probability sampling, inference algorithms, and model building libraries; On the other hand, MDP provides high-level APIs for DNN researchers that are unfamiliar with Bayesian models, making it possible to take advantage of Bayesian models without the need of changing their DNN programming logics.
 
@@ -20,6 +20,7 @@ The objective of MDP is to integrate deep learning with Bayesian learning. On th
 - Bijectors([mindspore.nn.probability.bijectors](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/bijector)): Reversible and composable transformations of random variables.
 
  **Layer 1-2: Probabilistic inference algorithms** 
+
 
 - SVI([mindspore.nn.probability.infer.variational](https://gitee.com/mindspore/mindspore/tree/master/mindspore/nn/probability/infer/variational)): A unified interface for stochastic variational inference.
 - MC: Algorithms for approximating integrals via sampling.
@@ -47,6 +48,7 @@ MDP requires MindSpore version 0.7.0-beta or later. MDP is actively evolving. In
 ```
 import mindspore.nn as nn
 from mindspore.nn.probability import bnn_layers
+import mindspore.ops.operations as P
 
 class BNNLeNet5(nn.Cell):
     """
@@ -92,26 +94,15 @@ class BNNLeNet5(nn.Cell):
 The way to construct Bayesian Neural Network by bnn_layers is the same as DNN. It's worth noting that bnn_layers and traditional layers of DNN can be combined with each other.
 
 3. Define the Loss Function and Optimizer
-- Defining the Loss Function
-The loss function `SoftmaxCrossEntropyWithLogits` is used in the example.
-
-```
-form mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-```
- Call the defined loss function in the `__main__` function.
+The loss function `SoftmaxCrossEntropyWithLogits` and the optimizer `AdamWeightDecay` are used in the example. Call the loss function and optimizer in the `__main__` function.
 
 ```
 if __name__ == "__main__":
     ...
     # define the loss function
     criterion = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    optimizer = AdamWeightDecay(params=network.trainable_params(), learning_rate=0.0001)
     ...
-```
-- Defining the Optimizer
-The Optimizer `AdamWeightDecay` is used in this example.
-
-```
-optimizer = nn.AdamWeightDecay(params=network.trainable_params(), learning_rate=0.0001)
 ```
 
 4. Train the Network
@@ -119,6 +110,8 @@ The process of Bayesian network training is basically the same as that of DNN, t
 Based on the two parameters `backbone` and `loss_fn` in WithLossCell, WithBNNLossCell adds two parameters of `dnn_factor` and `bnn_factor`. Those two parameters are used to trade off backbone's loss and kl loss to prevent kl loss from being too large to cover backbone's loss.
 
 ```
+from mindspore.nn import TrainOneStepCell
+
 if __name__ == "__main__":
     ...
     net_with_loss = bnn_layers.WithBNNLossCell(network, criterion, dnn_factor=60000, bnn_factor=0.000001)
@@ -138,8 +131,45 @@ if __name__ == "__main__":
         print('Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tvalidation Accuracy: {:.4f}'.format(i, train_loss, train_acc, valid_acc))
 ```
 
+The `train_model` and `validate_model` are defined as follows:
+
+```
+import numpy as np
+
+def train_model(train_net, net, dataset):
+    accs = []
+    loss_sum = 0
+    for _, data in enumerate(dataset.create_dict_iterator()):
+        train_x = Tensor(data['image'].astype(np.float32))
+        label = Tensor(data['label'].astype(np.int32))
+        loss = train_net(train_x, label)
+        output = net(train_x)
+        log_output = P.LogSoftmax(axis=1)(output)
+        acc = np.mean(log_output.asnumpy().argmax(axis=1) == label.asnumpy())
+        accs.append(acc)
+        loss_sum += loss.asnumpy()
+
+    loss_sum = loss_sum / len(accs)
+    acc_mean = np.mean(accs)
+    return loss_sum, acc_mean
+
+
+def validate_model(net, dataset):
+    accs = []
+    for _, data in enumerate(dataset.create_dict_iterator()):
+        train_x = Tensor(data['image'].astype(np.float32))
+        label = Tensor(data['label'].astype(np.int32))
+        output = net(train_x)
+        log_output = P.LogSoftmax(axis=1)(output)
+        acc = np.mean(log_output.asnumpy().argmax(axis=1) == label.asnumpy())
+        accs.append(acc)
+
+    acc_mean = np.mean(accs)
+    return acc_mean
+```
+
  **Variational Inference**
-1. Define the Variational Autoencoder, we only need to self-define the encoder and decoder(DNN model).
+1. Define the Variational Auto-Encoder, we only need to self-define the encoder and decoder(DNN model).
 
 ```
 import mindspore.nn as nn
@@ -203,8 +233,11 @@ trained_loss = vi.get_train_loss()
 5. Use the trained VAE network, we can generate new samples or reconstruct the input samples.
 
 ```
+IMAGE_SHAPE = (-1, 1, 32, 32)
 generated_sample = vae.generate_sample(64, IMAGE_SHAPE)
-reconstructed_sample = vae.reconstruct_sample(sample_x)
+for sample in ds_train.create_dict_iterator():
+    sample_x = Tensor(sample['image'], dtype=mstype.float32)
+    reconstructed_sample = vae.reconstruct_sample(sample_x)
 ```
 
 
@@ -215,6 +248,7 @@ For DNN researchers who are unfamiliar with Bayesian models, MDP provides high-l
 ```
 from mindspore.common.initializer import TruncatedNormal
 import mindspore.nn as nn
+import mindspore.ops.operations as P
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
     """weight initial for conv layer"""
@@ -281,6 +315,8 @@ class LeNet5(nn.Cell):
 2. Wrap DNN by TrainOneStepCell
 
 ```
+from mindspore.nn import WithLossCell, TrainOneStepCell
+
 if __name__ == "__main__":
     network = LeNet5()
 
@@ -311,11 +347,12 @@ The arg `trainable_dnn` specifies a trainable DNN model wrapped by TrainOneStepC
 from mindspore.nn.probability import transforms
 
 if __name__ == "__main__":
-    ```
+    ...
     bnn_transformer = transforms.TransformToBNN(train_network, 60000, 0.000001)
+    ...
 ```
 
-4-1. Transform the whole model
+3-1. Transform the whole model
 The method `transform_to_bnn_model` can transform both convolutional layer and full connection layer of DNN model to BNN model. Its code is as follows:
 
 ```
@@ -349,15 +386,16 @@ Arg `get_dense_args` specifies which arguments to be gotten from full connection
 
 ```
 if __name__ == "__main__":
-    ```
+    ...
     train_bnn_network = bnn_transformer.transform_to_bnn_model()
+    ...
 ```
 
-4-2. Transform a specific type of layers
+3-2. Transform a specific type of layers
 The method `transform_to_bnn_layer` can transform a specific type of layers (nn.Dense or nn.Conv2d) in DNN model to corresponding BNN layer. Its code is as follows:
 
 ```
-    def transform_to_bnn_layer(self, dnn_layer, bnn_layer, get_args, add_args={}):
+    def transform_to_bnn_layer(self, dnn_layer, bnn_layer, get_args=None, add_args=None):
         r"""
         Transform a specific type of layers in DNN model to corresponding BNN layer.
 
@@ -377,39 +415,37 @@ Arg `dnn_layer` specifies which type of DNN layer to be transformed to BNN layer
 
 ```
 if __name__ == "__main__":
-    ```
-    train_bnn_network = bnn_transformer.transform_to_bnn_model()
+    ...
+    train_bnn_network = bnn_transformer.transform_to_bnn_layer()
+    ...
 ```
 
 **Uncertainty Evaluation**
 The uncertainty estimation toolbox is based on MindSpore Deep Probabilistic Programming (MDP), and it is suitable for mainstream deep learning models, such as regression, classification, target detection and so on. In the inference stage, with the uncertainy estimation toolbox, developers only need to pass in the trained model and training dataset, specify the task and the samples to be estimated, then can obtain the aleatoric uncertainty and epistemic uncertainty. Based the uncertainty information, developers can understand the model and the dataset better.
- - **Classification Task**
-In classification task, for example, the model is lenet model, and the training dataset is mnist dataset. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
+
+In classification task, for example, the model is lenet model. The MNIST dateset is used in the example. Data processing is consistent with [Implementing an Image Classification Application](https://www.mindspore.cn/tutorial/en/master/quick_start/quick_start.html) in Tutorial. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
 ```
-evaluation = UncertaintyEvaluation(model=lenet,
-                                   train_dataset=mnist,
+from mindspore.nn.probability.toolbox.uncertainty_evaluation import UncertaintyEvaluation
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
+network = LeNet5()
+param_dict = load_checkpoint('checkpoint_lenet.ckpt')
+load_param_into_net(network, param_dict)
+# get train and eval dataset
+ds_train = create_dataset('workspace/mnist/train')
+ds_eval = create_dataset('workspace/mnist/test')
+evaluation = UncertaintyEvaluation(model=network,
+                                   train_dataset=ds_train,
                                    task_type='classification',
                                    num_classes=10,
                                    epochs=1,
                                    epi_uncer_model_path=None,
                                    ale_uncer_model_path=None,
                                    save_model=False)
-epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
-aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
-```
- - **Regression Task** 
-
-In regression task, for example, the model is MLP model, the training dataset is boston_housing. For evaluating the uncertainty of test examples, the use of the toolbox is as follows:
-```
-evaluation = UncertaintyEvaluation(model=MLP,
-                                   train_dataset=boston_housing,
-                                   task_type='regression',
-                                   epochs=1,
-                                   epi_uncer_model_path=None,
-                                   ale_uncer_model_path=None,
-                                   save_model=False)
-epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
-aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
+for eval_data in ds_eval.create_dict_iterator():
+    eval_data = Tensor(eval_data['image'], mstype.float32)
+    epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
+    aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
 ```
 
 
