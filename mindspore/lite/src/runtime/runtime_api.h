@@ -16,7 +16,6 @@
 #ifndef PREDICT_SRC_RUNTIME_RUNTIME_API_H_
 #define PREDICT_SRC_RUNTIME_RUNTIME_API_H_
 #include <memory>
-#include "include/thread_pool_config.h"
 
 #ifndef INTERNAL_API_DLL
 #ifdef _WIN32

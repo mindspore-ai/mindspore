@@ -16,7 +16,6 @@
 
 #include <utility>
 #include "src/runtime/parallel_executor.h"
-#include "include/thread_pool_config.h"
 #include "src/runtime/runtime_api.h"
 
 #define MAX_THREAD_NUM 8
