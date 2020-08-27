@@ -16,18 +16,18 @@
 @title mindspore_build
 
 SET BASEPATH=%CD%
-IF NOT EXIST %BASEPATH%/build (
+IF NOT EXIST "%BASEPATH%/build" (
     md "build"
 )
 
-cd %BASEPATH%/build
+cd "%BASEPATH%/build"
 set BUILD_PATH=%CD%
 
-IF NOT EXIST %BUILD_PATH%/mindspore (
+IF NOT EXIST "%BUILD_PATH%/mindspore" (
     md "mindspore"
 )
 
-cd %CD%/mindspore
+cd "%CD%/mindspore"
 
 IF "%1%" == "lite" (
     call :gene_gtest
@@ -56,7 +56,7 @@ IF "%1%" == "lite" (
         echo "build fail."
         goto run_fail
     ) ELSE (
-        cd %BASEPATH%/output
+        cd "%BASEPATH%/output"
         rd /s /q _CPack_Packages
     )
 ) ELSE (
@@ -78,40 +78,40 @@ IF "%1%" == "lite" (
     )
 )
 
-cd %BASEPATH%
+cd "%BASEPATH%"
 
 goto run_eof
 
 :run_cmake
-    cd %BUILD_PATH%/mindspore
+    cd "%BUILD_PATH%/mindspore"
     cmake -DBUILD_DEVICE=on -DBUILD_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^
-    -G "CodeBlocks - MinGW Makefiles" %BASEPATH%/mindspore/lite
+    -G "CodeBlocks - MinGW Makefiles" "%BASEPATH%/mindspore/lite"
 GOTO:EOF
 
 :gene_gtest
-    cd %BASEPATH%/third_party
+    cd "%BASEPATH%/third_party"
     IF EXIST googletest rd /s /q googletest
     git submodule update --init --recursive googletest
-    cd %BUILD_PATH%/mindspore
+    cd "%BUILD_PATH%/mindspore"
 GOTO:EOF
 
 :gene_protobuf
-    SET PROTOC=%BASEPATH%/build/mindspore/_deps/protobuf-src/_build/protoc
+    SET PROTOC="%BASEPATH%/build/mindspore/_deps/protobuf-src/_build/protoc"
 
-    SET PROTO_SRC_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/caffe
+    SET PROTO_SRC_DIR="%BASEPATH%/mindspore/lite/tools/converter/parser/caffe"
     cd %PROTO_SRC_DIR%
     %PROTOC% *.proto --proto_path=%PROTO_SRC_DIR% --cpp_out=%PROTO_SRC_DIR%
 
-    SET PROTO_SRC_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/onnx
+    SET PROTO_SRC_DIR="%BASEPATH%/mindspore/lite/tools/converter/parser/onnx"
     cd %PROTO_SRC_DIR%
     %PROTOC% *.proto --proto_path=%PROTO_SRC_DIR% --cpp_out=%PROTO_SRC_DIR%
     cd %BUILD_PATH%/mindspore
 GOTO:EOF
 
 :gene_flatbuffer
-    SET FLATC=%BASEPATH%/build/mindspore/_deps/flatbuffers-src/_build/flatc
-    SET FLAT_DIR=%BASEPATH%/mindspore/lite/schema
+    SET FLATC="%BASEPATH%/build/mindspore/_deps/flatbuffers-src/_build/flatc"
+    SET FLAT_DIR="%BASEPATH%/mindspore/lite/schema"
     cd %FLAT_DIR%
     IF EXIST inner rd /s /q inner
     md inner
@@ -119,14 +119,14 @@ GOTO:EOF
     %FLATC% -c -b *.fbs
     %FLATC% -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o %FLAT_DIR%/inner *.fbs
 
-    SET FLAT_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/tflite
+    SET FLAT_DIR="%BASEPATH%/mindspore/lite/tools/converter/parser/tflite"
     cd %FLAT_DIR%
     %FLATC% -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o %FLAT_DIR% *.fbs
-    cd %BUILD_PATH%/mindspore
+    cd "%BUILD_PATH%/mindspore"
 GOTO:EOF
 
 :run_fail
-    cd %BASEPATH%
+    cd "%BASEPATH%"
     set errorlevel=1
 
 :run_eof
