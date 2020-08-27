@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
@@ -31,6 +32,19 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
 namespace kernel {
+static std::map<int, int> kNCHWToNHWCAxisMap = {
+  {0, 0},
+  {1, 3},
+  {2, 1},
+  {3, 2},
+};
+static std::map<int, int> kNHWCToNCHWAxisMap = {
+  {0, 0},
+  {1, 2},
+  {2, 3},
+  {3, 1},
+};
+
 class GpuKernel : public KernelMod {
  public:
   virtual ~GpuKernel() = default;
@@ -72,6 +86,18 @@ class GpuKernel : public KernelMod {
     dst->push_back(src.size() < 3 ? 1 : SizeToInt(src[src.size() - 3]));
     dst->push_back(src.size() < 2 ? 1 : SizeToInt(src[src.size() - 2]));
     dst->push_back(src.size() == 0 ? 1 : SizeToInt(src[src.size() - 1]));
+  }
+
+  int AxisTransform(const std::string &origin_data_format, const std::string &cal_format, int axis) {
+    if (((origin_data_format == kOpFormat_DEFAULT) || (origin_data_format == kOpFormat_NCHW)) &&
+        (cal_format == kOpFormat_NHWC)) {
+      return kNCHWToNHWCAxisMap[axis];
+    } else if (((cal_format == kOpFormat_DEFAULT) || (cal_format == kOpFormat_NCHW)) &&
+               (origin_data_format == kOpFormat_NHWC)) {
+      return kNHWCToNCHWAxisMap[axis];
+    } else {
+      return axis;
+    }
   }
 
   // transpose shape: NCHW To NHWC
