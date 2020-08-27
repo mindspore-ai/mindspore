@@ -33,6 +33,7 @@ class Softplus(Bijector):
 
     Args:
         sharpness (float): scale factor. Default: 1.0.
+        name (str): name of the bijector. Default: 'Softplus'.
 
     Examples:
         >>> # To initialize a Softplus bijector of sharpness 2
@@ -47,10 +48,10 @@ class Softplus(Bijector):
         >>>     def construct(self, value):
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'forward' with the name of the function
-        >>>         ans = self.sp1.forward(value)
-        >>>         ans = self.sp1.inverse(value)
-        >>>         ans = self.sp1.forward_log_jacobian(value)
-        >>>         ans = self.sp1.inverse_log_jacobian(value)
+        >>>         ans1 = self.sp1.forward(value)
+        >>>         ans2 = self.sp1.inverse(value)
+        >>>         ans3 = self.sp1.forward_log_jacobian(value)
+        >>>         ans4 = self.sp1.inverse_log_jacobian(value)
     """
 
     def __init__(self,

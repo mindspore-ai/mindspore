@@ -101,13 +101,13 @@ class Bijector(Cell):
 
     def forward_log_jacobian(self, *args, **kwargs):
         """
-        Logarithm of the derivative of forward transformation.
+        Logarithm of the derivative of the forward transformation.
         """
         return self._forward_log_jacobian(*args, **kwargs)
 
     def inverse_log_jacobian(self, *args, **kwargs):
         """
-        Logarithm of the derivative of forward transformation.
+        Logarithm of the derivative of the inverse transformation.
         """
         return self._inverse_log_jacobian(*args, **kwargs)
 
@@ -131,11 +131,14 @@ class Bijector(Cell):
         """
         Override construct in Cell.
 
-        Args:
-            *inputs: inputs[0] is always the name of a function.
+        Note:
+            Names of supported functions include:
+            'forward', 'inverse', 'forward_log_jacobian', 'inverse_log_jacobian'.
 
-        Notes:
-            Always raise RuntimeError as Distribution should not be called directly.
+        Args:
+            name (str): name of the function.
+            *args (list): list of positional arguments needed for the function.
+            **kwargs (dictionary): dictionary of keyword arguments needed for the function.
         """
         if name == 'forward':
             return self.forward(*args, **kwargs)

@@ -454,13 +454,14 @@ class Distribution(Cell):
         Override construct in Cell.
 
         Note:
-            Names of supported functions:
+            Names of supported functions include:
             'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival'
             'var', 'sd', 'entropy', 'kl_loss', 'cross_entropy', 'sample'.
 
         Args:
             name (str): name of the function.
-            *args (list): list of arguments needed for the function.
+            *args (list): list of positional arguments needed for the function.
+            **kwargs (dictionary): dictionary of keyword arguments needed for the function.
         """
 
         if name == 'log_prob':
