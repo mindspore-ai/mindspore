@@ -90,7 +90,7 @@ int FullconnectionInt8CPUKernel::ReSize() {
                                     quant_params_.output.zp_, quant_params_.output.scale_, &quant_params_.out_act_min,
                                     &quant_params_.out_act_max);
   CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                     bias_ptr_, weight_bias_sums_);
+                     bias_ptr_, weight_bias_sums_, ColMajor);
   return RET_OK;
 }
 
@@ -136,7 +136,7 @@ int FullconnectionInt8CPUKernel::Run() {
   }
   auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->Data());
   RowMajor2Row4x16Major(input_ptr, fc_param_->row_, fc_param_->deep_, a_r4x16_ptr_, d16_);
-  CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_);
+  CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, quant_params_.weight.zp_, input_sums_, RowMajor);
   ParallelLaunch(THREAD_POOL_DEFAULT, FcInt8Run, this, thread_count_);
   return RET_OK;
 }
