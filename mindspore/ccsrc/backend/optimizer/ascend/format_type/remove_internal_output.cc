@@ -58,7 +58,7 @@ const AnfNodePtr RemoveInternalOutput::Process(const FuncGraphPtr &func_graph, c
   if (kernel_graph == nullptr) {
     return nullptr;
   }
-  if (!kernel_graph->IsInternalOutput(node, 0)) {
+  if (!kernel_graph->IsUniqueTargetInternalOutput(node, 0)) {
     return nullptr;
   }
   if (!UsedForOutputOnly(func_graph, node)) {

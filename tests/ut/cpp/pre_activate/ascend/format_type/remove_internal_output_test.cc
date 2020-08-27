@@ -49,7 +49,7 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     auto make_tuple = GetMakeTuple(kg);
     auto add = make_tuple->cast<CNodePtr>()->input(1);
     MS_EXCEPTION_IF_NULL(add);
-    kg->AddInternalOutput(add, add);
+    kg->AddInternalOutput(add, add, 0, true);
     KernelBuildInfoBuilder builder;
     builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
     builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
@@ -77,8 +77,8 @@ class TestHWRemoveInternalOutput : public BackendCommon {
     MS_EXCEPTION_IF_NULL(tuple_getitem2);
     auto max_pool = tuple_getitem1->cast<CNodePtr>()->input(1);
     MS_EXCEPTION_IF_NULL(max_pool);
-    kg->AddInternalOutput(tuple_getitem1, max_pool);
-    kg->AddInternalOutput(tuple_getitem2, max_pool);
+    kg->AddInternalOutput(tuple_getitem1, max_pool, 0, true);
+    kg->AddInternalOutput(tuple_getitem2, max_pool, 1, true);
     KernelBuildInfoBuilder builder;
     builder.SetInputsReshapeType({{}});
     builder.SetOutputsReshapeType({{}, {}});
