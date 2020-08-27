@@ -87,44 +87,44 @@ std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "");
 /// \param[in] column_names Column names used to specify columns to load, if empty, will read all columns.
 ///     (default = {})
 /// \param[in] decode the option to decode the images in dataset (default = false)
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///     A `RandomSampler` will be used to randomly iterate the entire dataset (default = nullptr)
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
                                     const std::vector<std::string> &column_names = {}, bool decode = false,
-                                    const std::shared_ptr<SamplerObj> &sampler = nullptr);
+                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a CelebADataset
 /// \notes The generated dataset has two columns ['image', 'attr'].
 //      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] dataset_type One of 'all', 'train', 'valid' or 'test'.
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///     will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &dataset_type = "all",
-                                      const std::shared_ptr<SamplerObj> &sampler = nullptr, bool decode = false,
+                                      const std::shared_ptr<SamplerObj> &sampler = RandomSampler(), bool decode = false,
                                       const std::set<std::string> &extensions = {});
 
 /// \brief Function to create a Cifar10 Dataset
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///     will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir,
-                                        const std::shared_ptr<SamplerObj> &sampler = nullptr);
+                                        const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a Cifar100 Dataset
 /// \notes The generated dataset has three columns ['image', 'coarse_label', 'fine_label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///     will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
-                                          const std::shared_ptr<SamplerObj> &sampler = nullptr);
+                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a CLUEDataset
 /// \notes The generated dataset has a variable number of columns depending on the task and usage
@@ -161,12 +161,12 @@ std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files,
 /// \param[in] annotation_file Path to the annotation json
 /// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
 /// \param[in] decode Decode the images after reading
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///     will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                   const std::string &task = "Detection", const bool &decode = false,
-                                  const std::shared_ptr<SamplerObj> &sampler = nullptr);
+                                  const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a CSVDataset
 /// \notes The generated dataset has a variable number of columns
@@ -200,13 +200,13 @@ std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, c
 ///     The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] decode A flag to decode in ImageFolder
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///     A `RandomSampler` will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] extensions File extensions to be read
 /// \param[in] class_indexing a class name to label map
 /// \return Shared pointer to the current ImageFolderDataset
 std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode = false,
-                                                const std::shared_ptr<SamplerObj> &sampler = nullptr,
+                                                const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                                 const std::set<std::string> &extensions = {},
                                                 const std::map<std::string, int32_t> &class_indexing = {});
 
@@ -214,25 +214,25 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_file The dataset file to be read
 /// \param[in] usage Need "train", "eval" or "inference" data (default="train")
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///     A `RandomSampler` will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
 ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
 /// \param[in] decode Decode the images after reading (default=false).
 /// \return Shared pointer to the current ManifestDataset
-std::shared_ptr<ManifestDataset> Manifest(std::string dataset_file, std::string usage = "train",
-                                          std::shared_ptr<SamplerObj> sampler = nullptr,
+std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage = "train",
+                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                           const std::map<std::string, int32_t> &class_indexing = {},
                                           bool decode = false);
 
 /// \brief Function to create a MnistDataset
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`,
-///     A `RandomSampler` will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir,
-                                    const std::shared_ptr<SamplerObj> &sampler = nullptr);
+                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a ConcatDataset
 /// \notes Reload "+" operator to concat two datasets
@@ -246,14 +246,14 @@ std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &dataset
 /// \param[in] total_rows Number of rows for the dataset to generate (default=0, number of rows is random)
 /// \param[in] schema SchemaObj to set column type, data type and data shape
 /// \param[in] columns_list List of columns to be read (default={}, read all columns)
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///    will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<RandomDataset> RandomData(const int32_t &total_rows = 0, T schema = nullptr,
                                           const std::vector<std::string> &columns_list = {},
-                                          std::shared_ptr<SamplerObj> sampler = nullptr) {
-  auto ds = std::make_shared<RandomDataset>(total_rows, schema, std::move(columns_list), std::move(sampler));
+                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler()) {
+  auto ds = std::make_shared<RandomDataset>(total_rows, schema, columns_list, std::move(sampler));
   return ds->ValidateParams() ? ds : nullptr;
 }
 
@@ -286,13 +286,13 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
 /// \param[in] mode Set the data list txt file to be readed
 /// \param[in] class_indexing A str-to-int mapping from label name to index
 /// \param[in] decode Decode the images after reading
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is `nullptr`, A `RandomSampler`
-///     will be used to randomly iterate the entire dataset
+/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                                 const std::string &mode = "train",
                                 const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
-                                const std::shared_ptr<SamplerObj> &sampler = nullptr);
+                                const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a ZipDataset
 /// \notes Applies zip to the dataset
@@ -756,7 +756,7 @@ class ImageFolderDataset : public Dataset {
 class ManifestDataset : public Dataset {
  public:
   /// \brief Constructor
-  ManifestDataset(std::string dataset_file, std::string usage, std::shared_ptr<SamplerObj> sampler,
+  ManifestDataset(const std::string &dataset_file, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
                   const std::map<std::string, int32_t> &class_indexing, bool decode);
 
   /// \brief Destructor
@@ -808,7 +808,7 @@ class RandomDataset : public Dataset {
 
   /// \brief Constructor
   RandomDataset(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema,
-                const std::vector<std::string> &columns_list, std::shared_ptr<SamplerObj> sampler)
+                const std::vector<std::string> &columns_list, const std::shared_ptr<SamplerObj> &sampler)
       : total_rows_(total_rows),
         schema_path_(""),
         schema_(std::move(schema)),
@@ -816,8 +816,8 @@ class RandomDataset : public Dataset {
         sampler_(std::move(sampler)) {}
 
   /// \brief Constructor
-  RandomDataset(const int32_t &total_rows, std::string schema_path, std::vector<std::string> columns_list,
-                std::shared_ptr<SamplerObj> sampler)
+  RandomDataset(const int32_t &total_rows, std::string schema_path, const std::vector<std::string> &columns_list,
+                const std::shared_ptr<SamplerObj> &sampler)
       : total_rows_(total_rows), schema_path_(schema_path), columns_list_(columns_list), sampler_(std::move(sampler)) {}
 
   /// \brief Destructor

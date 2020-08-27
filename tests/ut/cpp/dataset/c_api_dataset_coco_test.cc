@@ -290,3 +290,14 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestCocoWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoWithNullSampler.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Detection", false, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}

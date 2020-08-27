@@ -93,7 +93,7 @@ TEST_F(MindDataTestPipeline, TestAlbumDecode) {
 
 TEST_F(MindDataTestPipeline, TestAlbumNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumNumSamplers.";
-  
+
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
@@ -132,5 +132,27 @@ TEST_F(MindDataTestPipeline, TestAlbumError) {
   // Create a Album Dataset
   std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, SequentialSampler(0, 1));
 
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestAlbumWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumWithNullSampler.";
+  std::string folder_path = datasets_root_path_ + "/testAlbum/images";
+  std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
+  std::vector<std::string> column_names = {"image", "label", "id"};
+  // Create a Album Dataset
+  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestAlbumDuplicateColumnName) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumDuplicateColumnName.";
+  std::string folder_path = datasets_root_path_ + "/testAlbum/images";
+  std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
+  std::vector<std::string> column_names = {"image", "image", "id"};
+  // Create a Album Dataset
+  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true);
+  // Expect failure: duplicate column names
   EXPECT_EQ(ds, nullptr);
 }
