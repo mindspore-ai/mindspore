@@ -21,7 +21,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Rel
+from mindspore._checkparam import ParamValidator as validator, Rel
 from mindspore._checkparam import Validator
 from mindspore._checkparam import check_bool, twice, check_int_positive
 from mindspore._extends import cell_attr_register
@@ -29,10 +29,12 @@ from ..cell import Cell
 
 __all__ = ['Conv2d', 'Conv2dTranspose', 'DepthwiseConv2d', 'Conv1d', 'Conv1dTranspose']
 
+
 class _Conv(Cell):
     """
     Applies a N-D convolution over an input signal composed of several input planes.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -68,15 +70,16 @@ class _Conv(Cell):
         self.group = check_int_positive(group)
         self.has_bias = has_bias
         if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
-            kernel_size[0] < 1 or kernel_size[1] < 1:
+                isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \
+                kernel_size[0] < 1 or kernel_size[1] < 1:
             raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
                              + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
         if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or \
-            isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
+                isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
             raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
                              + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
         if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
-            dilation[0] < 1 or dilation[1] < 1:
+                isinstance(dilation[0], bool) or isinstance(dilation[1], bool) or dilation[0] < 1 or dilation[1] < 1:
             raise ValueError("Attr 'dilation' of 'Conv2D' Op passed "
                              + str(self.dilation) + ", should equal to or greater than 1.")
         if in_channels % group != 0:
@@ -192,6 +195,7 @@ class Conv2d(_Conv):
         >>> net(input).shape
         (1, 240, 1024, 640)
     """
+
     @cell_attr_register
     def __init__(self,
                  in_channels,
@@ -262,6 +266,7 @@ class Conv2d(_Conv):
 def _check_input_3d(input_shape):
     if len(input_shape) != 3:
         raise ValueError(f"Input should be 3d, but got shape {input_shape}")
+
 
 class Conv1d(_Conv):
     r"""
@@ -343,6 +348,7 @@ class Conv1d(_Conv):
         >>> net(input).shape
         (1, 240, 640)
     """
+
     @cell_attr_register
     def __init__(self,
                  in_channels,
@@ -497,6 +503,7 @@ class Conv2dTranspose(_Conv):
         >>> input = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
         >>> net(input)
         """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -661,6 +668,7 @@ class Conv1dTranspose(_Conv):
         >>> input = Tensor(np.ones([1, 3, 50]), mindspore.float32)
         >>> net(input)
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -808,7 +816,8 @@ class DepthwiseConv2d(Cell):
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
     :math:`\text{ks_w}` are the height and width of the convolution kernel. The full kernel has shape
-    :math:`(C_{out}, C_{in}, \text{ks_h}, \text{ks_w})` to split the input in the channel dimension.
+    :math:`(C_{out}, C_{in} // \text{group}, \text{ks_h}, \text{ks_w})`, where group is the group number
+    to split the input in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
     :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
@@ -851,6 +860,8 @@ class DepthwiseConv2d(Cell):
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value should
                                       be greater than or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
+        group (int): Split filter into groups, `in_ channels` and `out_channels` should be
+            divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             It can be a Tensor, a string, an Initializer or a number. When a string is specified,
@@ -874,6 +885,7 @@ class DepthwiseConv2d(Cell):
         >>> net(input).shape
         (1, 240, 1024, 640)
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -882,6 +894,7 @@ class DepthwiseConv2d(Cell):
                  pad_mode='same',
                  padding=0,
                  dilation=1,
+                 group=1,
                  has_bias=False,
                  weight_init='normal',
                  bias_init='zeros'):
@@ -891,9 +904,13 @@ class DepthwiseConv2d(Cell):
         self.dilation = twice(dilation)
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
+        validator.check_integer('group', group, in_channels, Rel.EQ)
+        validator.check_integer('group', group, out_channels, Rel.EQ)
+        validator.check_integer('group', group, 1, Rel.GE)
         self.pad_mode = pad_mode
         self.padding = padding
         self.dilation = dilation
+        self.group = group
         self.has_bias = has_bias
         self.weight_init = weight_init
         self.bias_init = bias_init
@@ -921,10 +938,10 @@ class DepthwiseConv2d(Cell):
 
     def extend_repr(self):
         s = 'input_channels={}, output_channels={}, kernel_size={}, stride={}, ' \
-            'pad_mode={}, padding={}, dilation={}' \
+            'pad_mode={}, padding={}, dilation={}, group={}, ' \
             'has_bias={}, weight_init={}, bias_init={}'.format(
                 self.in_channels, self.out_channels, self.kernel_size, self.stride,
-                self.pad_mode, self.padding, self.dilation,
+                self.pad_mode, self.padding, self.dilation, self.group,
                 self.has_bias, self.weight_init, self.bias_init)
 
         if self.has_bias:
