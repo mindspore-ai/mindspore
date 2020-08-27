@@ -41,6 +41,7 @@ void RowMajor2Row12Major(float *src_ptr, float *dst_ptr, int row, int col) {
 }
 
 void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+  size_t row_up_12 = UP_ROUND(row, C12NUM);
   size_t row12 = row / C12NUM * C12NUM;
   size_t col4 = col / C4NUM * C4NUM;
   float *src_r = src_ptr;
@@ -129,12 +130,6 @@ void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col)
         dst_c[i] = src_c[i * col];
       }
     }
-    for (; ci < col4; ci++) {
-      float *dst_c = dst_r + ci * C12NUM;
-      for (size_t i = 0; i < C12NUM; i++) {
-        dst_c[i] = 0;
-      }
-    }
     src_r += C12NUM * col;
     dst_r += C12NUM * col;
   }
@@ -147,7 +142,7 @@ void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col)
     dst_r += 1;
   }
 
-  for (; ri < row12; ri++) {
+  for (; ri < row_up_12; ri++) {
     for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = 0;
     }

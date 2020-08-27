@@ -116,20 +116,18 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
 }
 
 int Convolution1x1FP16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
     return RET_ERROR;
   }
-
   int ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return ret;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   return ReSize();
 }
