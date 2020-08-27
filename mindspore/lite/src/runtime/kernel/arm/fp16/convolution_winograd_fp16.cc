@@ -218,6 +218,14 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   int output_h = conv_param_->output_h_;
   int output_w = conv_param_->output_w_;
   int oc8 = UP_DIV(channel_out, C8NUM);
+  int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
+
+  size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic8 * C8NUM * sizeof(float16_t);
+  trans_input_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (trans_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc trans_input_ failed.";
+    return RET_ERROR;
+  }
 
   gemm_out_ = reinterpret_cast<float16_t *>(
     ctx_->allocator->Malloc(thread_count_ * cal_num * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float16_t)));
@@ -296,10 +304,6 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
   }
-  if (trans_input_ != nullptr) {
-    free(trans_input_);
-    trans_input_ = nullptr;
-  }
 
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -311,10 +315,8 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
 
-  int cal_num = 16;
   int channel_in = conv_param_->input_channel_;
   int ic8 = UP_DIV(channel_in, C8NUM);
-
   size_t nhwc8_input_size =
     ic8 * C8NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = malloc(nhwc8_input_size);
@@ -323,14 +325,6 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     return RET_ERROR;
   }
   memset(nhwc4_input_, 0, nhwc8_input_size);
-
-  size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic8 * C8NUM * sizeof(float16_t);
-  trans_input_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
-  if (trans_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc trans_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(trans_input_, 0, tile_buffer_size);
 
   ret = ConfigInputOutput();
   if (ret != RET_OK) {
