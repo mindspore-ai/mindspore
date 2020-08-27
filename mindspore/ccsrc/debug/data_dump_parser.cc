@@ -41,13 +41,13 @@ void DataDumpParser::ResetParam() {
 bool DataDumpParser::DumpEnabled() const {
   auto enable_dump = std::getenv(kEnableDataDump);
   if (enable_dump == nullptr) {
-    MS_LOG(INFO) << "[DataDump] enable dump is null. Please export ENABLE_DATA_DUMP";
+    MS_LOG(INFO) << "[DataDump] enable dump is null. If you want to dump data, please export ENABLE_DATA_DUMP";
     return false;
   }
 
   auto enabled = std::atoi(enable_dump);
   if (enabled != 1) {
-    MS_LOG(WARNING) << "[DataDump] Please export ENABLE_DATA_DUMP=1";
+    MS_LOG(WARNING) << "[DataDump] If you want to dump data, please export ENABLE_DATA_DUMP=1";
     return false;
   }
 
@@ -62,7 +62,7 @@ bool DataDumpParser::DumpEnabled() const {
 std::optional<std::string> DataDumpParser::GetDumpPath() const {
   auto dump_path = std::getenv(kDataDumpPath);
   if (dump_path == nullptr) {
-    MS_LOG(ERROR) << "[DataDump] dump path is null. Please export DATA_DUMP_PATH";
+    MS_LOG(ERROR) << "[DataDump] dump path is null. If you want to dump data, please export DATA_DUMP_PATH";
     return {};
   }
   std::string dump_path_str(dump_path);
