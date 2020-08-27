@@ -50,23 +50,8 @@ class TensorData {
   virtual ssize_t ndim() const = 0;
   /// Data pointer.
   virtual void *data() = 0;
-  /// Const Data pointer.
-  virtual const void *const_data() const = 0;
   /// Is data equals.
-  virtual bool equals(const TensorData &other) const {
-    if (this == &other) {
-      return true;
-    }
-    // By default, compare data byte by byte.
-    auto this_data = static_cast<const uint8_t *>(const_data());
-    auto other_data = static_cast<const uint8_t *>(other.const_data());
-    if (this_data == nullptr || other_data == nullptr) {
-      // null means data not initialized, compare uninitialized data always return false.
-      return false;
-    }
-    return (this_data == other_data) || (ndim() == other.ndim() && nbytes() == other.nbytes() &&
-                                         std::equal(this_data, this_data + nbytes(), other_data));
-  }
+  virtual bool equals(const TensorData &other) const = 0;
   /// To string.
   virtual std::string ToString(const TypeId type, const ShapeVector &shape) const = 0;
 };
