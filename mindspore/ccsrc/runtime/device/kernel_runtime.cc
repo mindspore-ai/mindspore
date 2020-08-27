@@ -18,6 +18,7 @@
 #include <vector>
 #include <utility>
 #include <numeric>
+#include <functional>
 #include "utils/ms_utils.h"
 #include "common/trans.h"
 #include "utils/utils.h"
@@ -841,7 +842,8 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
   return true;
 }
 
-void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
+void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
+                                              const std::unordered_set<ValueNodePtr> &, const std::vector<CNodePtr> &) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
 }
 

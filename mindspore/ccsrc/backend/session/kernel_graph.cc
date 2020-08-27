@@ -1125,6 +1125,9 @@ void KernelGraph::UpdateChildGraphOrder() {
 
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
-KernelGraph::~KernelGraph() { device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_); }
+KernelGraph::~KernelGraph() {
+  device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_, *inputs_, graph_value_nodes_,
+                                                              execution_order_);
+}
 }  // namespace session
 }  // namespace mindspore

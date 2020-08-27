@@ -397,6 +397,18 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
   bin_map->RemoveKernelCache();
 }
 
+void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
+                                                 const std::unordered_set<ValueNodePtr> &,
+                                                 const std::vector<CNodePtr> &execution_order) {
+  MS_LOG(INFO) << "Clear graph:" << graph_id << " GPU runtime resource";
+  // Release the kernel resource.
+  for (const auto &kernel : execution_order) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    kernel_mod->ReleaseResource();
+  }
+}
+
 void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
