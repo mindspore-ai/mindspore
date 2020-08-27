@@ -75,14 +75,16 @@ class OpAdapterImpl {
   OutHandler getOutput(const OperatorPtr &op, int index);
   OutHandler getCustomOutput(const OperatorPtr &op, int index);
   OutHandler getNormalOutput(const OperatorPtr &op, int index);
-  Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type);
+  Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
+                                const std::string &format);
   size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op);
   std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
                                                  const std::string &format);
-  Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type);
-  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node);
-  void UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr &node);
-  void UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node);
+  Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
+                               const std::string &format);
+  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node, const std::string &format);
+  void UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr &node, const std::string format);
+  void UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node, const std::string format);
   void updateInputDesc(const OperatorPtr &op, const AnfNodePtr &node);
   void updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                         const AnfNodePtr &node);
@@ -226,8 +228,9 @@ class OpAdapter : public BaseOpAdapter {
 
   OutHandler getNormalOutput(const OperatorPtr &op, int index) { return impl_->getNormalOutput(op, index); }
 
-  Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type) {
-    return impl_->UpdateSingleOutputDesc(op, shp, type);
+  Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
+                                const std::string &format) {
+    return impl_->UpdateSingleOutputDesc(op, shp, type, format);
   }
 
   size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) { return impl_->GetCustomOpOutputSize(cus_op); }
@@ -237,18 +240,21 @@ class OpAdapter : public BaseOpAdapter {
     return impl_->CreateOutputDesc(shape_ptr, type, format);
   }
 
-  Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type) {
-    return impl_->UpdateMultiOutputDesc(op, shp, type);
+  Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
+                               const std::string &format) {
+    return impl_->UpdateMultiOutputDesc(op, shp, type, format);
   }
 
-  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node) { return impl_->CreateNodeDesc(node); }
-
-  void UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr node) {
-    return impl_->UpdateNormalOpInputDesc(op, node);
+  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node, const std::string &format) {
+    return impl_->CreateNodeDesc(node, format);
   }
 
-  void UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node) {
-    return impl_->UpdateCustomOpInputDesc(op, node);
+  void UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr node, const std::string format) {
+    return impl_->UpdateNormalOpInputDesc(op, node, format);
+  }
+
+  void UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node, const std::string format) {
+    return impl_->UpdateCustomOpInputDesc(op, node, format);
   }
 
   void updateInputDesc(const OperatorPtr &op, const AnfNodePtr &node) { impl_->updateInputDesc(op, node); }

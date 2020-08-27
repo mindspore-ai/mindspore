@@ -87,7 +87,10 @@ GeFormat TransformUtil::ConvertFormat(const string &format) {
     return GeFormat::FORMAT_NHWC;
   } else if (format == kOpFormat_HWCN) {
     return GeFormat::FORMAT_HWCN;
+  } else if (format == kOpFormat_ND) {
+    return GeFormat::FORMAT_ND;
   } else {
+    MS_LOG(ERROR) << "Illegal tensor data format: (" << format << "). Use ND format instead.";
     return GeFormat::FORMAT_ND;
   }
 }
@@ -113,8 +116,7 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
   // convert me format to ge format
   GeFormat ge_format = ConvertFormat(format);
   if (ge_format == GeFormat::FORMAT_ND) {
-    MS_LOG(ERROR) << "undefined data format : " << static_cast<int>(ge_format);
-    return nullptr;
+    MS_LOG(INFO) << "Set ND data format";
   }
   // convert me datatype to ge datatype
   GeDataType data_type = ConvertDataType(me_type);

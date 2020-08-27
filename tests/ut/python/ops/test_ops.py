@@ -701,6 +701,16 @@ class ParallelConcatNet(nn.Cell):
         return self.parallel_concat((x1, x2))
 
 
+class BasicLSTMCellNet(nn.Cell):
+    """ BasicLSTMCellNet definition """
+
+    def __init__(self):
+        super(BasicLSTMCellNet, self).__init__()
+        self.lstm = P.BasicLSTMCell()
+
+    def construct(self, x, h, c, w, b):
+        return self.lstm(x, h, c, w, b)
+
 class EditDistance(nn.Cell):
     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
         super(EditDistance, self).__init__()
@@ -1402,11 +1412,6 @@ test_case_nn_ops = [
         'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
         'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
         'skip': ['backward']}),
-    ('BasicLSTMCell', {
-        'block': P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'),
-        'desc_inputs': [[128, 128], [128, 128], [128, 128], [512, 256, 1, 1], [512, 1, 1, 1]],
-        'desc_bprop': [[128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128], [128, 128]],
-        'skip': []}),
     ('TopK', {
         'block': P.TopK(),
         'desc_const': [5],
@@ -2346,6 +2351,18 @@ test_case_other_ops = [
         'block': P.PopulationCount(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int16))],
         'skip': ['backward']}),
+    ('BasicLSTMCellNet', {
+        'block': BasicLSTMCellNet(),
+        'desc_inputs': [Tensor(np.random.rand(1, 32).astype(np.float16)),
+                        Tensor(np.random.rand(1, 64).astype(np.float16)),
+                        Tensor(np.random.rand(1, 64).astype(np.float16)),
+                        Tensor(np.random.rand(96, 256).astype(np.float16)),
+                        Tensor(np.random.rand(256, ).astype(np.float16))],
+        'desc_bprop': [Tensor(np.random.rand(1, 64).astype(np.float16)),
+                       Tensor(np.random.rand(1, 64).astype(np.float16)),
+                       Tensor(np.random.rand(1, 64).astype(np.float16)),
+                       Tensor(np.random.rand(1, 64).astype(np.float16)),
+                       Tensor(np.random.rand(1, 64).astype(np.float16))]}),
 ]
 
 test_case_quant_ops = [
