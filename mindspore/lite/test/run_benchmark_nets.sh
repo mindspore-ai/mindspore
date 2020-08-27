@@ -403,17 +403,6 @@ rm -rf ${basepath}/ms_models
 mkdir -p ${basepath}/ms_models
 ms_models_path=${basepath}/ms_models
 
-echo "start convert models ... :"
-# Copy fp16 ms models:
-while read line; do
-  model_name=${line}
-  if [[ $model_name == \#* ]]; then
-      continue
-  fi
-  echo "cp '${models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.ms" >> "${run_benchmark_log_file}"
-  cp $models_path/${model_name}.ms ${ms_models_path}/${model_name}.ms
-done < ${models_fp16_config}
-
 # Convert tflite models:
 while read line; do
     model_name=${line}
@@ -482,6 +471,16 @@ while read line; do
     echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=AwareTraining' >> "${run_benchmark_log_file}"
     ./converter_lite  --fmk=TFLITE --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} --quantType=AwareTraining || Convert_status=$?
 done < ${models_tflite_awaretraining_config}
+
+# Copy fp16 ms models:
+while read line; do
+  model_name=${line%.*}
+  if [[ $model_name == \#* ]]; then
+      continue
+  fi
+  echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+  cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+done < ${models_fp16_config}
 
 # Check all result and return value
 if [[ ${Convert_status} = 0 ]];then
