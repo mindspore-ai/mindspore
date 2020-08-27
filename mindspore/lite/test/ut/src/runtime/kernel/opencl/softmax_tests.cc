@@ -92,6 +92,7 @@ void RunTestCase(std::vector<int> input_shape, std::vector<int> output_shape, st
   }
   delete kernel;
   delete pGraph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestSoftmaxOpenCL, Softmax_1) {

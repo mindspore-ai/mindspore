@@ -47,6 +47,7 @@ class OpenCLRuntime {
   OpenCLRuntime &operator=(const OpenCLRuntime &) = delete;
 
   int Init();
+  int Uninit();
 
   cl::Context *Context();
   cl::Device *Device();
@@ -143,6 +144,8 @@ class OpenCLRuntime {
 
  private:
   static bool init_done_;
+  static size_t instance_count_;
+  static OpenCLRuntime *ocl_runtime_instance_;
   cl::CommandQueue *default_command_queue_{nullptr};
   cl::Context *context_{nullptr};
   cl::Device *device_{nullptr};

@@ -40,12 +40,29 @@ static std::mutex g_mtx;
 static std::mutex g_init_mtx;
 
 bool OpenCLRuntime::init_done_ = false;
+OpenCLRuntime *OpenCLRuntime::ocl_runtime_instance_ = nullptr;
+size_t OpenCLRuntime::instance_count_ = 0;
 
 OpenCLRuntime *OpenCLRuntime::GetInstance() {
   std::unique_lock<std::mutex> lck(g_mtx);
   static OpenCLRuntime ocl_runtime;
-  ocl_runtime.Init();
-  return &ocl_runtime;
+  if (instance_count_ == 0) {
+    ocl_runtime_instance_ = &ocl_runtime;
+    ocl_runtime_instance_->Init();
+  }
+  instance_count_++;
+  return ocl_runtime_instance_;
+}
+
+void OpenCLRuntime::DeleteInstance() {
+  std::unique_lock<std::mutex> lck(g_mtx);
+  if (instance_count_ == 0) {
+    MS_LOG(ERROR) << "No OpenCLRuntime instance could delete!";
+  }
+  instance_count_--;
+  if (instance_count_ == 0) {
+    ocl_runtime_instance_->Uninit();
+  }
 }
 
 OpenCLRuntime::OpenCLRuntime() { default_build_opts_ = " -cl-mad-enable -cl-fast-relaxed-math -Werror"; }
@@ -207,15 +224,24 @@ int OpenCLRuntime::Init() {
   return RET_OK;
 }
 
-OpenCLRuntime::~OpenCLRuntime() {
-  init_done_ = false;
+int OpenCLRuntime::Uninit() {
   program_map_.clear();
   delete allocator_;
   delete default_command_queue_;
   delete context_;
   delete device_;
+  allocator_ = nullptr;
+  default_command_queue_ = nullptr;
+  context_ = nullptr;
+  device_ = nullptr;
+#ifdef USE_OPENCL_WRAPPER
   OpenCLWrapper::GetInstance()->UnLoadOpenCLLibrary();
+#endif
+  init_done_ = false;
+  return RET_OK;
 }
+
+OpenCLRuntime::~OpenCLRuntime() { Uninit(); }
 
 cl::Context *OpenCLRuntime::Context() { return context_; }
 

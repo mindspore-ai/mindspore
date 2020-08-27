@@ -134,6 +134,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path, bool fp16) {

@@ -111,6 +111,7 @@ void RunTestCaseMatMul(const std::vector<int> shape, const std::vector<std::stri
   tensor_x->SetData(nullptr);
   tensor_out->SetData(nullptr);
   MS_LOG(INFO) << "TestMatMulFp32 passed";
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestMatMulOpenCL, MatMulFp32) {

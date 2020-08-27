@@ -162,6 +162,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   inputs[1]->SetData(nullptr);
   inputs[2]->SetData(nullptr);
   delete[] packed_input;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
   return;
 }
 
@@ -587,5 +588,6 @@ TEST_F(TestConvolutionDwOpenCL, ProfilingMobilenetv2Fp32) {
   }
   delete [] input_data;
   delete [] weight_data;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

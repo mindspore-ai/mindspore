@@ -158,6 +158,7 @@ void TEST_MAIN(schema::Format input_format, schema::Format output_format, const 
   bias_tensor.SetData(nullptr);
   delete param;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestConvolutionOpenCL, in1x224x224x3_out1x112x112x32_k33_s22_p0101_fp32) {

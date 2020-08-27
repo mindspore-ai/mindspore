@@ -198,5 +198,6 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   delete sub_graph;
   delete param;
   delete biasadd_kernel;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 }  // namespace mindspore

@@ -326,6 +326,11 @@ LiteSession::~LiteSession() {
     }
   }
   input_vec_.clear();
+#if SUPPORT_GPU
+  if (context_->device_ctx_.type == DT_GPU) {
+    lite::opencl::OpenCLRuntime::DeleteInstance();
+  }
+#endif
   delete this->context_;
   delete this->executor;
   this->executor = nullptr;
