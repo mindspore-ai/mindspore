@@ -15,11 +15,9 @@
 
 import random
 import numpy as np
-import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 import mindspore.dataset as de
 from mindspore import Tensor, context
-from mindspore.ops import operations as P
 from mindspore.train.serialization import export
 from tests.st.networks.models.bert.src.bert_model import BertModel, BertConfig
 
@@ -50,20 +48,6 @@ random.seed(1)
 np.random.seed(1)
 de.config.set_seed(1)
 
-class AddNet(nn.Cell):
-    def __init__(self):
-        super(AddNet, self).__init__()
-        self.add = P.TensorAdd()
-
-    def construct(self, x_, y_):
-        return self.add(x_, y_)
-
-def export_add_model():
-    net = AddNet()
-    x = np.ones(4).astype(np.float32)
-    y = np.ones(4).astype(np.float32)
-    export(net, Tensor(x), Tensor(y), file_name='add.mindir', file_format='MINDIR')
-
 def export_bert_model():
     input_ids = np.random.randint(0, 1000, size=(2, 32), dtype=np.int32)
     segment_ids = np.zeros((2, 32), dtype=np.int32)
@@ -73,5 +57,4 @@ def export_bert_model():
            file_name='bert.mindir', file_format='MINDIR')
 
 if __name__ == '__main__':
-    export_add_model()
     export_bert_model()
