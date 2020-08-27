@@ -154,9 +154,8 @@ void Convolution3x3Int8CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3Int8CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
+  // config input output
+  ConfigInputOutput();
   auto ret = SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
@@ -167,8 +166,9 @@ int Convolution3x3Int8CPUKernel::Init() {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
   }
-  // config input output
-  ConfigInputOutput();
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
   return ReSize();
 }
 

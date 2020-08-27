@@ -102,8 +102,8 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  size_t nhwc4_input_size = channel_block * C4NUM * in_batch * conv_param_->input_h_ *
-                            conv_param_->input_w_ * sizeof(float16_t);
+  size_t nhwc4_input_size =
+    channel_block * C4NUM * in_batch * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
   if (nhwc4_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc nhwc4_input_ failed.";
@@ -132,13 +132,13 @@ void ConvolutionFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionFP16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   ConfigInputOutput();
   return ReSize();

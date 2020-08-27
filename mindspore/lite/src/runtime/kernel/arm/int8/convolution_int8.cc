@@ -247,9 +247,6 @@ void ConvolutionInt8CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionInt8CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   // config input output
   ConfigInputOutput();
   CheckSupportOptimize();
@@ -273,7 +270,9 @@ int ConvolutionInt8CPUKernel::Init() {
       return RET_ERROR;
     }
   }
-
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
   return ReSize();
 }
 
