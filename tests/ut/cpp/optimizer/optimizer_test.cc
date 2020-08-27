@@ -21,7 +21,7 @@
 
 #include "ir/anf.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/cse.h"
+#include "frontend/optimizer/cse_pass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 #include "debug/draw.h"
@@ -53,7 +53,7 @@ TEST_F(TestOptOptimizer, test_step_opt) {
                                                                       irpass.inline_,
                                                                     }},
                                                                    {"grad", {irpass.expand_jprim_}},
-                                                                   {"cse", OptPassConfig(CSE(false))}},
+                                                                   {"cse", OptPassConfig(CSEPass(false))}},
                                                                   true);
   EXPECT_TRUE(optimizer.get() != nullptr);
 

@@ -17,11 +17,13 @@
 
 #include "pipeline/jit/remove_value_node_dup.h"
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
 #include "frontend/optimizer/cse.h"
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace pipeline {

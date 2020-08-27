@@ -27,6 +27,8 @@
 #include "pybind_api/ir/tensor_py.h"
 #include "frontend/operator/ops.h"
 #include "abstract/infer_functions.h"
+#include "utils/convert_utils_py.h"
+
 namespace mindspore {
 namespace abstract {
 enum State {

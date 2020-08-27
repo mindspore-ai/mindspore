@@ -108,7 +108,7 @@
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
-#include "debug/anf_ir_utils.h"
+#include "debug/dump_proto.h"
 
 namespace mindspore {
 namespace opt {

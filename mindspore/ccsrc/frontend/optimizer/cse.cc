@@ -17,9 +17,13 @@
  */
 
 #include "frontend/optimizer/cse.h"
+
 #include <vector>
 #include <set>
 #include <unordered_map>
+
+#include "abstract/abstract_function.h"
+#include "utils/flags.h"
 
 namespace mindspore {
 /* namespace to support opt */

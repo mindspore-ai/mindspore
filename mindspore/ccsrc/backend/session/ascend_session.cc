@@ -34,7 +34,7 @@
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"
-#include "debug/anf_ir_utils.h"
+#include "debug/dump_proto.h"
 #include "utils/ms_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"

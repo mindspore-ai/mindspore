@@ -25,14 +25,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "pybind11/pybind11.h"
 #include "utils/convert_utils_base.h"
 #include "utils/any.h"
 #include "base/base_ref.h"
 #include "base/base.h"
 #include "ir/anf.h"
-
-namespace py = pybind11;
+#include "ir/func_graph.h"
 
 namespace mindspore {
 namespace tensor {
@@ -40,19 +38,9 @@ class Tensor;
 using TensorPtr = std::shared_ptr<Tensor>;
 }  // namespace tensor
 
-py::object AnyToPyData(const Any &value);
-py::object BaseRefToPyData(const BaseRef &value);
 bool BaseRefToBool(const BaseRef &in, bool *out);
 bool BaseRefToInt(const ValuePtr &v, int *value);
 bool ValueToBool(const ValuePtr &in, bool *out);
-py::object ValuePtrToPyData(const ValuePtr &value);
-
-AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
-                                           const py::object &min_shape = py::none(),
-                                           const py::object &max_shape = py::none());
-
-bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
-                                       const std::shared_ptr<py::object> &ret_val);
 
 // Isomorphism
 struct PairHasher {
