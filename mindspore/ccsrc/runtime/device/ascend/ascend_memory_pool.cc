@@ -43,6 +43,13 @@ bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   return true;
 }
 
+void AscendMemoryPool::ResetIdleMemBuf() {
+  auto idle_mem_buf_map = DynamicMemPoolBestFit::GetIdleMemBufMap();
+  for (auto &it : idle_mem_buf_map) {
+    rtMemset(it.second->device_addr_, it.first, 0, it.first);
+  }
+}
+
 size_t AscendMemoryPool::AlignMemorySize(size_t size) const {
   if (size == 0) {
     MS_LOG(EXCEPTION) << "The align memory size is a zero !";
