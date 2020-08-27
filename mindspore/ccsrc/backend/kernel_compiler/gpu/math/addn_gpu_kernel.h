@@ -82,7 +82,7 @@ class AddNGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but cudnnAddTensor needs 1 output.";
       return false;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "AddNGpuFwdKernel input is null";
@@ -96,9 +96,16 @@ class AddNGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape.size(); i++) {
       dimA[i] = SizeToInt(input_shape[i]);
     }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                             SizeToInt(input_shape.size()), dimA),
-                                "cudnnSetTensorNdDescriptor failed");
+    auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    if (input_format == kOpFormat_NHWC) {
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_,
+                                                               SizeToInt(input_shape.size()), dimA),
+                                  "cudnnSetTensorNdDescriptor failed");
+    } else {
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
+                                                               SizeToInt(input_shape.size()), dimA),
+                                  "cudnnSetTensorNdDescriptor failed");
+    }
     InitSizeLists();
     return true;
   }

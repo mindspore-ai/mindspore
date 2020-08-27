@@ -194,6 +194,12 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   auto cal_format = (inputs_type[0] == kNumberTypeFloat16) ? kOpFormat_NHWC : kOpFormat_NCHW;
   MS_LOG(DEBUG) << "Kernel node: " << kernel_node->fullname_with_scope() << ", format: " << cal_format;
   auto inputs_format_position = iter->second.first;
+  // If input position is empty, then insert all the input positions, because the input numbers of this op are variable.
+  if (inputs_format_position.size() == 0) {
+    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); input_index++) {
+      inputs_format_position.push_back(input_index);
+    }
+  }
   for (const auto &input_format_position : inputs_format_position) {
     if (input_format_position >= inputs_format->size()) {
       MS_LOG(EXCEPTION) << "The position [" << input_format_position << "] is out of range of the input size ["
