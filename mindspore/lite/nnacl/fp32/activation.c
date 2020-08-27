@@ -62,7 +62,14 @@ int Sigmoid(const float *src, int length, float *dst) {
 
 int Tanh(const float *src, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
-    dst[i] = 1.0f - 2.0f / (exp(2 * src[i]) + 1);
+    float tmp_in = src[i];
+    if (tmp_in > 5.0) {
+      dst[i] = 1.0f;
+    } else if (tmp_in < -5.0) {
+      dst[i] = -1.0f;
+    } else {
+      dst[i] = 1.0f - 2.0f / (exp(2 * tmp_in) + 1);
+    }
   }
   return NNACL_OK;
 }
