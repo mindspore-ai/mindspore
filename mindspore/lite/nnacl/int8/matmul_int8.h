@@ -37,8 +37,9 @@ void RowMajor2Row16x4MajorInt8(void *src_ptr, void *dst_ptr, int row, int col);
 
 void RowMajor2Row4x16Major(int8_t *src, int row, int col, int8_t *dst, int col_16);
 void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_16);
-void CalcInputSums(int8_t *a, int row, int col, int b_zp, int *dst);
-void CalcWeightBiasSums(int8_t *b, int row, int col, int a_zp, int b_zp, int *bias, int *dst);
+void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order);
+void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weight_zp, int *bias, int *dst,
+                        DataOrder order);
 void MatmulInt8(const int8_t *a, const int8_t *b, int8_t *dst, const int *a_sums, const int *bias, int act_min,
                 int act_max, int out_zp, int multiplier, int left_shift, int right_shift, int row, int col, int deep16,
                 int stride);

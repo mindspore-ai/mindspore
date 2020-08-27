@@ -225,12 +225,15 @@ void RowMajor2Col16x4Major(int8_t *src, int row, int col, int8_t *dst, int row_1
 }
 
 // dst: weight_zp * input_row_sums
-void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst) {
+void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order) {
   for (int r = 0; r < row; ++r) {
     int sum = 0;
     for (int c = 0; c < col; ++c) {
-      int src_idx = r * col + c;
-      sum += input[src_idx];
+      if (order == RowMajor) {
+        sum += input[r * col + c];
+      } else {
+        sum += input[c * row + r];
+      }
     }
     sum *= weight_zp;
     dst[r] = sum;
@@ -238,12 +241,16 @@ void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst) {
 }
 
 // dst: bias + depth*input_zp*weight_zp - input_zp*weight_col_sums
-void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weight_zp, int *bias, int *dst) {
+void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weight_zp, int *bias, int *dst,
+                        DataOrder order) {
   for (int c = 0; c < col; ++c) {
     int sum = 0;
     for (int r = 0; r < row; ++r) {
-      int src_idx = r * col + c;
-      sum += weight[src_idx];
+      if (order == RowMajor) {
+        sum += weight[r * col + c];
+      } else {
+        sum += weight[c * row + r];
+      }
     }
     dst[c] = row * input_zp * weight_zp - input_zp * sum;
     if (bias) {

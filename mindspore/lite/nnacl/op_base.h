@@ -55,6 +55,11 @@ typedef enum LiteDataType {
   kDataTypeInt8,
 } LiteDataType;
 
+typedef enum DataOrder {
+  RowMajor,
+  ColMajor,
+} DataOrder;
+
 typedef struct OpParameter {
   char name_[100];
   int type_;
