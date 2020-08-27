@@ -24,7 +24,7 @@ import mindspore.communication.management as D
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.train.model import Model
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net

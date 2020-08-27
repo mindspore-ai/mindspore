@@ -20,7 +20,7 @@ import datetime
 
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.optim import Momentum
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint

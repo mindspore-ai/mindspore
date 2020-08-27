@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore import dataset as de
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from mindspore.train.model import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.communication.management import init, get_rank, get_group_size

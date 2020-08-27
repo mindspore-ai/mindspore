@@ -36,7 +36,7 @@ from mindspore.parallel._utils import _need_to_full
 from mindspore.train import amp
 from mindspore.parallel._utils import _to_full_tensor
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from .dataset_helper import DatasetHelper
 
 

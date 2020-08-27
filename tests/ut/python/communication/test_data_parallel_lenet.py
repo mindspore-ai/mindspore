@@ -21,7 +21,8 @@ import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, Model, ParallelMode
+from mindspore import Tensor, Model
+from mindspore.context import ParallelMode
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 

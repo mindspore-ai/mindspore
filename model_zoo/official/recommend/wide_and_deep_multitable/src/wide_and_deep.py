@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.nn import Dropout, Flatten
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.common.initializer import Uniform, initializer
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
 

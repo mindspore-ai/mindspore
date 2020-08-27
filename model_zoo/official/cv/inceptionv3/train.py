@@ -21,7 +21,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.nn.optim.rmsprop import RMSProp
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor

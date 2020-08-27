@@ -17,6 +17,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore import context
+from mindspore.context import ParallelMode
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication.management import get_group_size
 from mindspore.ops import operations as P
@@ -417,7 +418,7 @@ class TrainingWrapper(nn.Cell):
         self.reducer_flag = False
         self.grad_reducer = None
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode in [ms.ParallelMode.DATA_PARALLEL, ms.ParallelMode.HYBRID_PARALLEL]:
+        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         if self.reducer_flag:
             mean = context.get_auto_parallel_context("mirror_mean")

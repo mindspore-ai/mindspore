@@ -35,7 +35,7 @@ from mindspore import log as logger
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))

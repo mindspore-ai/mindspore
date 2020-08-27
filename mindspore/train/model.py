@@ -30,7 +30,7 @@ from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_r
 from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
-from .parallel_utils import ParallelMode
+from ..context import ParallelMode
 from ..parallel._utils import _need_to_full, _to_full_tensor
 from ..common import dtype as mstype
 from .dataset_helper import DatasetHelper

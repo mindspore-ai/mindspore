@@ -30,7 +30,8 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 
 random.seed(1)
 np.random.seed(1)

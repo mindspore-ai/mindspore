@@ -29,7 +29,7 @@ from mindspore.train.callback import Callback, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
 import mindspore.communication.management as D
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore import context
 
 from src.transformer_for_train import TransformerTrainOneStepCell, TransformerNetworkWithLoss, \

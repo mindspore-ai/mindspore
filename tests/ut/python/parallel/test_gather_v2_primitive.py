@@ -27,7 +27,8 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE)
 device_number = 32

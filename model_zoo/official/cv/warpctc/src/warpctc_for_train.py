@@ -16,7 +16,7 @@
 import numpy as np
 from mindspore.parallel._utils import (_get_device_num, _get_mirror_mean,
                                        _get_parallel_mode)
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F

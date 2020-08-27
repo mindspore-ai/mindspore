@@ -26,7 +26,7 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from tests.ops_common import convert
 from ....train_step_wrap import train_step_with_loss_warp
 

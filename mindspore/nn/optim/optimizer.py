@@ -29,7 +29,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
 

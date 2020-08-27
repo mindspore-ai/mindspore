@@ -25,7 +25,7 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
 from mindspore import Tensor
-from mindspore.train import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore as ms

@@ -32,7 +32,8 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.callback import Callback
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 
 random.seed(1)
 np.random.seed(1)

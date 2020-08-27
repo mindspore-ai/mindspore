@@ -22,7 +22,8 @@ import numpy as np
 from mindspore import context
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint

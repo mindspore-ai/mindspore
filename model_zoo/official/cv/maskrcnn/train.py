@@ -24,7 +24,8 @@ import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
 from mindspore.communication.management import init
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn import SGD
 import mindspore.dataset.engine as de

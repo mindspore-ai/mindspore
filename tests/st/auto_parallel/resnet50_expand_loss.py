@@ -28,7 +28,8 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
 from mindspore.train.callback import Callback
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=int(os.getenv('DEVICE_ID')))

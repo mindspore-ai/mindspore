@@ -24,7 +24,7 @@ import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.callback import TimeMonitor
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore import log as logger

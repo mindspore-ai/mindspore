@@ -17,7 +17,7 @@ callbacks
 import time
 from mindspore.train.callback import Callback
 from mindspore import context
-from mindspore.train import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank
 
 def add_write(file_path, out_str):

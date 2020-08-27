@@ -23,7 +23,7 @@ from mindspore.nn import Dense
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 
 
 class Net(nn.Cell):

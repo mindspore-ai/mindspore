@@ -18,8 +18,7 @@ High-Level training interfaces.
 Helper functions in train piplines.
 """
 from .model import Model
-from .parallel_utils import ParallelMode
 from .dataset_helper import DatasetHelper
 from . import amp
 
-__all__ = ["Model", "ParallelMode", "DatasetHelper", "amp"]
+__all__ = ["Model", "DatasetHelper", "amp"]

@@ -22,7 +22,8 @@ from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 
 

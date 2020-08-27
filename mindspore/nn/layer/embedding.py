@@ -20,7 +20,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore._checkparam import Validator
 from mindspore.communication.management import get_group_size
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode
 from ..cell import Cell
 from ..._checkparam import Validator as validator, Rel
@@ -129,9 +129,9 @@ class EmbeddingLookup(Cell):
         embedding_size (int): The size of each embedding vector.
         param_init (str): The initialize way of embedding table. Default: 'normal'.
         target (str): Specify the target where the op is executed. The value should in
-        ['DEVICE', 'CPU']. Default: 'CPU'.
-        slice_mode (str): The slicing way in semi auto parallel/auto parallel. The value should get through
-        nn.EmbeddingLookUpSplitMode. Default: 'batch_slice'.
+            ['DEVICE', 'CPU']. Default: 'CPU'.
+        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value should get through
+            nn.EmbeddingLookUpSplitMode. Default: nn.EmbeddingLookUpSplitMode.BATCH_SLICE.
         manual_shapes (tuple): The accompaniment array in field slice mode.
 
     Inputs:

@@ -28,7 +28,7 @@ from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context
     _reset_auto_parallel_context
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
-           'get_auto_parallel_context', 'reset_auto_parallel_context']
+           'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode']
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
@@ -647,3 +647,26 @@ def get_context(attr_key):
         raise ValueError(
             "Get context keyword %s is not recognized!" % attr_key)
     return getattr(_context(), attr_key)
+
+class ParallelMode:
+    """
+    Parallel mode options.
+
+    There are five kinds of parallel modes, "STAND_ALONE", "DATA_PARALLEL",
+    "HYBRID_PARALLEL", "SEMI_AUTO_PARALLEL" and "AUTO_PARALLEL". Default: "STAND_ALONE".
+
+        - STAND_ALONE: Only one processor working.
+        - DATA_PARALLEL: Distributing the data across different processors.
+        - HYBRID_PARALLEL: Achieving data parallelism and model parallelism manually.
+        - SEMI_AUTO_PARALLEL: Achieving data parallelism and model parallelism by setting parallel strategies.
+        - AUTO_PARALLEL: Achieving parallelism automatically.
+
+    MODE_LIST: The list for all supported parallel modes.
+    """
+
+    STAND_ALONE = "stand_alone"
+    DATA_PARALLEL = "data_parallel"
+    HYBRID_PARALLEL = "hybrid_parallel"
+    SEMI_AUTO_PARALLEL = "semi_auto_parallel"
+    AUTO_PARALLEL = "auto_parallel"
+    MODE_LIST = [STAND_ALONE, DATA_PARALLEL, HYBRID_PARALLEL, SEMI_AUTO_PARALLEL, AUTO_PARALLEL]
