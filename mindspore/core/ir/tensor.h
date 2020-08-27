@@ -53,7 +53,7 @@ class TensorData {
   /// Is data equals.
   virtual bool equals(const TensorData &other) const = 0;
   /// To string.
-  virtual std::string ToString(const TypeId type, const ShapeVector &shape) const = 0;
+  virtual std::string ToString(const TypeId type, const ShapeVector &shape, bool use_comma) const = 0;
 };
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
@@ -207,6 +207,10 @@ class Tensor : public MetaTensor {
   TypeId set_data_type(const TypeId data_type) override;
 
   std::string GetShapeAndDataTypeInfo() const;
+
+  std::string ToStringInternal(int limit_size) const;
+
+  std::string ToStringNoLimit() const;
 
   std::string ToString() const override;
 
