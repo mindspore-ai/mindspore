@@ -101,7 +101,7 @@ int ModelImpl::BuildOps() {
     MS_LOG(ERROR) << "mete_graph is nullptr";
     return -1;
   }
-  MS_EXCEPTION_IF_NULL(meta_graph_->nodes());
+  MS_ASSERT(nullptr != meta_graph_->nodes());
   for (size_t i = 0; i < meta_graph_->nodes()->size(); i++) {
     auto cNode = meta_graph_->nodes()->GetAs<schema::CNode>(i);
     auto name = cNode->name()->str();
@@ -129,17 +129,17 @@ Model *Model::Import(const char *model_buf, size_t size) {
 Model::~Model() { delete (this->model_impl_); }
 
 mindspore::lite::PrimitiveC *Model::GetOp(const std::string &name) const {
-  MS_EXCEPTION_IF_NULL(model_impl_);
+  MS_ASSERT(nullptr != model_impl_);
   return const_cast<PrimitiveC *>(model_impl_->GetOp(name));
 }
 
 void Model::FreeMetaGraph() {
-  MS_EXCEPTION_IF_NULL(model_impl_);
+  MS_ASSERT(nullptr != model_impl_);
   return model_impl_->FreeMetaGraph();
 }
 
 const schema::MetaGraph *Model::GetMetaGraph() const {
-  MS_EXCEPTION_IF_NULL(model_impl_);
+  MS_ASSERT(nullptr != model_impl_);
   return model_impl_->meta_graph();
 }
 

@@ -28,26 +28,25 @@ namespace mindspore {
 namespace lite {
 TfliteModelParser::TfliteModelParser() = default;
 
-TfliteModelParser::~TfliteModelParser() = default;
+TfliteModelParser::~TfliteModelParser() { delete[](this->tfliteModelBuf); }
 
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *model_path) {
   size_t size;
-  auto buf = ReadFile(model_path, &size);
-  if (buf == nullptr) {
+  tfliteModelBuf = ReadFile(model_path, &size);
+  if (tfliteModelBuf == nullptr) {
     MS_LOG(ERROR) << "the file buffer is nullptr";
     return nullptr;
   }
-  flatbuffers::Verifier verify((const uint8_t *)buf, size);
+  flatbuffers::Verifier verify((const uint8_t *)tfliteModelBuf, size);
   if (!tflite::VerifyModelBuffer(verify)) {
     MS_LOG(ERROR) << "the buffer is invalid and fail to create graph";
     return nullptr;
   }
-  return tflite::UnPackModel(buf);
+  return tflite::UnPackModel(tfliteModelBuf);
 }
 
 STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                              const tflite::TensorT *tflite_tensor,
-                                              schema::TensorT *tensor) {
+                                              const tflite::TensorT *tflite_tensor, schema::TensorT *tensor) {
   auto count = 1;
   std::for_each(tflite_tensor->shape.begin(), tflite_tensor->shape.end(), [&](int32_t sha) { count *= sha; });
   auto data_size = count * GetDataTypeSize(TypeId(tensor->dataType));
@@ -95,8 +94,7 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
 
 STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                    const QuantType &quant_type,
-                                    schema::MetaGraphT *sub_graph) {
+                                    const QuantType &quant_type, schema::MetaGraphT *sub_graph) {
   int idx = 0;
   for (const auto &tflite_op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
@@ -107,7 +105,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       return RET_ERROR;
     }
 
-    std::unique_ptr<schema::CNodeT> op = std::make_unique<schema::CNodeT>();
+    auto op = std::make_unique<schema::CNodeT>();
     op->name = op_type + "-" + std::to_string(idx++);
     op->quantType = quant_type;
     MS_LOG(INFO) << "parse op: " << op->name.c_str();
@@ -227,7 +225,7 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
   return RET_OK;
 }
 
-STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph) {
+STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph) {
   for (auto &op : sub_graph->nodes) {
     if (op->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
       auto attr = op->primitive->value.AsDepthwiseConv2D();
@@ -301,15 +299,10 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT* sub_graph)
   return RET_OK;
 }
 
-MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
-                                     const std::string &weight_file,
-                                     const QuantType &quant_type) {
-  std::unique_ptr<schema::MetaGraphT> sub_graph = std::make_unique<schema::MetaGraphT>();
-  sub_graph->name = "MS_model converted by TF-Lite";
-  quantType = quant_type;
-
+schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
+                                                 const QuantType &quant_type) {
   // load graph
-  std::unique_ptr<tflite::ModelT> tflite_model = ReadTfliteModel(model_file.c_str());
+  auto tflite_model = ReadTfliteModel(model_file.c_str());
   if (tflite_model == nullptr) {
     MS_LOG(ERROR) << "read tflite model failed";
     return nullptr;
@@ -321,31 +314,38 @@ MetaGraphT *TfliteModelParser::Parse(const std::string &model_file,
   }
   const auto &tflite_subgraph = tflite_model->subgraphs[0];
 
+  auto meta_graph = std::make_unique<schema::MetaGraphT>();
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "new meta graph failed";
+    return nullptr;
+  }
+  meta_graph->name = "MS_model converted by TF-Lite";
+  quantType = quant_type;
   // convert op
-  if (ConvertOp(tflite_model, tflite_subgraph, quant_type, sub_graph.get()) != RET_OK) {
+  if (ConvertOp(tflite_model, tflite_subgraph, quant_type, meta_graph.get()) != RET_OK) {
     MS_LOG(ERROR) << "parse op failed.";
     return nullptr;
   }
 
   // convert tensor
-  if (ConvertTensor(tflite_subgraph, tflite_model->buffers, sub_graph.get()) != RET_OK) {
+  if (ConvertTensor(tflite_subgraph, tflite_model->buffers, meta_graph.get()) != RET_OK) {
     MS_LOG(ERROR) << "convert tensor failed";
     return nullptr;
   }
 
   // set graph input/output
-  if (GetGraphInfo(tflite_subgraph, sub_graph.get()) != RET_OK) {
+  if (GetGraphInfo(tflite_subgraph, meta_graph.get()) != RET_OK) {
     MS_LOG(ERROR) << "convert tensors failed";
     return nullptr;
   }
 
   // update for depthwiseConv
-  if (ConvertGroupDepthwiseOp(sub_graph.get()) != RET_OK) {
+  if (ConvertGroupDepthwiseOp(meta_graph.get()) != RET_OK) {
     MS_LOG(ERROR) << "convert group depthwise conv failed";
     return nullptr;
   }
 
-  return sub_graph.release();
+  return meta_graph.release();
 }
 }  // namespace lite
 }  // namespace mindspore

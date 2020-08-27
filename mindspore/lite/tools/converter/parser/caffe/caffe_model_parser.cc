@@ -31,7 +31,7 @@ CaffeModelParser::~CaffeModelParser() {}
 
 const std::set<std::string> CaffeModelParser::skipedLayerType = {"Dropout"};
 
-schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile,
+schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile,
                                             const std::string &weightFile,
                                             const QuantType &quantType) {
   if (ValidateFileStr(modelFile, ".prototxt") != RET_OK) {
@@ -49,7 +49,7 @@ schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile,
     return nullptr;
   }
 
-  std::unique_ptr<schema::MetaGraphT> subGraphDef = std::make_unique<schema::MetaGraphT>();
+  auto metaGraph = std::make_unique<schema::MetaGraphT>();
   TensorCache tensorCache;
 
   caffe::NetParameter proto;
@@ -57,7 +57,7 @@ schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile,
     MS_LOG(ERROR) << "Read prototxt file failed, model path: " << modelFile;
     return nullptr;
   }
-  subGraphDef->name = proto.name();
+  metaGraph->name = proto.name();
 
   caffe::NetParameter weight;
   if (ReadProtoFromBinaryFile((const char *)weightFile.c_str(), &weight) != RET_OK) {
@@ -71,22 +71,22 @@ schema::MetaGraphT *CaffeModelParser::Parse(const std::string &modelFile,
     return nullptr;
   }
 
-  status = ParseLayer(proto, weight, &tensorCache, subGraphDef.get());
+  status = ParseLayer(proto, weight, &tensorCache, metaGraph.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseLayer failed " << status;
     return nullptr;
   }
 
-  status = SetGraphTensorIndex(proto, &tensorCache, subGraphDef.get());
+  status = SetGraphTensorIndex(proto, &tensorCache, metaGraph.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Set inputTensor index and outputTensor index for graph failed!";
     return nullptr;
   }
-  subGraphDef->name = GetModelName(modelFile);
+  metaGraph->name = GetModelName(modelFile);
 
-  SetAllTensors(tensorCache, subGraphDef.get());
+  SetAllTensors(tensorCache, metaGraph.get());
 
-  return subGraphDef.release();
+  return metaGraph.release();
 }
 
 STATUS CaffeModelParser::SetOpInputIdx(const caffe::LayerParameter &layer,

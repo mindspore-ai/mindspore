@@ -138,7 +138,6 @@ class MS_API Benchmark {
   std::vector<mindspore::tensor::MSTensor *> msInputs;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> msOutputs;
   std::unordered_map<std::string, CheckTensor *> calibData;
-  bool cleanData = true;
 };
 
 int MS_API RunBenchmark(int argc, const char **argv);

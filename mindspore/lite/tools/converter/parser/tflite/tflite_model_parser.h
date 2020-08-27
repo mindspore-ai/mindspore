@@ -41,7 +41,7 @@ class TfliteModelParser : public ModelParser {
 
   ~TfliteModelParser() override;
 
-  MetaGraphT *Parse(const std::string &model_file,
+  schema::MetaGraphT *ParseToFb(const std::string &model_file,
                     const std::string &weight_file,
                     const QuantType &quantType = QuantType_QUANT_NONE) override;
 
@@ -78,6 +78,7 @@ class TfliteModelParser : public ModelParser {
   std::map<std::string, schema::CNodeT *> opMap;
   std::map<const tflite::OperatorT *, schema::CNodeT *> tfliteOpMap;
   QuantType quantType = QuantType_QUANT_NONE;
+  char *tfliteModelBuf = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

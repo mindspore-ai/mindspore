@@ -23,6 +23,7 @@
 #include <vector>
 #include <cfloat>
 #include <map>
+#include <utility>
 #include "src/lite_session.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/converter.h"
@@ -90,13 +91,51 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
 
-  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel,
-                       bool depthwise);
+  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel, bool depthwise);
 
   STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitive_c);
 };
 
-struct DivergInfo;
+struct DivergInfo {
+  std::vector<float> histogram;
+  CNodePtr cnode;
+  int bin_num;
+  float interval = 0;
+  float max;
+  float min;
+  float best_T = 0.0f;
+  size_t bit_num;
+  int quant_max = 255;
+  int quant_min = 0;
+  std::string method_x = kMethodKL;
+
+  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
+    this->method_x = method_x;
+    this->cnode = cnode;
+    this->bin_num = bins;
+    this->bit_num = bits;
+    histogram.resize(bin_num);
+    max = -FLT_MAX;
+    min = FLT_MAX;
+    this->quant_max = quant_max;
+    this->quant_min = quant_min;
+    std::fill(histogram.begin(), histogram.end(), 1.0e-7);
+  }
+
+  STATUS RecordMaxValue(const std::vector<float> &datas);
+
+  void UpdateInterval();
+
+  STATUS UpdateHistogram(const std::vector<float> &data);
+
+  void DumpHistogram();
+
+  STATUS ComputeThreshold();
+
+  std::pair<CNodePtr, float> GetScale();
+
+  std::pair<CNodePtr, int32_t> GetZeropoint();
+};
 
 class Calibrator {
  public:
@@ -123,7 +162,7 @@ class Calibrator {
 
   STATUS UpdateDivergInverval(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  STATUS UpdateDataFrequency(const std::string& op_name, const std::vector<float>& data,
+  STATUS UpdateDataFrequency(const std::string &op_name, const std::vector<float> &data,
                              std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
   void Dump();
 

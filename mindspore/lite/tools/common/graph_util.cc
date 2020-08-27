@@ -35,7 +35,7 @@ OpDefCopyer GetSimpleOpCopyer() {
     newCNode->quantType = inCNode->quantType;
     newCNode->primitive = std::make_unique<schema::PrimitiveT>();
     newCNode->primitive->value.type = inCNode->primitive->value.type;
-    return std::move(newCNode);
+    return newCNode;
   };
 }
 
@@ -96,7 +96,7 @@ std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size
       preNodeIdx.emplace_back(i);
     }
   }
-  return std::move(preNodeIdx);
+  return preNodeIdx;
 }
 
 std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx) {
@@ -111,7 +111,7 @@ std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const siz
       postNodeIdx.emplace_back(i);
     }
   }
-  return std::move(postNodeIdx);
+  return postNodeIdx;
 }
 
 STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {

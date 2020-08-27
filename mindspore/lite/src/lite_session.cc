@@ -33,9 +33,9 @@
 namespace mindspore {
 namespace lite {
 int LiteSession::ConvertTensors(const lite::Model *model) {
-  MS_EXCEPTION_IF_NULL(model);
+  MS_ASSERT(nullptr != model);
   auto meta_graph = model->GetMetaGraph();
-  MS_EXCEPTION_IF_NULL(meta_graph);
+  MS_ASSERT(nullptr != meta_graph);
   uint32_t tensorCount = meta_graph->allTensors()->size();
   for (uint32_t i = 0; i < tensorCount; i++) {
     auto *srcTensor = meta_graph->allTensors()->GetAs<schema::Tensor>(i);
@@ -246,7 +246,7 @@ int LiteSession::CompileGraph(Model *model) {
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 
 int LiteSession::RunGraph(const session::KernelCallBack &before, const session::KernelCallBack &after) {
-  MS_EXCEPTION_IF_NULL(this->context_);
+  MS_ASSERT(this->context_);
   if (before == nullptr && after == nullptr) {
     return executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {
@@ -255,7 +255,7 @@ int LiteSession::RunGraph(const session::KernelCallBack &before, const session::
 }
 
 int LiteSession::Init(Context *context) {
-  MS_EXCEPTION_IF_NULL(context);
+  MS_ASSERT(nullptr != context);
   this->context_ = new (std::nothrow) Context(context->thread_num_, context->allocator, context->device_ctx_);
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "new context failed";
@@ -276,7 +276,7 @@ int LiteSession::Init(Context *context) {
   }
 #endif
   executor = new Executor();
-  MS_EXCEPTION_IF_NULL(executor);
+  MS_ASSERT(nullptr != executor);
   return RET_OK;
 }
 

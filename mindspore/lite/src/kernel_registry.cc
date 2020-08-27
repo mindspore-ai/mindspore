@@ -100,8 +100,8 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *
                                               const std::vector<tensor::Tensor *> &out_tensors,
                                               const PrimitiveC *primitive, const Context *ctx,
                                               const kernel::KernelKey &key) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(ctx);
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != ctx);
   auto parameter = kernel::PopulateParameter(primitive);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "

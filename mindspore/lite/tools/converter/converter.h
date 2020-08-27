@@ -25,7 +25,6 @@
 #include "tools/anf_importer/anf_importer.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"
-#include "tools/converter/quantizer/quantizer.h"
 
 namespace mindspore {
 namespace lite {
@@ -34,15 +33,12 @@ class Converter {
   Converter();
   virtual ~Converter();
   virtual schema::MetaGraphT *Convert(const lite::converter::Flags *flags);
-  void CreateQuantizer(FuncGraphPtr func_graph, const converter::Flags *flags);
-  void FreeFuncGraph(const FuncGraphPtr &func_graph);
 
  protected:
   ModelParser *modelParser = nullptr;
   AnfImporter *modelImporter = nullptr;
   GraphDefTransform *transform = nullptr;
   AnfTransform *anfTransform = nullptr;
-  std::unique_ptr<quant::Quantizer> mQuantizer = nullptr;
 };
 
 int RunConverter(int argc, const char **argv);

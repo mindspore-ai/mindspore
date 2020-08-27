@@ -107,7 +107,7 @@ int Benchmark::ReadInputFile() {
       }
       auto inputData = cur_tensor->MutableData();
       memcpy(inputData, binBuf, tensorDataSize);
-      delete binBuf;
+      delete[](binBuf);
     }
   }
   return RET_OK;
@@ -455,6 +455,12 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   }
   if (!_flags->calibDataPath.empty()) {
     status = MarkAccuracy();
+    for (auto &data : calibData) {
+      data.second->shape.clear();
+      data.second->data.clear();
+      delete data.second;
+    }
+    calibData.clear();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
@@ -472,16 +478,6 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
       return status;
     }
   }
-
-  if (cleanData) {
-    for (auto &data : calibData) {
-      data.second->shape.clear();
-      data.second->data.clear();
-      delete data.second;
-    }
-    calibData.clear();
-  }
-
   delete (session);
   delete (model);
   return RET_OK;

@@ -17,11 +17,12 @@
 #ifndef MS_ANF_TRANSFORM_H
 #define MS_ANF_TRANSFORM_H
 
+#include <memory>
 #include "schema/inner/model_generated.h"
 #include "tools/common/storage.h"
 #include "tools/converter/converter_flags.h"
 #include "ir/anf.h"
-
+#include "tools/converter/quantizer/quantizer.h"
 
 namespace mindspore {
 namespace lite {
@@ -29,15 +30,12 @@ class AnfTransform {
  public:
   AnfTransform();
   virtual ~AnfTransform();
-  FuncGraphPtr Transform(const FuncGraphPtr &old_graph);
-  void SetGraphDef(schema::MetaGraphT *dstDef);
-  inline schema::MetaGraphT *GetOutput() { return graphDefT; }
+  FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
- protected:
-  schema::MetaGraphT *graphDefT = nullptr;
+ private:
+  std::unique_ptr<quant::Quantizer> mQuantizer = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore
 
 #endif
-

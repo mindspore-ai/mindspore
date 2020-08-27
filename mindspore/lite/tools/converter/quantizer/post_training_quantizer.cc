@@ -41,200 +41,173 @@ using std::vector;
 namespace mindspore {
 namespace lite {
 namespace quant {
-struct DivergInfo {
-  std::vector<float> histogram;
-  CNodePtr cnode;
-  int bin_num;
-  float interval = 0;
-  float max;
-  float min;
-  float best_T = 0.0f;
-  size_t bit_num;
-  int quant_max = 255;
-  int quant_min = 0;
-  std::string method_x = kMethodKL;
-
-  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
-    this->method_x = method_x;
-    this->cnode = cnode;
-    this->bin_num = bins;
-    this->bit_num = bits;
-    histogram.resize(bin_num);
-    max = -FLT_MAX;
-    min = FLT_MAX;
-    this->quant_max = quant_max;
-    this->quant_min = quant_min;
-    std::fill(histogram.begin(), histogram.end(), 1.0e-7);
+STATUS DivergInfo::RecordMaxValue(const std::vector<float> &datas) {
+  for (float data : datas) {
+    max = std::max(data, max);
+    min = std::min(data, min);
   }
+  return RET_OK;
+}
 
-  STATUS RecordMaxValue(const std::vector<float> &datas) {
-    for (float data : datas) {
-      max = std::max(data, max);
-      min = std::min(data, min);
+void DivergInfo::UpdateInterval() {
+  auto max_value = std::max(fabs(this->max), fabs(this->min));
+  this->interval = max_value / static_cast<float>(bin_num);
+}
+
+STATUS DivergInfo::UpdateHistogram(const std::vector<float> &data) {
+  for (auto value : data) {
+    if (value == 0) {
+      continue;
     }
+    int bin_index = std::min(static_cast<int>(std::fabs(value) / this->interval), bin_num - 1);
+    this->histogram[bin_index]++;
+  }
+  return RET_OK;
+}
+
+void DivergInfo::DumpHistogram() {
+  MS_LOG(INFO) << "Print node " << cnode->fullname_with_scope() << " histogram";
+  for (float item : this->histogram) {
+    std::cout << item << " ";
+  }
+  std::cout << std::endl;
+}
+
+STATUS DivergInfo::ComputeThreshold() {
+  if (method_x == kMethodMaxMin) {
+    this->best_T = std::max(fabs(this->max), fabs(this->min));
+    MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T;
     return RET_OK;
   }
 
-  void UpdateInterval() {
-    auto max_value = std::max(fabs(this->max), fabs(this->min));
-    this->interval = max_value / static_cast<float>(bin_num);
-  }
+  constexpr int quant_bint_nums = 128;
+  int threshold = quant_bint_nums;
+  float min_kl = FLT_MAX;
+  float after_threshold_sum = std::accumulate(this->histogram.begin() + quant_bint_nums, this->histogram.end(), 0.0f);
 
-  STATUS UpdateHistogram(const std::vector<float> &data) {
-    for (auto value : data) {
-      if (value == 0) {
+  for (int i = quant_bint_nums; i < this->bin_num; ++i) {
+    std::vector<float> quantized_histogram(quant_bint_nums, 0);
+    std::vector<float> reference_histogram(this->histogram.begin(), this->histogram.begin() + i);
+    std::vector<float> expanded_histogram(i, 0);
+    reference_histogram[i - 1] += after_threshold_sum;
+    after_threshold_sum -= this->histogram[i];
+
+    const float bin_interval = static_cast<float>(i) / static_cast<float>(quant_bint_nums);
+
+    // merge i bins to target bins
+    for (int j = 0; j < quant_bint_nums; ++j) {
+      const float start = j * bin_interval;
+      const float end = start + bin_interval;
+      const int left_upper = static_cast<int>(std::ceil(start));
+      if (left_upper > start) {
+        const double left_scale = left_upper - start;
+        quantized_histogram[j] += left_scale * this->histogram[left_upper - 1];
+      }
+      const int right_lower = static_cast<int>(std::floor(end));
+      if (right_lower < end) {
+        const double right_scale = end - right_lower;
+        quantized_histogram[j] += right_scale * this->histogram[right_lower];
+      }
+      std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
+                    [&quantized_histogram, j](float item) { quantized_histogram[j] += item; });
+    }
+    // expand target bins to i bins in order to calculate KL with reference_histogram
+    for (int j = 0; j < quant_bint_nums; ++j) {
+      const float start = j * bin_interval;
+      const float end = start + bin_interval;
+      float count = 0;
+      const int left_upper = static_cast<int>(std::ceil(start));
+      float left_scale = 0.0f;
+      if (left_upper > start) {
+        left_scale = left_upper - start;
+        if (this->histogram[left_upper - 1] != 0) {
+          count += left_scale;
+        }
+      }
+      const int right_lower = static_cast<int>(std::floor(end));
+      double right_scale = 0.0f;
+      if (right_lower < end) {
+        right_scale = end - right_lower;
+        if (this->histogram[right_lower] != 0) {
+          count += right_scale;
+        }
+      }
+      std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower, [&count](float item) {
+        if (item != 0) {
+          count += 1;
+        }
+      });
+      if (count == 0) {
         continue;
       }
-      int bin_index = std::min(static_cast<int>(std::fabs(value) / this->interval), bin_num - 1);
-      this->histogram[bin_index]++;
-    }
-    return RET_OK;
-  }
-
-  void DumpHistogram() {
-    MS_LOG(INFO) << "Print node " << cnode->fullname_with_scope() << " histogram";
-    for (float item : this->histogram) {
-      std::cout << item << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  STATUS ComputeThreshold() {
-    if (method_x == kMethodMaxMin) {
-      this->best_T = std::max(fabs(this->max), fabs(this->min));
-      MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T;
-      return RET_OK;
-    }
-
-    constexpr int quant_bint_nums = 128;
-    int threshold = quant_bint_nums;
-    float min_kl = FLT_MAX;
-    float after_threshold_sum = std::accumulate(this->histogram.begin() + quant_bint_nums, this->histogram.end(), 0.0f);
-
-    for (int i = quant_bint_nums; i < this->bin_num; ++i) {
-      std::vector<float> quantized_histogram(quant_bint_nums, 0);
-      std::vector<float> reference_histogram(this->histogram.begin(), this->histogram.begin() + i);
-      std::vector<float> expanded_histogram(i, 0);
-      reference_histogram[i - 1] += after_threshold_sum;
-      after_threshold_sum -= this->histogram[i];
-
-      const float bin_interval = static_cast<float>(i) / static_cast<float>(quant_bint_nums);
-
-      // merge i bins to target bins
-      for (int j = 0; j < quant_bint_nums; ++j) {
-        const float start = j * bin_interval;
-        const float end = start + bin_interval;
-        const int left_upper = static_cast<int>(std::ceil(start));
-        if (left_upper > start) {
-          const double left_scale = left_upper - start;
-          quantized_histogram[j] += left_scale * this->histogram[left_upper - 1];
-        }
-        const int right_lower = static_cast<int>(std::floor(end));
-        if (right_lower < end) {
-          const double right_scale = end - right_lower;
-          quantized_histogram[j] += right_scale * this->histogram[right_lower];
-        }
-        std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
-                      [&quantized_histogram, j](float item) { quantized_histogram[j] += item; });
+      const float average_num = quantized_histogram[j] / count;
+      if (left_upper > start && this->histogram[left_upper - 1] != 0) {
+        expanded_histogram[left_upper - 1] += average_num * left_scale;
       }
-      // expand target bins to i bins in order to calculate KL with reference_histogram
-      for (int j = 0; j < quant_bint_nums; ++j) {
-        const float start = j * bin_interval;
-        const float end = start + bin_interval;
-        float count = 0;
-        const int left_upper = static_cast<int>(std::ceil(start));
-        float left_scale = 0.0f;
-        if (left_upper > start) {
-          left_scale = left_upper - start;
-          if (this->histogram[left_upper - 1] != 0) {
-            count += left_scale;
-          }
+      if (right_lower < end && this->histogram[right_lower] != 0) {
+        expanded_histogram[right_lower] += average_num * right_scale;
+      }
+      for (int k = left_upper; k < right_lower; ++k) {
+        if (this->histogram[k] != 0) {
+          expanded_histogram[k] += average_num;
         }
-        const int right_lower = static_cast<int>(std::floor(end));
-        double right_scale = 0.0f;
-        if (right_lower < end) {
-          right_scale = end - right_lower;
-          if (this->histogram[right_lower] != 0) {
-            count += right_scale;
-          }
-        }
-        std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
-                      [&count](float item) {
-                        if (item != 0) {
-                          count += 1;
-                        }
-                      });
-        if (count == 0) {
-          continue;
-        }
-        const float average_num = quantized_histogram[j] / count;
-        if (left_upper > start && this->histogram[left_upper - 1] != 0) {
-          expanded_histogram[left_upper - 1] += average_num * left_scale;
-        }
-        if (right_lower < end && this->histogram[right_lower] != 0) {
-          expanded_histogram[right_lower] += average_num * right_scale;
-        }
-        for (int k = left_upper; k < right_lower; ++k) {
-          if (this->histogram[k] != 0) {
-            expanded_histogram[k] += average_num;
+      }
+    }
+    auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
+      auto sum = 0.0f;
+      std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
+      std::for_each(p.begin(), p.end(), [sum](float &item) { item /= sum; });
+      sum = 0.0f;
+      std::for_each(q.begin(), q.end(), [&sum](float item) { sum += item; });
+      std::for_each(q.begin(), q.end(), [sum](float &item) { item /= sum; });
+
+      float result = 0.0f;
+      const int size = p.size();
+      for (int i = 0; i < size; ++i) {
+        if (p[i] != 0) {
+          if (q[i] == 0) {
+            result += 1.0f;
+          } else {
+            result += (p[i] * std::log((p[i]) / (q[i])));
           }
         }
       }
-      auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
-        auto sum = 0.0f;
-        std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
-        std::for_each(p.begin(), p.end(), [sum](float &item) { item /= sum; });
-        sum = 0.0f;
-        std::for_each(q.begin(), q.end(), [&sum](float item) { sum += item; });
-        std::for_each(q.begin(), q.end(), [sum](float &item) { item /= sum; });
-
-        float result = 0.0f;
-        const int size = p.size();
-        for (int i = 0; i < size; ++i) {
-          if (p[i] != 0) {
-            if (q[i] == 0) {
-              result += 1.0f;
-            } else {
-              result += (p[i] * std::log((p[i]) / (q[i])));
-            }
-          }
-        }
-        return result;
-      };
-      const float kl = KLDivergence(reference_histogram, expanded_histogram);
-      if (kl < min_kl) {
-        min_kl = kl;
-        threshold = i;
-      }
+      return result;
+    };
+    const float kl = KLDivergence(reference_histogram, expanded_histogram);
+    if (kl < min_kl) {
+      min_kl = kl;
+      threshold = i;
     }
-    this->best_T = (static_cast<float>(threshold) + 0.5f) * this->interval;
-    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " Best threshold bin index: " << threshold << " T: " << best_T
-                  << " max: " << std::max(fabs(this->max), fabs(this->min));
-    return RET_OK;
   }
+  this->best_T = (static_cast<float>(threshold) + 0.5f) * this->interval;
+  MS_LOG(DEBUG) << cnode->fullname_with_scope() << " Best threshold bin index: " << threshold << " T: " << best_T
+                << " max: " << std::max(fabs(this->max), fabs(this->min));
+  return RET_OK;
+}
 
-  std::pair<CNodePtr, float> GetScale() {
-    float max_value = this->best_T;
-    float min_value = -max_value;
+std::pair<CNodePtr, float> DivergInfo::GetScale() {
+  float max_value = this->best_T;
+  float min_value = -max_value;
 
-    MS_ASSERT(quant_max - quant_min != 0);
-    float scale = (max_value - min_value) / (quant_max - quant_min);
-    MS_ASSERT(scale != 0);
-    return std::make_pair(this->cnode, scale);
+  MS_ASSERT(quant_max - quant_min != 0);
+  float scale = (max_value - min_value) / (quant_max - quant_min);
+  MS_ASSERT(scale != 0);
+  return std::make_pair(this->cnode, scale);
+}
+
+std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
+  int zero_point = 0;
+  if (quant_min == 0 && quant_max == 255) {
+    zero_point = 128;
+  } else if (quant_min == -127 && quant_max == 127) {
+    zero_point = 0;
+  } else {
+    MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
   }
+  return std::make_pair(this->cnode, zero_point);
+}
 
-  std::pair<CNodePtr, int32_t> GetZeropoint() {
-    int zero_point = 0;
-    if (quant_min == 0 && quant_max == 255) {
-      zero_point = 128;
-    } else if (quant_min == -127 && quant_max == 127) {
-      zero_point = 0;
-    } else {
-      MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
-    }
-    return std::make_pair(this->cnode, zero_point);
-  }
-};
 std::unordered_map<CNodePtr, float> Calibrator::GetScale(
   std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
   std::unordered_map<CNodePtr, float> result;
@@ -359,7 +332,7 @@ STATUS Calibrator::AddQuantizedOp(CNodePtr node) {
 
 void Calibrator::AddImage(const string file) {
   auto exist = [](const string file) {
-    struct stat buf{};
+    struct stat buf {};
     return stat(file.c_str(), &buf) == 0;
   };
   if (exist(file)) {
