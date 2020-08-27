@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "src/runtime/kernel/arm/fp32/resize.h"
 #include "schema/model_generated.h"
 #include "nnacl/fp32/resize.h"
@@ -36,6 +37,91 @@ int ResizeCPUKernel::Init() {
     return RET_OK;
   }
   return ReSize();
+}
+
+int ResizeCPUKernel::ReSize() {
+  int ret = RET_OK;
+  if (method_ == static_cast<int>(schema::ResizeMethod_BILINEAR)) {
+    FreeTmpBuffer();
+    ret = MallocTmpBuffer();
+    if (ret != RET_OK) {
+      FreeTmpBuffer();
+      return ret;
+    }
+
+    auto input = in_tensors_.at(0);
+    auto input_shape = input->shape();
+    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_[0]->shape().data(), align_corners_, y_bottoms_,
+                                y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+    if (ret != RET_OK) {
+      FreeTmpBuffer();
+    }
+  }
+  return ret;
+}
+
+int ResizeCPUKernel::MallocTmpBuffer() {
+  int h = new_height_;
+  int w = new_width_;
+  y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * h));
+  if (y_bottoms_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+  y_tops_ = reinterpret_cast<int *>(malloc(sizeof(int) * h));
+  if (y_tops_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+  y_bottom_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * h));
+  if (y_bottom_weights_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+
+  x_lefts_ = reinterpret_cast<int *>(malloc(sizeof(int) * w));
+  if (x_lefts_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+  x_rights_ = reinterpret_cast<int *>(malloc(sizeof(int) * w));
+  if (x_rights_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+  x_left_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * w));
+  if (x_left_weights_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+  return RET_OK;
+}
+void ResizeCPUKernel::FreeTmpBuffer() {
+  if (y_bottoms_ != nullptr) {
+    free(y_bottoms_);
+    y_bottoms_ = nullptr;
+  }
+  if (y_tops_ != nullptr) {
+    free(y_tops_);
+    y_tops_ = nullptr;
+  }
+  if (y_bottom_weights_ != nullptr) {
+    free(y_bottom_weights_);
+    y_bottom_weights_ = nullptr;
+  }
+
+  if (x_lefts_ != nullptr) {
+    free(x_lefts_);
+    x_lefts_ = nullptr;
+  }
+  if (x_rights_ != nullptr) {
+    free(x_rights_);
+    x_rights_ = nullptr;
+  }
+  if (x_left_weights_ != nullptr) {
+    free(x_left_weights_);
+    x_left_weights_ = nullptr;
+  }
 }
 
 int ResizeImpl(void *cdata, int task_id) {
@@ -66,8 +152,16 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_BILINEAR): {
-      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), align_corners_,
-                           task_id, context_->thread_num_);
+      int n_h_begin, n_h_end;
+      int n = out_tensors_.at(0)->shape()[0];
+      int h = new_height_;
+      int unit = UP_DIV(n * h, context_->thread_num_);
+      n_h_begin = unit * task_id;
+      n_h_end = std::min(n_h_begin + unit, n * h);
+
+      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), y_bottoms_,
+                           y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, n_h_begin, n_h_end);
+
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
@@ -97,8 +191,10 @@ int ResizeCPUKernel::Run() {
   int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ResizeImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
+
   return RET_OK;
 }
 }  // namespace mindspore::kernel
