@@ -388,7 +388,7 @@ class _Executor:
         dic = dict(zip(args_names, args_list))
         key = generate_key(phase, dic)
         self.phase_prefix = str(key[1])
-        if phase == 'export':
+        if 'export' in phase:
             phase = phase + '.' + self.phase_prefix + '.' + str(obj.create_time)
         else:
             phase = self.phase_prefix + phase + '.' + str(obj.create_time)

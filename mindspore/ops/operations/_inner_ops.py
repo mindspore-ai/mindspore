@@ -332,6 +332,7 @@ class Quant(PrimitiveWithInfer):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.round_mode = validator.check_string("round_mode", round_mode,
                                                  ["Round", "Floor", "Ceil", "Trunc"], self.name)
+        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -382,6 +383,7 @@ class Dequant(PrimitiveWithInfer):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.relu_flag = validator.check_value_type("relu_flag", relu_flag, [bool], self.name)
         self.add_prim_attr("dtype", mstype.float16)
+        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, deq_scale_shape):
         return x_shape

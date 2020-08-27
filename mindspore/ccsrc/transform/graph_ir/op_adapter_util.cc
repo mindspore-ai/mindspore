@@ -29,7 +29,7 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<mindspore::tensor
   // To-DO the format may read from ME tensor
   MS_EXCEPTION_IF_NULL(value);
   auto me_tensor = value->cast<MeTensorPtr>();
-  auto ge_tensor = TransformUtil::ConvertTensor(me_tensor, kOpFormat_NCHW);
+  auto ge_tensor = TransformUtil::ConvertTensor(me_tensor, kOpFormat_ND);
   return ge_tensor == nullptr ? GeTensor() : *ge_tensor;
 }
 
