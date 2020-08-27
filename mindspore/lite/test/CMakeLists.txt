@@ -246,6 +246,7 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_activation_fusion.cc
+             ${LITE_DIR}/tools/optimizer/fusion/conv_tuple_activation_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_transform_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_scale_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_bn_fusion.cc
