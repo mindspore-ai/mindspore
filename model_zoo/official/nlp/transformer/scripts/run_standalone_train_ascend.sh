@@ -37,7 +37,7 @@ python train.py  \
     --enable_save_ckpt="true" \
     --enable_lossscale="true" \
     --do_shuffle="true" \
-    --enable_data_sink="false" \
+    --enable_data_sink="true" \
     --checkpoint_path="" \
     --save_checkpoint_steps=2500 \
     --save_checkpoint_num=30 \
