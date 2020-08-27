@@ -182,9 +182,12 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
       for (auto kernel : temp_kernels) {
         for (auto tensor : kernel->out_tensors()) {
           tensor->set_allocator(context_->allocator.get());
-          if (context_->float16_priority && tensor->data_type() == kNumberTypeFloat16) {
-            tensor->set_data_type(kNumberTypeFloat32);
-          }
+        }
+      }
+      std::vector<tensor::Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
+      for (auto tensor : output_tensor) {
+        if (context_->float16_priority && tensor->data_type() == kNumberTypeFloat16) {
+          tensor->set_data_type(kNumberTypeFloat32);
         }
       }
       std::copy(temp_kernels.begin(), temp_kernels.end(), std::back_inserter(subgraph_kernels));
