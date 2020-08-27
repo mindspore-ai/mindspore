@@ -31,6 +31,8 @@ DatasetIteratorKernel::DatasetIteratorKernel() : handle_(HandleMgr::INVALID_HAND
 
 DatasetIteratorKernel::~DatasetIteratorKernel() { GpuBufferMgr::GetInstance().Close(handle_); }
 
+void DatasetIteratorKernel::ReleaseResource() { GpuBufferMgr::GetInstance().Close(handle_); }
+
 const std::vector<size_t> &DatasetIteratorKernel::GetInputSizeList() const { return input_size_list_; }
 
 const std::vector<size_t> &DatasetIteratorKernel::GetOutputSizeList() const { return output_size_list_; }

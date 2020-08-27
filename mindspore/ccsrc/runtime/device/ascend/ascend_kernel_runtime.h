@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/context.h"
 #include "framework/ge_runtime/davinci_model.h"
@@ -43,7 +44,9 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GenTask(const session::KernelGraph *graph) override;
   bool RunTask(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph) override;
-  void ClearGraphRuntimeResource(uint32_t graph_id) override;
+  void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
+                                 const std::unordered_set<ValueNodePtr> &value_nodes,
+                                 const std::vector<CNodePtr> &execution_order) override;
   bool SyncStream() override;
 
  protected:

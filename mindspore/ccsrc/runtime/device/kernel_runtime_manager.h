@@ -22,6 +22,8 @@
 #include <functional>
 #include <utility>
 #include <mutex>
+#include <unordered_set>
+#include <vector>
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_runtime.h"
 namespace mindspore {
@@ -38,7 +40,9 @@ class KernelRuntimeManager {
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ClearRuntimeResource();
-  void ClearGraphResource(uint32_t graph_id);
+  void ClearGraphResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
+                          const std::unordered_set<ValueNodePtr> &value_nodes,
+                          const std::vector<CNodePtr> &execution_order);
 
  private:
   KernelRuntimeManager() = default;

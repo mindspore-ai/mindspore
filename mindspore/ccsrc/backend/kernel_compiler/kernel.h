@@ -119,6 +119,7 @@ class KernelMod {
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual std::vector<size_t> GenParameters() { return {}; }
+  virtual void ReleaseResource() {}
 
   virtual ~KernelMod() = default;
   void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }

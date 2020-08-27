@@ -115,7 +115,9 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   }
 }
 
-void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
+void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
+                                                    const std::unordered_set<ValueNodePtr> &,
+                                                    const std::vector<CNodePtr> &) {
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     MS_LOG(DEBUG) << "Unload dump info " << graph_id;

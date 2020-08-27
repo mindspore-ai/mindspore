@@ -23,6 +23,7 @@
 #include <set>
 #include <utility>
 #include <unordered_map>
+#include <unordered_set>
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/optimizer/mem_reuse/mem_swap_manager.h"
@@ -37,6 +38,9 @@ class GPUKernelRuntime : public KernelRuntime {
   ~GPUKernelRuntime() override = default;
   bool Init() override;
   void ReleaseDeviceRes() override;
+  void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
+                                 const std::unordered_set<ValueNodePtr> &value_nodes,
+                                 const std::vector<CNodePtr> &execution_order) override;
   void AssignMemory(session::KernelGraph *graph) override;
   bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
 #ifdef ENABLE_DUMP_E2E

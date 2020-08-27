@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <map>
-
+#include <unordered_set>
 #include "runtime/device/device_address.h"
 #include "ir/tensor.h"
 #include "utils/convert_utils.h"
@@ -69,7 +69,9 @@ class KernelRuntime {
                                      const AddressPtrList &kernel_workspaces) const;
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
-  virtual void ClearGraphRuntimeResource(uint32_t graph_id);
+  virtual void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
+                                         const std::unordered_set<ValueNodePtr> &value_nodes,
+                                         const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
 
 #ifdef ENABLE_DUMP_E2E
