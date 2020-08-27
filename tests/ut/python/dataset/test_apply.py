@@ -15,7 +15,7 @@
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testPK/data"
@@ -46,8 +46,8 @@ def test_apply_generator_case():
 
 def test_apply_imagefolder_case():
     # apply dataset map operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_shards=4, shard_id=3)
-    data2 = ds.ImageFolderDatasetV2(DATA_DIR, num_shards=4, shard_id=3)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=3)
+    data2 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=3)
 
     decode_op = vision.Decode()
     normalize_op = vision.Normalize([121.0, 115.0, 100.0], [70.0, 68.0, 71.0])

@@ -18,8 +18,9 @@ Testing Invert op in DE
 import numpy as np
 
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.py_transforms as F
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as F
+import mindspore.dataset.vision.c_transforms as C
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, diff_mse
 
@@ -35,14 +36,14 @@ def test_invert_py(plot=False):
     logger.info("Test Invert Python op")
 
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224, 224)),
-                                       F.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                              F.Resize((224, 224)),
+                                                                              F.ToTensor()])
 
     ds_original = ds.map(input_columns="image",
-                         operations=transforms_original())
+                         operations=transforms_original)
 
     ds_original = ds_original.batch(512)
 
@@ -55,15 +56,15 @@ def test_invert_py(plot=False):
                                         axis=0)
 
     # Color Inverted Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_invert = F.ComposeOp([F.Decode(),
-                                     F.Resize((224, 224)),
-                                     F.Invert(),
-                                     F.ToTensor()])
+    transforms_invert = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                            F.Resize((224, 224)),
+                                                                            F.Invert(),
+                                                                            F.ToTensor()])
 
     ds_invert = ds.map(input_columns="image",
-                       operations=transforms_invert())
+                       operations=transforms_invert)
 
     ds_invert = ds_invert.batch(512)
 
@@ -92,7 +93,7 @@ def test_invert_c(plot=False):
     logger.info("Test Invert cpp op")
 
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = [C.Decode(), C.Resize(size=[224, 224])]
 
@@ -110,7 +111,7 @@ def test_invert_c(plot=False):
                                         axis=0)
 
     # Invert Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transform_invert = [C.Decode(), C.Resize(size=[224, 224]),
                         C.Invert()]
@@ -144,7 +145,7 @@ def test_invert_py_c(plot=False):
     logger.info("Test Invert cpp and python op")
 
     # Invert Images in cpp
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     ds = ds.map(input_columns=["image"],
                 operations=[C.Decode(), C.Resize((224, 224))])
 
@@ -162,17 +163,17 @@ def test_invert_py_c(plot=False):
                                         axis=0)
 
     # invert images in python
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     ds = ds.map(input_columns=["image"],
                 operations=[C.Decode(), C.Resize((224, 224))])
 
-    transforms_p_invert = F.ComposeOp([lambda img: img.astype(np.uint8),
-                                       F.ToPIL(),
-                                       F.Invert(),
-                                       np.array])
+    transforms_p_invert = mindspore.dataset.transforms.py_transforms.Compose([lambda img: img.astype(np.uint8),
+                                                                              F.ToPIL(),
+                                                                              F.Invert(),
+                                                                              np.array])
 
     ds_p_invert = ds.map(input_columns="image",
-                         operations=transforms_p_invert())
+                         operations=transforms_p_invert)
 
     ds_p_invert = ds_p_invert.batch(512)
 
@@ -203,7 +204,7 @@ def test_invert_one_channel():
     c_op = C.Invert()
 
     try:
-        ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+        ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         ds = ds.map(input_columns=["image"],
                     operations=[C.Decode(),
                                 C.Resize((224, 224)),
@@ -224,13 +225,13 @@ def test_invert_md5_py():
     logger.info("Test Invert python op with md5 check")
 
     # Generate dataset
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_invert = F.ComposeOp([F.Decode(),
-                                     F.Invert(),
-                                     F.ToTensor()])
+    transforms_invert = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                            F.Invert(),
+                                                                            F.ToTensor()])
 
-    data = ds.map(input_columns="image", operations=transforms_invert())
+    data = ds.map(input_columns="image", operations=transforms_invert)
     # Compare with expected md5 from images
     filename = "invert_01_result_py.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -243,7 +244,7 @@ def test_invert_md5_c():
     logger.info("Test Invert cpp op with md5 check")
 
     # Generate dataset
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_invert = [C.Decode(),
                          C.Resize(size=[224, 224]),

@@ -19,10 +19,10 @@ from functools import wraps
 import numpy as np
 from mindspore._c_dataengine import TensorOp
 
-from .utils import Inter, Border, ImageBatchFormat
-from ...core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
+from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
     check_tensor_op, UINT8_MAX, check_value_normalize_std
+from .utils import Inter, Border, ImageBatchFormat
 
 
 def check_crop_size(size):
@@ -677,21 +677,6 @@ def check_positive_degrees(method):
 
     return new_method
 
-
-def check_compose_list(method):
-    """Wrapper method to check the transform list of ComposeOp."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [transforms], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(transforms, (list,), transforms)
-        if not transforms:
-            raise ValueError("transforms list is empty.")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
 
 
 def check_random_select_subpolicy_op(method):

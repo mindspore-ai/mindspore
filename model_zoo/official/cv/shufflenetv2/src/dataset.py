@@ -30,6 +30,7 @@ class toBGR():
         img = np.ascontiguousarray(img)
         return img
 
+
 def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
     """
     create a train or eval dataset
@@ -45,23 +46,23 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
         dataset
     """
     if group_size == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
-                                     num_shards=group_size, shard_id=rank)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
+                                   num_shards=group_size, shard_id=rank)
     # define map operations
     if do_train:
         trans = [
             C.RandomCropDecodeResize(224),
             C.RandomHorizontalFlip(prob=0.5),
             C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
-            ]
+        ]
     else:
         trans = [
             C.Decode(),
             C.Resize(256),
             C.CenterCrop(224)
-            ]
+        ]
     trans += [
         toBGR(),
         C.Rescale(1.0 / 255.0, 0.0),

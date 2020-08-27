@@ -16,7 +16,7 @@ import os
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as CV
+import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.ops import operations as P

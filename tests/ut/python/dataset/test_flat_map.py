@@ -27,7 +27,7 @@ def test_flat_map_1():
 
     def flat_map_func(x):
         data_dir = x[0].item().decode('utf8')
-        d = ds.ImageFolderDatasetV2(data_dir)
+        d = ds.ImageFolderDataset(data_dir)
         return d
 
     data = ds.TextFileDataset(DATA_FILE)
@@ -47,7 +47,7 @@ def test_flat_map_2():
 
     def flat_map_func_1(x):
         data_dir = x[0].item().decode('utf8')
-        d = ds.ImageFolderDatasetV2(data_dir)
+        d = ds.ImageFolderDataset(data_dir)
         return d
 
     def flat_map_func_2(x):

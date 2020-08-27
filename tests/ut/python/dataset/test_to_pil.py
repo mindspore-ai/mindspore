@@ -16,8 +16,9 @@
 Testing ToPIL op in DE
 """
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -43,8 +44,8 @@ def test_to_pil_01():
         py_vision.CenterCrop(375),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data1 = data1.map(input_columns=["image"], operations=transform)
 
     # Compare with expected md5 from images
     filename = "to_pil_01_result.npz"
@@ -66,9 +67,9 @@ def test_to_pil_02():
         py_vision.CenterCrop(375),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    data1 = data1.map(input_columns=["image"], operations=transform)
 
     # Compare with expected md5 from images
     filename = "to_pil_02_result.npz"

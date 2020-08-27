@@ -273,7 +273,7 @@ def test_var_batch_var_resize():
     def add_one(batchInfo):
         return batchInfo.get_batch_num() + 1
 
-    data1 = ds.ImageFolderDatasetV2("../data/dataset/testPK/data/", num_parallel_workers=4, decode=True)
+    data1 = ds.ImageFolderDataset("../data/dataset/testPK/data/", num_parallel_workers=4, decode=True)
     data1 = data1.batch(batch_size=add_one, drop_remainder=True, input_columns=["image"], per_batch_map=np_psedo_resize)
     # i-th batch has shape [i, i^2, i^2, 3]
     i = 1

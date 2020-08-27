@@ -15,7 +15,7 @@
 """Dataset module."""
 from PIL import Image
 import mindspore.dataset as de
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 import numpy as np
 
 from .ei_dataset import HwVocRawDataset

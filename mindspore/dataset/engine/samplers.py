@@ -41,7 +41,7 @@ class Sampler:
         >>>         for i in range(self.dataset_size - 1, -1, -1):
         >>>             yield i
         >>>
-        >>> ds = ds.ImageFolderDatasetV2(path, sampler=ReverseSampler())
+        >>> ds = ds.ImageFolderDataset(path, sampler=ReverseSampler())
     """
 
     def __init__(self, num_samples=None):
@@ -232,7 +232,7 @@ class DistributedSampler(BuiltinSampler):
         >>>
         >>> # creates a distributed sampler with 10 shards total. This shard is shard 5
         >>> sampler = ds.DistributedSampler(10, 5)
-        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
 
     Raises:
         ValueError: If num_shards is not positive.
@@ -315,7 +315,7 @@ class PKSampler(BuiltinSampler):
         >>>
         >>> # creates a PKSampler that will get 3 samples from every class.
         >>> sampler = ds.PKSampler(3)
-        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
 
     Raises:
         ValueError: If num_val is not positive.
@@ -387,7 +387,7 @@ class RandomSampler(BuiltinSampler):
         >>>
         >>> # creates a RandomSampler
         >>> sampler = ds.RandomSampler()
-        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
 
     Raises:
         ValueError: If replacement is not boolean.
@@ -447,7 +447,7 @@ class SequentialSampler(BuiltinSampler):
         >>>
         >>> # creates a SequentialSampler
         >>> sampler = ds.SequentialSampler()
-        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
     """
 
     def __init__(self, start_index=None, num_samples=None):
@@ -510,7 +510,7 @@ class SubsetRandomSampler(BuiltinSampler):
         >>>
         >>> # creates a SubsetRandomSampler, will sample from the provided indices
         >>> sampler = ds.SubsetRandomSampler()
-        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
     """
 
     def __init__(self, indices, num_samples=None):
@@ -573,7 +573,7 @@ class WeightedRandomSampler(BuiltinSampler):
         >>>
         >>> # creates a WeightedRandomSampler that will sample 4 elements without replacement
         >>> sampler = ds.WeightedRandomSampler(weights, 4)
-        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
 
     Raises:
         ValueError: If num_samples is not positive.

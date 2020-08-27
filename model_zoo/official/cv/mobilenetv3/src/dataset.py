@@ -37,10 +37,10 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     if device_target == "GPU":
         if do_train:
             from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=get_group_size(), shard_id=get_rank())
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                       num_shards=get_group_size(), shard_id=get_rank())
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
         raise ValueError("Unsupported device_target.")
 

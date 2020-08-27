@@ -24,7 +24,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context

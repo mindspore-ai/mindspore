@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 
 DATA_DIR = "../data/dataset/testVOC2012"
 IMAGE_SHAPE = [2268, 2268, 2268, 2268, 642, 607, 561, 596, 612, 2268]

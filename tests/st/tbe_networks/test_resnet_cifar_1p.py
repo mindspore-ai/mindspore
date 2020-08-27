@@ -21,7 +21,7 @@ from resnet import resnet50
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore import Tensor

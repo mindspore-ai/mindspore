@@ -19,10 +19,10 @@ import argparse
 import mindspore.context as context
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as CV
+import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
-from mindspore.dataset.transforms.vision import Inter
+from mindspore.dataset.vision import Inter
 from mindspore.nn.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor

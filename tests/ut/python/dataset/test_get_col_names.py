@@ -15,7 +15,7 @@
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 
 CELEBA_DIR = "../data/dataset/testCelebAData"
 CIFAR10_DIR = "../data/dataset/testCifar10Data"
@@ -75,7 +75,7 @@ def test_get_column_name_generator():
 
 
 def test_get_column_name_imagefolder():
-    data = ds.ImageFolderDatasetV2(IMAGE_FOLDER_DIR)
+    data = ds.ImageFolderDataset(IMAGE_FOLDER_DIR)
     assert data.get_col_names() == ["image", "label"]
 
 
@@ -105,7 +105,7 @@ def test_get_column_name_map():
     assert data.get_col_names() == ["col1", "label"]
     data = ds.Cifar10Dataset(CIFAR10_DIR)
     data = data.map(input_columns=["image"], operations=center_crop_op, output_columns=["col1", "col2"],
-                    columns_order=["col2", "col1"])
+                    column_order=["col2", "col1"])
     assert data.get_col_names() == ["col2", "col1"]
 
 

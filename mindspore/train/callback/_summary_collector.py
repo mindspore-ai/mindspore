@@ -727,7 +727,7 @@ class SummaryCollector(Callback):
         Get dataset path of MindDataset object.
 
         Args:
-            output_dataset (Union[Dataset, ImageFolderDatasetV2, MnistDataset, Cifar10Dataset, Cifar100Dataset,
+            output_dataset (Union[Dataset, ImageFolderDataset, MnistDataset, Cifar10Dataset, Cifar100Dataset,
                 VOCDataset, CelebADataset, MindDataset, ManifestDataset, TFRecordDataset, TextFileDataset]):
                 Refer to mindspore.dataset.Dataset.
 
@@ -738,7 +738,7 @@ class SummaryCollector(Callback):
             IndexError: it means get dataset path failed.
         """
         dataset_package = import_module('mindspore.dataset')
-        dataset_dir_set = (dataset_package.ImageFolderDatasetV2, dataset_package.MnistDataset,
+        dataset_dir_set = (dataset_package.ImageFolderDataset, dataset_package.MnistDataset,
                            dataset_package.Cifar10Dataset, dataset_package.Cifar100Dataset,
                            dataset_package.VOCDataset, dataset_package.CelebADataset)
         dataset_file_set = (dataset_package.MindDataset, dataset_package.ManifestDataset)

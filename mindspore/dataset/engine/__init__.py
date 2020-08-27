@@ -28,7 +28,7 @@ from .serializer_deserializer import serialize, deserialize, show, compare
 from .samplers import *
 from ..core import config
 
-__all__ = ["config", "zip", "ImageFolderDatasetV2", "MnistDataset",
+__all__ = ["config", "zip", "ImageFolderDataset", "MnistDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset", "CSVDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
            "VOCDataset", "CocoDataset", "TextFileDataset", "Schema", "DistributedSampler",

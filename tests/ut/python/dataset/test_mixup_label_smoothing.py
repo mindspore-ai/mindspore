@@ -17,8 +17,8 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.transforms.py_transforms as f
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train"
@@ -33,14 +33,13 @@ def test_one_hot_op():
 
     # define map operations
     # ds = de.ImageFolderDataset(DATA_DIR, schema=SCHEMA_DIR)
-    dataset = ds.ImageFolderDatasetV2(DATA_DIR)
+    dataset = ds.ImageFolderDataset(DATA_DIR)
     num_classes = 2
     epsilon_para = 0.1
 
-    transforms = [f.OneHotOp(num_classes=num_classes, smoothing_rate=epsilon_para),
-                  ]
-    transform_label = py_vision.ComposeOp(transforms)
-    dataset = dataset.map(input_columns=["label"], operations=transform_label())
+    transforms = [f.OneHotOp(num_classes=num_classes, smoothing_rate=epsilon_para),]
+    transform_label = f.Compose(transforms)
+    dataset = dataset.map(input_columns=["label"], operations=transform_label)
 
     golden_label = np.ones(num_classes) * epsilon_para / num_classes
     golden_label[1] = 1 - epsilon_para / num_classes
@@ -63,7 +62,7 @@ def test_mix_up_single():
     resize_width = 224
 
     # Create dataset and define map operations
-    ds1 = ds.ImageFolderDatasetV2(DATA_DIR_2)
+    ds1 = ds.ImageFolderDataset(DATA_DIR_2)
 
     num_classes = 10
     decode_op = c_vision.Decode()
@@ -112,7 +111,7 @@ def test_mix_up_multi():
     resize_width = 224
 
     # Create dataset and define map operations
-    ds1 = ds.ImageFolderDatasetV2(DATA_DIR_2)
+    ds1 = ds.ImageFolderDataset(DATA_DIR_2)
 
     num_classes = 3
     decode_op = c_vision.Decode()

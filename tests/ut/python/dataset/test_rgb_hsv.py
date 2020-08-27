@@ -21,8 +21,9 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as vision
-import mindspore.dataset.transforms.vision.py_transforms_util as util
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as vision
+import mindspore.dataset.vision.py_transforms_util as util
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -137,9 +138,9 @@ def test_rgb_hsv_pipeline():
         vision.Resize([64, 64]),
         vision.ToTensor()
     ]
-    transforms1 = vision.ComposeOp(transforms1)
+    transforms1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds1 = ds1.map(input_columns=["image"], operations=transforms1())
+    ds1 = ds1.map(input_columns=["image"], operations=transforms1)
 
     # Second dataset
     transforms2 = [
@@ -149,9 +150,9 @@ def test_rgb_hsv_pipeline():
         vision.RgbToHsv(),
         vision.HsvToRgb()
     ]
-    transform2 = vision.ComposeOp(transforms2)
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds2 = ds2.map(input_columns=["image"], operations=transform2())
+    ds2 = ds2.map(input_columns=["image"], operations=transform2)
 
     num_iter = 0
     for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):

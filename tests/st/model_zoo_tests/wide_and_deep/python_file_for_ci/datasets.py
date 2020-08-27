@@ -57,7 +57,7 @@ def _get_tf_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
         np.array(y).flatten().reshape(batch_size, 39),
         np.array(z).flatten().reshape(batch_size, 1))),
                 input_columns=['feat_ids', 'feat_vals', 'label'],
-                columns_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
+                column_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
     #if train_mode:
     ds = ds.repeat(epochs)
     return ds
@@ -97,7 +97,7 @@ def _get_mindrecord_dataset(directory, train_mode=True, epochs=1, batch_size=100
                                              np.array(y).flatten().reshape(batch_size, 39),
                                              np.array(z).flatten().reshape(batch_size, 1))),
                 input_columns=['feat_ids', 'feat_vals', 'label'],
-                columns_order=['feat_ids', 'feat_vals', 'label'],
+                column_order=['feat_ids', 'feat_vals', 'label'],
                 num_parallel_workers=8)
     ds = ds.repeat(epochs)
     return ds

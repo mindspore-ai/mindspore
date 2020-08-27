@@ -33,7 +33,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_transforms_list, check_random_apply, check_ten_crop, check_num_channels, check_pad, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
-    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_compose_list, check_auto_contrast
+    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast
 from .utils import Inter, Border
 
 DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
@@ -44,50 +44,6 @@ DE_PY_BORDER_TYPE = {Border.CONSTANT: 'constant',
                      Border.EDGE: 'edge',
                      Border.REFLECT: 'reflect',
                      Border.SYMMETRIC: 'symmetric'}
-
-
-class ComposeOp:
-    """
-    Compose a list of transforms.
-
-    .. Note::
-        ComposeOp takes a list of transformations either provided in py_transforms or from user-defined implementation;
-        each can be an initialized transformation class or a lambda function, as long as the output from the last
-        transformation is a single tensor of type numpy.ndarray. See below for an example of how to use ComposeOp
-        with py_transforms classes and check out FiveCrop or TenCrop for the use of them in conjunction with lambda
-        functions.
-
-    Args:
-        transforms (list): List of transformations to be applied.
-
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms.vision.py_transforms as py_transforms
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> dataset = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8)
-        >>> # create a list of transformations to be applied to the image data
-        >>> transform = py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                                      py_transforms.RandomHorizontalFlip(0.5),
-        >>>                                      py_transforms.ToTensor(),
-        >>>                                      py_transforms.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        >>>                                      py_transforms.RandomErasing()])
-        >>> # apply the transform to the dataset through dataset.map()
-        >>> dataset = dataset.map(input_columns="image", operations=transform())
-    """
-
-    @check_compose_list
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self):
-        """
-        Call method.
-
-        Returns:
-            lambda function, Lambda function that takes in an image to apply transformations on.
-        """
-        return lambda img: util.compose(img, self.transforms)
 
 
 class ToTensor:
@@ -103,9 +59,11 @@ class ToTensor:
         output_type (Numpy datatype, optional): The datatype of the NumPy output (default=np.float32).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomHorizontalFlip(0.5),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(), py_transforms.RandomHorizontalFlip(0.5),
+        >>>          py_transforms.ToTensor()])
     """
 
     def __init__(self, output_type=np.float32):
@@ -132,11 +90,13 @@ class ToType:
         output_type (Numpy datatype): The datatype of the NumPy output, e.g. numpy.float32.
 
     Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> import numpy as np
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomHorizontalFlip(0.5),
-        >>>                          py_transforms.ToTensor(),
-        >>>                          py_transforms.ToType(np.float32)])
+        >>>
+        >>> Compose([py_transforms.Decode(), py_transforms.RandomHorizontalFlip(0.5),
+        >>>          py_transforms.ToTensor(),
+        >>>          py_transforms.ToType(np.float32)])
     """
 
     def __init__(self, output_type):
@@ -179,9 +139,11 @@ class ToPIL:
 
     Examples:
         >>> # data is already decoded, but not in PIL image format
-        >>> py_transforms.ComposeOp([py_transforms.ToPIL(),
-        >>>                          py_transforms.RandomHorizontalFlip(0.5),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.ToPIL(),  py_transforms.RandomHorizontalFlip(0.5),
+        >>>          py_transforms.ToTensor()])
     """
 
     def __call__(self, img):
@@ -202,7 +164,10 @@ class Decode:
     Decode the input image to PIL image format in RGB mode.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
         >>>                          py_transforms.RandomHorizontalFlip(0.5),
         >>>                          py_transforms.ToTensor()])
     """
@@ -233,10 +198,13 @@ class Normalize:
             The standard deviation values must be in range (0.0, 1.0].
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomHorizontalFlip(0.5),
-        >>>                          py_transforms.ToTensor(),
-        >>>                          py_transforms.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262))])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomHorizontalFlip(0.5),
+        >>>          py_transforms.ToTensor(),
+        >>>          py_transforms.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262))])
     """
 
     @check_normalize_py
@@ -291,9 +259,12 @@ class RandomCrop:
               value of edge.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomCrop(224),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomCrop(224),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_random_crop
@@ -330,9 +301,12 @@ class RandomHorizontalFlip:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomHorizontalFlip(0.5),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomHorizontalFlip(0.5),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_prob
@@ -360,9 +334,12 @@ class RandomVerticalFlip:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomVerticalFlip(0.5),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.RandomVerticalFlip(0.5),
+        >>>         py_transforms.ToTensor()])
     """
 
     @check_prob
@@ -401,9 +378,12 @@ class Resize:
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.Resize(256),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.Resize(256),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_resize_interpolation
@@ -448,9 +428,12 @@ class RandomResizedCrop:
             crop area (default=10). If exceeded, fall back to use center crop instead.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomResizedCrop(224),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.RandomResizedCrop(224),
+        >>>         py_transforms.ToTensor()])
     """
 
     @check_random_resize_crop
@@ -486,9 +469,12 @@ class CenterCrop:
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.CenterCrop(64),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.CenterCrop(64),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_crop
@@ -527,9 +513,12 @@ class RandomColorAdjust:
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_random_color_adjust
@@ -585,9 +574,12 @@ class RandomRotation:
             If it is an int, it is used for all RGB channels. Default is 0.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomRotation(30),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.RandomRotation(30),
+        >>>         py_transforms.ToTensor()])
     """
 
     @check_random_rotation
@@ -619,10 +611,12 @@ class RandomOrder:
         transforms (list): List of the transformations to be applied.
 
     Examples:
-        >>> transforms_list = [py_transforms.CenterCrop(64), py_transforms.RandomRotation(30)]
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomOrder(transforms_list),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomOrder(transforms_list),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_transforms_list
@@ -651,10 +645,12 @@ class RandomApply:
         prob (float, optional): The probability to apply the transformation list (default=0.5).
 
     Examples:
-        >>> transforms_list = [py_transforms.CenterCrop(64), py_transforms.RandomRotation(30)]
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomApply(transforms_list, prob=0.6),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.RandomApply(transforms_list, prob=0.6),
+        >>>         py_transforms.ToTensor()])
     """
 
     @check_random_apply
@@ -683,10 +679,12 @@ class RandomChoice:
          transforms (list): List of transformations to be chosen from to apply.
 
     Examples:
-        >>> transforms_list = [py_transforms.CenterCrop(64), py_transforms.RandomRotation(30)]
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomChoice(transforms_list),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomChoice(transforms_list),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_transforms_list
@@ -716,10 +714,13 @@ class FiveCrop:
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.FiveCrop(size),
-        >>>                          # 4D stack of 5 images
-        >>>                          lambda images: numpy.stack([py_transforms.ToTensor()(image) for image in images])])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.FiveCrop(size),
+        >>>          # 4D stack of 5 images
+        >>>          lambda images: numpy.stack([py_transforms.ToTensor()(image) for image in images])])
     """
 
     @check_crop
@@ -752,10 +753,13 @@ class TenCrop:
             if set to True (default=False).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.TenCrop(size),
-        >>>                          # 4D stack of 10 images
-        >>>                          lambda images: numpy.stack([py_transforms.ToTensor()(image) for image in images])])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.TenCrop(size),
+        >>>         # 4D stack of 10 images
+        >>>         lambda images: numpy.stack([py_transforms.ToTensor()(image) for image in images])])
     """
 
     @check_ten_crop
@@ -789,9 +793,12 @@ class Grayscale:
             Default is 1. If set to 3, the returned image has 3 identical RGB channels.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.Grayscale(3),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.Grayscale(3),
+        >>>         py_transforms.ToTensor()])
     """
 
     @check_num_channels
@@ -819,9 +826,12 @@ class RandomGrayscale:
         prob (float, optional): Probability of the image being converted to grayscale (default=0.1).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomGrayscale(0.3),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomGrayscale(0.3),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_prob
@@ -878,10 +888,13 @@ class Pad:
               value of edge.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          # adds 10 pixels (default black) to each side of the border of the image
-        >>>                          py_transforms.Pad(padding=10),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          # adds 10 pixels (default black) to each side of the border of the image
+        >>>          py_transforms.Pad(padding=10),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_pad
@@ -922,9 +935,12 @@ class RandomPerspective:
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomPerspective(prob=0.1),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.RandomPerspective(prob=0.1),
+        >>>         py_transforms.ToTensor()])
     """
 
     @check_random_perspective
@@ -972,9 +988,12 @@ class RandomErasing:
             erase_area (default=10). If exceeded, return the original image.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.ToTensor(),
-        >>>                          py_transforms.RandomErasing(value='random')])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.ToTensor(),
+        >>>          py_transforms.RandomErasing(value='random')])
     """
 
     @check_random_erasing
@@ -1016,9 +1035,12 @@ class Cutout:
         num_patches (int, optional): Number of patches to be cut out of an image (default=1).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.ToTensor(),
-        >>>                          py_transforms.Cutout(80)])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.ToTensor(),
+        >>>         py_transforms.Cutout(80)])
     """
 
     @check_cutout
@@ -1043,7 +1065,8 @@ class Cutout:
         bounded = False
 
         for _ in range(self.num_patches):
-            i, j, erase_h, erase_w, erase_value = util.get_erase_params(np_img, (scale, scale), (1, 1), 0, bounded, 1)
+            i, j, erase_h, erase_w, erase_value = util.get_erase_params(np_img, (scale, scale), (1, 1), 0, bounded,
+                                                                        1)
             np_img = util.erase(np_img, i, j, erase_h, erase_w, erase_value)
         return np_img
 
@@ -1061,10 +1084,13 @@ class LinearTransformation:
         mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.Resize(256),
-        >>>                          py_transforms.ToTensor(),
-        >>>                          py_transforms.LinearTransformation(transformation_matrix, mean_vector)])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.Resize(256),
+        >>>          py_transforms.ToTensor(),
+        >>>          py_transforms.LinearTransformation(transformation_matrix, mean_vector)])
     """
 
     @check_linear_transform
@@ -1133,9 +1159,12 @@ class RandomAffine:
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_random_affine
@@ -1278,9 +1307,12 @@ class RandomColor:
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomColor((0.5,1.5)),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomColor((0.5,1.5)),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_positive_degrees
@@ -1310,9 +1342,12 @@ class RandomSharpness:
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomSharpness((0.5,1.5)),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.RandomSharpness((0.5,1.5)),
+        >>>          py_transforms.ToTensor()])
 
     """
 
@@ -1343,9 +1378,12 @@ class AutoContrast:
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.AutoContrast(),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>         py_transforms.AutoContrast(),
+        >>>         py_transforms.ToTensor()])
 
     """
 
@@ -1373,9 +1411,12 @@ class Invert:
     Invert colors of input PIL image.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.Invert(),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.Invert(),
+        >>>          py_transforms.ToTensor()])
 
     """
 
@@ -1398,9 +1439,12 @@ class Equalize:
     Equalize the histogram of input PIL image.
 
     Examples:
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.Equalize(),
-        >>>                          py_transforms.ToTensor()])
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.Equalize(),
+        >>>          py_transforms.ToTensor()])
 
     """
 
@@ -1430,13 +1474,16 @@ class UniformAugment:
          num_ops (int, optional): number of transforms to sequentially apply (default=2).
 
     Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
         >>> transforms_list = [py_transforms.CenterCrop(64),
         >>>                    py_transforms.RandomColor(),
         >>>                    py_transforms.RandomSharpness(),
         >>>                    py_transforms.RandomRotation(30)]
-        >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.UniformAugment(transforms_list),
-        >>>                          py_transforms.ToTensor()])
+        >>> Compose([py_transforms.Decode(),
+        >>>          py_transforms.UniformAugment(transforms_list),
+        >>>          py_transforms.ToTensor()])
     """
 
     @check_uniform_augment_py

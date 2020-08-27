@@ -37,24 +37,24 @@ def create_dataset(dataset_path, config, do_train, repeat_num=1):
     rank = config.rank
     group_size = config.group_size
     if group_size == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=config.work_nums, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=config.work_nums, shuffle=True,
-                                     num_shards=group_size, shard_id=rank)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=True,
+                                   num_shards=group_size, shard_id=rank)
     # define map operations
     if do_train:
         trans = [
             C.RandomCropDecodeResize(config.image_size),
             C.RandomHorizontalFlip(prob=0.5),
-            C.RandomColorAdjust(brightness=0.4, saturation=0.5) # fast mode
-            #C.RandomColorAdjust(brightness=0.4, contrast=0.5, saturation=0.5, hue=0.2)
-            ]
+            C.RandomColorAdjust(brightness=0.4, saturation=0.5)  # fast mode
+            # C.RandomColorAdjust(brightness=0.4, contrast=0.5, saturation=0.5, hue=0.2)
+        ]
     else:
         trans = [
             C.Decode(),
-            C.Resize(int(config.image_size/0.875)),
+            C.Resize(int(config.image_size / 0.875)),
             C.CenterCrop(config.image_size)
-            ]
+        ]
     trans += [
         C.Rescale(1.0 / 255.0, 0.0),
         C.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),

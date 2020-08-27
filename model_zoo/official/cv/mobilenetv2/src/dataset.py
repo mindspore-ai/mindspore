@@ -26,6 +26,7 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
+
 def create_dataset(dataset_path, do_train, config, repeat_num=1):
     """
     create a train or eval dataset
@@ -44,20 +45,19 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
         rank_size = int(os.getenv("RANK_SIZE", '1'))
         rank_id = int(os.getenv("RANK_ID", '0'))
         if rank_size == 1:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=rank_size, shard_id=rank_id)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                       num_shards=rank_size, shard_id=rank_id)
     elif config.platform == "GPU":
         if do_train:
             from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=get_group_size(), shard_id=get_rank())
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                       num_shards=get_group_size(), shard_id=get_rank())
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     elif config.platform == "CPU":
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
-
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
 
     resize_height = config.image_height
     resize_width = config.image_width
@@ -71,7 +71,8 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
     resize_op = C.Resize((256, 256))
     center_crop = C.CenterCrop(resize_width)
     rescale_op = C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
-    normalize_op = C.Normalize(mean=[0.485*255, 0.456*255, 0.406*255], std=[0.229*255, 0.224*255, 0.225*255])
+    normalize_op = C.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                               std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
     change_swap_op = C.HWC2CHW()
 
     if do_train:
@@ -95,6 +96,7 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
 
     return ds
 
+
 def extract_features(net, dataset_path, config):
     features_folder = dataset_path + '_features'
     if not os.path.exists(features_folder):
@@ -110,13 +112,13 @@ def extract_features(net, dataset_path, config):
     for data in pbar:
         features_path = os.path.join(features_folder, f"feature_{i}.npy")
         label_path = os.path.join(features_folder, f"label_{i}.npy")
-        if not(os.path.exists(features_path) and os.path.exists(label_path)):
+        if not (os.path.exists(features_path) and os.path.exists(label_path)):
             image = data["image"]
             label = data["label"]
             features = model.predict(Tensor(image))
             np.save(features_path, features.asnumpy())
             np.save(label_path, label)
-        pbar.set_description("Process dataset batch: %d"%(i+1))
+        pbar.set_description("Process dataset batch: %d" % (i + 1))
         i += 1
 
     return step_size

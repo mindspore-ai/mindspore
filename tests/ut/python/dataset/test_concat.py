@@ -17,7 +17,8 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.py_transforms as F
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as F
 from mindspore import log as logger
 
 
@@ -317,15 +318,15 @@ def test_concat_14():
     DATA_DIR = "../data/dataset/testPK/data"
     DATA_DIR2 = "../data/dataset/testImageNetData/train/"
 
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_samples=3)
-    data2 = ds.ImageFolderDatasetV2(DATA_DIR2, num_samples=2)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_samples=3)
+    data2 = ds.ImageFolderDataset(DATA_DIR2, num_samples=2)
 
-    transforms1 = F.ComposeOp([F.Decode(),
-                               F.Resize((224, 224)),
-                               F.ToTensor()])
+    transforms1 = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                      F.Resize((224, 224)),
+                                                                      F.ToTensor()])
 
-    data1 = data1.map(input_columns=["image"], operations=transforms1())
-    data2 = data2.map(input_columns=["image"], operations=transforms1())
+    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    data2 = data2.map(input_columns=["image"], operations=transforms1)
     data3 = data1 + data2
 
     expected, output = [], []
@@ -351,7 +352,7 @@ def test_concat_15():
     DATA_DIR = "../data/dataset/testPK/data"
     DATA_DIR2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR)
+    data1 = ds.ImageFolderDataset(DATA_DIR)
     data2 = ds.TFRecordDataset(DATA_DIR2, columns_list=["image"])
 
     data1 = data1.project(["image"])

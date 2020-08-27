@@ -35,8 +35,8 @@ from . import cache_client
 from .. import callback
 
 
-def check_imagefolderdatasetv2(method):
-    """A wrapper that wraps a parameter checker around the original Dataset(ImageFolderDatasetV2)."""
+def check_imagefolderdataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(ImageFolderDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -474,8 +474,8 @@ def check_batch(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [batch_size, drop_remainder, num_parallel_workers, per_batch_map,
-         input_columns, pad_info], param_dict = parse_user_args(method, *args, **kwargs)
+        [batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns, output_columns,
+         column_order, pad_info], param_dict = parse_user_args(method, *args, **kwargs)
 
         if not (isinstance(batch_size, int) or (callable(batch_size))):
             raise TypeError("batch_size should either be an int or a callable.")
@@ -509,6 +509,12 @@ def check_batch(method):
                 raise ValueError("input_columns can not be empty")
             if len(input_columns) != (len(ins.signature(per_batch_map).parameters) - 1):
                 raise ValueError("the signature of per_batch_map should match with input columns")
+
+        if output_columns is not None:
+            raise ValueError("output_columns is currently not implemented.")
+
+        if column_order is not None:
+            raise ValueError("column_order is currently not implemented.")
 
         return method(self, *args, **kwargs)
 
@@ -551,14 +557,14 @@ def check_map(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [input_columns, _, output_columns, columns_order, num_parallel_workers, python_multiprocessing, cache,
+        [_, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
          callbacks], _ = \
             parse_user_args(method, *args, **kwargs)
 
-        nreq_param_columns = ['input_columns', 'output_columns', 'columns_order']
+        nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
 
-        if columns_order is not None:
-            type_check(columns_order, (list,), "columns_order")
+        if column_order is not None:
+            type_check(column_order, (list,), "column_order")
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
@@ -571,7 +577,7 @@ def check_map(method):
             else:
                 type_check(callbacks, (callback.DSCallback,), "callbacks")
 
-        for param_name, param in zip(nreq_param_columns, [input_columns, output_columns, columns_order]):
+        for param_name, param in zip(nreq_param_columns, [input_columns, output_columns, column_order]):
             if param is not None:
                 check_columns(param, param_name)
         if callbacks is not None:

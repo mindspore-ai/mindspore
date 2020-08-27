@@ -18,7 +18,7 @@ Testing the MixUpBatch op in DE
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 import mindspore.dataset.transforms.c_transforms as data_trans
 from mindspore import log as logger
 from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_seed, \
@@ -74,12 +74,12 @@ def test_mixup_batch_success1(plot=False):
 
 def test_mixup_batch_success2(plot=False):
     """
-    Test MixUpBatch op with specified alpha parameter on ImageFolderDatasetV2
+    Test MixUpBatch op with specified alpha parameter on ImageFolderDataset
     """
     logger.info("test_mixup_batch_success2")
 
     # Original Images
-    ds_original = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR2, shuffle=False)
+    ds_original = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
     decode_op = vision.Decode()
     ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
     ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
@@ -92,7 +92,7 @@ def test_mixup_batch_success2(plot=False):
             images_original = np.append(images_original, image, axis=0)
 
     # MixUp Images
-    data1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR2, shuffle=False)
+    data1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
 
     decode_op = vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=[decode_op])

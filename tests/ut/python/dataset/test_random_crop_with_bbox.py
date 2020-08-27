@@ -17,8 +17,8 @@ Testing RandomCropWithBBox op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.utils as mode
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.utils as mode
 
 from mindspore import log as logger
 from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
@@ -48,7 +48,7 @@ def test_random_crop_with_bbox_op_c(plot_vis=False):
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            columns_order=["image", "bbox"],
+                            column_order=["image", "bbox"],
                             operations=[test_op])  # Add column for "bbox"
 
     unaugSamp, augSamp = [], []
@@ -78,7 +78,7 @@ def test_random_crop_with_bbox_op_coco_c(plot_vis=False):
 
     dataCoco2 = dataCoco2.map(input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
-                              columns_order=["image", "bbox"],
+                              column_order=["image", "bbox"],
                               operations=[test_op])
 
     unaugSamp, augSamp = [], []
@@ -110,7 +110,7 @@ def test_random_crop_with_bbox_op2_c(plot_vis=False):
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            columns_order=["image", "bbox"],
+                            column_order=["image", "bbox"],
                             operations=[test_op])
 
     filename = "random_crop_with_bbox_01_c_result.npz"
@@ -147,7 +147,7 @@ def test_random_crop_with_bbox_op3_c(plot_vis=False):
     # map to apply ops
     dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            columns_order=["image", "bbox"],
+                            column_order=["image", "bbox"],
                             operations=[test_op])
 
     unaugSamp, augSamp = [], []
@@ -177,14 +177,14 @@ def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            columns_order=["image", "bbox"],
+                            column_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
 
     # Test Op added to list of Operations here
     dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            columns_order=["image", "bbox"],
+                            column_order=["image", "bbox"],
                             operations=[lambda img, bboxes: (
                                 img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
 
@@ -214,7 +214,7 @@ def test_random_crop_with_bbox_op_invalid_c():
         # map to apply ops
         dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                columns_order=["image", "bbox"],
+                                column_order=["image", "bbox"],
                                 operations=[test_op])  # Add column for "bbox"
 
         for _ in dataVoc2.create_dict_iterator(num_epochs=1):
@@ -254,7 +254,7 @@ def test_random_crop_with_bbox_op_bad_padding():
 
         dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                columns_order=["image", "bbox"],
+                                column_order=["image", "bbox"],
                                 operations=[test_op])
 
         for _ in dataVoc2.create_dict_iterator(num_epochs=1):
@@ -268,7 +268,7 @@ def test_random_crop_with_bbox_op_bad_padding():
 
         dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                columns_order=["image", "bbox"],
+                                column_order=["image", "bbox"],
                                 operations=[test_op])
 
         for _ in dataVoc2.create_dict_iterator(num_epochs=1):

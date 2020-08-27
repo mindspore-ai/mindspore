@@ -17,8 +17,9 @@ Testing RandomPerspective op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
-from mindspore.dataset.transforms.vision.utils import Inter
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as py_vision
+from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -41,20 +42,20 @@ def test_random_perspective_op(plot=False):
         py_vision.RandomPerspective(),
         py_vision.ToTensor()
     ]
-    transform1 = py_vision.ComposeOp(transforms1)
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
 
     transforms2 = [
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = py_vision.ComposeOp(transforms2)
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform1())
+    data1 = data1.map(input_columns=["image"], operations=transform1)
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform2())
+    data2 = data2.map(input_columns=["image"], operations=transform2)
 
     image_perspective = []
     image_original = []
@@ -83,11 +84,11 @@ def skip_test_random_perspective_md5():
         py_vision.Resize(1450), # resize to a smaller size to prevent round-off error
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(input_columns=["image"], operations=transform())
+    data = data.map(input_columns=["image"], operations=transform)
 
     # check results with md5 comparison
     filename = "random_perspective_01_result.npz"

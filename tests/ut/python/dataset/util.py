@@ -386,12 +386,12 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
         # map to use selected invalid bounding box type
         data = data.map(input_columns=["image", "bbox"],
                         output_columns=["image", "bbox"],
-                        columns_order=["image", "bbox"],
+                        column_order=["image", "bbox"],
                         operations=lambda img, bboxes: add_bad_bbox(img, bboxes, invalid_bbox_type))
         # map to apply ops
         data = data.map(input_columns=["image", "bbox"],
                         output_columns=["image", "bbox"],
-                        columns_order=["image", "bbox"],
+                        column_order=["image", "bbox"],
                         operations=[test_op])  # Add column for "bbox"
         for _, _ in enumerate(data.create_dict_iterator(num_epochs=1)):
             break

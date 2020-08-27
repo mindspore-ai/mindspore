@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
 """
-This module is to support common augmentations. C_transforms is a high performance
-image augmentation module which is developed with C++ OpenCV. Py_transforms
-provide more kinds of image augmentations which is developed with Python PIL.
+General py_transforms_utils functions.
 """
-from .. import vision
-from . import c_transforms
-from . import py_transforms
+import numpy as np
+
+
+def is_numpy(img):
+    """
+    Check if the input image is Numpy format.
+
+    Args:
+        img: Image to be checked.
+
+    Returns:
+        Bool, True if input is Numpy image.
+    """
+    return isinstance(img, np.ndarray)

@@ -37,10 +37,10 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
         dataset
     """
     if group_size == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
-                                     num_shards=group_size, shard_id=rank)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
+                                   num_shards=group_size, shard_id=rank)
     # define map operations
     if do_train:
         trans = [

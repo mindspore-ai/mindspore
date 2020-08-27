@@ -17,7 +17,8 @@ Testing LinearTransformation op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import diff_mse, visualize_list, save_and_check_md5
 
@@ -46,11 +47,11 @@ def test_linear_transformation_op(plot=False):
         py_vision.CenterCrop([height, weight]),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    data1 = data1.map(input_columns=["image"], operations=transform)
     # Note: if transformation matrix is diagonal matrix with all 1 in diagonal,
     #       the output matrix in expected to be the same as the input matrix.
     data1 = data1.map(input_columns=["image"],
@@ -58,7 +59,7 @@ def test_linear_transformation_op(plot=False):
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     image_transformed = []
     image = []
@@ -96,8 +97,8 @@ def test_linear_transformation_md5():
         py_vision.ToTensor(),
         py_vision.LinearTransformation(transformation_matrix, mean_vector)
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data1 = data1.map(input_columns=["image"], operations=transform)
 
     # Compare with expected md5 from images
     filename = "linear_transformation_01_result.npz"
@@ -126,8 +127,8 @@ def test_linear_transformation_exception_01():
             py_vision.ToTensor(),
             py_vision.LinearTransformation(None, mean_vector)
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data1 = data1.map(input_columns=["image"], operations=transform)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Argument transformation_matrix with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
@@ -155,8 +156,8 @@ def test_linear_transformation_exception_02():
             py_vision.ToTensor(),
             py_vision.LinearTransformation(transformation_matrix, None)
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data1 = data1.map(input_columns=["image"], operations=transform)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Argument mean_vector with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
@@ -185,8 +186,8 @@ def test_linear_transformation_exception_03():
             py_vision.ToTensor(),
             py_vision.LinearTransformation(transformation_matrix, mean_vector)
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data1 = data1.map(input_columns=["image"], operations=transform)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "square matrix" in str(e)
@@ -215,8 +216,8 @@ def test_linear_transformation_exception_04():
             py_vision.ToTensor(),
             py_vision.LinearTransformation(transformation_matrix, mean_vector)
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data1 = data1.map(input_columns=["image"], operations=transform)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should match" in str(e)

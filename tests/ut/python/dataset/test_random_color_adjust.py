@@ -19,8 +19,9 @@ import pytest
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import diff_mse, visualize_image, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -42,9 +43,9 @@ def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), satu
         (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    data1 = data1.map(input_columns=["image"], operations=transform)
 
     # if input is grayscale, the output dimensions should be single channel, the following should fail
     random_adjust_op = c_vision.RandomColorAdjust(brightness=brightness, contrast=contrast, saturation=saturation,
@@ -86,9 +87,9 @@ def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturat
                                     hue=hue),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -211,9 +212,9 @@ def test_random_color_adjust_md5():
         py_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    data2 = data2.map(input_columns=["image"], operations=transform)
     # Compare with expected md5 from images
     filename = "random_color_adjust_01_c_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
