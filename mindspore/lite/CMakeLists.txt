@@ -113,12 +113,11 @@ if (WIN32)
     add_compile_definitions(BUILDING_DLL)
 endif ()
 
-set(ANF_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../core/ir/meta_tensor.cc
+set(CORE_SRC
+        ${CORE_DIR}/ir/meta_tensor.cc
         ${CORE_DIR}/gvar/logging_level.cc
         ${CORE_DIR}/gvar/typeid_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../core/base/base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/common/log_adapter.cc
+        ${CORE_DIR}/base/base.cc
         )
 if (BUILD_CONVERTER)
     if (PLATFORM_ARM64 OR PLATFORM_ARM32)

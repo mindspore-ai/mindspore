@@ -1,11 +1,21 @@
+if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+  # for performance
+  if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
+  endif()
+endif ()
+
 set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/ms_tensor_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.c
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/workspace_pool.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ir/tensor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ir/meta_tensor_extends.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
@@ -28,24 +38,20 @@ if (SUPPORT_GPU)
       )
 endif ()
 
-set(ANF_SRC
-    ${ANF_SRC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/ir/meta_tensor_extends.cc
-    )
 file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)
 add_library(mindspore-lite SHARED ${LITE_SRC} ${C_OPS_SRC})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
-add_library(anf OBJECT ${ANF_SRC})
+add_library(core_mid_ OBJECT ${CORE_SRC})
 if (SUPPORT_GPU)
   add_subdirectory(runtime/kernel/opencl)
   target_link_libraries(mindspore-lite
-      anf
+core_mid_
       cpu_kernel_mid_
       opencl_kernel_lib_
       )
 else ()
   target_link_libraries(mindspore-lite
-      anf
+      core_mid_
       cpu_kernel_mid_
       )
 endif ()
