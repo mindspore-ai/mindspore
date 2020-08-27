@@ -23,8 +23,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
-                const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
+
+void ConvDwInt8(int8_t *output_data, int32_t *output_row, const int8_t *input_data, const int16_t *weight_data,
+                const int32_t *bias_data, const ConvParameter *conv_param, int task_id);
+
+void ConvDwSWInt8(int8_t *output_data, const int16_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
+                  const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
 void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *input_data, const int16_t *weight_data,
                   const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_INT8_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -23,28 +23,29 @@
 #include "nnacl/fp32/conv_depthwise.h"
 
 namespace mindspore::kernel {
-class ConvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
+class ConvolutionDepthwiseSWInt8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
-  ConvolutionDepthwiseInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
-                                    const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
-                                    const mindspore::lite::PrimitiveC *primitive)
+  ConvolutionDepthwiseSWInt8CPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+                                      const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
+                                      const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ConvolutionDepthwiseInt8CPUKernel() override;
+  ~ConvolutionDepthwiseSWInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
   int InitWeightBias();
+  int InitBuffer();
   int Execute(int task_id);
 
  private:
-  int InitBuffer();
+  SlidingWindowParam *sliding = nullptr;
   int16_t *packed_weight_ = nullptr;
-  int8_t *input_ptr_ = nullptr;
-  int8_t *output_ptr_ = nullptr;
-  int32_t *row_buffer_ = nullptr;
+  int16_t *packed_input_ = nullptr;
+  int8_t *packed_output_ = nullptr;
+  bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_INT8_H_
