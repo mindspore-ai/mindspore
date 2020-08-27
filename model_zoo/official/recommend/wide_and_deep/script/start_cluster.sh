@@ -38,7 +38,7 @@ do
   user=$(get_node_user ${cluster_config_path} ${node})
   passwd=$(get_node_passwd ${cluster_config_path} ${node})
   echo "------------------${user}@${node}---------------------"
-  if [ $MODE == "host_device_mix" ]; then
+  if [ $MODE == "host_device_mix" ] || [ $MODE == "field_slice_host_device_mix" ]; then
     ssh_pass ${node} ${user} ${passwd} "mkdir -p ${execute_path}; cd ${execute_path}; bash ${SCRIPTPATH}/run_auto_parallel_train_cluster.sh ${RANK_SIZE} ${RANK_START} ${EPOCH_SIZE} ${VOCAB_SIZE} ${EMB_DIM} ${DATASET} ${ENV_SH} ${MODE} ${RANK_TABLE_FILE}"
   else
     echo "[ERROR] mode is wrong"

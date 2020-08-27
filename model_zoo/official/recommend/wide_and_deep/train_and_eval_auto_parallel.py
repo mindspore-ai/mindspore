@@ -27,11 +27,12 @@ from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
-from src.datasets import create_dataset, DataType
+from src.datasets import create_dataset, DataType, compute_manual_shape
 from src.metrics import AUCMetric
 from src.config import WideDeepConfig
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 def get_WideDeep_net(config):
     """
@@ -40,7 +41,8 @@ def get_WideDeep_net(config):
     WideDeep_net = WideDeepModel(config)
     loss_net = NetWithLossClass(WideDeep_net, config)
     loss_net = VirtualDatasetCellTriple(loss_net)
-    train_net = TrainStepWrap(loss_net, host_device_mix=bool(config.host_device_mix))
+    train_net = TrainStepWrap(
+        loss_net, host_device_mix=bool(config.host_device_mix))
     eval_net = PredictWithSigmoid(WideDeep_net)
     eval_net = VirtualDatasetCellTriple(eval_net)
     return train_net, eval_net
@@ -50,6 +52,7 @@ class ModelBuilder():
     """
     ModelBuilder
     """
+
     def __init__(self):
         pass
 
@@ -86,10 +89,19 @@ def train_and_eval(config):
     if config.full_batch:
         context.set_auto_parallel_context(full_batch=True)
         de.config.set_seed(1)
-        ds_train = create_dataset(data_path, train_mode=True, epochs=1,
-                                  batch_size=batch_size*get_group_size(), data_type=dataset_type)
-        ds_eval = create_dataset(data_path, train_mode=False, epochs=1,
-                                 batch_size=batch_size*get_group_size(), data_type=dataset_type)
+        if config.field_slice:
+            compute_manual_shape(config, get_group_size())
+            ds_train = create_dataset(data_path, train_mode=True, epochs=1,
+                                      batch_size=batch_size*get_group_size(), data_type=dataset_type,
+                                      manual_shape=config.manual_shape, target_column=config.field_size)
+            ds_eval = create_dataset(data_path, train_mode=False, epochs=1,
+                                     batch_size=batch_size*get_group_size(), data_type=dataset_type,
+                                     manual_shape=config.manual_shape, target_column=config.field_size)
+        else:
+            ds_train = create_dataset(data_path, train_mode=True, epochs=1,
+                                      batch_size=batch_size*get_group_size(), data_type=dataset_type)
+            ds_eval = create_dataset(data_path, train_mode=False, epochs=1,
+                                     batch_size=batch_size*get_group_size(), data_type=dataset_type)
     else:
         ds_train = create_dataset(data_path, train_mode=True, epochs=1,
                                   batch_size=batch_size, rank_id=get_rank(),
@@ -106,9 +118,11 @@ def train_and_eval(config):
     train_net.set_train()
     auc_metric = AUCMetric()
 
-    model = Model(train_net, eval_network=eval_net, metrics={"auc": auc_metric})
+    model = Model(train_net, eval_network=eval_net,
+                  metrics={"auc": auc_metric})
 
-    eval_callback = EvalCallBack(model, ds_eval, auc_metric, config, host_device_mix=host_device_mix)
+    eval_callback = EvalCallBack(
+        model, ds_eval, auc_metric, config, host_device_mix=host_device_mix)
 
     callback = LossCallBack(config=config, per_print_times=20)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*epochs,
@@ -116,16 +130,19 @@ def train_and_eval(config):
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path, config=ckptconfig)
     context.set_auto_parallel_context(strategy_ckpt_save_file=config.stra_ckpt)
-    callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
+    callback_list = [TimeMonitor(
+        ds_train.get_dataset_size()), eval_callback, callback]
     if not host_device_mix:
         callback_list.append(ckpoint_cb)
-    model.train(epochs, ds_train, callbacks=callback_list, dataset_sink_mode=(not host_device_mix))
+    model.train(epochs, ds_train, callbacks=callback_list,
+                dataset_sink_mode=(not host_device_mix))
 
 
 if __name__ == "__main__":
     wide_deep_config = WideDeepConfig()
     wide_deep_config.argparse_init()
-    context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target=wide_deep_config.device_target, save_graphs=True)
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
     set_multi_subgraphs()
@@ -134,7 +151,9 @@ if __name__ == "__main__":
     elif wide_deep_config.device_target == "GPU":
         init("nccl")
     if wide_deep_config.host_device_mix == 1:
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, mirror_mean=True)
+        context.set_auto_parallel_context(
+            parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, mirror_mean=True)
     else:
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, mirror_mean=True)
+        context.set_auto_parallel_context(
+            parallel_mode=ParallelMode.AUTO_PARALLEL, mirror_mean=True)
     train_and_eval(wide_deep_config)
