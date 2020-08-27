@@ -25,7 +25,7 @@ void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_i
   for (int j = task_id; j < prelu_param_->tile_block_; j += prelu_param_->op_parameter_.thread_num_) {
     float *input_ptr = input + j * TILE_NUM * channel_num;
     float *output_ptr = input_ptr;
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
     for (int i = 0; i < c4; i++) {
       int c_offset = i * C4NUM;
       float32x4_t slope_value = vld1q_f32(negetive_slope_value + c_offset);
