@@ -341,7 +341,6 @@ void Redistribution(const std::pair<AnfNodePtr, int> &node_pair, const OperatorI
   TensorInfo tensorinfo_out = next_distribute_operator->inputs_tensor_info()[IntToSize(index - 1)];
   TensorLayout tensorlayout_out = tensorinfo_out.tensor_layout();
   TensorLayout tensorlayout_in = GetTensorInLayout(middle_node, middle_prim, distribute_operator);
-
   if (tensor_redistribution.Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
     MS_LOG(ERROR) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim : " << next_prim_name;
     MS_LOG(ERROR) << "Redistribution: middle_node " << middle_node->ToString() << " next_node "

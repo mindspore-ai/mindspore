@@ -746,7 +746,6 @@ Strategys CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
 
   size_t first_tensor_dim = ops[iter_ops]->inputs_tensor_info()[0].shape().size();
   size_t second_tensor_dim = ops[iter_ops]->inputs_tensor_info()[1].shape().size();
-
   // Do Broadcasting in the second tensor.
   if (second_tensor_dim < first_tensor_dim) {
     bool braoadcast_first_tensor = false;
@@ -964,7 +963,6 @@ void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_pt
     auto iter_ops = no_stra_op_list->at(iter_list - 1);
     Strategys stra;
     Dimensions s = CopyOutgoingOperatorInputStrategy(ops, input_tensor_names, iter_ops);
-
     if (s.size() != 0 && ops[iter_ops]->type() == SQUEEZE) {
       s = ModifyStrategyIfSqueezeOutgoing(ops, iter_ops, s);
     }

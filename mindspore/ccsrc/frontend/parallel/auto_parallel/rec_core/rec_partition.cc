@@ -204,7 +204,9 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
 
   // Comopute iter times
   int iter_times = static_cast<int>(log2(num_device));
-
+  if (iter_times > 10) {
+    MS_LOG(EXCEPTION) << "ERROR: Number of iter_times can't be larger than 10.";
+  }
   // N-cuts loop
   for (int loop = 0; loop < iter_times; loop++) {
     // Sort by weights
