@@ -16,7 +16,9 @@
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -24,18 +26,21 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 class Net(nn.Cell):
     def __init__(self, shape, seed=0, seed2=0):
         super(Net, self).__init__()
-        self.uniformreal = P.UniformReal(seed=seed)
+        self.uniformint = P.UniformInt(seed=seed)
         self.shape = shape
 
-    def construct(self):
-        return self.uniformreal(self.shape)
+    def construct(self, a, b):
+        return self.uniformint(self.shape, a, b)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_net():
+def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
+    a = 1
+    b = 5
     net = Net(shape, seed=seed)
-    output = net()
+    ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
+    output = net(ta, tb)
     assert output.shape == (3, 2, 4)
