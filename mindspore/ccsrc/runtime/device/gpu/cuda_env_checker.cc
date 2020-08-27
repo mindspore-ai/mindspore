@@ -118,7 +118,6 @@ std::pair<std::string, bool> CudaEnvChecker::IsCudaRealPath(const std::string &p
   valid_path = (end == real_path.size() - 1) ? true : ((end == real_path.size() - 2) && (real_path.back() == '/'));
   return {real_path.substr(0, end + 1), valid_path};
 }
-
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
