@@ -25,6 +25,7 @@
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
+#include "src/runtime/runtime_api.h"
 
 namespace mindspore {
 namespace lite {

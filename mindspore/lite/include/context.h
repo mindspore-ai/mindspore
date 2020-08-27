@@ -20,13 +20,19 @@
 #include <string>
 #include <memory>
 #include "include/ms_tensor.h"
-#include "include/thread_pool_config.h"
 
 namespace mindspore::lite {
 /// \brief Allocator defined a memory pool for malloc memory and free memory dynamically.
 ///
 /// \note List public class and interface for reference.
 class Allocator;
+
+/// \brief CpuBindMode defined for holding bind cpu strategy argument.
+typedef enum {
+  MID_CPU = -1,   /**< bind middle cpu first */
+  HIGHER_CPU = 1, /**< bind higher cpu first */
+  NO_BIND = 0     /**< no bind */
+} CpuBindMode;
 
 /// \brief DeviceType defined for holding user's preferred backend.
 typedef enum {

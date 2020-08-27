@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/thread_pool.h"
-#include "include/thread_pool_config.h"
 #define _GNU_SOURCE
 #include <pthread.h>
 #include <stdatomic.h>
@@ -75,7 +74,7 @@ typedef struct {
 typedef struct ThreadPool {
   ThreadList *thread_list;
   int thread_num;
-  CpuBindMode mode;
+  BindMode mode;
   atomic_bool is_alive;
 } ThreadPool;
 
@@ -315,7 +314,7 @@ int BindMasterThread(int thread_pool_id, bool is_bind) {
   CPU_ZERO(&mask);
   if (is_bind) {
     unsigned int attach_id;
-    if (thread_pool->mode == MID_CPU) {
+    if (thread_pool->mode == MID_MODE) {
       attach_id = cpu_cores[gHigNum + gMidNum - 1];
     } else {
       attach_id = cpu_cores[0];
@@ -343,10 +342,10 @@ int BindSalverThreads(int thread_pool_id, bool is_bind) {
     return RET_TP_ERROR;
   }
   cpu_set_t mask;
-  if (is_bind && thread_pool->mode != NO_BIND) {
+  if (is_bind && thread_pool->mode != NO_BIND_MODE) {
     unsigned int attach_id;
     for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-      if (thread_pool->mode == MID_CPU) {
+      if (thread_pool->mode == MID_MODE) {
         int core_id = gHigNum + gMidNum - i - 2;
         if (core_id >= 0) {
           attach_id = cpu_cores[core_id];
@@ -393,9 +392,9 @@ int BindSalverThreads(int thread_pool_id, bool is_bind) {
 }
 #endif
 
-int BindThreads(int thread_pool_id, bool is_bind, CpuBindMode mode) {
+int BindThreads(int thread_pool_id, bool is_bind, int mode) {
 #ifdef BIND_CORE
-  if (mode == NO_BIND) {
+  if (mode == NO_BIND_MODE) {
     return RET_TP_OK;
   }
   ThreadPool *thread_pool = GetInstance(thread_pool_id);
@@ -605,7 +604,7 @@ int CreateNewThread(int thread_pool_id, int thread_id) {
   return RET_TP_OK;
 }
 
-int ReConfigThreadPool(int thread_pool_id, int thread_num, CpuBindMode mode) {
+int ReConfigThreadPool(int thread_pool_id, int thread_num, int mode) {
   LOG_INFO("reconfig thread pool, thread_pool_id: %d, thread_num: %d, mode: %d", thread_pool_id, thread_num, mode);
   if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
     LOG_INFO("invalid thread num: %d", thread_num);
@@ -646,7 +645,7 @@ int ReConfigThreadPool(int thread_pool_id, int thread_num, CpuBindMode mode) {
   return BindThreads(thread_pool_id, true, mode);
 }
 
-int CreateThreadPool(int thread_pool_id, int thread_num, CpuBindMode mode) {
+int CreateThreadPool(int thread_pool_id, int thread_num, int mode) {
   LOG_INFO("create thread pool, thread_pool_id: %d, thread_num: %d, mode: %d", thread_pool_id, thread_num, mode);
   if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
     LOG_INFO("invalid thread num: %d", thread_num);
@@ -690,7 +689,7 @@ int CreateThreadPool(int thread_pool_id, int thread_num, CpuBindMode mode) {
   return RET_TP_OK;
 }
 
-int ConfigThreadPool(int thread_pool_id, int thread_num, CpuBindMode mode) {
+int ConfigThreadPool(int thread_pool_id, int thread_num, int mode) {
   LOG_INFO("config: thread_pool_id: %d, thread_num: %d, mode: %d, is_created: %d, refcount: %d", thread_pool_id,
            thread_num, mode, thread_pool_is_created[thread_pool_id], thread_pool_refcount[thread_pool_id]);
   if (thread_pool_id >= MAX_THREAD_POOL_NUM) {
