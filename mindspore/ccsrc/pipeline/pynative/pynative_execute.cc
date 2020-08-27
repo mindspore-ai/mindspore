@@ -522,6 +522,9 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int> *te
 
   opt::ConstInputToAttrInfoRegister reg;
   bool reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
+  if (op_run_info->op_name == prim::kPrimEmbeddingLookup->name()) {
+    reg_exist = false;
+  }
 
   op_prim->BeginRecordAddAttr();
   size_t input_num = op_run_info->op_inputs.size();
