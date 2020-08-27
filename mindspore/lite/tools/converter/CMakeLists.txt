@@ -103,6 +103,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/common/gllo_utils.cc
         ../optimizer/fusion/conv_biasadd_fusion.cc
         ../optimizer/fusion/conv_activation_fusion.cc
+        ../optimizer/fusion/conv_tuple_activation_fusion.cc
         ../optimizer/fusion/conv_transform_fusion.cc
         ../optimizer/fusion/conv_scale_fusion.cc
         ../optimizer/fusion/conv_bn_fusion.cc
