@@ -32,6 +32,26 @@ class Greater : public Arithmetic {
   explicit Greater(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
   explicit Greater(schema::Primitive *primitive) : Arithmetic(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto val_offset = schema::CreateGreater(fbb);
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Greater, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
 };
 }  // namespace lite

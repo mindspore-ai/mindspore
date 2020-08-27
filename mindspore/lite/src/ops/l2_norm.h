@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -35,6 +36,34 @@ class L2Norm : public PrimitiveC {
   void SetEpsilon(float epsilon);
 #else
   explicit L2Norm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+
+  schema::Primitive *Init(schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+
+    auto attr = primitive->value_as_L2Norm();
+    MS_ASSERT(attr != nullptr);
+
+    auto axis = std::make_unique<std::vector<int32_t>>();
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis->push_back(attr->axis()->data()[i]);
+    }
+
+    auto val_offset = schema::CreateL2NormDirect(fbb, axis.release(), attr->epsilon());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_L2Norm, val_offset.o);
+    fbb.Finish(prim_offset);
+
+    auto buf = fbb.GetBufferPointer();
+    MS_ASSERT(buf != nullptr);
+    auto buf_bak = new char[fbb.GetSize()];
+    memcpy(buf_bak, buf, fbb.GetSize());
+
+    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
+    auto prim = const_cast<schema::Primitive *>(root);
+
+    delete[] buf_bak;
+    fbb.Clear();
+    return prim;
+  }
 #endif
   std::vector<int> GetAxis() const;
   float GetEpsilon() const;
