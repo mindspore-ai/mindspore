@@ -8,16 +8,16 @@ function Run_x86() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
-        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "{run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-	    run_result='Run_x86: '${model_name}' pass'
+	    run_result='x86: '${model_name}' pass'
 	    echo ${run_result} >> ${run_benchmark_result_file}
 	else
-	    run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
+	    run_result='x86: '${model_name}' failed'
 	    echo ${run_result} >> ${run_benchmark_result_file}
 	    return 1
         fi
@@ -29,16 +29,16 @@ function Run_x86() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
-        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_x86: '${model_name}' pass'
+            run_result='x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
+            run_result='x86: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -50,16 +50,16 @@ function Run_x86() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
-        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_x86: '${model_name}' pass'
+            run_result='x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
+            run_result='x86: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -71,16 +71,16 @@ function Run_x86() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
-        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}_posttraining.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --warmUpLoopCount=1 --loopCount=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_x86: '${model_name}'_posttraining pass'
+            run_result='x86: '${model_name}'_posttraining pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_x86: '${model_name}'_posttraining fail <<===========================this is the failed case'
+            run_result='x86: '${model_name}'_posttraining failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -92,16 +92,16 @@ function Run_x86() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
-        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1' || return 1
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --numThreads=1 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_x86: '${model_name}'_awaretraining pass'
+            run_result='x86: '${model_name}'_awaretraining pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_x86: '${model_name}'_awaretraining fail <<===========================this is the failed case'
+            run_result='x86: '${model_name}'_awaretraining failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -113,16 +113,16 @@ function Run_x86() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
-        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}
+        echo ${model_name} >> "${run_benchmark_log_file}"
+        echo 'cd  '${convertor_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_benchmark_log_file}"
         cd ${convertor_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' || return 1
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --accuracyThreshold=1.5
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath='${ms_models_path}'/'${model_name}'.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib;./benchmark/benchmark --modelPath=${ms_models_path}/${model_name}.ms --inDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --calibDataPath=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --warmUpLoopCount=1 --loopCount=1 --accuracyThreshold=1.5 >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_x86: '${model_name}' pass'
+            run_result='x86: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_x86: '${model_name}' fail <<===========================this is the failed case'
+            run_result='x86: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -137,30 +137,30 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64: '${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name}
+        #echo ${model_name}
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64: '${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -173,30 +173,30 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64:'${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64:'${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -209,30 +209,30 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64:'${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "{run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64:'${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -245,31 +245,31 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64: '${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64: '${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
-            echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='arm64: '${model_name}' failed'
+	    echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
 	#sleep 1
@@ -281,30 +281,30 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --inDataPath=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --calibDataPath=/data/local/tmp/input_output/output/'${model_name}'.ms.out --warmUpLoopCount=1 --loopCount=1 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64: '${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name}
+        echo ${model_name} >> "${run_benchmark_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5'
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> "${run_benchmark_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelPath='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --fp16Priority=true --accuracyThreshold=5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_benchmark_log_file}"
         if [ $? = 0 ]; then
-            run_result='Run_arm64: '${model_name}' pass'
+            run_result='arm64: '${model_name}' pass'
             echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='Run_arm64:'${model_name}' fail <<===========================this is the failed case'
+            run_result='arm64: '${model_name}' failed'
             echo ${run_result} >> ${run_benchmark_result_file}
             return 1
         fi
@@ -315,14 +315,14 @@ function Run_arm64() {
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
-    echo -e "----------------------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "Testcase Result                                                                                                                               "
-    echo -e "-------- ------                                                                                                                               "
+    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
+    echo -e "env        Testcase                                                                                                       Result   "
+    echo -e "---        --------                                                                                                       ------   "
 }
 
 # Print start msg after run testcase
 function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "----------------------------------------------------------------------------------------------------------------------------------------------"
+    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
 }
 
 
@@ -382,6 +382,13 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib/:./third_party/protobuf/lib
 # Convert the models
 cd ${convertor_path}/mindspore-lite-${version}-convert-ubuntu || exit 1
 
+# Write resulte to temp file
+run_benchmark_result_file=${basepath}/run_benchmark_result.txt
+echo ' ' > ${run_benchmark_result_file}
+
+run_benchmark_log_file=${basepath}/run_benchmark_log.txt
+echo 'run benchmark logs: ' > ${run_benchmark_log_file}
+
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
@@ -390,18 +397,20 @@ models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
 models_onnx_config=${basepath}/models_onnx.cfg
 models_fp16_config=${basepath}/models_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
+Convert_status=0
 
 rm -rf ${basepath}/ms_models
 mkdir -p ${basepath}/ms_models
 ms_models_path=${basepath}/ms_models
 
+echo "start convert models ... :"
 # Copy fp16 ms models:
 while read line; do
   model_name=${line}
   if [[ $model_name == \#* ]]; then
       continue
   fi
-  echo 'cp '${models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.ms'
+  echo "cp '${models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.ms" >> "${run_benchmark_log_file}"
   cp $models_path/${model_name}.ms ${ms_models_path}/${model_name}.ms
 done < ${models_fp16_config}
 
@@ -411,9 +420,9 @@ while read line; do
     if [[ $model_name == \#* ]]; then
       continue
     fi
-    echo ${model_name}
-    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}''
-    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name} || exit 1
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name} || Convert_status=$?
 done < ${models_tflite_config}
 
 # Convert caffe models:
@@ -422,10 +431,10 @@ while read line; do
     if [[ $model_name == \#* ]]; then
       continue
     fi
-    echo ${model_name}
-    pwd
-    echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}''
-    ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name} || exit 1
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    #pwd >> ${run_benchmark_log_file}
+    echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name} || Convert_status=$?
 done < ${models_caffe_config}
 
 # Convert onnx models:
@@ -434,10 +443,10 @@ while read line; do
     if [[ $model_name == \#* ]]; then
       continue
     fi
-    echo ${model_name}
-    pwd
-    echo './converter_lite  --fmk=ONNX --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}''
-    ./converter_lite  --fmk=ONNX --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} || exit 1
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    #pwd >> ${run_benchmark_log_file}
+    echo './converter_lite  --fmk=ONNX --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=ONNX --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} || Convert_status=$?
 done < ${models_onnx_config}
 
 # Convert mindspore models:
@@ -446,10 +455,10 @@ while read line; do
     if [[ $model_name == \#* ]]; then
       continue
     fi
-    echo ${model_name}
-    pwd
-    echo './converter_lite  --fmk=MS --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}''
-    ./converter_lite  --fmk=MS --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} || exit 1
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    pwd >> "${run_benchmark_log_file}"
+    echo './converter_lite  --fmk=MS --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=MS --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} || Convert_status=$?
 done < ${models_mindspore_config}
 
 # Convert TFLite PostTraining models:
@@ -458,9 +467,9 @@ while read line; do
     if [[ $model_name == \#* ]]; then
       continue
     fi
-    echo ${model_name}
-    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config'
-    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_posttraining --quantType=PostTraining --config_file=${models_path}/${model_name}_posttraining.config || exit 1
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_posttraining --quantType=PostTraining --config_file=${models_path}/${model_name}_posttraining.config || Convert_status=$?
 done < ${models_tflite_posttraining_config}
 
 # Convert TFLite AwareTraining models:
@@ -469,13 +478,23 @@ while read line; do
     if [[ $model_name == \#* ]]; then
       continue
     fi
-    echo ${model_name}
-    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=AwareTraining'
-    ./converter_lite  --fmk=TFLITE --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} --quantType=AwareTraining || exit 1
+    echo ${model_name} >> "${run_benchmark_log_file}"
+    echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=AwareTraining' >> "${run_benchmark_log_file}"
+    ./converter_lite  --fmk=TFLITE --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name} --quantType=AwareTraining || Convert_status=$?
 done < ${models_tflite_awaretraining_config}
+
+# Check all result and return value
+if [[ ${Convert_status} = 0 ]];then
+    echo "convert is ended"
+else
+    echo "convert failed"
+    cat ${run_benchmark_log_file}
+    exit 1
+fi
 
 # Push to the arm and run benchmark:
 # First:copy benchmark exe and so files to the server which connected to the phone
+echo "Push files to the arm and run benchmark"
 rm -rf ${basepath}/benchmark_test
 mkdir -p ${basepath}/benchmark_test
 benchmark_test_path=${basepath}/benchmark_test
@@ -488,7 +507,7 @@ cp -a ${arm_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm}/be
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
 
 # Second:adb push all needed files to the phone
-adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/
+adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
 
 # Third:run adb ,run session ,check the result:
 echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
@@ -497,16 +516,14 @@ echo 'chmod 777 benchmark' >> adb_cmd.txt
 
 adb -s ${device_id} shell < adb_cmd.txt
 
-# Write resulte to temp file
-run_benchmark_result_file=${basepath}/run_benchmark_result.txt
-echo 'cases :' > ${run_benchmark_result_file}
-
 # Run on x86
+echo "start Run x86 ..."
 Run_x86 &
 Run_x86_PID=$!
 sleep 1
 
 # Run on arm64
+echo "start Run arm64 ..."
 Run_arm64 &
 Run_arm64_PID=$!
 
@@ -519,7 +536,8 @@ Run_arm64_status=$?
 # Print all results:
 MS_PRINT_TESTCASE_START_MSG
 while read line; do
-    echo ${line}
+    arr=("${line}")
+    printf "%-10s %-110s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
 done < ${run_benchmark_result_file}
 MS_PRINT_TESTCASE_END_MSG
 
@@ -529,5 +547,15 @@ if [[ ${Run_x86_status} = 0 ]] && [[ ${Run_arm64_status} = 0 ]];then
     exit 0
 else
     echo "run failed"
+    cat ${run_benchmark_log_file}
+    
+    #print the result table again:
+    MS_PRINT_TESTCASE_START_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-10s %-110s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+    done < ${run_benchmark_result_file}
+    MS_PRINT_TESTCASE_END_MSG
+    
     exit 1
 fi
