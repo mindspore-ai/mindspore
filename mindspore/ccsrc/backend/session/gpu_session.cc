@@ -133,7 +133,11 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto input_nodes = kernel_graph->inputs();
+  std::vector<AnfNodePtr> input_nodes;
+  for (const auto &input_node : kernel_graph->inputs()) {
+    auto params = AnfAlgo::GetAllOutput(input_node);
+    std::copy(params.begin(), params.end(), std::back_inserter(input_nodes));
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (inputs.size() != input_nodes.size()) {
