@@ -649,108 +649,13 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
 }
 
-std::pair<AnfNodePtr, std::vector<AnfNodePtr>> CNodeWithRefKeys(const AnfNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<AnfNodePtr> refkeys;
-  if (cnode->isa<CNode>()) {
-    auto cnode_ptr = cnode->cast<CNodePtr>();
-    auto inputs = cnode_ptr->inputs();
-    for (auto &one_input : inputs) {
-      if (IsValueNode<RefKey>(one_input)) {
-        refkeys.push_back(one_input);
-      }
-    }
-    if (refkeys.size() >= 1) {
-      return std::make_pair(cnode, refkeys);
-    }
-  }
-  return {nullptr, refkeys};
-}
-
 void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
   // Step 3
   for (auto &node : all_nodes) {
-    auto cnode_with_refkeys = CNodeWithRefKeys(node);
-    if ((!node->isa<Parameter>()) && (cnode_with_refkeys.first == nullptr)) {
-      continue;
-    }
-    std::string parameter_name;
-    AnfNodePtr target_parameter = nullptr;
-    AnfNodeIndexSet target_set;
-
-    if (cnode_with_refkeys.first != nullptr) {
-      // Dealing with the RefKey case
-      auto refkeys = cnode_with_refkeys.second;
-      auto cnode = cnode_with_refkeys.first;
-
-      auto cnode_ptr = cnode->cast<CNodePtr>();
-      if (cnode_ptr == nullptr || !IsValueNode<Primitive>(cnode_ptr->input(0))) {
-        continue;
-      }
-      if (!IsAutoParallelCareNode(cnode_ptr)) {
-        continue;
-      }
-
-      if (refkeys.size() > 1) {
-        MS_LOG(EXCEPTION) << "CNode: " << cnode->fullname_with_scope() << " 's inputs have more than 1 RefKeys.";
-      }
-      MS_EXCEPTION_IF_NULL(cnode->func_graph());
-      auto cnode_func_graph = cnode->func_graph();
-      MS_EXCEPTION_IF_NULL(cnode->func_graph()->manager());
-
-      // Find the RefKey being used
-      auto candidate_set_by_refkey = cnode_func_graph->manager()->node_users()[refkeys[0]];
-      for (auto &candidate : candidate_set_by_refkey) {
-        auto candidate_node = candidate.first;
-        auto c = candidate_node->cast<CNodePtr>();
-        if (c == nullptr || !IsValueNode<Primitive>(c->input(0))) {
-          continue;
-        }
-        if (!IsAutoParallelCareNode(c)) {
-          continue;
-        }
-        target_set.add(candidate);
-      }
-
-      // Find the corresponding Parameter being used
-      std::vector<AnfNodePtr> parameters = FindParameterByRefKeyNode(refkeys[0], cnode_func_graph);
-      if (parameters.size() != 1) {
-        MS_LOG(EXCEPTION) << "Find parameter by ref key node failed";
-      }
-      parameter_name = parameters[0]->cast<ParameterPtr>()->name();
-      target_parameter = parameters[0];
-      auto candidate_set_by_para = cnode_func_graph->manager()->node_users()[parameters[0]];
-      for (auto &candidate : candidate_set_by_para) {
-        auto candidate_node = candidate.first;
-        auto c = candidate_node->cast<CNodePtr>();
-        if (c == nullptr || !IsValueNode<Primitive>(c->input(0))) {
-          continue;
-        }
-        if (!IsAutoParallelCareNode(c)) {
-          continue;
-        }
-        (void)target_set.insert(candidate);
-      }
-    } else if (node->isa<Parameter>()) {
-      // Dealing with the Parameter case
-      MS_EXCEPTION_IF_NULL(node->func_graph());
-      MS_EXCEPTION_IF_NULL(node->func_graph()->manager());
-      auto candidate_set = node->func_graph()->manager()->node_users()[node];
-      for (auto &candidate : candidate_set) {
-        auto candidate_node = candidate.first;
-        auto c = candidate_node->cast<CNodePtr>();
-        if (c == nullptr || !IsValueNode<Primitive>(c->input(0))) {
-          continue;
-        }
-        if (!IsAutoParallelCareNode(c)) {
-          continue;
-        }
-        (void)target_set.insert(candidate);
-      }
-      // In this case, node is a Parameter
-      parameter_name = node->cast<ParameterPtr>()->name();
-      target_parameter = node;
-    }
+    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsAutoParallelCareNode);
+    auto parameter_name = parameter_users_info.first;
+    auto target_parameter = parameter_users_info.second.first;
+    auto target_set = parameter_users_info.second.second;
     if (target_set.size() <= 1) {
       continue;
     }

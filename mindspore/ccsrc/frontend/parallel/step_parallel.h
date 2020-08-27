@@ -150,6 +150,13 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
 std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 
 bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name);
+
+using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
+using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
+
+RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode);
+
+ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
 }  // namespace parallel
 }  // namespace mindspore
 

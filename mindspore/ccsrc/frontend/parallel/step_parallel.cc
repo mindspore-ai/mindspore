@@ -2499,6 +2499,149 @@ void HandleForwardMakeTuple(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
+RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> refkeys;
+  if (cnode->isa<CNode>()) {
+    auto cnode_ptr = cnode->cast<CNodePtr>();
+    auto inputs = cnode_ptr->inputs();
+    for (auto &one_input : inputs) {
+      if (IsValueNode<RefKey>(one_input)) {
+        refkeys.push_back(one_input);
+      }
+    }
+    if (refkeys.size() >= 1) {
+      return std::make_pair(cnode, refkeys);
+    }
+  }
+  return {nullptr, refkeys};
+}
+
+ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &)) {
+  // In this case, node is a Parameter
+  ParameterUsersInfo parameter_user_info;
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+  MS_EXCEPTION_IF_NULL(node->func_graph()->manager());
+  auto candidate_set = node->func_graph()->manager()->node_users()[node];
+  for (auto &candidate : candidate_set) {
+    auto candidate_node = candidate.first;
+    auto c = candidate_node->cast<CNodePtr>();
+    if (c == nullptr || !IsValueNode<Primitive>(c->input(0)) || !IsCareNode(c)) {
+      continue;
+    }
+    (void)parameter_user_info.second.second.insert(candidate);
+  }
+
+  parameter_user_info.first = node->cast<ParameterPtr>()->name();
+  parameter_user_info.second.first = node;
+  return parameter_user_info;
+}
+
+ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bool (*IsCareNode)(const CNodePtr &)) {
+  // Dealing with the RefKey case
+  ParameterUsersInfo parameter_user_info;
+  auto refkeys = ref_key_pair.second;
+  auto cnode = ref_key_pair.first;
+
+  auto cnode_ptr = cnode->cast<CNodePtr>();
+  if ((cnode_ptr == nullptr) || !IsValueNode<Primitive>(cnode_ptr->input(0)) || !IsCareNode(cnode_ptr)) {
+    return parameter_user_info;
+  }
+
+  if (refkeys.size() > 1) {
+    MS_LOG(EXCEPTION) << "CNode: " << cnode->fullname_with_scope() << "'s inputs have more than 1 RefKeys";
+  }
+  MS_EXCEPTION_IF_NULL(cnode->func_graph());
+  auto cnode_func_graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(cnode->func_graph()->manager());
+
+  // Find the RefKey being used
+  auto candidate_set_by_refkey = cnode_func_graph->manager()->node_users()[refkeys[0]];
+  for (auto &candidate : candidate_set_by_refkey) {
+    auto candidate_node = candidate.first;
+    auto c = candidate_node->cast<CNodePtr>();
+    if ((c == nullptr) || !IsValueNode<Primitive>(c->input(0)) || !IsCareNode(c)) {
+      continue;
+    }
+    parameter_user_info.second.second.add(candidate);
+  }
+
+  // Find the corresponding Parameter being used
+  std::vector<AnfNodePtr> parameters = FindParameterByRefKeyNode(refkeys[0], cnode_func_graph);
+  if (parameters.size() != 1) {
+    MS_LOG(EXCEPTION) << "Find parameter by ref key node failed";
+  }
+  parameter_user_info.first = parameters[0]->cast<ParameterPtr>()->name();
+  parameter_user_info.second.first = parameters[0];
+  auto candidate_set_by_para = cnode_func_graph->manager()->node_users()[parameters[0]];
+  for (auto &candidate : candidate_set_by_para) {
+    auto candidate_node = candidate.first;
+    auto c = candidate_node->cast<CNodePtr>();
+    if ((c == nullptr) || !IsValueNode<Primitive>(c->input(0)) || !IsCareNode(c)) {
+      continue;
+    }
+    (void)parameter_user_info.second.second.insert(candidate);
+  }
+  return parameter_user_info;
+}
+
+ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &)) {
+  ParameterUsersInfo parameter_users_info;
+  auto cnode_with_refkeys = CNodeWithRefKeys(node);
+
+  if (cnode_with_refkeys.first != nullptr) {
+    // the node is a ref key node
+    return FindRefKeyNodeUsers(cnode_with_refkeys, IsCareNode);
+  } else if (node->isa<Parameter>()) {
+    // the node is a parameter node
+    return FindParameterNodeUsers(node, IsCareNode);
+  }
+
+  return parameter_users_info;
+}
+
+Shape ParameterSliceShape(const std::pair<AnfNodePtr, int> &param_info) {
+  auto user_cnode = param_info.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(user_cnode);
+  auto user_input_index = param_info.second;
+  OperatorInfoPtr op_info = user_cnode->user_data<OperatorInfo>();
+  MS_EXCEPTION_IF_NULL(op_info);
+
+  size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
+  if (SizeToInt(input_tensor_info_size) <= user_input_index - 1) {
+    MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
+                      << ", but the index is " << user_input_index - 1;
+  }
+  TensorInfo tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
+  MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << user_input_index - 1
+                << ", the slice shape is " << ShapeToString(tensor_info.slice_shape()) << ", the origin shape is "
+                << ShapeToString(tensor_info.shape());
+  return tensor_info.slice_shape();
+}
+
+void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode);
+    auto users_set = parameter_users_info.second.second;
+    if (users_set.size() <= 1) {
+      continue;
+    }
+
+    auto parameter_name = parameter_users_info.first;
+    MS_LOG(INFO) << "The parameter: " << parameter_name << " has " << users_set.size() << " users";
+    auto first_user = users_set.pop();
+    Shape first_user_slice_shape = ParameterSliceShape(first_user);
+
+    for (auto &user : users_set) {
+      Shape user_slice_shape = ParameterSliceShape(user);
+      if (first_user_slice_shape != user_slice_shape) {
+        MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
+                          << " has multiple users, but the split strategies are different";
+      }
+    }
+  }
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(optimizer);
@@ -2555,6 +2698,9 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   }
 
   HandleForwardMakeTuple(all_nodes);
+
+  // if the input or parameter has multiple users, check whether its split strategies are consistent.
+  CheckParameterSplit(all_nodes);
 
   // save strategy as checkpoint for multi-train
   if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
