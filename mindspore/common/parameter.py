@@ -389,6 +389,8 @@ class Parameter(MetaTensor):
                 raise RuntimeError("Must set or change parallel mode before any Initializer created.")
         if self.init_mode is None:
             return self
+        if self.inited_param is not None:
+            return self.inited_param
         if layout is not None:
             if not isinstance(layout, list):
                 raise TypeError("The layout should be list! layout is {}.".format(layout))
