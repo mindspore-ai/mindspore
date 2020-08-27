@@ -35,8 +35,7 @@ void InitParameter(PoolingParameter *param) {
   param->pad_d_ = 0;
   param->pad_l_ = 0;
   param->pad_r_ = 0;
-  param->avg_pooling_ = false;
-  param->max_pooling_ = true;
+  param->pool_mode_ = PoolMode_MaxPool;
 }
 
 TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {

@@ -163,7 +163,7 @@ int PoolingGradCPUKernel::Run() {
   auto input_ptr = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
 
-  if (pool_param->max_pooling_) {
+  if (pool_param->pool_mode_ == PoolMode_MaxPool) {
     auto ind = reinterpret_cast<int *>(inputs_.at(1)->Data());
     MaxPoolingGrad(input_ptr, ind, output_ptr, pool_param);
   } else {

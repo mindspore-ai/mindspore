@@ -294,32 +294,26 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
   auto pool_mode = pooling_primitive->GetPoolingMode();
   switch (pool_mode) {
     case schema::PoolMode_MAX_POOLING:
-      pooling_param->max_pooling_ = true;
-      pooling_param->avg_pooling_ = false;
+      pooling_param->pool_mode_ = PoolMode_MaxPool;
       break;
     case schema::PoolMode_MEAN_POOLING:
-      pooling_param->max_pooling_ = false;
-      pooling_param->avg_pooling_ = true;
+      pooling_param->pool_mode_ = PoolMode_AvgPool;
       break;
     default:
-      pooling_param->max_pooling_ = false;
-      pooling_param->avg_pooling_ = false;
+      pooling_param->pool_mode_ = PoolMode_No;
       break;
   }
 
   auto round_mode = pooling_primitive->GetRoundMode();
   switch (round_mode) {
     case schema::RoundMode_FLOOR:
-      pooling_param->round_floor_ = true;
-      pooling_param->round_ceil_ = false;
+      pooling_param->round_mode_ = RoundMode_Floor;
       break;
     case schema::RoundMode_CEIL:
-      pooling_param->round_floor_ = false;
-      pooling_param->round_ceil_ = true;
+      pooling_param->round_mode_ = RoundMode_Ceil;
       break;
     default:
-      pooling_param->round_floor_ = false;
-      pooling_param->round_ceil_ = false;
+      pooling_param->round_mode_ = RoundMode_No;
       break;
   }
 

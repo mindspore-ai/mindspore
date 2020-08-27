@@ -32,6 +32,8 @@ void AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
 
 void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
 
+void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
+
 void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
 #ifdef __cplusplus
 }
