@@ -130,6 +130,7 @@ void AICPUQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel:
   AicpuMetadataInfo(kernel_node, kernel_info_list);
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
+
 bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(select_kernel_build_info);
@@ -140,7 +141,7 @@ bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr 
   return std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
                      [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
                        MS_EXCEPTION_IF_NULL(item);
-                       return *item == *select_kernel_build_info;
+                       return item->IsSimilarityKernelBuildInfo(*select_kernel_build_info);
                      });
 }
 
