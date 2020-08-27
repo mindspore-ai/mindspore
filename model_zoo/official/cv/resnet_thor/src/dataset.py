@@ -40,7 +40,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     if target == "Ascend":
         device_num, rank_id = _get_rank_info()
     else:
-        init("nccl")
+        init()
         rank_id = get_rank()
         device_num = get_group_size()
 

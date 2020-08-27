@@ -128,10 +128,7 @@ if __name__ == "__main__":
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
     set_multi_subgraphs()
-    if wide_deep_config.device_target == "Ascend":
-        init("hccl")
-    elif wide_deep_config.device_target == "GPU":
-        init("nccl")
+    init()
     if wide_deep_config.host_device_mix == 1:
         context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, mirror_mean=True)
     else:

@@ -64,7 +64,7 @@ elif args_opt.device_target == "GPU":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="GPU",
                         save_graphs=False)
-    init("nccl")
+    init()
     context.set_auto_parallel_context(device_num=get_group_size(),
                                       parallel_mode=ParallelMode.DATA_PARALLEL,
                                       mirror_mean=True)

@@ -57,10 +57,7 @@ if __name__ == '__main__':
     cfg = config_ascend if args_opt.platform == 'Ascend' else config_gpu
     # init distributed
     if args_opt.is_distributed:
-        if args_opt.platform == "Ascend":
-            init()
-        else:
-            init("nccl")
+        init()
         cfg.rank = get_rank()
         cfg.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL

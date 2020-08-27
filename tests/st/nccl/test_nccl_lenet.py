@@ -25,7 +25,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-init('nccl')
+init()
 
 epoch = 5
 total = 5000

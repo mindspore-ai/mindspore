@@ -59,7 +59,7 @@ if __name__ == '__main__':
             init()
             rank_id = int(os.environ.get('RANK_ID'))
         elif args_opt.device_target == "GPU":
-            init("nccl")
+            init()
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=get_group_size(),

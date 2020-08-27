@@ -135,7 +135,7 @@ if __name__ == '__main__':
             init()
             context.set_context(device_id=args.device_id)
         elif args.device_target == "GPU":
-            init("nccl")
+            init()
 
         args.rank = get_rank()
         args.group_size = get_group_size()

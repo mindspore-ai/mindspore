@@ -172,10 +172,7 @@ def train(cloud_args=None):
 
     # init distributed
     if args.is_distributed:
-        if args.platform == "Ascend":
-            init()
-        else:
-            init("nccl")
+        init()
         args.rank = get_rank()
         args.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL

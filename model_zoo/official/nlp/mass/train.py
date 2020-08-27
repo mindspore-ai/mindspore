@@ -227,10 +227,7 @@ def _build_training_pipeline(config: TransformerConfig,
 
 def _setup_parallel_env(platform):
     context.reset_auto_parallel_context()
-    if platform == "GPU":
-        MultiAscend.init("nccl")
-    else:
-        MultiAscend.init()
+    MultiAscend.init()
     context.set_auto_parallel_context(
         parallel_mode=ParallelMode.DATA_PARALLEL,
         device_num=MultiAscend.get_group_size(),

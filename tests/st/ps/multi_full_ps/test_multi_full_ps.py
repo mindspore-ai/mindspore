@@ -30,7 +30,7 @@ args, _ = parser.parse_known_args()
 device_target = args.device_target
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
 if device_target == "GPU":
-    init('nccl')
+    init()
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):

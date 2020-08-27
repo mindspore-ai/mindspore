@@ -73,7 +73,7 @@ class AllReduce(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
         >>>
-        >>> init('nccl')
+        >>> init()
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -136,7 +136,7 @@ class AllGather(PrimitiveWithInfer):
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
         >>>
-        >>> init('nccl')
+        >>> init()
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -246,7 +246,7 @@ class ReduceScatter(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
         >>>
-        >>> init('nccl')
+        >>> init()
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
@@ -360,7 +360,7 @@ class Broadcast(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
         >>>
-        >>> init('nccl')
+        >>> init()
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()

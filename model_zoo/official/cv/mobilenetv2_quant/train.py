@@ -57,7 +57,7 @@ if args_opt.device_target == "Ascend":
                         device_target="Ascend",
                         device_id=device_id, save_graphs=False)
 elif args_opt.device_target == "GPU":
-    init("nccl")
+    init()
     context.set_auto_parallel_context(device_num=get_group_size(),
                                       parallel_mode=ParallelMode.DATA_PARALLEL,
                                       mirror_mean=True)

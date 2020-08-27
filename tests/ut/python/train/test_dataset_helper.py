@@ -75,7 +75,7 @@ def test_dataset_iter_normal():
 
 @pytest.mark.skipif('not context.get_context("enable_ge")')
 def test_dataset_iter_ge():
-    init()
+    init("hccl")
     dataset = get_dataset(32)
     dataset_helper = DatasetHelper(dataset, dataset_sink_mode=True, sink_size=10)
     count = 0
@@ -87,7 +87,7 @@ def test_dataset_iter_ge():
 
 @pytest.mark.skipif('context.get_context("enable_ge")')
 def test_dataset_iter_ms_loop_sink():
-    init()
+    init("hccl")
     context.set_context(enable_loop_sink=True)
     dataset = get_dataset(32)
     dataset_helper = DatasetHelper(dataset, dataset_sink_mode=True, sink_size=10)
@@ -101,7 +101,7 @@ def test_dataset_iter_ms_loop_sink():
 
 @pytest.mark.skipif('context.get_context("enable_ge")')
 def test_dataset_iter_ms():
-    init()
+    init("hccl")
     context.set_context(enable_loop_sink=False)
     dataset = get_dataset(32)
     DatasetHelper(dataset, dataset_sink_mode=True, sink_size=10)

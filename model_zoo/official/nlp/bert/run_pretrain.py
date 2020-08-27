@@ -70,11 +70,11 @@ def run_pretrain():
     ckpt_save_dir = args_opt.save_checkpoint_path
     if args_opt.distribute == "true":
         if args_opt.device_target == 'Ascend':
-            D.init('hccl')
+            D.init()
             device_num = args_opt.device_num
             rank = args_opt.device_id % device_num
         else:
-            D.init('nccl')
+            D.init()
             device_num = D.get_group_size()
             rank = D.get_rank()
             ckpt_save_dir = args_opt.save_checkpoint_path + 'ckpt_' + str(rank) + '/'
