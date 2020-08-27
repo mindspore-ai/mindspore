@@ -476,3 +476,16 @@ def test_tensor_operation():
     assert np.all(x.asnumpy() == np.ones((3, 3)))
     res = 5 // x
     assert np.all(x.asnumpy() == np.ones((3, 3)))
+
+def test_tensor_from_numpy():
+    a = np.ones((2, 3))
+    t = ms.Tensor.from_numpy(a)
+    assert np.all(t.asnumpy() == 1)
+    # 't' and 'a' share same data.
+    a[1] = 2
+    assert np.all(t.asnumpy()[0] == 1)
+    assert np.all(t.asnumpy()[1] == 2)
+    # 't' is still valid after 'a' deleted.
+    del a
+    assert np.all(t.asnumpy()[0] == 1)
+    assert np.all(t.asnumpy()[1] == 2)
