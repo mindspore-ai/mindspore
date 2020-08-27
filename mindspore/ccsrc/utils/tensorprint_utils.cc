@@ -210,7 +210,7 @@ bool ConvertDataItem2Tensor(const std::vector<tdt::DataItem> &items) {
       mindspore::tensor::Tensor print_tensor(type_id, tensor_shape);
       auto memory_size = totaldims * type_size_map[item.tensorType_];
       if (PrintTensorToString(str_data_ptr->data(), &print_tensor, memory_size)) {
-        buf << print_tensor.ToStringRepr() << std::endl;
+        buf << print_tensor.ToStringNoLimit() << std::endl;
       }
     }
   }
