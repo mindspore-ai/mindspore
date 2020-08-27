@@ -18,6 +18,7 @@
 import os
 import time
 import argparse
+import ast
 import random
 import numpy as np
 
@@ -41,7 +42,7 @@ np.random.seed(1)
 de.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description="FasterRcnn training")
-parser.add_argument("--run_distribute", type=bool, default=False, help="Run distribute, default: false.")
+parser.add_argument("--run_distribute", type=ast.literal_eval, default=False, help="Run distribute, default: false.")
 parser.add_argument("--dataset", type=str, default="coco", help="Dataset name, default: coco.")
 parser.add_argument("--pre_trained", type=str, default="", help="Pretrained file path.")
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default: 0.")

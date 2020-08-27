@@ -89,16 +89,20 @@ def argparse_init():
     Argparse init.
     """
     parser = argparse.ArgumentParser(description='transformer')
-    parser.add_argument("--distribute", type=str, default="false", help="Run distribute, default is false.")
+    parser.add_argument("--distribute", type=str, default="false", choices=['true', 'false'],
+                        help="Run distribute, default is false.")
     parser.add_argument("--epoch_size", type=int, default=52, help="Epoch size, default is 52.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-    parser.add_argument("--enable_lossscale", type=str, default="true", help="Use lossscale or not, default is true.")
-    parser.add_argument("--do_shuffle", type=str, default="true", help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="false", help="Enable data sink, default is false.")
+    parser.add_argument("--enable_lossscale", type=str, default="true", choices=['true', 'false'],
+                        help="Use lossscale or not, default is true.")
+    parser.add_argument("--do_shuffle", type=str, default="true", choices=['true', 'false'],
+                        help="Enable shuffle for dataset, default is true.")
+    parser.add_argument("--enable_data_sink", type=str, default="false", choices=['true', 'false'],
+                        help="Enable data sink, default is false.")
     parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")
-    parser.add_argument("--enable_save_ckpt", type=str, default="true", help="Enable save checkpoint, "
-                                                                             "default is true.")
+    parser.add_argument("--enable_save_ckpt", type=str, default="true", choices=['true', 'false'],
+                        help="Enable save checkpoint, default is true.")
     parser.add_argument("--save_checkpoint_steps", type=int, default=2500, help="Save checkpoint steps, "
                                                                                 "default is 2500.")
     parser.add_argument("--save_checkpoint_num", type=int, default=30, help="Save checkpoint numbers, default is 30.")
