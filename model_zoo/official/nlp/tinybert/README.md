@@ -30,8 +30,8 @@ The backbone structure of TinyBERT is transformer, the transformer contains four
 - Download glue dataset for task distillation. Convert dataset files from json format to tfrecord format, please refer to run_classifier.py which in [BERT](https://github.com/google-research/bert) repository.
 
 # [Environment Requirements](#contents)
-- Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Hardware（Ascend/GPU）
+  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
 - Framework
   - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
@@ -42,22 +42,26 @@ The backbone structure of TinyBERT is transformer, the transformer contains four
 After installing MindSpore via the official website, you can start general distill, task distill and evaluation as follows:
 ```bash
 # run standalone general distill example
-bash scripts/run_standalone_gd_ascend.sh 
+bash scripts/run_standalone_gd.sh 
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_standalone_gd_ascend.sh file first.
+Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
 
-# run distributed general distill example
+# For Ascend device, run distributed general distill example
 bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
 
 Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir` and `schema_dir` in the run_distributed_gd_ascend.sh file first.
 
-# run task distill and evaluation example
-bash scripts/run_standalone_td_ascend.sh 
+# For GPU device, run distributed general distill example
+bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
 
-Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir` and `schema_dir` in the run_standalone_td_ascend.sh file first.
+# run task distill and evaluation example
+bash scripts/run_standalone_td.sh 
+
+Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir` and `schema_dir` in the run_standalone_td.sh file first.
+If running on GPU, please set the `device_target=GPU`.
 ```
 
-For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+For distributed training on Ascend, a hccl configuration file with JSON format needs to be created in advance.
 Please follow the instructions in the link below:
 https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
@@ -69,10 +73,10 @@ https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 └─bert
   ├─README.md
   ├─scripts
-    ├─run_distributed_gd_ascend.sh       # shell script for distributed general distill phase
-    ├─run_distributed_gd_for_gpu.sh      # shell script for distributed general distill phase
-    ├─run_standalone_gd_ascend.sh        # shell script for standalone general distill phase
-    ├─run_standalone_td_ascend.sh        # shell script for standalone task distill phase
+    ├─run_distributed_gd_ascend.sh       # shell script for distributed general distill phase on Ascend
+    ├─run_distributed_gd_gpu.sh          # shell script for distributed general distill phase on GPU
+    ├─run_standalone_gd.sh               # shell script for standalone general distill phase
+    ├─run_standalone_td.sh               # shell script for standalone task distill phase
   ├─src
     ├─__init__.py
     ├─assessment_method.py               # assessment method for evaluation
@@ -91,13 +95,13 @@ https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 ## [Script Parameters](#contents)
 ### General Distill
 ``` 
-usage: run_general_distill_ascend.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
-                                      [--device_target DEVICE_TARGET] [--do_shuffle DO_SHUFFLE]
-                                      [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] 
-                                      [--save_ckpt_path SAVE_CKPT_PATH]
-                                      [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
-                                      [--save_checkpoint_step N] [--max_ckpt_num N] 
-                                      [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [train_steps N]
+usage: run_general_distill.py   [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
+                                [--device_target DEVICE_TARGET] [--do_shuffle DO_SHUFFLE]
+                                [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] 
+                                [--save_ckpt_path SAVE_CKPT_PATH]
+                                [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
+                                [--save_checkpoint_step N] [--max_ckpt_num N] 
+                                [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [train_steps N]
 
 options:
     --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
@@ -118,17 +122,17 @@ options:
   
 ### Task Distill
 ``` 
-usage: run_general_task_ascend.py  [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [--do_eval DO_EVAL] 
-                                   [--td_phase1_epoch_size N] [--td_phase2_epoch_size N] 
-                                   [--device_id N] [--do_shuffle DO_SHUFFLE]
-                                   [--enable_data_sink ENABLE_DATA_SINK] [--save_ckpt_step N] 
-                                   [--max_ckpt_num N] [--data_sink_steps N] 
-                                   [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
-                                   [--load_gd_ckpt_path LOAD_GD_CKPT_PATH]
-                                   [--load_td1_ckpt_path LOAD_TD1_CKPT_PATH]
-                                   [--train_data_dir TRAIN_DATA_DIR]
-                                   [--eval_data_dir EVAL_DATA_DIR]
-                                   [--task_name TASK_NAME] [--schema_dir SCHEMA_DIR]
+usage: run_general_task.py  [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [--do_eval DO_EVAL] 
+                            [--td_phase1_epoch_size N] [--td_phase2_epoch_size N] 
+                            [--device_id N] [--do_shuffle DO_SHUFFLE]
+                            [--enable_data_sink ENABLE_DATA_SINK] [--save_ckpt_step N] 
+                            [--max_ckpt_num N] [--data_sink_steps N] 
+                            [--load_teacher_ckpt_path LOAD_TEACHER_CKPT_PATH]
+                            [--load_gd_ckpt_path LOAD_GD_CKPT_PATH]
+                            [--load_td1_ckpt_path LOAD_TD1_CKPT_PATH]
+                            [--train_data_dir TRAIN_DATA_DIR]
+                            [--eval_data_dir EVAL_DATA_DIR]
+                            [--task_name TASK_NAME] [--schema_dir SCHEMA_DIR]
 
 options:
     --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
@@ -198,13 +202,25 @@ Parameters for bert network:
 #### running on Ascend
 Before running the command below, please check `load_teacher_ckpt_path`, `data_dir` and `schma_dir` has been set. Please set the path to be the absolute full path, e.g:"/username/checkpoint_100_300.ckpt".
 ```
-bash scripts/run_standalone_gd_ascend.sh
+bash scripts/run_standalone_gd.sh
 ```
 The command above will run in the background, you can view the results the file log.txt. After training, you will get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
 ```
 # grep "epoch" log.txt
 epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.2093), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 epoch: 2, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+```
+
+#### running on GPU
+Before running the command below, please check `load_teacher_ckpt_path`, `data_dir` `schma_dir` and `device_target=GPU` has been set. Please set the path to be the absolute full path, e.g:"/username/checkpoint_100_300.ckpt".
+```
+bash scripts/run_standalone_gd.sh
+```
+The command above will run in the background, you can view the results the file log.txt. After training, you will get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
+```
+# grep "epoch" log.txt
+epoch: 1, step: 100, outpus are 28.2093
 ...
 ```
 
@@ -223,12 +239,24 @@ epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 30.5901), Tens
 ...
 ```
 
+#### running on GPU
+Please input the path to be the absolute full path, e.g:"/username/checkpoint_100_300.ckpt".
+```
+bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
+```
+The command above will run in the background, you can view the results the file log.txt. After training, you will get some checkpoint files under the LOG* folder by default. The loss value will be achieved as follows:
+```
+# grep "epoch" LOG*/log.txt
+epoch: 1, step: 1, outpus are 63.4098
+...
+```
+
 ## [Evaluation Process](#contents)
 ### Evaluation
-If you want to after running and continue to eval, please set `do_train=true` and `do_eval=true`, If you want to run eval alone, please set `do_train=false` and `do_eval=true`.
-#### evaluation on SST-2 dataset when running on Ascend   
+If you want to after running and continue to eval, please set `do_train=true` and `do_eval=true`, If you want to run eval alone, please set `do_train=false` and `do_eval=true`. If running on GPU, please set `device_target=GPU`.
+#### evaluation on SST-2 dataset  
 ```
-bash scripts/run_standalone_td_ascend.sh
+bash scripts/run_standalone_td.sh
 ```
 The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:   
 ```bash
@@ -240,10 +268,10 @@ The best acc is 0.899305
 The best acc is 0.902777
 ...
 ```
-#### evaluation on MNLI dataset when running on Ascend
+#### evaluation on MNLI dataset
 Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
 ```
-bash scripts/run_standalone_td_ascend.sh
+bash scripts/run_standalone_td.sh
 ```
 The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:   
 ```
@@ -255,10 +283,10 @@ The best acc is 0.810355
 The best acc is 0.813929
 ...
 ```
-#### evaluation on QNLI dataset when running on Ascend
+#### evaluation on QNLI dataset
 Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
 ```
-bash scripts/run_standalone_td_ascend.sh
+bash scripts/run_standalone_td.sh
 ```
 The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:   
 ```
@@ -277,34 +305,34 @@ The best acc is 0.891176
 | Parameters                 | TinyBERT                                                   | TinyBERT                  |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              |                                                            |                           |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
-| uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
-| MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
-| Dataset                    | cn-wiki-128                                                | ImageNet                  |
-| Training Parameters        | src/gd_config.py                                           | src/config.py             |
+| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
+| uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
+| MindSpore Version          | 0.6.0                                                      | 0.7.0                     |
+| Dataset                    | cn-wiki-128                                                | cn-wiki-128               |
+| Training Parameters        | src/gd_config.py                                           | src/gd_config.py          |
 | Optimizer                  | AdamWeightDecay                                            | AdamWeightDecay           |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
-| outputs                    | probability                                                |                           |
-| Loss                       | 6.541583                                                   | 1.913                     |
-| Speed                      | 35.4ms/step                                                |                      |
-| Total time                 | 17.3h                                                      |                           |
-| Params (M)                 | 15M                                                        |                           |
-| Checkpoint for task distill| 74M(.ckpt file)                                            |                           |    
+| outputs                    | probability                                                | probability               |
+| Loss                       | 6.541583                                                   | 6.6915                    |
+| Speed                      | 35.4ms/step                                                | 98.654ms/step             |
+| Total time                 | 17.3h(3poch, 8p)                                           | 48h(3poch, 8p)            |
+| Params (M)                 | 15M                                                        | 15M                       |
+| Checkpoint for task distill| 74M(.ckpt file)                                            | 74M(.ckpt file)           |    
 
 #### Inference Performance
 
-| Parameters                 |                               |                           |                      |
-| -------------------------- | ----------------------------- | ------------------------- | -------------------- |
-| Model Version              |                               |                           |                      |
-| Resource                   | Huawei 910                    | NV SMX2 V100-32G          | Huawei 310           |
-| uploaded Date              | 08/20/2020                    | 05/22/2020                |                      |
-| MindSpore Version          | 0.6.0                         | 0.2.0                     | 0.2.0                | 
-| Dataset                    | SST-2,                        | ImageNet, 1.2W            | ImageNet, 1.2W       |
-| batch_size                 | 32                            | 130(8P)                   |                      |
-| Accuracy                   | 0.902777                      | ACC1[72.07%] ACC5[90.90%] |                      |
-| Speed                      |                               |                           |                      |
-| Total time                 |                               |                           |                      |
-| Model for inference        | 74M(.ckpt file)               |                           |                      |
+| Parameters                 |                               |                           |
+| -------------------------- | ----------------------------- | ------------------------- | 
+| Model Version              |                               |                           |
+| Resource                   | Huawei 910                    | NV SMX2 V100-32G          |
+| uploaded Date              | 08/20/2020                    | 08/24/2020                |
+| MindSpore Version          | 0.6.0                         | 0.7.0                     |
+| Dataset                    | SST-2,                        | SST-2                     |
+| batch_size                 | 32                            | 32                        |
+| Accuracy                   | 0.902777                      | 0.9086                    |
+| Speed                      |                               |                           |
+| Total time                 |                               |                           |
+| Model for inference        | 74M(.ckpt file)               | 74M(.ckpt file)           |
 
 # [Description of Random Situation](#contents)
 
