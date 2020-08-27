@@ -109,11 +109,9 @@ def test_grad_sens_parameter_type():
             out = self.matmul2(out, b)
             return out
 
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
-
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    strategy1 = ((4, 2), (2, 1))
-    strategy2 = ((2, 4), (4, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=64, global_rank=0)
+    strategy1 = ((8, 1), (1, 8))
+    strategy2 = ((8, 8), (8, 1))
     net = GradWrap(Net(strategy1, strategy2))
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
@@ -121,9 +119,14 @@ def test_grad_sens_parameter_type():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
     sens = Tensor(np.ones([128, 64]), dtype=ms.float32)
-    # net(x, y, b, sens)
     net.set_auto_parallel()
-    _executor.compile(net, x, y, b, sens)
+    _executor.compile(net, x, y, b, sens, phase='train', auto_parallel_mode=True)
+    x_layout = [[8, 8], [1, -1], [16, 32], [0], [1]]
+    y_layout = [[8, 8], [-1, 0], [32, 8], [0], [1]]
+    b_layout = [[8, 8], [0, -1], [8, 64], [0], [1]]
+    sens_layout = [[8, 8], [1, -1], [16, 64], [0], [1]]
+    expect_dict = {'x': x_layout, 'y': y_layout, 'b': b_layout, 'sens': sens_layout}
+    assert net.parameter_layout_dict == expect_dict
 
 
 def test_grad_sens_tensor_type():
