@@ -25,6 +25,7 @@ namespace dataset {
 
 RemovalPass::RemovalNodes::RemovalNodes() : is_caching_(false) {}
 
+#ifndef ENABLE_ANDROID
 // Identifies the subtree below this node as a cached descendant tree.
 Status RemovalPass::RemovalNodes::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
   *modified = false;
@@ -40,6 +41,7 @@ Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<CacheOp> node, bool 
   is_caching_ = false;
   return Status::OK();
 }
+#endif
 
 // Perform ShuffleOp removal check.
 Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {

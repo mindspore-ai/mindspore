@@ -165,12 +165,14 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
+#ifdef ENABLE_PYTHON
   static Status CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage, int64_t *count,
                                int64_t *numClasses);
 
   // Get str-to-int mapping from label name to index
   static Status GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
                                  std::map<std::string, int32_t> *output_class_indexing);
+#endif
 
   /// \brief Base-class override for NodePass visitor acceptor
   /// \param[in] p Pointer to the NodePass to be accepted

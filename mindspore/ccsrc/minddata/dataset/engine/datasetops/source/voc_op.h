@@ -188,6 +188,7 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
+#ifdef ENABLE_PYTHON
   // @param const std::string &dir - VOC dir path
   // @param const std::string &task_type - task type of reading voc job
   // @param const std::string &task_mode - task mode of reading voc job
@@ -204,6 +205,7 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param std::map<std::string, int32_t> *output_class_indexing - output class index of VOCDataset
   static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                  const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing);
+#endif
 
   /// \brief Base-class override for NodePass visitor acceptor
   /// \param[in] p Pointer to the NodePass to be accepted

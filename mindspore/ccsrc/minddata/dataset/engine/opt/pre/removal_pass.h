@@ -42,6 +42,7 @@ class RemovalPass : public TreePass {
     /// \brief Destructor
     ~RemovalNodes() = default;
 
+#ifndef ENABLE_ANDROID
     /// \brief Identifies the subtree below this node as a cached descendant tree.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
@@ -53,6 +54,7 @@ class RemovalPass : public TreePass {
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The error code return
     Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+#endif
 
     /// \brief Perform ShuffleOp removal check
     /// \param[in] node The node being visited

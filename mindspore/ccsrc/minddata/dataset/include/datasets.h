@@ -30,7 +30,9 @@
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/type_id.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/text/vocab.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -40,7 +42,9 @@ class DatasetOp;
 class DataSchema;
 class Tensor;
 class TensorShape;
+#ifndef ENABLE_ANDROID
 class Vocab;
+#endif
 
 namespace api {
 
@@ -57,14 +61,20 @@ class CocoDataset;
 class CSVDataset;
 class CsvBase;
 class ImageFolderDataset;
+#ifndef ENABLE_ANDROID
 class ManifestDataset;
+#endif
 class MnistDataset;
 class RandomDataset;
 class TextFileDataset;
+#ifndef ENABLE_ANDROID
 class VOCDataset;
+#endif
 // Dataset Op classes (in alphabetical order)
 class BatchDataset;
+#ifndef ENABLE_ANDROID
 class BuildVocabDataset;
+#endif
 class ConcatDataset;
 class MapDataset;
 class ProjectDataset;
@@ -210,6 +220,7 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
                                                 const std::set<std::string> &extensions = {},
                                                 const std::map<std::string, int32_t> &class_indexing = {});
 
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a ManifestDataset
 /// \notes The generated dataset has two columns ['image', 'label']
 /// \param[in] dataset_file The dataset file to be read
@@ -224,6 +235,7 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                           const std::map<std::string, int32_t> &class_indexing = {},
                                           bool decode = false);
+#endif
 
 /// \brief Function to create a MnistDataset
 /// \notes The generated dataset has two columns ['image', 'label']
@@ -276,6 +288,7 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
                                           ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
                                           int32_t shard_id = 0);
 
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a VOCDataset
 /// \notes The generated dataset has multi-columns :
 ///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
@@ -293,6 +306,7 @@ std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::strin
                                 const std::string &mode = "train",
                                 const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+#endif
 
 /// \brief Function to create a ZipDataset
 /// \notes Applies zip to the dataset
@@ -356,6 +370,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
+#ifndef ENABLE_ANDROID
   /// \brief Function to create a Vocab from source dataset
   /// \notes Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
   ///    which contains top_k most frequent words (if top_k is specified)
@@ -373,6 +388,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                     const std::pair<int64_t, int64_t> &freq_range = {0, kDeMaxFreq},
                                     int64_t top_k = kDeMaxTopk, const std::vector<std::string> &special_tokens = {},
                                     bool special_first = true);
+#endif
 
   /// \brief Function to create a ConcatDataset
   /// \notes Concat the datasets in the input
@@ -753,6 +769,7 @@ class ImageFolderDataset : public Dataset {
   std::set<std::string> exts_;
 };
 
+#ifndef ENABLE_ANDROID
 class ManifestDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -777,6 +794,7 @@ class ManifestDataset : public Dataset {
   std::map<std::string, int32_t> class_index_;
   std::shared_ptr<SamplerObj> sampler_;
 };
+#endif
 
 class MnistDataset : public Dataset {
  public:
@@ -873,6 +891,7 @@ class TextFileDataset : public Dataset {
   ShuffleMode shuffle_;
 };
 
+#ifndef ENABLE_ANDROID
 class VOCDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -904,6 +923,7 @@ class VOCDataset : public Dataset {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
+#endif
 
 // DERIVED DATASET CLASSES FOR DATASET OPS
 // (In alphabetical order)
@@ -933,6 +953,7 @@ class BatchDataset : public Dataset {
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 
+#ifndef ENABLE_ANDROID
 class BuildVocabDataset : public Dataset {
  public:
   /// \brief Constructor
@@ -959,6 +980,7 @@ class BuildVocabDataset : public Dataset {
   std::vector<std::string> special_tokens_;
   bool special_first_;
 };
+#endif
 
 class ConcatDataset : public Dataset {
  public:

@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_TASK_MANAGER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_TASK_MANAGER_H_
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
 #include <semaphore.h>
 #include <signal.h>  // for sig_atomic_t
 #endif
@@ -92,7 +92,7 @@ class TaskManager : public Service {
   static void InterruptMaster(const Status &rc = Status::OK());
 
   static void WakeUpWatchDog() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
     TaskManager &tm = TaskManager::GetInstance();
     (void)sem_post(&tm.sem_);
 #endif
@@ -113,7 +113,7 @@ class TaskManager : public Service {
   std::shared_ptr<Task> master_;
   List<Task> lru_;
   List<Task> free_lst_;
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
   sem_t sem_;
 #endif
   TaskGroup *watchdog_grp_;

@@ -62,7 +62,8 @@ option(BUILD_CONVERTER "if build converter" on)
 option(ENABLE_FP16 "if build fp16 ops" off)
 option(SUPPORT_GPU "if support gpu" off)
 option(OFFLINE_COMPILE "if offline compile OpenCL kernel" off)
-option(BUILD_MINDDATA "" off)
+set(BUILD_MINDDATA "off" CACHE STRING "off, lite, or full")
+option(BUILD_MINDDATA_EXAMPLE "" on)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 add_compile_definitions(USE_ANDROID_LOG)
@@ -172,7 +173,9 @@ if (BUILD_DEVICE)
     endif ()
 endif ()
 
-if (BUILD_MINDDATA)
+if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full")
+    # TODO: add sentencepiece dependency
+    #include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
     # opencv
     set(OpenCV_DIR ${TOP_DIR}/third_party/opencv/build)
     find_package(OpenCV REQUIRED)

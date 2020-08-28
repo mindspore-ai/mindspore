@@ -16,7 +16,7 @@
 #include "minddata/dataset/util/services.h"
 
 #include <limits.h>
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
 #include <sys/syscall.h>
 #else
 #include <stdlib.h>
@@ -31,7 +31,7 @@ namespace dataset {
 std::unique_ptr<Services> Services::instance_ = nullptr;
 std::once_flag Services::init_instance_flag_;
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
 std::string Services::GetUserName() {
   char user[LOGIN_NAME_MAX];
   (void)getlogin_r(user, sizeof(user));

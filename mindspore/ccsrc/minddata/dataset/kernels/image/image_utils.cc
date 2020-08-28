@@ -187,7 +187,7 @@ void JpegSetSource(j_decompress_ptr cinfo, const void *data, int64_t datasize) {
     (*cinfo->mem->alloc_small)(reinterpret_cast<j_common_ptr>(cinfo), JPOOL_PERMANENT, sizeof(struct jpeg_source_mgr)));
   cinfo->src->init_source = JpegInitSource;
   cinfo->src->fill_input_buffer = JpegFillInputBuffer;
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(ENABLE_ARM32)
   cinfo->src->skip_input_data = reinterpret_cast<void (*)(j_decompress_ptr, long)>(JpegSkipInputData);
 #else
   cinfo->src->skip_input_data = JpegSkipInputData;

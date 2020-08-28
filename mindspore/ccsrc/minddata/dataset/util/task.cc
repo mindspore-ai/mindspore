@@ -17,6 +17,9 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "utils/log_adapter.h"
+#if defined(__ANDROID__) || defined(ANDROID)
+#include "minddata/dataset/util/services.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -29,6 +32,10 @@ void Task::operator()() {
   id_ = this_thread::get_id();
   std::stringstream ss;
   ss << id_;
+#if defined(__ANDROID__) || defined(ANDROID)
+  // The thread id in Linux may be duplicate
+  ss << Services::GetUniqueID();
+#endif
   MS_LOG(DEBUG) << my_name_ << " Thread ID " << ss.str() << " Started.";
   try {
     // Previously there is a timing hole where the thread is spawn but hit error immediately before we can set

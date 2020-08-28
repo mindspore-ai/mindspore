@@ -48,6 +48,7 @@ class EpochInjectionPass : public TreePass {
     /// \return Status The error code return
     Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified) override;
 
+#ifndef ENABLE_ANDROID
     /// \brief Performs finder work for BuildSentencePieceVocabOp that has special rules about epoch control injection.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
@@ -60,6 +61,7 @@ class EpochInjectionPass : public TreePass {
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The error code return
     Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+#endif
 
     /// \brief Register the DeviceQueueOp for further action.
     /// \param[in] node The node being visited

@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 // Register the custom signal handlers
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
 extern void RegisterHandlers();
 
 // A signal handler for SIGINT.  Drives interrupt to watchdog
