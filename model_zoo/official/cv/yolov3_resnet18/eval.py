@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Evaluation for yolo_v3"""
+"""Evaluation for yolov3-resnet18"""
 import os
 import argparse
 import time

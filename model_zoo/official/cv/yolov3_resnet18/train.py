@@ -24,6 +24,7 @@ Note if mindrecord_dir isn't empty, it will use mindrecord_dir rather than image
 
 import os
 import argparse
+import ast
 import numpy as np
 import mindspore.nn as nn
 from mindspore import context, Tensor
@@ -61,21 +62,21 @@ def init_net_param(network, init_value='ones'):
 
 def main():
     parser = argparse.ArgumentParser(description="YOLOv3 train")
-    parser.add_argument("--only_create_dataset", type=bool, default=False, help="If set it true, only create "
-                                                                                "Mindrecord, default is false.")
-    parser.add_argument("--distribute", type=bool, default=False, help="Run distribute, default is false.")
+    parser.add_argument("--only_create_dataset", type=ast.literal_eval, default=False,
+                        help="If set it true, only create Mindrecord, default is False.")
+    parser.add_argument("--distribute", type=ast.literal_eval, default=False, help="Run distribute, default is False.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate, default is 0.001.")
     parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink")
-    parser.add_argument("--epoch_size", type=int, default=10, help="Epoch size, default is 10")
+    parser.add_argument("--epoch_size", type=int, default=50, help="Epoch size, default is 50")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained checkpoint file path")
     parser.add_argument("--pre_trained_epoch_size", type=int, default=0, help="Pretrained epoch size")
     parser.add_argument("--save_checkpoint_epochs", type=int, default=5, help="Save checkpoint epochs, default is 5.")
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
     parser.add_argument("--mindrecord_dir", type=str, default="./Mindrecord_train",
-                        help="Mindrecord directory. If the mindrecord_dir is empty, it wil generate mindrecord file by"
+                        help="Mindrecord directory. If the mindrecord_dir is empty, it wil generate mindrecord file by "
                              "image_dir and anno_path. Note if mindrecord_dir isn't empty, it will use mindrecord_dir "
                              "rather than image_dir and anno_path. Default is ./Mindrecord_train")
     parser.add_argument("--image_dir", type=str, default="", help="Dataset directory, "

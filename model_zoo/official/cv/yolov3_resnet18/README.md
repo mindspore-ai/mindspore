@@ -96,7 +96,7 @@ After installing MindSpore via the official website, you can start training and 
 ## [Script and Sample Code](#contents)
 
 ```
-└── model_zoo
+└── cv
     ├── README.md                           // descriptions about all the models
     └── yolov3_resnet18        
         ├── README.md                       // descriptions about yolov3_resnet18
@@ -118,9 +118,9 @@ After installing MindSpore via the official website, you can start training and 
   ```
   Major parameters in train.py and config.py as follows:
 
-    evice_num: Use device nums, default is 1.
+    device_num: Use device nums, default is 1.
     lr: Learning rate, default is 0.001.
-    epoch_size: Epoch size, default is 10.
+    epoch_size: Epoch size, default is 50.
     batch_size: Batch size, default is 32.
     pre_trained: Pretrained Checkpoint file path.
     pre_trained_epoch_size: Pretrained epoch size.
@@ -201,7 +201,7 @@ Note the precision and recall values are results of two-classification(person an
 
 | Parameters                 | Ascend                                                      | 
 | -------------------------- | ----------------------------------------------------------- |
-| Model Version              | Inception V1                                                |
+| Model Version              | YOLOv3_Resnet18 V1                                          |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | 
 | uploaded Date              | 06/01/2020 (month/day/year)                                 | 
 | MindSpore Version          | 0.2.0-alpha                                                 | 
@@ -220,7 +220,7 @@ Note the precision and recall values are results of two-classification(person an
 
 | Parameters          | Ascend                                          | 
 | ------------------- | ----------------------------------------------- |
-| Model Version       | Inception V1                                    | 
+| Model Version       | YOLOv3_Resnet18 V1                              | 
 | Resource            | Ascend 910                                      |
 | Uploaded Date       | 06/01/2020 (month/day/year)                     |
 | MindSpore Version   | 0.2.0-alpha                                     |

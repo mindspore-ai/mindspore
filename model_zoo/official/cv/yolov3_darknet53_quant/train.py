@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""YoloV3 train."""
+"""YoloV3-Darknet53-Quant train."""
 
 import os
 import time
@@ -32,7 +32,7 @@ from mindspore.train.quant import quant
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
-from src.util import AverageMeter, load_backbone, get_param_groups
+from src.util import AverageMeter, get_param_groups
 from src.lr_scheduler import warmup_step_lr, warmup_cosine_annealing_lr, \
     warmup_cosine_annealing_lr_V2, warmup_cosine_annealing_lr_sample
 from src.yolo_dataset import create_yolo_dataset
@@ -52,53 +52,60 @@ def parse_args():
     parser = argparse.ArgumentParser('mindspore coco training')
 
     # dataset related
-    parser.add_argument('--data_dir', type=str, default='', help='train data dir')
-    parser.add_argument('--per_batch_size', default=32, type=int, help='batch size for per gpu')
+    parser.add_argument('--data_dir', type=str, default='', help='Train data dir. Default: ""')
+    parser.add_argument('--per_batch_size', default=16, type=int, help='Batch size for per device. Default: 16')
 
     # network related
-    parser.add_argument('--pretrained_backbone', default='', type=str, help='model_path, local pretrained backbone'
-                                                                            ' model to load')
-    parser.add_argument('--resume_yolov3', default='', type=str, help='path of pretrained yolov3')
+    parser.add_argument('--resume_yolov3', default='', type=str,\
+                       help='The ckpt file of yolov3-darknet53, which used to yolov3-darknet53 quant. Default: ""')
 
     # optimizer and lr related
-    parser.add_argument('--lr_scheduler', default='exponential', type=str,
-                        help='lr-scheduler, option type: exponential, cosine_annealing')
-    parser.add_argument('--lr', default=0.001, type=float, help='learning rate of the training')
-    parser.add_argument('--lr_epochs', type=str, default='220,250', help='epoch of lr changing')
-    parser.add_argument('--lr_gamma', type=float, default=0.1,
-                        help='decrease lr by a factor of exponential lr_scheduler')
-    parser.add_argument('--eta_min', type=float, default=0., help='eta_min in cosine_annealing scheduler')
-    parser.add_argument('--T_max', type=int, default=320, help='T-max in cosine_annealing scheduler')
-    parser.add_argument('--max_epoch', type=int, default=320, help='max epoch num to train the model')
-    parser.add_argument('--warmup_epochs', default=0, type=float, help='warmup epoch')
-    parser.add_argument('--weight_decay', type=float, default=0.0005, help='weight decay')
-    parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+    parser.add_argument('--lr_scheduler', default='exponential', type=str,\
+                        help='Learning rate scheduler, option type: exponential, '
+                             'cosine_annealing. Default: exponential')
+    parser.add_argument('--lr', default=0.012, type=float, help='Learning rate of the training')
+    parser.add_argument('--lr_epochs', type=str, default='92,105',\
+                       help='Epoch of lr changing. Default: 92,105')
+    parser.add_argument('--lr_gamma', type=float, default=0.1,\
+                       help='Decrease lr by a factor of exponential lr_scheduler. Default: 0.1')
+    parser.add_argument('--eta_min', type=float, default=0.,\
+                       help='Eta_min in cosine_annealing scheduler. Default: 0.')
+    parser.add_argument('--T_max', type=int, default=135,\
+                       help='T-max in cosine_annealing scheduler. Default: 135')
+    parser.add_argument('--max_epoch', type=int, default=135,\
+                       help='Max epoch num to train the model. Default: 135')
+    parser.add_argument('--warmup_epochs', type=float, default=0, help='Warmup epochs. Default: 0')
+    parser.add_argument('--weight_decay', type=float, default=0.0005, help='Weight decay. Default: 0.0005')
+    parser.add_argument('--momentum', type=float, default=0.9, help='Momentum. Default: 0.9')
 
     # loss related
-    parser.add_argument('--loss_scale', type=int, default=1024, help='static loss scale')
-    parser.add_argument('--label_smooth', type=int, default=0, help='whether to use label smooth in CE')
-    parser.add_argument('--label_smooth_factor', type=float, default=0.1, help='smooth strength of original one-hot')
+    parser.add_argument('--loss_scale', type=int, default=1024, help='Static loss scale. Default: 1024')
+    parser.add_argument('--label_smooth', type=int, default=0, help='Whether to use label smooth in CE. Default: 0')
+    parser.add_argument('--label_smooth_factor', type=float, default=0.1,\
+                       help='Smooth strength of original one-hot. Default: 0.1')
 
     # logging related
-    parser.add_argument('--log_interval', type=int, default=100, help='logging interval')
-    parser.add_argument('--ckpt_path', type=str, default='outputs/', help='checkpoint save location')
-    parser.add_argument('--ckpt_interval', type=int, default=None, help='ckpt_interval')
-    parser.add_argument('--is_save_on_master', type=int, default=1, help='save ckpt on master or all rank')
+    parser.add_argument('--log_interval', type=int, default=100, help='Logging interval steps. Default: 100')
+    parser.add_argument('--ckpt_path', type=str, default='outputs/',\
+                       help='Checkpoint save location. Default: "outputs/"')
+    parser.add_argument('--ckpt_interval', type=int, default=None, help='Save checkpoint interval. Default: None')
+    parser.add_argument('--is_save_on_master', type=int, default=1,\
+                       help='Save ckpt on master or all rank, 1 for master, 0 for all ranks. Default: 1')
 
     # distributed related
-    parser.add_argument('--is_distributed', type=int, default=1, help='if multi device')
-    parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
-    parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
-
-    # roma obs
-    parser.add_argument('--train_url', type=str, default="", help='train url')
+    parser.add_argument('--is_distributed', type=int, default=0,\
+                       help='Distribute train or not, 1 for yes, 0 for no. Default: 0')
+    parser.add_argument('--rank', type=int, default=0, help='Local rank of distributed, Default: 0')
+    parser.add_argument('--group_size', type=int, default=1, help='World size of device, Default: 1')
 
     # profiler init
-    parser.add_argument('--need_profiler', type=int, default=0, help='whether use profiler')
+    parser.add_argument('--need_profiler', type=int, default=0,\
+                       help='Whether use profiler, 1 for yes, 0 for no, Default: 0')
 
     # reset default config
-    parser.add_argument('--training_shape', type=str, default="", help='fix training shape')
-    parser.add_argument('--resize_rate', type=int, default=None, help='resize rate for multi-scale training')
+    parser.add_argument('--training_shape', type=str, default="", help='Fix training shape. Default: ""')
+    parser.add_argument('--resize_rate', type=int, default=None,\
+                       help='Resize rate for multi-scale training. Default: None')
 
     args, _ = parser.parse_known_args()
     if args.lr_scheduler == 'cosine_annealing' and args.max_epoch > args.T_max:
@@ -141,7 +148,7 @@ def train():
     args.logger.save_args(args)
 
     if args.need_profiler:
-        from mindinsight.profiler.profiling import Profiler
+        from mindspore.profiler.profiling import Profiler
         profiler = Profiler(output_path=args.outputs_dir, is_detail=True, is_show_op_path=True)
 
     loss_meter = AverageMeter('loss')
@@ -158,12 +165,6 @@ def train():
     network = YOLOV3DarkNet53(is_training=True)
     # default is kaiming-normal
     default_recurisive_init(network)
-
-    if args.pretrained_backbone:
-        network = load_backbone(network, args.pretrained_backbone, args)
-        args.logger.info('load pre-trained backbone {} into network'.format(args.pretrained_backbone))
-    else:
-        args.logger.info('Not load pre-trained backbone, please be careful')
 
     if args.resume_yolov3:
         param_dict = load_checkpoint(args.resume_yolov3)
