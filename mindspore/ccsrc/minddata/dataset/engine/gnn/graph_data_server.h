@@ -164,6 +164,8 @@ class GraphDataGrpcServer : public GrpcAsyncServer {
   GraphDataGrpcServer(const std::string &host, int32_t port, GraphDataServiceImpl *service_impl)
       : GrpcAsyncServer(host, port), service_impl_(service_impl) {}
 
+  ~GraphDataGrpcServer() = default;
+
   Status RegisterService(grpc::ServerBuilder *builder) {
     builder->RegisterService(&svc_);
     return Status::OK();
