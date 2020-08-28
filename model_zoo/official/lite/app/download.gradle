@@ -1,0 +1,73 @@
+/**
+ * To download necessary library from HuaWei server.
+ * Including mindspore-lite .so file, opencv .so file and model file.
+ * The libraries can be downloaded manually.
+ */
+
+
+def targetModelFile = "src/main/assets/model/mobilenetv2.ms"
+def openCVLibrary_arm64 = "libs/arm64-v8a/libopencv_java4.so"
+def mindSporeLibrary_arm64 = "libs/arm64-v8a/libmindspore-lite.so"
+
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms"
+def opencvDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/opencv%204.4.0/libopencv_java4.so"
+def mindsporeLiteDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so"
+
+
+task downloadModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelDownloadUrl}"
+    }
+    sourceUrl = "${modelDownloadUrl}"
+    target = file("${targetModelFile}")
+}
+
+
+task downloadOpenCVLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${opencvDownloadUrl}"
+    }
+    sourceUrl = "${opencvDownloadUrl}"
+    target = file("${openCVLibrary_arm64}")
+}
+
+task downloadMindSporeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${mindsporeLiteDownloadUrl}"
+    }
+    sourceUrl = "${mindsporeLiteDownloadUrl}"
+    target = file("${mindSporeLibrary_arm64}")
+}
+
+/*
+ * Using preBuild to download mindspore library, opencv library and model file.
+ * Run before gradle build.
+ */
+if (file("libs/arm64-v8a/libmindspore-lite.so").exists()){
+    downloadMindSporeLibrary.enabled = false
+}
+
+if (file("libs/arm64-v8a/libopencv_java4.so.so").exists()){
+    downloadOpenCVLibrary.enabled = false
+}
+if (file("src/main/assets/model/mobilenetv2.ms").exists()){
+    downloadModelFile.enabled = false
+}
+
+preBuild.dependsOn downloadMindSporeLibrary
+preBuild.dependsOn downloadOpenCVLibrary
+preBuild.dependsOn downloadModelFile
+
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}
