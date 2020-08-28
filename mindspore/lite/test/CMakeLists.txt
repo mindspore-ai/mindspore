@@ -230,6 +230,7 @@ if(BUILD_CONVERTER)
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${TOP_DIR}/mindspore/core/utils/flags.cc
+            ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
             ${LITE_DIR}/tools/converter/graphdef_transform.cc

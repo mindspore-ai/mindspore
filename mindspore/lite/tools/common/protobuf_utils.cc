@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_parse_utils.h"
+#include "tools/common/protobuf_utils.h"
 #include <fstream>
 #include <string>
 #include "google/protobuf/io/zero_copy_stream_impl.h"
@@ -37,15 +37,14 @@ bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded
   return proto->ParseFromCodedStream(coded_stream);
 }
 
-STATUS ReadProtoFromText(const char *file,
-                         google::protobuf::Message *message) {
+STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
   if (file == nullptr || message == nullptr) {
     return RET_ERROR;
   }
 
   std::string realPath = RealPath(file);
   if (realPath.empty()) {
-    MS_LOG(ERROR) << "Proto file path " << file <<" is  not valid";
+    MS_LOG(ERROR) << "Proto file path " << file << " is  not valid";
     return RET_ERROR;
   }
 
@@ -67,8 +66,7 @@ STATUS ReadProtoFromText(const char *file,
   return RET_OK;
 }
 
-STATUS ReadProtoFromBinaryFile(const char *file,
-                               google::protobuf::Message *message) {
+STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message) {
   if (file == nullptr || message == nullptr) {
     return RET_ERROR;
   }
@@ -100,4 +98,3 @@ STATUS ReadProtoFromBinaryFile(const char *file,
 }
 }  // namespace lite
 }  // namespace mindspore
-
