@@ -35,10 +35,10 @@ do
     end=`expr $start \+ $core_gap`
     cmdopt=$start"-"$end
 
-    rm -rf LOG$i
-    mkdir ./LOG$i
-    cp  *.py ./LOG$i
-    cd ./LOG$i || exit
+    rm -rf train_parallel$i
+    mkdir ./train_parallel$i
+    cp  *.py ./train_parallel$i
+    cd ./train_parallel$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
 
     env > env.log

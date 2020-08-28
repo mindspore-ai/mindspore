@@ -20,7 +20,7 @@
 
 # [InceptionV3 Description](#contents)
 
-InceptionV3 by Google is the 3rd version in a series of Deep Learning Convolutional Architectures.
+InceptionV3 by Google is the 3rd version in a series of Deep Learning Convolutional Architectures. Inception v3 mainly focuses on burning less computational power by modifying the previous Inception architectures. This idea was proposed in the paper Rethinking the Inception Architecture for Computer Vision, published in 2015.
 
 [Paper](https://arxiv.org/pdf/1512.00567.pdf) Min Sun, Ali Farhadi, Steve Seitz. Ranking Domain-Specific Highlights by Analyzing Edited Videos[J]. 2014.
 
@@ -36,8 +36,8 @@ The overall network architecture of InceptionV3 is show below:
 Dataset used can refer to paper.
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
-	- Train: 120G, 1.2W images
-	- Test: 5G, 50000 images
+	- Train: 120G, 1200k images
+	- Test: 5G, 50k images
 - Data format: RGB images.
 	- Note: Data will be processed in src/dataset.py 
 
@@ -64,21 +64,21 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```shell
 .
-└─inceptionv3      
+└─Inception-v3      
   ├─README.md
   ├─scripts      
-  │	├─run_standalone_train.sh         		  # launch standalone training with ascend platform(1p)
-  │ ├─run_standalone_train_for_gpu.sh         # launch standalone training with gpu platform(1p)
-  │ ├─run_distribute_train.sh         		  # launch distributed training with ascend platform(8p)
-  │ ├─run_distribute_train_for_gpu.sh         # launch distributed training with gpu platform(8p)
-  │ ├─run_eval.sh                     		  # launch evaluating with ascend platform
-  │ └─run_eval_for_gpu.sh                     # launch evaluating with gpu platform
+	├─run_standalone_train.sh         		  # launch standalone training with ascend platform(1p)
+    ├─run_standalone_train_gpu.sh             # launch standalone training with gpu platform(1p)
+	├─run_distribute_train.sh         		  # launch distributed training with ascend platform(8p)
+    ├─run_distribute_train_gpu.sh             # launch distributed training with gpu platform(8p)
+	├─run_eval.sh                     		  # launch evaluating with ascend platform
+    └─run_eval_gpu.sh                         # launch evaluating with gpu platform
   ├─src
-  │  ├─config.py                       # parameter configuration
-  │  ├─dataset.py                      # data preprocessing
-  │  ├─inception_v3.py                 # network definition
-  │  ├─loss.py                         # Customized CrossEntropy loss function
-  │  ├─lr_generator.py                 # learning rate generator
+    ├─config.py                       # parameter configuration
+    ├─dataset.py                      # data preprocessing
+    ├─inception_v3.py                 # network definition
+    ├─loss.py                         # Customized CrossEntropy loss function
+    ├─lr_generator.py                 # learning rate generator
   ├─eval.py                           # eval net
   ├─export.py                         # convert checkpoint
   └─train.py                          # train net
@@ -88,27 +88,32 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```python
 Major parameters in train.py and config.py are:   
-'random_seed': 1,                # fix random seed
-'rank': 0,                       # local rank of distributed
-'group_size': 1,                 # world size of distributed
-'work_nums': 8,                  # number of workers to read the data
-'decay_method': 'cosine',        # learning rate scheduler mode
-"loss_scale": 1,                 # loss scale
-'batch_size': 128,               # input batchsize
-'epoch_size': 250,               # total epoch numbers
-'num_classes': 1000,             # dataset class numbers
-'smooth_factor': 0.1,            # label smoothing factor
-'aux_factor': 0.2,               # loss factor of aux logit
-'lr_init': 0.00004,              # initiate learning rate
-'lr_max': 0.4,                   # max bound of learning rate
-'lr_end': 0.000004,               # min bound of learning rate
-'warmup_epochs': 1,              # warmup epoch numbers
-'weight_decay': 0.00004,         # weight decay
-'momentum': 0.9,                 # momentum
-'opt_eps': 1.0,                  # epsilon
-'keep_checkpoint_max': 100,      # max numbers to keep checkpoints
-'ckpt_path': './checkpoint/',    # save checkpoint path
-'is_save_on_master': 1           # save checkpoint on rank0, distributed parameters
+'random_seed'                # fix random seed
+'rank'                       # local rank of distributed
+'group_size'                 # world size of distributed
+'work_nums'                  # number of workers to read the data
+'decay_method'               # learning rate scheduler mode
+"loss_scale"                 # loss scale
+'batch_size'                 # input batchsize
+'epoch_size'                 # total epoch numbers
+'num_classes'                # dataset class numbers
+'smooth_factor'              # label smoothing factor
+'aux_factor'                 # loss factor of aux logit
+'lr_init'                    # initiate learning rate
+'lr_max'                     # max bound of learning rate
+'lr_end'                     # min bound of learning rate
+'warmup_epochs'              # warmup epoch numbers
+'weight_decay'               # weight decay
+'momentum'                   # momentum
+'opt_eps'                    # epsilon
+'keep_checkpoint_max'        # max numbers to keep checkpoints
+'ckpt_path'                  # save checkpoint path
+'is_save_on_master'          # save checkpoint on rank0, distributed parameters
+'dropout_keep_prob'          # the keep rate, between 0 and 1, e.g. keep_prob = 0.9, means dropping out 10% of input units
+'has_bias'                   # specifies whether the layer uses a bias vector. 
+'amp_level'                  # option for argument `level` in `mindspore.amp.build_train_network`, level for mixed 
+                             # precision training. Supports [O0, O2, O3].
+
 ```
 
 ## [Training process](#contents)
@@ -125,13 +130,15 @@ sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
 sh run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
+> Notes: 
+    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
 - GPU:
 ```
 # distribute training example(8p)
-sh run_distribute_train_for_gpu.sh DATA_DIR 
+sh run_distribute_train_gpu.sh DATA_DIR 
 # standalone training
-sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
+sh run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
 ```
 
 ### Launch
@@ -143,10 +150,16 @@ sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
       GPU: python train.py --dataset_path /dataset/train --platform GPU
 
   shell:
-      # distributed training example(8p) for GPU
-	  sh scripts/run_distribute_train_for_gpu.sh /dataset/train
-	  # standalone training example for GPU
-      sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
+      Ascend:
+      # distribute training example(8p)
+      sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+      # standalone training
+      sh run_standalone_train.sh DEVICE_ID DATA_PATH
+	  GPU:
+      # distributed training example(8p)
+	  sh scripts/run_distribute_train_gpu.sh /dataset/train
+	  # standalone training example
+      sh scripts/run_standalone_train_gpu.sh 0 /dataset/train
 ```
 
 ### Result
@@ -166,7 +179,7 @@ Epoch time: 160917.911, per step time: 128.631
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
 - Ascend: sh run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-- GPU: sh run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+- GPU: sh run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 
 ### Launch
 
@@ -178,14 +191,14 @@ You can start training using python or shell scripts. The usage of shell scripts
 
   shell:
       Ascend: sh run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-      GPU: sh run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      GPU: sh run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process. 
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the followings in `log.txt`. 
+Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`. 
 
 ``` 
 metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
@@ -197,21 +210,23 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 
 ### Training Performance
 
-| Parameters                 | InceptionV3                                                |                           |
-| -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Model Version              |                                                            |                           |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
-| uploaded Date              | 08/21/2020                                                 | 08/21/2020                |
-| MindSpore Version          | 0.6.0-beta                                                 | 0.6.0-beta                     |
-| Training Parameters        | src/config.py                                              | src/config.py             |
-| Optimizer                  | RMSProp                                                    | RMSProp                   |
-| Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
-| outputs                    | probability                                                | probability               |
-| Loss                       | 1.98                                                       | 1.98                      |
-| Accuracy                   | ACC1[78.8%] ACC5[94.2%]                                    | ACC1[78.7%] ACC5[94.1%]   |
-| Total time                 | 11h                                                        | 72h                       |
-| Params (M)                 | 103M                                                       | 103M                      |
-| Checkpoint for Fine tuning | 313M                                                       | 312.41M                   |
+| Parameters                 | InceptionV3                                    |                           |
+| -------------------------- | ---------------------------------------------- | ------------------------- |
+| Model Version              |                                                |                           |
+| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G   | NV SMI V100-16G(PCIE),cpu:2.10GHz 96cores, memory:250G           |
+| uploaded Date              | 08/21/2020                                     | 08/21/2020                |
+| MindSpore Version          | 0.6.0-beta                                     | 0.6.0-beta                |
+| Training Parameters        | src/config.py                                  | src/config.py             |
+| Optimizer                  | RMSProp                                        | RMSProp                   |
+| Loss Function              | SoftmaxCrossEntropy                            | SoftmaxCrossEntropy       |
+| outputs                    | probability                                    | probability               |
+| Loss                       | 1.98                                           | 1.98                      |
+| Accuracy (8p)                  | ACC1[78.8%] ACC5[94.2%]                        | ACC1[78.7%] ACC5[94.1%]   |
+| Total time (8p)                | 11h                                            | 72h                       |
+| Params (M)                 | 103M                                           | 103M                      |
+| Checkpoint for Fine tuning | 313M                                           | 312M                      |
+| Scripts                    | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
+
 
 #### Inference Performance
 
@@ -221,7 +236,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 08/22/2020 (month/day/year) |
 | MindSpore Version   | 0.6.0-beta                  |
-| Dataset             | 50,000 images               |
+| Dataset             | 50k images                  |
 | batch_size          | 128                         |
 | outputs             | probability                 |
 | Accuracy            | ACC1[78.8%] ACC5[94.2%]     |
