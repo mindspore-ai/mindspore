@@ -209,7 +209,7 @@ int OpenCLRuntime::Init() {
     return RET_ERROR;
   }
 
-  allocator_ = new (std::nothrow) OpenCLAllocator();
+  allocator_ = new (std::nothrow) OpenCLAllocator(this);
   if (allocator_ == nullptr) {
     MS_LOG(ERROR) << "Command OpenCL allocator failed!";
     return RET_ERROR;

@@ -40,11 +40,13 @@ struct OpenclMemory {
   OpenCLMemoryType mem_type{MS_HOST_BUFFER | MS_CL_BUFFER};
 };
 
+class OpenCLRuntime;
 enum class MemType : char { SVM, BUF, IMG };
 
 class OpenCLAllocator : public Allocator {
  public:
   OpenCLAllocator();
+  explicit OpenCLAllocator(OpenCLRuntime *ocl_runtime);
   ~OpenCLAllocator() override;
   void SetContext(const AllocatorContext &ctx) override;
   void *Malloc(size_t size) override;
@@ -86,6 +88,7 @@ class OpenCLAllocator : public Allocator {
   // 6 is empirical value
   int shift_factor_ = 6;
   bool lock_flag_ = false;
+  OpenCLRuntime *ocl_runtime_{nullptr};
 };
 
 }  // namespace mindspore::lite::opencl

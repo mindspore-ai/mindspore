@@ -276,11 +276,6 @@ int SubGraphOpenCLKernel::UnInit() {
       delete op;
     }
   }
-  for (const auto parameter : in_parameters_) {
-    if (parameter != nullptr) {
-      delete parameter;
-    }
-  }
   return RET_OK;
 }
 
