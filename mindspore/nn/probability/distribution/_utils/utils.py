@@ -244,8 +244,8 @@ def logits_to_probs(logits, is_binary=False):
         is_binary (bool)
     """
     if is_binary:
-        return nn.sigmoid()(logits)
-    return nn.softmax(axis=-1)(logits)
+        return nn.Sigmoid()(logits)
+    return nn.Softmax(axis=-1)(logits)
 
 
 def clamp_probs(probs):
@@ -300,6 +300,9 @@ def raise_none_error(name):
     raise TypeError(f"the type {name} should be subclass of Tensor."
                     f" It should not be None since it is not specified during initialization.")
 
+@constexpr
+def raise_probs_logits_error():
+    raise TypeError("Either 'probs' or 'logits' must be specified, but not both.")
 
 @constexpr
 def raise_not_impl_error(name):
