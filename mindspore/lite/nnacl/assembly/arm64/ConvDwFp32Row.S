@@ -29,7 +29,7 @@ mov x6, x1
 mov x7, x2
 mov x8, x4
 
-    LoopInputDepth16In:
+    LoopDepth16In:
     cmp x8, #16
     blt L4
     sub x8, x8, #16
@@ -39,8 +39,8 @@ mov x8, x4
     ld1 {v16.4s, v17.4s}, [x0], #32
 
     cmp x8, #16
-    blt LoopInputDepth16Out
-    LoopInputDepth16:
+    blt LoopDepth16Out
+    LoopDepth16:
     fmla v16.4s, v0.4s, v2.4s
     fmla v17.4s, v1.4s, v3.4s
 
@@ -61,9 +61,9 @@ mov x8, x4
 
     sub x8, x8, #16
     cmp x8, #16
-    bge LoopInputDepth16
+    bge LoopDepth16
 
-    LoopInputDepth16Out:
+    LoopDepth16Out:
     fmla v16.4s, v0.4s, v2.4s
     fmla v17.4s, v1.4s, v3.4s
     st1 {v16.4s, v17.4s}, [x9], #32
@@ -81,7 +81,7 @@ mov x8, x4
     cmp x8, #4
     blt L0
 
-    LoopInputDepth4:
+    LoopDepth4:
     ld1 {v0.4s}, [x6], #16
     ld1 {v2.4s}, [x7], #16
     ld1 {v16.4s}, [x0], #16
@@ -89,13 +89,13 @@ mov x8, x4
     st1 {v16.4s}, [x9], #16
     sub x8, x8, #4
     cmp x8, #4
-    bge LoopInputDepth4
+    bge LoopDepth4
 
     L0:
     cmp x8, #0
     beq Loop16LineEnd
 
-    LoopInputDepth0:
+    LoopDepth0:
     ldr s0, [x6], #4
     ldr s1, [x7], #4
     ldr s2, [x0], #4
@@ -103,7 +103,7 @@ mov x8, x4
     fadd s2, s2, s0
     str s2, [x9], #4
     subs x8, x8, #1
-    bne LoopInputDepth0
+    bne LoopDepth0
 
     Loop16LineEnd:
 
