@@ -31,7 +31,7 @@ fi
 # Before start distribute train, first create mindrecord files.
 BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 cd $BASE_PATH/../ || exit
-python train.py --only_create_dataset=1
+python train.py --only_create_dataset=True
 
 echo "After running the scipt, the network runs in the background. The log will be generated in LOGx/log.txt"
 
@@ -57,7 +57,7 @@ do
     if [ $# == 5 ]
     then
         python train.py  \
-        --distribute=1  \
+        --distribute=True  \
         --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
@@ -68,7 +68,7 @@ do
     if [ $# == 7 ]
     then
         python train.py  \
-        --distribute=1  \
+        --distribute=True  \
         --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \

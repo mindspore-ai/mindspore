@@ -17,6 +17,7 @@
 
 import os
 import argparse
+import ast
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.communication.management import init
@@ -32,9 +33,10 @@ from src.init_params import init_net_param, filter_checkpoint_parameter
 
 def main():
     parser = argparse.ArgumentParser(description="SSD training")
-    parser.add_argument("--only_create_dataset", type=bool, default=False, help="If set it true, only create "
-                                                                                "Mindrecord, default is False.")
-    parser.add_argument("--distribute", type=bool, default=False, help="Run distribute, default is False.")
+    parser.add_argument("--only_create_dataset", type=ast.literal_eval, default=False,
+                        help="If set it true, only create Mindrecord, default is False.")
+    parser.add_argument("--distribute", type=ast.literal_eval, default=False,
+                        help="Run distribute, default is False.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
     parser.add_argument("--lr", type=float, default=0.05, help="Learning rate, default is 0.05.")
@@ -46,7 +48,8 @@ def main():
     parser.add_argument("--pre_trained_epoch_size", type=int, default=0, help="Pretrained epoch size.")
     parser.add_argument("--save_checkpoint_epochs", type=int, default=10, help="Save checkpoint epochs, default is 10.")
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
-    parser.add_argument("--filter_weight", type=bool, default=False, help="Filter weight parameters, default is False.")
+    parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
+                        help="Filter weight parameters, default is False.")
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
