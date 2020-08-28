@@ -88,7 +88,22 @@ void DetectionPostProcess::SetUseRegularNms(bool use_regular_nms) {
 }
 
 #else
-
+int DetectionPostProcess::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_DetectionPostProcess();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_DetectionPostProcess return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateDetectionPostProcess(
+    *fbb, attr->format(), attr->inputSize(), attr->hScale(), attr->wScale(), attr->xScale(), attr->yScale(),
+    attr->NmsIouThreshold(), attr->NmsScoreThreshold(), attr->MaxDetections(), attr->DetectionsPreClass(),
+    attr->MaxClassesPreDetection(), attr->NumClasses(), attr->UseRegularNms());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_DetectionPostProcess, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int DetectionPostProcess::GetFormat() const { return this->primitive_->value_as_DetectionPostProcess()->format(); }
 int DetectionPostProcess::GetInputSize() const {
   return this->primitive_->value_as_DetectionPostProcess()->inputSize();

@@ -72,7 +72,45 @@ std::vector<int> StridedSlice::GetIsScale() const {
   auto fb_vector = this->primitive_->value_as_StridedSlice()->isScale();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
+int StridedSlice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_StridedSlice();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_StridedSlice return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> begin;
+  if (attr->begin() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->begin()->size()); i++) {
+      begin.push_back(attr->begin()->data()[i]);
+    }
+  }
+  std::vector<int32_t> end;
+  if (attr->end() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->end()->size()); i++) {
+      end.push_back(attr->end()->data()[i]);
+    }
+  }
+  std::vector<int32_t> stride;
+  if (attr->stride() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->stride()->size()); i++) {
+      stride.push_back(attr->stride()->data()[i]);
+    }
+  }
+  std::vector<int32_t> isScale;
+  if (attr->isScale() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->isScale()->size()); i++) {
+      isScale.push_back(attr->isScale()->data()[i]);
+    }
+  }
+  auto val_offset =
+    schema::CreateStridedSliceDirect(*fbb, attr->beginMask(), attr->endMask(), attr->ellipsisMask(),
+                                     attr->newAxisMask(), attr->shrinkAxisMask(), &begin, &end, &stride, &isScale);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_StridedSlice, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 namespace {
 constexpr int kStridedSliceOutputNum = 1;

@@ -30,7 +30,19 @@ void SpaceToDepth::SetFormat(int format) { this->primitive_->value.AsSpaceToDept
 
 int SpaceToDepth::GetBlockSize() const { return this->primitive_->value_as_SpaceToDepth()->blockSize(); }
 int SpaceToDepth::GetFormat() const { return this->primitive_->value_as_SpaceToDepth()->format(); }
-
+int SpaceToDepth::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_SpaceToDepth();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_SpaceToDepth return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateSpaceToDepth(*fbb, attr->blockSize(), attr->format());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SpaceToDepth, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 namespace {
 constexpr int kSpaceToDepthOutputNum = 1;

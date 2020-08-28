@@ -29,7 +29,25 @@ std::vector<int> Reverse::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_Reverse()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
+int Reverse::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Reverse();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Reverse return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateReverseDirect(*fbb, &axis);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Reverse, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

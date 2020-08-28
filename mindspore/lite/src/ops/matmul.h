@@ -32,7 +32,7 @@ class MatMul : public PrimitiveC {
  public:
   MatMul() = default;
   explicit MatMul(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetTransposeA(bool transpose_a);
   void SetTransposeB(bool transpose_b);
 
@@ -43,30 +43,9 @@ class MatMul : public PrimitiveC {
 #else
 
  public:
-  explicit MatMul(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  MatMul() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_MatMul();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateMatMul(fbb, attr->transposeA(), attr->transposeB());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_MatMul, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 
  public:

@@ -18,7 +18,17 @@
 
 namespace mindspore {
 namespace lite {
-
+#ifdef PRIMITIVE_WRITEABLE
+#else
+int Rank::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto val_offset = schema::CreateRank(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Rank, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+#endif
 int Rank::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();

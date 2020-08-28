@@ -149,6 +149,20 @@ int MatMul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 bool MatMul::GetTransposeA() const { return this->primitive_->value_as_MatMul()->transposeA(); }
 bool MatMul::GetTransposeB() const { return this->primitive_->value_as_MatMul()->transposeB(); }
 
+int MatMul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_MatMul();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_MatMul return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateMatMul(*fbb, attr->transposeA(), attr->transposeB());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_MatMul, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 
 int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

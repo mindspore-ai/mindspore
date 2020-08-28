@@ -24,7 +24,19 @@ float Dropout::GetRatio() const { return this->primitive_->value.AsDropout()->ra
 void Dropout::SetRatio(float ratio) { this->primitive_->value.AsDropout()->ratio = ratio; }
 
 #else
-
+int Dropout::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Dropout();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Dropout return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateDropout(*fbb, attr->ratio());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Dropout, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 float Dropout::GetRatio() const { return this->primitive_->value_as_Dropout()->ratio(); }
 
 #endif

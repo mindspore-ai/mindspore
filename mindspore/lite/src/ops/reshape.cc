@@ -81,7 +81,25 @@ std::vector<int64_t> Reshape::GetShape() const {
   auto fb_vector = this->primitive_->value_as_Reshape()->shape();
   return std::vector<int64_t>(fb_vector->begin(), fb_vector->end());
 }
-
+int Reshape::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Reshape();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Reshape return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int64_t> shape;
+  if (attr->shape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->shape()->size()); i++) {
+      shape.push_back(attr->shape()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateReshapeDirect(*fbb, attr->format(), &shape);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Reshape, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Reshape::CalNewShape(const tensor::Tensor *in_tensor, std::vector<int> *out_shape) const {

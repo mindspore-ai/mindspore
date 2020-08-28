@@ -49,34 +49,9 @@ class DeConv2D : public PrimitiveC {
   void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
 #else
-  explicit DeConv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  DeConv2D() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_DeConv2D();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateDeConv2D(fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(),
-                                             attr->kernelW(), attr->kernelH(), attr->strideW(), attr->strideH(),
-                                             attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
-                                             attr->padRight(), attr->dilateW(), attr->dilateH(),
-                                             attr->hasBias(), attr->activationType());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_DeConv2D, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;

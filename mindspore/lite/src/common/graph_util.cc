@@ -61,5 +61,22 @@ std::vector<size_t> GetGraphOutputNodes(const schema::MetaGraph *meta_graph) {
   }
   return ret;
 }
+
+std::vector<size_t> GetLinkedPostNodeIdx(const schema::MetaGraph &graph, const size_t &tensor_idx) {
+  std::vector<size_t> post_node_idxes;
+  for (size_t i = 0; i < graph.nodes()->size(); i++) {
+    auto node = graph.nodes()->GetAs<schema::CNode>(i);
+    if (node == nullptr) {
+      continue;
+    }
+    auto node_input_idxes = node->inputIndex();
+    auto is_contain = std::any_of(node_input_idxes->begin(), node_input_idxes->end(),
+                                  [&](const uint32_t &node_input_idx) { return node_input_idx == tensor_idx; });
+    if (is_contain) {
+      post_node_idxes.emplace_back(i);
+    }
+  }
+  return post_node_idxes;
+}
 }  // namespace lite
 }  // namespace mindspore

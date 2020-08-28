@@ -43,7 +43,20 @@ int64_t Resize::GetNewHeight() const { return this->primitive_->value_as_Resize(
 int64_t Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()->newWidth(); }
 bool Resize::GetAlignCorners() const { return this->primitive_->value_as_Resize()->alignCorners(); }
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value_as_Resize()->preserveAspectRatio(); }
-
+int Resize::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Resize();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Resize return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateResize(*fbb, attr->format(), attr->method(), attr->newHeight(), attr->newWidth(),
+                                         attr->alignCorners(), attr->preserveAspectRatio());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Resize, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 namespace {
 constexpr int kInputRank = 4;

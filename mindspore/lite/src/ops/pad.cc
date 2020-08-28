@@ -38,6 +38,25 @@ std::vector<int> Pad::GetPaddings() const {
 int Pad::GetPaddingMode() const { return this->primitive_->value_as_Pad()->paddingMode(); }
 float Pad::GetConstantValue() const { return this->primitive_->value_as_Pad()->constantValue(); }
 
+int Pad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Pad();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Pad return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> paddings;
+  if (attr->paddings() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->paddings()->size()); i++) {
+      paddings.push_back(attr->paddings()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreatePadDirect(*fbb, &paddings, attr->paddingMode(), attr->constantValue());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Pad, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 namespace {
 const size_t kInputRank = 4;

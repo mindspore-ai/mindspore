@@ -35,7 +35,19 @@ int Range::GetDType() const { return this->primitive_->value_as_Range()->dType()
 int Range::GetStart() const { return this->primitive_->value_as_Range()->start(); }
 int Range::GetLimit() const { return this->primitive_->value_as_Range()->limit(); }
 int Range::GetDelta() const { return this->primitive_->value_as_Range()->delta(); }
-
+int Range::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Range();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Range return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateRange(*fbb, attr->dType(), attr->start(), attr->limit(), attr->delta());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Range, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Range::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

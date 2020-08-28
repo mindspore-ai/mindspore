@@ -24,7 +24,19 @@ int Eltwise::GetMode() const { return this->primitive_->value.AsEltwise()->mode;
 void Eltwise::SetMode(int mode) { this->primitive_->value.AsEltwise()->mode = (schema::EltwiseMode)mode; }
 
 #else
-
+int Eltwise::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Eltwise();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Eltwise return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateEltwise(*fbb, attr->mode());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Eltwise, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Eltwise::GetMode() const { return this->primitive_->value_as_Eltwise()->mode(); }
 
 #endif

@@ -33,6 +33,21 @@ float PowerGrad::GetPower() const { return this->primitive_->value_as_PowerGrad(
 float PowerGrad::GetScale() const { return this->primitive_->value_as_PowerGrad()->scale(); }
 float PowerGrad::GetShift() const { return this->primitive_->value_as_PowerGrad()->shift(); }
 
+int PowerGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+
+  auto attr = primitive->value_as_PowerGrad();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_PowerGrad return nullptr";
+    return RET_ERROR;
+  }
+
+  auto val_offset = schema::CreatePowerGrad(*fbb, attr->power(), attr->scale(), attr->shift());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_PowerGrad, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

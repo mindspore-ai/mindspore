@@ -46,14 +46,14 @@ constexpr int kAnfPopulaterTwo = 2;
 constexpr int kAnfPopulaterThree = 3;
 class PrimitiveC : public mindspore::Primitive {
  public:
-  // Argument primitive is delived into PrimitiveC and will be deleted in ~PrimitiveC(). Caller should not delete
-  // primitive
+  // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().
+  // Caller should not delete primitive.
   explicit PrimitiveC(schema::PrimitiveT *primitive) : Primitive(""), primitive_(primitive) {}
 
   explicit PrimitiveC(const Primitive &prim) : Primitive(prim) {}
 
-  // Argument primitive is delived into PrimitiveC and will be deleted in ~PrimitiveC(). Caller should not delete
-  // primitive
+  // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().
+  // Caller should not delete primitive.
   explicit PrimitiveC(const std::string &name, schema::PrimitiveT *primitive)
       : Primitive(name), primitive_(primitive) {}
 
@@ -113,7 +113,7 @@ class PrimitiveC : public mindspore::Primitive {
   static std::shared_ptr<PrimitiveC> UnPackFromPrimitive(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 
  protected:
-  virtual int UnPackAttr(const Primitive &prim) { return RET_ERROR; }
+  virtual int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) { return RET_ERROR; }
 
  protected:
   schema::PrimitiveT *primitive_ = nullptr;
@@ -133,15 +133,9 @@ class PrimitiveC {
  public:
   PrimitiveC() = default;
 
-  // Argument primitive is delived into PrimitiveC and will be deleted in ~PrimitiveC(). Caller should not delete
-  // primitive
-  explicit PrimitiveC(schema::Primitive *primitive) : primitive_(primitive) {}
+  virtual ~PrimitiveC() { free(this->primitive_buf_); }
 
-  virtual ~PrimitiveC() {
-    //    delete this->primitive_;
-  }
-
-  static PrimitiveC *UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive);
+  static PrimitiveC *UnPackFromSchemaPrimitive(const schema::Primitive *primitive);
 
   bool GetInferFlag() const;
 
@@ -152,7 +146,53 @@ class PrimitiveC {
   int Type() const;
 
  protected:
-  schema::Primitive *primitive_ = nullptr;
+  template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
+  static PrimitiveC *NewPrimitiveC(const schema::Primitive *primitive) {
+    auto primc = new T();
+    if (primc == nullptr) {
+      MS_LOG(ERROR) << "new PrimitiveC failed";
+      return nullptr;
+    }
+    auto ret = primc->UnPackSchemaPrimitive(primitive);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "UnPackSchemaPrimitive failed";
+      return nullptr;
+    }
+    return primc;
+  }
+
+  int UnPackSchemaPrimitive(const schema::Primitive *primitive) {
+    flatbuffers::FlatBufferBuilder fbb(1024);
+    if (UnPackToFlatBuilder(primitive, &fbb) != RET_OK) {
+      MS_LOG(ERROR) << "UnPackToFlatBuilder failde";
+      fbb.Clear();
+      return RET_ERROR;
+    }
+    auto buf = fbb.GetBufferPointer();
+    if (buf == nullptr) {
+      MS_LOG(ERROR) << "GetBufferPointer return nullptr";
+      fbb.Clear();
+      return RET_ERROR;
+    }
+    primitive_buf_ = reinterpret_cast<char *>(malloc(fbb.GetSize()));
+    if (primitive_buf_ == nullptr) {
+      MS_LOG(ERROR) << "malloc primitive_buf_ failed";
+      fbb.Clear();
+      return RET_ERROR;
+    }
+    memcpy(primitive_buf_, buf, fbb.GetSize());
+    this->primitive_ = flatbuffers::GetRoot<schema::Primitive>(primitive_buf_);
+    fbb.Clear();
+    return RET_OK;
+  }
+
+  virtual int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+    return RET_ERROR;
+  }
+
+ protected:
+  const schema::Primitive *primitive_ = nullptr;
+  char *primitive_buf_ = nullptr;
   bool infer_flag_ = true;
 };
 #endif

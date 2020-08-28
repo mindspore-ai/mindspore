@@ -33,7 +33,25 @@ std::vector<float> Upsample::GetScales() const {
   auto fb_vector = this->primitive_->value_as_Upsample()->scales();
   return std::vector<float>(fb_vector->begin(), fb_vector->end());
 }
-
+int Upsample::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Upsample();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Upsample return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<float> scales;
+  if (attr->scales() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->scales()->size()); i++) {
+      scales.push_back(attr->scales()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateUpsampleDirect(*fbb, attr->mode()->c_str(), &scales);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Upsample, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

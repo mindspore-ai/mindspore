@@ -34,30 +34,9 @@ class SoftMax : public PrimitiveC {
   void SetAxis(int axis);
 
 #else
-  explicit SoftMax(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  SoftMax() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_SoftMax();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateSoftMax(fbb, attr->axis());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_SoftMax, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;

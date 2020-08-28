@@ -19,6 +19,18 @@
 
 namespace mindspore {
 namespace lite {
+#ifdef PRIMITIVE_WRITEABLE
+#else
+int Nchw2Nhwc::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto val_offset = schema::CreateNchw2Nhwc(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Nchw2Nhwc, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+#endif
+
 int Nchw2Nhwc::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();

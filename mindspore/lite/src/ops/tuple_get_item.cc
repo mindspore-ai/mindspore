@@ -48,6 +48,15 @@ int TupleGetItem::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr
   }
   return RET_OK;
 }
+#else
+int TupleGetItem::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto val_offset = schema::CreateTupleGetItem(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_TupleGetItem, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

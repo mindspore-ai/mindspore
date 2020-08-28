@@ -32,7 +32,21 @@ void ROIPooling::SetScale(float scale) { this->primitive_->value.AsROIPooling()-
 int ROIPooling::GetPooledH() const { return this->primitive_->value_as_ROIPooling()->pooledH(); }
 int ROIPooling::GetPooledW() const { return this->primitive_->value_as_ROIPooling()->pooledW(); }
 float ROIPooling::GetScale() const { return this->primitive_->value_as_ROIPooling()->scale(); }
+int ROIPooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
 
+  auto attr = primitive->value_as_ROIPooling();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_ROIPooling return nullptr";
+    return RET_ERROR;
+  }
+
+  auto val_offset = schema::CreateROIPooling(*fbb, attr->pooledH(), attr->pooledW(), attr->scale());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ROIPooling, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int ROIPooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

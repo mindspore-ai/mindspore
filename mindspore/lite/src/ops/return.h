@@ -31,9 +31,9 @@ class Return : public PrimitiveC {
   MS_DECLARE_PARENT(Return, PrimitiveC);
   Return() = default;
   explicit Return(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit Return(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Return() = default;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

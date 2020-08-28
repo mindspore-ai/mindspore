@@ -27,9 +27,9 @@ class Quant : public PrimitiveC {
   MS_DECLARE_PARENT(Quant, PrimitiveC);
   Quant() = default;
   explicit Quant(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit Quant(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Quant() = default;
 #endif
 };
 }  // namespace lite

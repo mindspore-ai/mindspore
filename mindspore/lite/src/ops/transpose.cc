@@ -77,6 +77,26 @@ std::vector<int> Transpose::GetPerm() const {
 }
 bool Transpose::GetConjugate() const { return this->primitive_->value_as_Transpose()->conjugate(); }
 
+int Transpose::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Transpose();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Transpose return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> perm;
+  if (attr->perm() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->perm()->size()); i++) {
+      perm.push_back(attr->perm()->data()[i]);
+    }
+  }
+
+  auto val_offset = schema::CreateTransposeDirect(*fbb, &perm, attr->conjugate());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Transpose, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Transpose::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

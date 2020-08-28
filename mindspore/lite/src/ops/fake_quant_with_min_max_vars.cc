@@ -32,7 +32,21 @@ void FakeQuantWithMinMaxVars::SetNumBits(int num_bits) {
 }
 
 #else
+int FakeQuantWithMinMaxVars::UnPackToFlatBuilder(const schema::Primitive *primitive,
+                                                 flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_FakeQuantWithMinMaxVars();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_FakeQuantWithMinMaxVars return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset = schema::CreateFakeQuantWithMinMaxVars(*fbb, attr->narrowRange(), attr->numBits());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_FakeQuantWithMinMaxVars, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 bool FakeQuantWithMinMaxVars::GetNarrowRange() const {
   return this->primitive_->value_as_FakeQuantWithMinMaxVars()->narrowRange();
 }

@@ -29,6 +29,19 @@ void LeakyReLU::SetNegativeSlope(float negative_slope) {
 
 float LeakyReLU::GetNegativeSlope() const { return this->primitive_->value_as_LeakyReLU()->negativeSlope(); }
 
+int LeakyReLU::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_LeakyReLU();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_LeakyReLU return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateLeakyReLU(*fbb, attr->negativeSlope());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_LeakyReLU, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

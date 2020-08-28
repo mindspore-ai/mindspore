@@ -31,32 +31,13 @@ class Flatten : public PrimitiveC {
   MS_DECLARE_PARENT(Flatten, PrimitiveC);
   Flatten() = default;
   explicit Flatten(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit Flatten(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Flatten() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto val_offset = schema::CreateFlatten(fbb);
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Flatten, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
-
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -32,10 +32,29 @@
 
 namespace mindspore {
 namespace lite {
+static std::vector<schema::PrimitiveType> packed_op = {
+  schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
+  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
+  schema::PrimitiveType_MatMul};
+
+// this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
+static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
+  MS_ASSERT(nullptr != model);
+  auto meta_graph = model->GetMetaGraph();
+  MS_ASSERT(nullptr != meta_graph);
+  auto post_node_idxes = GetLinkedPostNodeIdx(*meta_graph, tensor_idx);
+  return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
+    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(post_node_idx);
+    MS_ASSERT(cNode != nullptr);
+    return IsContain(packed_op, cNode->primitive()->value_type());
+  });
+}
+
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(nullptr != model);
   auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(nullptr != meta_graph);
+  copyed_tensor_idxes_.clear();
   uint32_t tensorCount = meta_graph->allTensors()->size();
   for (uint32_t i = 0; i < tensorCount; i++) {
     auto *srcTensor = meta_graph->allTensors()->GetAs<schema::Tensor>(i);
@@ -54,16 +73,30 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       }
     }
     int dataType = srcTensor->dataType();
-    auto *dstTensor = new tensor::Tensor(TypeId(dataType), shape, srcTensor->format(), srcTensor->nodeType());
+    auto *dstTensor =
+      new (std::nothrow) tensor::Tensor(TypeId(dataType), shape, srcTensor->format(), srcTensor->nodeType());
+    if (dstTensor == nullptr) {
+      MS_LOG(ERROR) << "new " << i << "th tensor failed";
+      return RET_NULL_PTR;
+    }
     if (srcTensor->nodeType() == schema::NodeType_ValueNode && srcTensor->data() != nullptr &&
         srcTensor->data()->size() > 0) {
       if (shape.empty()) {
         shape.push_back(1);
+        dstTensor->set_shape(shape);
       }
-      MS_ASSERT(dstTensor != nullptr);
       MS_ASSERT(dstTensor->Size() == srcTensor->data()->size());
-      // no copy data, do copy when call LiteKernel::Init
-      dstTensor->SetData(const_cast<unsigned char *>(srcTensor->data()->data()));
+      if (WeightTensorNeedCopy(model, i)) {
+        auto ret = dstTensor->MallocData();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Malloc data for " << i << "th tensor failed";
+          return RET_ERROR;
+        }
+        memcpy(dstTensor->Data(), srcTensor->data()->data(), dstTensor->Size());
+        copyed_tensor_idxes_.emplace_back(i);
+      } else {
+        dstTensor->SetData(const_cast<unsigned char *>(srcTensor->data()->data()));
+      }
     }
     auto quant_params = srcTensor->quantParams();
     if (quant_params != nullptr) {
@@ -74,7 +107,6 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         dstTensor->AddQuantParam(quant_arg);
       }
     }
-
     this->tensors_.emplace_back(dstTensor);
   }
 
@@ -240,6 +272,7 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   executor->Prepare(this->kernels_);
+  model->FreeMetaGraph();
   return RET_OK;
 }
 
@@ -277,7 +310,10 @@ int LiteSession::Init(Context *context) {
   }
 #endif
   executor = new Executor();
-  MS_ASSERT(nullptr != executor);
+  if (nullptr == executor) {
+    MS_LOG(ERROR) << "new Executor failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -288,9 +324,12 @@ void LiteSession::BindThread(bool if_bind) {
 }
 
 LiteSession::~LiteSession() {
-  for (auto *tensor : tensors_) {
-    // weight data can not be to free, we will free weight data when freeing meta_graph
-    if (tensor->TensorType() == schema::NodeType_ValueNode && !IsContain(this->inputs_, tensor)) {
+  for (size_t i = 0; i < tensors_.size(); i++) {
+    auto *tensor = tensors_.at(i);
+    MS_ASSERT(tensor != nullptr);
+    // data of weight tensor of node in packed_op can not be to free, we will free weight data when freeing meta_graph
+    if (tensor->TensorType() == schema::NodeType_ValueNode && !IsContain(this->inputs_, tensor) &&
+        !IsContain(copyed_tensor_idxes_, i)) {
       tensor->SetData(nullptr);
     }
     delete tensor;

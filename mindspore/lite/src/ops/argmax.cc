@@ -32,7 +32,20 @@ void ArgMax::SetKeepDims(bool keep_dims) { this->primitive_->value.AsArgMax()->k
 void ArgMax::SetAxisType(int axis_type) { this->primitive_->value.AsArgMax()->axisType = axis_type; }
 
 #else
-
+int ArgMax::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_ArgMax();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_ArgMax return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset =
+    schema::CreateArgMax(*fbb, attr->axis(), attr->outMaxValue(), attr->topK(), attr->keepDims(), attr->axisType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ArgMax, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int ArgMax::GetAxis() const { return this->primitive_->value_as_ArgMax()->axis(); }
 bool ArgMax::GetOutMaxValue() const { return this->primitive_->value_as_ArgMax()->outMaxValue(); }
 int ArgMax::GetTopK() const { return this->primitive_->value_as_ArgMax()->topK(); }

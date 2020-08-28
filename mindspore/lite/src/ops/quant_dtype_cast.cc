@@ -29,7 +29,19 @@ void QuantDTypeCast::SetDstT(int dst_t) { this->primitive_->value.AsQuantDTypeCa
 
 int QuantDTypeCast::GetSrcT() const { return this->primitive_->value_as_QuantDTypeCast()->srcT(); }
 int QuantDTypeCast::GetDstT() const { return this->primitive_->value_as_QuantDTypeCast()->dstT(); }
-
+int QuantDTypeCast::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_QuantDTypeCast();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_QuantDTypeCast return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateQuantDTypeCast(*fbb, attr->srcT(), attr->dstT());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_QuantDTypeCast, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int QuantDTypeCast::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

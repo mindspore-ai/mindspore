@@ -26,7 +26,19 @@ void Cast::SetSrcT(int src_t) { this->primitive_->value.AsCast()->srcT = src_t; 
 void Cast::SetDstT(int dst_t) { this->primitive_->value.AsCast()->dstT = dst_t; }
 
 #else
-
+int Cast::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Cast();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Cast return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateCast(*fbb, attr->srcT(), attr->dstT());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Cast, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Cast::GetSrcT() const { return this->primitive_->value_as_Cast()->srcT(); }
 int Cast::GetDstT() const { return this->primitive_->value_as_Cast()->dstT(); }
 

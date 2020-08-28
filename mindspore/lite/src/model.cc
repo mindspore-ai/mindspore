@@ -135,7 +135,7 @@ mindspore::lite::PrimitiveC *Model::GetOp(const std::string &name) const {
 
 void Model::FreeMetaGraph() {
   MS_ASSERT(nullptr != model_impl_);
-  return model_impl_->FreeMetaGraph();
+  model_impl_->FreeMetaGraph();
 }
 
 const schema::MetaGraph *Model::GetMetaGraph() const {

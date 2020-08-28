@@ -26,7 +26,19 @@ void Div::SetActivationType(int activation_type) {
 }
 
 #else
-
+int Div::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Div();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Div return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateDiv(*fbb, attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Div, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Div::GetActivationType() const { return this->primitive_->value_as_Div()->activationType(); }
 
 #endif
