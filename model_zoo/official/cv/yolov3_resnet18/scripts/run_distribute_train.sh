@@ -40,7 +40,7 @@ BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 cd $BASE_PATH/../ || exit
 
 # Before start distribute train, first create mindrecord files.
-python train.py --only_create_dataset=1 --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR  \
+python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR  \
 --anno_path=$ANNO_PATH
 if [ $? -ne 0 ]
 then
@@ -72,7 +72,7 @@ do
     if [ $# == 6 ]
     then
         taskset -c $cmdopt python train.py  \
-        --distribute=1  \
+        --distribute=True  \
         --lr=0.005 \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
@@ -85,7 +85,7 @@ do
     if [ $# == 8 ]
     then
         taskset -c $cmdopt python train.py  \
-        --distribute=1  \
+        --distribute=True  \
         --lr=0.005 \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
