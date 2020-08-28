@@ -18,10 +18,8 @@
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #undef __STDC_FORMAT_MACROS
-#include <cmath>
 #include <algorithm>
 #include <utility>
-#include <cfloat>
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
@@ -167,71 +165,6 @@ int Benchmark::ReadCalibData() {
   return RET_OK;
 }
 
-// tensorData need to be converter first
-float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msShape, float *msTensorData) {
-  auto iter = this->calibData.find(nodeName);
-  if (iter != this->calibData.end()) {
-    std::vector<size_t> castedMSShape;
-    size_t shapeSize = 1;
-    for (int64_t dim : msShape) {
-      castedMSShape.push_back(size_t(dim));
-      shapeSize *= dim;
-    }
-
-    CheckTensor *calibTensor = iter->second;
-    if (calibTensor->shape != castedMSShape) {
-      std::ostringstream oss;
-      oss << "Shape of mslite output(";
-      for (auto dim : castedMSShape) {
-        oss << dim << ",";
-      }
-      oss << ") and shape source model output(";
-      for (auto dim : calibTensor->shape) {
-        oss << dim << ",";
-      }
-      oss << ") are different";
-      std::cerr << oss.str() << std::endl;
-      MS_LOG(ERROR) << oss.str().c_str();
-      return RET_ERROR;
-    }
-    size_t errorCount = 0;
-    float meanError = 0;
-    std::cout << "Data of node " << nodeName << " : ";
-    for (size_t j = 0; j < shapeSize; j++) {
-      if (j < 50) {
-        std::cout << msTensorData[j] << " ";
-      }
-
-      if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
-        std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
-        MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
-        return RET_ERROR;
-      }
-
-      auto tolerance = absoluteTolerance + relativeTolerance * fabs(calibTensor->data.at(j));
-      auto absoluteError = std::fabs(msTensorData[j] - calibTensor->data.at(j));
-      if (absoluteError > tolerance) {
-        // just assume that atol = rtol
-        meanError += absoluteError / (fabs(calibTensor->data.at(j)) + FLT_MIN);
-        errorCount++;
-      }
-    }
-    std::cout << std::endl;
-    if (meanError > 0.0f) {
-      meanError /= errorCount;
-    }
-
-    if (meanError <= 0.0000001) {
-      std::cout << "Mean bias of node " << nodeName << " : 0%" << std::endl;
-    } else {
-      std::cout << "Mean bias of node " << nodeName << " : " << meanError * 100 << "%" << std::endl;
-    }
-    return meanError;
-  } else {
-    MS_LOG(INFO) << "%s is not in Source Model output", nodeName.c_str();
-    return RET_ERROR;
-  }
-}
 
 int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
@@ -255,7 +188,24 @@ int Benchmark::CompareOutput() {
     auto &tensor = tensors.front();
     MS_ASSERT(tensor->GetDataType() == DataType_DT_FLOAT);
     MS_ASSERT(tensor->GetData() != nullptr);
-    float bias = CompareData(nodeName, tensor->shape(), static_cast<float *>(tensor->MutableData()));
+    float bias = 0;
+    switch (msCalibDataType) {
+      case TypeId::kNumberTypeFloat: {
+        bias = CompareData<float>(nodeName, tensor->shape(), static_cast<float *>(tensor->MutableData()));
+        break;
+      }
+      case TypeId::kNumberTypeInt8: {
+        bias = CompareData<int8_t>(nodeName, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
+        break;
+      }
+      case TypeId::kNumberTypeInt32: {
+        bias = CompareData<int32_t>(nodeName, tensor->shape(), static_cast<int32_t *>(tensor->MutableData()));
+        break;
+      }
+      default:
+        MS_LOG(ERROR) << "Datatype " << msCalibDataType << " is not supported.";
+        return RET_ERROR;
+    }
     if (bias >= 0) {
       totalBias += bias;
       totalSize++;
@@ -343,14 +293,26 @@ int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
   for (size_t i = 0; i < msInputs.size(); i++) {
-    MS_ASSERT(msInputs.at(i) != nullptr);
-    MS_ASSERT(msInputs.at(i)->data_type() == TypeId::kNumberTypeFloat32);
-    auto inData = reinterpret_cast<float *>(msInputs.at(i)->MutableData());
-    std::cout << "InData" << i << ": ";
-    for (size_t j = 0; j < 20; j++) {
-      std::cout << inData[j] << " ";
-    }
-    std::cout << std::endl;
+      switch (msInputs.at(i)->data_type()) {
+        case TypeId::kNumberTypeFloat:
+          PrintInputData<float>(msInputs.at(i));
+          break;
+        case TypeId::kNumberTypeFloat32:
+          PrintInputData<float>(msInputs.at(i));
+          break;
+        case TypeId::kNumberTypeInt8:
+          PrintInputData<int8_t>(msInputs.at(i));
+          break;
+        case TypeId::kNumberTypeUInt8:
+          PrintInputData<uint8_t>(msInputs.at(i));
+          break;
+        case TypeId::kNumberTypeInt32:
+          PrintInputData<int>(msInputs.at(i));
+          break;
+        default:
+          MS_LOG(ERROR) << "Datatype " << msInputs.at(i)->data_type() << " is not supported.";
+          return RET_ERROR;
+      }
   }
   auto status = session->RunGraph();
   if (status != RET_OK) {
@@ -554,6 +516,16 @@ int Benchmark::Init() {
   }
 
   this->_flags->inDataType = this->_flags->inDataTypeIn == "img" ? kImage : kBinary;
+
+  if (!_flags->calibDataType.empty()) {
+    if (dataTypeMap.find(_flags->calibDataType) == dataTypeMap.end()) {
+      MS_LOG(ERROR) << "CalibDataType not supported: " << _flags->calibDataType.c_str();
+      return RET_ERROR;
+    }
+    msCalibDataType = dataTypeMap.at(_flags->calibDataType);
+    MS_LOG(INFO) << "CalibDataType = " << _flags->calibDataType.c_str();
+    std::cout << "CalibDataType = " << _flags->calibDataType.c_str() << std::endl;
+  }
 
   if (_flags->modelPath.empty()) {
     MS_LOG(ERROR) << "modelPath is required";
