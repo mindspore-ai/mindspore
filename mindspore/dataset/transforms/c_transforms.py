@@ -32,7 +32,7 @@ class OneHot(cde.OneHotOp):
 
     Args:
         num_classes (int): Number of classes of the label
-            it should be bigger than or equal to label class number.
+            it should be bigger than largest label number in dataset.
 
     Raises:
         RuntimeError: feature size is bigger than num_classes.
