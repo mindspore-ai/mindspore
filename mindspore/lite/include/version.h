@@ -24,8 +24,8 @@ namespace lite {
 /// \brief Global method to get a version string.
 ///
 /// \return The version string of MindSpore Lite.
-#ifndef MS_VERSION_MAJOY
-#define MS_VERSION_MAJOY 0
+#ifndef MS_VERSION_MAJOR
+#define MS_VERSION_MAJOR 0
 #endif
 #ifndef MS_VERSION_MINOR
 #define MS_VERSION_MINOR 7
@@ -34,7 +34,7 @@ namespace lite {
 #define MS_VERSION_REVISION 0
 #endif
 std::string Version() {
-  return "MindSpore Lite " + std::to_string(MS_VERSION_MAJOY) + "." + std::to_string(MS_VERSION_MINOR) + "." +
+  return "MindSpore Lite " + std::to_string(MS_VERSION_MAJOR) + "." + std::to_string(MS_VERSION_MINOR) + "." +
          std::to_string(MS_VERSION_REVISION);
 }
 }  // namespace lite
