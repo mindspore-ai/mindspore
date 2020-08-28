@@ -41,21 +41,19 @@ class NMSWithMaskGpuFwdKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
-    T *area = GetDeviceAddress<T>(workspace, 0);       // store area values for all boxes
-    T *data_buff = GetDeviceAddress<T>(workspace, 1);  // sort buffer
+    T *area = GetDeviceAddress<T>(workspace, 0);
+    T *data_buff = GetDeviceAddress<T>(workspace, 1);
     int *index_buff = GetDeviceAddress<int>(workspace, 2);
+    bool *row_mask = GetDeviceAddress<bool>(workspace, 3);
     T *output = GetDeviceAddress<T>(outputs, 0);
     int *sel_idx = GetDeviceAddress<int>(outputs, 1);
     bool *sel_boxes = GetDeviceAddress<bool>(outputs, 2);
 
-    CalSortInit(num_input_, input, output, index_buff, data_buff, box_size_,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalPreprocess(num_input_, sel_idx, area, input, output, index_buff, box_size_,
+    CalSort(num_input_, input, output, index_buff, data_buff, box_size_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalPreprocess(num_input_, sel_idx, sel_boxes, area, input, output, index_buff, box_size_, row_mask,
                   reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalNMSWithMask(num_input_, iou_value_, output, area, sel_boxes, box_size_,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalFinalPass(num_input_, iou_value_, output, area, sel_boxes, box_size_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalNMS(num_input_, iou_value_, output, area, sel_boxes, box_size_, row_mask,
+           reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -87,8 +85,9 @@ class NMSWithMaskGpuFwdKernel : public GpuKernel {
     input_size_ = num_input_ * sizeof(T) * box_size_;  // 5 values per bbox
     output_size_ = (input_size_) + (num_input_ * sizeof(int)) + (num_input_ * sizeof(bool));
 
-    workspace_size_ = num_input_ * sizeof(int);
-    workspace_size_ += ceil_power_2 * (sizeof(T) + sizeof(int));
+    workspace_size_ = num_input_ * sizeof(int);                   // storing areas
+    workspace_size_ += ceil_power_2 * (sizeof(T) + sizeof(int));  // sorting buffers
+    workspace_size_ += (num_input_ * num_input_ * sizeof(bool));  // Row mask - NMS
 
     InitSizeLists();
     return true;
@@ -103,9 +102,10 @@ class NMSWithMaskGpuFwdKernel : public GpuKernel {
     output_size_list_.push_back(num_input_ * sizeof(bool));
 
     // N sized workspace arrs
-    workspace_size_list_.push_back(num_input_ * sizeof(T));      // area list
-    workspace_size_list_.push_back(ceil_power_2 * sizeof(T));    // data buff
-    workspace_size_list_.push_back(ceil_power_2 * sizeof(int));  // index buff
+    workspace_size_list_.push_back(num_input_ * sizeof(T));                  // area list
+    workspace_size_list_.push_back(ceil_power_2 * sizeof(T));                // data buff
+    workspace_size_list_.push_back(ceil_power_2 * sizeof(int));              // index buff
+    workspace_size_list_.push_back(num_input_ * num_input_ * sizeof(bool));  // mask list
   }
 
  private:
