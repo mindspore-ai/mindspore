@@ -1,189 +1,183 @@
-# LeNet Quantization Aware Training
+# Contents
 
-## Description
-
-Training LeNet with MNIST dataset in MindSpore with quantization aware training.
-
-This is the simple and basic tutorial for constructing a network in MindSpore with quantization aware.
-
-In this tutorial, you will:
-
-1. Train a MindSpore fusion model for MNIST from scratch using `nn.Conv2dBnAct` and `nn.DenseBnAct`.
-2. Fine tune the fusion model by applying the quantization aware training auto network converter API `convert_quant_network`, after the network convergence then export a quantization aware model checkpoint file.
-3. Use the quantization aware model to create an actually quantized model for the Ascend inference backend.
-4. See the persistence of accuracy in inference backend and a 4x smaller model. To see the latency benefits on mobile, try out the Ascend inference backend examples.
-
-
-## Train fusion model
-
-### Install
-
-Install MindSpore base on the ascend device and GPU device from [MindSpore](https://www.mindspore.cn/install/en).
+- [LeNet Description](#lenet-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training Process](#training-process)
+        - [Training](#training)
+    - [Evaluation Process](#evaluation-process)
+        - [Evaluation](#evaluation)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Evaluation Performance](#evaluation-performance)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
 
-```python
-pip uninstall -y mindspore-ascend
-pip uninstall -y mindspore-gpu
-pip install mindspore-ascend.whl
+# [LeNet Description](#contents)
+
+LeNet was proposed in 1998, a typical convolutional neural network. It was used for digit recognition and got big success.
+
+[Paper](https://ieeexplore.ieee.org/document/726791): Y.Lecun, L.Bottou, Y.Bengio, P.Haffner. Gradient-Based Learning Applied to Document Recognition. *Proceedings of the IEEE*. 1998.
+
+This is the quantitative network of LeNet.
+
+# [Model Architecture](#contents)
+
+LeNet is very simple, which contains 5 layers. The layer composition consists of 2 convolutional layers and 3 fully connected layers.
+
+# [Dataset](#contents)
+
+Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>)
+
+- Dataset size 52.4M 60,000 28*28 in 10 classes
+  - Train 60,000 images
+  - Test 10,000 images
+- Data format binary files
+  - Note Data will be processed in dataset.py
+
+- The directory structure is as follows:
+
 ```
-
-Then you will get the following display
-
-
-```bash
->>> Found existing installation: mindspore-ascend
->>> Uninstalling mindspore-ascend:
->>>     Successfully uninstalled mindspore-ascend.
-```
-
-### Prepare Dataset
-
-Download the MNIST dataset, the directory structure is as follows:
-
-```
-└─MNIST_Data
+└─Data
     ├─test
     │      t10k-images.idx3-ubyte
     │      t10k-labels.idx1-ubyte
+    │
     └─train
            train-images.idx3-ubyte
            train-labels.idx1-ubyte
 ```
 
-### Define fusion model
+# [Environment Requirements](#contents)
 
-Define a MindSpore fusion model using `nn.Conv2dBnAct` and `nn.DenseBnAct`.
+- Hardware:Ascend
+  - Prepare hardware environment with Ascend
+- Framework
+  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
+  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
 
-```Python
-class LeNet5(nn.Cell):
-    """
-    Define Lenet fusion model
-    """
+# [Quick Start](#contents)
 
-    def __init__(self, num_class=10, channel=1):
-        super(LeNet5, self).__init__()
-        self.num_class = num_class
-
-        # change `nn.Conv2d` to `nn.Conv2dBnAct`
-        self.conv1 = nn.Conv2dBnAct(channel, 6, 5, activation='relu')
-        self.conv2 = nn.Conv2dBnAct(6, 16, 5, activation='relu')
-        # change `nn.Dense` to `nn.DenseBnAct`
-        self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
-        self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
-        self.fc3 = nn.DenseBnAct(84, self.num_class)
-
-        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.flatten = nn.Flatten()
-
-    def construct(self, x):
-        x = self.conv1(x)
-        x = self.max_pool2d(x)
-        x = self.conv2(x)
-        x = self.max_pool2d(x)
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.fc2(x)
-        x = self.fc3(x)
-        return x
-```
-
-Get the MNIST from scratch dataset.
-
-```Python
-ds_train = create_dataset(os.path.join(args.data_path, "train"), 
-                          cfg.batch_size, cfg.epoch_size)
-step_size = ds_train.get_dataset_size()
-
-## Train quantization aware model
-
-### Define quantization aware model
-
-You will apply quantization aware training to the whole model and the layers of "fake quant op" are insert into the whole model. All layers are now perpare by "fake quant op".
-
-Note that the resulting model is quantization aware but not quantized (e.g. the weights are float32 instead of int8).
+After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 ```python
-# define funsion network
-network = LeNet5Fusion(cfg.num_classes)
-
-# load quantization aware network checkpoint
-param_dict = load_checkpoint(args.ckpt_path)
-load_param_into_net(network, param_dict)
-
-# convert funsion netwrok to quantization aware network
-network = quant.convert_quant_network(network)
+# enter ../lenet directory and train lenet network,then a '.ckpt' file will be generated.
+sh run_standalone_train_ascend.sh [DATA_PATH]
+# enter lenet dir, train LeNet-Quant
+python train.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
+#evaluate LeNet-Quant
+python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
 ```
 
-### load checkpoint
+# [Script Description](#contents)
 
-After convert to quantization aware network, we can load the checkpoint file.
+## [Script and Sample Code](#contents)
+
+```
+├── model_zoo
+    ├── README.md                        // descriptions about all the models
+    ├── lenet_quant
+        ├── README.md                    // descriptions about LeNet-Quant
+        ├── src
+        │   ├── config.py                // parameter configuration
+        │   ├── dataset.py               // creating dataset
+        │   ├── lenet_fusion.py          // auto constructed quantitative network model of LeNet-Quant
+        │   ├── lenet_quant.py           // manual constructed quantitative network model of LeNet-Quant
+        │   ├── loss_monitor.py          //monitor of network's loss and other data
+        ├── requirements.txt             // package needed
+        ├── train.py               // training LeNet-Quant network with device Ascend
+        ├── eval.py                // evaluating LeNet-Quant network with device Ascend
+```
+
+## [Script Parameters](#contents)
 
 ```python
-config_ck = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
-                             keep_checkpoint_max=cfg.keep_checkpoint_max)
-ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
-model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+Major parameters in train.py and config.py as follows:
+
+--data_path: The absolute full path to the train and evaluation datasets.
+--epoch_size: Total training epochs.
+--batch_size: Training batch size.
+--image_height: Image height used as input to the model.
+--image_width: Image width used as input the model.
+--device_target: Device where the code will be implemented. Optional values
+                 are "Ascend", "GPU", "CPU".Only "Ascend" is supported now.
+--ckpt_path: The absolute full path to the checkpoint file saved
+                   after training.
+--data_path: Path where the dataset is saved
 ```
 
-### train quantization aware model
+## [Training Process](#contents)
 
-Also, you can just run this command instead.
+### Training
 
-```python
-python train_quant.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
+```
+python train.py --device_target=Ascend --dataset_path=/home/datasets/MNIST --dataset_sink_mode=True > log.txt 2>&1 &
 ```
 
-After all the following we will get the loss value of each step as following:
+After training, the loss value will be achieved as follows:
 
-```bash
->>> Epoch: [  1/ 10] step: [  1/ 900], loss: [2.3040/2.5234], time: [1.300234]
->>> ...
->>> Epoch: [ 9/ 10] step: [887/ 900], loss: [0.0113/0.0223], time: [1.300234]
->>> Epoch: [ 9/ 10] step: [888/ 900], loss: [0.0334/0.0223], time: [1.300234]
->>> Epoch: [ 9/ 10] step: [889/ 900], loss: [0.0233/0.0223], time: [1.300234]
+```
+# grep "Epoch " log.txt
+Epoch: [ 1/ 10], step: [ 937/ 937], loss: [0.0081], avg loss: [0.0081], time: [11268.6832ms]
+Epoch time: 11269.352, per step time: 12.027, avg loss: 0.008
+Epoch: [ 2/ 10], step: [ 937/ 937], loss: [0.0496], avg loss: [0.0496], time: [3085.2389ms]
+Epoch time: 3085.641, per step time: 3.293, avg loss: 0.050
+Epoch: [ 3/ 10], step: [ 937/ 937], loss: [0.0017], avg loss: [0.0017], time: [3085.3510ms]
+...
+...
 ```
 
-### Evaluate quantization aware model
+The model checkpoint will be saved in the current directory.
 
-Procedure of quantization aware model evaluation is different from normal. Because the checkpoint was create by quantization aware model, so we need to load fusion model checkpoint before convert fusion model to quantization aware model.
+## [Evaluation Process](#contents)
 
-```python
-# define funsion network
-network = LeNet5Fusion(cfg.num_classes)
+### Evaluation
 
-# load quantization aware network checkpoint
-param_dict = load_checkpoint(args.ckpt_path)
-load_param_into_net(network, param_dict)
+Before running the command below, please check the checkpoint path used for evaluation.
 
-# convert funsion netwrok to quantization aware network
-network = quant.convert_quant_network(network)
+```
+python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_937.ckpt > log.txt 2>&1 &
 ```
 
-Also, you can just run this command insread.
+You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:
 
-```python
-python eval_quant.py --data_path MNIST_Data --device_target Ascend --ckpt_path checkpoint_lenet.ckpt
+```
+# grep "Accuracy: " log.txt
+'Accuracy': 0.9842
 ```
 
-The top1 accuracy would display on shell.
+# [Model Description](#contents)
 
-```bash
->>> Accuracy: 98.54.
-```
+## [Performance](#contents)
 
-## Note
+### Evaluation Performance
 
-Here are some optional parameters:
+| Parameters                 | LeNet                                                       |
+| -------------------------- | ----------------------------------------------------------- |
+| Resource                   | Ascend 910 CPU 2.60GHz 56cores Memory 314G                  |
+| uploaded Date              | 06/09/2020 (month/day/year)                                 |
+| MindSpore Version          | 0.5.0-beta                                                  |
+| Dataset                    | MNIST                                                       |
+| Training Parameters        | epoch=10, steps=937, batch_size = 64, lr=0.01               |
+| Optimizer                  | Momentum                                                    |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 0.002                                                       |
+| Speed                      |3.29 ms/step                                                 |
+| Total time                 | 40s                                                         |
+| Checkpoint for Fine tuning | 482k (.ckpt file)                                           |
+| Scripts                    | [scripts](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet) |
 
-```bash
---device_target {Ascend,GPU}
-    device where the code will be implemented (default: Ascend)
---data_path DATA_PATH
-    path where the dataset is saved
---dataset_sink_mode DATASET_SINK_MODE
-    dataset_sink_mode is False or True
-```
+# [Description of Random Situation](#contents)
 
-You can run ```python train.py -h``` or ```python eval.py -h``` to get more information.
+In dataset.py, we set the seed inside “create_dataset" function.
 
-We encourage you to try this new capability, which can be particularly important for deployment in resource-constrained environments.
+# [ModelZoo Homepage](#contents)
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
