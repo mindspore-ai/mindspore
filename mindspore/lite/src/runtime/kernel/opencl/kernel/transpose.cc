@@ -35,6 +35,7 @@ namespace mindspore::kernel {
 int TransposeOpenCLKernel::Init() {
   std::string kernel_name = "transpose";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
   if (!is_image_out_) {
     kernel_name += "_BUF";
   } else {
@@ -70,11 +71,10 @@ int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
   size_t im_dst_x, im_dst_y;
   im_dst_x = UP_DIV(out_tensors_[0]->Height() * out_tensors_[0]->Width(), C4NUM);
   im_dst_y = out_tensors_[0]->Channel();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -82,6 +82,7 @@ int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_siz
 }
 
 int TransposeOpenCLKernel::Run() {
+  // notice: input image2d size = {c/4, h * w}
   MS_LOG(DEBUG) << this->name() << " Running!";
   std::vector<int> shapex = in_tensors_[0]->shape();
   int h = shapex[1];
