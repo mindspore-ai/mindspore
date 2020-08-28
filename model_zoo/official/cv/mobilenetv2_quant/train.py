@@ -24,14 +24,14 @@ from mindspore import Tensor
 from mindspore import nn
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train.serialization import load_checkpoint
 from mindspore.communication.management import init
 from mindspore.train.quant import quant
 import mindspore.dataset.engine as de
 
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
-from src.utils import Monitor, CrossEntropyWithLabelSmooth
+from src.utils import Monitor, CrossEntropyWithLabelSmooth, _load_param_into_net
 from src.config import config_ascend, config_ascend_quant
 from src.mobilenetV2 import mobilenetV2
 
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     # load pre trained ckpt
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
-        load_param_into_net(network, param_dict)
+        _load_param_into_net(network, param_dict)
 
     # convert fusion network to quantization aware network
     if config.quantization_aware:

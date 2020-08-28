@@ -111,3 +111,34 @@ class CrossEntropyWithLabelSmooth(_Loss):
         out_loss = self.ce(logit, one_hot_label)
         out_loss = self.mean(out_loss, 0)
         return out_loss
+
+def _load_param_into_net(model, params_dict):
+    """
+    load fp32 model parameters to quantization model.
+
+    Args:
+        model: quantization model
+        params_dict: f32 param
+
+    Returns:
+        None
+    """
+    iterable_dict = {
+        'weight': iter([item for item in params_dict.items() if item[0].endswith('weight')]),
+        'bias': iter([item for item in params_dict.items() if item[0].endswith('bias')]),
+        'gamma': iter([item for item in params_dict.items() if item[0].endswith('gamma')]),
+        'beta': iter([item for item in params_dict.items() if item[0].endswith('beta')]),
+        'moving_mean': iter([item for item in params_dict.items() if item[0].endswith('moving_mean')]),
+        'moving_variance': iter(
+            [item for item in params_dict.items() if item[0].endswith('moving_variance')]),
+        'minq': iter([item for item in params_dict.items() if item[0].endswith('minq')]),
+        'maxq': iter([item for item in params_dict.items() if item[0].endswith('maxq')])
+    }
+    for name, param in model.parameters_and_names():
+        key_name = name.split(".")[-1]
+        if key_name not in iterable_dict.keys():
+            continue
+        value_param = next(iterable_dict[key_name], None)
+        if value_param is not None:
+            param.set_parameter_data(value_param[1].data)
+            print(f'init model param {name} with checkpoint param {value_param[0]}')
