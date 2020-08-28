@@ -409,7 +409,7 @@ def _run_op(obj, op_name, args):
     if op_name == "Cast" or obj.update_parameter:
         cast_args = args
     else:
-        cast_args = args
+        cast_args = list(args)
         for idx, arg in enumerate(args):
             cast_type = getattr(arg, "cast_type", None)
             if cast_type:

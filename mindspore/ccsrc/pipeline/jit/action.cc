@@ -157,13 +157,19 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     if (fg->paramter_obj_nodes().size() == 0 || graphs.size() <= 1) {
       continue;
     }
+    auto &cloned_nodes = *cloner->cloned_node();
     for (auto &fv : fg->paramter_obj_nodes()) {
       TraceManager::DebugTrace(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
       TraceManager::EndTrace();
       auto &node_users = res->manager()->node_users()[fv];
       for (auto &n : node_users) {
-        auto repl_n = (*cloner->cloned_node())[n.first]->cast<CNodePtr>();
+        // If the user is not in this graph, no need to change.
+        auto cloned = cloned_nodes[n.first];
+        if (cloned == nullptr) {
+          continue;
+        }
+        auto repl_n = cloned->cast<CNodePtr>();
         repl_n->set_input(n.second, param);
       }
     }
