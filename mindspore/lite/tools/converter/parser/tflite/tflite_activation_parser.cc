@@ -71,7 +71,7 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
       return RET_NULL_PTR;
     }
     attr->alpha = tflite_attr->alpha;
-    attr->type = schema::ActivationType_SIGMOID;
+    attr->type = schema::ActivationType_LEAKY_RELU;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Activation;
@@ -84,52 +84,11 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   return RET_OK;
 }
 
-STATUS TflitePreluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
-                                const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                schema::CNodeT *op,
-                                std::vector<int32_t> *tensors_id,
-                                std::vector<schema::Format> *tensors_format,
-                                std::map<int, int>  *tensors_id_map) {
-  MS_LOG(DEBUG) << "parse TflitePreluParser";
-
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::PreluT> attr = std::make_unique<schema::PreluT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->slope)) {
-    MS_LOG(ERROR) << "get pRelu -> slope failed";
-    return RET_ERROR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_Prelu;
-  op->primitive->value.value = attr.release();
-
-  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
-             tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
-              tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
-  return RET_OK;
-}
-
-
 TfliteNodeRegister g_TfliteReluParser("Relu", new TfliteReluParser());
 TfliteNodeRegister g_TfliteRelu6Parser("Relu6", new TfliteRelu6Parser());
 TfliteNodeRegister g_TfliteTanhParser("Tanh", new TfliteTanhParser());
 TfliteNodeRegister g_TfliteHardSwishParser("HardSwish", new TfliteHardSwishParser());
 TfliteNodeRegister g_tfliteLogisticParser("Logistic", new TfliteLogisticParser());
-TfliteNodeRegister g_tflitePreluParser("Prelu", new TflitePreluParser());
 TfliteNodeRegister g_TfliteLeakyReluParser("LeakyRelu", new TfliteLeakyReluParser());
 }  // namespace lite
 }  // namespace mindspore

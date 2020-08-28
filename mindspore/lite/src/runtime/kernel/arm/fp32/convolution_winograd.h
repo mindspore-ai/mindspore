@@ -38,10 +38,6 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
       delete trans_weight_;
       trans_weight_ = nullptr;
     }
-    if (trans_input_ != nullptr) {
-      free(trans_input_);
-      trans_input_ = nullptr;
-    }
   };
   int Init() override;
   int ReSize() override;
@@ -51,9 +47,14 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int MallocFilterMatrix(int oc_block, int oc_block_num);
   int InitTmpBuffer();
   int ConfigInputOutput();
+  int PostProcess();
 
  private:
   void FreeTmpBuffer() {
+    if (trans_input_ != nullptr) {
+      ctx_->allocator->Free(trans_input_);
+      trans_input_ = nullptr;
+    }
     if (tmp_data_ != nullptr) {
       ctx_->allocator->Free(tmp_data_);
       tmp_data_ = nullptr;
@@ -66,6 +67,10 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(tmp_out_data_);
       tmp_out_data_ = nullptr;
     }
+    if (col_buffer_ != nullptr) {
+      ctx_->allocator->Free(col_buffer_);
+      col_buffer_ = nullptr;
+    }
   }
   int kernel_unit_;
   int input_unit_;
@@ -74,6 +79,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *trans_input_ = nullptr;
   float *gemm_out_ = nullptr;
   float *tmp_out_data_ = nullptr;
+  float *col_buffer_ = nullptr;
   Matrix *trans_weight_ = nullptr;
   InputTransformUnitFunc input_trans_func_;
   OutputTransformUnitFunc output_trans_func_;

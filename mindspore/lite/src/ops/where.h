@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,14 +29,18 @@ namespace lite {
 class Where : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Where, PrimitiveC);
   Where() = default;
   explicit Where(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetCondition(const std::vector<bool> &condition);
+
 #else
-  explicit Where(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Where() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<bool> GetCondition() const;
-  void SetCondition(const std::vector<bool> &condition);
 };
 }  // namespace lite
 }  // namespace mindspore

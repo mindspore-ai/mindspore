@@ -31,7 +31,7 @@ class ReverseCPUKernel : public LiteKernel {
   ReverseCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                    const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~ReverseCPUKernel() {
     if (tmp_ != nullptr) {
       free(tmp_);
@@ -52,7 +52,6 @@ class ReverseCPUKernel : public LiteKernel {
   int strides_[REVERSE_STRIDE_MAX_SIZE];
   int inCount_[REVERSE_STRIDE_MAX_SIZE];
   int outCount_[REVERSE_STRIDE_MAX_SIZE];
-  const Context *ctx_;
   int thread_count_;
   int *tmp_ = nullptr;
   float *in_ptr_;

@@ -27,10 +27,13 @@ namespace lite {
 class Greater : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Greater, Arithmetic);
   Greater() = default;
   explicit Greater(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  explicit Greater(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  Greater() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

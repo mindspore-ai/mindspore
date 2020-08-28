@@ -26,8 +26,19 @@ void Scale::SetAxis(int axis) { this->primitive_->value.AsScale()->axis = axis; 
 #else
 
 int Scale::GetAxis() const { return this->primitive_->value_as_Scale()->axis(); }
-
-void Scale::SetAxis(int axis) {}
+int Scale::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Scale();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Scale return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateScale(*fbb, attr->axis());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Scale, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -22,26 +22,17 @@
 
 typedef struct SpaceToBatchParameter {
   OpParameter op_parameter_;
-  int block_sizes_[8];
-  int paddings_[8];
-  int n_dims_;
-  int num_elements_;
-  int num_elements_padded_;
-  int n_space_dims_;
-  int in_shape_[8];
-  int padded_in_shape_[8];
   bool need_paddings_;
+  int block_sizes_[4];
+  int paddings_[4];
 } SpaceToBatchParameter;
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, int h_start, int h_end);
-int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_size, int h_start,
-                        int h_end);
-void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *out_strides, int *perm,
-                      int *output_shape, int h_start, int h_end);
-void DoPadding(const float *input, float *padded_input, SpaceToBatchParameter param, float *tmp_space[]);
-int EnumElement(int *shape, int n_dims);
+void DoSpaceToBatchNHWC(const float *input, float *output, SpaceToBatchParameter *param, int *in_shape,
+                        int *out_shape);
+void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, int *padding, int *out_shape,
+                               const float *pedding_h_data, const float *pedding_w_data);
 #ifdef __cplusplus
 }
 #endif

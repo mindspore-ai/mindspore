@@ -77,7 +77,7 @@ int MulInt8CPUKernel::Run() {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
 
-    ArithmeticParameter tile_para = {0};
+    ArithmeticParameter tile_para;
     tile_para.ndim_ = out_tensors_.at(0)->shape().size();
     for (size_t i = 0; i < tile_para.ndim_; i++) {
       tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
@@ -86,17 +86,17 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->Data()),
                        static_cast<int8_t *>(in_tensors_.at(1)->Data()), input0_data_, input1_data_, &tile_para);
-    ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = LiteBackendParallelLaunch(MulInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, MulInt8Run, this, thread_count_);
   return ret;
 }
 
-int MulInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int MulInt8Run(void *cdata, int task_id) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->DoExecute(task_id);
   return lite::RET_OK;

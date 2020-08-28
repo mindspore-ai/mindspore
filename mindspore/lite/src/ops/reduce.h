@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,19 +29,22 @@ namespace lite {
 class Reduce : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Reduce, PrimitiveC);
   Reduce() = default;
   explicit Reduce(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void SetAxes(const std::vector<int> &axes);
+  void SetKeepDims(int keep_dims);
+  void SetMode(int mode);
 #else
-  explicit Reduce(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Reduce() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetAxes() const;
   int GetKeepDims() const;
   int GetMode() const;
-  void SetAxes(const std::vector<int> &axes);
-  void SetKeepDims(int keep_dims);
-  void SetMode(int mode);
 };
 }  // namespace lite
 }  // namespace mindspore

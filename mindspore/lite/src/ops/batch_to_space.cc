@@ -32,7 +32,31 @@ void BatchToSpace::SetBlockShape(const std::vector<int> &block_shape) {
 void BatchToSpace::SetCrops(const std::vector<int> &crops) { this->primitive_->value.AsBatchToSpace()->crops = crops; }
 
 #else
-
+int BatchToSpace::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_BatchToSpace();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_BatchToSpace return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> blockShape;
+  if (attr->blockShape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->blockShape()->size()); i++) {
+      blockShape.push_back(attr->blockShape()->data()[i]);
+    }
+  }
+  std::vector<int32_t> crops;
+  if (attr->crops() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->crops()->size()); i++) {
+      crops.push_back(attr->crops()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateBatchToSpaceDirect(*fbb, &blockShape, &crops);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_BatchToSpace, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 std::vector<int> BatchToSpace::GetBlockShape() const {
   auto fb_vector = this->primitive_->value_as_BatchToSpace()->blockShape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
@@ -42,8 +66,6 @@ std::vector<int> BatchToSpace::GetCrops() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void BatchToSpace::SetBlockShape(const std::vector<int> &block_shape) {}
-void BatchToSpace::SetCrops(const std::vector<int> &crops) {}
 #endif
 namespace {
 constexpr int kBatchToSpaceOutputNum = 1;

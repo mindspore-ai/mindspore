@@ -72,7 +72,7 @@ int ROIPoolingCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int ROIPoolingRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ROIPoolingRun(void *cdata, int task_id) {
   auto Data = reinterpret_cast<ROIPoolingCPUKernel *>(cdata);
   auto ret = Data->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -91,7 +91,7 @@ int ROIPoolingCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->Data());
   roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  ret = LiteBackendParallelLaunch(ROIPoolingRun, this, param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ROIPoolingRun, this, param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling error: error_code[" << ret << "]";
     return ret;

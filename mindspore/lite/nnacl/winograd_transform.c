@@ -24,8 +24,8 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
   int ic4 = UP_DIV(in_channel, C4NUM);
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int input_h = conv_param->input_h_;
   int input_w = conv_param->input_w_;
   if (out_w_block_num == 0) {
@@ -42,7 +42,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
     int interval_y_e = src_y_e < input_h ? input_unit : (input_h - src_y_s);
 
     int src_plane_offset = ic4 * C4NUM * (src_y_s * input_w + src_x_s);
-    int dst_plane_offset = c * C4NUM;
+    int dst_plane_offset = c * C4NUM * ic4;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
       memset(tmp_data, 0, input_unit * input_unit * C4NUM * sizeof(float));
@@ -67,8 +67,8 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
         }
       }
       // input transform
-      int dst_ic4_offset = dst_plane_offset + ic * TILE_NUM * C4NUM;
-      size_t dst_step = ic4 * C4NUM * TILE_NUM;
+      int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
+      size_t dst_step = C12NUM * ic4 * C4NUM;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
       input_trans_func(tmp_data, trans_input_ptr, C4NUM, dst_step);
     }
@@ -86,6 +86,7 @@ void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const f
   int output_h_unit_block = UP_DIV(output_h, output_unit);
   int output_channel = conv_param->output_channel_;
   int oc4 = UP_DIV(output_channel, C4NUM);
+  int oc8 = UP_DIV(output_channel, C8NUM);
   int input_unit = conv_param->input_unit_;
   if (output_unit_num == 0) {
     return;
@@ -93,17 +94,19 @@ void WinogradOutputTransform(const float *gemm_out, float *tmp_out_data, const f
   for (int i = 0; i < cal_num; i++) {
     int dst_x_s = out_tile_index % output_unit_num;
     int dst_y_s = out_tile_index / output_unit_num;
-    int src_tile_offset = i * oc4 * C4NUM * input_unit * input_unit;
+    int src_tile_offset = i * oc8 * C8NUM * input_unit * input_unit;
     int dst_tile_offset = C4NUM * output_unit * (dst_x_s + dst_y_s * output_w_unit_block * output_unit);
 
     for (int j = 0; j < oc4; j++) {
-      int src_oc4_offset = src_tile_offset + j * input_unit * input_unit * C4NUM;
+      int c8_block = j / 2;
+      int c8_res = j % 2;
+      int src_oc4_offset = src_tile_offset + c8_block * input_unit * input_unit * C8NUM + c8_res * C4NUM;
       int dst_oc4_offset =
         dst_tile_offset + j * C4NUM * output_h_unit_block * output_w_unit_block * output_unit * output_unit;
       const float *src_ptr = gemm_out + src_oc4_offset;
       const float *bias_ptr = bias_data + j * C4NUM;
       float *dst_ptr = tmp_out_data + dst_oc4_offset;
-      output_trans_func(src_ptr, dst_ptr, bias_ptr, C4NUM, output_w_unit_block * output_unit);
+      output_trans_func(src_ptr, dst_ptr, bias_ptr, C8NUM, output_w_unit_block * output_unit);
     }
     out_tile_index++;
   }
@@ -283,8 +286,8 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
   int input_channel = conv_param->input_channel_;
   int input_width = conv_param->input_w_;
   int input_height = conv_param->input_h_;
-  int pad_w = conv_param->pad_w_;
-  int pad_h = conv_param->pad_h_;
+  int pad_w = conv_param->pad_l_;
+  int pad_h = conv_param->pad_u_;
   int ic4 = UP_DIV(input_channel, C4NUM);
   const int input_unit = 4;
   if (out_w_block == 0) {
@@ -300,7 +303,7 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
     int real_y_end = (origin_y + input_unit) < input_height ? input_unit : (input_height - origin_y);
 
     int src_plane_offset = ic4 * C4NUM * (origin_y * input_width + origin_x);
-    int dst_plane_offset = cal_id * C4NUM;
+    int dst_plane_offset = cal_id * C4NUM * ic4;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
       memset(tmp_data, 0, input_unit * input_unit * C4NUM * sizeof(float));
@@ -326,8 +329,8 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
       }
 
       // input transform
-      int dst_ic4_offset = dst_plane_offset + ic * TILE_NUM * C4NUM;
-      size_t dst_step = ic4 * C4NUM * TILE_NUM;
+      int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
+      size_t dst_step = C12NUM * ic4 * C4NUM;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
       Conv3x3Fp32InputUnit(tmp_data, trans_input_ptr, dst_step);
     }
@@ -336,8 +339,8 @@ void Conv3x3Fp32InputTransform(const float *input_data, float *trans_input, floa
 
 void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4, int output_channel, int kernel_plane,
                                 int oc_block) {
-  const int input_unit = 4;
-  int dst_step = iC4 * C4NUM * oc_block;
+  int oc_plane_block = UP_DIV(output_channel, oc_block);
+  int dst_step = iC4 * C4NUM * oc_block * oc_plane_block;
   if (oc_block == 0) {
     return;
   }
@@ -345,7 +348,7 @@ void Conv3x3Fp32FilterTransform(float *weight_data, float *trans_weight, int iC4
     int oc_block_num = o / oc_block;
     int oc_block_rem = o % oc_block;
     int src_oc_offset = o * iC4 * C4NUM * kernel_plane;
-    int dst_oc_offset = oc_block_num * oc_block * iC4 * C4NUM * input_unit * input_unit + oc_block_rem;
+    int dst_oc_offset = oc_block_num * oc_block * iC4 * C4NUM + oc_block_rem;
     for (int i = 0; i < iC4; i++) {
       float *src_ic4_ptr = weight_data + src_oc_offset + i * kernel_plane * C4NUM;
       float *dst_ic4_ptr = trans_weight + dst_oc_offset + i * oc_block * C4NUM;
@@ -559,24 +562,24 @@ void Conv3x3Fp32OutputUnit(const float *gemm_out, const float *bias_data, float 
   float32x4_t bias_ptr = vld1q_f32(bias_data);
 
   float32x4_t s00 = vld1q_f32(gemm_out);
-  float32x4_t s01 = vld1q_f32(gemm_out + 4);
-  float32x4_t s02 = vld1q_f32(gemm_out + 8);
-  float32x4_t s03 = vld1q_f32(gemm_out + 12);
+  float32x4_t s01 = vld1q_f32(gemm_out + 8);
+  float32x4_t s02 = vld1q_f32(gemm_out + 16);
+  float32x4_t s03 = vld1q_f32(gemm_out + 24);
 
-  float32x4_t s10 = vld1q_f32(gemm_out + 16);
-  float32x4_t s11 = vld1q_f32(gemm_out + 20);
-  float32x4_t s12 = vld1q_f32(gemm_out + 24);
-  float32x4_t s13 = vld1q_f32(gemm_out + 28);
+  float32x4_t s10 = vld1q_f32(gemm_out + 32);
+  float32x4_t s11 = vld1q_f32(gemm_out + 40);
+  float32x4_t s12 = vld1q_f32(gemm_out + 48);
+  float32x4_t s13 = vld1q_f32(gemm_out + 56);
 
-  float32x4_t s20 = vld1q_f32(gemm_out + 32);
-  float32x4_t s21 = vld1q_f32(gemm_out + 36);
-  float32x4_t s22 = vld1q_f32(gemm_out + 40);
-  float32x4_t s23 = vld1q_f32(gemm_out + 44);
+  float32x4_t s20 = vld1q_f32(gemm_out + 64);
+  float32x4_t s21 = vld1q_f32(gemm_out + 72);
+  float32x4_t s22 = vld1q_f32(gemm_out + 80);
+  float32x4_t s23 = vld1q_f32(gemm_out + 88);
 
-  float32x4_t s30 = vld1q_f32(gemm_out + 48);
-  float32x4_t s31 = vld1q_f32(gemm_out + 52);
-  float32x4_t s32 = vld1q_f32(gemm_out + 56);
-  float32x4_t s33 = vld1q_f32(gemm_out + 60);
+  float32x4_t s30 = vld1q_f32(gemm_out + 96);
+  float32x4_t s31 = vld1q_f32(gemm_out + 104);
+  float32x4_t s32 = vld1q_f32(gemm_out + 112);
+  float32x4_t s33 = vld1q_f32(gemm_out + 120);
 
   float32x4_t t00 = vaddq_f32(vaddq_f32(s00, s10), s20);
   float32x4_t t01 = vaddq_f32(vaddq_f32(s01, s11), s21);
@@ -609,24 +612,24 @@ void Conv3x3Fp32OutputUnit(const float *gemm_out, const float *bias_data, float 
     const float *bias_ptr = bias_data + i;
 
     float s00 = local_ptr[0];
-    float s01 = (local_ptr + 4)[0];
-    float s02 = (local_ptr + 8)[0];
-    float s03 = (local_ptr + 12)[0];
+    float s01 = (local_ptr + 8)[0];
+    float s02 = (local_ptr + 16)[0];
+    float s03 = (local_ptr + 24)[0];
 
-    float s10 = (local_ptr + 16)[0];
-    float s11 = (local_ptr + 20)[0];
-    float s12 = (local_ptr + 24)[0];
-    float s13 = (local_ptr + 28)[0];
+    float s10 = (local_ptr + 32)[0];
+    float s11 = (local_ptr + 40)[0];
+    float s12 = (local_ptr + 48)[0];
+    float s13 = (local_ptr + 56)[0];
 
-    float s20 = (local_ptr + 32)[0];
-    float s21 = (local_ptr + 36)[0];
-    float s22 = (local_ptr + 40)[0];
-    float s23 = (local_ptr + 44)[0];
+    float s20 = (local_ptr + 64)[0];
+    float s21 = (local_ptr + 72)[0];
+    float s22 = (local_ptr + 80)[0];
+    float s23 = (local_ptr + 88)[0];
 
-    float s30 = (local_ptr + 48)[0];
-    float s31 = (local_ptr + 52)[0];
-    float s32 = (local_ptr + 56)[0];
-    float s33 = (local_ptr + 60)[0];
+    float s30 = (local_ptr + 96)[0];
+    float s31 = (local_ptr + 104)[0];
+    float s32 = (local_ptr + 112)[0];
+    float s33 = (local_ptr + 120)[0];
 
     float t00 = s00 + s10 + s20;
     float t01 = s01 + s11 + s21;
@@ -663,6 +666,7 @@ void Conv3x3Fp32OutputTransform(const float *gemm_out, float *out_data, const fl
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
   int oc4 = UP_DIV(output_channel, C4NUM);
+  int oc8 = UP_DIV(output_channel, C8NUM);
   const int input_unit = 4;
   if (out_w_block == 0) {
     return;
@@ -670,11 +674,13 @@ void Conv3x3Fp32OutputTransform(const float *gemm_out, float *out_data, const fl
   for (int i = 0; i < real_cal_num; i++) {
     int out_w_index = (start_index + i) % out_w_block;
     int out_h_index = (start_index + i) / out_w_block;
-    int src_tile_offset = i * oc4 * C4NUM * input_unit * input_unit;
+    int src_tile_offset = i * oc8 * C8NUM * input_unit * input_unit;
     int dst_tile_offset = C4NUM * (out_w_index * OUPUT_UNIT + out_h_index * OUPUT_UNIT * output_w);
 
     for (int j = 0; j < oc4; j++) {
-      int src_oc4_offset = src_tile_offset + j * input_unit * input_unit * C4NUM;
+      int c8_block = j / 2;
+      int c8_res = j % 2;
+      int src_oc4_offset = src_tile_offset + c8_block * input_unit * input_unit * C8NUM + c8_res * C4NUM;
       int dst_oc4_offset = dst_tile_offset + j * C4NUM * output_h * output_w;
       const float *src_ptr = gemm_out + src_oc4_offset;
       const float *bias_ptr = bias_data + j * C4NUM;
@@ -689,7 +695,7 @@ void Conv3x3Fp32OutputTransform(const float *gemm_out, float *out_data, const fl
 }
 
 // int8 conv3x3
-void Conv3x3Uint8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t step, int input_zp) {
+void Conv3x3Int8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t step, int input_zp) {
 #ifdef ENABLE_ARM
   int16x8_t zp = vdupq_n_s16(input_zp);
 
@@ -858,14 +864,14 @@ void Conv3x3Uint8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t 
 #endif
 }
 
-void Conv3x3Uint8InputTransform(const int16_t *input_data, int16_t *trans_input, int16_t *tmp_data, int start_index,
+void Conv3x3Int8InputTransform(const int16_t *input_data, int16_t *trans_input, int16_t *tmp_data, int start_index,
                                 int real_cal_num, int out_w_block, ConvParameter *conv_param) {
   // input data format : nhwc
   int input_channel = conv_param->input_channel_;
   int input_width = conv_param->input_w_;
   int input_height = conv_param->input_h_;
-  int pad_w = conv_param->pad_w_;
-  int pad_h = conv_param->pad_h_;
+  int pad_w = conv_param->pad_l_;
+  int pad_h = conv_param->pad_u_;
   ConvQuantArg quant_arg = conv_param->conv_quant_arg_;
   int input_zp = quant_arg.input_quant_args_[0].zp_;
   const int ic8 = UP_DIV(input_channel, C8NUM);
@@ -898,7 +904,7 @@ void Conv3x3Uint8InputTransform(const int16_t *input_data, int16_t *trans_input,
       int dst_ic8_offset = dst_plane_offset + ic * TILE_NUM * C8NUM;
       size_t dst_step = ic8 * C8NUM * TILE_NUM;
       int16_t *trans_input_ptr = trans_input + dst_ic8_offset;
-      Conv3x3Uint8InputUnit(tmp_data, trans_input_ptr, dst_step, input_zp);
+      Conv3x3Int8InputUnit(tmp_data, trans_input_ptr, dst_step, input_zp);
     }
   }
 }
@@ -1169,7 +1175,7 @@ void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weigh
   }
 }
 
-void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, int8_t *output_data, bool h_not_bound,
+void Conv3x3Int8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, int8_t *output_data, bool h_not_bound,
                             bool w_not_bound, int output_w, int real_num, int oc_start, ConvParameter *conv_param) {
   int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
   int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
@@ -1221,13 +1227,13 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
   int32x4_t ls;
   int32x4_t rs;
   if ((conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL)) {
-    out_multiplier = vld1q_s32(quant_multiplier);
-    ls = vld1q_s32(left_shift);
-    rs = vld1q_s32(right_shift);
+    out_multiplier = vld1q_s32(quant_multiplier + oc_start);
+    ls = vld1q_s32(left_shift + oc_start);
+    rs = vld1q_s32(right_shift + oc_start);
   } else {
-    out_multiplier = vdupq_n_s32(quant_multiplier);
-    ls = vdupq_n_s32(left_shift);
-    rs = vdupq_n_s32(right_shift);
+    out_multiplier = vdupq_n_s32(quant_multiplier[0]);
+    ls = vdupq_n_s32(left_shift[0]);
+    rs = vdupq_n_s32(right_shift[0]);
   }
   int32x4_t out_zp = vdupq_n_s32(output_zp);
   int32x4_t output_min = vdupq_n_s32(out_min);
@@ -1261,27 +1267,27 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
   d11 = vmaxq_s32(d11, output_min);
   d11 = vminq_s32(d11, output_max);
 
-  (output_data)[0] = (uint8_t)d00[0];
-  (output_data + 1)[0] = (uint8_t)d00[1];
-  (output_data + 2)[0] = (uint8_t)d00[2];
-  (output_data + 3)[0] = (uint8_t)d00[3];
+  (output_data)[0] = (int8_t)d00[0];
+  (output_data + 1)[0] = (int8_t)d00[1];
+  (output_data + 2)[0] = (int8_t)d00[2];
+  (output_data + 3)[0] = (int8_t)d00[3];
 
   if (w_not_bound) {
-    *(output_data + 4) = (uint8_t)d01[0];
-    *(output_data + 5) = (uint8_t)d01[1];
-    *(output_data + 6) = (uint8_t)d01[2];
-    *(output_data + 7) = (uint8_t)d01[3];
+    *(output_data + 4) = (int8_t)d01[0];
+    *(output_data + 5) = (int8_t)d01[1];
+    *(output_data + 6) = (int8_t)d01[2];
+    *(output_data + 7) = (int8_t)d01[3];
   }
   if (h_not_bound) {
-    *(output_data + output_w * 4) = (uint8_t)d10[0];
-    *(output_data + output_w * 4 + 1) = (uint8_t)d10[1];
-    *(output_data + output_w * 4 + 2) = (uint8_t)d10[2];
-    *(output_data + output_w * 4 + 3) = (uint8_t)d10[3];
+    *(output_data + output_w * 4) = (int8_t)d10[0];
+    *(output_data + output_w * 4 + 1) = (int8_t)d10[1];
+    *(output_data + output_w * 4 + 2) = (int8_t)d10[2];
+    *(output_data + output_w * 4 + 3) = (int8_t)d10[3];
     if (w_not_bound) {
-      *(output_data + output_w * 4 + 4) = (uint8_t)d11[0];
-      *(output_data + output_w * 4 + 5) = (uint8_t)d11[1];
-      *(output_data + output_w * 4 + 6) = (uint8_t)d11[2];
-      *(output_data + output_w * 4 + 7) = (uint8_t)d11[3];
+      *(output_data + output_w * 4 + 4) = (int8_t)d11[0];
+      *(output_data + output_w * 4 + 5) = (int8_t)d11[1];
+      *(output_data + output_w * 4 + 6) = (int8_t)d11[2];
+      *(output_data + output_w * 4 + 7) = (int8_t)d11[3];
     }
   }
 #else
@@ -1450,7 +1456,7 @@ void Conv3x3Uint8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, i
 #endif
 }
 
-void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const int32_t *bias_data, int start_index,
+void Conv3x3Int8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const int32_t *bias_data, int start_index,
                                  int real_cal_num, int out_w_block, ConvParameter *conv_param) {
   int output_channel = conv_param->output_channel_;
   int output_w = conv_param->output_w_;
@@ -1477,7 +1483,7 @@ void Conv3x3Uint8OutputTransform(const int32_t *gemm_out, int8_t *out_data, cons
       int real_num = (output_channel - j * C4NUM) < C4NUM ? (output_channel - j * C4NUM) : C4NUM;
       bool w_not_bound = out_w_index * OUPUT_UNIT + 1 < output_w;
       bool h_not_bound = out_h_index * OUPUT_UNIT + 1 < output_h;
-      Conv3x3Uint8OutputUnit(src_ptr, bias_ptr, dst_ptr, h_not_bound, w_not_bound, output_w, real_num, j * C4NUM,
+      Conv3x3Int8OutputUnit(src_ptr, bias_ptr, dst_ptr, h_not_bound, w_not_bound, output_w, real_num, j * C4NUM,
                              conv_param);
     }
   }

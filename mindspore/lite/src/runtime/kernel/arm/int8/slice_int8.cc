@@ -68,7 +68,7 @@ int SliceInt8CPUKernel::DoSlice(int task_id) {
   return ret;
 }
 
-int SliceInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SliceInt8Run(void *cdata, int task_id) {
   auto slice_kernel = reinterpret_cast<SliceInt8CPUKernel *>(cdata);
   auto ret = slice_kernel->DoSlice(task_id);
   if (ret != RET_OK) {
@@ -90,7 +90,7 @@ int SliceInt8CPUKernel::Run() {
   if (param_->size_[1] < param_->op_parameter_.thread_num_) {
     ret = SliceInt8NoParallel(input_data, output_data, param_);
   } else {
-    ret = LiteBackendParallelLaunch(SliceInt8Run, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, SliceInt8Run, this, op_parameter_->thread_num_);
   }
 
   if (ret != RET_OK) {

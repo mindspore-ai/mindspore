@@ -25,11 +25,13 @@ namespace lite {
 class TupleGetItem : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(TupleGetItem, PrimitiveC);
   TupleGetItem() = default;
   explicit TupleGetItem(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit TupleGetItem(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  TupleGetItem() = default;
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

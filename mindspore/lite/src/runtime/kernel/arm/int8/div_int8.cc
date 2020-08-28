@@ -87,7 +87,7 @@ int DivInt8CPUKernel::DoExecute(int task_id) {
   return ret;
 }
 
-int DivInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int DivInt8Run(void *cdata, int task_id) {
   auto div_kernel = reinterpret_cast<DivInt8CPUKernel *>(cdata);
   auto ret = div_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -104,7 +104,7 @@ int DivInt8CPUKernel::Run() {
   }
 
   if (broadcast_) {
-    ArithmeticParameter tile_para = {0};
+    ArithmeticParameter tile_para;
     tile_para.ndim_ = out_tensors_.at(0)->shape().size();
     for (size_t i = 0; i < tile_para.ndim_; i++) {
       tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
@@ -123,7 +123,7 @@ int DivInt8CPUKernel::Run() {
                         static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(tile0_data_),
                         reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
   }
-  ret = LiteBackendParallelLaunch(DivInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, DivInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
     context_->allocator->Free(tile0_data_);
     context_->allocator->Free(tile1_data_);

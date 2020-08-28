@@ -47,8 +47,8 @@ void InitConvParamPack(ConvParameter *conv_param) {
   conv_param->dilation_h_ = 1;
   conv_param->dilation_w_ = 1;
 
-  conv_param->pad_h_ = 1;
-  conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = 1;
+  conv_param->pad_l_ = 1;
 }
 
 TEST_F(TestPack, PackInputFp32) {

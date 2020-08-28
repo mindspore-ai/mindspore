@@ -94,7 +94,7 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   return RET_OK;
 }
 
-int SoftmaxRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SoftmaxRun(void *cdata, int task_id) {
   auto softmax_kernel = reinterpret_cast<SoftmaxInt8CPUKernel *>(cdata);
   auto error_code = softmax_kernel->DoSoftmax(task_id);
   if (error_code != RET_OK) {
@@ -122,7 +122,7 @@ int SoftmaxInt8CPUKernel::Run() {
     context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  ret = LiteBackendParallelLaunch(SoftmaxRun, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SoftmaxRun, this, thread_count_);
   context_->allocator->Free(exp_data_);
   context_->allocator->Free(sum_data_);
   if (ret != RET_OK) {

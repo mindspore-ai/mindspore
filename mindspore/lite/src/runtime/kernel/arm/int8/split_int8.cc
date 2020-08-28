@@ -71,7 +71,7 @@ int SplitInt8CPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-int SplitInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SplitInt8Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<SplitInt8CPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
@@ -94,7 +94,7 @@ int SplitInt8CPUKernel::Run() {
     output_ptr_.push_back(reinterpret_cast<int8_t *>(out_tensors_.at(i)->Data()));
   }
 
-  ret = LiteBackendParallelLaunch(SplitInt8Run, this, thread_n_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SplitInt8Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

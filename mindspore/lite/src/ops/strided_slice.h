@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,10 +29,22 @@ namespace lite {
 class StridedSlice : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(StridedSlice, PrimitiveC);
   StridedSlice() = default;
   explicit StridedSlice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBeginMask(int begin_mask);
+  void SetEndMask(int end_mask);
+  void SetEllipsisMask(int ellipsis_mask);
+  void SetNewAxisMask(int new_axis_mask);
+  void SetShrinkAxisMask(int shrink_axis_mask);
+  void SetBegin(const std::vector<int> &begin);
+  void SetEnd(const std::vector<int> &end);
+  void SetStride(const std::vector<int> &stride);
+  void SetIsScale(const std::vector<int> &is_scale);
 #else
-  explicit StridedSlice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  StridedSlice() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBeginMask() const;
@@ -43,15 +56,6 @@ class StridedSlice : public PrimitiveC {
   std::vector<int> GetEnd() const;
   std::vector<int> GetStride() const;
   std::vector<int> GetIsScale() const;
-  void SetBeginMask(int begin_mask);
-  void SetEndMask(int end_mask);
-  void SetEllipsisMask(int ellipsis_mask);
-  void SetNewAxisMask(int new_axis_mask);
-  void SetShrinkAxisMask(int shrink_axis_mask);
-  void SetBegin(const std::vector<int> &begin);
-  void SetEnd(const std::vector<int> &end);
-  void SetStride(const std::vector<int> &stride);
-  void SetIsScale(const std::vector<int> &is_scale);
 
   int NDims() { return this->ndim_; }
   void ApplyNewAxisMask();

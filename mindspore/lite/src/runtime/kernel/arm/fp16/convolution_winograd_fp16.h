@@ -38,10 +38,6 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       free(fp16_weight_);
       fp16_weight_ = nullptr;
     }
-    if (trans_input_ != nullptr) {
-      free(trans_input_);
-      trans_input_ = nullptr;
-    }
     if (trans_weight_ != nullptr) {
       delete trans_weight_;
       trans_weight_ = nullptr;
@@ -56,9 +52,14 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int MallocFilterMatrix(int oc_block, int oc_block_num);
   int InitTmpBuffer();
   int ConfigInputOutput();
+  int PostProcess();
 
  private:
   void FreeTmpBuffer() {
+    if (trans_input_ != nullptr) {
+      ctx_->allocator->Free(trans_input_);
+      trans_input_ = nullptr;
+    }
     if (tmp_data_ != nullptr) {
       ctx_->allocator->Free(tmp_data_);
       tmp_data_ = nullptr;
@@ -85,7 +86,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   TmpBufferAddressFp16 tmp_buffer_address_list_[4];
 };
 int WinogradFilterTransformFp16(const float16_t *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
-                                 ConvParameter *conv_param, int oc_block);
+                                ConvParameter *conv_param, int oc_block);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_WINOGRAD_FP16_H_

@@ -126,13 +126,13 @@ void ConvolutionSWFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionSWFP16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   ConfigInputOutput();
   return ReSize();
@@ -186,7 +186,7 @@ int ConvolutionSWFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int ConvolutionSWFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvolutionSWFp16Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionSWFP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -219,7 +219,7 @@ int ConvolutionSWFP16CPUKernel::Run() {
   int in_channel = conv_param_->input_channel_;
   convert_func_(reinterpret_cast<void *>(execute_input_), nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionSWFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionSWFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv fp16 error error_code[" << error_code << "]";
     FreeTmpBuffer();

@@ -26,11 +26,10 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LeakyReLU;
-using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 namespace {
-int LeakyReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int LeakyReluRun(void *cdata, int task_id) {
   auto kernel_relu = reinterpret_cast<LeakyReluCPUKernel *>(cdata);
   auto ret = kernel_relu->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -66,7 +65,7 @@ int LeakyReluCPUKernel::Run() {
   input_data = reinterpret_cast<float *>(input->Data());
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  auto ret = LiteBackendParallelLaunch(LeakyReluRun, this, context_->thread_num_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, LeakyReluRun, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PReluDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -100,5 +99,4 @@ kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::tensor
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LeakyReLU, CpuLeakyReluFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Prelu, CpuLeakyReluFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -100,7 +100,7 @@ int ReverseCPUKernel::Init() {
   return ret;
 }
 
-int ReverseRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ReverseRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<ReverseCPUKernel *>(cdata);
   auto ret = g_kernel->DoReverse(task_id);
   if (ret != RET_OK) {
@@ -132,7 +132,7 @@ int ReverseCPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  ret = LiteBackendParallelLaunch(ReverseRun, this, thread_sz_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ReverseRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reverse run error error_code[" << ret << "]";
     return ret;

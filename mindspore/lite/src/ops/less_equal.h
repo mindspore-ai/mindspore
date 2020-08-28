@@ -28,10 +28,13 @@ namespace lite {
 class LessEqual : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(LessEqual, Arithmetic);
   LessEqual() = default;
   explicit LessEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  explicit LessEqual(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  LessEqual() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

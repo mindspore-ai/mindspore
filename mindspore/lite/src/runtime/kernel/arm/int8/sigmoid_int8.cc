@@ -79,7 +79,7 @@ int SigmoidInt8CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int SigmoidInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SigmoidInt8Run(void *cdata, int task_id) {
   auto activation_kernel = reinterpret_cast<SigmoidInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
@@ -95,7 +95,7 @@ int SigmoidInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  int error_code = LiteBackendParallelLaunch(SigmoidInt8Run, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, SigmoidInt8Run, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SigmoidInt8Run function error error_code[" << error_code << "]";
     return RET_ERROR;

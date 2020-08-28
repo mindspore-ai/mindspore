@@ -29,12 +29,23 @@ void Gather::SetAxis(int axis) { this->primitive_->value.AsGather()->axis = axis
 void Gather::SetBatchDims(int batch_dims) { this->primitive_->value.AsGather()->batchDims = batch_dims; }
 
 #else
+int Gather::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Gather();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Gather return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset = schema::CreateGather(*fbb, attr->axis(), attr->batchDims());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Gather, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Gather::GetAxis() const { return this->primitive_->value_as_Gather()->axis(); }
 int Gather::GetBatchDims() const { return this->primitive_->value_as_Gather()->batchDims(); }
 
-void Gather::SetAxis(int axis) {}
-void Gather::SetBatchDims(int batch_dims) {}
 #endif
 
 int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
@@ -67,10 +78,6 @@ int Gather::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   }
   auto indices_shape = indices->shape();
   int indices_rank = indices_shape.size();
-  if (indices_rank < batch_dims + 1) {
-    MS_LOG(ERROR) << "input[1]'s rank is less than batchDim + 1";
-    return RET_ERROR;
-  }
   if (batch_dims != 0) {
     MS_LOG(ERROR) << "batchDims  " << batch_dims << " != 0, which is not support";
     return RET_ERROR;

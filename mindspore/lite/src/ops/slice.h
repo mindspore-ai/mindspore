@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,18 +29,30 @@ namespace lite {
 class Slice : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Slice, PrimitiveC);
   Slice() = default;
   explicit Slice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetBegin(const std::vector<int> &begin);
+  void SetSize(const std::vector<int> &size);
 #else
-  explicit Slice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Slice() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   std::vector<int> GetBegin() const;
   std::vector<int> GetSize() const;
-  void SetFormat(int format);
-  void SetBegin(const std::vector<int> &begin);
-  void SetSize(const std::vector<int> &size);
+  std::vector<int> GetAxes() const;
+  // due to difference between tflite and onnx, when inferring shape, construct new parameters of begin and size.
+  // when running graph, we need to obtain new begins and sizes using the two function as below.
+  std::vector<int> GetPostProcessBegin() const;
+  std::vector<int> GetPostProcessSize() const;
+
+ protected:
+  std::vector<int> begin = {0};
+  std::vector<int> size = {-1};
 };
 }  // namespace lite
 }  // namespace mindspore

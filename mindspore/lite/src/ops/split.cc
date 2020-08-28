@@ -38,9 +38,25 @@ std::vector<int> Split::GetSizeSplits() const {
 }
 int Split::GetSplitDim() const { return this->primitive_->value_as_Split()->splitDim(); }
 
-void Split::SetNumberSplit(int number_split) {}
-void Split::SetSizeSplits(const std::vector<int> &size_splits) {}
-void Split::SetSplitDim(int split_dim) {}
+int Split::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Split();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Split return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> sizeSplits;
+  if (attr->sizeSplits() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->sizeSplits()->size()); i++) {
+      sizeSplits.push_back(attr->sizeSplits()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateSplitDirect(*fbb, attr->numberSplit(), &sizeSplits, attr->splitDim());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Split, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

@@ -28,10 +28,13 @@ namespace lite {
 class FloorDiv : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(FloorDiv, Arithmetic);
   FloorDiv() = default;
   explicit FloorDiv(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  explicit FloorDiv(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  FloorDiv() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

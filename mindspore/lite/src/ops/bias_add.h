@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,14 +29,17 @@ namespace lite {
 class BiasAdd : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(BiasAdd, PrimitiveC);
   BiasAdd() = default;
   explicit BiasAdd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void SetAxis(const std::vector<int> &axis);
 #else
-  explicit BiasAdd(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  BiasAdd() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetAxis() const;
-  void SetAxis(const std::vector<int> &axis);
 };
 }  // namespace lite
 }  // namespace mindspore

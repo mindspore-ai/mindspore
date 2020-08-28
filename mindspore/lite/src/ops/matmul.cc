@@ -108,14 +108,32 @@ void MatMul::PopulaterQuantParam(const Primitive &prim,
 }
 
 int MatMul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-
-  auto attr = std::make_unique<schema::MatMulT>();
-  attr->transposeA = GetValue<bool>(prim.GetAttr("transpose_a"));
-  attr->transposeB = GetValue<bool>(prim.GetAttr("transpose_b"));
-
-  this->primitive_->value.type = schema::PrimitiveType_MatMul;
-  this->primitive_->value.value = attr.release();
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_MatMul;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_MatMul) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::MatMulT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    attr->transposeA = GetValue<bool>(prim.GetAttr("transpose_a"));
+    attr->transposeB = GetValue<bool>(prim.GetAttr("transpose_b"));
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
   if (GetQuantType() == schema::QuantType_AwareTraining) {
     std::vector<std::vector<schema::QuantParamT>> vecInputQuantParam;
     std::vector<std::vector<schema::QuantParamT>> vecOutputQuantParam;
@@ -131,8 +149,20 @@ int MatMul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 bool MatMul::GetTransposeA() const { return this->primitive_->value_as_MatMul()->transposeA(); }
 bool MatMul::GetTransposeB() const { return this->primitive_->value_as_MatMul()->transposeB(); }
 
-void MatMul::SetTransposeA(bool transpose_a) {}
-void MatMul::SetTransposeB(bool transpose_b) {}
+int MatMul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_MatMul();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_MatMul return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateMatMul(*fbb, attr->transposeA(), attr->transposeB());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_MatMul, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 
 int MatMul::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

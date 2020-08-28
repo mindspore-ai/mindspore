@@ -112,7 +112,7 @@ int PadInt8CPUKernel::RunImpl(int task_id) {
   return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id, context_->thread_num_);
 }
 
-int PadInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PadInt8Impl(void *cdata, int task_id) {
   auto resize = reinterpret_cast<PadInt8CPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -132,7 +132,7 @@ int PadInt8CPUKernel::Run() {
   out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
 
   memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
-  int error_code = LiteBackendParallelLaunch(PadInt8Impl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PadInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

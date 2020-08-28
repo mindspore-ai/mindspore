@@ -15,7 +15,6 @@
  */
 
 #include "nnacl/fp32/batchnorm.h"
-#include "nnacl/fp16/batchnorm_fp16.h"
 #include <math.h>
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"

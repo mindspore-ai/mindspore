@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,18 +29,21 @@ namespace lite {
 class Split : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Split, PrimitiveC);
   Split() = default;
   explicit Split(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetNumberSplit(int number_split);
+  void SetSizeSplits(const std::vector<int> &size_splits);
+  void SetSplitDim(int split_dim);
 #else
-  explicit Split(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Split() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetNumberSplit() const;
   std::vector<int> GetSizeSplits() const;
   int GetSplitDim() const;
-  void SetNumberSplit(int number_split);
-  void SetSizeSplits(const std::vector<int> &size_splits);
-  void SetSplitDim(int split_dim);
 };
 }  // namespace lite
 }  // namespace mindspore

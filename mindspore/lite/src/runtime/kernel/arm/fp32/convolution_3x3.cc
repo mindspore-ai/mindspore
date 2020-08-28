@@ -94,9 +94,18 @@ int Convolution3x3CPUKernel::InitWeightBias() {
 }
 
 int Convolution3x3CPUKernel::InitTmpBuffer() {
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
   int oC4 = UP_DIV(conv_param_->output_channel_, C4NUM);
+  int oC8 = UP_DIV(conv_param_->output_channel_, C8NUM);
   const int k_plane = 16;
   MS_ASSERT(ctx_->allocator != nullptr);
+
+  size_t tile_buffer_size = thread_count_ * C12NUM * C16NUM * ic4 * C4NUM * sizeof(float);
+  tile_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (tile_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc tile buffer failed.";
+    return RET_ERROR;
+  }
 
   size_t block_unit_buffer_size = thread_count_ * k_plane * C4NUM * sizeof(float);
   block_unit_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(block_unit_buffer_size));
@@ -105,10 +114,17 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * k_plane * oC4 * C4NUM * sizeof(float);
+  size_t tmp_dst_buffer_size = thread_count_ * C12NUM * k_plane * oC8 * C8NUM * sizeof(float);
   tmp_dst_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_buffer_ failed.";
+    return RET_ERROR;
+  }
+
+  size_t col_buffer_size = thread_count_ * C12NUM * C4NUM * ic4 * sizeof(float);
+  col_buffer_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(col_buffer_size));
+  if (col_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc col_buffer_ failed.";
     return RET_ERROR;
   }
 
@@ -124,6 +140,7 @@ int Convolution3x3CPUKernel::InitTmpBuffer() {
   tmp_buffer_address_list_[1] = block_unit_buffer_;
   tmp_buffer_address_list_[2] = tmp_dst_buffer_;
   tmp_buffer_address_list_[3] = nc4hw4_out_;
+  tmp_buffer_address_list_[4] = col_buffer_;
   return RET_OK;
 }
 
@@ -138,13 +155,13 @@ void Convolution3x3CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.ret: " << ret;
     return RET_ERROR;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   ConfigInputOutput();
   return ReSize();
@@ -160,10 +177,6 @@ int Convolution3x3CPUKernel::ReSize() {
   if (nhwc4_input_ != nullptr) {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
-  }
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
   }
 
   ret = ConvolutionBaseCPUKernel::Init();
@@ -182,13 +195,6 @@ int Convolution3x3CPUKernel::ReSize() {
   }
   memset(nhwc4_input_, 0, nhwc4_input_size);
 
-  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * iC4 * C4NUM * sizeof(float);
-  tile_buffer_ = reinterpret_cast<float *>(malloc(tile_buffer_size));
-  if (tile_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tile buffer failed.";
-    return RET_ERROR;
-  }
-  memset(tile_buffer_, 0, tile_buffer_size);
   return RET_OK;
 }
 
@@ -197,18 +203,40 @@ int Convolution3x3CPUKernel::RunImpl(int task_id) {
     MS_LOG(ERROR) << "gemm_func is nullptr.";
     return RET_ERROR;
   }
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
   Conv3x3Fp32(reinterpret_cast<float *>(nhwc4_input_), transformed_filter_addr_, reinterpret_cast<float *>(bias_data_),
-              output_addr, tmp_buffer_address_list_, task_id, conv_param_, gemm_func_);
+              tmp_buffer_address_list_, task_id, conv_param_, gemm_func_);
   return RET_OK;
 }
 
-int Convolution3x3Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int Convolution3x3Impl(void *cdata, int task_id) {
   auto conv3x3 = reinterpret_cast<Convolution3x3CPUKernel *>(cdata);
   auto error_code = conv3x3->RunImpl(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution3x3 Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int Convolution3x3CPUKernel::PostProcess() {
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  auto act_type = conv_param_->act_type_;
+  switch (act_type) {
+    case ActType_No:
+      PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                           conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+      break;
+    case ActType_Relu:
+      PackNC4HW4ToNHWCReluFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                               conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+      break;
+    case ActType_Relu6:
+      PackNC4HW4ToNHWCRelu6Fp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
+                                conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupport activation type.";
+      return RET_ERROR;
   }
   return RET_OK;
 }
@@ -230,25 +258,17 @@ int Convolution3x3CPUKernel::Run() {
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  int error_code = LiteBackendParallelLaunch(Convolution3x3Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution3x3Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 error error_code[" << error_code << "]";
     FreeTmpBuffer();
     return RET_ERROR;
   }
 
-  auto is_relu = conv_param_->is_relu_;
-  auto is_relu6 = conv_param_->is_relu6_;
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  if (is_relu) {
-    PackNC4HW4ToNHWCReluFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                             conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-  } else if (is_relu6) {
-    PackNC4HW4ToNHWCRelu6Fp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                              conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-  } else {
-    PackNC4HW4ToNHWCFp32(nc4hw4_out_, output_addr, conv_param_->output_batch_,
-                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  ret = PostProcess();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Post process failed.";
+    return ret;
   }
   FreeTmpBuffer();
   return RET_OK;

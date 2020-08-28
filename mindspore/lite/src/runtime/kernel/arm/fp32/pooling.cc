@@ -52,15 +52,33 @@ int PoolingCPUKernel::ReSize() {
 int PoolingCPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  if (pooling_param_->max_pooling_) {
-    MaxPooling(input_ptr, output_ptr, pooling_param_, task_id);
+  if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
+    switch (pooling_param_->act_type_) {
+      case ActType_Relu:
+        MaxPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      case ActType_Relu6:
+        MaxPoolingRelu6(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      default:
+        MaxPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    }
   } else {
-    AvgPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    switch (pooling_param_->act_type_) {
+      case ActType_Relu:
+        AvgPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      case ActType_Relu6:
+        AvgPoolingRelu6(input_ptr, output_ptr, pooling_param_, task_id);
+        break;
+      default:
+        AvgPooling(input_ptr, output_ptr, pooling_param_, task_id);
+    }
   }
   return RET_OK;
 }
 
-int PoolingImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PoolingImpl(void *cdata, int task_id) {
   auto pooling = reinterpret_cast<PoolingCPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -76,7 +94,7 @@ int PoolingCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(PoolingImpl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;

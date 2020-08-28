@@ -36,16 +36,14 @@ class ConvolutionDepthwiseInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
 
   int InitWeightBias();
-  int InitBuffer();
   int Execute(int task_id);
 
  private:
-  void FreeTmpBuffer();
-  SlidingWindowParam *sliding = nullptr;
+  int InitBuffer();
   int16_t *packed_weight_ = nullptr;
-  int16_t *packed_input_ = nullptr;
-  int8_t *packed_output_ = nullptr;
-  bool need_align_ = false;
+  int8_t *input_ptr_ = nullptr;
+  int8_t *output_ptr_ = nullptr;
+  int32_t *row_buffer_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

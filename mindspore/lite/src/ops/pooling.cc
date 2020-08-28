@@ -36,6 +36,7 @@ int Pooling::GetPadDown() const { return this->primitive_->value.AsPooling()->pa
 int Pooling::GetPadLeft() const { return this->primitive_->value.AsPooling()->padLeft; }
 int Pooling::GetPadRight() const { return this->primitive_->value.AsPooling()->padRight; }
 int Pooling::GetRoundMode() const { return this->primitive_->value.AsPooling()->roundMode; }
+int Pooling::GetActivationType() const { return this->primitive_->value.AsPooling()->activationType; }
 
 void Pooling::SetFormat(int format) { this->primitive_->value.AsPooling()->format = (schema::Format)format; }
 void Pooling::SetPoolingMode(int pooling_mode) {
@@ -54,44 +55,66 @@ void Pooling::SetPadRight(int pad_right) { this->primitive_->value.AsPooling()->
 void Pooling::SetRoundMode(int round_mode) {
   this->primitive_->value.AsPooling()->roundMode = (schema::RoundMode)round_mode;
 }
+void Pooling::SetActivationType(int activation_type) {
+  this->primitive_->value.AsPooling()->activationType = (schema::ActivationType)activation_type;
+}
 
 int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::PoolingT>();
-  if (prim.instance_name() == "MaxPool") {
-    attr->poolingMode = schema::PoolMode_MAX_POOLING;
-  } else if (prim.instance_name() == "MeanPool") {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Pooling;
   }
-
-  auto format = GetValue<std::string>(prim.GetAttr("data_format"));
-  if (format == "NCHW") {
-    attr->format = schema::Format_NCHW;
-  } else if (format == "NHWC") {
-    attr->format = schema::Format_NHWC;
-  } else {
-    attr->format = schema::Format_NUM_OF_FORMAT;
+  if (this->primitive_->value.type != schema::PrimitiveType_Pooling) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
   }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::PoolingT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    if (prim.instance_name() == "MaxPool") {
+      attr->poolingMode = schema::PoolMode_MAX_POOLING;
+    } else if (prim.instance_name() == "MeanPool") {
+      attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+    }
 
-  auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));
-  if (pad_mode == "VALID") {
-    attr->padMode = schema::PadMode_VALID;
-  } else if (pad_mode == "SAME") {
-    attr->padMode = schema::PadMode_SAME;
-  } else {
-    attr->padMode = schema::PadMode_NOTSET;
+    auto format = GetValue<std::string>(prim.GetAttr("data_format"));
+    if (format == "NCHW") {
+      attr->format = schema::Format_NCHW;
+    } else if (format == "NHWC") {
+      attr->format = schema::Format_NHWC;
+    } else {
+      attr->format = schema::Format_NUM_OF_FORMAT;
+    }
+
+    auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));
+    if (pad_mode == "VALID") {
+      attr->padMode = schema::PadMode_VALID;
+    } else if (pad_mode == "SAME") {
+      attr->padMode = schema::PadMode_SAME;
+    } else {
+      attr->padMode = schema::PadMode_NOTSET;
+    }
+
+    auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("ksize"));
+    attr->windowH = kernel_size[2];
+    attr->windowW = kernel_size[3];
+
+    auto stride = GetValue<std::vector<int>>(prim.GetAttr("strides"));
+    attr->strideH = stride[2];
+    attr->strideW = stride[3];
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
   }
-
-  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("ksize"));
-  attr->windowH = kernel_size[2];
-  attr->windowW = kernel_size[3];
-
-  auto stride = GetValue<std::vector<int>>(prim.GetAttr("strides"));
-  attr->strideH = stride[2];
-  attr->strideW = stride[3];
-
-  this->primitive_->value.type = schema::PrimitiveType_Pooling;
-  this->primitive_->value.value = attr.release();
 
   return RET_OK;
 }
@@ -111,20 +134,24 @@ int Pooling::GetPadDown() const { return this->primitive_->value_as_Pooling()->p
 int Pooling::GetPadLeft() const { return this->primitive_->value_as_Pooling()->padLeft(); }
 int Pooling::GetPadRight() const { return this->primitive_->value_as_Pooling()->padRight(); }
 int Pooling::GetRoundMode() const { return this->primitive_->value_as_Pooling()->roundMode(); }
+int Pooling::GetActivationType() const { return this->primitive_->value_as_Pooling()->activationType(); }
 
-void Pooling::SetFormat(int format) {}
-void Pooling::SetPoolingMode(int pooling_mode) {}
-void Pooling::SetGlobal(bool global) {}
-void Pooling::SetWindowW(int window_w) {}
-void Pooling::SetWindowH(int window_h) {}
-void Pooling::SetStrideW(int stride_w) {}
-void Pooling::SetStrideH(int stride_h) {}
-void Pooling::SetPadMode(int pad_mode) {}
-void Pooling::SetPadUp(int pad_up) {}
-void Pooling::SetPadDown(int pad_down) {}
-void Pooling::SetPadLeft(int pad_left) {}
-void Pooling::SetPadRight(int pad_right) {}
-void Pooling::SetRoundMode(int round_mode) {}
+int Pooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Pooling();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Pooling return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset =
+    schema::CreatePooling(*fbb, attr->format(), attr->poolingMode(), attr->global(), attr->windowW(), attr->windowH(),
+                          attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(),
+                          attr->padLeft(), attr->padRight(), attr->roundMode());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Pooling, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 
 #endif
 
@@ -165,10 +192,18 @@ int Pooling::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tenso
     output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
     auto pad_h_all = ((output_h - 1) * GetStrideH() + (window_h - 1) + 1 - input_h);
     auto pad_w_all = ((output_w - 1) * GetStrideW() + (window_w - 1) + 1 - input_w);
-    pad_u_ = pad_h_all / 2;
-    pad_d_ = pad_h_all - pad_u_;
-    pad_l_ = pad_w_all / 2;
-    pad_r_ = pad_w_all - pad_l_;
+    if (pad_h_all < 0) {
+      pad_u_ = pad_d_ = 0;
+    } else {
+      pad_u_ = pad_h_all / 2;
+      pad_d_ = pad_h_all - pad_u_;
+    }
+    if (pad_w_all < 0) {
+      pad_l_ = pad_r_ = 0;
+    } else {
+      pad_l_ = pad_w_all / 2;
+      pad_r_ = pad_w_all - pad_l_;
+    }
   } else {
     auto round_mode = (schema::RoundMode)GetRoundMode();
     if (round_mode == schema::RoundMode_FLOOR) {

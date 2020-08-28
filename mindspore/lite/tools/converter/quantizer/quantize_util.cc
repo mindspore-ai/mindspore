@@ -87,13 +87,13 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   }
   auto cnode = std::dynamic_pointer_cast<CNode>(node);
 
-  auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-  if (primitiveT_value == nullptr) {
-    MS_LOG(WARNING) << "PrimitiveT_value is nullptr: " << cnode->fullname_with_scope();
+  auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+  if (primitive_c == nullptr) {
+    MS_LOG(WARNING) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     return false;
   }
 
-  auto type = primitiveT_value->GetPrimitiveT()->value.type;
+  auto type = (schema::PrimitiveType)primitive_c->Type();
   MS_LOG(INFO) << "Primitive type: " << type;
   static const std::vector<schema::PrimitiveType> uint8OpList = {
     schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
@@ -168,11 +168,11 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
                              int quant_max, int quant_min, int num_bits) {
   MS_ASSERT(quantParam != nullptr);
   if (mMin > 0.0f) {
-    MS_LOG(ERROR) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
+    MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
     mMin = 0.0f;
   }
   if (mMax < 0.0f) {
-    MS_LOG(ERROR) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
+    MS_LOG(DEBUG) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
     mMax = 0.0f;
   }
   if (mMin > mMax) {
@@ -279,7 +279,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   return RET_OK;
 }
 
-STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, QuantType quantType,
+STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitive_c, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum, bool per_channel, bool depth_wise) {
   auto dims = weight->tensor_shape();
   if (per_channel) {
@@ -349,16 +349,12 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
           quant_datas[index] = quant_data;
         }
       }
-      auto ret = memcpy_s(const_cast<float *>(raw_datas), weight->tensor_size(), quant_datas.data(),
+      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(),
                           elem_count * sizeof(int8_t));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;
       }
-      if (quantType == QuantType_WeightQuant) {
-        PostBitPack(const_cast<float *>(raw_datas), elem_count, bitNum);
-      }
-
       weight->set_tensor_size(elem_count * sizeof(int8_t));
     } else {
       // channel at first
@@ -407,9 +403,6 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;
       }
-      if (quantType == QuantType_WeightQuant) {
-        PostBitPack(const_cast<float *>(raw_datas), elem_count, bitNum);
-      }
       weight->set_tensor_size(elem_count * sizeof(int8_t));
     }
 
@@ -441,16 +434,13 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return RET_ERROR;
     }
-    if (quantType == QuantType_WeightQuant) {
-      PostBitPack(raw_datas, elem_count, bitNum);
-    }
     weight->set_tensor_size(elem_count * sizeof(int8_t));
   }
   if (quant_params.empty()) {
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
   }
-  primitiveT_value->AddInputQuantParam(quant_params);
+  primitive_c->AddInputQuantParam(quant_params);
   return RET_OK;
 }
 

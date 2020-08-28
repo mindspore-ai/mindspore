@@ -36,7 +36,7 @@ int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
     this->primitive_->value.type = schema::PrimitiveType_Add;
   }
   if (this->primitive_->value.type != schema::PrimitiveType_Add) {
-    MS_LOG(ERROR) << "Primitive type should be add";
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -50,10 +50,21 @@ int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
 }
 
 #else
-
+int Add::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Add();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Add return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateAdd(*fbb, attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Add, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Add::GetActivationType() const { return this->primitive_->value_as_Add()->activationType(); }
 
-void Add::SetActivationType(int activation_type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

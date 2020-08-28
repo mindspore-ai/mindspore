@@ -19,7 +19,6 @@
 #include <memory>
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
-#include "src/ir/tensor.h"
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
@@ -309,8 +308,18 @@ void Conv2D::PopulaterQuantParam(const Primitive &prim,
 }
 
 int Conv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Conv2D;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Conv2D) {
+    MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
   int group = GetValue<int>(prim.GetAttr("group"));
   if (group > 1) {
     PopulaterConv2DMultiGroup(prim, this->primitive_, group, inputs);
@@ -329,7 +338,23 @@ int Conv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 }
 
 #else
+int Conv2D::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Conv2D();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Conv2D return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset = schema::CreateConv2D(
+    *fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(), attr->kernelW(), attr->kernelH(),
+    attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
+    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Conv2D, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Conv2D::GetFormat() const { return this->primitive_->value_as_Conv2D()->format(); }
 int Conv2D::GetGroup() const { return this->primitive_->value_as_Conv2D()->group(); }
 int Conv2D::GetChannelIn() const { return this->primitive_->value_as_Conv2D()->channelIn(); }
@@ -348,23 +373,6 @@ int Conv2D::GetDilateH() const { return this->primitive_->value_as_Conv2D()->dil
 bool Conv2D::GetHasBias() const { return this->primitive_->value_as_Conv2D()->hasBias(); }
 int Conv2D::GetActivationType() const { return this->primitive_->value_as_Conv2D()->activationType(); }
 
-void Conv2D::SetFormat(int format) {}
-void Conv2D::SetGroup(int group) {}
-void Conv2D::SetChannelIn(int channel_in) {}
-void Conv2D::SetChannelOut(int channel_out) {}
-void Conv2D::SetKernelW(int kernel_w) {}
-void Conv2D::SetKernelH(int kernel_h) {}
-void Conv2D::SetStrideW(int stride_w) {}
-void Conv2D::SetStrideH(int stride_h) {}
-void Conv2D::SetPadMode(int pad_mode) {}
-void Conv2D::SetPadUp(int pad_up) {}
-void Conv2D::SetPadDown(int pad_down) {}
-void Conv2D::SetPadLeft(int pad_left) {}
-void Conv2D::SetPadRight(int pad_right) {}
-void Conv2D::SetDilateW(int dilate_w) {}
-void Conv2D::SetDilateH(int dilate_h) {}
-void Conv2D::SetHasBias(bool has_bias) {}
-void Conv2D::SetActivationType(int activation_type) {}
 #endif
 void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output_w) {
   MS_ASSERT(this->primitive_ != nullptr);
@@ -384,10 +392,18 @@ void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output
     *output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(stride_h));
     auto pad_h_all = ((*output_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - input_h);
     auto pad_w_all = ((*output_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - input_w);
-    pad_u_ = pad_h_all / 2;
-    pad_d_ = pad_h_all - pad_u_;
-    pad_l_ = pad_w_all / 2;
-    pad_r_ = pad_w_all - pad_l_;
+    if (pad_h_all < 0) {
+      pad_u_ = pad_d_ = 0;
+    } else {
+      pad_u_ = pad_h_all / 2;
+      pad_d_ = pad_h_all - pad_u_;
+    }
+    if (pad_w_all < 0) {
+      pad_l_ = pad_r_ = 0;
+    } else {
+      pad_l_ = pad_w_all / 2;
+      pad_r_ = pad_w_all - pad_l_;
+    }
   } else {
     *output_w = std::ceil((static_cast<float>(input_w) + pad_l_ + pad_r_ -
                            (static_cast<float>(kernel_w) - 1) * static_cast<float>(dilate_w)) /

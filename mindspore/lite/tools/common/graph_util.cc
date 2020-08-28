@@ -35,7 +35,7 @@ OpDefCopyer GetSimpleOpCopyer() {
     newCNode->quantType = inCNode->quantType;
     newCNode->primitive = std::make_unique<schema::PrimitiveT>();
     newCNode->primitive->value.type = inCNode->primitive->value.type;
-    return std::move(newCNode);
+    return newCNode;
   };
 }
 
@@ -96,7 +96,7 @@ std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size
       preNodeIdx.emplace_back(i);
     }
   }
-  return std::move(preNodeIdx);
+  return preNodeIdx;
 }
 
 std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx) {
@@ -111,7 +111,7 @@ std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const siz
       postNodeIdx.emplace_back(i);
     }
   }
-  return std::move(postNodeIdx);
+  return postNodeIdx;
 }
 
 STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
@@ -586,80 +586,6 @@ std::string GetModelName(const std::string &modelFile) {
   modelName = modelName + std::to_string(rand());
 
   return modelName;
-}
-
-OpGraphT *OpGraphT::Build(const schema::MetaGraphT *subGraphDef) {
-  if (subGraphDef == nullptr) {
-    MS_LOG(ERROR) << "subGraphDef is nullptr";
-    return nullptr;
-  }
-  auto graph = std::unique_ptr<OpGraphT>(new OpGraphT());
-  if (graph == nullptr) {
-    MS_LOG(ERROR) << "malloc opgraph failed";
-    return nullptr;
-  }
-
-  auto &opDefs = subGraphDef->nodes;
-
-  for (auto &opDef : opDefs) {
-    auto ret = graph->AddEdge(opDef.get(), &opDefs);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << opDef->name.c_str() << " add edge failed. ret: " << ret;
-      return nullptr;
-    }
-  }
-
-  return graph.release();
-}
-
-int OpGraphT::AddEdge(const schema::CNodeT *srcNodeDef, const std::vector<std::unique_ptr<schema::CNodeT>> *nodeDefs) {
-  MS_ASSERT(srcNodeDef != nullptr);
-  MS_ASSERT(nodeDefs != nullptr);
-  NODE_ID srcId = std::string(srcNodeDef->name);
-  // for single op condition
-  AddNode(srcId);
-  for (auto index : srcNodeDef->outputIndex) {
-    for (auto &dstNodeDef : *nodeDefs) {
-      bool find = false;
-      auto inputIndex = dstNodeDef->inputIndex;
-      if (std::any_of(inputIndex.begin(), inputIndex.end(), [&index](size_t i) { return i == index; })) {
-        find = true;
-      }
-
-      if (!find) {
-        continue;
-      }
-      NODE_ID dstId = std::string(dstNodeDef->name.c_str());
-      auto ret = AddEdge(srcId, dstId);
-      if (ret != RET_OK) {
-        return ret;
-      }
-    }
-  }
-  return RET_OK;
-}
-
-int OpGraphT::AddEdge(NODE_ID srcId, NODE_ID dstId) {
-  auto srcNode = AddNode(srcId);
-  if (srcNode == nullptr) {
-    MS_LOG(ERROR) << "add srcNode failed";
-    return RET_ERROR;
-  }
-  srcNode->AddOutEdge(dstId);
-  auto dstNode = AddNode(dstId);
-  if (dstNode == nullptr) {
-    MS_LOG(ERROR) << "add dstNode failed";
-    return RET_ERROR;
-  }
-  dstNode->AddInEdge(srcId);
-  return RET_OK;
-}
-
-OpGraphT::~OpGraphT() {
-  for (auto iter : nodes) {
-    delete iter.second;
-  }
-  nodes.clear();
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -24,11 +24,11 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_CaffePReLU;
+using mindspore::schema::PrimitiveType_PReLU;
 
 namespace mindspore::kernel {
 namespace {
-int PReluRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PReluRun(void *cdata, int task_id) {
   auto PRelu = reinterpret_cast<PReluCPUKernel *>(cdata);
   auto ret = PRelu->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -135,7 +135,7 @@ int PReluCPUKernel::Run() {
   auto negative_slope_tensor = in_tensors_.at(1);
   prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->Data());
 
-  auto ret = LiteBackendParallelLaunch(PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PRelu Run error: error_code[" << ret << "]";
     context_->allocator->Free(input_data_);
@@ -155,7 +155,7 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
     MS_LOG(ERROR) << "input param is nullptr!";
     return nullptr;
   }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Prelu);
+
   auto *kernel = new (std::nothrow) PReluCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PReluCPUKernel fail!";
@@ -171,5 +171,5 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CaffePReLU, CpuPReluFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PReLU, CpuPReluFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -48,7 +48,7 @@ class BatchnormCPUKernel : public LiteKernel {
   void *variance_ = nullptr;
 };
 
-int BatchNormRun(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int BatchNormRun(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_H_

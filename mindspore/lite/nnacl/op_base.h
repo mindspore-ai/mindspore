@@ -23,8 +23,8 @@
 
 #define C4NUM 4
 #define C8NUM 8
+#define C12NUM 12
 #define C16NUM 16
-#define BLOCK 4
 #define TILE_NUM 8
 
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
@@ -55,10 +55,17 @@ typedef enum LiteDataType {
   kDataTypeInt8,
 } LiteDataType;
 
+typedef enum DataOrder {
+  RowMajor,
+  ColMajor,
+} DataOrder;
+
 typedef struct OpParameter {
   char name_[100];
   int type_;
   int thread_num_;
 } OpParameter;
+
+typedef enum ActType { ActType_No, ActType_Relu, ActType_Relu6, ActType_Prelu } ActType;
 
 #endif  // MINDSPORE_LITE_NNACL_OP_BASE_H_

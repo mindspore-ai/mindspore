@@ -90,36 +90,36 @@ ConvDwInt8Center:
                 LoopKw16:
                     mov x22, x21
                     ld1 {v25.4h}, [x17], #8
-                    ld1 {v16.4h}, [x22], x13
-                    ld1 {v17.4h}, [x22], x13
+                    ld1 {v16.4h}, [x22], x11
+                    ld1 {v17.4h}, [x22], x11
                     smlal v0.4s, v16.4h, v25.4h
                     smlal v1.4s, v17.4h, v25.4h
-                    ld1 {v18.4h}, [x22], x13
-                    ld1 {v19.4h}, [x22], x13
+                    ld1 {v18.4h}, [x22], x11
+                    ld1 {v19.4h}, [x22], x11
                     smlal v2.4s, v18.4h, v25.4h
                     smlal v3.4s, v19.4h, v25.4h
-                    ld1 {v20.4h}, [x22], x13
-                    ld1 {v21.4h}, [x22], x13
+                    ld1 {v20.4h}, [x22], x11
+                    ld1 {v21.4h}, [x22], x11
                     smlal v4.4s, v20.4h, v25.4h
                     smlal v5.4s, v21.4h, v25.4h
-                    ld1 {v22.4h}, [x22], x13
-                    ld1 {v23.4h}, [x22], x13
+                    ld1 {v22.4h}, [x22], x11
+                    ld1 {v23.4h}, [x22], x11
                     smlal v6.4s, v22.4h, v25.4h
                     smlal v7.4s, v23.4h, v25.4h
-                    ld1 {v16.4h}, [x22], x13
-                    ld1 {v17.4h}, [x22], x13
+                    ld1 {v16.4h}, [x22], x11
+                    ld1 {v17.4h}, [x22], x11
                     smlal v8.4s, v16.4h, v25.4h
                     smlal v9.4s, v17.4h, v25.4h
-                    ld1 {v18.4h}, [x22], x13
-                    ld1 {v19.4h}, [x22], x13
+                    ld1 {v18.4h}, [x22], x11
+                    ld1 {v19.4h}, [x22], x11
                     smlal v10.4s, v18.4h, v25.4h
                     smlal v11.4s, v19.4h, v25.4h
-                    ld1 {v20.4h}, [x22], x13
-                    ld1 {v21.4h}, [x22], x13
+                    ld1 {v20.4h}, [x22], x11
+                    ld1 {v21.4h}, [x22], x11
                     smlal v12.4s, v20.4h, v25.4h
                     smlal v13.4s, v21.4h, v25.4h
-                    ld1 {v22.4h}, [x22], x13
-                    ld1 {v23.4h}, [x22], x13
+                    ld1 {v22.4h}, [x22], x11
+                    ld1 {v23.4h}, [x22], x11
                     smlal v14.4s, v22.4h, v25.4h
                     smlal v15.4s, v23.4h, v25.4h
                     subs x18, x18, #1
@@ -420,20 +420,20 @@ ConvDwInt8Center:
                 LoopKw8:
                     mov x22, x21
                     ld1 {v25.4h}, [x17], #8
-                    ld1 {v16.4h}, [x22], x13
-                    ld1 {v17.4h}, [x22], x13
+                    ld1 {v16.4h}, [x22], x11
+                    ld1 {v17.4h}, [x22], x11
                     smlal v0.4s, v16.4h, v25.4h
                     smlal v1.4s, v17.4h, v25.4h
-                    ld1 {v18.4h}, [x22], x13
-                    ld1 {v19.4h}, [x22], x13
+                    ld1 {v18.4h}, [x22], x11
+                    ld1 {v19.4h}, [x22], x11
                     smlal v2.4s, v18.4h, v25.4h
                     smlal v3.4s, v19.4h, v25.4h
-                    ld1 {v20.4h}, [x22], x13
-                    ld1 {v21.4h}, [x22], x13
+                    ld1 {v20.4h}, [x22], x11
+                    ld1 {v21.4h}, [x22], x11
                     smlal v4.4s, v20.4h, v25.4h
                     smlal v5.4s, v21.4h, v25.4h
-                    ld1 {v22.4h}, [x22], x13
-                    ld1 {v23.4h}, [x22], x13
+                    ld1 {v22.4h}, [x22], x11
+                    ld1 {v23.4h}, [x22], x11
                     smlal v6.4s, v22.4h, v25.4h
                     smlal v7.4s, v23.4h, v25.4h
                     subs x18, x18, #1

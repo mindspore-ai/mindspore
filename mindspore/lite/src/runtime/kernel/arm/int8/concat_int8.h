@@ -56,7 +56,7 @@ class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
   int8_t *output_data_ = nullptr;
 };
 
-int ConcatInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int ConcatInt8Run(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONCAT_INT8_H_

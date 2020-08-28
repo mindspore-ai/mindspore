@@ -38,7 +38,32 @@ void EmbeddingLookupSparse::SetMaxNortm(float max_nortm) {
 }
 
 #else
-
+int EmbeddingLookupSparse::UnPackToFlatBuilder(const schema::Primitive *primitive,
+                                               flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_EmbeddingLookupSparse();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_EmbeddingLookupSparse return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> spIds;
+  if (attr->spIds() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->spIds()->size()); i++) {
+      spIds.push_back(attr->spIds()->data()[i]);
+    }
+  }
+  std::vector<float> spWeights;
+  if (attr->spWeights() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->spWeights()->size()); i++) {
+      spWeights.push_back(attr->spWeights()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateEmbeddingLookupSparseDirect(*fbb, &spIds, &spWeights);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_EmbeddingLookupSparse, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 std::vector<int> EmbeddingLookupSparse::GetSpIds() const {
   auto fb_vector = this->primitive_->value_as_EmbeddingLookupSparse()->spIds();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
@@ -51,9 +76,6 @@ float EmbeddingLookupSparse::GetMaxNortm() const {
   return this->primitive_->value_as_EmbeddingLookupSparse()->maxNortm();
 }
 
-void EmbeddingLookupSparse::SetSpIds(const std::vector<int> &sp_ids) {}
-void EmbeddingLookupSparse::SetSpWeights(const std::vector<float> &sp_weights) {}
-void EmbeddingLookupSparse::SetMaxNortm(float max_nortm) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -56,7 +56,7 @@ int ExpandDimsCPUKernel::DoExpandDims(int task_id) {
   return RET_OK;
 }
 
-int ExpandDimsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ExpandDimsRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<ExpandDimsCPUKernel *>(cdata);
   auto ret = g_kernel->DoExpandDims(task_id);
   if (ret != RET_OK) {
@@ -74,7 +74,7 @@ int ExpandDimsCPUKernel::Run() {
   }
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
-  auto ret = LiteBackendParallelLaunch(ExpandDimsRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, ExpandDimsRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ExpandDimsRun error error_code[" << ret << "]";
     return ret;

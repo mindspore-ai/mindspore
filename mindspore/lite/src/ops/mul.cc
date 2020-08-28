@@ -26,10 +26,30 @@ void Mul::SetActivationType(int activation_type) {
   this->primitive_->value.AsMul()->activationType = (schema::ActivationType)activation_type;
 }
 int Mul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::MulT>();
-  this->primitive_->value.type = schema::PrimitiveType_Mul;
-  this->primitive_->value.value = attr.release();
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Mul;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Mul) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::MulT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
 
   return RET_OK;
 }
@@ -38,7 +58,20 @@ int Mul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
 
 int Mul::GetActivationType() const { return this->primitive_->value_as_Mul()->activationType(); }
 
-void Mul::SetActivationType(int activation_type) {}
+int Mul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Mul();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Mul return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateMul(*fbb, attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Mul, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 }  // namespace lite
 }  // namespace mindspore

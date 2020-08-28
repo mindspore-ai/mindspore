@@ -15,6 +15,7 @@
  */
 
 #include <vector>
+#include <map>
 #include <string>
 #include <set>
 
@@ -23,7 +24,6 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-
 #include "src/runtime/kernel/opencl/cl/activation.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -39,61 +39,58 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::kernel {
 
 int ActivationOpenClKernel::Init() {
-  const int max_shape_dim = 4;
-  if (in_tensors_[0]->shape().size() != max_shape_dim) {
-    MS_LOG(ERROR) << "Activate fun only support dim=4, but your dim=" << in_tensors_[0]->shape().size();
+  in_size_ = in_tensors_[0]->shape().size();
+  out_size_ = out_tensors_[0]->shape().size();
+  if (in_size_ != 2 && in_size_ != 4) {
+    MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
     return RET_ERROR;
   }
-  std::string program_name = "";
-  std::string kernel_name = "";
+  std::map<int, std::vector<std::string>> Program_Kernel{
+    {ActivationType_LEAKY_RELU, std::vector<std::string>{"LEAKY_RELU", "ReluScalar"}},
+    {ActivationType_RELU, std::vector<std::string>{"RELU", "Relu"}},
+    {ActivationType_SIGMOID, std::vector<std::string>{"SIGMOID", "Sigmoid"}},
+    {ActivationType_RELU6, std::vector<std::string>{"RELU6", "Relu6"}}};
+  if (Program_Kernel.count(type_) == 0) {
+    MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
+    return RET_ERROR;
+  }
+
   std::string source = activation_source;
-  if (type_ == ActivationType_RELU) {
-    program_name = "RELU";
-    kernel_name = "Relu";
-  } else if (type_ == ActivationType_RELU6) {
-    program_name = "RELU6";
-    kernel_name = "Relu6";
-  } else if (type_ == ActivationType_LEAKY_RELU) {
-    program_name = "LEAKY_RELU";
-    kernel_name = "ReluScalar";
-  } else if (type_ == ActivationType_SIGMOID) {
-    program_name = "SIGMOID";
-    kernel_name = "Sigmoid";
-  } else {
-    MS_LOG(ERROR) << "Activation type error";
-    return RET_ERROR;
-  }
   std::set<std::string> build_options;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  ocl_runtime->LoadSource(program_name, source);
-  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime->LoadSource(Program_Kernel[type_][0], source);
+  ocl_runtime->BuildKernel(kernel_, Program_Kernel[type_][0], Program_Kernel[type_][1], build_options);
+
+  std::map<int, schema::Format> format{{4, schema::Format_NHWC4}, {2, schema::Format_NC4}};
+  if (format.count(out_size_) == 0) {
+    MS_LOG(ERROR) << "Not found output tensor format";
+    return RET_ERROR;
+  }
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  in_tensors_[0]->SetFormat(format[in_size_]);
+  out_tensors_[0]->SetFormat(format[out_size_]);
+  if (in_size_ == 2) {
+    in_ori_format_ = schema::Format_NC4;
+    out_ori_format_ = schema::Format_NC4;
+  }
   MS_LOG(DEBUG) << op_parameter_->name_ << " init Done!";
   return RET_OK;
 }
 
 int ActivationOpenClKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " begin running!";
-  int N = in_tensors_[0]->shape()[0];
-  int H = in_tensors_[0]->shape()[1];
-  int W = in_tensors_[0]->shape()[2];
-  int C = in_tensors_[0]->shape()[3];
-  cl_int4 input_shape = {N, H, W, C};
-
+  cl_int4 img2d_shape = GetImg2dShape();
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, img2d_shape);
   if (type_ == ActivationType_LEAKY_RELU) {
     ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_);
   }
   std::vector<size_t> local = {1, 1};
-  std::vector<size_t> global = {static_cast<size_t>(H), static_cast<size_t>(W)};
-  std::cout << type_ << " " << std::endl;
+  std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
   auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << op_parameter_->name_ << " fail.";
@@ -102,11 +99,21 @@ int ActivationOpenClKernel::Run() {
   return RET_OK;
 }
 
-int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  int H = in_tensors_[0]->shape()[1];
-  int W = in_tensors_[0]->shape()[2];
-  int C = in_tensors_[0]->shape()[3];
+cl_int4 ActivationOpenClKernel::GetImg2dShape() {
+  cl_int4 img2d_shape = {0, 0, 0, 0};
+  for (int i = 0; i < in_size_; ++i) {
+    img2d_shape.s[i + 4 - in_size_] = in_tensors_[0]->shape()[i];
+  }
+  if (in_size_ == 2) {
+    img2d_shape.s[1] = img2d_shape.s[2];
+    img2d_shape.s[2] = UP_DIV(img2d_shape.s[3], C4NUM);
+    img2d_shape.s[3] = C4NUM;
+  }
+  return img2d_shape;
+}
 
+int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+  cl_int4 img_shape = GetImg2dShape();
 #ifdef ENABLE_FP16
   size_t img_dtype = CL_HALF_FLOAT;
 #else
@@ -114,8 +121,8 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
 #endif
 
   img_size->clear();
-  img_size->push_back(W * UP_DIV(C, C4NUM));
-  img_size->push_back(H);
+  img_size->push_back(img_shape.s[2] * UP_DIV(img_shape.s[3], C4NUM));
+  img_size->push_back(img_shape.s[1]);
   img_size->push_back(img_dtype);
   return RET_OK;
 }
@@ -125,11 +132,11 @@ kernel::LiteKernel *OpenClActivationFp32KernelCreator(const std::vector<lite::te
                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                       const kernel::KernelKey &desc,
                                                       const mindspore::lite::PrimitiveC *primitive) {
-  if (inputs.size() == 0) {
+  if (inputs.empty()) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;
   }
-  if (inputs[0]->shape()[0] > 1) {
+  if (inputs[0]->shape().size() > 2 && inputs[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Activation kernel:" << opParameter->name_ << " failed: Unsupported multi-batch.";
     return nullptr;
   }

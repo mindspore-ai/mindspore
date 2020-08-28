@@ -20,7 +20,6 @@ j* you may not use this file except in compliance with the License.
 #include <vector>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -38,9 +37,6 @@ struct GpuInfo {
   float opencl_version = 0;
 };
 
-// Base GPU cache size used for computing local work group size.
-const int32_t g_base_gpu_mem_cachesize = 16384;
-
 class OpenCLRuntime {
  public:
   static OpenCLRuntime *GetInstance();
@@ -51,11 +47,12 @@ class OpenCLRuntime {
   OpenCLRuntime &operator=(const OpenCLRuntime &) = delete;
 
   int Init();
+  int Uninit();
 
   cl::Context *Context();
   cl::Device *Device();
-  OpenCLAllocator *GetAllocator() { return allocator_.get(); }
-  cl::CommandQueue *GetDefaultCommandQueue() { return default_command_queue_.get(); }
+  OpenCLAllocator *GetAllocator() { return allocator_; }
+  cl::CommandQueue *GetDefaultCommandQueue() { return default_command_queue_; }
   uint64_t DeviceGlobalMemoryCacheSize() const;
   int DeviceMaxWorkGroupSize() const;
   uint32_t DeviceComputeUnits() const;
@@ -65,61 +62,68 @@ class OpenCLRuntime {
   GpuInfo GetGpuInfo();
   bool GetFp16Enable() const;
   bool SetFp16Enable(bool enable);
-  const std::vector<size_t> &GetWorkItemSize() { return max_work_item_sizes_; }
-  uint32_t GetImagePitchAlignment() { return image_pitch_align_; }
-  cl_device_svm_capabilities GetSVMCapabilities() const { return svm_capabilities_; }
+  bool GetSVMEnable() const { return svm_enable_; }
+  void SetSVMEnable(bool enable) { svm_enable_ = enable; }
+  const std::vector<size_t> &GetWorkItemSize() const { return max_work_item_sizes_; }
+  uint32_t GetImagePitchAlignment() const { return image_pitch_align_; }
+  cl_device_svm_capabilities GetSVMCapabilities() const { return svm_enable_ ? svm_capabilities_ : 0; }
 
   template <typename T>
-  typename std::enable_if<std::is_pointer<T>::value, cl_int>::type SetKernelArg(cl_kernel &kernel, uint32_t index,
-                                                                                const T value) {
-    if (svm_capabilities_) {
-      MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
-      return clSetKernelArgSVMPointer(kernel, index, value);
-    } else {
-      MEM_TYPE mem_type = allocator_->GetMemType(value);
-      if (mem_type == MEM_TYPE::BUF) {
+  typename std::enable_if<std::is_pointer<T>::value, cl_int>::type SetKernelArg(cl::Kernel &kernel, uint32_t index,
+                                                                                const T value,
+                                                                                const MemType mem_type = MemType::IMG) {
+    switch (mem_type) {
+      case MemType::SVM: {
+        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
+        return kernel.setArg(index, value);
+      }
+      case MemType::BUF: {
         cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
         MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
-        return clSetKernelArg(kernel, index, sizeof((*buffer)()), &(*buffer)());
-      } else {
-        cl::Image2D *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(value));
-        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << image << ", host_ptr: " << value;
-        return clSetKernelArg(kernel, index, sizeof((*image)()), &(*image)());
+        return kernel.setArg(index, *buffer);
       }
+      case MemType::IMG: {
+        cl::Image2D *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(value));
+        if (image == nullptr) {
+          MS_LOG(WARNING) << "Can't get Image2D, try to use Buffer. Please confirm the buffer type.";
+          cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
+          MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
+          return kernel.setArg(index, *buffer);
+        }
+        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << image << ", host_ptr: " << value;
+        return kernel.setArg(index, *image);
+      }
+      default:
+        MS_LOG(ERROR) << "Unsupport opencl memory type: " << static_cast<int>(mem_type);
     }
   }
 
   template <typename T>
-  typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type SetKernelArg(cl_kernel &kernel, uint32_t index,
-                                                                                 const T value) {
-    return clSetKernelArg(kernel, index, sizeof(value), &value);
+  typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type SetKernelArg(
+    cl::Kernel &kernel, uint32_t index, const T value, const MemType mem_type = MemType::IMG) {
+    return kernel.setArg(index, value);
   }
 
-  template <typename T>
-  int SetKernelArg(cl::Kernel &kernel, uint32_t index, const T &value) {
-    return SetKernelArg(kernel(), index, value);
-  }
-
-  bool CreateProgramFromIL(const std::vector<u_char> program_binary, const std::string flag);
-  bool CreateKernelFromIL(cl_kernel &kernel, const std::string kernel_name);
+  cl::Program CreateProgramFromIL(const std::vector<char> &binary, const std::string &flag);
+  cl::Program CreateProgramFromBinary(const std::vector<std::vector<unsigned char>> &binary, const std::string &flag);
+  cl::Kernel GetKernelFromBinary(const std::string &kernel_name);
+  std::vector<std::vector<unsigned char>> GetProgramBinaries(const cl::Program &program);
   bool LoadSource(const std::string &program_name, const std::string &source);
   int BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
                   const std::set<std::string> &build_options);
-  int RunKernel(const cl_kernel &kernel, const std::vector<size_t> &global, const std::vector<size_t> &local,
-                cl::CommandQueue *command_queue);
   int RunKernel(const cl::Kernel &kernel, const std::vector<size_t> &global, const std::vector<size_t> &local,
                 cl::CommandQueue *command_queue);
   bool CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
                            bool sync = false) const;
   bool CopyHostMemToDevice(const void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
                            bool sync = false) const;
-  void *MapBuffer(const cl::Buffer buffer, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
+  void *MapBuffer(const cl::Buffer &buffer, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
                   bool sync = false) const;
-  void *MapBuffer(const cl::Image2D buffer, bool sync, int flags, const std::vector<size_t> &region,
+  void *MapBuffer(const cl::Image2D &buffer, bool sync, int flags, const std::vector<size_t> &region,
                   cl::CommandQueue *command_queue = nullptr) const;
   int MapBuffer(void *host_ptr, int map_flags, size_t size, cl::CommandQueue *command_queue = nullptr,
                 bool sync = false) const;
-  int UnmapBuffer(const cl::Memory buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
+  int UnmapBuffer(const cl::Memory &buffer, void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   int UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue = nullptr) const;
   bool SyncCommandQueue(cl::CommandQueue *command_queue = nullptr);
 
@@ -136,17 +140,18 @@ class OpenCLRuntime {
   GpuInfo ParseGpuInfo(std::string device_name, std::string device_version);
 
   bool LoadProgram(const std::string &program_name, cl::Program *program);
-  bool BuildProgram(const std::string &build_options, cl::Program *program);
+  bool BuildProgram(const std::string &build_options, const cl::Program &program);
 
  private:
-  static std::shared_ptr<OpenCLRuntime> opencl_runtime_singleton_;
   static bool init_done_;
-  std::shared_ptr<cl::CommandQueue> default_command_queue_{nullptr};
-  std::shared_ptr<cl::Context> context_{nullptr};
-  std::shared_ptr<cl::Device> device_{nullptr};
-  std::shared_ptr<OpenCLAllocator> allocator_{nullptr};
-  std::map<std::string, cl::Program> program_map_{};
-  cl_program il_program_{0};
+  static size_t instance_count_;
+  static OpenCLRuntime *ocl_runtime_instance_;
+  cl::CommandQueue *default_command_queue_{nullptr};
+  cl::Context *context_{nullptr};
+  cl::Device *device_{nullptr};
+  OpenCLAllocator *allocator_{nullptr};
+  std::map<std::string, cl::Program> program_map_;
+  cl::Program binary_program_{0};
   uint64_t global_memery_cachesize_{0};
   int max_work_group_size;
   uint32_t compute_units_{0};
@@ -155,11 +160,11 @@ class OpenCLRuntime {
   GpuInfo gpu_info_;
   bool support_fp16_{false};
   bool fp16_enable_{false};
+  bool svm_enable_{false};
   cl_device_svm_capabilities svm_capabilities_{0};
   cl_uint image_pitch_align_{0};
   std::vector<size_t> max_work_item_sizes_;
 };
 
 }  // namespace mindspore::lite::opencl
-
 #endif  // MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_

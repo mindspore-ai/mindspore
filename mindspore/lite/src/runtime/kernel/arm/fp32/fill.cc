@@ -28,12 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore::kernel {
-
-namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-}  // namespace
-
 int FillCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -62,7 +56,7 @@ int FillCPUKernel::DoFill(int task_id) {
   return RET_OK;
 }
 
-int FillRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int FillRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<FillCPUKernel *>(cdata);
   auto ret = g_kernel->DoFill(task_id);
   if (ret != RET_OK) {
@@ -83,7 +77,7 @@ int FillCPUKernel::Run() {
   auto fill_data = reinterpret_cast<float *>(fillData->Data());
   src_data_ = fill_data[0];
   out_ptr_ = reinterpret_cast<float *>(output->Data());
-  auto ret = LiteBackendParallelLaunch(FillRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(THREAD_POOL_DEFAULT, FillRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
     return ret;

@@ -28,10 +28,12 @@ namespace lite {
 class ZerosLike : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ZerosLike, PrimitiveC);
   ZerosLike() = default;
   explicit ZerosLike(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  explicit ZerosLike(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  ZerosLike() = default;
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

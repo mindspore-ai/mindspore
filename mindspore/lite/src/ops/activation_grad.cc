@@ -26,10 +26,21 @@ void ActivationGrad::SetType(int type) {
 }
 
 #else
-
+int ActivationGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_ActivationGrad();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_ActivationGrad return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateActivationGrad(*fbb, attr->type());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ActivationGrad, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int ActivationGrad::GetType() const { return this->primitive_->value_as_ActivationGrad()->type(); }
 
-void ActivationGrad::SetType(int type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

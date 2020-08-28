@@ -57,7 +57,6 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
                             std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);
 
  private:
-  SubGraphOpenCLParameter *subgraph_ocl_parameter_;
   lite::opencl::OpenCLAllocator *allocator_;
   std::vector<lite::tensor::Tensor *> in_convert_tensors_;
   std::vector<lite::tensor::Tensor *> out_convert_tensors_;

@@ -1,6 +1,6 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
-set(ANF_SRC
-        ${ANF_SRC}
+set(CORE_SRC
+        ${CORE_SRC}
         #core / abstract
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/abstract_function.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/abstract/analysis_context.cc
@@ -29,6 +29,7 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/scope.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/value_extends.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/ref.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/container.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/empty.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/ir/dtype/number.cc
@@ -45,6 +46,8 @@ set(ANF_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/info.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/profile.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../core/utils/ms_context.cc
+        )
+set(CCSRC_SRC
         ## ccsrc
         ${CCSRC_DIR}/debug/draw.cc
         ${CCSRC_DIR}/pybind_api/export_flags.cc
@@ -53,8 +56,7 @@ set(ANF_SRC
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_utils_extends.cc
-        )
+)
 
 if (WIN32)
     set(LITE_SRC
@@ -66,7 +68,7 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/kernel_registry.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/graph_util.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/runtime_api.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/thread_pool.c
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/workspace_pool.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/allocator.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../src/executor.cc
@@ -91,6 +93,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/node_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/protobuf_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
@@ -100,6 +103,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/common/gllo_utils.cc
         ../optimizer/fusion/conv_biasadd_fusion.cc
         ../optimizer/fusion/conv_activation_fusion.cc
+        ../optimizer/fusion/conv_tuple_activation_fusion.cc
         ../optimizer/fusion/conv_transform_fusion.cc
         ../optimizer/fusion/conv_scale_fusion.cc
         ../optimizer/fusion/conv_bn_fusion.cc
@@ -116,11 +120,13 @@ add_subdirectory(quantizer)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(LITE_SRC
+        ${SRC_DIR}/common/graph_utils_extends.cc
+        ${SRC_DIR}/common/log_adapter.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/ms_tensor_utils.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
-        ${SRC_DIR}/runtime/thread_pool.cc
+        ${SRC_DIR}/runtime/thread_pool.c
         ${SRC_DIR}/runtime/workspace_pool.cc
         ${SRC_DIR}/ir/tensor.cc
         ${SRC_DIR}/context.cc
@@ -161,12 +167,35 @@ endif()
 
 add_executable(converter_lite
         main.cc
-        ${ANF_SRC}
+        ${CORE_SRC}
+        ${CCSRC_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
         ${KERNEL_SRC}
         ${LITE_SRC}
         )
+
+if (WIN32)
+    add_library(converter_mid OBJECT
+            ${CORE_SRC}
+            ${CCSRC_SRC}
+            ${CONVERTER_SRC}
+            ${OPS_SRC}
+            ${KERNEL_SRC}
+            ${LITE_SRC}
+            )
+    add_library(converter_parser STATIC
+            $<TARGET_OBJECTS:tflite_parser_mid>
+            $<TARGET_OBJECTS:caffe_parser_mid>
+            $<TARGET_OBJECTS:onnx_parser_mid>
+            $<TARGET_OBJECTS:anf_importer_mid>
+            $<TARGET_OBJECTS:anf_exporter_mid>
+            $<TARGET_OBJECTS:graph_pass_mid>
+            $<TARGET_OBJECTS:fusion_mid>
+            $<TARGET_OBJECTS:quantizer_mid>
+            $<TARGET_OBJECTS:converter_mid>
+            )
+endif()
 
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
@@ -187,5 +216,5 @@ target_link_libraries(converter_lite PRIVATE
 
 if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     install(TARGETS converter_lite
-            RUNTIME DESTINATION ${MAIN_DIR}/converter COMPONENT ${COMPONENT_NAME})
+            RUNTIME DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
 endif ()

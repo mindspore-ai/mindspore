@@ -92,7 +92,7 @@ int QuantizedAddCPUKernel::Run() {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
 
-    ArithmeticParameter tile_para = {0};
+    ArithmeticParameter tile_para;
     tile_para.ndim_ = out_tensors_.at(0)->shape().size();
     for (size_t i = 0; i < tile_para.ndim_; i++) {
       tile_para.in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
@@ -102,17 +102,17 @@ int QuantizedAddCPUKernel::Run() {
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->Data()),
                         static_cast<uint8_t *>(in_tensors_.at(1)->Data()), reinterpret_cast<uint8_t *>(input0_data_),
                         reinterpret_cast<uint8_t *>(input1_data_), &tile_para);
-    ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
+    ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = LiteBackendParallelLaunch(AddInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, AddInt8Run, this, thread_count_);
   return ret;
 }
 
-int AddInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int AddInt8Run(void *cdata, int task_id) {
   auto add = reinterpret_cast<QuantizedAddCPUKernel *>(cdata);
   add->DoExecute(task_id);
   return lite::RET_OK;

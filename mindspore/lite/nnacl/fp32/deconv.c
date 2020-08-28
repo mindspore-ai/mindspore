@@ -33,18 +33,18 @@ void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, in
   return;
 }
 
-int DeConvPostFp32C8x8(const float *src, float *tmp, const float *bias, float *dst, int output_channel,
-                       ConvParameter *conv_param) {
-  /* row8x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
+int DeConvPostFp32C12x8(const float *src, float *tmp, const float *bias, float *dst, int output_channel,
+                        ConvParameter *conv_param) {
+  /* row12x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
   int oc8 = UP_ROUND(output_channel, C8NUM);
-  int in_plane8 = UP_ROUND(input_plane, C8NUM);
+  int in_plane12 = UP_ROUND(input_plane, C12NUM);
   int src_iw_stride = C8NUM;
   int src_ih_stride = conv_param->input_w_ * C8NUM;
-  int src_kw_stride = in_plane8 * C8NUM;
-  int src_kh_stride = in_plane8 * conv_param->kernel_w_ * C8NUM;
+  int src_kw_stride = in_plane12 * C8NUM;
+  int src_kh_stride = in_plane12 * conv_param->kernel_w_ * C8NUM;
   int dst_oh_stride = conv_param->output_w_ * C8NUM;
   int dst_ow_stride = C8NUM;
   int dst_kh_stride = conv_param->dilation_h_ * conv_param->output_w_ * C8NUM;
@@ -52,13 +52,13 @@ int DeConvPostFp32C8x8(const float *src, float *tmp, const float *bias, float *d
 
   for (int c = 0; c < oc8; c += 8) {
     float *dst_ptr = tmp + c * output_plane;
-    const float *src_ptr = src + c * in_plane8 * kernel_plane;
+    const float *src_ptr = src + c * in_plane12 * kernel_plane;
     memset(dst_ptr, 0, output_plane * C8NUM * sizeof(float));
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
-        int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
-        int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
+        int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
+        int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
 
         int kh_start = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
         int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
@@ -97,45 +97,7 @@ int DeConvPostFp32C8x8(const float *src, float *tmp, const float *bias, float *d
     }       /*ih*/
   }         /*oc8*/
 
-  PostConvFuncFp32C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_, conv_param->is_relu_,
-                     conv_param->is_relu6_);
-  return NNACL_OK;
-}
-
-int DeConvPostFp32C4(const float *src, float *tmp_c4, float *dst, const float *bias, int output_channel,
-                     int input_plane, int kernel_plane, int output_plane, ConvParameter *conv_param) {
-  int oc4 = UP_DIV(output_channel, C4NUM);
-  for (int c = 0; c < oc4; c++) {
-    float *dst_ptr = tmp_c4 + c * output_plane * C4NUM;
-    const float *src_ptr = src + c * input_plane * kernel_plane * C4NUM;
-    memset(dst_ptr, 0, output_plane * C4NUM * sizeof(float));
-
-    for (int ih = 0; ih < conv_param->input_h_; ih++) {
-      for (int iw = 0; iw < conv_param->input_w_; iw++) {
-        int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
-        int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
-
-        int kh_start = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
-        int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
-        int kw_start = MSMAX(0, UP_DIV(-ow, conv_param->dilation_w_));
-        int kw_end = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->output_w_ - ow, conv_param->dilation_w_));
-        for (int kh = kh_start; kh < kh_end; kh++) {
-          for (int kw = kw_start; kw < kw_end; kw++) {
-            int src_index = ih * conv_param->input_w_ * C4NUM + iw * C4NUM +
-                            kh * input_plane * conv_param->kernel_w_ * C4NUM + kw * input_plane * C4NUM;
-            int dst_index = oh * conv_param->output_w_ * C4NUM + ow * C4NUM +
-                            kh * conv_param->dilation_h_ * conv_param->output_w_ * C4NUM +
-                            kw * conv_param->dilation_w_ * C4NUM;
-            for (int i = 0; i < C4NUM; i++) {
-              dst_ptr[dst_index + i] += src_ptr[src_index + i];
-            }
-          } /*kw*/
-        }   /*kh*/
-      }     /*iw*/
-    }       /*ih*/
-  }         /*oc4*/
-
-  PostConvFuncFp32C4(tmp_c4, dst, bias, output_channel, output_plane, conv_param->output_channel_, conv_param->is_relu_,
-                     conv_param->is_relu6_);
+  PostConvFuncFp32C8(tmp, dst, bias, output_channel, output_plane, conv_param->output_channel_,
+                     conv_param->act_type_ == ActType_Relu, conv_param->act_type_ == ActType_Relu6);
   return NNACL_OK;
 }

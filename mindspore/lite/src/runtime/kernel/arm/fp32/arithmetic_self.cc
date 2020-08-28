@@ -41,7 +41,7 @@ int ArithmeticSelfCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ArithmeticSelfRuns(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ArithmeticSelfRuns(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<ArithmeticSelfCPUKernel *>(cdata);
   auto ret = g_kernel->DoArithmeticSelf(task_id);
   if (ret != RET_OK) {
@@ -80,7 +80,7 @@ int ArithmeticSelfCPUKernel::Run() {
   auto out_tensor = out_tensors_.at(0);
   in_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
   out_ptr_ = reinterpret_cast<float *>(out_tensor->Data());
-  ret = LiteBackendParallelLaunch(ArithmeticSelfRuns, this, thread_sz_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticSelfRuns, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
     return ret;

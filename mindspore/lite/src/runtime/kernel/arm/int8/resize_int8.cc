@@ -30,20 +30,14 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-constexpr size_t kRank = 4;
-}  // namespace
-
 int ResizeInt8CPUKernel::Init() {
   auto ret = ResizeBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
-  quant_in_ = new(std::nothrow) QuantArg;
+  quant_in_ = new (std::nothrow) QuantArg;
   MS_ASSERT(quant_in_);
-  quant_out_ = new(std::nothrow) QuantArg;
+  quant_out_ = new (std::nothrow) QuantArg;
   MS_ASSERT(quant_out_);
   auto input = in_tensors_.at(0);
   quant_in_->zp_ = input->GetQuantParams().front().zeroPoint;
@@ -52,7 +46,7 @@ int ResizeInt8CPUKernel::Init() {
   quant_out_->zp_ = output->GetQuantParams().front().zeroPoint;
   quant_out_->scale_ = output->GetQuantParams().front().scale;
 
-  multiplier_ = new(std::nothrow) QuantMulArg;
+  multiplier_ = new (std::nothrow) QuantMulArg;
   MS_ASSERT(multiplier_);
   QuantizeRoundParameter(quant_in_->scale_ / quant_out_->scale_, &multiplier_->multiplier_, &multiplier_->left_shift_,
                          &multiplier_->right_shift_);
@@ -62,7 +56,7 @@ int ResizeInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int ResizeInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ResizeInt8Impl(void *cdata, int task_id) {
   auto resize = reinterpret_cast<ResizeInt8CPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -91,9 +85,14 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_BILINEAR): {
-      ret = ResizeBilinearInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                               align_corners_, quant_in_, quant_out_, multiplier_, task_id, context_->thread_num_);
-
+      if (quant_in_->zp_ == 0) {
+        ret = ResizeBilinearInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                                 align_corners_, quant_in_, quant_out_, multiplier_, task_id, context_->thread_num_);
+      } else {
+        ret = ResizeBilinearInt8WithFloatWeight(input_data, output_data, input_shape.data(),
+                                                out_tensors_[0]->shape().data(), align_corners_, quant_in_, quant_out_,
+                                                multiplier_, task_id, context_->thread_num_);
+      }
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST_NEIGHBOR): {
@@ -101,25 +100,12 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
       if (same_zp && same_scale) {
         ret =
-            ResizeNearestNeighborInt8Simple(input_data,
-                                            output_data,
-                                            input_shape.data(),
-                                            out_tensors_[0]->shape().data(),
-                                            align_corners_,
-                                            task_id,
-                                            context_->thread_num_);
+          ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                                          align_corners_, task_id, context_->thread_num_);
       } else {
         ret =
-            ResizeNearestNeighborInt8(input_data,
-                                      output_data,
-                                      input_shape.data(),
-                                      out_tensors_[0]->shape().data(),
-                                      align_corners_,
-                                      multiplier_,
-                                      quant_in_,
-                                      quant_out_,
-                                      task_id,
-                                      context_->thread_num_);
+          ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                                    align_corners_, multiplier_, quant_in_, quant_out_, task_id, context_->thread_num_);
       }
       break;
     }
@@ -138,7 +124,7 @@ int ResizeInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = LiteBackendParallelLaunch(ResizeInt8Impl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ResizeInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

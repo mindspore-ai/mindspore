@@ -28,10 +28,13 @@ namespace lite {
 class Equal : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Equal, PrimitiveC);
   Equal() = default;
   explicit Equal(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  explicit Equal(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  Equal() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

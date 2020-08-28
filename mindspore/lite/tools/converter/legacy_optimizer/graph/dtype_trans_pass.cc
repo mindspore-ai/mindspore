@@ -56,7 +56,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
   for (auto graphInIdx : graphInIdxes) {
     MS_ASSERT(graph->allTensors.size() > graphInIdx);
     auto &graphInTensor = graph->allTensors.at(graphInIdx);
-    graphInTensor->dataType = TypeId::kNumberTypeUInt8;
+    graphInTensor->dataType = TypeId::kNumberTypeInt8;
   }
 
   if (this->inputDataDType == TypeId::kNumberTypeInt8) {

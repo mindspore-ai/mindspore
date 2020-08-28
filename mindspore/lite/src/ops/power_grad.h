@@ -28,17 +28,20 @@ namespace lite {
 class PowerGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(PowerGrad, PrimitiveC);
   PowerGrad() = default;
   explicit PowerGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPower(float power);
+  void SetScale(float scale);
+  void SetShift(float shift);
 #else
-  explicit PowerGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  PowerGrad() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetPower() const;
   float GetScale() const;
   float GetShift() const;
-  void SetPower(float power);
-  void SetScale(float scale);
-  void SetShift(float shift);
 };
 }  // namespace lite
 }  // namespace mindspore

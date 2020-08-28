@@ -277,7 +277,7 @@ kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::t
                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
-  MS_EXCEPTION_IF_NULL(opParameter);
+  MS_ASSERT(nullptr != opParameter);
   if (opParameter == nullptr) {
     return nullptr;
   }

@@ -459,8 +459,6 @@ TEST_F(TestMatMulFp32, batch) {
                      -17.63555145263672, -8.490625381469727,  5.317771911621094,   -14.561882019042969,
                      -7.251564025878906, -2.508212089538574,  5.86458683013916,    -3.466249465942383,
                      8.869029998779297,  25.034008026123047};
-
-  float *output = reinterpret_cast<float *>(outputs_[0]->Data());
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
   delete mm;
   for (auto t : inputs_) delete t;

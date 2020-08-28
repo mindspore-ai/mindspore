@@ -88,7 +88,7 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   return ret;
 }
 
-int PowerInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PowerInt8Run(void *cdata, int task_id) {
   auto power_kernel = reinterpret_cast<PowerInt8CPUKernel *>(cdata);
   auto ret = power_kernel->DoPower(task_id);
   if (ret != RET_OK) {
@@ -103,7 +103,7 @@ int PowerInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  ret = LiteBackendParallelLaunch(PowerInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, PowerInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerInt8Run error, error_code[" << ret << "]";
   }

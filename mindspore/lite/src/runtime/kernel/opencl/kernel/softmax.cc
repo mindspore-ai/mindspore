@@ -107,7 +107,7 @@ int SoftmaxOpenCLKernel::Init() {
     MS_LOG(EXCEPTION) << "Init `Softmax` kernel failed: Unsupported axis: " << parameter_->axis_;
   }
 #ifdef PROGRAM_WITH_IL
-  runtime_->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   if (!is_image_out_) {
     out_mem_type_ = OpenCLMemType::BUF;

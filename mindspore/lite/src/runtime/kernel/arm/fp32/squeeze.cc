@@ -27,11 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Squeeze;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kSqueezeInputNum = 1;
-constexpr int kSqueezeOutputNum = 1;
-}  // namespace
-
 int SqueezeCPUKernel::Init() { return RET_OK; }
 
 int SqueezeCPUKernel::ReSize() { return RET_OK; }

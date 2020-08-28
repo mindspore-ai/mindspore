@@ -29,34 +29,52 @@ void Reduce::SetKeepDims(int keep_dims) { this->primitive_->value.AsReduce()->ke
 void Reduce::SetMode(int mode) { this->primitive_->value.AsReduce()->mode = (schema::ReduceMode)mode; }
 
 int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::ReduceT>();
-  attr->mode = schema::ReduceMode_ReduceMean;
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Reduce;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Reduce) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::ReduceT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    attr->mode = schema::ReduceMode_ReduceMean;
 
-  attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));
-  if (inputs.size() == kAnfPopulaterTwo) {
-    auto inputNode = inputs[kAnfPopulaterOne];
-    MS_ASSERT(inputNode != nullptr);
-    if (inputNode->isa<ValueNode>()) {
-      auto valueNode = inputNode->cast<ValueNodePtr>();
-      MS_ASSERT(valueNode != nullptr);
-      auto value = valueNode->value();
-      MS_ASSERT(value != nullptr);
-      if (value->isa<ValueTuple>()) {
-        auto valTuplPtr = dyn_cast<ValueTuple>(value);
-        MS_ASSERT(valTuplPtr != nullptr);
-        for (size_t i = 0; i < valTuplPtr->size(); i++) {
-          auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
-          MS_ASSERT(elem != nullptr);
-          attr->axes.emplace_back(elem->value());
+    attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));
+    if (inputs.size() == kAnfPopulaterTwo) {
+      auto inputNode = inputs[kAnfPopulaterOne];
+      MS_ASSERT(inputNode != nullptr);
+      if (inputNode->isa<ValueNode>()) {
+        auto valueNode = inputNode->cast<ValueNodePtr>();
+        MS_ASSERT(valueNode != nullptr);
+        auto value = valueNode->value();
+        MS_ASSERT(value != nullptr);
+        if (value->isa<ValueTuple>()) {
+          auto valTuplPtr = dyn_cast<ValueTuple>(value);
+          MS_ASSERT(valTuplPtr != nullptr);
+          for (size_t i = 0; i < valTuplPtr->size(); i++) {
+            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            MS_ASSERT(elem != nullptr);
+            attr->axes.emplace_back(elem->value());
+          }
         }
       }
     }
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
   }
-
-  this->primitive_->value.type = schema::PrimitiveType_Reduce;
-  this->primitive_->value.value = attr.release();
-
   return RET_OK;
 }
 
@@ -68,10 +86,25 @@ std::vector<int> Reduce::GetAxes() const {
 }
 int Reduce::GetKeepDims() const { return this->primitive_->value_as_Reduce()->keepDims(); }
 int Reduce::GetMode() const { return this->primitive_->value_as_Reduce()->mode(); }
-
-void Reduce::SetAxes(const std::vector<int> &axes) {}
-void Reduce::SetKeepDims(int keep_dims) {}
-void Reduce::SetMode(int mode) {}
+int Reduce::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Reduce();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Reduce return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axes;
+  if (attr->axes() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axes()->size()); i++) {
+      axes.push_back(attr->axes()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateReduceDirect(*fbb, &axes, attr->keepDims(), attr->mode());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Reduce, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

@@ -28,16 +28,19 @@ namespace lite {
 class Unstack : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Unstack, PrimitiveC);
   Unstack() = default;
   explicit Unstack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetNum(int num);
+  void SetAxis(int axis);
 #else
-  explicit Unstack(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Unstack() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetNum() const;
   int GetAxis() const;
-  void SetNum(int num);
-  void SetAxis(int axis);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -61,5 +61,17 @@ int ScatterND::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
   output->set_shape(out_shape);
   return RET_OK;
 }
+#ifdef PRIMITIVE_WRITEABLE
+#else
+int ScatterND::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+
+  auto val_offset = schema::CreateScatterND(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ScatterND, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+#endif
 }  // namespace lite
 }  // namespace mindspore

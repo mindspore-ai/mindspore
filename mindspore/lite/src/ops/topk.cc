@@ -29,9 +29,19 @@ void TopK::SetSorted(bool sorted) { this->primitive_->value.AsTopK()->sorted = s
 
 int TopK::GetK() const { return this->primitive_->value_as_TopK()->k(); }
 bool TopK::GetSorted() const { return this->primitive_->value_as_TopK()->sorted(); }
-
-void TopK::SetK(int k) {}
-void TopK::SetSorted(bool sorted) {}
+int TopK::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_TopK();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_TopK return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateTopK(*fbb, attr->k(), attr->sorted());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_TopK, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int TopK::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

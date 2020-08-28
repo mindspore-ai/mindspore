@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/convolution_winograd_fp16.h"
 #include "src/runtime/kernel/arm/fp16/matrix_fp16.h"
 #include "nnacl/fp16/conv_fp16.h"
-#include "nnacl/fp16/common_func.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/winograd_transform_fp16.h"
@@ -219,6 +218,14 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   int output_h = conv_param_->output_h_;
   int output_w = conv_param_->output_w_;
   int oc8 = UP_DIV(channel_out, C8NUM);
+  int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
+
+  size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic8 * C8NUM * sizeof(float16_t);
+  trans_input_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (trans_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc trans_input_ failed.";
+    return RET_ERROR;
+  }
 
   gemm_out_ = reinterpret_cast<float16_t *>(
     ctx_->allocator->Malloc(thread_count_ * cal_num * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float16_t)));
@@ -270,18 +277,17 @@ int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   kernel_unit_ = conv_param_->kernel_h_;
   input_unit_ = output_unit_ + kernel_unit_ - 1;
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
-
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   return ReSize();
 }
@@ -297,10 +303,6 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     free(nhwc4_input_);
     nhwc4_input_ = nullptr;
   }
-  if (trans_input_ != nullptr) {
-    free(trans_input_);
-    trans_input_ = nullptr;
-  }
 
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -312,10 +314,8 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
 
-  int cal_num = 16;
   int channel_in = conv_param_->input_channel_;
   int ic8 = UP_DIV(channel_in, C8NUM);
-
   size_t nhwc8_input_size =
     ic8 * C8NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float16_t);
   nhwc4_input_ = malloc(nhwc8_input_size);
@@ -324,14 +324,6 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     return RET_ERROR;
   }
   memset(nhwc4_input_, 0, nhwc8_input_size);
-
-  size_t tile_buffer_size = thread_count_ * cal_num * input_unit_ * input_unit_ * ic8 * C8NUM * sizeof(float16_t);
-  trans_input_ = reinterpret_cast<float16_t *>(malloc(tile_buffer_size));
-  if (trans_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc trans_input_ failed.";
-    return RET_ERROR;
-  }
-  memset(trans_input_, 0, tile_buffer_size);
 
   ret = ConfigInputOutput();
   if (ret != RET_OK) {
@@ -348,12 +340,34 @@ int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int ConvolutionWinogradFp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvolutionWinogradFp16Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionWinogradFP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionWinograd Fp16 Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConvolutionWinogradFP16CPUKernel::PostProcess() {
+  auto act_type = conv_param_->act_type_;
+  switch (act_type) {
+    case ActType_No:
+      UnPackWinogradOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                               conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    case ActType_Relu:
+      UnPackWinogradReluOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                                   conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    case ActType_Relu6:
+      UnPackWinogradRelu6OutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
+                                    conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupport activation type.";
+      return RET_ERROR;
   }
   return RET_OK;
 }
@@ -383,23 +397,17 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   int in_channel = conv_param_->input_channel_;
   PackNHWCToNHWC8Fp16(execute_input_, nhwc4_input_, in_batch, in_h * in_w, in_channel);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionWinogradFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionWinogradFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << error_code << "]";
     FreeTmpBuffer();
     return RET_ERROR;
   }
 
-  // get real output
-  if (conv_param_->is_relu_) {
-    UnPackWinogradReluOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                                 conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else if (conv_param_->is_relu6_) {
-    UnPackWinogradRelu6OutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                                  conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
-  } else {
-    UnPackWinogradOutputFp16(tmp_out_data_, execute_output_, conv_param_->output_batch_, conv_param_->output_h_,
-                             conv_param_->output_w_, conv_param_->output_channel_, output_unit_);
+  ret = PostProcess();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Post process failed.";
+    return ret;
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();

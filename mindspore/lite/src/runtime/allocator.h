@@ -72,7 +72,7 @@ class DefaultAllocator : public Allocator {
   bool lockFlag = false;
 };
 
-#define MAX_MALLOC_SIZE 500 * 1024 * 1024
+#define MAX_MALLOC_SIZE (2000 * 1024 * 1024)
 
 }  // namespace mindspore::lite
 

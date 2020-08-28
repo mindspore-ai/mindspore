@@ -28,13 +28,17 @@ namespace lite {
 class Eltwise : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Eltwise, PrimitiveC);
   Eltwise() = default;
   explicit Eltwise(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMode(int mode);
+
 #else
-  explicit Eltwise(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Eltwise() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetMode() const;
-  void SetMode(int mode);
 };
 }  // namespace lite
 }  // namespace mindspore

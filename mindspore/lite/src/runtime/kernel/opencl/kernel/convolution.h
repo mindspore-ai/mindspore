@@ -40,6 +40,8 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
 
  private:
+  bool use_fp16_ = false;
+
   int CI;
   int IH;
   int IW;
@@ -48,8 +50,8 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   int OW;
   int CI_SLICES;
   int CO_SLICES;
-  float *packed_weight_ = nullptr;
-  float *packed_bias_ = nullptr;
+  void *packed_weight_ = nullptr;
+  void *packed_bias_ = nullptr;
 
   bool use_winograd_ = false;
   int TILES_X;

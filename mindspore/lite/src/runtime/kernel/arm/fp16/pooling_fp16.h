@@ -28,17 +28,9 @@ class PoolingFp16CPUKernel : public PoolingBaseCPUKernel {
                        const std::vector<lite::tensor::Tensor *> &outputs, const Context *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~PoolingFp16CPUKernel() override {
-    if (fp16_input_ != nullptr) {
-      free(fp16_input_);
-    }
-    if (fp16_output_ != nullptr) {
-      free(fp16_output_);
-    }
-  };
+  ~PoolingFp16CPUKernel() override = default;
 
   int Init() override;
-  int InitBuffer();
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);

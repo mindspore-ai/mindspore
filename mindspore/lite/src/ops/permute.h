@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,10 +29,12 @@ namespace lite {
 class Permute : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  Permute() = default;
+  MS_DECLARE_PARENT(Permute, PrimitiveC);
   explicit Permute(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  explicit Permute(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Permute() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int64_t> GetOrder() const;
   void SetOrder(const std::vector<int64_t> &order);

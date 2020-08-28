@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <vector>
 #include "src/runtime/kernel/arm/fp32/gather.h"
+#include <vector>
+#include "nnacl/gather_parameter.h"
+#include "nnacl/fp32/gather.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -30,12 +31,17 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 
 int GatherCPUKernel::Init() {
-  axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
-  batchDims_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->batchDims_;
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
+}
+
+GatherCPUKernel::~GatherCPUKernel() {
+  if (indices_data_ != nullptr) {
+    free(indices_data_);
+    indices_data_ = nullptr;
+  }
 }
 
 int GatherCPUKernel::ReSize() { return RET_OK; }
@@ -46,7 +52,6 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto out_tensor = out_tensors_.at(0);
 
   auto input_ptr = reinterpret_cast<float *>(input_tensor->Data());
-  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensor->Data());
 
   auto input_int32 = reinterpret_cast<int32_t *>(input_tensor->Data());
@@ -55,26 +60,18 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
+  auto axis = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
 
-  const int limit = in_shape[axis_];
-  for (int i = 0; i < indices_element_size; ++i) {
-    if (indices_ptr[i] >= limit) {
-      MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
-      return RET_ERROR;
-    }
-  }
+  const int limit = in_shape[axis];
 
-  int outer_size = 1;
-  for (int i = 0; i < axis_; ++i) {
+  int outer_size = 1, inner_size = 1;
+  for (int i = 0; i < axis; ++i) {
     outer_size *= in_shape[i];
   }
-
-  int inner_size = 1;
-  for (int i = axis_ + 1; i < in_rank; ++i) {
+  for (int i = axis + 1; i < in_rank; ++i) {
     inner_size *= in_shape[i];
   }
-
-  int stride = UP_DIV(outer_size, thread_count_);
+  int stride = UP_DIV(outer_size, op_parameter_->thread_num_);
   int count = MSMIN(stride, outer_size - stride * task_id);
   auto thread_stride = stride * task_id;
 
@@ -82,27 +79,22 @@ int GatherCPUKernel::DoGather(int task_id) {
   if (input_tensor->data_type() == kNumberTypeInt32) {
     input_int32 += thread_stride * limit;
     output_int32 += thread_stride * indices_element_size;
-    error_code = GatherInt32(input_int32, count, inner_size, limit, indices_ptr, indices_element_size, output_int32);
+    error_code = GatherInt32(input_int32, count, inner_size, limit, indices_data_, indices_element_size, output_int32);
   } else {
     input_ptr += thread_stride * limit;
     output_ptr += thread_stride * indices_element_size;
-    error_code = Gather(input_ptr, count, inner_size, limit, indices_ptr, indices_element_size, output_ptr);
+    error_code = Gather(input_ptr, count, inner_size, limit, indices_data_, indices_element_size, output_ptr);
   }
-
-  if (error_code != RET_OK) {
-    return RET_ERROR;
-  }
-  return RET_OK;
+  return error_code;
 }
 
-int GatherRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int GatherRun(void *cdata, int task_id) {
   auto gather_kernel = reinterpret_cast<GatherCPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "GatherRun error task_id[" << task_id << "] error_code[" << error_code << "]";
-    return RET_ERROR;
   }
-  return RET_OK;
+  return error_code;
 }
 
 int GatherCPUKernel::Run() {
@@ -111,12 +103,30 @@ int GatherCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(GatherRun, this, thread_count_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Gather function error error_code[" << error_code << "]";
+
+  auto indices_tensor = in_tensors_.at(1);
+  indices_data_ = reinterpret_cast<int *>(malloc(indices_tensor->Size()));
+  if (indices_data_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  return RET_OK;
+  auto in_shape = in_tensors_.at(0)->shape();
+  int indices_element_size = indices_tensor->ElementsNum();
+  auto axis = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;;
+  auto indices_ptr = reinterpret_cast<float *>(indices_tensor->Data());
+  const int limit = in_shape[axis];
+  for (int i = 0; i < indices_element_size; ++i) {
+    indices_data_[i] = static_cast<int>(indices_ptr[i]);
+    if (indices_data_[i] >= limit) {
+      MS_LOG(ERROR) << " indice data: " << indices_data_[i] << " is not in [ 0, " << limit - 1 << " ]";
+      return RET_ERROR;
+    }
+  }
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, GatherRun, this, op_parameter_->thread_num_);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Gather function error error_code[" << error_code << "]";
+  }
+  return error_code;
 }
 
 kernel::LiteKernel *CpuGatherFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

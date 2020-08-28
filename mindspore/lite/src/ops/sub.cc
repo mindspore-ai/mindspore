@@ -28,8 +28,19 @@ void Sub::SetActivationType(int activation_type) {
 #else
 
 int Sub::GetActivationType() const { return this->primitive_->value_as_Sub()->activationType(); }
-
-void Sub::SetActivationType(int activation_type) {}
+int Sub::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Sub();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Sub return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateSub(*fbb, attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Sub, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

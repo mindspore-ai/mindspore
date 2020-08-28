@@ -20,7 +20,6 @@
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/conv_parameter.h"
-
 #include "src/runtime/opencl/opencl_runtime.h"
 
 namespace mindspore::kernel {
@@ -46,8 +45,8 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
   int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) override;
 
  private:
-  FLOAT_t *packed_weight_;
-  FLOAT_t *bias_data_;
+  void *packed_weight_;
+  void *bias_data_;
   cl::Kernel kernel_;
 };
 }  // namespace mindspore::kernel

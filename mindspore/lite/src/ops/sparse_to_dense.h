@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,19 +29,22 @@ namespace lite {
 class SparseToDense : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SparseToDense, PrimitiveC);
   SparseToDense() = default;
   explicit SparseToDense(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetOutputShape(const std::vector<int> &output_shape);
+  void SetSparseValue(const std::vector<int> &sparse_value);
+  void SetDefaultValue(const std::vector<int> &default_value);
+  void SetValidateIndices(bool validate_indices);
 #else
-  explicit SparseToDense(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  SparseToDense() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetOutputShape() const;
   std::vector<int> GetSparseValue() const;
   std::vector<int> GetDefaultValue() const;
   bool GetValidateIndices() const;
-  void SetOutputShape(const std::vector<int> &output_shape);
-  void SetSparseValue(const std::vector<int> &sparse_value);
-  void SetDefaultValue(const std::vector<int> &default_value);
-  void SetValidateIndices(bool validate_indices);
 };
 }  // namespace lite
 }  // namespace mindspore

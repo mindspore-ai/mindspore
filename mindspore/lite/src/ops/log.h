@@ -28,10 +28,13 @@ namespace lite {
 class Log : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Log, ArithmeticSelf);
   Log() = default;
   explicit Log(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  explicit Log(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+  Log() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

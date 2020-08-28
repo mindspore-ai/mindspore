@@ -38,7 +38,7 @@ int WhereCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int WhereRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int WhereRun(void *cdata, int task_id) {
   auto wheredata = reinterpret_cast<WhereCPUKernel *>(cdata);
   auto ret = wheredata->DoExcute(task_id);
   if (ret != RET_OK) {
@@ -79,7 +79,7 @@ int WhereCPUKernel::Run() {
     MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
     return RET_ERROR;
   }
-  ret = LiteBackendParallelLaunch(WhereRun, this, where_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, WhereRun, this, where_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

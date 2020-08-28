@@ -31,12 +31,22 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
                   const mindspore::lite::PrimitiveC *primitive)
       : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ResizeCPUKernel() = default;
+  ~ResizeCPUKernel() { FreeTmpBuffer(); }
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
+  int MallocTmpBuffer();
+  void FreeTmpBuffer();
+
+ private:
+  int *y_tops_ = nullptr;
+  int *y_bottoms_ = nullptr;
+  int *x_lefts_ = nullptr;
+  int *x_rights_ = nullptr;
+  float *y_bottom_weights_ = nullptr;
+  float *x_left_weights_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

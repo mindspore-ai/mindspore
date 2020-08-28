@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::kernel {
 
-int ReshapeCPUKernel::Run() {
+int ReshapeFp16CPUKernel::Run() {
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
@@ -73,4 +73,31 @@ int ReshapeCPUKernel::Run() {
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuReshapeFp16KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+                                                const std::vector<lite::tensor::Tensor *> &outputs,
+                                                OpParameter *opParameter, const Context *ctx,
+                                                const kernel::KernelKey &desc,
+                                                const mindspore::lite::PrimitiveC *primitive) {
+  if (opParameter == nullptr) {
+    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+    return nullptr;
+  }
+  MS_ASSERT(desc.type == schema::PrimitiveType_Reshape);
+  auto *kernel = new (std::nothrow) ReshapeFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ReshapeFp16CPUKernel fail!";
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reshape, CpuReshapeFp16KernelCreator)
 }  // namespace mindspore::kernel

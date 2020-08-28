@@ -15,19 +15,17 @@
  */
 
 #include "tools/converter/graphdef_transform.h"
-#include <iostream>
 #include <memory>
 #include <string>
 #include "schema/model_generated.h"
 #include "utils/log_adapter.h"
-#include "src/common/op_utils.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
-// #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/format_trans_transpose_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/batchnorm_convert_scale_pass.h"
+#include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
+#include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
 #include "tools/converter/legacy_optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/converter/legacy_optimizer/graph/weight_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
@@ -36,7 +34,6 @@
 #include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/quantizer/aware_quantizer.h"
-#include "tools/converter/converter.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -56,7 +53,7 @@ void GraphDefTransform::CreateQuantizer(const converter::Flags *flags) {
       break;
     }
     default:
-      //      MS_LOGI("will support quantizer type %s in the future!", flags->quantTypeIn.c_str());
+      MS_LOG(INFO) << "will support quantizer type " << flags->quantTypeIn << " in the future";
       break;
   }
 }
@@ -71,7 +68,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     weightHardCodePass->SetFmkType(ctx.fmk);
     weightFormatPass->SetQuantType(ctx.quantType);
     weightFormatPass->SetFmkType(ctx.fmk);
-//    weightFormatPass->SetDstFormat(Format_KHWC);
     weightFormatOptimizer.AddPass(weightHardCodePass);
     weightFormatOptimizer.AddPass(weightFormatPass);
     status = weightFormatOptimizer.Run(graphDefT);
@@ -152,9 +148,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(new EltwiseFormatTransPass());
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    //    if (ctx.quantType == QuantType_AwareTraining) {
-    //      formatTransOptimizer.AddPass(new (std::nothrow) FormatTransNodeQuantParamFillPass());
-    //    }
     status = formatTransOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run formatTransOptimizer graphPasses Failed";
@@ -164,6 +157,17 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer fusionOptimizer;
     fusionOptimizer.AddPass(new (std::nothrow) FormatTransPermuteFusionPass());
+    fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    status = fusionOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run fusionOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+
+  {
+    Optimizer fusionOptimizer;
+    fusionOptimizer.AddPass(new (std::nothrow) MulAddFusionPass());
     fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     status = fusionOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {

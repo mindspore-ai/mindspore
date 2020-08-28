@@ -33,6 +33,7 @@ namespace mindspore::kernel {
 int ReshapeOpenCLKernel::Init() {
   std::string kernel_name = "reshape";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   if (in_ori_format_ != schema::Format_NHWC4 && in_ori_format_ != schema::Format_NHWC) {
@@ -45,7 +46,7 @@ int ReshapeOpenCLKernel::Init() {
     return RET_ERROR;
   }
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = reshape_source;
@@ -73,11 +74,10 @@ int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   int c = shapex[3];
   im_dst_x = w * UP_DIV(c, C4NUM);
   im_dst_y = h;
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -121,4 +121,5 @@ kernel::LiteKernel *OpenCLReshapeKernelCreator(const std::vector<lite::tensor::T
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reshape, OpenCLReshapeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reshape, OpenCLReshapeKernelCreator)
 }  // namespace mindspore::kernel

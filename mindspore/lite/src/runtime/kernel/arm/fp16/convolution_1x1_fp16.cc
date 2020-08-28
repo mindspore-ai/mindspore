@@ -38,8 +38,7 @@ int Convolution1x1FP16CPUKernel::InitMatmulParam() {
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->row_16_ = UP_ROUND(matmul_param_->row_, C16NUM);
   matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
-  matmul_param_->act_type_ = (conv_param_->is_relu6_) ? ActType_Relu6 : ActType_No;
-  matmul_param_->act_type_ = (conv_param_->is_relu_) ? ActType_Relu : matmul_param_->act_type_;
+  matmul_param_->act_type_ = conv_param_->act_type_;
   return RET_OK;
 }
 
@@ -57,7 +56,7 @@ Convolution1x1FP16CPUKernel::~Convolution1x1FP16CPUKernel() {
 }
 
 int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
-  pre_trans_input_ = (conv_param_->pad_h_ != 0 || conv_param_->pad_w_ != 0 || conv_param_->stride_h_ != 1 ||
+  pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
@@ -70,11 +69,19 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
     return RET_MEMORY_FAILED;
   }
   memset(pack_input_, 0, matmul_param_->row_16_ * matmul_param_->deep_ * sizeof(float16_t));
+
+  if (pre_trans_input_) {
+    input_ptr_ = reinterpret_cast<float16_t *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float16_t)));
+    if (input_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "Conv1x1 Malloc input_ptr_ error!";
+      return RET_MEMORY_FAILED;
+    }
+    memset(input_ptr_, 0, matmul_param_->row_ * matmul_param_->deep_ * sizeof(float16_t));
+  }
   return RET_OK;
 }
 
 int Convolution1x1FP16CPUKernel::InitWeightBias() {
-  auto bias_tensor = in_tensors_.at(kBiasIndex);
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
@@ -87,6 +94,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
       memcpy(bias_data_, bias_tensor->Data(), output_channel * sizeof(float16_t));
     } else {
@@ -108,20 +116,18 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
 }
 
 int Convolution1x1FP16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
     return RET_ERROR;
   }
-
   int ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return ret;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   return ReSize();
 }
@@ -130,6 +136,10 @@ void Convolution1x1FP16CPUKernel::FreeTmpBuffer() {
   if (pack_input_ != nullptr) {
     free(pack_input_);
     pack_input_ = nullptr;
+  }
+  if (pre_trans_input_ && input_ptr_ != nullptr) {
+    free(input_ptr_);
+    input_ptr_ = nullptr;
   }
   return;
 }
@@ -182,7 +192,7 @@ int Convolution1x1FP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int Convolution1x1Fp16Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int Convolution1x1Fp16Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<Convolution1x1FP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -205,21 +215,12 @@ int Convolution1x1FP16CPUKernel::Run() {
     return ret;
   }
 
-  if (pre_trans_input_) {
-    input_ptr_ = reinterpret_cast<float16_t *>(
-      ctx_->allocator->Malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(float16_t)));
-    if (input_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Conv1x1 Malloc input_ptr_ error!";
-      return RET_MEMORY_FAILED;
-    }
-  }
-
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     Pre1x1Trans(
       execute_input_ + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_,
       execute_output_ + batch_index * matmul_param_->row_ * matmul_param_->col_);
 
-    int error_code = LiteBackendParallelLaunch(Convolution1x1Fp16Impl, this, thread_count_);
+    int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution1x1Fp16Impl, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "conv1x1 fp16 error error_code[" << error_code << "]";
       return RET_ERROR;
@@ -229,10 +230,6 @@ int Convolution1x1FP16CPUKernel::Run() {
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
 
-  if (pre_trans_input_ && input_ptr_ != nullptr) {
-    ctx_->allocator->Free(input_ptr_);
-    input_ptr_ = nullptr;
-  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

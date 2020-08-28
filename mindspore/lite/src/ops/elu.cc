@@ -24,10 +24,21 @@ float Elu::GetAlpha() const { return this->primitive_->value.AsElu()->alpha; }
 void Elu::SetAlpha(float alpha) { this->primitive_->value.AsElu()->alpha = alpha; }
 
 #else
-
+int Elu::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Elu();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Elu return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateElu(*fbb, attr->alpha());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Elu, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 float Elu::GetAlpha() const { return this->primitive_->value_as_Elu()->alpha(); }
 
-void Elu::SetAlpha(float alpha) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

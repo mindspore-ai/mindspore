@@ -24,10 +24,23 @@ float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value.AsEmb
 void EmbeddingLookup::SetMaxNorm(float max_norm) { this->primitive_->value.AsEmbeddingLookup()->maxNorm = max_norm; }
 
 #else
+int EmbeddingLookup::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
 
+  auto attr = primitive->value_as_EmbeddingLookup();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_EmbeddingLookup return nullptr";
+    return RET_ERROR;
+  }
+
+  auto val_offset = schema::CreateEmbeddingLookup(*fbb, attr->maxNorm());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_EmbeddingLookup, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 float EmbeddingLookup::GetMaxNorm() const { return this->primitive_->value_as_EmbeddingLookup()->maxNorm(); }
 
-void EmbeddingLookup::SetMaxNorm(float max_norm) {}
 #endif
 
 int EmbeddingLookup::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

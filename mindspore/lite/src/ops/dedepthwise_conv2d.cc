@@ -70,7 +70,24 @@ void DeDepthwiseConv2D::SetActivationType(int activation_type) {
 }
 
 #else
+int DeDepthwiseConv2D::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
 
+  auto attr = primitive->value_as_DeDepthwiseConv2D();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_DeDepthwiseConv2D return nullptr";
+    return RET_ERROR;
+  }
+
+  auto val_offset = schema::CreateDeDepthwiseConv2D(
+    *fbb, attr->format(), attr->channelIn(), attr->channelMultiplier(), attr->kernelW(), attr->kernelH(),
+    attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
+    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_DeDepthwiseConv2D, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int DeDepthwiseConv2D::GetFormat() const { return this->primitive_->value_as_DeDepthwiseConv2D()->format(); }
 int DeDepthwiseConv2D::GetChannelIn() const { return this->primitive_->value_as_DeDepthwiseConv2D()->channelIn(); }
 int DeDepthwiseConv2D::GetChannelMultiplier() const {
@@ -92,22 +109,6 @@ int DeDepthwiseConv2D::GetActivationType() const {
   return this->primitive_->value_as_DeDepthwiseConv2D()->activationType();
 }
 
-void DeDepthwiseConv2D::SetFormat(int format) {}
-void DeDepthwiseConv2D::SetChannelIn(int channel_in) {}
-void DeDepthwiseConv2D::SetChannelMultiplier(int channel_multiplier) {}
-void DeDepthwiseConv2D::SetKernelW(int kernel_w) {}
-void DeDepthwiseConv2D::SetKernelH(int kernel_h) {}
-void DeDepthwiseConv2D::SetStrideW(int stride_w) {}
-void DeDepthwiseConv2D::SetStrideH(int stride_h) {}
-void DeDepthwiseConv2D::SetPadMode(int pad_mode) {}
-void DeDepthwiseConv2D::SetPadUp(int pad_up) {}
-void DeDepthwiseConv2D::SetPadDown(int pad_down) {}
-void DeDepthwiseConv2D::SetPadLeft(int pad_left) {}
-void DeDepthwiseConv2D::SetPadRight(int pad_right) {}
-void DeDepthwiseConv2D::SetDilateW(int dilate_w) {}
-void DeDepthwiseConv2D::SetDilateH(int dilate_h) {}
-void DeDepthwiseConv2D::SetHasBias(bool has_bias) {}
-void DeDepthwiseConv2D::SetActivationType(int activation_type) {}
 #endif
 int DeDepthwiseConv2D::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
                                   std::vector<lite::tensor::Tensor *> outputs_) {

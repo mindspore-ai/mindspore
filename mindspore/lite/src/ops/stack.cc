@@ -35,10 +35,25 @@ std::vector<int> Stack::GetIsScale() const {
   auto fb_vector = this->primitive_->value_as_Stack()->isScale();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
-void Stack::SetAxis(int axis) {}
-void Stack::SetN(int n) {}
-void Stack::SetIsScale(const std::vector<int> &is_scale) {}
+int Stack::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Stack();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Stack return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> isScale;
+  if (attr->isScale() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->isScale()->size()); i++) {
+      isScale.push_back(attr->isScale()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateStackDirect(*fbb, attr->axis(), attr->n(), &isScale);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Stack, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

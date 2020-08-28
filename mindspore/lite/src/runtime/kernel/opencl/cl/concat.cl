@@ -1,4 +1,4 @@
-// #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
 __kernel void Concat(__read_only image2d_t input0, __read_only image2d_t input1, __write_only image2d_t output,
@@ -10,11 +10,11 @@ __kernel void Concat(__read_only image2d_t input0, __read_only image2d_t input1,
     return;
   }
   if (Z < input_channels.x) {
-    FLT4 result = read_imagef(input0, smp_none, (int2)((Y)*input_channels.x + Z, (X)));
-    write_imagef(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+    FLT4 result = READ_IMAGE(input0, smp_none, (int2)((Y)*input_channels.x + Z, (X)));
+    WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
   } else {
-    FLT4 result = read_imagef(input1, smp_none, (int2)((Y)*input_channels.y + Z - input_channels.x, (X)));
-    write_imagef(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+    FLT4 result = READ_IMAGE(input1, smp_none, (int2)((Y)*input_channels.y + Z - input_channels.x, (X)));
+    WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
   }
 }
 
@@ -27,14 +27,14 @@ __kernel void Concat3input(__read_only image2d_t input0, __read_only image2d_t i
     return;
   }
   if (Z < input_channels.x) {
-    FLT4 result0 = read_imagef(input0, smp_none, (int2)((Y)*input_channels.x + Z, (X)));
-    write_imagef(output, (int2)((Y)*output_shape.w + Z, (X)), result0);
+    FLT4 result0 = READ_IMAGE(input0, smp_none, (int2)((Y)*input_channels.x + Z, (X)));
+    WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result0);
   } else if (Z < (input_channels.x + input_channels.y)) {
-    FLT4 result1 = read_imagef(input1, smp_none, (int2)((Y)*input_channels.y + Z - input_channels.x, (X)));
-    write_imagef(output, (int2)((Y)*output_shape.w + Z, (X)), result1);
+    FLT4 result1 = READ_IMAGE(input1, smp_none, (int2)((Y)*input_channels.y + Z - input_channels.x, (X)));
+    WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result1);
   } else {
     FLT4 result2 =
-      read_imagef(input2, smp_none, (int2)((Y)*input_channels.z + Z - input_channels.x - input_channels.y, (X)));
-    write_imagef(output, (int2)((Y)*output_shape.w + Z, (X)), result2);
+      READ_IMAGE(input2, smp_none, (int2)((Y)*input_channels.z + Z - input_channels.x - input_channels.y, (X)));
+    WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result2);
   }
 }

@@ -28,10 +28,13 @@ namespace lite {
 class Rank : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Rank, PrimitiveC);
   Rank() = default;
   explicit Rank(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  explicit Rank(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Rank() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

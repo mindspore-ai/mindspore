@@ -48,11 +48,6 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
 void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
-void ConvDw3x3Fp32FilterTrans(float *trans_weight, float *weight, int oc4);
-
-void ConvDw3x3Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
-                   float *trans_buffer, float *block_buffer, const ConvParameter *conv_param, int task_id);
-
 void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 

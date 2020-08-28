@@ -25,22 +25,20 @@ class SpaceToBatchCPUKernel : public LiteKernel {
   SpaceToBatchCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                         const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~SpaceToBatchCPUKernel() = default;
+  ~SpaceToBatchCPUKernel() { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int SpaceToBatchParallel(int task_id);
 
  private:
-  int thread_num_;
-  int thread_h_stride_;
-  int thread_h_num_;
-  int num_unit_;
-  const float *input_ptr_;
-  float *output_ptr_;
+  void FreeTmpBuffer();
+  float *pedding_input_ = nullptr;
+  float *pedding_h_data_ = nullptr;
+  float *pedding_w_data_ = nullptr;
+  std::vector<int> padded_in_shape_;
 };
 }  // namespace mindspore::kernel
 

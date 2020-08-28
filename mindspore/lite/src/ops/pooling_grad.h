@@ -28,10 +28,26 @@ namespace lite {
 class PoolingGrad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(PoolingGrad, PrimitiveC);
   PoolingGrad() = default;
   explicit PoolingGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetPoolingMode(int pooling_mode);
+  void SetGlobal(bool global);
+  void SetWindowW(int window_w);
+  void SetWindowH(int window_h);
+  void SetStrideW(int stride_w);
+  void SetStrideH(int stride_h);
+  void SetPadMode(int pad_mode);
+  void SetPadUp(int pad_up);
+  void SetPadDown(int pad_down);
+  void SetPadLeft(int pad_left);
+  void SetPadRight(int pad_right);
+  void SetRoundMode(int round_mode);
 #else
-  explicit PoolingGrad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  PoolingGrad() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetFormat() const;
   int GetPoolingMode() const;
@@ -46,19 +62,6 @@ class PoolingGrad : public PrimitiveC {
   int GetPadLeft() const;
   int GetPadRight() const;
   int GetRoundMode() const;
-  void SetFormat(int format);
-  void SetPoolingMode(int pooling_mode);
-  void SetGlobal(bool global);
-  void SetWindowW(int window_w);
-  void SetWindowH(int window_h);
-  void SetStrideW(int stride_w);
-  void SetStrideH(int stride_h);
-  void SetPadMode(int pad_mode);
-  void SetPadUp(int pad_up);
-  void SetPadDown(int pad_down);
-  void SetPadLeft(int pad_left);
-  void SetPadRight(int pad_right);
-  void SetRoundMode(int round_mode);
 };
 }  // namespace lite
 }  // namespace mindspore

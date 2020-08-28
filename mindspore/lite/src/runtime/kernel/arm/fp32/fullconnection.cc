@@ -27,17 +27,13 @@ FullconnectionCPUKernel::~FullconnectionCPUKernel() {
 }
 
 void FullconnectionCPUKernel::FreeBuf() {
-  if (a_c8_ptr_ != nullptr) {
-    free(a_c8_ptr_);
-    a_c8_ptr_ = nullptr;
+  if (a_c12_ptr_ != nullptr) {
+    free(a_c12_ptr_);
+    a_c12_ptr_ = nullptr;
   }
   if (b_r8_ptr_ != nullptr) {
     free(b_r8_ptr_);
     b_r8_ptr_ = nullptr;
-  }
-  if (c_r8x8_ptr_ != nullptr) {
-    free(c_r8x8_ptr_);
-    c_r8x8_ptr_ = nullptr;
   }
   if (bias_ptr_ != nullptr) {
     free(bias_ptr_);
@@ -51,8 +47,8 @@ int FullconnectionCPUKernel::ReSize() {
   fc_param_->col_ = (in_tensors_[1]->shape())[0];
   fc_param_->deep_ = (in_tensors_[1]->shape())[1];
 
-  fc_param_->row_8_ = UP_ROUND(fc_param_->row_, 8);
-  fc_param_->col_8_ = UP_ROUND(fc_param_->col_, 8);
+  fc_param_->row_12_ = UP_ROUND(fc_param_->row_, C12NUM);
+  fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
 
   thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, 8));
   thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, 8), thread_count_);
@@ -63,11 +59,11 @@ int FullconnectionCPUKernel::ReSize() {
     memcpy(bias_ptr_, in_tensors_[2]->Data(), fc_param_->col_ * sizeof(float));
   }
 
-  a_c8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_8_ * fc_param_->deep_ * sizeof(float)));
-  if (a_c8_ptr_ == nullptr) {
+  a_c12_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_12_ * fc_param_->deep_ * sizeof(float)));
+  if (a_c12_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
-  memset(a_c8_ptr_, 0, fc_param_->row_8_ * fc_param_->deep_ * sizeof(float));
+  memset(a_c12_ptr_, 0, fc_param_->row_12_ * fc_param_->deep_ * sizeof(float));
 
   b_r8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->col_8_ * fc_param_->deep_ * sizeof(float)));
   if (b_r8_ptr_ == nullptr) {
@@ -76,17 +72,10 @@ int FullconnectionCPUKernel::ReSize() {
   }
   memset(b_r8_ptr_, 0, fc_param_->col_8_ * fc_param_->deep_ * sizeof(float));
 
-  c_r8x8_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float)));
-  if (c_r8x8_ptr_ == nullptr) {
-    FreeBuf();
-    return RET_MEMORY_FAILED;
-  }
-  memset(c_r8x8_ptr_, 0, fc_param_->row_8_ * fc_param_->col_8_ * sizeof(float));
-
-  fc_param_->a_const_ = false;
-  fc_param_->b_const_ = false;
-  InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c8_ptr_);
-  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
+  fc_param_->a_const_ = (in_tensors_[0]->Data() != nullptr);
+  fc_param_->b_const_ = (in_tensors_[1]->Data() != nullptr);
+  if (fc_param_->a_const_) InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c12_ptr_);
+  if (fc_param_->b_const_) InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
   return RET_OK;
 }
 
@@ -98,30 +87,14 @@ int FullconnectionCPUKernel::Init() {
 }
 
 void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
-  if (fc_param_->a_const_ == true) {
-    return;
-  }
-  if (src_ptr == nullptr) {
-    return;
-  }
-  fc_param_->a_const_ = true;
-  RowMajor2Col8Major(src_ptr, a_c8_ptr_, fc_param_->row_, fc_param_->deep_);
-  return;
+  RowMajor2Col12Major(src_ptr, a_c12_ptr_, fc_param_->row_, fc_param_->deep_);
 }
 
 void FullconnectionCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
-  if (fc_param_->b_const_ == true) {
-    return;
-  }
-  if (src_ptr == nullptr) {
-    return;
-  }
-  fc_param_->b_const_ = true;
   RowMajor2Col8Major(src_ptr, dst_ptr, fc_param_->col_, fc_param_->deep_);
-  return;
 }
 
-int FcFp32MatmulRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int FcFp32MatmulRun(void *cdata, int task_id) {
   auto fc = reinterpret_cast<FullconnectionCPUKernel *>(cdata);
   auto error_code = fc->DoMatmul(task_id);
   if (error_code != RET_OK) {
@@ -132,15 +105,14 @@ int FcFp32MatmulRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int FullconnectionCPUKernel::DoMatmul(int task_id) {
-  int cur_oc = MSMIN(thread_stride_, UP_DIV(fc_param_->col_8_, 8) - task_id * thread_stride_);
+  int cur_oc = MSMIN(thread_stride_ * C8NUM, fc_param_->col_ - task_id * thread_stride_ * C8NUM);
   if (cur_oc <= 0) {
     return RET_OK;
   }
 
-  MatMul(a_c8_ptr_, b_r8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->deep_,
-         c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->row_8_,
-         bias_ptr_ + task_id * thread_stride_ * C8NUM, fc_param_->act_type_, fc_param_->deep_, fc_param_->row_8_,
-         cur_oc * 8, 0, false);
+  MatMulOpt(a_c12_ptr_, b_r8_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->deep_,
+            c_r_ptr + task_id * thread_stride_ * C8NUM, bias_ptr_ + task_id * thread_stride_ * C8NUM,
+            fc_param_->act_type_, fc_param_->deep_, fc_param_->row_, cur_oc, fc_param_->col_, OutType_Nhwc);
   return RET_OK;
 }
 
@@ -152,14 +124,13 @@ int FullconnectionCPUKernel::Run() {
   }
   auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
   auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  c_r_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
-  InitMatrixA(a_ptr, a_c8_ptr_);
-  InitMatrixB(b_ptr, b_r8_ptr_);
+  if (!fc_param_->a_const_) InitMatrixA(a_ptr, a_c12_ptr_);
+  if (!fc_param_->b_const_) InitMatrixB(b_ptr, b_r8_ptr_);
 
-  LiteBackendParallelLaunch(FcFp32MatmulRun, this, thread_count_);
+  ParallelLaunch(THREAD_POOL_DEFAULT, FcFp32MatmulRun, this, thread_count_);
 
-  Row8x8Major2RowMajor(c_r8x8_ptr_, output_ptr, fc_param_->row_, fc_param_->col_, fc_param_->col_);
   return RET_OK;
 }
 }  // namespace mindspore::kernel

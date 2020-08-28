@@ -20,18 +20,28 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include "src/ops/arithmetic_self.h"
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
 class Ceil : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Ceil, ArithmeticSelf);
   Ceil() = default;
   explicit Ceil(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  explicit Ceil(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+  Ceil() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override {
+    MS_ASSERT(nullptr != primitive);
+    MS_ASSERT(nullptr != fbb);
+    auto val_offset = schema::CreateCeil(*fbb);
+    auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Ceil, val_offset.o);
+    fbb->Finish(prim_offset);
+    return RET_OK;
+  }
 #endif
 };
 }  // namespace lite

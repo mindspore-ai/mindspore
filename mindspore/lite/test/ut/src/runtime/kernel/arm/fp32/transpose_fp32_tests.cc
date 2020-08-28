@@ -65,7 +65,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes4) {
   }
 
   auto ret = DoTranspose(in, out, input_shape, output_shape, param, 0, 3);
-  MS_ASSERT(ret == 0);
+  ASSERT_EQ(ret, 0);
   delete param;
   CompareOutputData(out, correct, 24, 0.000001);
 }
@@ -105,7 +105,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes3) {
   }
 
   auto ret = DoTranspose(in, out, input_shape, output_shape, param, 0, 3);
-  MS_ASSERT(ret == 0);
+  ASSERT_EQ(ret, 0);
   delete param;
   CompareOutputData(out, correct, 24, 0.000001);
 }
@@ -146,7 +146,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes2) {
   }
 
   auto ret = DoTranspose(in, out, input_shape, output_shape, param, 0, 6);
-  MS_ASSERT(ret == 0);
+  ASSERT_EQ(ret, 0);
   delete param;
   CompareOutputData(out, correct, 24, 0.000001);
 }

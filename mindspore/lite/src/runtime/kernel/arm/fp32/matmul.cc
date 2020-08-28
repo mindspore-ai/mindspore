@@ -28,20 +28,16 @@ namespace mindspore::kernel {
 MatmulCPUKernel::~MatmulCPUKernel() { FreeTmpBuffer(); }
 
 void MatmulCPUKernel::FreeTmpBuffer() {
-  if (a_c8_ptr_ != nullptr) {
-    ctx_->allocator->Free(a_c8_ptr_);
-    a_c8_ptr_ = nullptr;
+  if (a_c12_ptr_ != nullptr) {
+    free(a_c12_ptr_);
+    a_c12_ptr_ = nullptr;
   }
   if (b_r8_ptr_ != nullptr) {
-    ctx_->allocator->Free(b_r8_ptr_);
+    free(b_r8_ptr_);
     b_r8_ptr_ = nullptr;
   }
-  if (c_r8x8_ptr_ != nullptr) {
-    ctx_->allocator->Free(c_r8x8_ptr_);
-    c_r8x8_ptr_ = nullptr;
-  }
   if (bias_ptr_ != nullptr) {
-    ctx_->allocator->Free(bias_ptr_);
+    free(bias_ptr_);
     bias_ptr_ = nullptr;
   }
 }
@@ -66,80 +62,69 @@ int MatmulCPUKernel::ReSize() {
   params_->row_ = c_shape[c_shape.size() - 2];
   params_->col_ = c_shape[c_shape.size() - 1];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
-  params_->row_8_ = UP_ROUND(params_->row_, 8);
+  params_->row_12_ = UP_ROUND(params_->row_, C12NUM);
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, 8), thread_count_);
 
-  a_c8_ptr_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(params_->row_8_ * params_->deep_ * sizeof(float)));
-  if (a_c8_ptr_ == nullptr) {
+  a_c12_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_12_ * params_->deep_ * sizeof(float)));
+  if (a_c12_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(a_c8_ptr_, 0, params_->row_8_ * params_->deep_ * sizeof(float));
-  b_r8_ptr_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(params_->col_8_ * params_->deep_ * sizeof(float)));
+  memset(a_c12_ptr_, 0, params_->row_12_ * params_->deep_ * sizeof(float));
+
+  b_r8_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->col_8_ * params_->deep_ * sizeof(float)));
   if (b_r8_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
   memset(b_r8_ptr_, 0, params_->col_8_ * params_->deep_ * sizeof(float));
-  c_r8x8_ptr_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(params_->row_8_ * params_->col_8_ * sizeof(float)));
-  if (c_r8x8_ptr_ == nullptr) {
+
+  params_->a_const_ = (in_tensors_[0]->Data() != nullptr);
+  params_->b_const_ = (in_tensors_[1]->Data() != nullptr);
+  if (params_->a_const_ == true) {
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c12_ptr_);
+  }
+  if (params_->b_const_ == true) {
+    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
+  }
+
+  bias_ptr_ = reinterpret_cast<float *>(malloc(params_->col_8_ * sizeof(float)));
+  if (bias_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(c_r8x8_ptr_, 0, params_->row_8_ * params_->col_8_ * sizeof(float));
-
-  params_->a_const_ = false;
-  params_->b_const_ = false;
-  InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->Data()), a_c8_ptr_);
-  InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->Data()), b_r8_ptr_);
-
+  memset(bias_ptr_, 0, params_->col_8_ * sizeof(float));
   if (in_tensors_.size() == 3) {
-    bias_ptr_ = reinterpret_cast<float *>(malloc(params_->col_8_ * sizeof(float)));
-    if (bias_ptr_ == nullptr) {
-      FreeTmpBuffer();
-      return RET_MEMORY_FAILED;
-    }
-    memset(bias_ptr_, 0, params_->col_8_ * sizeof(float));
     memcpy(bias_ptr_, in_tensors_[2]->Data(), params_->col_ * sizeof(float));
-  } else {
-    bias_ptr_ = nullptr;
   }
 
   return RET_OK;
 }
 
 void MatmulCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
-  if (params_->a_const_ == true) {
-    return;
-  }
-  if (src_ptr == nullptr) {
-    return;
-  }
-  params_->a_const_ = true;
-
-  if (params_->a_transpose_) {
-    RowMajor2Row8Major(src_ptr, dst_ptr, params_->deep_, params_->row_);
-  } else {
-    RowMajor2Col8Major(src_ptr, a_c8_ptr_, params_->row_, params_->deep_);
+  for (int i = 0; i < params_->batch; i++) {
+    float *src = src_ptr + i * params_->deep_ * params_->row_;
+    float *dst = dst_ptr + i * params_->deep_ * params_->row_12_;
+    if (params_->a_transpose_) {
+      RowMajor2Row12Major(src, dst, params_->deep_, params_->row_);
+    } else {
+      RowMajor2Col12Major(src, dst, params_->row_, params_->deep_);
+    }
   }
   return;
 }
 
 void MatmulCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
-  if (params_->b_const_ == true) {
-    return;
-  }
-  if (src_ptr == nullptr) {
-    return;
-  }
-  params_->b_const_ = true;
-
-  if (params_->b_transpose_) {
-    RowMajor2Col8Major(src_ptr, dst_ptr, params_->col_, params_->deep_);
-  } else {
-    RowMajor2Row8Major(src_ptr, dst_ptr, params_->deep_, params_->col_);
+  for (int i = 0; i < params_->batch; i++) {
+    float *src = src_ptr + i * params_->deep_ * params_->col_;
+    float *dst = dst_ptr + i * params_->deep_ * params_->col_8_;
+    if (params_->b_transpose_) {
+      RowMajor2Col8Major(src, dst, params_->col_, params_->deep_);
+    } else {
+      RowMajor2Row8Major(src, dst, params_->deep_, params_->col_);
+    }
   }
   return;
 }
@@ -152,22 +137,17 @@ int MatmulCPUKernel::Init() {
 }
 
 int MatmulCPUKernel::RunImpl(int task_id) {
-  int cur_oc = MSMIN(thread_stride_, UP_DIV(params_->col_8_, 8) - task_id * thread_stride_);
+  int cur_oc = MSMIN(thread_stride_ * C8NUM, params_->col_ - task_id * thread_stride_ * C8NUM);
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  auto cur_b = b_r8_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_;
-  auto cur_c = c_r8x8_ptr_ + task_id * thread_stride_ * C8NUM * params_->row_8_;
-  if (bias_ptr_) {
-    auto cur_bias = bias_ptr_ + task_id * thread_stride_ * C8NUM;
-    MatMul(a_c8_ptr_, cur_b, cur_c, cur_bias, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8, 0, false);
-  } else {
-    MatMul(a_c8_ptr_, cur_b, cur_c, NULL, ActType_No, params_->deep_, params_->row_8_, cur_oc * 8, 0, false);
-  }
+  MatMulOpt(a_ptr_, b_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_,
+            c_ptr_ + task_id * thread_stride_ * C8NUM, bias_ptr_ + task_id * thread_stride_ * C8NUM, ActType_No,
+            params_->deep_, params_->row_, cur_oc, params_->col_, OutType_Nhwc);
   return RET_OK;
 }
 
-int MatmulFloatRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int MatmulFloatRun(void *cdata, int task_id) {
   auto op = reinterpret_cast<MatmulCPUKernel *>(cdata);
   auto error_code = op->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -183,22 +163,22 @@ int MatmulCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->Data());
-  auto b_ptr = reinterpret_cast<float *>(in_tensors_[1]->Data());
-  auto c_ptr = reinterpret_cast<float *>(out_tensors_[0]->Data());
-  auto a_stride = params_->row_ * params_->deep_;
-  auto b_stride = params_->deep_ * params_->col_;
-  auto c_stride = params_->row_ * params_->col_;
+  auto a_src = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto b_src = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto c_src = reinterpret_cast<float *>(out_tensors_[0]->Data());
+
+  if (params_->a_const_ == false) {
+    InitMatrixA(a_src, a_c12_ptr_);
+  }
+  if (params_->b_const_ == false) {
+    InitMatrixB(b_src, b_r8_ptr_);
+  }
+
   for (int i = 0; i < params_->batch; ++i) {
-    auto cur_a_ptr = a_ptr + i * a_stride;
-    auto cur_b_ptr = b_ptr + i * b_stride;
-    auto cur_c_ptr = c_ptr + i * c_stride;
-
-    InitMatrixA(cur_a_ptr, a_c8_ptr_);
-    InitMatrixB(cur_b_ptr, b_r8_ptr_);
-
-    LiteBackendParallelLaunch(MatmulFloatRun, this, thread_count_);
-    Row8x8Major2RowMajor(c_r8x8_ptr_, cur_c_ptr, params_->row_, params_->col_, params_->col_);
+    a_ptr_ = a_c12_ptr_ + i * params_->row_12_ * params_->deep_;
+    b_ptr_ = b_r8_ptr_ + i * params_->deep_ * params_->col_8_;
+    c_ptr_ = c_src + i * params_->row_ * params_->col_;
+    ParallelLaunch(THREAD_POOL_DEFAULT, MatmulFloatRun, this, thread_count_);
   }
   return RET_OK;
 }

@@ -21,9 +21,10 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/concat.h"
 
-void ConcatComputeByCPU_2input_dim4_axis3(const float *input0, const float *input1, float *output,
-                                          std::vector<int> input_shape0, std::vector<int> input_shape1,
-                                          std::vector<int> output_shape, const int axis) {
+template <typename T>
+void ConcatComputeByCPU_2input_dim4_axis3(const T *input0, const T *input1, T *output, std::vector<int> input_shape0,
+                                          std::vector<int> input_shape1, std::vector<int> output_shape,
+                                          const int axis) {
   int postion, index0 = 0, index1 = 0;
   for (int i = 0; i < output_shape[0]; i++) {
     for (int j = 0; j < output_shape[1]; j++) {
@@ -43,10 +44,10 @@ void ConcatComputeByCPU_2input_dim4_axis3(const float *input0, const float *inpu
     }
   }
 }
-void ConcatComputeByCPU_3input_dim4_axis3(float *input0, float *input1, float *input2, float *output,
-                                          std::vector<int> input_shape0, std::vector<int> input_shape1,
-                                          std::vector<int> input_shape2, std::vector<int> output_shape,
-                                          const int axis) {
+template <typename T>
+void ConcatComputeByCPU_3input_dim4_axis3(T *input0, T *input1, T *input2, T *output, std::vector<int> input_shape0,
+                                          std::vector<int> input_shape1, std::vector<int> input_shape2,
+                                          std::vector<int> output_shape, const int axis) {
   int postion, index0 = 0, index1 = 0, index2 = 0;
   for (int i = 0; i < output_shape[0]; i++) {
     for (int j = 0; j < output_shape[1]; j++) {
@@ -82,9 +83,13 @@ void ConcatComputeByCPU_3input_dim4_axis3(float *input0, float *input1, float *i
 }
 
 namespace mindspore {
-class TestConcatOpenCL : public mindspore::CommonTest {
+class TestConcatOpenCLfp32 : public mindspore::CommonTest {
  public:
-  TestConcatOpenCL() {}
+  TestConcatOpenCLfp32() {}
+};
+class TestConcatOpenCLfp16 : public mindspore::CommonTest {
+ public:
+  TestConcatOpenCLfp16() {}
 };
 
 template <typename T>
@@ -94,18 +99,139 @@ void CompareOutputData1(T *output_data, T *correct_data, int size, float err_bou
     ASSERT_LE(abs, err_bound);
   }
 }
+TEST_F(TestConcatOpenCLfp16, ConcatFp16_2input_dim4_axis3) {
+  MS_LOG(INFO) << "begin test";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->SetFp16Enable(true);
+  ocl_runtime->Init();
+  auto allocator = ocl_runtime->GetAllocator();
 
-TEST_F(TestConcatOpenCL, ConcatFp32_2input_dim4_axis3) {
+  MS_LOG(INFO) << "init tensors";
+  constexpr int INPUT_NUM = 3;
+  std::array<std::vector<int>, INPUT_NUM> input_shapes = {
+    std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}};
+  std::vector<int> output_shape = {1, 16, 256, 240};
+  auto data_type = kNumberTypeFloat16;
+  auto tensor_type = schema::NodeType_ValueNode;
+  std::vector<lite::tensor::Tensor *> inputs;
+  for (auto &shape : input_shapes) {
+    auto input_temp = new (std::nothrow) lite::tensor::Tensor(data_type, shape, schema::Format_NHWC4, tensor_type);
+    inputs.push_back(input_temp);
+    if (input_temp == nullptr) {
+      MS_LOG(INFO) << "new input_tensor failed";
+      return;
+    }
+  }
+  auto *output_tensor =
+    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
+  if (output_tensor == nullptr) {
+    MS_LOG(INFO) << "new output_tensor failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    return;
+  }
+  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  MS_LOG(INFO) << "input_shapes size=: " << input_shapes.size();
+
+  MS_LOG(INFO) << "initialize tensors";
+  auto param = new (std::nothrow) ConcatParameter();
+  if (param == nullptr) {
+    MS_LOG(INFO) << "new ConcatParameter failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    return;
+  }
+  param->axis_ = 3;
+  auto *concat_kernel =
+    new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (concat_kernel == nullptr) {
+    MS_LOG(INFO) << "new kernel::ConcatOpenCLKernel failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    return;
+  }
+  concat_kernel->Init();
+  // to do allocate memory for inputs and outputs
+  for (auto &input_tensor : inputs) {
+    input_tensor->MallocData(allocator);
+  }
+
+  MS_LOG(INFO) << "initialize sub_graph";
+  std::vector<kernel::LiteKernel *> kernels{concat_kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    MS_LOG(INFO) << "new kernel::SubGraphOpenCLKernel failed";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete concat_kernel;
+    return;
+  }
+  sub_graph->Init();
+  unsigned int seed = 123;
+  MS_LOG(INFO) << "initialize input data";
+  for (auto &input_tensor : inputs) {
+    auto input_data = reinterpret_cast<float16_t *>(input_tensor->Data());
+    for (int i = 0; i < input_tensor->ElementsNum(); ++i) {
+      input_data[i] = static_cast<float16_t>(rand_r(&seed) % 10 + 1);
+    }
+  }
+
+  // compute the result for CPU
+  auto *input_data0 = reinterpret_cast<float16_t *>(inputs[0]->Data());
+  auto *input_data1 = reinterpret_cast<float16_t *>(inputs[1]->Data());
+  std::vector<float16_t> output_data_cpu(output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3]);
+  if (inputs.size() == 2) {
+    ConcatComputeByCPU_2input_dim4_axis3(input_data0, input_data1, output_data_cpu.data(), input_shapes[0],
+                                         input_shapes[1], output_shape, param->axis_);
+  }
+  if (inputs.size() == 3) {
+    auto *input_data2 = reinterpret_cast<float16_t *>(inputs[2]->Data());
+    ConcatComputeByCPU_3input_dim4_axis3(input_data0, input_data1, input_data2, output_data_cpu.data(), input_shapes[0],
+                                         input_shapes[1], input_shapes[2], output_shape, param->axis_);
+  }
+
+  std::cout << "==================output data================" << std::endl;
+  sub_graph->Run();
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->Data());
+  CompareOutputData1(output_data_gpu, output_data_cpu.data(), output_tensor->ElementsNum(), 0.00001);
+  for (auto tensor : inputs) {
+    delete tensor;
+  }
+  for (auto tensor : outputs) {
+    delete tensor;
+  }
+  delete param;
+  delete concat_kernel;
+  delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
   MS_LOG(INFO) << "begin test";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "init tensors";
-  constexpr int INPUT_NUM = 2;
-  std::array<std::vector<int>, INPUT_NUM> input_shapes = {std::vector<int>{1, 16, 256, 80},
-                                                          std::vector<int>{1, 16, 256, 80}};
-  std::vector<int> output_shape = {1, 16, 256, 160};
+  constexpr int INPUT_NUM = 3;
+  std::array<std::vector<int>, INPUT_NUM> input_shapes = {
+    std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}};
+  std::vector<int> output_shape = {1, 16, 256, 240};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
   std::vector<lite::tensor::Tensor *> inputs;

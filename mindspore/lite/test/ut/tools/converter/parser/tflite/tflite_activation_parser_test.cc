@@ -119,15 +119,6 @@ TEST_F(TestTfliteParserPrelu, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Prelu) << "wrong Op Type";
-}
-
-TEST_F(TestTfliteParserPrelu, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPrelu(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value;
-  std::vector<float> slope(20, 0);
-  ASSERT_EQ(val.AsPrelu()->slope, slope);
-  ASSERT_EQ(val.type, schema::PrimitiveType_Prelu);
 }
 
 class TestTfliteParserLeakyRelu : public TestTfliteParser {

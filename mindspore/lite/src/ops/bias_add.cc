@@ -25,23 +25,59 @@ std::vector<int> BiasAdd::GetAxis() const { return this->primitive_->value.AsBia
 void BiasAdd::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsBiasAdd()->axis = axis; }
 
 int BiasAdd::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::BiasAddT>();
-  attr->axis = {0};
-  this->primitive_->value.type = schema::PrimitiveType_BiasAdd;
-  this->primitive_->value.value = attr.release();
-
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_BiasAdd;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_BiasAdd) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::BiasAddT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    attr->axis = {0};
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
 #else
-
+int BiasAdd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_BiasAdd();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_BiasAdd return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateBiasAddDirect(*fbb, &axis);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_BiasAdd, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 std::vector<int> BiasAdd::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_BiasAdd()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void BiasAdd::SetAxis(const std::vector<int> &axis) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

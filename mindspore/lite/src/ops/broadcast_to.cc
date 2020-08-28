@@ -26,13 +26,30 @@ void BroadcastTo::SetDstShape(const std::vector<int> &dst_shape) {
 }
 
 #else
-
+int BroadcastTo::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_BroadcastTo();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_BroadcastTo return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> dst_shape;
+  if (attr->dst_shape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->dst_shape()->size()); i++) {
+      dst_shape.push_back(attr->dst_shape()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateBroadcastToDirect(*fbb, &dst_shape);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_BroadcastTo, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 std::vector<int> BroadcastTo::GetDstShape() const {
   auto fb_vector = this->primitive_->value_as_BroadcastTo()->dst_shape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void BroadcastTo::SetDstShape(const std::vector<int> &dst_shape) {}
 #endif
 namespace {
 constexpr int kBroadcastToInputNum = 1;

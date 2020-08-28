@@ -21,6 +21,7 @@
 #include <set>
 #include <cmath>
 #include <string>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -29,15 +30,18 @@ namespace lite {
 class Upsample : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Upsample, PrimitiveC);
   Upsample() = default;
   explicit Upsample(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMode(std::string mode);
+  void SetScales(const std::vector<float> &scales);
 #else
-  explicit Upsample(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Upsample() = default;
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+
 #endif
   std::string GetMode() const;
   std::vector<float> GetScales() const;
-  void SetMode(std::string mode);
-  void SetScales(const std::vector<float> &scales);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,18 +29,21 @@ namespace lite {
 class Stack : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Stack, PrimitiveC);
   Stack() = default;
   explicit Stack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+  void SetN(int n);
+  void SetIsScale(const std::vector<int> &is_scale);
 #else
-  explicit Stack(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Stack() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   int GetN() const;
   std::vector<int> GetIsScale() const;
-  void SetAxis(int axis);
-  void SetN(int n);
-  void SetIsScale(const std::vector<int> &is_scale);
 };
 }  // namespace lite
 }  // namespace mindspore

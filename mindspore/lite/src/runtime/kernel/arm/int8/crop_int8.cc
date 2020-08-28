@@ -67,7 +67,7 @@ int CropInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  ret = LiteBackendParallelLaunch(CropInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, CropInt8Run, this, thread_count_);
   return ret;
 }
 
@@ -91,7 +91,7 @@ void PadOffset(int input_dim, CropParameter *crop_para) {
   }
 }
 
-int CropInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int CropInt8Run(void *cdata, int task_id) {
   auto crop = reinterpret_cast<CropInt8CPUKernel *>(cdata);
   crop->DoExecute(task_id);
   return RET_OK;

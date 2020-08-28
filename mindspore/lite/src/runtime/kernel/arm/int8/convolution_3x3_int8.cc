@@ -44,6 +44,10 @@ void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParamete
 }
 
 void Convolution3x3Int8CPUKernel::FreeTmpBuffer() {
+  if (tile_buffer_ != nullptr) {
+    ctx_->allocator->Free(tile_buffer_);
+    tile_buffer_ = nullptr;
+  }
   if (block_unit_buffer_ != nullptr) {
     ctx_->allocator->Free(block_unit_buffer_);
     block_unit_buffer_ = nullptr;
@@ -66,10 +70,6 @@ Convolution3x3Int8CPUKernel::~Convolution3x3Int8CPUKernel() {
   if (input_data_ != nullptr) {
     free(input_data_);
     input_data_ = nullptr;
-  }
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
   }
   FreeQuantParam();
 }
@@ -115,7 +115,15 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   int output_batch = conv_param_->output_batch_;
   int output_w = conv_param_->output_w_;
   int output_h = conv_param_->output_h_;
+  int ic8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   MS_ASSERT(ctx_->allocator != nullptr);
+
+  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * ic8 * C8NUM * sizeof(int16_t);
+  tile_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(tile_buffer_size));
+  if (tile_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
+    return RET_ERROR;
+  }
 
   size_t block_unit_buffer_size = thread_count_ * 4 * 4 * C8NUM * sizeof(int16_t);
   block_unit_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(block_unit_buffer_size));
@@ -146,9 +154,8 @@ void Convolution3x3Int8CPUKernel::ConfigInputOutput() {
 }
 
 int Convolution3x3Int8CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
+  // config input output
+  ConfigInputOutput();
   auto ret = SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
@@ -159,8 +166,9 @@ int Convolution3x3Int8CPUKernel::Init() {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
   }
-  // config input output
-  ConfigInputOutput();
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
   return ReSize();
 }
 
@@ -174,10 +182,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
   if (input_data_ != nullptr) {
     free(input_data_);
     input_data_ = nullptr;
-  }
-  if (tile_buffer_ != nullptr) {
-    free(tile_buffer_);
-    tile_buffer_ = nullptr;
   }
 
   ret = ConvolutionBaseCPUKernel::Init();
@@ -196,13 +200,6 @@ int Convolution3x3Int8CPUKernel::ReSize() {
   }
   memset(input_data_, 0, c8_input_size);
 
-  size_t tile_buffer_size = thread_count_ * TILE_NUM * C16NUM * ic8 * C8NUM * sizeof(int16_t);
-  tile_buffer_ = reinterpret_cast<int16_t *>(malloc(tile_buffer_size));
-  if (tile_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "malloc tile_buffer_ failed.";
-    return RET_ERROR;
-  }
-  memset(tile_buffer_, 0, tile_buffer_size);
   return RET_OK;
 }
 
@@ -213,7 +210,7 @@ int Convolution3x3Int8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int Convolution3x3Int8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int Convolution3x3Int8Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<Convolution3x3Int8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -238,7 +235,7 @@ int Convolution3x3Int8CPUKernel::Run() {
   auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
   PackInputToC8Int8(input_addr, input_data_, conv_param_);
 
-  int error_code = LiteBackendParallelLaunch(Convolution3x3Int8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, Convolution3x3Int8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv3x3 int8 error error_code[" << error_code << "]";
     FreeTmpBuffer();
