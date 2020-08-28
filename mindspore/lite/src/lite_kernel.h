@@ -74,7 +74,10 @@ class LiteKernel {
   }
 
   virtual ~LiteKernel() {
-    free(op_parameter_);
+    if (op_parameter_ != nullptr) {
+      free(op_parameter_);
+      op_parameter_ = nullptr;
+    }
   }
 
   virtual int Prepare();

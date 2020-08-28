@@ -261,24 +261,19 @@ int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::tensor::
 }
 
 int SubGraphOpenCLKernel::UnInit() {
-  for (const auto tensor : in_convert_tensors_) {
+  for (const auto &tensor : in_convert_tensors_) {
     if (tensor != nullptr) {
       delete tensor;
     }
   }
-  for (const auto tensor : out_convert_tensors_) {
+  for (const auto &tensor : out_convert_tensors_) {
     if (tensor != nullptr) {
       delete tensor;
     }
   }
-  for (const auto op : in_convert_ops_) {
+  for (const auto &op : in_convert_ops_) {
     if (op != nullptr) {
       delete op;
-    }
-  }
-  for (const auto parameter : in_parameters_) {
-    if (parameter != nullptr) {
-      delete parameter;
     }
   }
   return RET_OK;
