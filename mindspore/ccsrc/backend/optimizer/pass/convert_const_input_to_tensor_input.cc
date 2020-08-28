@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-
 AnfNodePtr CreateTensorInput(const AnfNodePtr &node, const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
   auto value_node = input_node->cast<ValueNodePtr>();
