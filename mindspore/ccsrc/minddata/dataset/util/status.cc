@@ -60,7 +60,7 @@ std::string CodeAsString(const StatusCode c) {
   return std::string(s);
 }
 
-Status::Status(StatusCode c) noexcept : code_(c), err_msg_(std::move(CodeAsString(c))) {}
+Status::Status(StatusCode c) noexcept : code_(c), err_msg_(CodeAsString(c)) {}
 
 Status::Status() noexcept : code_(StatusCode::kOK), err_msg_("") {}
 
