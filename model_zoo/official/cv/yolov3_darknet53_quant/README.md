@@ -273,7 +273,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 
 | Parameters                 | Ascend                                                                                         |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
-| Model Version              | YOLOv3_Darknet53_Quant                                                                         |
+| Model Version              | YOLOv3_Darknet53_Quant V1                                                                      |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G                                                |
 | uploaded Date              | 06/31/2020 (month/day/year)                                                                    |
 | MindSpore Version          | 0.6.0-alpha                                                                                    |
@@ -294,7 +294,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Model Version       | YOLOv3_Darknet53_Quant      |
+| Model Version       | YOLOv3_Darknet53_Quant V1   |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 06/31/2020 (month/day/year) |
 | MindSpore Version   | 0.6.0-alpha                 |
