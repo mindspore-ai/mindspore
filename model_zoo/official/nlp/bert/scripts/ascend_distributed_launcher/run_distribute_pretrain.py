@@ -122,7 +122,7 @@ def distribute_pretrain():
         print("core_nums:", cmdopt)
         print("epoch_size:", str(cfg['epoch_size']))
         print("data_dir:", data_dir)
-        print("log_file_dir: " + cur_dir + "/LOG" + str(device_id) + "/log.txt")
+        print("log_file_dir: " + cur_dir + "/LOG" + str(device_id) + "/pretraining_log.txt")
 
         os.chdir(cur_dir + "/LOG" + str(device_id))
         cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
