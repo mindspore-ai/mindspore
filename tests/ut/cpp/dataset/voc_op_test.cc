@@ -63,9 +63,7 @@ TEST_F(MindDataTestVOCOp, TestVOCDetection) {
   std::string task_mode("train");
   std::shared_ptr<VOCOp> my_voc_op;
   VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-                     .SetTask(task_type)
-                     .SetMode(task_mode)
+  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode)
                      .Build(&my_voc_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -116,9 +114,7 @@ TEST_F(MindDataTestVOCOp, TestVOCSegmentation) {
   std::string task_mode("train");
   std::shared_ptr<VOCOp> my_voc_op;
   VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-                     .SetTask(task_type)
-                     .SetMode(task_mode)
+  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode)
                      .Build(&my_voc_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -173,9 +169,8 @@ TEST_F(MindDataTestVOCOp, TestVOCClassIndex) {
   class_index["train"] = 5;
   std::shared_ptr<VOCOp> my_voc_op;
   VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-                     .SetTask(task_type)
-                     .SetMode(task_mode)
+  Status rc =
+    builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode)
                      .SetClassIndex(class_index)
                      .Build(&my_voc_op);
   ASSERT_TRUE(rc.IsOk());

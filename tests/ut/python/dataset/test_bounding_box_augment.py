@@ -42,8 +42,8 @@ def test_bounding_box_augment_with_rotation_op(plot_vis=False):
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     # Ratio is set to 1 to apply rotation on all bounding boxes.
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomRotation(90), 1)
@@ -81,8 +81,8 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     # Ratio is set to 0.9 to apply RandomCrop of size (50, 50) on 90% of the bounding boxes.
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomCrop(50), 0.9)
@@ -120,8 +120,8 @@ def test_bounding_box_augment_valid_ratio_c(plot_vis=False):
     original_seed = config_get_set_seed(1)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 0.9)
 
@@ -188,8 +188,8 @@ def test_bounding_box_augment_valid_edge_c(plot_vis=False):
     original_seed = config_get_set_seed(1)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 1)
 
@@ -232,7 +232,7 @@ def test_bounding_box_augment_invalid_ratio_c():
     """
     logger.info("test_bounding_box_augment_invalid_ratio_c")
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
         # ratio range is from 0 - 1
@@ -256,13 +256,13 @@ def test_bounding_box_augment_invalid_bounds_c():
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1),
                                           1)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 

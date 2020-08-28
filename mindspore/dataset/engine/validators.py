@@ -27,7 +27,7 @@ from mindspore.dataset.callback import DSCallback
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_num_parallel_workers, \
-    check_columns, check_pos_int32
+    check_columns, check_pos_int32, check_valid_str
 
 from . import datasets
 from . import samplers
@@ -73,6 +73,10 @@ def check_mnist_cifar_dataset(method):
 
         dataset_dir = param_dict.get('dataset_dir')
         check_dir(dataset_dir)
+
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "test", "all"], "usage")
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
@@ -154,15 +158,15 @@ def check_vocdataset(method):
         task = param_dict.get('task')
         type_check(task, (str,), "task")
 
-        mode = param_dict.get('mode')
-        type_check(mode, (str,), "mode")
+        usage = param_dict.get('usage')
+        type_check(usage, (str,), "usage")
 
         if task == "Segmentation":
-            imagesets_file = os.path.join(dataset_dir, "ImageSets", "Segmentation", mode + ".txt")
+            imagesets_file = os.path.join(dataset_dir, "ImageSets", "Segmentation", usage + ".txt")
             if param_dict.get('class_indexing') is not None:
                 raise ValueError("class_indexing is invalid in Segmentation task")
         elif task == "Detection":
-            imagesets_file = os.path.join(dataset_dir, "ImageSets", "Main", mode + ".txt")
+            imagesets_file = os.path.join(dataset_dir, "ImageSets", "Main", usage + ".txt")
         else:
             raise ValueError("Invalid task : " + task)
 
@@ -235,9 +239,9 @@ def check_celebadataset(method):
         validate_dataset_param_value(nreq_param_list, param_dict, list)
         validate_dataset_param_value(nreq_param_str, param_dict, str)
 
-        dataset_type = param_dict.get('dataset_type')
-        if dataset_type is not None and dataset_type not in ('all', 'train', 'valid', 'test'):
-            raise ValueError("dataset_type should be one of 'all', 'train', 'valid' or 'test'.")
+        usage = param_dict.get('usage')
+        if usage is not None and usage not in ('all', 'train', 'valid', 'test'):
+            raise ValueError("usage should be one of 'all', 'train', 'valid' or 'test'.")
 
         check_sampler_shuffle_shard_options(param_dict)
 

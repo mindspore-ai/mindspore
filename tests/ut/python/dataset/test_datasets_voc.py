@@ -21,7 +21,7 @@ TARGET_SHAPE = [680, 680, 680, 680, 642, 607, 561, 596, 612, 680]
 
 
 def test_voc_segmentation():
-    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True, shuffle=False)
+    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0
     for item in data1.create_dict_iterator(num_epochs=1):
         assert item["image"].shape[0] == IMAGE_SHAPE[num]
@@ -31,7 +31,7 @@ def test_voc_segmentation():
 
 
 def test_voc_detection():
-    data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     num = 0
     count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator(num_epochs=1):
@@ -45,7 +45,7 @@ def test_voc_detection():
 
 def test_voc_class_index():
     class_index = {'car': 0, 'cat': 1, 'train': 5}
-    data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", class_indexing=class_index, decode=True)
+    data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", class_indexing=class_index, decode=True)
     class_index1 = data1.get_class_indexing()
     assert (class_index1 == {'car': 0, 'cat': 1, 'train': 5})
     data1 = data1.shuffle(4)
@@ -63,7 +63,7 @@ def test_voc_class_index():
 
 
 def test_voc_get_class_indexing():
-    data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True)
+    data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", decode=True)
     class_index1 = data1.get_class_indexing()
     assert (class_index1 == {'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5})
     data1 = data1.shuffle(4)
@@ -81,7 +81,7 @@ def test_voc_get_class_indexing():
 
 
 def test_case_0():
-    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True)
+    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True)
 
     resize_op = vision.Resize((224, 224))
 
@@ -99,7 +99,7 @@ def test_case_0():
 
 
 def test_case_1():
-    data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True)
+    data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", decode=True)
 
     resize_op = vision.Resize((224, 224))
 
@@ -116,7 +116,7 @@ def test_case_1():
 
 
 def test_case_2():
-    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True)
+    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True)
     sizes = [0.5, 0.5]
     randomize = False
     dataset1, dataset2 = data1.split(sizes=sizes, randomize=randomize)
@@ -134,7 +134,7 @@ def test_case_2():
 
 def test_voc_exception():
     try:
-        data1 = ds.VOCDataset(DATA_DIR, task="InvalidTask", mode="train", decode=True)
+        data1 = ds.VOCDataset(DATA_DIR, task="InvalidTask", usage="train", decode=True)
         for _ in data1.create_dict_iterator(num_epochs=1):
             pass
         assert False
@@ -142,7 +142,7 @@ def test_voc_exception():
         pass
 
     try:
-        data2 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", class_indexing={"cat": 0}, decode=True)
+        data2 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", class_indexing={"cat": 0}, decode=True)
         for _ in data2.create_dict_iterator(num_epochs=1):
             pass
         assert False
@@ -150,7 +150,7 @@ def test_voc_exception():
         pass
 
     try:
-        data3 = ds.VOCDataset(DATA_DIR, task="Detection", mode="notexist", decode=True)
+        data3 = ds.VOCDataset(DATA_DIR, task="Detection", usage="notexist", decode=True)
         for _ in data3.create_dict_iterator(num_epochs=1):
             pass
         assert False
@@ -158,7 +158,7 @@ def test_voc_exception():
         pass
 
     try:
-        data4 = ds.VOCDataset(DATA_DIR, task="Detection", mode="xmlnotexist", decode=True)
+        data4 = ds.VOCDataset(DATA_DIR, task="Detection", usage="xmlnotexist", decode=True)
         for _ in data4.create_dict_iterator(num_epochs=1):
             pass
         assert False
@@ -166,7 +166,7 @@ def test_voc_exception():
         pass
 
     try:
-        data5 = ds.VOCDataset(DATA_DIR, task="Detection", mode="invalidxml", decode=True)
+        data5 = ds.VOCDataset(DATA_DIR, task="Detection", usage="invalidxml", decode=True)
         for _ in data5.create_dict_iterator(num_epochs=1):
             pass
         assert False
@@ -174,7 +174,7 @@ def test_voc_exception():
         pass
 
     try:
-        data6 = ds.VOCDataset(DATA_DIR, task="Detection", mode="xmlnoobject", decode=True)
+        data6 = ds.VOCDataset(DATA_DIR, task="Detection", usage="xmlnoobject", decode=True)
         for _ in data6.create_dict_iterator(num_epochs=1):
             pass
         assert False

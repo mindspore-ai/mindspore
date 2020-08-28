@@ -5,7 +5,7 @@ SET(DE_UT_SRCS
         common/cvop_common.cc
         common/bboxop_common.cc
         auto_contrast_op_test.cc
-	album_op_test.cc
+        album_op_test.cc
         batch_op_test.cc
         bit_functions_test.cc
         storage_container_test.cc
@@ -62,8 +62,8 @@ SET(DE_UT_SRCS
         rescale_op_test.cc
         resize_op_test.cc
         resize_with_bbox_op_test.cc
-	rgba_to_bgr_op_test.cc
-	rgba_to_rgb_op_test.cc
+        rgba_to_bgr_op_test.cc
+        rgba_to_rgb_op_test.cc
         schema_test.cc
         skip_op_test.cc
         shuffle_op_test.cc

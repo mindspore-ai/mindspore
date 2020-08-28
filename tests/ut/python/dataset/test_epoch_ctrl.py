@@ -35,6 +35,7 @@ def diff_mse(in1, in2):
     mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
     return mse * 100
 
+
 def test_cifar10():
     """
     dataset parameter
@@ -45,7 +46,7 @@ def test_cifar10():
     batch_size = 32
     limit_dataset = 100
     # apply dataset operations
-    data1 = ds.Cifar10Dataset(data_dir_10, limit_dataset)
+    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
     data1 = data1.repeat(num_repeat)
     data1 = data1.batch(batch_size, True)
     num_epoch = 5
@@ -139,6 +140,7 @@ def test_generator_dict_0():
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
+
 def test_generator_dict_1():
     """
     test generator dict 1
@@ -157,6 +159,7 @@ def test_generator_dict_1():
             np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
         assert i == 64
+
 
 def test_generator_dict_2():
     """
@@ -179,6 +182,7 @@ def test_generator_dict_2():
     item1 = iter1.__next__()
     assert item1
     # rely on garbage collector to destroy iter1
+
 
 def test_generator_dict_3():
     """
@@ -226,6 +230,7 @@ def test_generator_dict_4():
     err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
+
 def test_generator_dict_4_1():
     """
     test generator dict 4_1
@@ -248,6 +253,7 @@ def test_generator_dict_4_1():
         iter1.__next__()
     err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
+
 
 def test_generator_dict_4_2():
     """
@@ -273,6 +279,7 @@ def test_generator_dict_4_2():
         iter1.__next__()
     err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
+
 
 def test_generator_dict_5():
     """
@@ -305,6 +312,7 @@ def test_generator_dict_5():
     err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
+
 # Test tuple iterator
 
 def test_generator_tuple_0():
@@ -322,6 +330,7 @@ def test_generator_tuple_0():
         golden = np.array([i])
         np.testing.assert_array_equal(item[0], golden)
         i = i + 1
+
 
 def test_generator_tuple_1():
     """
@@ -341,6 +350,7 @@ def test_generator_tuple_1():
             np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
+
 
 def test_generator_tuple_2():
     """
@@ -363,6 +373,7 @@ def test_generator_tuple_2():
     item1 = iter1.__next__()
     assert item1
     # rely on garbage collector to destroy iter1
+
 
 def test_generator_tuple_3():
     """
@@ -441,6 +452,7 @@ def test_generator_tuple_5():
         iter1.__next__()
     err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
+
 
 # Test with repeat
 def test_generator_tuple_repeat_1():
@@ -535,6 +547,7 @@ def test_generator_tuple_repeat_repeat_2():
     with pytest.raises(AttributeError) as info:
         iter1.__next__()
     assert "object has no attribute 'depipeline'" in str(info.value)
+
 
 def test_generator_tuple_repeat_repeat_3():
     """

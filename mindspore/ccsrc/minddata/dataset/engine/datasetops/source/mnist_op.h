@@ -47,8 +47,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   class Builder {
    public:
     // Constructor for Builder class of MnistOp
-    // @param  uint32_t numWrks - number of parallel workers
-    // @param dir - directory folder got ImageNetFolder
     Builder();
 
     // Destructor.
@@ -87,13 +85,20 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method
-    // @param const std::string & dir
+    // @param const std::string &dir
     // @return
     Builder &SetDir(const std::string &dir) {
       builder_dir_ = dir;
       return *this;
     }
 
+    // Setter method
+    // @param const std::string &usage
+    // @return
+    Builder &SetUsage(const std::string &usage) {
+      builder_usage_ = usage;
+      return *this;
+    }
     // Check validity of input args
     // @return - The error code return
     Status SanityCheck();
@@ -105,6 +110,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
 
    private:
     std::string builder_dir_;
+    std::string builder_usage_;
     int32_t builder_num_workers_;
     int32_t builder_rows_per_buffer_;
     int32_t builder_op_connector_size_;
@@ -113,14 +119,15 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   };
 
   // Constructor
+  // @param const std::string &usage - Usage of this dataset, can be 'train', 'test' or 'all'
   // @param int32_t num_workers - number of workers reading images in parallel
   // @param int32_t rows_per_buffer - number of images (rows) in each buffer
   // @param std::string folder_path - dir directory of mnist
   // @param int32_t queue_size - connector queue size
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the mnist dataset
   // @param td::unique_ptr<Sampler> sampler - sampler tells MnistOp what to read
-  MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folder_path, int32_t queue_size,
-          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+  MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per_buffer, std::string folder_path,
+          int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
 
   // Destructor.
   ~MnistOp() = default;
@@ -150,7 +157,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @param dir path to the MNIST directory
   // @param count output arg that will hold the minimum of the actual dataset size and numSamples
   // @return
-  static Status CountTotalRows(const std::string &dir, int64_t *count);
+  static Status CountTotalRows(const std::string &dir, const std::string &usage, int64_t *count);
 
   /// \brief Base-class override for NodePass visitor acceptor
   /// \param[in] p Pointer to the NodePass to be accepted
@@ -241,6 +248,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   WaitPost wp_;
   std::string folder_path_;  // directory of image folder
   int32_t rows_per_buffer_;
+  const std::string usage_;  // can only be either "train" or "test"
   std::unique_ptr<DataSchema> data_schema_;
   std::vector<MnistLabelPair> image_label_pairs_;
   std::vector<std::string> image_names_;

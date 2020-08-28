@@ -73,7 +73,7 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method.
-    // @param const std::string & task_type
+    // @param const std::string &task_type
     // @return Builder setter method returns reference to the builder.
     Builder &SetTask(const std::string &task_type) {
       if (task_type == "Segmentation") {
@@ -85,10 +85,10 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method.
-    // @param const std::string & task_mode
+    // @param const std::string &usage
     // @return Builder setter method returns reference to the builder.
-    Builder &SetMode(const std::string &task_mode) {
-      builder_task_mode_ = task_mode;
+    Builder &SetUsage(const std::string &usage) {
+      builder_usage_ = usage;
       return *this;
     }
 
@@ -145,7 +145,7 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
     bool builder_decode_;
     std::string builder_dir_;
     TaskType builder_task_type_;
-    std::string builder_task_mode_;
+    std::string builder_usage_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int32_t builder_rows_per_buffer_;
@@ -279,7 +279,7 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   int64_t buf_cnt_;
   std::string folder_path_;
   TaskType task_type_;
-  std::string task_mode_;
+  std::string usage_;
   int32_t rows_per_buffer_;
   std::unique_ptr<DataSchema> data_schema_;
 

@@ -392,6 +392,59 @@ def test_cifar100_visualize(plot=False):
         visualize_dataset(image_list, label_list)
 
 
+def test_cifar_usage():
+    """
+    test usage of cifar
+    """
+    logger.info("Test Cifar100Dataset usage flag")
+
+    # flag, if True, test cifar10 else test cifar100
+    def test_config(usage, flag=True, cifar_path=None):
+        if cifar_path is None:
+            cifar_path = DATA_DIR_10 if flag else DATA_DIR_100
+        try:
+            data = ds.Cifar10Dataset(cifar_path, usage=usage) if flag else ds.Cifar100Dataset(cifar_path, usage=usage)
+            num_rows = 0
+            for _ in data.create_dict_iterator():
+                num_rows += 1
+        except (ValueError, TypeError, RuntimeError) as e:
+            return str(e)
+        return num_rows
+
+    # test the usage of CIFAR100
+    assert test_config("train") == 10000
+    assert test_config("all") == 10000
+    assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid")
+    assert "Argument usage with value ['list'] is not of type (<class 'str'>,)" in test_config(["list"])
+    assert "no valid data matching the dataset API Cifar10Dataset" in test_config("test")
+
+    # test the usage of CIFAR10
+    assert test_config("test", False) == 10000
+    assert test_config("all", False) == 10000
+    assert "no valid data matching the dataset API Cifar100Dataset" in test_config("train", False)
+    assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid", False)
+
+    # change this directory to the folder that contains all cifar10 files
+    all_cifar10 = None
+    if all_cifar10 is not None:
+        assert test_config("train", True, all_cifar10) == 50000
+        assert test_config("test", True, all_cifar10) == 10000
+        assert test_config("all", True, all_cifar10) == 60000
+        assert ds.Cifar10Dataset(all_cifar10, usage="train").get_dataset_size() == 50000
+        assert ds.Cifar10Dataset(all_cifar10, usage="test").get_dataset_size() == 10000
+        assert ds.Cifar10Dataset(all_cifar10, usage="all").get_dataset_size() == 60000
+
+    # change this directory to the folder that contains all cifar100 files
+    all_cifar100 = None
+    if all_cifar100 is not None:
+        assert test_config("train", False, all_cifar100) == 50000
+        assert test_config("test", False, all_cifar100) == 10000
+        assert test_config("all", False, all_cifar100) == 60000
+        assert ds.Cifar100Dataset(all_cifar100, usage="train").get_dataset_size() == 50000
+        assert ds.Cifar100Dataset(all_cifar100, usage="test").get_dataset_size() == 10000
+        assert ds.Cifar100Dataset(all_cifar100, usage="all").get_dataset_size() == 60000
+
+
 if __name__ == '__main__':
     test_cifar10_content_check()
     test_cifar10_basic()
@@ -405,3 +458,5 @@ if __name__ == '__main__':
     test_cifar100_pk_sampler()
     test_cifar100_exception()
     test_cifar100_visualize(plot=False)
+
+    test_cifar_usage()

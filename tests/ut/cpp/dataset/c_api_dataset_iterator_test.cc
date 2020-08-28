@@ -28,7 +28,7 @@ TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorEmptyColumn.";
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, RandomSampler(false, 5));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 5));
   EXPECT_NE(ds, nullptr);
 
   // Create a Rename operation on ds
@@ -64,7 +64,7 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, RandomSampler(false, 4));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, std::string(), RandomSampler(false, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -103,7 +103,7 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorReOrder.";
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, SequentialSampler(false, 4));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), SequentialSampler(false, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds
@@ -160,9 +160,8 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   // Iterate the dataset and get each row
   std::vector<std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
-  std::vector<TensorShape> expect = {TensorShape({173673}), TensorShape({1, 4}),
-                                     TensorShape({173673}), TensorShape({1, 4}),
-                                     TensorShape({147025}), TensorShape({1, 4}),
+  std::vector<TensorShape> expect = {TensorShape({173673}), TensorShape({1, 4}),   TensorShape({173673}),
+                                     TensorShape({1, 4}),   TensorShape({147025}), TensorShape({1, 4}),
                                      TensorShape({211653}), TensorShape({1, 4})};
 
   uint64_t i = 0;
@@ -187,7 +186,7 @@ TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, RandomSampler(false, 4));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, std::string(), RandomSampler(false, 4));
   EXPECT_NE(ds, nullptr);
 
   // Pass wrong column name

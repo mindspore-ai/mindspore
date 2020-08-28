@@ -37,11 +37,9 @@ def test_random_horizontal_flip_with_bbox_op_c(plot_vis=False):
     logger.info("test_random_horizontal_flip_with_bbox_op_c")
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
@@ -102,11 +100,9 @@ def test_random_horizontal_flip_with_bbox_valid_rand_c(plot_vis=False):
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(0.6)
 
@@ -140,8 +136,8 @@ def test_random_horizontal_flip_with_bbox_valid_edge_c(plot_vis=False):
     """
     logger.info("test_horizontal_flip_with_bbox_valid_edge_c")
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
@@ -178,7 +174,7 @@ def test_random_horizontal_flip_with_bbox_invalid_prob_c():
     """
     logger.info("test_random_horizontal_bbox_invalid_prob_c")
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
         # Note: Valid range of prob should be [0.0, 1.0]
@@ -201,13 +197,13 @@ def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
 
     test_op = c_vision.RandomHorizontalFlipWithBBox(1)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 
