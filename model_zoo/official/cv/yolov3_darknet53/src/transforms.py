@@ -465,6 +465,11 @@ class MultiScaleTrans:
         self.seed_list = self.generate_seed_list(seed_num=self.seed_num)
         self.resize_count_num = int(np.ceil(self.dataset_size / self.resize_rate))
         self.device_num = device_num
+        self.anchor_scales = config.anchor_scales
+        self.num_classes = config.num_classes
+        self.max_box = config.max_box
+        self.label_smooth = config.label_smooth
+        self.label_smooth_factor = config.label_smooth_factor
 
     def generate_seed_list(self, init_seed=1234, seed_num=int(1e6), seed_range=(1, 1000)):
         seed_list = []
@@ -474,12 +479,19 @@ class MultiScaleTrans:
             seed_list.append(seed)
         return seed_list
 
-    def __call__(self, imgs, annos, batchInfo):
+    def __call__(self, imgs, annos, x1, x2, x3, x4, x5, x6, batchInfo):
         epoch_num = batchInfo.get_epoch_num()
         size_idx = int(batchInfo.get_batch_num() / self.resize_rate)
         seed_key = self.seed_list[(epoch_num * self.resize_count_num + size_idx) % self.seed_num]
         ret_imgs = []
         ret_annos = []
+
+        bbox1 = []
+        bbox2 = []
+        bbox3 = []
+        gt1 = []
+        gt2 = []
+        gt3 = []
 
         if self.size_dict.get(seed_key, None) is None:
             random.seed(seed_key)
@@ -491,8 +503,19 @@ class MultiScaleTrans:
         for img, anno in zip(imgs, annos):
             img, anno = preprocess_fn(img, anno, self.config, input_size, self.device_num)
             ret_imgs.append(img.transpose(2, 0, 1).copy())
-            ret_annos.append(anno)
-        return np.array(ret_imgs), np.array(ret_annos)
+            bbox_true_1, bbox_true_2, bbox_true_3, gt_box1, gt_box2, gt_box3 = \
+                _preprocess_true_boxes(true_boxes=anno, anchors=self.anchor_scales, in_shape=img.shape[0:2],
+                                       num_classes=self.num_classes, max_boxes=self.max_box,
+                                       label_smooth=self.label_smooth, label_smooth_factor=self.label_smooth_factor)
+            bbox1.append(bbox_true_1)
+            bbox2.append(bbox_true_2)
+            bbox3.append(bbox_true_3)
+            gt1.append(gt_box1)
+            gt2.append(gt_box2)
+            gt3.append(gt_box3)
+            ret_annos.append(0)
+        return np.array(ret_imgs), np.array(ret_annos), np.array(bbox1), np.array(bbox2), np.array(bbox3), \
+               np.array(gt1), np.array(gt2), np.array(gt3)
 
 
 def thread_batch_preprocess_true_box(annos, config, input_shape, result_index, batch_bbox_true_1, batch_bbox_true_2,

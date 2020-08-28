@@ -53,8 +53,8 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Hardware（Ascend/GPU）
+  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
 - Framework
   - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
 - For more information, please check the resources below：
@@ -65,7 +65,7 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
 
 # [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation in Ascend as follows: 
+After installing MindSpore via the official website, you can start training and evaluation in as follows. If running on GPU, please add `--device_target=GPU` in the python command or use the "_gpu" shell script ("xxx_gpu.sh").
 
 ```
 # The darknet53_backbone.ckpt in the follow script is got from darknet53 training like paper. 
@@ -87,8 +87,11 @@ python train.py \
 # standalone training example(1p) by shell script
 sh run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
 
-# distributed training example(8p) by shell script
+# For Ascend device, distributed training example(8p) by shell script
 sh run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
+
+# For GPU device, distributed training example(8p) by shell script
+sh run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 
 # run evaluation by python command
 python eval.py \
@@ -113,6 +116,9 @@ sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
     └─run_eval.sh                     # launch evaluating in ascend
+    ├─run_standalone_train_gpu.sh     # launch standalone training(1p) in gpu
+    ├─run_distribute_train_gpu.sh     # launch distributed training(8p) in gpu
+    └─run_eval_gpu.sh                 # launch evaluating in gpu
   ├─src
     ├─__init__.py                     # python init file
     ├─config.py                       # parameter configuration
@@ -138,6 +144,7 @@ Major parameters in train.py as follow.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --device_target       device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
   --data_dir DATA_DIR   Train dataset directory.
   --per_batch_size PER_BATCH_SIZE
                         Batch size for Training. Default: 32.
@@ -212,7 +219,7 @@ python train.py \
     --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 ```
 
-The python command above will run in the background, you can view the results through the file `log.txt`.
+The python command above will run in the background, you can view the results through the file `log.txt`. If running on GPU, please add `--device_target=GPU` in the python command.
 
 After training, you'll get some checkpoint files under the outputs folder by default. The loss value will be achieved as follows:
 
@@ -228,8 +235,13 @@ The model checkpoint will be saved in outputs directory.
 
 ### Distributed Training
 
+For Ascend device, distributed training example(8p) by shell script
 ```
 sh run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
+```
+For GPU device, distributed training example(8p) by shell script
+```
+sh run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log.txt`. The loss value will be achieved as follows:
@@ -254,7 +266,7 @@ epoch[319], iter[102300], loss:35.430038, 423.49 imgs/sec, lr:2.409552052995423e
 
 ### Evaluation
 
-Before running the command below.
+Before running the command below. If running on GPU, please add `--device_target=GPU` in the python command or use the "_gpu" shell script ("xxx_gpu.sh").
 
 ```
 python eval.py \
