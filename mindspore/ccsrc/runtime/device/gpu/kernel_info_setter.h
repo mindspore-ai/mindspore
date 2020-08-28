@@ -39,6 +39,7 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimReluGrad->name(), {{0, 1}, {0}}},
   {prim::kPrimMaxPool->name(), {{0}, {0}}},
   {prim::kPrimMaxPoolGrad->name(), {{0, 1, 2}, {0}}},
+  {kSliceOpName, {{0}, {0}}},
   {kAvgPoolOpName, {{0}, {0}}},
   {kAvgPoolGradGpuOpName, {{0, 1, 2}, {0}}},
   {kTensorAddOpName, {{0, 1}, {0}}},
