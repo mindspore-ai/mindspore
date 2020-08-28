@@ -184,7 +184,7 @@ void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
   int status;
   auto pid = waitpid(child_pid_, &status, WNOHANG | WUNTRACED);
   if (WIFEXITED(status)) {
-    DP_ERROR << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid;
+    DP_INFO << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid;
     if (!dp_.expired()) {
       dp_.lock()->Close();
     }
@@ -194,7 +194,7 @@ void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
     // which caused by MPI_Finalize() never returned.
     exit(-1);
   } else if (WIFSTOPPED(status)) {
-    DP_ERROR << "Child stopped, sig: " << WSTOPSIG(status) << ", pid: " << pid;
+    DP_INFO << "Child stopped, sig: " << WSTOPSIG(status) << ", pid: " << pid;
   } else if (WIFSIGNALED(status)) {
     DP_INFO << "Child not exited, signaled, sig: " << WTERMSIG(status) << ", pid: " << pid;
   } else if (WIFCONTINUED(status)) {
