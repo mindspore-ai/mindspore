@@ -17,7 +17,7 @@ add_library(mindspore-lite-jni SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/common/jni_utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/model.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/version.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/context.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_config.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_tensor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cpp
         )

@@ -21,8 +21,8 @@
 #include "include/errorcode.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createSession(JNIEnv *env, jobject thiz,
-                                                                                     jlong context_ptr) {
-  auto *pointer = reinterpret_cast<void *>(context_ptr);
+                                                                                     jlong ms_config_ptr) {
+  auto *pointer = reinterpret_cast<void *>(ms_config_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Context pointer from java is nullptr");
     return jlong(nullptr);

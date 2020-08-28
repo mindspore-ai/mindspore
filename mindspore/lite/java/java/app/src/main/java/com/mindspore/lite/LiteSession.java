@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.mindspore.lite.context.Context;
+import com.mindspore.lite.config.MSConfig;
 
 public class LiteSession {
     static {
@@ -35,8 +35,8 @@ public class LiteSession {
         this.sessionPtr = 0;
     }
 
-    public boolean init(Context context) {
-        this.sessionPtr = createSession(context.getContextPtr());
+    public boolean init(MSConfig config) {
+        this.sessionPtr = createSession(config.getMSConfigPtr());
         return this.sessionPtr != 0;
     }
 
@@ -129,7 +129,7 @@ public class LiteSession {
         this.sessionPtr = 0;
     }
 
-    private native long createSession(long contextPtr);
+    private native long createSession(long msConfigPtr);
 
     private native boolean compileGraph(long sessionPtr, long modelPtr);
 
