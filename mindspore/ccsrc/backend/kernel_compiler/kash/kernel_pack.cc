@@ -19,28 +19,21 @@
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "nlohmann/json.hpp"
 #include "securec/include/securec.h"
-#include "pipeline/jit/parse/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
+#include "utils/system/sha256.h"
+
 namespace mindspore {
 namespace kernel {
-constexpr auto kUtilsModule = "mindspore._extends.utils";
-constexpr auto kCalSha256Func = "cal_sha256";
-
 namespace {
 bool CheckHash(const std::string &json_file, const std::string &bin_file, const nlohmann::json &js) {
   if (js.find("sha256") == js.end()) {
     MS_LOG(ERROR) << "No sha256 found in " << json_file;
     return false;
   }
+  std::string sha256_cal = system::sha256::GetHashFromFile(bin_file);
   std::string sha256_str = js["sha256"];
-  py::object ret = parse::python_adapter::CallPyFn(kUtilsModule, kCalSha256Func, bin_file);
-  std::string sha256_cal = py::cast<std::string>(ret);
-  if (sha256_cal.empty()) {
-    MS_LOG(ERROR) << "Cal sha256 of " << bin_file << " failed.";
-    return false;
-  }
-  if (sha256_cal != sha256_str) {
+  if (sha256_cal.empty() || sha256_cal != sha256_str) {
     MS_LOG(ERROR) << "Cal sha256 of " << bin_file << " failed.";
     return false;
   }
