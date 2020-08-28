@@ -116,7 +116,7 @@ using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 
 // Generate a key for mapping function graph
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults);
-py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple inputs);
+py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 
 bool InitDistribute(const std::map<std::string, std::string> &options);
 
@@ -142,7 +142,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<int64_t> &input_indexes, bool need_run);
 
 // init random normal
-bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> outshape, int64_t seed,
+bool InitRandomNormal(float mean, float stddev, const std::vector<int64_t> &outshape, int64_t seed,
                       const py::object &outputTensor);
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list);

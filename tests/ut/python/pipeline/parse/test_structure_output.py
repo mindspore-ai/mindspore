@@ -89,8 +89,7 @@ def test_output_parameter_tuple():
             super(Net, self).__init__()
 
         def construct(self, x):
-            ret = x
-            return ret
+            return x
 
     x = (1, 2, 3)
     net = Net()
@@ -103,8 +102,7 @@ def test_output_parameter_list():
             super(Net, self).__init__()
 
         def construct(self, x):
-            ret = x
-            return ret
+            return x
 
     x = [1, 2, 3]
     net = Net()
@@ -117,8 +115,7 @@ def test_output_parameter_int():
             super(Net, self).__init__()
 
         def construct(self, x):
-            ret = x
-            return ret
+            return x
 
     x = 88
     net = Net()
@@ -131,8 +128,7 @@ def test_output_parameter_str():
             super(Net, self).__init__()
 
         def construct(self, x):
-            ret = x
-            return ret
+            return x
 
     x = "hello world"
     net = Net()

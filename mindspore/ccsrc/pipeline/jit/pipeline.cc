@@ -99,7 +99,7 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
   MS_LOG(DEBUG) << "GenerateKey args size:" << defaults.size();
   abstract::AbstractBasePtrList args_spec;
 
-  for (auto arg : defaults) {
+  for (const auto &arg : defaults) {
     if (py::isinstance<py::module>(arg.second)) {
       MS_LOG(EXCEPTION) << "GenerateKey failed, argument input should not be py::module";
     }
@@ -120,7 +120,7 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
   return argSpec;
 }
 
-py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple inputs) {
+py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs) {
   MS_LOG(DEBUG) << "Verify args size:" << inputs.size();
   if (inputs.size() != input_signature.size()) {
     MS_LOG(ERROR) << "Signature size not equal to args size";
@@ -131,12 +131,12 @@ py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple i
   for (auto arg_obj : inputs) {
     if (py::isinstance<Tensor>(arg_obj)) {
       MS_LOG(DEBUG) << "Verify Tensor";
-      std::shared_ptr<Tensor> m_tensor = arg_obj.cast<std::shared_ptr<Tensor>>();
+      auto m_tensor = arg_obj.cast<std::shared_ptr<Tensor>>();
       if (m_tensor == nullptr) {
         MS_LOG(ERROR) << "Verify Tensor error, get ptr is null";
         return false;
       }
-      std::shared_ptr<MetaTensor> sig = input_signature[count].cast<std::shared_ptr<MetaTensor>>();
+      auto sig = input_signature[count].cast<std::shared_ptr<MetaTensor>>();
       ShapeVector sig_shape = sig->shape();
       TypePtr sig_type = sig->Dtype();
 
@@ -301,16 +301,16 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
   std::map<std::string, std::pair<PrimitivePyPtr, std::string>> fake_quant_table;
-  auto filter = [](AnfNodePtr node) {
+  auto filter = [](const AnfNodePtr &node) {
     return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul) ||
              IsPrimitiveCNode(node, prim::kPrimDepthwiseConv2dNative));
   };
   std::vector<AnfNodePtr> nodes = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
-  auto is_quant_cnode = [](AnfNodePtr node) {
+  auto is_quant_cnode = [](const AnfNodePtr &node) {
     return IsPrimitiveCNode(node, prim::kPrimFakeQuantPerLayer) ||
            IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel);
   };
-  for (auto node : nodes) {
+  for (const auto &node : nodes) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr || cnode->size() != 3) {
       continue;
@@ -756,11 +756,24 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
   auto ret_val = std::make_shared<py::object>();
   if (info_.count(phase_s) != 0 && info_[phase_s]->func_graph != nullptr) {
     if (IsGraphOutputValueNodeOrParameter(info_[phase_s]->func_graph->output(), args, ret_val)) {
+      // Check the input arg must be Tensor when backend is "ms".
+      if (MsContext::GetInstance()->backend_policy() == kMsConvert) {
+        for (std::size_t i = 0; i < size; i++) {
+          ValuePtr converted = nullptr;
+          if (!parse::ConvertData(args[i], &converted)) {
+            MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
+          }
+          if (!converted->isa<tensor::Tensor>()) {
+            MS_EXCEPTION(TypeError) << "The " << i << "th arg: " << converted->ToString() << " is not tensor.";
+          }
+        }
+      }
       return *ret_val;
     }
   }
   if (backend == "ge") {
-    if (args.size() > 0) {
+    // Virtual output constructed for test cases.
+    if (!args.empty()) {
       return args[0];
     }
     return args;
@@ -909,9 +922,9 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   return true;
 }
 
-bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed,
+bool InitRandomNormal(float mean, float stddev, const std::vector<int64_t> &out_shape, int64_t seed,
                       const py::object &output_tensor) {
-  if (out_shape.size() == 0) {
+  if (out_shape.empty()) {
     std::cout << "output data shape is error" << std::endl;
   }
   int64_t total_count = 1;
@@ -923,14 +936,14 @@ bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, 
     thread_num = 1;
   }
   auto temp = py::cast<std::shared_ptr<Tensor>>(output_tensor);
-  float *start_ptr = reinterpret_cast<float *>(temp->data_c());
+  auto *start_ptr = reinterpret_cast<float *>(temp->data_c());
   if (start_ptr == nullptr) {
     std::cout << "start_ptr is nullptr" << std::endl;
     return false;
   }
   int64_t batchSize = total_count / thread_num;
   std::vector<std::thread> threads(thread_num);
-  mindspore::kernel::PhiloxGenerator generator = mindspore::kernel::PhiloxGenerator(seed);
+  auto generator = mindspore::kernel::PhiloxGenerator(seed);
   if (thread_num != 1) {
     for (uint32_t i = 0; i < thread_num - 1; i++) {
       float *offset_ptr = start_ptr + batchSize * i;
