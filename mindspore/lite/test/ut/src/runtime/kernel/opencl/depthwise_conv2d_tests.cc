@@ -208,7 +208,7 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNC4HW4Fp32) {
   float gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  DepthWiseTestMain<float, float>(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
+  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
@@ -280,7 +280,7 @@ TEST_F(TestConvolutionDwOpenCL, PadNC4HW4Fp32) {
                       0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  DepthWiseTestMain<float, float>(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
+  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NC4HW4);
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
@@ -325,7 +325,8 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp32) {
   float gnd_data[] = {3.3848767, 1.4446403, 1.8428744, 1.3194335, 2.5873442, 2.1384869, 2.04022,  1.1872686,
                       2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
-  DepthWiseTestMain<float, float>(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  // delete conv_param;
 }
 
 TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
@@ -397,7 +398,7 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp32) {
                       0.8749627,  0.8953936,  0.5093431,  1.5496738,  0.54936385, 0.7683113,  1.165742,  1.3682933,
                       1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
-  DepthWiseTestMain<float, float>(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
+  DepthWiseTestMain<float, float>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4);
 }
 
 TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp16) {
@@ -444,7 +445,7 @@ TEST_F(TestConvolutionDwOpenCL, NoPadNHWC4Fp16) {
                           2.2294958, 1.6570128, 2.465089,  1.4294086, 2.7941442, 1.7871612, 2.188921, 1.0601988};
 
   lite::opencl::OpenCLRuntime::GetInstance()->SetFp16Enable(true);
-  DepthWiseTestMain<float16_t, float16_t>(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4,
+  DepthWiseTestMain<float16_t, float16_t>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4,
                                           kNumberTypeFloat16, true, 1e-2);
 }
 
@@ -518,7 +519,7 @@ TEST_F(TestConvolutionDwOpenCL, PadNHWC4Fp16) {
                           1.0517888,  0.59817517, 0.75649744, 1.2075498,  0.38804203};
 
   lite::opencl::OpenCLRuntime::GetInstance()->SetFp16Enable(true);
-  DepthWiseTestMain<float16_t, float16_t>(conv_param.get(), input_data, weight_data, gnd_data, schema::Format_NHWC4,
+  DepthWiseTestMain<float16_t, float16_t>(conv_param.release(), input_data, weight_data, gnd_data, schema::Format_NHWC4,
                                           kNumberTypeFloat16, true, 1e-2);
 }
 

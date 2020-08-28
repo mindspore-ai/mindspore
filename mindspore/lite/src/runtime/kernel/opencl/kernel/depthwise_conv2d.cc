@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/depthwise_conv2d.h"
+#include <float.h>
 #include <string>
 #include <set>
 #include <utility>
@@ -180,7 +181,8 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   std::vector<size_t> local;
   GetLocalSize(0, global, &local);
 
-  float relu_clip1 = 6.0;
+  std::map<ActType, std::pair<float, float>> relu_clips{
+    {ActType_No, {FLT_MIN, FLT_MAX}}, {ActType_Relu, {0.0, FLT_MAX}}, {ActType_Relu6, {0, 6.0}}};
   cl_int2 kernel_size = {parameter->kernel_h_, parameter->kernel_w_};
   cl_int2 stride = {parameter->stride_h_, parameter->stride_w_};
   cl_int2 padding = {-parameter->pad_u_, -parameter->pad_l_};
@@ -189,17 +191,19 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,
                       (cl_int)out_tensors_[0]->Batch()};
 
-  ocl_runtime->SetKernelArg(kernel_, 1, packed_weight_);
-  ocl_runtime->SetKernelArg(kernel_, 2, bias_data_);
-  ocl_runtime->SetKernelArg(kernel_, 3, relu_clip1);
-  ocl_runtime->SetKernelArg(kernel_, 5, kernel_size);
-  ocl_runtime->SetKernelArg(kernel_, 6, stride);
-  ocl_runtime->SetKernelArg(kernel_, 7, padding);
-  ocl_runtime->SetKernelArg(kernel_, 8, dilation);
-  ocl_runtime->SetKernelArg(kernel_, 9, src_size);
-  ocl_runtime->SetKernelArg(kernel_, 10, dst_size);
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 4, out_tensors_[0]->Data());
+  int arg_cnt = 0;
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, kernel_size);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, stride);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, padding);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, dilation);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
+  ocl_runtime->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }

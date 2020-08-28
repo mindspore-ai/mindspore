@@ -147,8 +147,10 @@ int ToFormatOpenCLKernel::Run() {
 
   cl_int4 shape{(cl_int)nhwc_shape_[0], (cl_int)nhwc_shape_[1], (cl_int)nhwc_shape_[2], (cl_int)nhwc_shape_[3]};
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data());
+  auto src_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
+  auto dst_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::IMG : lite::opencl::MemType::BUF;
+  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data(), src_mem_type);
+  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data(), dst_mem_type);
   ocl_runtime->SetKernelArg(kernel_, 2, gsize);
   ocl_runtime->SetKernelArg(kernel_, 3, shape);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
