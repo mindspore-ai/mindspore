@@ -84,6 +84,8 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/session/ascend_control_parser.cc"
         "../../../mindspore/ccsrc/backend/session/kernel_graph.cc"
         "../../../mindspore/ccsrc/backend/session/session_basic.cc"
+        "../../../mindspore/ccsrc/backend/session/executor.cc"
+        "../../../mindspore/ccsrc/backend/session/executor_manager.cc"
         "../../../mindspore/ccsrc/backend/session/session_factory.cc"
         "../../../mindspore/ccsrc/backend/session/kernel_build_client.cc"
         "../../../mindspore/ccsrc/vm/*.cc"

@@ -39,6 +39,7 @@ class KernelRuntimeManager {
   void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator);
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);
+  void ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ClearRuntimeResource();
   void ClearGraphResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
                           const std::unordered_set<ValueNodePtr> &value_nodes,
@@ -48,6 +49,7 @@ class KernelRuntimeManager {
   KernelRuntimeManager() = default;
   ~KernelRuntimeManager() = default;
   DISABLE_COPY_AND_ASSIGN(KernelRuntimeManager);
+  std::string GetDeviceKey(const std::string &device_name, uint32_t device_id);
   std::map<std::string, std::shared_ptr<KernelRuntime> > runtime_map_;
   std::map<std::string, KernelRuntimeCreator> runtime_creators_;
   std::mutex lock_;

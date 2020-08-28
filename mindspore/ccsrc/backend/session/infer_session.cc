@@ -318,7 +318,7 @@ void MSInferSession::RegAllOp() {
 Status MSInferSession::CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr, uint32_t &model_id) {
   MS_ASSERT(session_impl_ != nullptr);
   try {
-    auto graph_id = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
+    auto graph_id = session_impl_->CompileGraphAsync(NOT_NULL(funcGraphPtr));
     py::gil_scoped_release gil_release;
     model_id = graph_id;
     return SUCCESS;
@@ -332,7 +332,7 @@ std::vector<tensor::TensorPtr> MSInferSession::RunGraph(uint32_t graph_id,
                                                         const std::vector<tensor::TensorPtr> &inputs) {
   try {
     VectorRef outputs;
-    session_impl_->RunGraph(graph_id, inputs, &outputs);
+    session_impl_->RunGraphAsync(graph_id, inputs, &outputs);
 
     return TransformVectorRefToMultiTensor(outputs);
   } catch (std::exception &e) {
@@ -364,16 +364,16 @@ Status MSInferSession::InitEnv(const std::string &device, uint32_t device_id) {
     return FAILED;
   }
   ms_context->set_device_target(device);
+  if (!context::OpenTsd(ms_context)) {
+    MS_LOG(ERROR) << "Session init OpenTsd failed!";
+    return FAILED;
+  }
   session_impl_ = session::SessionFactory::Get().Create(ajust_device);
   if (session_impl_ == nullptr) {
     MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << device << " is available.";
     return FAILED;
   }
   session_impl_->Init(device_id);
-  if (!context::OpenTsd(ms_context)) {
-    MS_LOG(ERROR) << "Session init OpenTsd failed!";
-    return FAILED;
-  }
   return SUCCESS;
 }
 

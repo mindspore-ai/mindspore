@@ -39,7 +39,7 @@ class CPUKernelRuntime : public KernelRuntime {
   bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void BindInputOutput(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
-                       VectorRef *outputs, std::vector<tensor::TensorPtr> *need_sync_outputs);
+                       VectorRef *outputs);
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
@@ -49,11 +49,9 @@ class CPUKernelRuntime : public KernelRuntime {
                                        TypeId type_id) override;
 
  private:
-  tensor::TensorPtr CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,
-                                         std::vector<tensor::TensorPtr> *need_sync_outputs);
+  tensor::TensorPtr CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index);
 
-  BaseRef CreatTensorForOutput(session::KernelGraph *kernel_graph, const session::KernelWithIndex &kernel_with_index,
-                               std::vector<tensor::TensorPtr> *need_sync_outputs);
+  BaseRef CreatTensorForOutput(session::KernelGraph *kernel_graph, const session::KernelWithIndex &kernel_with_index);
   void AssignValueNodeAddress(session::KernelGraph *kernel_graph);
   void AssignInputNodeAddress(const session::KernelGraph *kernel_graph);
   void AssignKernelOutputAddress(const session::KernelGraph *kernel_graph);

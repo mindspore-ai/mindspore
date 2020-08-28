@@ -83,15 +83,23 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   return graph_id;
 }
 
+void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
+                                     VectorRef *outputs,
+                                     std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+  auto kernel_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Bind input output address";
+  runtime_.BindInputOutput(kernel_graph.get(), input_tensors, outputs);
+  return;
+}
+
 void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
-  auto &kernel_graph = graphs_[graph_id];
+  auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
-  MS_LOG(INFO) << "Bind input output address";
-  std::vector<tensor::TensorPtr> need_sync_outputs;
-  runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs, &need_sync_outputs);
+
   MS_LOG(INFO) << "Run graph start";
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);
@@ -113,9 +121,6 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   bool ret = runtime_.Run(kernel_graph.get());
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
-  }
-  for (auto output : need_sync_outputs) {
-    (void)output->data_sync();
   }
 
   if (enable_summary) {

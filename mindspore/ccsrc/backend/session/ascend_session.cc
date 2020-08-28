@@ -312,7 +312,6 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   // if none of child graph and no anf output exists
   if (!kernel_graph->executable()) {
     MS_LOG(INFO) << "No child graph has anf output";
-    UpdateOutputs(kernel_graph, outputs, inputs);
     return;
   }
   // load input data from user input
@@ -322,12 +321,9 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
   {
-    py::gil_scoped_release release;
     // run task on device
     ExecTask(kernel_graph);
   }
-  // get result from device
-  UpdateOutputs(kernel_graph, outputs, inputs);
   // summary
   Summary(kernel_graph.get());
 #ifdef ENABLE_DEBUGGER
@@ -396,8 +392,8 @@ void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " finish !";
 }
 
-py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                               const std::vector<tensor::TensorPtr> &input_tensors) {
+void AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                          const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
@@ -408,7 +404,6 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
   // run op
   RunOpExecTask(graph);
   // get output
-  VectorRef outputs;
   if (op_run_info.value != nullptr) {
     std::vector<tensor::TensorPtr> pre_output_tensors;
     TensorValueToTensor(op_run_info.value, &pre_output_tensors);
@@ -416,22 +411,13 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
       tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
       tensor->set_device_address(pre_output->device_address());
       tensor->set_dirty(false);
-      outputs.emplace_back(tensor);
+      outputs->emplace_back(tensor);
     }
   } else {
-    UpdateOutputs(graph, &outputs, input_tensors);
+    UpdateOutputs(graph, outputs, input_tensors);
   }
-  // trans output to tuple
-  auto output_tensors = TransformBaseRefListToTuple(outputs);
-  if (!utils::isa<PyObjectRef>(output_tensors) ||
-      !py::isinstance<py::tuple>(utils::cast<PyObjectRef>(output_tensors).object_)) {
-    MS_LOG(EXCEPTION) << "The output tensors should be a tuple !";
-  }
-  py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
-  py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
   RunOpMemoryClear(graph.get());
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
-  return tuple_tensors;
 }
 
 // compile graph steps

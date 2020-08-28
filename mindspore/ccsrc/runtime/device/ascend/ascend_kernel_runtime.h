@@ -60,6 +60,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool HcclInit();
   bool NeedDestroyHccl();
   bool DestroyHccl();
+  void SetContext();
 
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;

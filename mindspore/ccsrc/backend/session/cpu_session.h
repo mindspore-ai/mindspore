@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_SESSION_CPU_SESSION_H
 #include <string>
 #include <memory>
+#include <map>
 #include <vector>
 #include "backend/session/session_basic.h"
 #include "backend/session/kernel_graph.h"
@@ -28,12 +29,12 @@ class CPUSession : public SessionBasic {
  public:
   CPUSession() = default;
   ~CPUSession() override = default;
-  void Init(uint32_t device_id) override {
-    SessionBasic::Init(device_id);
-    context_ = std::make_shared<Context>(kCPUDevice, device_id);
-  }
+  void Init(uint32_t device_id) override { InitDevice(kCPUDevice, device_id); }
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
+
+  void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *,
+                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) override;
 
  protected:
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) override;

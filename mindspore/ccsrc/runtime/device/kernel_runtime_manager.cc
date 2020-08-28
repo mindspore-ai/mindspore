@@ -49,8 +49,13 @@ void KernelRuntimeManager::Register(const std::string &device_name, KernelRuntim
   }
 }
 
+std::string KernelRuntimeManager::GetDeviceKey(const std::string &device_name, uint32_t device_id) {
+  std::string device_key = device_name + "_" + std::to_string(device_id);
+  return device_key;
+}
+
 KernelRuntime *KernelRuntimeManager::GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id) {
-  std::string runtime_key = device_name + "_" + std::to_string(device_id);
+  auto runtime_key = GetDeviceKey(device_name, device_id);
   auto runtime_iter = runtime_map_.find(runtime_key);
   if (runtime_iter != runtime_map_.end()) {
     return runtime_iter->second.get();
@@ -72,8 +77,8 @@ KernelRuntime *KernelRuntimeManager::GetSingleKernelRuntime(const std::string &d
 }
 
 KernelRuntime *KernelRuntimeManager::GetKernelRuntime(const std::string &device_name, uint32_t device_id) {
+  std::string runtime_key = GetDeviceKey(device_name, device_id);
   std::lock_guard<std::mutex> guard(lock_);
-  std::string runtime_key = device_name + "_" + std::to_string(device_id);
   auto runtime_iter = runtime_map_.find(runtime_key);
   if (runtime_iter != runtime_map_.end()) {
     return runtime_iter->second.get();
@@ -91,6 +96,21 @@ KernelRuntime *KernelRuntimeManager::GetKernelRuntime(const std::string &device_
   }
 
   return kernel_runtime.get();
+}
+
+void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id) {
+  std::string runtime_key = GetDeviceKey(device_name, device_id);
+  std::lock_guard<std::mutex> guard(lock_);
+  auto runtime_iter = runtime_map_.find(runtime_key);
+  if (runtime_iter == runtime_map_.end()) {
+    return;
+  }
+  auto runtime = runtime_iter->second.get();
+  if (runtime == nullptr) {
+    return;
+  }
+  runtime->ReleaseDeviceRes();
+  runtime_map_.erase(runtime_iter);
 }
 }  // namespace device
 }  // namespace mindspore

@@ -22,10 +22,10 @@
 #include <utility>
 #include <memory>
 #include <map>
-
 #include "utils/base_ref_extends.h"
 #include "backend/session/session_context.h"
 #include "backend/session/kernel_graph.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/any.h"
@@ -49,8 +49,8 @@ using AnyListPtr = std::shared_ptr<AnyList>;
 
 using OpRunInfo = pynative::OpExecInfo;
 using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
-
-class SessionBasic {
+class Executor;
+class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
  public:
   SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
 #ifdef ENABLE_DEBUGGER
@@ -59,6 +59,12 @@ class SessionBasic {
   }
 
   virtual void Init(uint32_t device_id) { device_id_ = device_id; }
+
+  void InitDevice(const std::string &device_name, uint32_t device_id);
+
+  virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
+                                   VectorRef *outputs,
+                                   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
 
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
@@ -69,12 +75,19 @@ class SessionBasic {
 
   virtual void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) = 0;
 
-  virtual void BuildOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
-                       const std::vector<int> &tensors_mask) {}
+  virtual void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {}
 
-  virtual py::tuple RunOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors) {
-    return py::tuple();
-  }
+  virtual void RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                     const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
+
+  GraphId CompileGraphAsync(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  GraphId CompileGraphAsync(NotNull<FuncGraphPtr> func_graph);
+  void BuildGraphAsync(GraphId graphId);
+  void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
+  void BuildOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
+                    const std::vector<int> &tensors_mask);
+  py::tuple RunOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
@@ -116,9 +129,11 @@ class SessionBasic {
   void CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs);
 
  protected:
-  virtual void SetSummaryNodes(KernelGraph *graph);
   // Get graph by graph id ,if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;
+
+  virtual void SetSummaryNodes(KernelGraph *graph);
+
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const;
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
@@ -132,8 +147,6 @@ class SessionBasic {
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
                                                       const std::vector<int> &tensors_mask);
-  // trans BaseRef list to py::tuple
-  BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, bool valid_input, KernelGraph *graph);
@@ -152,6 +165,7 @@ class SessionBasic {
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
   uint32_t device_id_;
+  std::shared_ptr<Executor> executor_;
 #ifdef ENABLE_DEBUGGER
   std::shared_ptr<Debugger> debugger_;
 #endif

@@ -94,7 +94,18 @@ std::string GetRankId() {
 
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
+void AscendKernelRuntime::SetContext() {
+  if (rt_context_ == nullptr) {
+    return;
+  }
+  auto ret = rtCtxSetCurrent(rt_context_);
+  if (ret != RT_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+  }
+}
+
 void AscendKernelRuntime::ClearGraphModelMap() {
+  SetContext();
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
     auto &data_dumper = iter.second;
@@ -118,6 +129,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
                                                     const std::unordered_set<ValueNodePtr> &,
                                                     const std::vector<CNodePtr> &) {
+  SetContext();
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     MS_LOG(DEBUG) << "Unload dump info " << graph_id;
@@ -156,6 +168,10 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
 
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
+  if (!initialized_) {
+    return;
+  }
+  SetContext();
   // release ge runtime
   ClearGraphModelMap();
 
@@ -438,6 +454,7 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
 }
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
+  SetContext();
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
   }
@@ -494,6 +511,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
+  SetContext();
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "Null pointer graph, LoadTask failed. ";
   }
@@ -586,6 +604,7 @@ void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
 }
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
+  SetContext();
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
 
@@ -613,6 +632,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::SyncStream() {
+  SetContext();
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
@@ -649,12 +669,7 @@ bool AscendKernelRuntime::InitDevice() {
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
   }
-
-  ret = rtCtxSetCurrent(rt_context_);
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
-  }
-
+  SetContext();
   ret = rtStreamCreate(&stream_, 0);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
@@ -664,14 +679,9 @@ bool AscendKernelRuntime::InitDevice() {
 }
 
 bool AscendKernelRuntime::ResetDevice() {
-  auto ret = rtCtxSetCurrent(rt_context_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtCtxSetCurrent failed";
-    return false;
-  }
-
+  SetContext();
   if (stream_ != nullptr) {
-    ret = rtStreamDestroy(stream_);
+    auto ret = rtStreamDestroy(stream_);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
     }
@@ -679,7 +689,7 @@ bool AscendKernelRuntime::ResetDevice() {
   }
 
   if (rt_context_ != nullptr) {
-    ret = rtCtxDestroy(rt_context_);
+    auto ret = rtCtxDestroy(rt_context_);
     if (ret != RT_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call rtCtxDestroy, ret[" << ret << "]";
     }

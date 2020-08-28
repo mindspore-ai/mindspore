@@ -54,9 +54,9 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
   GraphId graph_id = kInvalidGraphId;
   if (target != target_device_ && !target.empty()) {
     CreateOtherSession(target);
-    graph_id = other_sess_->CompileGraph(lst, outputs);
+    graph_id = other_sess_->CompileGraphAsync(lst, outputs);
   } else {
-    graph_id = target_sess_->CompileGraph(lst, outputs);
+    graph_id = target_sess_->CompileGraphAsync(lst, outputs);
   }
 
   if (MsContext::GetInstance()->precompile_only()) {
@@ -64,9 +64,9 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
     return result;
   }
   if (target != target_device_ && !target.empty()) {
-    other_sess_->BuildGraph(graph_id);
+    other_sess_->BuildGraphAsync(graph_id);
   } else if (!is_multi_graph_sink_) {
-    target_sess_->BuildGraph(graph_id);
+    target_sess_->BuildGraphAsync(graph_id);
   }
   result.run = std::make_shared<RunFunc>(
     [graph_id, target, this](const VectorRef &args) -> VectorRef { return MsRunGraph(graph_id, args, target); });
@@ -137,9 +137,9 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   VectorRef outputs;
   // call ms rungraph (graphId, input ,output)
   if (target != target_device_ && !target.empty()) {
-    other_sess_->RunGraph(g, inputs, &outputs);
+    other_sess_->RunGraphAsync(g, inputs, &outputs);
   } else {
-    target_sess_->RunGraph(g, inputs, &outputs);
+    target_sess_->RunGraphAsync(g, inputs, &outputs);
   }
 
   MS_LOG(DEBUG) << "RunGraph finished:" << outputs.size();
@@ -150,7 +150,7 @@ void MsBackend::Link(GraphId graph_id) {
   if (graph_id == kInvalidGraphId) {
     graph_id = target_sess_->GetFinalRunGraph();
   }
-  target_sess_->BuildGraph(graph_id);
+  target_sess_->BuildGraphAsync(graph_id);
 }
 
 Backend::Backend(const std::string &name) : name_(name) {
@@ -186,7 +186,7 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   other_device_ = target;
 }
 
-GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraph(fg); }
+GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraphAsync(fg); }
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
 

@@ -29,7 +29,7 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/session_factory.h"
 #include "backend/session/ascend_control_parser.h"
-#include "runtime/device/ascend/ascend_memory_pool.h"
+#include "runtime/context.h"
 
 namespace mindspore {
 namespace session {
@@ -38,10 +38,17 @@ enum GraphType : int { COMMON_GRAPH = 0, CONDITION_GRAPH = 1, BRANCH_START = 2, 
 class AscendSession : public SessionBasic {
  public:
   AscendSession() { final_graph_id_ = kInvalidGraphId; }
-  ~AscendSession() override { mindspore::device::ascend::AscendMemoryPool::GetInstance().ResetIdleMemBuf(); }
+  ~AscendSession() override = default;
   void Init(uint32_t device_id) override {
-    SessionBasic::Init(device_id);
-    context_ = std::make_shared<Context>(kAscendDevice, device_id);
+    InitDevice(kAscendDevice, device_id);
+    auto ret = rtCtxCreate(&rt_context_, 0, device_id);
+    if (ret != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
+    }
+    ret = rtCtxSetCurrent(rt_context_);
+    if (ret != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+    }
   }
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
@@ -49,8 +56,8 @@ class AscendSession : public SessionBasic {
   void BuildGraph(GraphId) override;
   void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
-  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                  const std::vector<tensor::TensorPtr> &input_tensors) override;
+  void RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+             const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
 
   // get graph id in child graphs by ME front anf node pointer
   GraphId GetGraphIdByNode(const AnfNodePtr &front_anf) const override;
@@ -121,6 +128,8 @@ class AscendSession : public SessionBasic {
   std::map<std::pair<GraphId, size_t>, tensor::TensorPtr> initial_tenosrs_;
   // final_graph_id is used in every root graph has it's own session situation
   GraphId final_graph_id_;
+  // ascend runtime context
+  rtContext_t rt_context_{nullptr};
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session
