@@ -21,6 +21,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/reshape.h"
+#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 class TestReshapeOpenCL : public mindspore::CommonTest {
@@ -28,29 +29,27 @@ class TestReshapeOpenCL : public mindspore::CommonTest {
   TestReshapeOpenCL() {}
 };
 
-TEST_F(TestReshapeOpenCL, ReshapeFp32) {
+void RunTestCaseReshape(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
-  int c = 63;
-  size_t input_size;
-  std::string input_path = "./test_data/reshape/reshape_fp32_input.bin";
-  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
+  size_t dtype_size = sizeof(float);
+  if (enable_fp16) {
+    ocl_runtime->SetFp16Enable(true);
+    dtype_size = sizeof(float16_t);
   }
+  auto allocator = ocl_runtime->GetAllocator();
+  int c = shape[0];
   std::vector<int> input_shape = {1, 1, 1, c};
-  auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC);
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape, schema::Format_NHWC);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
   std::vector<int> out_shape = {1, c};
-  auto tensor_out_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape, schema::Format_NC);
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape, schema::Format_NC);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -76,36 +75,36 @@ TEST_F(TestReshapeOpenCL, ReshapeFp32) {
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->Data(), input_data, c * dtype_size);
   pGraph->Run();
 
-  size_t output_size;
-  std::string output_path = "./test_data/reshape/reshape_fp32_output.bin";
-  auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
-  if (correct_data == nullptr) {
-    MS_LOG(ERROR) << "correct_data create error.";
-    return;
+  if (enable_fp16) {
+    CompareOutput(outputs[0]->Data(), output_data, c, static_cast<float16_t>(1e-3), 2e-2);
+  } else {
+    CompareOutput(outputs[0]->Data(), output_data, c, static_cast<float>(1e-5));
   }
-  printf("==================output data=================\n");
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
-  std::cout << std::endl;
-  int size_n = c;
-  size_n = size_n > 100 ? 100 : size_n;
-  for (int i = 0; i < size_n; i++) {
-    std::cout << output_data[i] << " ";
-    if ((i + 1) % c == 0) {
-      std::cout << std::endl;
-    }
-  }
-  std::cout << std::endl;
-
-  // compare
-  CompareOutputData(output_data, correct_data, c, 0.00001);
-
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
 
   MS_LOG(INFO) << "Test ReshapeFp32 passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestReshapeOpenCL, ReshapeFp32) {
+  int c = 7;
+  std::vector<int> shape = {c};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
+  std::vector<float> output_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
+
+  RunTestCaseReshape(shape, input_data.data(), output_data.data(), false);
+}
+
+TEST_F(TestReshapeOpenCL, ReshapeFp16) {
+  int c = 7;
+  std::vector<int> shape = {c};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
+  std::vector<float16_t> output_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
+
+  RunTestCaseReshape(shape, input_data.data(), output_data.data(), true);
 }
 }  // namespace mindspore

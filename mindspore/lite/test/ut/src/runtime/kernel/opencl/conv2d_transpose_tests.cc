@@ -31,14 +31,14 @@ class TestConv2dTransposeOpenCL : public mindspore::CommonTest {
 };
 
 void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data, void *weight_data, void *bias_data,
-                                void *output_data, bool fp16) {
+                                void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->Init();
   size_t dtype_size = sizeof(float);
-  if (fp16) {
+  if (enable_fp16) {
     ocl_runtime->SetFp16Enable(true);
     dtype_size = sizeof(float16_t);
   }
-  ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
   int pad = shape[0];
   int n = shape[1];
@@ -52,7 +52,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   int ow = 2 * w - 1 + 2 * (kw - 1 - pad) - kw + 1;
   std::vector<int> input_shape = {n, h, w, ci};
   auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape);
+    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
@@ -61,7 +61,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   std::vector<int> weight_shape = {co, kh, kw, ci};
   auto tensor_w_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), weight_shape);
+    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), weight_shape);
   auto tensor_w = tensor_w_ptr.get();
   if (tensor_w == nullptr) {
     MS_LOG(ERROR) << "tensor_w create error.";
@@ -71,7 +71,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   std::vector<int> bias_shape = {co};
   auto tensor_bias_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), bias_shape);
+    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), bias_shape);
   auto tensor_bias = tensor_bias_ptr.get();
   if (tensor_bias == nullptr) {
     MS_LOG(ERROR) << "tensor_bias create error.";
@@ -81,7 +81,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
 
   std::vector<int> out_shape = {1, oh, ow, co};
   auto tensor_out_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape);
+    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -126,7 +126,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   pGraph->Init();
   memcpy(inputs[0]->Data(), input_data, n * h * w * ci * dtype_size);
   pGraph->Run();
-  if (fp16) {
+  if (enable_fp16) {
     CompareOutput(outputs[0]->Data(), output_data, n * oh * ow * co, static_cast<float16_t>(1e-3), 2e-2);
   } else {
     CompareOutput(outputs[0]->Data(), output_data, n * oh * ow * co, static_cast<float>(1e-5));
@@ -137,7 +137,8 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path, bool fp16) {
+void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<std::string> file_path,
+                                bool enable_fp16) {
   size_t input_size;
   std::string input_path = file_path[0];
   auto input_data = mindspore::lite::ReadFile(input_path.c_str(), &input_size);
@@ -168,7 +169,7 @@ void RunTestCaseConv2dTranspose(const std::vector<int> shape, const std::vector<
     MS_LOG(ERROR) << "output_data load error.";
     return;
   }
-  RunTestCaseConv2dTranspose(shape, input_data, weight_data, bias_data, output_data, fp16);
+  RunTestCaseConv2dTranspose(shape, input_data, weight_data, bias_data, output_data, enable_fp16);
 }
 
 TEST_F(TestConv2dTransposeOpenCL, Conv2dTransposeFp32) {

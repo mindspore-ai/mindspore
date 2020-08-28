@@ -21,6 +21,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/transpose.h"
+#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 class TestTransposeOpenCL : public mindspore::CommonTest {
@@ -28,31 +29,29 @@ class TestTransposeOpenCL : public mindspore::CommonTest {
   TestTransposeOpenCL() {}
 };
 
-TEST_F(TestTransposeOpenCL, TransposeFp32) {
+void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
-  int h = 64;
-  int w = 1;
-  int c = 7360;
-  size_t input_size;
-  std::string input_path = "./test_data/transpose/transpose_fp32_input.bin";
-  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
+  size_t dtype_size = sizeof(float);
+  if (enable_fp16) {
+    ocl_runtime->SetFp16Enable(true);
+    dtype_size = sizeof(float16_t);
   }
+  auto allocator = ocl_runtime->GetAllocator();
+  int h = shape[0];
+  int w = shape[1];
+  int c = shape[2];
   std::vector<int> input_shape = {1, h, w, c};
-  auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NHWC);
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape, schema::Format_NHWC);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
   std::vector<int> out_shape = {1, c, h, w};
-  auto tensor_out_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape, schema::Format_NCHW);
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape, schema::Format_NCHW);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -78,8 +77,34 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->Data(), input_data, h * w * c * dtype_size);
   pGraph->Run();
+
+  if (enable_fp16) {
+    CompareOutput(outputs[0]->Data(), output_data, h * w * c, static_cast<float16_t>(1e-3), 2e-2);
+  } else {
+    CompareOutput(outputs[0]->Data(), output_data, h * w * c, static_cast<float>(1e-5));
+  }
+
+  inputs[0]->SetData(nullptr);
+  outputs[0]->SetData(nullptr);
+
+  MS_LOG(INFO) << "Test TransposeFp32 passed";
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+TEST_F(TestTransposeOpenCL, TransposeFp32) {
+  int h = 64;
+  int w = 1;
+  int c = 7360;
+  std::vector<int> shape = {h, w, c};
+  size_t input_size;
+  std::string input_path = "./test_data/transpose/transpose_fp32_input.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data load error.";
+    return;
+  }
 
   size_t output_size;
   std::string output_path = "./test_data/transpose/transpose_fp32_output.bin";
@@ -88,26 +113,17 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
     MS_LOG(ERROR) << "correct_data create error.";
     return;
   }
-  printf("==================output data=================\n");
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
-  std::cout << std::endl;
-  int size_n = h * w * c;
-  size_n = size_n > 100 ? 100 : size_n;
-  for (int i = 0; i < size_n; i++) {
-    std::cout << output_data[i] << " ";
-    if ((i + 1) % c == 0) {
-      std::cout << std::endl;
-    }
-  }
-  std::cout << std::endl;
+  RunTestTranspose(shape, input_data, correct_data, false);
+}
 
-  // compare
-  CompareOutputData(output_data, correct_data, h * w * c, 0.00001);
+TEST_F(TestTransposeOpenCL, TransposeFp16) {
+  int h = 4;
+  int w = 1;
+  int c = 3;
+  std::vector<int> shape = {h, w, c};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  std::vector<float16_t> output_data = {0.0f, 3.0f, 6.0f, 9.0f, 1.0f, 4.0f, 7.0f, 10.0f, 2.0f, 5.0f, 8.0f, 11.0f};
 
-  inputs[0]->SetData(nullptr);
-  outputs[0]->SetData(nullptr);
-
-  MS_LOG(INFO) << "Test TransposeFp32 passed";
-  lite::opencl::OpenCLRuntime::DeleteInstance();
+  RunTestTranspose(shape, input_data.data(), output_data.data(), true);
 }
 }  // namespace mindspore
