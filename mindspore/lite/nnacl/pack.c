@@ -487,9 +487,7 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int r
         for (int m = 0; m < ic4; m++) {
           int channel_block_stride = input_x_stride + m * C4NUM;
           int channel_block_offset = input_plane_offset + m * tile_num * C4NUM;
-          for (int k = 0; k < C4NUM; k++) {
-            (packed_input + channel_block_offset)[k] = (input_data + channel_block_stride)[k];
-          }
+          memcpy(packed_input + channel_block_offset, input_data + channel_block_stride, 4);
         }  // channel_block loop
       }    // kernel_w loop
     }      // kernel_h loop

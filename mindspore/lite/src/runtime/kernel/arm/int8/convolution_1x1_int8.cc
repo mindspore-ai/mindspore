@@ -68,7 +68,6 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
       matmul_func_ = nullptr;
     } else {
       support_optimize_ = true;
-      matmul_func_ = MatMulInt8_8x8_r;
     }
   } else {
     support_optimize_ = false;
