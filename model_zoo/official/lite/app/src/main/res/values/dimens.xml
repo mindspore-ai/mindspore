@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="ms_bottom_sheet_corner_radius">15dp</dimen>
+    <dimen name="ms_bottom_sheet_top_padding">8dp</dimen>
+
+    <dimen name="hor_text_view_text_margin_normal">15dp</dimen>
+    <dimen name="hor_text_view_text_margin_small">6dp</dimen>
+    <dimen name="hor_text_view_text_size">15sp</dimen>
+</resources>
