@@ -198,10 +198,16 @@ class TensorDataImpl : public TensorData {
     return data_.get();
   }
 
+  const void *const_data() const override {
+    // May return nullptr if data not initialized.
+    return data_.get();
+  }
+
   bool equals(const TensorData &other) const override {
     auto ptr = dynamic_cast<const TensorDataImpl<T> *>(&other);
     if (ptr == nullptr) {
-      return false;
+      // Not same type, compare data byte by byte.
+      return TensorData::equals(other);
     }
     if (ptr == this) {
       return true;

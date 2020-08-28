@@ -99,6 +99,11 @@ class TensorPy {
   // param data_type [TypeId] Data type of the tensor.
   static TensorPtr MakeTensor(const py::array &input, const TypePtr &data_type = nullptr);
 
+  // brief Create Tensor from a numpy array without copy.
+  //
+  // param input [py::array] Data value of the tensor.
+  static TensorPtr MakeTensorNoCopy(const py::array &input);
+
   static py::array SyncAsNumpy(const Tensor &tensor);
 
   static py::array AsNumpy(const Tensor &tensor);
