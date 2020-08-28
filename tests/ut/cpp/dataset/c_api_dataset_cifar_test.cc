@@ -107,3 +107,33 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
   std::shared_ptr<Dataset> ds = Cifar10("", RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestCifar10DatasetWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSampler.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCifar100DatasetWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithNullSampler.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestCifar100DatasetWithWrongSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithWrongSampler.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, RandomSampler(false, -10));
+  // Expect failure: sampler is not construnced correctly
+  EXPECT_EQ(ds, nullptr);
+}
