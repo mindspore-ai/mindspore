@@ -24,7 +24,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_CaffePReLU;
+using mindspore::schema::PrimitiveType_PReLU;
 
 namespace mindspore::kernel {
 namespace {
@@ -155,7 +155,7 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
     MS_LOG(ERROR) << "input param is nullptr!";
     return nullptr;
   }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Prelu);
+
   auto *kernel = new (std::nothrow) PReluCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PReluCPUKernel fail!";
@@ -171,5 +171,5 @@ kernel::LiteKernel *CpuPReluFp32KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CaffePReLU, CpuPReluFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PReLU, CpuPReluFp32KernelCreator)
 }  // namespace mindspore::kernel

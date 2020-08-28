@@ -75,8 +75,8 @@
 #include "src/ops/gather_nd.h"
 #include "src/ops/local_response_normalization.h"
 #include "src/ops/pad.h"
-#include "src/ops/prelu.h"
-#include "src/ops/caffe_p_relu.h"
+#include "src/ops/leaky_relu.h"
+#include "src/ops/p_relu.h"
 #include "src/ops/reverse_sequence.h"
 #include "src/ops/dedepthwise_conv2d.h"
 #include "src/ops/depthwise_conv2d.h"
@@ -233,7 +233,7 @@ OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *prim
 }
 
 OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::CaffePReLU *>(primitive);
+  auto param = dynamic_cast<const mindspore::lite::PReLU *>(primitive);
   PReluParameter *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
   if (prelu_param == nullptr) {
     MS_LOG(ERROR) << "malloc PReluParameter failed.";
@@ -246,7 +246,7 @@ OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive
 }
 
 OpParameter *PopulateLeakyReluParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = dynamic_cast<const mindspore::lite::Prelu *>(primitive);
+  auto param = dynamic_cast<const mindspore::lite::LeakyReLU *>(primitive);
   LeakyReluParameter *leaky_relu_param = reinterpret_cast<LeakyReluParameter *>(malloc(sizeof(LeakyReluParameter)));
   if (leaky_relu_param == nullptr) {
     MS_LOG(ERROR) << "malloc LeakyReluParameter failed.";
@@ -254,17 +254,14 @@ OpParameter *PopulateLeakyReluParameter(const mindspore::lite::PrimitiveC *primi
   }
   memset(leaky_relu_param, 0, sizeof(LeakyReluParameter));
   leaky_relu_param->op_parameter_.type_ = primitive->Type();
-  auto temp = param->GetSlope();
-  leaky_relu_param->slope_ = reinterpret_cast<float *>(malloc(temp.size() * sizeof(float)));
+  leaky_relu_param->slope_ = reinterpret_cast<float *>(malloc(sizeof(float)));
   if (leaky_relu_param->slope_ == nullptr) {
     MS_LOG(ERROR) << "malloc relu slope fail!";
     free(leaky_relu_param);
     return nullptr;
   }
-  for (size_t i = 0; i < temp.size(); i++) {
-    leaky_relu_param->slope_[i] = temp[i];
-  }
-  leaky_relu_param->slope_num_ = temp.size();
+  leaky_relu_param->slope_[0] = param->GetNegativeSlope();
+  leaky_relu_param->slope_num_ = 1;
   return reinterpret_cast<OpParameter *>(leaky_relu_param);
 }
 
@@ -1598,8 +1595,8 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_ScatterND] = PopulateScatterNDParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Squeeze] = PopulateSqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Split] = PopulateSplitParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_CaffePReLU] = PopulatePReLUParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_Prelu] = PopulateLeakyReluParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_PReLU] = PopulatePReLUParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_LeakyReLU] = PopulateLeakyReluParameter;
   populate_parameter_funcs_[schema::PrimitiveType_PriorBox] = PopulatePriorBoxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_QuantDTypeCast] = PopulateQuantDTypeCastParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;

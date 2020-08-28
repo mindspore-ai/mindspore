@@ -29,7 +29,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Prelu;
+using mindspore::schema::PrimitiveType_PReLU;
 
 namespace mindspore::kernel {
 
@@ -154,5 +154,5 @@ kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::tensor::Ten
   return kernel;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Prelu, OpenCLPReluKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PReLU, OpenCLPReluKernelCreator)
 }  // namespace mindspore::kernel

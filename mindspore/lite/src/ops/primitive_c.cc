@@ -72,8 +72,8 @@
 #include "src/ops/gather_nd.h"
 #include "src/ops/local_response_normalization.h"
 #include "src/ops/pad.h"
-#include "src/ops/prelu.h"
-#include "src/ops/caffe_p_relu.h"
+#include "src/ops/p_relu.h"
+#include "src/ops/leaky_relu.h"
 #include "src/ops/reverse_sequence.h"
 #include "src/ops/dedepthwise_conv2d.h"
 #include "src/ops/depthwise_conv2d.h"
@@ -346,10 +346,10 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new Minimum(primitive);
     case schema::PrimitiveType_StridedSlice:
       return new StridedSlice(primitive);
-    case schema::PrimitiveType_Prelu:
-      return new Prelu(primitive);
-    case schema::PrimitiveType_CaffePReLU:
-      return new CaffePReLU(primitive);
+    case schema::PrimitiveType_LeakyReLU:
+      return new (std::nothrow) LeakyReLU(primitive);
+    case schema::PrimitiveType_PReLU:
+      return new (std::nothrow) PReLU(primitive);
     case schema::PrimitiveType_Round:
       return new Round(primitive);
     case schema::PrimitiveType_Reverse:
@@ -554,10 +554,10 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
       return new Minimum(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_StridedSlice:
       return new StridedSlice(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_Prelu:
-      return new Prelu(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_CaffePReLU:
-      return new CaffePReLU(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_LeakyReLU:
+      return new (std::nothrow) LeakyReLU(const_cast<schema::Primitive *>(primitive));
+    case schema::PrimitiveType_PReLU:
+      return new (std::nothrow) PReLU(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Round:
       return new Round(const_cast<schema::Primitive *>(primitive));
     case schema::PrimitiveType_Reverse:
