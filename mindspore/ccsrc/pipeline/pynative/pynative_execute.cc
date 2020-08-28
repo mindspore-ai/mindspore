@@ -793,6 +793,20 @@ AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
   return node;
 }
 
+AnfNodePtr PynativeExecutor::GetParamNode(const py::object &obj) {
+  auto id = GetId(obj);
+  auto &param = graph_info_map_[curr_g_].param_map[id];
+  if (param.second.size() == 1 && param.second[0] == -1) {
+    return param.first;
+  }
+  auto para_node = param.first;
+  for (auto &idx : param.second) {
+    std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), para_node, NewValueNode(idx)};
+    para_node = curr_g_->NewCNode(tuple_get_item_inputs);
+  }
+  return para_node;
+}
+
 std::string PynativeExecutor::GetCellId(const py::object &cell, const py::args &args) {
   auto cell_id = GetId(cell);
   for (size_t i = 0; i < args.size(); i++) {
@@ -995,9 +1009,18 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
     graph_info_map_[g] = GraphInfo();
   }
   for (size_t i = 0; i < args.size(); i++) {
+    auto param = args[i];
     auto new_param = g->add_parameter();
-    std::string param_obj = GetId(args[i]);
-    graph_info_map_[g].param_map[param_obj] = new_param;
+    std::string param_obj = GetId(param);
+    if (py::isinstance<py::tuple>(param)) {
+      auto tuple = param.cast<py::tuple>();
+      auto tuple_size = static_cast<int>(tuple.size());
+      for (int j = 0; j < tuple_size; j++) {
+        set_param_map(curr_g_, GetId(tuple[j]), new_param, j);
+        SetTupleParam(tuple[j], new_param, std::vector<int>{j});
+      }
+    }
+    set_param_map(curr_g_, param_obj, new_param);
   }
 }
 
@@ -1028,16 +1051,16 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, bool op_mask) {
       auto value = py::cast<tensor::TensorPtr>(obj);
       free_param->set_default_param(value);
       MS_LOG(DEBUG) << "Top graph set free parameter " << obj_id;
-      graph_info_map_[df_builder_].param_map[obj_id] = free_param;
+      set_param_map(df_builder_, obj_id, free_param);
       return free_param;
     }
-    return graph_info_map_[df_builder_].param_map[obj_id];
+    return graph_info_map_[df_builder_].param_map[obj_id].first;
   }
 
   // if input is graph output
   if (graph_info_map_[curr_g_].param_map.count(obj_id) != 0) {
     // op(x, y)
-    node = graph_info_map_[curr_g_].param_map[obj_id];
+    node = GetParamNode(obj);
   } else if (graph_info_map_[curr_g_].obj_node_map.count(obj_id) != 0) {
     // out = op(op1(x, y))
     // out = op(cell1(x, y))
@@ -1081,6 +1104,19 @@ void PynativeExecutor::SetTupleOutput(const py::object &obj, const AnfNodePtr &c
       tmp.push_back(i);
       set_obj_node_map(curr_g_, GetId(tuple[i]), cnode, tmp);
       SetTupleOutput(tuple[i], cnode, tmp);
+    }
+  }
+}
+
+// for param ((a, (b, c)), d) need multi getitem
+void PynativeExecutor::SetTupleParam(const py::object &obj, const AnfNodePtr &para_node, std::vector<int> idx) {
+  if (py::isinstance<py::tuple>(obj)) {
+    auto tuple = obj.cast<py::tuple>();
+    for (int i = 0; i < static_cast<int>(tuple.size()); i++) {
+      std::vector<int> tmp = idx;
+      tmp.push_back(i);
+      set_param_map(curr_g_, GetId(tuple[i]), para_node, tmp);
+      SetTupleParam(tuple[i], para_node, tmp);
     }
   }
 }
@@ -1132,7 +1168,7 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
                                        const py::args &args) {
   AnfNodePtr output_node;
   if (graph_info_map_[curr_g_].param_map.count(out_id)) {
-    output_node = graph_info_map_[curr_g_].param_map[out_id];
+    output_node = GetParamNode(out);
   } else {
     output_node = GetObjNode(out);
   }
@@ -1186,7 +1222,7 @@ std::vector<AnfNodePtr> PynativeExecutor::GetWeightsArgs(const py::object &weigh
       auto param_id = GetId(param);
       AnfNodePtr para_node = nullptr;
       if (graph_info_map_[df_builder_].param_map.count(param_id)) {
-        para_node = graph_info_map_[df_builder_].param_map[param_id];
+        para_node = graph_info_map_[df_builder_].param_map[param_id].first;
       } else {
         auto name_attr = mindspore::parse::python_adapter::GetPyObjAttr(param, "name");
         if (py::isinstance<py::none>(name_attr)) {
