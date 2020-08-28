@@ -32,7 +32,7 @@ Primitive::Primitive(const std::string &name, const bool is_base, const PrimType
       has_signature_(false),
       prim_type_(prim_type),
       record_evaluate_add_attr_(false),
-      is_const_value_(false),
+      is_const_prim_(false),
       id_(MakeId()) {}
 
 Primitive::Primitive(const Primitive &prim)
@@ -43,7 +43,7 @@ Primitive::Primitive(const Primitive &prim)
       has_signature_(prim.has_signature_),
       prim_type_(prim.prim_type_),
       record_evaluate_add_attr_(false),
-      is_const_value_(false),
+      is_const_prim_(false),
       id_(prim.id_) {}
 
 abstract::AbstractBasePtr Primitive::ToAbstract() {

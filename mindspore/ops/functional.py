@@ -28,7 +28,7 @@ hastype = Primitive('hastype')
 cast = P.Cast()
 dtype = P.DType()
 isconstant = Primitive('is_constant')
-isconstant.set_is_const_value(True)
+isconstant.set_const_prim(True)
 
 issubclass_ = P.IsSubClass()
 isinstance_ = P.IsInstance()

@@ -147,7 +147,7 @@ def resolve_symbol(namespace, symbol):
         resolve_ = namespace[symbol]
 
         # list and dict is not hashable ,it can not be key for the map, just return the result
-        if isinstance(resolve_, (list, dict)):
+        if isinstance(resolve_, (tuple, list, dict)):
             return resolve_
 
         # dataclass may not be hashable
