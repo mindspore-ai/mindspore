@@ -59,7 +59,7 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
 
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
   // Create a Manifest Dataset
-  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", nullptr, {}, true);
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", RandomSampler(), {}, true);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -130,7 +130,7 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   std::vector<int> expected_label = {111, 222};
 
   // Create a Manifest Dataset
-  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", nullptr, map, true);
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", RandomSampler(), map, true);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -203,4 +203,13 @@ TEST_F(MindDataTestPipeline, TestManifestError) {
   // Create a Manifest Dataset with invalid usage
   std::shared_ptr<Dataset> ds1 = Manifest(file_path, "invalid_usage");
   EXPECT_EQ(ds1, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestManifestWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestWithNullSampler.";
+  std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
+  // Create a Manifest Dataset
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
 }

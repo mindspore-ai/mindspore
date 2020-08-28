@@ -191,8 +191,8 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 }
 
 // Function to create a ManifestDataset.
-std::shared_ptr<ManifestDataset> Manifest(std::string dataset_file, std::string usage,
-                                          std::shared_ptr<SamplerObj> sampler,
+std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage,
+                                          const std::shared_ptr<SamplerObj> &sampler,
                                           const std::map<std::string, int32_t> &class_indexing, bool decode) {
   auto ds = std::make_shared<ManifestDataset>(dataset_file, usage, sampler, class_indexing, decode);
 
@@ -211,7 +211,7 @@ std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::s
 // Function to overload "+" operator to concat two datasets
 std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
                                          const std::shared_ptr<Dataset> &datasets2) {
-  std::shared_ptr<ConcatDataset> ds = std::make_shared<ConcatDataset>(std::vector({datasets1, datasets2}));
+  std::shared_ptr<ConcatDataset> ds = std::make_shared<ConcatDataset>(std::vector({datasets2, datasets1}));
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -580,13 +580,6 @@ bool SchemaObj::from_json(nlohmann::json json_obj) {
 
 // OTHER FUNCTIONS
 
-// Helper function to create default RandomSampler.
-std::shared_ptr<SamplerObj> CreateDefaultSampler() {
-  const int32_t num_samples = 0;  // 0 means to sample all ids.
-  bool replacement = false;
-  return std::make_shared<RandomSamplerObj>(replacement, num_samples);
-}
-
 // Helper function to compute a default shuffle size
 Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
                           int64_t *shuffle_size) {
@@ -682,6 +675,36 @@ bool ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_sha
   return true;
 }
 
+// Helper function to validate dataset sampler parameter
+bool ValidateDatasetSampler(const std::string &dataset_name, const std::shared_ptr<SamplerObj> &sampler) {
+  if (sampler == nullptr) {
+    MS_LOG(ERROR) << dataset_name << ": Sampler is not constructed correctly, sampler: nullptr";
+    return false;
+  }
+  return true;
+}
+
+// Helper function to validate dataset input/output column parameter
+bool ValidateDatasetColumnParam(const std::string &dataset_name, const std::string &column_param,
+                                const std::vector<std::string> &columns) {
+  if (columns.empty()) {
+    MS_LOG(ERROR) << dataset_name << ":" << column_param << " should not be empty";
+    return false;
+  }
+  for (uint32_t i = 0; i < columns.size(); ++i) {
+    if (columns[i].empty()) {
+      MS_LOG(ERROR) << dataset_name << ":" << column_param << "[" << i << "] should not be empty";
+      return false;
+    }
+  }
+  std::set<std::string> columns_set(columns.begin(), columns.end());
+  if (columns_set.size() != columns.size()) {
+    MS_LOG(ERROR) << dataset_name << ":" << column_param << ": Every column name should not be same with others";
+    return false;
+  }
+  return true;
+}
+
 /* ####################################### Derived Dataset classes ################################# */
 
 // DERIVED DATASET CLASSES LEAF-NODE DATASETS
@@ -701,6 +724,9 @@ bool CelebADataset::ValidateParams() {
   if (!ValidateDatasetDirParam("CelebADataset", dataset_dir_)) {
     return false;
   }
+  if (!ValidateDatasetSampler("CelebADataset", sampler_)) {
+    return false;
+  }
   std::set<std::string> dataset_type_list = {"all", "train", "valid", "test"};
   auto iter = dataset_type_list.find(dataset_type_);
   if (iter == dataset_type_list.end()) {
@@ -714,11 +740,6 @@ bool CelebADataset::ValidateParams() {
 std::vector<std::shared_ptr<DatasetOp>> CelebADataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   RETURN_EMPTY_IF_ERROR(
@@ -736,17 +757,14 @@ std::vector<std::shared_ptr<DatasetOp>> CelebADataset::Build() {
 Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), sampler_(sampler) {}
 
-bool Cifar10Dataset::ValidateParams() { return ValidateDatasetDirParam("Cifar10Dataset", dataset_dir_); }
+bool Cifar10Dataset::ValidateParams() {
+  return ValidateDatasetDirParam("Cifar10Dataset", dataset_dir_) && ValidateDatasetSampler("Cifar10Dataset", sampler_);
+}
 
 // Function to build CifarOp for Cifar10
 std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
@@ -765,17 +783,15 @@ std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
 Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), sampler_(sampler) {}
 
-bool Cifar100Dataset::ValidateParams() { return ValidateDatasetDirParam("Cifar100Dataset", dataset_dir_); }
+bool Cifar100Dataset::ValidateParams() {
+  return ValidateDatasetDirParam("Cifar100Dataset", dataset_dir_) &&
+         ValidateDatasetSampler("Cifar100Dataset", sampler_);
+}
 
 // Function to build CifarOp for Cifar100
 std::vector<std::shared_ptr<DatasetOp>> Cifar100Dataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
@@ -987,6 +1003,9 @@ bool CocoDataset::ValidateParams() {
   if (!ValidateDatasetDirParam("CocoDataset", dataset_dir_)) {
     return false;
   }
+  if (!ValidateDatasetSampler("CocoDataset", sampler_)) {
+    return false;
+  }
   Path annotation_file(annotation_file_);
   if (!annotation_file.Exists()) {
     MS_LOG(ERROR) << "annotation_file is invalid or not exist";
@@ -1005,11 +1024,6 @@ bool CocoDataset::ValidateParams() {
 std::vector<std::shared_ptr<DatasetOp>> CocoDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   CocoOp::TaskType task_type;
   if (task_ == "Detection") {
@@ -1100,6 +1114,12 @@ bool CSVDataset::ValidateParams() {
     return false;
   }
 
+  if (!column_names_.empty()) {
+    if (!ValidateDatasetColumnParam("CSVDataset", "column_names", column_names_)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -1155,16 +1175,14 @@ ImageFolderDataset::ImageFolderDataset(std::string dataset_dir, bool decode, std
       class_indexing_(class_indexing),
       exts_(extensions) {}
 
-bool ImageFolderDataset::ValidateParams() { return ValidateDatasetDirParam("ImageFolderDataset", dataset_dir_); }
+bool ImageFolderDataset::ValidateParams() {
+  return ValidateDatasetDirParam("ImageFolderDataset", dataset_dir_) &&
+         ValidateDatasetSampler("ImageFolderDataset", sampler_);
+}
 
 std::vector<std::shared_ptr<DatasetOp>> ImageFolderDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler, i.e., RandomSampler.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   // Do internal Schema generation.
   // This arg is exist in ImageFolderOp, but not externalized (in Python API).
@@ -1180,7 +1198,8 @@ std::vector<std::shared_ptr<DatasetOp>> ImageFolderDataset::Build() {
   return node_ops;
 }
 
-ManifestDataset::ManifestDataset(std::string dataset_file, std::string usage, std::shared_ptr<SamplerObj> sampler,
+ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::string &usage,
+                                 const std::shared_ptr<SamplerObj> &sampler,
                                  const std::map<std::string, int32_t> &class_indexing, bool decode)
     : dataset_file_(dataset_file), usage_(usage), decode_(decode), class_index_(class_indexing), sampler_(sampler) {}
 
@@ -1188,6 +1207,9 @@ bool ManifestDataset::ValidateParams() {
   Path manifest_file(dataset_file_);
   if (!manifest_file.Exists()) {
     MS_LOG(ERROR) << "dataset file: [" << dataset_file_ << "] is invalid or not exist";
+    return false;
+  }
+  if (!ValidateDatasetSampler("ManifestDataset", sampler_)) {
     return false;
   }
 
@@ -1203,11 +1225,6 @@ bool ManifestDataset::ValidateParams() {
 std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
@@ -1228,16 +1245,13 @@ std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
 MnistDataset::MnistDataset(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir), sampler_(sampler) {}
 
-bool MnistDataset::ValidateParams() { return ValidateDatasetDirParam("MnistDataset", dataset_dir_); }
+bool MnistDataset::ValidateParams() {
+  return ValidateDatasetDirParam("MnistDataset", dataset_dir_) && ValidateDatasetSampler("MnistDataset", sampler_);
+}
 
 std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler, i.e., RandomSampler.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
@@ -1256,6 +1270,14 @@ bool RandomDataset::ValidateParams() {
   if (total_rows_ < 0) {
     MS_LOG(ERROR) << "RandomDataset: total_rows must be greater than 0, now get " << total_rows_;
     return false;
+  }
+  if (!ValidateDatasetSampler("RandomDataset", sampler_)) {
+    return false;
+  }
+  if (!columns_list_.empty()) {
+    if (!ValidateDatasetColumnParam("RandomDataset", "columns_list", columns_list_)) {
+      return false;
+    }
   }
   return true;
 }
@@ -1277,11 +1299,6 @@ std::vector<std::shared_ptr<DatasetOp>> RandomDataset::Build() {
 
   if (schema_obj != nullptr && total_rows_ == 0) {
     total_rows_ = schema_obj->get_num_rows();
-  }
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
   }
 
   std::string schema_json_string, schema_file_path;
@@ -1392,6 +1409,9 @@ bool VOCDataset::ValidateParams() {
     MS_LOG(ERROR) << "Invalid dataset path or no dataset path is specified.";
     return false;
   }
+  if (!ValidateDatasetSampler("VOCDataset", sampler_)) {
+    return false;
+  }
   if (task_ == "Segmentation") {
     if (!class_index_.empty()) {
       MS_LOG(ERROR) << "class_indexing is invalid in Segmentation task.";
@@ -1419,11 +1439,6 @@ bool VOCDataset::ValidateParams() {
 std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  // If user does not specify Sampler, create a default sampler based on the shuffle variable.
-  if (sampler_ == nullptr) {
-    sampler_ = CreateDefaultSampler();
-  }
 
   auto schema = std::make_unique<DataSchema>();
   VOCOp::TaskType task_type_;
@@ -1539,6 +1554,10 @@ bool ConcatDataset::ValidateParams() {
     MS_LOG(ERROR) << "Concat: concatenated datasets are not specified.";
     return false;
   }
+  if (find(datasets_.begin(), datasets_.end(), nullptr) != datasets_.end()) {
+    MS_LOG(ERROR) << "Concat: concatenated dataset should not be null.";
+    return false;
+  }
   return true;
 }
 
@@ -1586,6 +1605,21 @@ bool MapDataset::ValidateParams() {
     MS_LOG(ERROR) << "Map: No operation is specified.";
     return false;
   }
+  if (!input_columns_.empty()) {
+    if (!ValidateDatasetColumnParam("MapDataset", "input_columns", input_columns_)) {
+      return false;
+    }
+  }
+  if (!output_columns_.empty()) {
+    if (!ValidateDatasetColumnParam("MapDataset", "output_columns", output_columns_)) {
+      return false;
+    }
+  }
+  if (!project_columns_.empty()) {
+    if (!ValidateDatasetColumnParam("MapDataset", "project_columns", project_columns_)) {
+      return false;
+    }
+  }
 
   return true;
 }
@@ -1615,12 +1649,12 @@ RenameDataset::RenameDataset(const std::vector<std::string> &input_columns,
     : input_columns_(input_columns), output_columns_(output_columns) {}
 
 bool RenameDataset::ValidateParams() {
-  if (input_columns_.empty() || output_columns_.empty()) {
-    MS_LOG(ERROR) << "input and output columns must be specified";
+  if (input_columns_.size() != output_columns_.size()) {
+    MS_LOG(ERROR) << "RenameDataset: input and output columns must be the same size";
     return false;
   }
-  if (input_columns_.size() != output_columns_.size()) {
-    MS_LOG(ERROR) << "input and output columns must be the same size";
+  if (!ValidateDatasetColumnParam("RenameDataset", "input_columns", input_columns_) ||
+      !ValidateDatasetColumnParam("RenameDataset", "output_columns", output_columns_)) {
     return false;
   }
   return true;
@@ -1713,7 +1747,7 @@ std::vector<std::shared_ptr<DatasetOp>> TakeDataset::Build() {
 
 // Function to validate the parameters for TakeDataset
 bool TakeDataset::ValidateParams() {
-  if (take_count_ < 0 && take_count_ != -1) {
+  if (take_count_ <= 0 && take_count_ != -1) {
     MS_LOG(ERROR) << "Take: take_count should be either -1 or positive integer, take_count: " << take_count_;
     return false;
   }

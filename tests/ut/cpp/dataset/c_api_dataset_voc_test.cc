@@ -194,3 +194,13 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentationError1) {
   // Expect nullptr for segmentation task with class_index
   EXPECT_EQ(ds, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestVOCWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCWithNullSampler.";
+
+  // Create a VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Segmentation", "train", {}, false, nullptr);
+  // Expect failure: sampler can not be nullptr
+  EXPECT_EQ(ds, nullptr);
+}
