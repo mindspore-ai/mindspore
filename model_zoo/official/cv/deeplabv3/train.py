@@ -17,7 +17,8 @@ import argparse
 from mindspore import context
 from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
-from mindspore import Model, ParallelMode
+from mindspore import Model
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.callback import Callback, CheckpointConfig, ModelCheckpoint, TimeMonitor
 from src.md_dataset import create_dataset

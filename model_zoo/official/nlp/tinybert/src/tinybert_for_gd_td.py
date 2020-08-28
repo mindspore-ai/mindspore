@@ -26,7 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import get_group_size
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from .tinybert_model import BertModel, TinyBertModel, BertModelCLS
 

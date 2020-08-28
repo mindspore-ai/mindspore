@@ -24,7 +24,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
 from .bert_model import BertModel

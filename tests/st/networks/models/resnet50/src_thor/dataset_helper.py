@@ -16,7 +16,7 @@
 from mindspore._checkparam import check_bool
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _to_full_shapes
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 
 def _send_data(dataset):
     """Engine dataset to write data to tdt queue."""

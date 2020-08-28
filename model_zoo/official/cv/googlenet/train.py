@@ -28,7 +28,8 @@ from mindspore import context
 from mindspore.communication.management import init, get_rank
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.config import cifar_cfg as cfg

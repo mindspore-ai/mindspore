@@ -27,7 +27,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train.model import Model
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 
 

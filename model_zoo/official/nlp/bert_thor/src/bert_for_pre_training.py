@@ -27,7 +27,7 @@ from mindspore.ops import _selected_ops
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from .bert_model import BertModel
 from .config import cfg
 from .lr_generator import get_bert_damping

@@ -25,7 +25,7 @@ from mindspore.nn.optim import Adam, FTRL
 from mindspore.common.initializer import Uniform, initializer
 # from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
 import numpy as np

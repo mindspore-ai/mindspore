@@ -26,7 +26,8 @@ from mindspore.nn.optim import Adam, Lamb
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
-from mindspore import context, ParallelMode, Parameter
+from mindspore import context, Parameter
+from mindspore.context import ParallelMode
 from mindspore.communication import management as MultiAscend
 from mindspore.train.serialization import load_checkpoint
 

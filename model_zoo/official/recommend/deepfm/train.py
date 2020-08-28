@@ -19,7 +19,8 @@ import argparse
 import random
 import numpy as np
 
-from mindspore import context, ParallelMode
+from mindspore import context
+from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor

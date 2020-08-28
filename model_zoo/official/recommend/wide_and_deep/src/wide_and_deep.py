@@ -23,7 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam, FTRL, LazyAdam
 from mindspore.common.initializer import Uniform, initializer
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
 

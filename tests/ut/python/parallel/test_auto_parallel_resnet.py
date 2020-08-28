@@ -29,7 +29,8 @@ from mindspore.ops import operations as P
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as resset_op_id
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=0)

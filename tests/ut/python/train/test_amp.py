@@ -20,7 +20,8 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import amp
 from mindspore import nn
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 from mindspore.common import dtype as mstype
 from ....dataset_mock import MindData
 from mindspore.parallel._auto_parallel_context import auto_parallel_context

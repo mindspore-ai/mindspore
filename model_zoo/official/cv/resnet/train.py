@@ -22,7 +22,8 @@ from mindspore import Tensor
 from mindspore import dataset as de
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager

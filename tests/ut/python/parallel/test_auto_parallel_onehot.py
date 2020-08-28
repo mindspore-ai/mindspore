@@ -23,7 +23,8 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 

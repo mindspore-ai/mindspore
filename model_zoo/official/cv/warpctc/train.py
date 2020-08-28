@@ -21,7 +21,8 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import dataset as de
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.nn.wrap import WithLossCell
 from mindspore.train.callback import TimeMonitor, LossMonitor, CheckpointConfig, ModelCheckpoint
 from mindspore.communication.management import init, get_group_size, get_rank

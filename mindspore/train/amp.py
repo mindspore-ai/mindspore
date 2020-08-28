@@ -23,7 +23,7 @@ from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..ops import functional as F
 from ..parallel._utils import _get_parallel_mode
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
-from .parallel_utils import ParallelMode
+from ..context import ParallelMode
 from .. import context
 
 __all__ = ["build_train_network"]

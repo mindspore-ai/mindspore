@@ -18,7 +18,7 @@ import time
 import argparse
 import datetime
 
-from mindspore import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore.nn.optim.momentum import Momentum
 from mindspore import Tensor
 import mindspore.nn as nn

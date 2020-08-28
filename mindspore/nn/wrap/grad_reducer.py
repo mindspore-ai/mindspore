@@ -251,8 +251,9 @@ class DistributedGradReducer(Cell):
         >>> from mindspore.ops import operations as P
         >>> from mindspore.ops import functional as F
         >>> from mindspore import context
+        >>> from mindspore.context import ParallelMode
         >>> from mindspore import nn
-        >>> from mindspore import ParallelMode, ParameterTuple
+        >>> from mindspore import ParameterTuple
         >>>
         >>> device_id = int(os.environ["DEVICE_ID"])
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,

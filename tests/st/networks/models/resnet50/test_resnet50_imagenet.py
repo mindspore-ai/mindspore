@@ -24,7 +24,8 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.communication.management import init
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 import mindspore.nn as nn

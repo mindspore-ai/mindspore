@@ -28,7 +28,8 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations.comm_ops import _VirtualDataset
 from mindspore.parallel import set_algo_parameters
-from mindspore.train import Model, ParallelMode
+from mindspore.train import Model
+from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 

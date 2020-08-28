@@ -25,7 +25,7 @@ from mindspore.common.api import _executor
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
-from mindspore.train.parallel_utils import ParallelMode
+from mindspore.context import ParallelMode
 
 
 class DenseMMNet(nn.Cell):
