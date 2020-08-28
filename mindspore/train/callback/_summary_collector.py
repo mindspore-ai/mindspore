@@ -259,7 +259,7 @@ class SummaryCollector(Callback):
         """Check specified data type and value."""
         if specified_data is None:
             if action:
-                return self._DEFAULT_SPECIFIED_DATA
+                return dict(self._DEFAULT_SPECIFIED_DATA)
             return dict()
 
         check_value_type('collect_specified_data', specified_data, [dict, type(None)])
