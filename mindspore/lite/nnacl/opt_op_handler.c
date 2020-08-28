@@ -37,7 +37,7 @@ void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int
                                        size_t ksize, size_t ic4, size_t output_channel, size_t offset,
                                        const int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,
                                        int32_t *out_multiplier, int32_t *shift_before, int32_t *shift_after,
-                                     size_t asymmetric, size_t per_channel) {
+                                       size_t asymmetric, size_t per_channel) {
   return IndirectGemmInt8_24x4_dp(dst, src, weight, bias, ksize, ic4, output_channel, offset, input_sum, act_min,
                                   act_max, out_zp, out_multiplier, shift_before, shift_after, asymmetric, per_channel);
 }
@@ -47,7 +47,7 @@ void MatMulR4Int8_optimize_handler(const int8_t *a, const int8_t *b, int *dst, i
   return MatMulOptR4Int8Neon64(a, b, dst, row4, col4, deep16, input_sum, bias);
 }
 
-void MatMulRInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
+void MatMulRInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                                   size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                                   int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini,
                                   int32_t maxi, bool per_channel) {

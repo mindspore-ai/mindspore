@@ -172,7 +172,7 @@ void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, 
 void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16,
                         bool suppport_opt) {
   /* optimize normal -> same layout */
-  PackInputSum16x4PerLater(src, dst, filter_zp, row4, col16);
+  PackInputSum16x4PerLayer(src, dst, filter_zp, row4, col16);
   return;
 }
 
