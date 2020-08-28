@@ -38,6 +38,8 @@ class DTypeTransPass : public GraphPass {
 
   void SetInputDataDType(TypeId dataType);
 
+  void SetOutputDataDType(TypeId dataType);
+
  private:
   STATUS DoModelInputDTypeTrans(schema::MetaGraphT *graph);
 
@@ -51,6 +53,7 @@ class DTypeTransPass : public GraphPass {
  private:
   size_t id;
   TypeId inputDataDType = TypeId::kNumberTypeFloat;
+  TypeId outputDataDType = TypeId::kNumberTypeFloat;
 
   OpDefCopyer castOpCopyer = [](schema::CNodeT *inCNode) -> std::unique_ptr<schema::CNodeT> {
     std::unique_ptr<schema::CNodeT> newCNode(new (std::nothrow) schema::CNodeT);

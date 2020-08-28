@@ -101,7 +101,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
 
 STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  if (inputDataDType == TypeId::kNumberTypeInt8) {
+  if (outputDataDType == TypeId::kNumberTypeInt8) {
     return RET_OK;
   }
   MS_ASSERT(inputDataDType == TypeId::kNumberTypeFloat);
@@ -231,5 +231,8 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
 }
 
 void DTypeTransPass::SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }
+
+void DTypeTransPass::SetOutputDataDType(TypeId dataType) { this->outputDataDType = dataType; }
+
 }  // namespace lite
 }  // namespace mindspore
