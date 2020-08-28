@@ -19,14 +19,16 @@
 #include "nnacl/op_base.h"
 #include "nnacl/quantization/quantize.h"
 
+typedef enum PoolMode { PoolMode_No, PoolMode_MaxPool, PoolMode_AvgPool } PoolMode;
+
+typedef enum RoundMode { RoundMode_No, RoundMode_Ceil, RoundMode_Floor } RoundMode;
+
 typedef struct PoolingParameter {
   OpParameter op_parameter_;
+  PoolMode pool_mode_;
+  RoundMode round_mode_;
+  ActType act_type_;
   QuantArg **quant_args_;
-  bool global_;
-  bool max_pooling_;
-  bool avg_pooling_;
-  bool round_ceil_;
-  bool round_floor_;
   int window_w_;
   int window_h_;
   int input_w_;
@@ -44,7 +46,8 @@ typedef struct PoolingParameter {
   int stride_w_;
   int stride_h_;
   int thread_num_;
-  ActType act_type_;
+  bool global_;
+  bool quantize_;
 } PoolingParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_POOLING_PARAMETER_H_

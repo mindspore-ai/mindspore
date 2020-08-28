@@ -43,13 +43,13 @@ int PoolingOpenCLKernel::Init() {
   std::string source;
   std::string program_name;
 #endif
-  if (parameter_->max_pooling_) {
+  if (parameter_->pool_mode_ == PoolMode_MaxPool) {
     kernel_name = "MaxPooling2d";
 #ifndef PROGRAM_WITH_IL
     source = max_pool2d_source;
     program_name = "MaxPooling2d";
 #endif
-  } else if (parameter_->avg_pooling_) {
+  } else if (parameter_->pool_mode_ == PoolMode_AvgPool) {
     kernel_name = "AvgPooling2d";
 #ifndef PROGRAM_WITH_IL
     source = avg_pool2d_source;

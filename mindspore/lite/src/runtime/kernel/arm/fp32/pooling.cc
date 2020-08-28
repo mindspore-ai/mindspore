@@ -52,7 +52,7 @@ int PoolingCPUKernel::ReSize() {
 int PoolingCPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
-  if (pooling_param_->max_pooling_) {
+  if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
     switch (pooling_param_->act_type_) {
       case ActType_Relu:
         MaxPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);

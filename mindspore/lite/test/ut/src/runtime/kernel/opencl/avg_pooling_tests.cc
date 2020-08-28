@@ -48,8 +48,7 @@ void InitAvgPoolingParam(PoolingParameter *param) {
   param->pad_l_ = 0;
   param->pad_r_ = 0;
 
-  param->max_pooling_ = false;
-  param->avg_pooling_ = true;
+  param->pool_mode_ = PoolMode_AvgPool;
 }
 
 TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {

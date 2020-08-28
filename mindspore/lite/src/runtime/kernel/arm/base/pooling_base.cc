@@ -42,6 +42,12 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   pooling_quant_arg_[1][0].scale_ = out_quant_arg.front().scale;
   pooling_quant_arg_[1][0].zp_ = out_quant_arg.front().zeroPoint;
   pooling_param_->quant_args_ = pooling_quant_arg_;
+  if (pooling_quant_arg_[0][0].scale_ == pooling_quant_arg_[1][0].scale_ &&
+      pooling_quant_arg_[0][0].zp_ == pooling_quant_arg_[1][0].zp_) {
+    pooling_param_->quantize_ = false;
+  } else {
+    pooling_param_->quantize_ = true;
+  }
   return RET_OK;
 }
 

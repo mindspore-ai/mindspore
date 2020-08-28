@@ -26,7 +26,7 @@
 #include "nnacl/fp32_grad/pooling_grad.h"
 
 namespace mindspore {
-class TestPoolingGradFp32 :  public mindspore::CommonTest {
+class TestPoolingGradFp32 : public mindspore::CommonTest {
  public:
   TestPoolingGradFp32() {}
 };
@@ -161,8 +161,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   auto pooling_param = new PoolingParameter();
   InitPoolingParamFP32(pooling_param);
   pooling_param->output_channel_ = 3;
-  pooling_param->avg_pooling_ = false;
-  pooling_param->max_pooling_ = true;
+  pooling_param->pool_mode_ = PoolMode_MaxPool;
   // runtime part
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
@@ -215,8 +214,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolingKernelGradFp32) {
   // prepare stage
   auto maxpool = new PoolingParameter();
   InitPoolingParamFP32(maxpool);
-  maxpool->avg_pooling_ = false;
-  maxpool->max_pooling_ = true;
+  maxpool->pool_mode_ = PoolMode_MaxPool;
   maxpool->input_h_ = 30;
   maxpool->input_w_ = 30;
   maxpool->input_channel_ = 3;
@@ -268,8 +266,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolingKernelGradFp32) {
 
   auto pooling_param = new PoolingParameter();
   InitPoolingParamFP32(pooling_param);
-  pooling_param->avg_pooling_ = false;
-  pooling_param->max_pooling_ = true;
+  pooling_param->pool_mode_ = PoolMode_MaxPool;
   pooling_param->input_h_ = 10;
   pooling_param->input_w_ = 10;
   pooling_param->input_channel_ = 3;

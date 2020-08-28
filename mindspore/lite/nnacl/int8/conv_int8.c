@@ -264,7 +264,8 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight, c
   int output_tile_count = UP_DIV(output_count, tile_n);
   int ic4 = UP_DIV(in_channel, C4NUM);
   int kernel_plane = kernel_h * kernel_w;
-  int unit_size = kernel_plane * ic4 * C4NUM;
+  int plane_block = UP_DIV(kernel_plane, C4NUM);
+  int unit_size = plane_block * C4NUM * ic4 * C4NUM;
   int packed_input_size = output_tile_count * tile_n * unit_size;
   int input_sum_offset;
   if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
