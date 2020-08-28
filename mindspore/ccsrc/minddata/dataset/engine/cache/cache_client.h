@@ -52,6 +52,8 @@ class CacheClient {
       prefetch_size_ = 20;  // rows_per_buf is too small (1 by default).
     }
 
+    ~Builder() = default;
+
     /// Setter function to set the session id
     /// \param session_id
     /// \return Builder object itself.

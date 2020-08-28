@@ -49,6 +49,8 @@ class CacheServer : public Service {
    public:
     Builder() : top_("/tmp"), num_workers_(32), port_(50052), shared_memory_sz_in_gb_(4) {}
 
+    ~Builder() = default;
+
     /// \brief Getter functions
     const std::string &getTop() const { return top_; }
     int32_t getNumWorkers() const { return num_workers_; }

@@ -42,6 +42,8 @@ class PyDSCallback : public DSCallback {
         epoch_end_needed_(false),
         step_end_needed_(false) {}
 
+  ~PyDSCallback() = default;
+
   void setBegin(py::function f);
   void setEnd(py::function f);
   void setEpochBegin(py::function f);

@@ -35,6 +35,8 @@ class CallbackManager {
   /// \brief CallbackManager default constructor. Init needs to be called before using the created instance.
   CallbackManager() : enabled_(false) {}
 
+  ~CallbackManager() = default;
+
   /// \brief
   /// \param [in] callbacks list of callbacks to perform
   void AddCallbacks(std::vector<std::shared_ptr<DSCallback>> callbacks);
