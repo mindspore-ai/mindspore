@@ -15,7 +15,6 @@ add_library(caffe_parser_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_model_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_node_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_node_parser_registry.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_parse_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_pooling_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_power_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_prelu_parser.cc

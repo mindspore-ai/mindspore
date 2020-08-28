@@ -27,7 +27,6 @@
 #include <vector>
 #include "src/ops/primitive_c.h"
 #include "frontend/operator/ops.h"
-#include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "include/errorcode.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -37,6 +36,7 @@
 #include "src/param_value_lite.h"
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "utils/log_adapter.h"
+#include "tools/common/protobuf_utils.h"
 
 using string = std::string;
 using int32 = int32_t;
@@ -651,31 +651,11 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 }
 
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
-  std::unique_ptr<char[]> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
-#ifdef _WIN32
-  if (_fullpath(onnx_file.get(), model_path.c_str(), 1024) == nullptr) {
-    MS_LOG(ERROR) << "open file failed.";
-    return nullptr;
-  }
-#else
-  if (realpath(model_path.c_str(), onnx_file.get()) == nullptr) {
-    MS_LOG(ERROR) << "open file failed.";
-    return nullptr;
-  }
-#endif
-  int fd = open(onnx_file.get(), O_RDONLY);
-  google::protobuf::io::FileInputStream input(fd);
-  google::protobuf::io::CodedInputStream code_input(&input);
-  code_input.SetTotalBytesLimit(INT_MAX, 536870912);
   auto onnx_model = new onnx::ModelProto;
-  bool ret = onnx_model->ParseFromCodedStream(&code_input);
-  if (!ret) {
-    MS_LOG(ERROR) << "load onnx file failed";
-    delete onnx_model;
+  if (ReadProtoFromBinaryFile((const char *)model_path.c_str(), onnx_model) != RET_OK) {
+    MS_LOG(ERROR) << "Read onnx model file failed, model path: " << model_path;
     return nullptr;
   }
-  (void)close(fd);
-  MS_LOG(INFO) << "enter ReadProtoFromBinary success!" << std::endl;
   return onnx_model;
 }
 
