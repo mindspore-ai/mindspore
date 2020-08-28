@@ -164,7 +164,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       for (size_t j = 0; j < input_tensors.size(); ++j) {
         input_tensors[j]->SetFormat(schema::Format_NHWC);
         if (input_tensors[j]->shape().size() == 4) {
-          MS_LOG(WARNING) << "init input_tensor format to nhwc";
+          MS_LOG(INFO) << "init input_tensor format to nhwc";
         }
       }
       lite_primitive->InferShape(input_tensors, output_tensors);

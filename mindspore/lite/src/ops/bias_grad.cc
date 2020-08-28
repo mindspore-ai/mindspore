@@ -24,7 +24,25 @@ std::vector<int> BiasGrad::GetAxis() const { return this->primitive_->value.AsBi
 void BiasGrad::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsBiasGrad()->axis = axis; }
 
 #else
-
+int BiasGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_BiasGrad();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_BiasGrad return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateBiasGradDirect(*fbb, &axis);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_BiasGrad, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 std::vector<int> BiasGrad::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_BiasGrad()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());

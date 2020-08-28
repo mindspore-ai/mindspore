@@ -39,7 +39,31 @@ std::vector<int> Tile::GetDims() const {
   auto fb_vector = this->primitive_->value_as_Tile()->dims();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
+int Tile::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Tile();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Tile return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> multiples;
+  if (attr->multiples() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->multiples()->size()); i++) {
+      multiples.push_back(attr->multiples()->data()[i]);
+    }
+  }
+  std::vector<int32_t> dims;
+  if (attr->dims() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->dims()->size()); i++) {
+      dims.push_back(attr->dims()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateTileDirect(*fbb, &multiples, &dims);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Tile, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Tile::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

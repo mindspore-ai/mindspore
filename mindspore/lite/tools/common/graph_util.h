@@ -88,17 +88,6 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
 
 STATUS ValidateFileStr(const std::string &modelFile, std::string fileType);
 std::string GetModelName(const std::string &modelFile);
-
-class OpGraphT : public OpGraph<OpNode> {
- public:
-  OpGraphT() {}
-  ~OpGraphT();
-  static OpGraphT *Build(const schema::MetaGraphT *subGraphDef);
-
- private:
-  int AddEdge(NODE_ID srcId, NODE_ID dstId);
-  int AddEdge(const schema::CNodeT *srcNodeDef, const std::vector<std::unique_ptr<schema::CNodeT>> *nodeDefs);
-};
 }  // namespace lite
 }  // namespace mindspore
 

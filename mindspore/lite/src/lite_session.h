@@ -87,6 +87,7 @@ class LiteSession : public session::LiteSession {
   Context *context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels_;
   std::vector<tensor::Tensor *> tensors_;
+  std::vector<size_t> copyed_tensor_idxes_;
   // graph input tensors
   std::vector<tensor::Tensor *> inputs_;
   // graph output tensors

@@ -48,6 +48,15 @@ int MakeTuple::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
   }
   return RET_OK;
 }
+#else
+int MakeTuple::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto val_offset = schema::CreateMakeTuple(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_MakeTuple, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

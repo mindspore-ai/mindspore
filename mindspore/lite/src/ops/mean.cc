@@ -33,6 +33,26 @@ std::vector<int> Mean::GetAxis() const {
 }
 bool Mean::GetKeepDims() const { return this->primitive_->value_as_Mean()->keepDims(); }
 
+int Mean::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Mean();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Mean return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateMeanDirect(*fbb, &axis, attr->keepDims());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Mean, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 
 namespace {

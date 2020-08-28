@@ -35,30 +35,9 @@ class FusedBatchNorm : public PrimitiveC {
   void SetMomentum(float momentum);
   void SetSpatial(int spatial);
 #else
-  explicit FusedBatchNorm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  FusedBatchNorm() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_FusedBatchNorm();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateFusedBatchNorm(fbb, attr->epsilon(), attr->momentum(), attr->spatial());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_FusedBatchNorm, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetEpsilon() const;
   float GetMomentum() const;

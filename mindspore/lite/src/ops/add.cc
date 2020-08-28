@@ -50,7 +50,19 @@ int Add::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
 }
 
 #else
-
+int Add::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Add();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Add return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateAdd(*fbb, attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Add, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Add::GetActivationType() const { return this->primitive_->value_as_Add()->activationType(); }
 
 #endif

@@ -58,6 +58,20 @@ int Mul::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
 
 int Mul::GetActivationType() const { return this->primitive_->value_as_Mul()->activationType(); }
 
+int Mul::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Mul();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Mul return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateMul(*fbb, attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Mul, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 }  // namespace lite
 }  // namespace mindspore

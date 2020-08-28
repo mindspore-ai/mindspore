@@ -75,7 +75,7 @@ size_t GetShapeSize(const TensorT &tensor) {
 std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &oldTensor) {
   auto newTensor = std::unique_ptr<TensorT>(new (std::nothrow) TensorT);
   if (newTensor == nullptr) {
-    // MS_LOG(ERROR)("new TensorT failed");
+     MS_LOG(ERROR) << "new TensorT failed";
     return nullptr;
   }
   newTensor->dims = oldTensor->dims;
@@ -85,7 +85,7 @@ std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &oldTenso
   newTensor->nodeType = oldTensor->nodeType;
   newTensor->data = oldTensor->data;
   if (!oldTensor->quantParams.empty()) {
-    newTensor->quantParams.emplace_back(std::move(GetTensorQuantParam(oldTensor)));
+    newTensor->quantParams.emplace_back(GetTensorQuantParam(oldTensor));
   }
   return newTensor;
 }

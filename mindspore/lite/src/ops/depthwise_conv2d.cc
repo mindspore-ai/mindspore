@@ -232,7 +232,22 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
 }
 
 #else
-
+int DepthwiseConv2D::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_DepthwiseConv2D();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_DepthwiseConv2D return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateDepthwiseConv2D(
+    *fbb, attr->format(), attr->channelIn(), attr->channelMultiplier(), attr->kernelW(), attr->kernelH(),
+    attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
+    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_DepthwiseConv2D, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int DepthwiseConv2D::GetFormat() const { return this->primitive_->value_as_DepthwiseConv2D()->format(); }
 int DepthwiseConv2D::GetChannelIn() const { return this->primitive_->value_as_DepthwiseConv2D()->channelIn(); }
 int DepthwiseConv2D::GetChannelMultiplier() const {

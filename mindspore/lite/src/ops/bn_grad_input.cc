@@ -26,7 +26,19 @@ void BNGradInput::SetEps(float eps) { this->primitive_->value.AsBNGradInput()->e
 void BNGradInput::SetChannels(int channels) { this->primitive_->value.AsBNGradInput()->channels = channels; }
 
 #else
-
+int BNGradInput::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_BNGradInput();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_BNGradInput return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateBNGradInput(*fbb, attr->eps(), attr->channels());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_BNGradInput, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 float BNGradInput::GetEps() const { return this->primitive_->value_as_BNGradInput()->eps(); }
 int BNGradInput::GetChannels() const { return this->primitive_->value_as_BNGradInput()->channels(); }
 

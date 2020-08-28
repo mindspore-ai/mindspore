@@ -77,6 +77,43 @@ bool PriorBox::GetClip() const { return this->primitive_->value_as_PriorBox()->c
 bool PriorBox::GetFlip() const { return this->primitive_->value_as_PriorBox()->flip(); }
 float PriorBox::GetOffset() const { return this->primitive_->value_as_PriorBox()->offset(); }
 
+int PriorBox::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_PriorBox();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_PriorBox return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> min_sizes;
+  if (attr->min_sizes() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->min_sizes()->size()); i++) {
+      min_sizes.push_back(attr->min_sizes()->data()[i]);
+    }
+  }
+  std::vector<int32_t> max_sizes;
+  if (attr->max_sizes() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->max_sizes()->size()); i++) {
+      max_sizes.push_back(attr->max_sizes()->data()[i]);
+    }
+  }
+  std::vector<float> aspect_ratios;
+  if (attr->aspect_ratios() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->aspect_ratios()->size()); i++) {
+      aspect_ratios.push_back(attr->aspect_ratios()->data()[i]);
+    }
+  }
+  std::vector<float> variances;
+  if (attr->variances() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->variances()->size()); i++) {
+      variances.push_back(attr->variances()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreatePriorBoxDirect(*fbb, &min_sizes, &max_sizes, &aspect_ratios, &variances);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_PriorBox, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

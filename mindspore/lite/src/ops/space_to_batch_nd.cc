@@ -50,6 +50,32 @@ std::vector<int> SpaceToBatchND::GetPaddings() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
+int SpaceToBatchND::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_SpaceToBatch();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_SpaceToBatch return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> blockShape;
+  if (attr->blockShape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->blockShape()->size()); i++) {
+      blockShape.push_back(attr->blockShape()->data()[i]);
+    }
+  }
+  std::vector<int32_t> paddings;
+  if (attr->paddings() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->paddings()->size()); i++) {
+      paddings.push_back(attr->paddings()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateSpaceToBatchDirect(*fbb, &blockShape, &paddings);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SpaceToBatch, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif  // PRIMITIVE_WRITEABLE
 
 int SpaceToBatchND::InferShape(std::vector<lite::tensor::Tensor *> inputs,

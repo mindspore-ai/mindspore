@@ -21,7 +21,7 @@
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,27 +32,9 @@ class NotEqual : public Arithmetic {
   NotEqual() = default;
   explicit NotEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  explicit NotEqual(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  NotEqual() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto val_offset = schema::CreateNotEqual(fbb);
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_NotEqual, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

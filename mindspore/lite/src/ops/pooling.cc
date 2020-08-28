@@ -136,6 +136,23 @@ int Pooling::GetPadRight() const { return this->primitive_->value_as_Pooling()->
 int Pooling::GetRoundMode() const { return this->primitive_->value_as_Pooling()->roundMode(); }
 int Pooling::GetActivationType() const { return this->primitive_->value_as_Pooling()->activationType(); }
 
+int Pooling::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Pooling();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Pooling return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset =
+    schema::CreatePooling(*fbb, attr->format(), attr->poolingMode(), attr->global(), attr->windowW(), attr->windowH(),
+                          attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(),
+                          attr->padLeft(), attr->padRight(), attr->roundMode());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Pooling, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 
 int Pooling::PadUp() const { return this->pad_u_; }

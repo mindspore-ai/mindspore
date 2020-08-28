@@ -26,7 +26,19 @@ void SoftMax::SetAxis(int axis) { this->primitive_->value.AsSoftMax()->axis = ax
 #else
 
 int SoftMax::GetAxis() const { return this->primitive_->value_as_SoftMax()->axis(); }
-
+int SoftMax::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_SoftMax();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_SoftMax return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateSoftMax(*fbb, attr->axis());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SoftMax, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int SoftMax::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

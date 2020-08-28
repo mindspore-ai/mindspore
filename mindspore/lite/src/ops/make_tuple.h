@@ -27,29 +27,11 @@ class MakeTuple : public PrimitiveC {
   MS_DECLARE_PARENT(MakeTuple, PrimitiveC);
   MakeTuple() = default;
   explicit MakeTuple(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit MakeTuple(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  MakeTuple() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto val_offset = schema::CreateMakeTuple(fbb);
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_MakeTuple, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

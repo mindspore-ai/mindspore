@@ -60,7 +60,19 @@ int Concat::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 }
 
 #else
-
+int Concat::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Concat();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Concat return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateConcat(*fbb, attr->axis(), attr->n());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Concat, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Concat::GetAxis() const { return this->primitive_->value_as_Concat()->axis(); }
 int Concat::GetN() const { return this->primitive_->value_as_Concat()->n(); }
 

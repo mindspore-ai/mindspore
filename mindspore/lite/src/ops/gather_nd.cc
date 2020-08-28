@@ -24,7 +24,20 @@ int GatherNd::GetBatchDims() const { return this->primitive_->value.AsGatherNd()
 void GatherNd::SetBatchDims(int batch_dims) { this->primitive_->value.AsGatherNd()->batchDims = batch_dims; }
 
 #else
+int GatherNd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_GatherNd();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_GatherNd return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset = schema::CreateGatherNd(*fbb, attr->batchDims());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_GatherNd, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int GatherNd::GetBatchDims() const { return this->primitive_->value_as_GatherNd()->batchDims(); }
 
 #endif

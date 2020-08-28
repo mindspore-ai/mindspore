@@ -50,6 +50,34 @@ std::vector<int> Slice::GetAxes() const {
   auto fb_vector = this->primitive_->value_as_Slice()->axes();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
+int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+
+  auto attr = primitive->value_as_Slice();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Slice return nullptr";
+    return RET_ERROR;
+  }
+
+  std::vector<int32_t> begin;
+  if (attr->begin() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->begin()->size()); i++) {
+      begin.push_back(attr->begin()->data()[i]);
+    }
+  }
+  std::vector<int32_t> size;
+  if (attr->size() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->size()->size()); i++) {
+      size.push_back(attr->size()->data()[i]);
+    }
+  }
+
+  auto val_offset = schema::CreateSliceDirect(*fbb, attr->format(), &begin, &size);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Slice, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 std::vector<int> Slice::GetPostProcessBegin() const { return this->begin; }
@@ -92,8 +120,7 @@ int Slice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<li
       return RET_PARAM_INVALID;
     }
     if (size[i] > (input_shape[i] - begin[i])) {
-      MS_LOG(ERROR) << "Invalid size input " << size[i]
-                    << " which should be <= " << input_shape[i] - begin[i];
+      MS_LOG(ERROR) << "Invalid size input " << size[i] << " which should be <= " << input_shape[i] - begin[i];
       return RET_PARAM_INVALID;
     }
 

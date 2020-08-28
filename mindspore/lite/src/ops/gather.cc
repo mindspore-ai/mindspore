@@ -29,7 +29,20 @@ void Gather::SetAxis(int axis) { this->primitive_->value.AsGather()->axis = axis
 void Gather::SetBatchDims(int batch_dims) { this->primitive_->value.AsGather()->batchDims = batch_dims; }
 
 #else
+int Gather::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Gather();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Gather return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset = schema::CreateGather(*fbb, attr->axis(), attr->batchDims());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Gather, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Gather::GetAxis() const { return this->primitive_->value_as_Gather()->axis(); }
 int Gather::GetBatchDims() const { return this->primitive_->value_as_Gather()->batchDims(); }
 

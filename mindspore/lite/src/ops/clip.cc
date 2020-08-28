@@ -26,7 +26,19 @@ void Clip::SetMax(float max) { this->primitive_->value.AsClip()->max = max; }
 void Clip::SetMin(float min) { this->primitive_->value.AsClip()->min = min; }
 
 #else
-
+int Clip::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Clip();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Clip return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateClip(*fbb, attr->max(), attr->min());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Clip, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 float Clip::GetMax() const { return this->primitive_->value_as_Clip()->max(); }
 float Clip::GetMin() const { return this->primitive_->value_as_Clip()->min(); }
 

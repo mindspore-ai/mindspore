@@ -34,30 +34,9 @@ class Elu : public PrimitiveC {
   void SetAlpha(float alpha);
 
 #else
-  explicit Elu(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Elu() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_Elu();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateElu(fbb, attr->alpha());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Elu, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetAlpha() const;
 };

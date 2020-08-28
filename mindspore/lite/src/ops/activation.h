@@ -30,34 +30,13 @@ class Activation : public PrimitiveC {
   MS_DECLARE_PARENT(Activation, PrimitiveC);
   Activation() = default;
   explicit Activation(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetType(int type);
   void SetAlpha(float alpha);
 #else
-  explicit Activation(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Activation() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_Activation();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateActivation(fbb, attr->type(), attr->alpha());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Activation, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetType() const;
   float GetAlpha() const;

@@ -31,34 +31,13 @@ class Concat : public PrimitiveC {
   MS_DECLARE_PARENT(Concat, PrimitiveC);
   Concat() = default;
   explicit Concat(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetAxis(int axis);
   void SetN(int n);
 #else
-  explicit Concat(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Concat() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_Concat();
-    MS_ASSERT(attr != nullptr);
-
-    auto val_offset = schema::CreateConcat(fbb, attr->axis(), attr->n());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Concat, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;

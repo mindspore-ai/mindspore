@@ -26,7 +26,26 @@ void L2Norm::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsL
 void L2Norm::SetEpsilon(float epsilon) { this->primitive_->value.AsL2Norm()->epsilon = epsilon; }
 
 #else
+int L2Norm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_L2Norm();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_L2Norm return nullptr";
+    return RET_ERROR;
+  }
 
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateL2NormDirect(*fbb, &axis, attr->epsilon());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_L2Norm, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 std::vector<int> L2Norm::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_L2Norm()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());

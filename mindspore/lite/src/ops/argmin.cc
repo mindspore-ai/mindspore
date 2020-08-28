@@ -32,7 +32,20 @@ void ArgMin::SetKeepDims(bool keep_dims) { this->primitive_->value.AsArgMin()->k
 void ArgMin::SetAxisType(int axis_type) { this->primitive_->value.AsArgMin()->axisType = axis_type; }
 
 #else
-
+int ArgMin::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_ArgMin();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_ArgMin return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset =
+    schema::CreateArgMin(*fbb, attr->axis(), attr->outMaxValue(), attr->topK(), attr->keepDims(), attr->axisType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ArgMin, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int ArgMin::GetAxis() const { return this->primitive_->value_as_ArgMin()->axis(); }
 bool ArgMin::GetOutMaxValue() const { return this->primitive_->value_as_ArgMin()->outMaxValue(); }
 int ArgMin::GetTopK() const { return this->primitive_->value_as_ArgMin()->topK(); }

@@ -32,27 +32,9 @@ class Nhwc2Nchw : public PrimitiveC {
   Nhwc2Nchw() = default;
   explicit Nhwc2Nchw(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  explicit Nhwc2Nchw(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Nhwc2Nchw() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto val_offset = schema::CreateNhwc2Nchw(fbb);
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Nhwc2Nchw, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

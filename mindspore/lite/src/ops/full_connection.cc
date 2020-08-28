@@ -31,7 +31,21 @@ void FullConnection::SetActivationType(int activationType) {
   this->primitive_->value.AsFullConnection()->activationType = (schema::ActivationType)activationType;
 }
 #else
+int FullConnection::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_FullConnection();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_FullConnection return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset =
+    schema::CreateFullConnection(*fbb, attr->hasBias(), attr->axis(), attr->useAxis(), attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_FullConnection, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 bool FullConnection::GetHasBias() const { return this->primitive_->value_as_FullConnection()->hasBias(); }
 int FullConnection::GetAxis() const { return this->primitive_->value_as_FullConnection()->axis(); }
 bool FullConnection::GetUseAxis() const { return this->primitive_->value_as_FullConnection()->useAxis(); }

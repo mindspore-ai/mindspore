@@ -42,49 +42,9 @@ class StridedSlice : public PrimitiveC {
   void SetStride(const std::vector<int> &stride);
   void SetIsScale(const std::vector<int> &is_scale);
 #else
-  explicit StridedSlice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  StridedSlice() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_StridedSlice();
-    MS_ASSERT(attr != nullptr);
-
-    auto begin = std::make_unique<std::vector<int32_t>>();
-    for (int i = 0; i < static_cast<int>(attr->begin()->size()); i++) {
-      begin->push_back(attr->begin()->data()[i]);
-    }
-    auto end = std::make_unique<std::vector<int32_t>>();
-    for (int i = 0; i < static_cast<int>(attr->end()->size()); i++) {
-      end->push_back(attr->end()->data()[i]);
-    }
-    auto stride = std::make_unique<std::vector<int32_t>>();
-    for (int i = 0; i < static_cast<int>(attr->stride()->size()); i++) {
-      stride->push_back(attr->stride()->data()[i]);
-    }
-    auto isScale = std::make_unique<std::vector<int32_t>>();
-    for (int i = 0; i < static_cast<int>(attr->isScale()->size()); i++) {
-      isScale->push_back(attr->isScale()->data()[i]);
-    }
-
-    auto val_offset = schema::CreateStridedSliceDirect(fbb, attr->beginMask(), attr->endMask(), attr->ellipsisMask(),
-                                                       attr->newAxisMask(), attr->shrinkAxisMask(), begin.release(),
-                                                       end.release(), stride.release(), isScale.release());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_StridedSlice, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetBeginMask() const;

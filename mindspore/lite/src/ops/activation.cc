@@ -55,7 +55,19 @@ int Activation::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> 
   return RET_OK;
 }
 #else
-
+int Activation::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Activation();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Activation return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateActivation(*fbb, attr->type(), attr->alpha());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Activation, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Activation::GetType() const { return this->primitive_->value_as_Activation()->type(); }
 float Activation::GetAlpha() const { return this->primitive_->value_as_Activation()->alpha(); }
 #endif

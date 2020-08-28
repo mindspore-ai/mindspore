@@ -86,7 +86,25 @@ std::vector<int> Reduce::GetAxes() const {
 }
 int Reduce::GetKeepDims() const { return this->primitive_->value_as_Reduce()->keepDims(); }
 int Reduce::GetMode() const { return this->primitive_->value_as_Reduce()->mode(); }
-
+int Reduce::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Reduce();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Reduce return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axes;
+  if (attr->axes() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axes()->size()); i++) {
+      axes.push_back(attr->axes()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateReduceDirect(*fbb, &axes, attr->keepDims(), attr->mode());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Reduce, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

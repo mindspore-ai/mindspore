@@ -36,39 +36,9 @@ class Slice : public PrimitiveC {
   void SetBegin(const std::vector<int> &begin);
   void SetSize(const std::vector<int> &size);
 #else
-  explicit Slice(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Slice() = default;
 
-  schema::Primitive *Init(schema::Primitive *primitive) {
-    flatbuffers::FlatBufferBuilder fbb(1024);
-
-    auto attr = primitive->value_as_Slice();
-    MS_ASSERT(attr != nullptr);
-
-    auto begin = std::make_unique<std::vector<int32_t>>();
-    for (int i = 0; i < static_cast<int>(attr->begin()->size()); i++) {
-      begin->push_back(attr->begin()->data()[i]);
-    }
-    auto size = std::make_unique<std::vector<int32_t>>();
-    for (int i = 0; i < static_cast<int>(attr->size()->size()); i++) {
-      size->push_back(attr->size()->data()[i]);
-    }
-
-    auto val_offset = schema::CreateSliceDirect(fbb, attr->format(), begin.release(), size.release());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Slice, val_offset.o);
-    fbb.Finish(prim_offset);
-
-    auto buf = fbb.GetBufferPointer();
-    MS_ASSERT(buf != nullptr);
-    auto buf_bak = new char[fbb.GetSize()];
-    memcpy(buf_bak, buf, fbb.GetSize());
-
-    auto root = flatbuffers::GetRoot<schema::Primitive>(buf_bak);
-    auto prim = const_cast<schema::Primitive *>(root);
-
-    delete[] buf_bak;
-    fbb.Clear();
-    return prim;
-  }
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
@@ -81,8 +51,8 @@ class Slice : public PrimitiveC {
   std::vector<int> GetPostProcessSize() const;
 
  protected:
-    std::vector<int> begin = {0};
-    std::vector<int> size = {-1};
+  std::vector<int> begin = {0};
+  std::vector<int> size = {-1};
 };
 }  // namespace lite
 }  // namespace mindspore
