@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""hub config."""
+from src.resnet import resnet50, resnet101, se_resnet50
 
-export DEVICE_ID=$1
-DATA_DIR=$2
-PATH_CHECKPOINT=$3
-
-python eval.py  \
-    --platform=Ascend \
-    --checkpoint=$PATH_CHECKPOINT \
-    --dataset_path=$DATA_DIR > eval.log 2>&1 &
+def create_network(name, **kwargs):
+    if name == 'resnet50':
+        return resnet50(*args, **kwargs)
+    if name == 'resnet101':
+        return resnet101(*args, **kwargs)
+    if name == 'se_resnet50':
+        return se_resnet50(*args, **kwargs)
+    raise NotImplementedError(f"{name} is not implemented in the repo")
