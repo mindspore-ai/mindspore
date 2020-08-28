@@ -36,7 +36,7 @@ class GatherCPUKernel : public LiteKernel {
   int DoGather(int task_id);
 
  private:
-  int *indices_data_;
+  int *indices_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -540,7 +540,7 @@ table MatMul {
     transposeB : bool = false;
 }
 
-table CaffePReLU {
+table PReLU {
     channelShared : bool = false;
     slope: [float];
 }
@@ -648,10 +648,6 @@ table Reduce {
     axes: [int];
     keepDims: int;
     mode: ReduceMode;
-}
-
-table Prelu {
-    slope: [float];
 }
 
 table Transpose {

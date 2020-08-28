@@ -34,7 +34,7 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto,
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::CaffePReLUT> attr = std::make_unique<schema::CaffePReLUT>();
+  std::unique_ptr<schema::PReLUT> attr = std::make_unique<schema::PReLUT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
@@ -60,7 +60,7 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto,
   weightVec->push_back(slope);
 
   op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_CaffePReLU;
+  op->primitive->value.type = schema::PrimitiveType_PReLU;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }

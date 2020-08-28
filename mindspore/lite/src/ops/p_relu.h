@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_PRELU_H_
-#define LITE_MINDSPORE_LITE_C_OPS_PRELU_H_
+#ifndef LITE_MINDSPORE_LITE_C_OPS_P_RELU_H_
+#define LITE_MINDSPORE_LITE_C_OPS_P_RELU_H_
 
 #include <vector>
 #include <set>
@@ -26,21 +26,21 @@
 
 namespace mindspore {
 namespace lite {
-class Prelu : public Activation {
+class PReLU : public Activation {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Prelu, PrimitiveC);
-  Prelu() = default;
-  explicit Prelu(schema::PrimitiveT *primitive) : Activation(primitive) {}
-  void SetSlope(const std::vector<float> &slope);
+  MS_DECLARE_PARENT(PReLU, Activation);
+  PReLU() = default;
+  explicit PReLU(schema::PrimitiveT *primitive) : Activation(primitive) {}
+  void SetChannelShared(bool channel_shared);
 
 #else
-  explicit Prelu(schema::Primitive *primitive) : Activation(primitive) {}
+  explicit PReLU(schema::Primitive *primitive) : Activation(primitive) {}
 
   schema::Primitive *Init(schema::Primitive *primitive) {
     flatbuffers::FlatBufferBuilder fbb(1024);
 
-    auto attr = primitive->value_as_Prelu();
+    auto attr = primitive->value_as_PReLU();
     MS_ASSERT(attr != nullptr);
 
     auto slope = std::make_unique<std::vector<float>>();
@@ -48,8 +48,8 @@ class Prelu : public Activation {
       slope->push_back(attr->slope()->data()[i]);
     }
 
-    auto val_offset = schema::CreatePreluDirect(fbb, slope.release());
-    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Prelu, val_offset.o);
+    auto val_offset = schema::CreatePReLUDirect(fbb, attr->channelShared(), slope.release());
+    auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_PReLU, val_offset.o);
     fbb.Finish(prim_offset);
 
     auto buf = fbb.GetBufferPointer();
@@ -65,8 +65,9 @@ class Prelu : public Activation {
     return prim;
   }
 #endif
-  std::vector<float> GetSlope() const;
+  bool GetChannelShared() const;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_C_OPS_PRELU_H_
+
+#endif  // LITE_MINDSPORE_LITE_C_OPS_P_RELU_H_

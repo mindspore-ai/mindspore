@@ -26,7 +26,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LeakyReLU;
-using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
 namespace {
@@ -100,5 +99,4 @@ kernel::LiteKernel *CpuLeakyReluFp32KernelCreator(const std::vector<lite::tensor
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LeakyReLU, CpuLeakyReluFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Prelu, CpuLeakyReluFp32KernelCreator)
 }  // namespace mindspore::kernel

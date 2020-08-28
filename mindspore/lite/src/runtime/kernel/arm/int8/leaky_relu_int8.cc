@@ -25,9 +25,20 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Prelu;
 
 namespace mindspore::kernel {
+namespace {
+int LeakyReluInt8Run(void *cdata, int task_id) {
+  if (cdata == nullptr) {
+    MS_LOG(ERROR) << "input cdata is nullptr!";
+    return RET_ERROR;
+  }
+  auto relu = reinterpret_cast<LeakyReluInt8CPUKernel *>(cdata);
+  relu->DoExecute(task_id);
+  return RET_OK;
+}
+}  // namespace
+
 int LeakyReluInt8CPUKernel::Init() {
   LeakyReluBaseCPUKernel::Init();
   LeakyReluParameter *param = reinterpret_cast<LeakyReluParameter *>(op_parameter_);
@@ -82,15 +93,10 @@ int LeakyReluInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-  ret = ParallelLaunch(THREAD_POOL_DEFAULT, PreluInt8Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, LeakyReluInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunPreluParam failed. errorcode: ";
   }
-  return RET_OK;
-}
-int PreluInt8Run(void *cdata, int task_id) {
-  auto prelu = reinterpret_cast<LeakyReluInt8CPUKernel *>(cdata);
-  prelu->DoExecute(task_id);
   return RET_OK;
 }
 

@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-#include "src/ops/prelu.h"
+#include "src/ops/p_relu.h"
 
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<float> Prelu::GetSlope() const { return this->primitive_->value.AsPrelu()->slope; }
+bool PReLU::GetChannelShared() const { return this->primitive_->value.AsPReLU()->channelShared; }
 
-void Prelu::SetSlope(const std::vector<float> &slope) { this->primitive_->value.AsPrelu()->slope = slope; }
+void PReLU::SetChannelShared(bool channel_shared) {
+  this->primitive_->value.AsPReLU()->channelShared = channel_shared;
+}
 
 #else
 
-std::vector<float> Prelu::GetSlope() const {
-  auto fb_vector = this->primitive_->value_as_Prelu()->slope();
-  return std::vector<float>(fb_vector->begin(), fb_vector->end());
-}
+bool PReLU::GetChannelShared() const { return this->primitive_->value_as_PReLU()->channelShared(); }
 
 #endif
 }  // namespace lite

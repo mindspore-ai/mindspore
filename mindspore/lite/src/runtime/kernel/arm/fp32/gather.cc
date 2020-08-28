@@ -38,7 +38,10 @@ int GatherCPUKernel::Init() {
 }
 
 GatherCPUKernel::~GatherCPUKernel() {
-  context_->allocator->Free(indices_data_);
+  if (indices_data_ != nullptr) {
+    free(indices_data_);
+    indices_data_ = nullptr;
+  }
 }
 
 int GatherCPUKernel::ReSize() { return RET_OK; }
@@ -102,7 +105,7 @@ int GatherCPUKernel::Run() {
   }
 
   auto indices_tensor = in_tensors_.at(1);
-  indices_data_ = reinterpret_cast<int *>(context_->allocator->Malloc(indices_tensor->Size()));
+  indices_data_ = reinterpret_cast<int *>(malloc(indices_tensor->Size()));
   if (indices_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;

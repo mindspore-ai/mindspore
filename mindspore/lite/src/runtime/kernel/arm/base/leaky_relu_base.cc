@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_LeakyReLU;
 namespace mindspore::kernel {
 int LeakyReluBaseCPUKernel::Init() { return RET_OK; }
 
-kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
+kernel::LiteKernel *CpuLeakyReluInt8KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const Context *ctx,
                                               const kernel::KernelKey &desc,
@@ -41,7 +41,7 @@ kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Te
   MS_ASSERT(desc.type == schema::PrimitiveType_LeakyRelu);
   auto *kernel = new (std::nothrow) LeakyReluInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PreluCPUKernel fail!";
+    MS_LOG(ERROR) << "new LeakyReluInt8CPUKernel fail!";
     return nullptr;
   }
   auto ret = kernel->Init();
@@ -54,5 +54,5 @@ kernel::LiteKernel *CpuPreluInt8KernelCreator(const std::vector<lite::tensor::Te
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, CpuPreluInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, CpuLeakyReluInt8KernelCreator)
 }  // namespace mindspore::kernel
