@@ -44,7 +44,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained Checkpoint file path.")
     parser.add_argument("--pre_trained_epoch_size", type=int, default=0, help="Pretrained epoch size.")
-    parser.add_argument("--save_checkpoint_epochs", type=int, default=10, help="Save checkpoint epochs, default is 5.")
+    parser.add_argument("--save_checkpoint_epochs", type=int, default=10, help="Save checkpoint epochs, default is 10.")
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
     parser.add_argument("--filter_weight", type=bool, default=False, help="Filter weight parameters, default is False.")
     args_opt = parser.parse_args()
