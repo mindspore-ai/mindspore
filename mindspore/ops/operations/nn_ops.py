@@ -1761,7 +1761,7 @@ class SmoothL1Loss(PrimitiveWithInfer):
         Sets input prediction as `X`, input target as `Y`, output as `loss`. Then,
 
         .. math::
-            \text{SmoothL1Loss} = \begin{cases} \frac{0.5 x^{2}}{\text{beta}, &if \left |x \right | < \text{beta} \cr
+            \text{SmoothL1Loss} = \begin{cases} \frac{0.5 x^{2}}{\text{beta}}, &if \left |x \right | < \text{beta} \cr
             \left |x \right|-0.5 \text{beta}, &\text{otherwise}\end{cases}
 
     Args:
