@@ -210,20 +210,22 @@ def parse_args():
     parser = argparse.ArgumentParser('mindspore coco testing')
 
     # dataset related
-    parser.add_argument('--data_dir', type=str, default='', help='train data dir')
-    parser.add_argument('--per_batch_size', default=1, type=int, help='batch size for per gpu')
+    parser.add_argument('--data_dir', type=str, default="", help='Train data dir. Default: ""')
+    parser.add_argument('--per_batch_size', default=1, type=int, help='Batch size for per device, Default: 1')
 
     # network related
-    parser.add_argument('--pretrained', default='', type=str, help='model_path, local pretrained model to load')
+    parser.add_argument('--pretrained', default="", type=str,\
+                       help='The model path, local pretrained model to load, Default: ""')
 
     # logging related
-    parser.add_argument('--log_path', type=str, default='outputs/', help='checkpoint save location')
+    parser.add_argument('--log_path', type=str, default="outputs/", help='Log save location, Default: "outputs/"')
 
     # detect_related
-    parser.add_argument('--nms_thresh', type=float, default=0.5, help='threshold for NMS')
-    parser.add_argument('--annFile', type=str, default='', help='path to annotation')
-    parser.add_argument('--testing_shape', type=str, default='', help='shape for test ')
-    parser.add_argument('--ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
+    parser.add_argument('--nms_thresh', type=float, default=0.5, help='Threshold for NMS. Default: 0.5')
+    parser.add_argument('--annFile', type=str, default="", help='The path to annotation. Default: ""')
+    parser.add_argument('--testing_shape', type=str, default="", help='Shape for test. Default: ""')
+    parser.add_argument('--ignore_threshold', type=float, default=0.001,\
+                       help='Threshold to throw low quality boxes, Default: 0.001')
 
     args, _ = parser.parse_known_args()
 
