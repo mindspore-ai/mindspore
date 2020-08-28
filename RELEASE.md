@@ -1,3 +1,113 @@
+# Release 0.7.0-beta
+
+## Major Features and Improvements
+### MindSpore Training and Inference Framework
+#### Ascend 910
+* New models
+    * TinyBert: a smaller and faster version of BERT using transformer distillation for natural language understanding on GLUE benchmark.
+    * SE-ResNet50: add Squeeze-and-Excitation blocks(SE-Blocks) to the resnet50 network to improve channel interdependencies for image classification on ImageNet 2012 dataset.
+    * Inception V3: the third version of Inception convolutional architectures for image classification on ImageNet 2012 dataset.
+* Frontend and user interface
+    * Embedding operator high-level packaging to support segmented by field for Wide&Deep.
+    * Load multi-node checkpoint into single-process to support host-device hybrid inference.
+    * Support Concat/Tile/Strideslice distributed operators.
+    * Support cumulative gradient and batch training split.
+    * Support variable parameter input for Cell object.
+    * Parameter mixed calculation optimization for pynative mode.
+    * Deep Probabilistic Programming
+      * Support statistical distributions classes used to generate stochastic tensors.
+      * Support probabilistic inference algorithms.
+      * Support BNN layers used to construct BNN in Graph mode.
+      * Support interfaces for the transformation between BNN and DNN in Graph mode.
+      * Support uncertainty estimation to estimate epistemic uncertainty and aleatoric uncertainty.
+    * User interfaces change log
+      * change base class of parameter([!3473](https://gitee.com/mindspore/mindspore/pulls/3473))
+      * change binary to mindir([!4258](https://gitee.com/mindspore/mindspore/pulls/4258))
+      * change export from geir to air([!4269](https://gitee.com/mindspore/mindspore/pulls/4269))
+      * Init parameter data by default([!3967](https://gitee.com/mindspore/mindspore/pulls/3967))
+      * change IndexedSlices to RowTensor([!4031](https://gitee.com/mindspore/mindspore/pulls/4031))
+      * Must set or change parallel mode before any Initializer created([!4801](https://gitee.com/mindspore/mindspore/pulls/4801))
+* Executor and performance optimization
+    * Minspore graph compilation process performance improved by 20%.
+    * Decoupling C++ and Python modules to achieve separate compilation of core modules.
+    * Serving module supports restful interface [POST].
+* Data processing, augmentation, and save format
+    * Support automatic data augmentation
+    * Support GNN distributed cache in single node
+    * Support ConcatDataset using distributed sampler
+
+#### Other Hardware Support
+* GPU platform
+    * New model supported: VGG16, ResNet101, TinyBert, DeepFM.
+    * Support some distributed operators in ResNet50 and Wide&Deep.
+    * Support automatic parallel for Wide&Deep.
+    * Support function funcs[i](*inputs) (such as switch-case).
+    * Support distributed training with parameter server.
+    * Support GPU operator profiling.
+    * Performance optimization of the distributed training with allreduce.
+    * Performance optimization of the mixed precision training.
+    * Performance optimization of the pynative mode.
+    * Performance optimization of the convolution operator, batch normalization operator.
+* CPU platform
+    * Support MobileNetV2 Re-Training: Re-train the network with different class number.
+
+### MindSpore Lite
+* Converter
+    * Support third party model, including TFLite/Caffe/ONNX.
+    * Add 93 TFLite op.
+    * Add 24 Caffe op.
+    * Add 62 ONNX op.
+    * Add support for windows.
+    * Add 11 optimized passes, include fusion/const fold.
+    * Support aware-training and Post-training quantization.
+* CPU
+    * Add 100+ops，support fp32, int8/uint8, FP16 ops
+    * Support fast convolution algorithms: Sliding Window, Img2col + Gemm, Strassen, Winograd
+    * Support assembly/neon instruction.
+    * Support CPU fp16 and sdot on ARM v8.2+.
+* GPU
+    * Add 20+ ops for OpenCL.
+    * Support image2D/buffer format.
+    * Optimize online initialization time.
+    * add optimized convolution1X1/3X3/depthwise/convolution_transposed for OpenCL.
+* Tool & example
+    * Add benchmark and TimeProfile tools.
+    * Add image classification and object detection Android Demo.
+
+## Bugfixes
+* Models
+  * normalize the readme file([!5410](https://gitee.com/mindspore/mindspore/pulls/5410))
+  * fix a sink_size bug for transformer([!5393](https://gitee.com/mindspore/mindspore/pulls/5393))
+  * fix bool type optional for resnet50([!5363](https://gitee.com/mindspore/mindspore/pulls/5363))
+* Python API
+  * improve interface '__bool__' for tensor([!4000](https://gitee.com/mindspore/mindspore/pulls/4000))
+  * fix GPU-ResizeNearestNeighbor([!3760](https://gitee.com/mindspore/mindspore/pulls/3760))
+  * fix topK multi dimention grad func([!3711](https://gitee.com/mindspore/mindspore/pulls/3711))
+  * fix scatterop error msg([!3699](https://gitee.com/mindspore/mindspore/pulls/3699))
+  * fix bug of cast dtype when using mix_presion in pynative mode([!3730](https://gitee.com/mindspore/mindspore/pulls/3730))
+* Executor
+  * fix etsnet train error when UnsegmentSum's first input shape is (1,) ([!4573](https://gitee.com/mindspore/mindspore/pulls/4573))
+  * fix bug of result error in while control flow because of unsupporting for value reference ([!4103](https://gitee.com/mindspore/mindspore/pulls/4103))
+  * fix bug of the output tensor does not carry device data type ([!3774](https://gitee.com/mindspore/mindspore/pulls/3774))
+  * fix bug of avoiding multi attr value are eliminated in pynative mode ([!4225](https://gitee.com/mindspore/mindspore/pulls/4225))
+  * fix bug of AssignAdd unable to work normally in multi-cases ([!5171](https://gitee.com/mindspore/mindspore/pulls/5171))
+* GPU platform
+  * improve the environment variable checking for nvcc compiler path ([!5140](https://gitee.com/mindspore/mindspore/pulls/5140))
+  * fix bug of error in cast operator conversion from fp16 to fp32 ([!4147](https://gitee.com/mindspore/mindspore/pulls/4147))
+  * fix bug of the array out of bound in case of make_tuple operator ([!5219](https://gitee.com/mindspore/mindspore/pulls/5219))
+* Data processing and Pro
+  * fix GeneratorDataset time out([!3624](https://gitee.com/mindspore/mindspore/pulls/3624))
+  * fix concat operator get_dataset_size error([!4701](https://gitee.com/mindspore/mindspore/pulls/4701))
+  * fixing python validator for Repeat Op([!4366](https://gitee.com/mindspore/mindspore/pulls/4366))
+
+## Contributors
+Thanks goes to these wonderful people:
+
+Adel, Alexey, andy, andy_wangrui, anthonyaje, anzhengqi, askmiao, avakh, baihuawei, bingyaweng, BowenK, buxue, caifubi, CaoJian, caozhou, Cathy, changzherui, chenfei, chengxianbin, chenhaozhe, chenjianping, chentingting, chenzomi, chenzupeng, chujinjin, cjh9368, Corleone, cristoval, danish, dengyutao, eric, Eric, ervinzhang, etone-chan, fangzehua, fary86, fuzhiye, gengdongjie, genglishuai, Giancarlo, gongdaguo, gukecai, guohongzilong, GuoMengHao, hangq, hanhaocheng, hanhuifeng2020, hanjun996, Harshvardhan, He, heleiwang, hesham, hexia, Hoai, hongxing, huangdongrun, huanghui, huangxinjing, islam_amin, Jesse, jianghui58, jiangzhiwen, jin-xiulang, jinyaohui, jjfeing, John, Jonathan, jonyguo, kai00, kingfo, kpy, kswang, laiyongqiang, leilei_snow, leopz, Li, liangzelang, lianliguang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, lingyunli63, linqingke, lirongzhen1, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuzhongkai, Lixia, lixian, liyong, lizhenyu, looop5, luoyang, lvchangquan, lvliang, lvwenyuan, lyvette, mahdi, Mahdi, mamba_ni, maning202007, Margaret_wangrui, mayang, meixiaowei, meng_chunyang, ms_yan, nhussain, panbingao, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, pengyongrong, Pengyongrong, qianlong, qujianwei, root, shenwei41, shibeiji, simson, songhonglei413, Su, sunsuodong, suteng, tao_yunhao, TFbunny, tinazhang, tom__chen, tony_liu2, tronzhang, VectorSL, wandongdong, wangdongxu, wanghua, wangmin, wangshaocong, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wukesong, wuweikang, wuxuejian, wuyongkang, xiefangqi, xuanyue, Xun, xutianchun, xuyongfei, yanghaitao, yangjie159, YangLuo, yangruoqi713, yangyongjie, yangzhenzhang, yankai, yao_yf, yelihua, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zhangxuetong, zhaizhiqiang, Zhang, zhangxinfeng3, zhangxuetong, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaoting, zhaozhenlong, zhengjun10, zhongligeng, zhoufeng, zhousiyi, zhouyaqiang, zhouyuanshen, Zichun, Zirui, zjun, zongha, ZPaC, lijiaqi, liangchenghui, wangminggui
+
+Contributions of any kind are welcome!
+
+
 # Release 0.6.0-beta
 
 ## Major Features and Improvements
@@ -207,11 +317,11 @@ Contributions of any kind are welcome!
 * Executor
     * Fix dropout，topK and addn errors in PyNative mode ([!1285](https://gitee.com/mindspore/mindspore/pulls/1285), [!1138](https://gitee.com/mindspore/mindspore/pulls/1138), [!1033](https://gitee.com/mindspore/mindspore/pulls/1033)).
     * Fix memory leaks after execution in PyNatvie mode ([!1201](https://gitee.com/mindspore/mindspore/pulls/1201)).
-    * Fix HCCL failure in some special scenes ([!1204](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1204), [!1252](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1252)).
-    * Fix SSD network when Select failed, cann't find kernel info([!1449](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1449)).
-    * Fix Topk operator selection strategy bug between aicore and aicpu([!1367](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/1367)).
-    * Fix input memory size of 'assign' op unequal in control sink mode when assigning a data from one child graph to another child graph([!802](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/802)).
-    * Fix allreduce ir inconsistency([!989](https://gitee.com/mindspore/dashboard/projects/mindspore/mindspore/pulls/989)).
+    * Fix HCCL failure in some special scenes ([!1204](https://gitee.com/mindspore/mindspore/pulls/1204), [!1252](https://gitee.com/mindspore/mindspore/pulls/1252)).
+    * Fix SSD network when Select failed, cann't find kernel info([!1449](https://gitee.com/mindspore/mindspore/pulls/1449)).
+    * Fix Topk operator selection strategy bug between aicore and aicpu([!1367](https://gitee.com/mindspore/mindspore/pulls/1367)).
+    * Fix input memory size of 'assign' op unequal in control sink mode when assigning a data from one child graph to another child graph([!802](https://gitee.com/mindspore/mindspore/pulls/802)).
+    * Fix allreduce ir inconsistency([!989](https://gitee.com/mindspore/mindspore/pulls/989)).
 * GPU platform
     * Fix summary for gradient collection ([!1364](https://gitee.com/mindspore/mindspore/pulls/1364))
     * Fix the slice operator ([!1489](https://gitee.com/mindspore/mindspore/pulls/1489))
