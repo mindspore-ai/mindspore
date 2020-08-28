@@ -29,4 +29,6 @@ add_library(caffe_parser_mid OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_permute_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_tile_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/caffe_tanh_parser.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_exp_parser.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_exp_parser.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/caffe_slice_parser.cc
+    )
