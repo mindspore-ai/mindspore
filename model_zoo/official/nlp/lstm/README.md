@@ -58,6 +58,16 @@ LSTM contains embeding, encoder and decoder modules. Encoder module consists of 
   bash run_eval_gpu.sh 0 ./aclimdb ./glove_dir lstm-20_390.ckpt
   ```
 
+- runing on CPU
+
+  ```bash
+  # run training example
+  bash run_train_cpu.sh ./aclimdb ./glove_dir
+
+  # run evaluation example
+  bash run_eval_cpu.sh ./aclimdb ./glove_dir lstm-20_390.ckpt
+  ```
+
 
 # [Script Description](#contents)
 
@@ -69,14 +79,16 @@ LSTM contains embeding, encoder and decoder modules. Encoder module consists of 
     ├── README.md               # descriptions about LSTM
     ├── script
     │   ├── run_eval_gpu.sh     # shell script for evaluation on GPU
-    │   └── run_train_gpu.sh    # shell script for training on GPU
+    │   ├── run_eval_cpu.sh     # shell script for evaluation on CPU
+    │   ├── run_train_gpu.sh    # shell script for training on GPU
+    │   └── run_train_cpu.sh    # shell script for training on CPU
     ├── src
     │   ├── config.py           # parameter configuration
     │   ├── dataset.py          # dataset preprocess
     │   ├── imdb.py             # imdb dataset read script
     │   └── lstm.py             # Sentiment model
-    ├── eval.py                 # evaluation script
-    └── train.py                # training script
+    ├── eval.py                 # evaluation script on both GPU and CPU
+    └── train.py                # training script on both GPU and CPU
 ```
 
 
@@ -154,60 +166,89 @@ config.py:
 
 - Set options in `config.py`, including learning rate and network hyperparameters.
 
-- Run `sh run_train_gpu.sh` for training.
+- runing on GPU
 
-    ``` bash
-    bash run_train_gpu.sh 0 ./aclimdb ./glove_dir
-    ```
+  Run `sh run_train_gpu.sh` for training.
 
-    The above shell script will run distribute training in the background. You will get the loss value as following:
-    ```shell
-    # grep "loss is " log.txt
-    epoch: 1 step: 390, loss is 0.6003723
-    epcoh: 2 step: 390, loss is 0.35312173
-    ...
-    ```
+  ``` bash
+  bash run_train_gpu.sh 0 ./aclimdb ./glove_dir
+  ```
+
+  The above shell script will run distribute training in the background. You will get the loss value as following:
+  ```shell
+  # grep "loss is " log.txt
+  epoch: 1 step: 390, loss is 0.6003723
+  epcoh: 2 step: 390, loss is 0.35312173
+  ...
+  ```
+
+- runing on CPU
+
+  Run `sh run_train_cpu.sh` for training.
+
+  ``` bash
+  bash run_train_cpu.sh ./aclimdb ./glove_dir
+  ```
+
+  The above shell script will train in the background. You will get the loss value as following:
+
+  ```shell
+  # grep "loss is " log.txt
+  epoch: 1 step: 390, loss is 0.6003723
+  epcoh: 2 step: 390, loss is 0.35312173
+  ...
+  ```
 
 
 ## [Evaluation Process](#contents)
 
-- Run `bash run_eval_gpu.sh` for evaluation.
+- evaluation on GPU
 
-    ``` bash
-    bash run_eval_gpu.sh 0 ./aclimdb ./glove_dir lstm-20_390.ckpt
-    ```
+  Run `bash run_eval_gpu.sh` for evaluation.
+
+  ``` bash
+  bash run_eval_gpu.sh 0 ./aclimdb ./glove_dir lstm-20_390.ckpt
+  ```
+
+- evaluation on CPU
+
+  Run `bash run_eval_cpu.sh` for evaluation.
+
+  ``` bash
+  bash run_eval_cpu.sh ./aclimdb ./glove_dir lstm-20_390.ckpt
+  ```
 
 # [Model Description](#contents)
 ## [Performance](#contents)
 
 ### Training Performance
 
-| Parameters                 | LSTM                                                           |
-| -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Tesla V100-SMX2-16GB                                           |
-| uploaded Date              | 08/06/2020 (month/day/year)                                    |
-| MindSpore Version          | 0.6.0-beta                                                     |
-| Dataset                    | aclimdb_v1                                                     |
-| Training Parameters        | epoch=20, batch_size=64                                        |
-| Optimizer                  | Momentum                                                       |
-| Loss Function              | Softmax Cross Entropy                                          |
-| Speed                      | 1022 (1pcs)                                                    |
-| Loss                       | 0.12                                                           |
-| Params (M)                 | 6.45                                                           |
-| Checkpoint for inference   | 292.9M (.ckpt file)                                            |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/lstm |
+| Parameters                 | LSTM (GPU)                                                     | LSTM (CPU)                 |
+| -------------------------- | -------------------------------------------------------------- | -------------------------- |
+| Resource                   | Tesla V100-SMX2-16GB                                           | Ubuntu X86-i7-8565U-16GB   |
+| uploaded Date              | 08/06/2020 (month/day/year)                                    | 08/06/2020 (month/day/year)|
+| MindSpore Version          | 0.6.0-beta                                                     | 0.6.0-beta                 |
+| Dataset                    | aclimdb_v1                                                     | aclimdb_v1                 |
+| Training Parameters        | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
+| Optimizer                  | Momentum                                                       | Momentum                   |
+| Loss Function              | Softmax Cross Entropy                                          | Softmax Cross Entropy      |
+| Speed                      | 1022 (1pcs)                                                    | 20                         |
+| Loss                       | 0.12                                                           | 0.12                       |
+| Params (M)                 | 6.45                                                           | 6.45                       |
+| Checkpoint for inference   | 292.9M (.ckpt file)                                            | 292.9M (.ckpt file)        |
+| Scripts                    | [lstm script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/lstm) | [lstm script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/lstm) |
 
 
 ### Evaluation Performance
 
-| Parameters          | LSTM                        |
-| ------------------- | --------------------------- |
-| Resource            | Tesla V100-SMX2-16GB        |
-| uploaded Date       | 08/06/2020 (month/day/year) |
-| MindSpore Version   | 0.6.0-beta                  |
-| Dataset             | aclimdb_v1                  |
-| batch_size          | 64                          |
-| Accuracy            | 84%                         |
+| Parameters          | LSTM (GPU)                  | LSTM (CPU)                   |
+| ------------------- | --------------------------- | ---------------------------- |
+| Resource            | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
+| uploaded Date       | 08/06/2020 (month/day/year) | 08/06/2020 (month/day/year)  |
+| MindSpore Version   | 0.6.0-beta                  | 0.6.0-beta                   |
+| Dataset             | aclimdb_v1                  | aclimdb_v1                   |
+| batch_size          | 64                          | 64                           |
+| Accuracy            | 84%                         | 83%                          |
 
 
 # [Description of Random Situation](#contents)
