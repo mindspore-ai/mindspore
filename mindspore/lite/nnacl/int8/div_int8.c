@@ -29,8 +29,8 @@ int DivInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64
     }
 
     int recip_shift;
-    const int32_t input1_inv = (input1_val > 0) ? ComputerReciproal(input1_val, 31, &recip_shift)
-                                                : -ComputerReciproal(-input1_val, 31, &recip_shift);
+    const int32_t input1_inv = (input1_val > 0) ? ComputerReciprocal(input1_val, 31, &recip_shift)
+                                                : -ComputerReciprocal(-input1_val, 31, &recip_shift);
     const int leading_bits = CountLeadingSignBits(input0_val);
     const int32_t raw_data =
       SaturatingRoundingDoublingHighMul(input0_val * (1 << (unsigned int)leading_bits), input1_inv);
