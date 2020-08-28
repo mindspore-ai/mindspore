@@ -149,10 +149,12 @@ void SparseOptimInfo::ComputeMean(const std::shared_ptr<std::vector<std::shared_
   size_t original_row_count = input_shapes->front();
   if (original_row_count > 0) {
     size_t offset = 0;
-    if ((original_row_count % server_num) == 0) {
-      offset = original_row_count / server_num * rank_id;
-    } else {
-      offset = std::round((static_cast<float>(original_row_count)) / server_num) * rank_id;
+    std::map<int, int> rank_dims = Util::AllRankLocalShard(original_row_count, rank_id, server_num);
+    for (size_t i = 0; i < rank_id; i++) {
+      if (rank_dims.count(i) == 0) {
+        MS_LOG(EXCEPTION) << "No local shard number for rank " << i;
+      }
+      offset += rank_dims[i];
     }
     for (size_t i = 0; i < indices_size; i++) {
       indices_data[i] -= offset;
