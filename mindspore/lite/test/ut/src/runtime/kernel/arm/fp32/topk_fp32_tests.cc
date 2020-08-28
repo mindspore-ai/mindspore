@@ -45,7 +45,8 @@ TEST_F(TestTopKFp32, TopK) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), nullptr, desc, nullptr);
+  auto ctx = std::make_shared<lite::Context>();
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

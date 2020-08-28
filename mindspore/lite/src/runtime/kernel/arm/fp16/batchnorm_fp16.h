@@ -35,9 +35,10 @@ class BatchnormFp16CPUKernel : public BatchnormCPUKernel {
 
  private:
   void FreeInputAndOutput();
-  bool isFloat32Tensor_ = false;
-  void *input_ = nullptr;
-  void *output_ = nullptr;
+  bool is_input_fp32_ = false;
+  bool is_output_fp32_ = false;
+  float16_t *input_ = nullptr;
+  float16_t *output_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
