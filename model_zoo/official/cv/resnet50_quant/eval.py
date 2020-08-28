@@ -20,7 +20,8 @@ import argparse
 from src.config import config_quant
 from src.dataset import create_dataset
 from src.crossentropy import CrossEntropy
-from models.resnet_quant import resnet50_quant
+#from models.resnet_quant import resnet50_quant #auto construct quantative network of resnet50
+from models.resnet_quant_manual import resnet50_quant #manually construct quantative network of resnet50
 
 from mindspore import context
 from mindspore.train.model import Model

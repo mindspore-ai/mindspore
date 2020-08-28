@@ -252,13 +252,14 @@ def without_fold_batchnorm(weight, cell_quant):
     return weight, bias
 
 
-def load_nonquant_param_into_quant_net(quant_model, params_dict):
+def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_params=None):
     """
     load fp32 model parameters to quantization model.
 
     Args:
-        quant_model: quantization model
-        params_dict: f32 param
+        quant_model: quantization model.
+        params_dict: f32 param.
+        quant_new_params:parameters that exist in quantative network but not in unquantative network.
 
     Returns:
         None
@@ -277,6 +278,8 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict):
     for name, param in quant_model.parameters_and_names():
         key_name = name.split(".")[-1]
         if key_name not in iterable_dict.keys():
+            if quant_new_params is not None and key_name in quant_new_params:
+                continue
             raise ValueError(f"Can't find match parameter in ckpt,param name = {name}")
         value_param = next(iterable_dict[key_name], None)
         if value_param is not None:
