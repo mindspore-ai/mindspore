@@ -233,7 +233,7 @@ class Softsign(PrimitiveWithInfer):
     The function is shown as follows:
 
     .. math::
-        \text{output} = \frac{\text{input_x}}{1 + \abs{\text{input_x}}},
+        \text{output} = \frac{\text{input_x}}{1 + \left| \text{input_x} \right|},
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose data type should be float16 or float32.

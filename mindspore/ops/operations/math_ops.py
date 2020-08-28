@@ -319,7 +319,7 @@ class ReduceMean(_Reduce):
         Tensor, has the same dtype as the 'input_x'.
 
         - If axis is (), and keep_dims is false,
-          the output is a 0-D tensor representing the sum of all elements in the input tensor.
+          the output is a 0-D tensor representing the mean of all elements in the input tensor.
         - If axis is int, set as 2, and keep_dims is false,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
         - If axis is tuple(int), set as (2, 3), and keep_dims is false,
