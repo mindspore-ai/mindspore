@@ -21,6 +21,8 @@
 #include <string>
 #include <unordered_map>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/kernel_compiler/common_utils.h"
+#include "backend/kernel_compiler/cpu/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -39,6 +41,9 @@ class Util {
   static int LocalShard(int first_dim, int rank_id, int server_num);
   static void SetRankId(int rank_id);
   static int GetRankId();
+  static void ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
+                                   const size_t first_dim_size, const size_t outer_dim_size,
+                                   mindspore::kernel::SparseGradient<int> *unique_sparse_grad);
 
  private:
   static std::unordered_map<std::string, int> optimizer_to_ids;

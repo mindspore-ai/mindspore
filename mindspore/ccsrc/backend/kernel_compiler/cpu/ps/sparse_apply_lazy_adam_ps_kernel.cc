@@ -71,15 +71,15 @@ void SparseApplyLazyAdamPSKernel::ReInit(
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   const std::vector<size_t> &indices_shape = *(shape_vec[0]);
   indices_size_ = indices_shape[0];
-  workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float);
-  workspace_size_list_[1] = indices_size_ * sizeof(int);
+  workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
+  workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
 void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
   const auto &indices_addr = inputs[10];
   indices_size_ = indices_addr->size / sizeof(int);
-  workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float);
-  workspace_size_list_[1] = indices_size_ * sizeof(int);
+  workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
+  workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
 bool SparseApplyLazyAdamPSKernel::Execute(const std::vector<AddressPtr> &inputs,

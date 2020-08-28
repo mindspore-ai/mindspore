@@ -17,14 +17,16 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_PROXY_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PS_WORKER_PROXY_H_
 
+#include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include <utility>
 #include <memory>
 #include <vector>
-#include <unordered_set>
 #include "ps/ps.h"
 #include "frontend/parallel/ps/util.h"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -36,7 +38,7 @@ class WorkerProxy : public ::ps::KVWorker<T> {
   using Callback = std::function<void()>;
   using SlicedKVs = std::vector<std::pair<bool, ::ps::KVPairs<T>>>;
   using Slicer = std::function<void(int ts, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &ranges,
-                                    SlicedKVs *sliced)>;
+                                    SlicedKVs *sliced, const std::map<int, int> &attrs)>;
   using ::ps::SimpleApp::obj_;
   explicit WorkerProxy(int app_id, int customer_id, int lookup_customer_id, int general_customer_id)
       : Worker(app_id, customer_id) {
@@ -46,14 +48,16 @@ class WorkerProxy : public ::ps::KVWorker<T> {
     using std::placeholders::_2;
     using std::placeholders::_3;
     using std::placeholders::_4;
+    using std::placeholders::_5;
     lookup_customer_ = std::unique_ptr<::ps::Customer>(
       new ::ps::Customer(app_id, lookup_customer_id, std::bind(&WorkerProxy<T>::ProcessLookupResult, this, _1)));
     general_customer_ = std::unique_ptr<::ps::Customer>(
       new ::ps::Customer(app_id, general_customer_id, std::bind(&WorkerProxy<T>::ProcessResponse, this, _1)));
-    lookup_slicer_ = std::bind(&WorkerProxy<T>::LookupIdSlicer, this, _1, _2, _3, _4);
-    broadcast_slicer_ = std::bind(&WorkerProxy<T>::BroadcastSlicer, this, _1, _2, _3, _4);
-    round_robin_slicer_ = std::bind(&WorkerProxy<T>::RoundRobinSlicer, this, _1, _2, _3, _4);
-    worker_init_embedding_slicer_ = std::bind(&WorkerProxy<T>::WorkerInitEmbeddingSlicer, this, _1, _2, _3, _4);
+    lookup_slicer_ = std::bind(&WorkerProxy<T>::LookupIdSlicer, this, _1, _2, _3, _4, _5);
+    sparse_slicer_ = std::bind(&WorkerProxy<T>::SparseSlicer, this, _1, _2, _3, _4, _5);
+    broadcast_slicer_ = std::bind(&WorkerProxy<T>::BroadcastSlicer, this, _1, _2, _3, _4, _5);
+    round_robin_slicer_ = std::bind(&WorkerProxy<T>::RoundRobinSlicer, this, _1, _2, _3, _4, _5);
+    worker_init_embedding_slicer_ = std::bind(&WorkerProxy<T>::WorkerInitEmbeddingSlicer, this, _1, _2, _3, _4, _5);
   }
   ~WorkerProxy() override = default;
 
@@ -68,6 +72,8 @@ class WorkerProxy : public ::ps::KVWorker<T> {
   bool IsReadyForPull(const Key &key);
   void PushData(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &vals, const ::ps::SArray<int> &lens = {},
                 int cmd = 0, int priority = 0);
+  void PushSparseData(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &vals, const ::ps::SArray<int> &lens,
+                      size_t grad_index, size_t indice_index, size_t first_dim_size, size_t outer_dim_size);
   void PullData(const ::ps::SArray<::ps::Key> &keys, ::ps::SArray<T> *vals, ::ps::SArray<int> *lens = nullptr,
                 int cmd = 0, int priority = 0);
   void Finalize();
@@ -79,18 +85,27 @@ class WorkerProxy : public ::ps::KVWorker<T> {
   int AddGeneralRspCB(const ::ps::SArray<::ps::Key> &keys, ::ps::SArray<T> *vals, ::ps::SArray<int> *lens, int cmd,
                       const Callback &cb);
   void LookupIdSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                      std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced);
+                      std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced, const std::map<int, int> &attrs);
+  void SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
+                    std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced, const std::map<int, int> &attrs);
   void BroadcastSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                       std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced);
+                       std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced, const std::map<int, int> &attrs);
   void RoundRobinSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                        std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced);
+                        std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced, const std::map<int, int> &attrs);
   void WorkerInitEmbeddingSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                                 std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced);
+                                 std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
+                                 const std::map<int, int> &attrs);
   void ProcessLookupResult(const ::ps::Message &msg);
   void ProcessResponse(const ::ps::Message &msg);
   void Send(::ps::Customer *customer, int timestamp, bool push, bool pull, int cmd, const ::ps::KVPairs<T> &kvs,
-            const Slicer &slicer);
+            const Slicer &slicer, std::map<int, int> attrs = {});
   void AddKeyByHashMod(const ::ps::Key &key);
+
+  void PrepareSparseGradient(const size_t begin, const size_t end, const std::unordered_set<int> &distinct_ids,
+                             const std::vector<std::pair<int, T *>> &indice_to_grad, const int *all_indice,
+                             const size_t segment_size, T *gradient, int *indice);
+  void BuildSparseValue(const ::ps::SArray<int> &lengths, const size_t grad_index, const size_t indice_index,
+                        const T *original_data, const T *grads, int *indices, ::ps::SArray<T> *reduced_data);
 
   int server_num_;
   std::unique_ptr<::ps::Customer> lookup_customer_;
@@ -100,6 +115,7 @@ class WorkerProxy : public ::ps::KVWorker<T> {
   std::unordered_map<int, ::ps::KVPairs<T>> gathered_response_;
   std::mutex mutex_;
   Slicer lookup_slicer_;
+  Slicer sparse_slicer_;
   Slicer broadcast_slicer_;
   Slicer round_robin_slicer_;
   Slicer worker_init_embedding_slicer_;
@@ -222,6 +238,28 @@ void WorkerProxy<T>::PushData(const ::ps::SArray<::ps::Key> &keys, const ::ps::S
 }
 
 template <typename T>
+void WorkerProxy<T>::PushSparseData(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<T> &vals,
+                                    const ::ps::SArray<int> &lens, size_t grad_index, size_t indice_index,
+                                    size_t first_dim_size, size_t outer_dim_size) {
+  int ts = AddGeneralRspCB(keys, nullptr, nullptr, 0, nullptr);
+  ::ps::KVPairs<T> kvs;
+  kvs.keys = keys;
+  kvs.vals = vals;
+  kvs.lens = lens;
+  int cmd = 0;
+  if (embedding_table_ranges_.count(keys[0])) {
+    std::map<int, int> attrs{{0, grad_index}, {1, indice_index}, {2, first_dim_size}, {3, outer_dim_size}};
+    Send(general_customer_.get(), ts, true, false, cmd, kvs, sparse_slicer_, attrs);
+  } else {
+    Send(general_customer_.get(), ts, true, false, cmd, kvs, round_robin_slicer_);
+  }
+  if (expected_result_count_[ts] < server_num_) {
+    general_customer_->AddResponse(ts, server_num_ - expected_result_count_[ts]);
+  }
+  general_customer_->WaitRequest(ts);
+}
+
+template <typename T>
 void WorkerProxy<T>::PullData(const ::ps::SArray<::ps::Key> &keys, ::ps::SArray<T> *vals, ::ps::SArray<int> *lens,
                               int cmd, int priority) {
   int ts = AddGeneralRspCB(keys, vals, lens, cmd, nullptr);
@@ -320,7 +358,8 @@ int WorkerProxy<T>::AddGeneralRspCB(const ::ps::SArray<::ps::Key> &keys, ::ps::S
 
 template <typename T>
 void WorkerProxy<T>::LookupIdSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                                    std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced) {
+                                    std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
+                                    const std::map<int, int> &attrs) {
   int *lookup_ids = send.lens.data();
   size_t id_size = send.lens.size();
 
@@ -359,8 +398,180 @@ void WorkerProxy<T>::LookupIdSlicer(int timestamp, const ::ps::KVPairs<T> &send,
 }
 
 template <typename T>
+void WorkerProxy<T>::SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
+                                  std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
+                                  const std::map<int, int> &attrs) {
+  // Init variables
+  T *data = send.vals.data();
+
+  if (attrs.count(0) == 0 || attrs.count(1) == 0 || attrs.count(2) == 0 || attrs.count(3) == 0) {
+    MS_LOG(EXCEPTION) << "Invalid attrs keys";
+  }
+  auto iter = attrs.find(0);
+  size_t grad_index = static_cast<size_t>(iter->second);
+  iter = attrs.find(1);
+  size_t indice_index = static_cast<size_t>(iter->second);
+  iter = attrs.find(2);
+  size_t first_dim_size = static_cast<size_t>(iter->second);
+  iter = attrs.find(3);
+  size_t outer_dim_size = static_cast<size_t>(iter->second);
+
+  int grad_size = send.lens[grad_index];
+  int indice_size = send.lens[indice_index];
+  int segment_size = grad_size / indice_size;
+
+  int grad_offset = 0;
+  int indice_offset = 0;
+  for (size_t i = 0; i < grad_index; i++) {
+    grad_offset += send.lens[i];
+  }
+  for (size_t j = 0; j < indice_index; j++) {
+    indice_offset += send.lens[j];
+  }
+
+  T *grad_data = data + grad_offset;
+  int *indice_data = reinterpret_cast<int *>(data) + indice_offset;
+
+  // Build the mappings of indice to gradient
+  std::vector<std::pair<int, T *>> indice_to_grads;
+  for (int i = 0; i < indice_size; i++) {
+    int indice = indice_data[i];
+    T *grad = grad_data + i * segment_size;
+    indice_to_grads.push_back(std::make_pair(indice, grad));
+  }
+
+  const Key &key = send.keys[0];
+  const std::vector<::ps::Range> &ranges = *(embedding_table_ranges_[key]);
+  sliced->resize(ranges.size());
+
+  // Construct reduced sparse data for each server
+  for (size_t i = 0; i < ranges.size(); i++) {
+    const ::ps::Range &range = ranges[i];
+    const auto &begin = range.begin();
+    const auto &end = range.end();
+    auto &kvs = sliced->at(i).second;
+    kvs.keys = send.keys;
+    kvs.lens = send.lens;
+
+    // Prepare the sparse gradient and indice
+    std::vector<int> indice_ids;
+    std::unordered_set<int> distinct_ids;
+    for (int j = 0; j < indice_size; j++) {
+      size_t indice = static_cast<size_t>(indice_data[j]);
+      if (indice >= begin && indice <= end) {
+        indice_ids.push_back(indice);
+        distinct_ids.insert(indice);
+      }
+    }
+    size_t indices_size = indice_ids.size();
+    int slice_segment_size = indices_size * segment_size;
+    T *src_grad_data = new T[slice_segment_size];
+    int *src_indice_data = new int[indices_size];
+    PrepareSparseGradient(begin, end, distinct_ids, indice_to_grads, indice_data, segment_size, src_grad_data,
+                          src_indice_data);
+
+    // Reduce the sparse gradient and indice
+    T *new_grad = new T[slice_segment_size];
+    int *new_indices = new int[indices_size];
+    mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad, new_indices, indices_size});
+    Util::ReduceSparseGradient(src_grad_data, src_indice_data, indices_size, segment_size, first_dim_size,
+                               outer_dim_size, &unique_sparse_grad);
+
+    // Update the length of reduce sparse gradient and indice
+    ::ps::SArray<int> reduced_lens;
+    reduced_lens.CopyFrom(kvs.lens);
+    reduced_lens[grad_index] = unique_sparse_grad.indices_size_ * segment_size;
+    reduced_lens[indice_index] = unique_sparse_grad.indices_size_;
+
+    // Build the sparse value to be sent
+    size_t total_size = 0;
+    for (auto size : reduced_lens) {
+      total_size += size;
+    }
+    ::ps::SArray<T> reduced_data(total_size, 0);
+    BuildSparseValue(reduced_lens, grad_index, indice_index, data, unique_sparse_grad.value_,
+                     unique_sparse_grad.indices_, &reduced_data);
+
+    kvs.lens = reduced_lens;
+    kvs.vals = reduced_data;
+
+    if (indices_size <= 0) {
+      sliced->at(i).first = false;
+    } else {
+      sliced->at(i).first = true;
+      expected_result_count_[timestamp] += 1;
+    }
+  }
+}
+
+template <typename T>
+void WorkerProxy<T>::PrepareSparseGradient(const size_t begin, const size_t end,
+                                           const std::unordered_set<int> &distinct_ids,
+                                           const std::vector<std::pair<int, T *>> &indice_to_grads,
+                                           const int *all_indice, const size_t segment_size, T *gradient,
+                                           int *indices) {
+  int offset = 0;
+  int index = 0;
+  size_t segment_data_size = segment_size * sizeof(T);
+  for (auto &pair : indice_to_grads) {
+    if (distinct_ids.count(pair.first) == 0) {
+      continue;
+    }
+    indices[index++] = pair.first;
+    auto ret = memcpy_s(gradient + offset, segment_data_size, pair.second, segment_data_size);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+    }
+    offset += segment_size;
+  }
+}
+
+template <typename T>
+void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const size_t grad_index,
+                                      const size_t indice_index, const T *original_data, const T *grads, int *indices,
+                                      ::ps::SArray<T> *reduced_data) {
+  int offset = 0;
+  for (size_t i = 0; i < lengths.size(); i++) {
+    if (i != grad_index && i != indice_index) {
+      int data_size = lengths[i] * sizeof(T);
+      auto ret = memcpy_s(reduced_data->data() + offset, data_size, original_data + offset, data_size);
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      }
+    }
+    offset += lengths[i];
+  }
+
+  // Fill the reduced gradient
+  int grad_offset = 0;
+  for (size_t i = 0; i < grad_index; i++) {
+    grad_offset += lengths[i];
+  }
+  int data_size = lengths[grad_index] * sizeof(T);
+  auto ret = memcpy_s(reduced_data->data() + grad_offset, data_size, grads, data_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+
+  // Fill the reduced indice
+  data_size = lengths[indice_index] * sizeof(T);
+  int indice_offset = grad_offset + data_size;
+  T *indice_data = reduced_data->data() + indice_offset;
+  T *convert = new T[lengths[indice_index]];
+  for (int i = 0; i < lengths[indice_index]; i++) {
+    convert[i] = static_cast<T>(indices[i]);
+  }
+  ret = memcpy_s(indice_data, data_size, convert, data_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+  delete[] convert;
+}
+
+template <typename T>
 void WorkerProxy<T>::BroadcastSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                                     std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced) {
+                                     std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
+                                     const std::map<int, int> &attr) {
   sliced->resize(server_num_);
   for (int i = 0; i < server_num_; i++) {
     sliced->at(i).first = true;
@@ -371,7 +582,8 @@ void WorkerProxy<T>::BroadcastSlicer(int timestamp, const ::ps::KVPairs<T> &send
 
 template <typename T>
 void WorkerProxy<T>::RoundRobinSlicer(int timestamp, const ::ps::KVPairs<T> &send, const std::vector<::ps::Range> &,
-                                      std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced) {
+                                      std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
+                                      const std::map<int, int> &attr) {
   sliced->resize(server_num_);
   auto keys = send.keys;
   auto vals = send.vals;
@@ -408,7 +620,8 @@ void WorkerProxy<T>::RoundRobinSlicer(int timestamp, const ::ps::KVPairs<T> &sen
 template <typename T>
 void WorkerProxy<T>::WorkerInitEmbeddingSlicer(int timestamp, const ::ps::KVPairs<T> &send,
                                                const std::vector<::ps::Range> &,
-                                               std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced) {
+                                               std::vector<std::pair<bool, ::ps::KVPairs<T>>> *sliced,
+                                               const std::map<int, int> &attrs) {
   sliced->resize(server_num_);
   auto keys = send.keys;
   auto vals = send.vals;
@@ -483,9 +696,9 @@ void WorkerProxy<T>::ProcessResponse(const ::ps::Message &msg) {
 
 template <typename T>
 void WorkerProxy<T>::Send(::ps::Customer *customer, int timestamp, bool push, bool pull, int cmd,
-                          const ::ps::KVPairs<T> &kvs, const Slicer &slicer) {
+                          const ::ps::KVPairs<T> &kvs, const Slicer &slicer, std::map<int, int> attrs) {
   SlicedKVs sliced;
-  slicer(timestamp, kvs, ::ps::Postoffice::Get()->GetServerKeyRanges(), &sliced);
+  slicer(timestamp, kvs, ::ps::Postoffice::Get()->GetServerKeyRanges(), &sliced, attrs);
 
   for (size_t i = 0; i < sliced.size(); i++) {
     const auto &s = sliced[i];
