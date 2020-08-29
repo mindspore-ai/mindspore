@@ -98,7 +98,7 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 
 ```shell
 .
-└─ model_zoo
+└─ cv
   └─ ssd      
     ├─ README.md                  ## descriptions about SSD
     ├─ scripts
@@ -226,7 +226,7 @@ mAP: 0.23808886505483504
 
 | Parameters                 | Ascend                                                       |
 | -------------------------- | -------------------------------------------------------------|
-| Model Version              | V1                                                           |
+| Model Version              | SSD V1                                                       |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G              |
 | uploaded Date              | 06/01/2020 (month/day/year)                                  |
 | MindSpore Version          | 0.3.0-alpha                                                  |
@@ -244,7 +244,7 @@ mAP: 0.23808886505483504
 
 | Parameters          | Ascend                      |
 | ------------------- | ----------------------------|
-| Model Version       | V1                          |
+| Model Version       | SSD V1                      |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 06/01/2020 (month/day/year) |
 | MindSpore Version   | 0.3.0-alpha                 |

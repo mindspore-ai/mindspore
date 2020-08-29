@@ -96,7 +96,7 @@ After installing MindSpore via the official website, you can start training and 
 ## [Script and Sample Code](#contents)
 
 ```
-└── model_zoo
+└── cv
     ├── README.md                           // descriptions about all the models
     └── yolov3_resnet18        
         ├── README.md                       // descriptions about yolov3_resnet18
@@ -201,7 +201,7 @@ Note the precision and recall values are results of two-classification(person an
 
 | Parameters                 | Ascend                                                      | 
 | -------------------------- | ----------------------------------------------------------- |
-| Model Version              | Inception V1                                                |
+| Model Version              | YOLOv3_Resnet18 V1                                          |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | 
 | uploaded Date              | 06/01/2020 (month/day/year)                                 | 
 | MindSpore Version          | 0.2.0-alpha                                                 | 
@@ -220,7 +220,7 @@ Note the precision and recall values are results of two-classification(person an
 
 | Parameters          | Ascend                                          | 
 | ------------------- | ----------------------------------------------- |
-| Model Version       | Inception V1                                    | 
+| Model Version       | YOLOv3_Resnet18 V1                              | 
 | Resource            | Ascend 910                                      |
 | Uploaded Date       | 06/01/2020 (month/day/year)                     |
 | MindSpore Version   | 0.2.0-alpha                                     |
