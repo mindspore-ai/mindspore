@@ -65,6 +65,38 @@ For distributed training on Ascend, a hccl configuration file with JSON format n
 Please follow the instructions in the link below:
 https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
+For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) format. 
+```
+For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].
+
+For task distill and eval phase, schema file contains ["input_ids", "input_mask", "segment_ids", "label_ids"]. 
+
+`numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+
+For example, the dataset is cn-wiki-128, the schema file for general distill phase as following:
+{
+	"datasetType": "TF",
+	"numRows": 7680,
+	"columns": {
+		"input_ids": {
+			"type": "int64",
+			"rank": 1,
+			"shape": [256]
+		},
+		"input_mask": {
+			"type": "int64",
+			"rank": 1,
+			"shape": [256]
+		},
+		"segment_ids": {
+			"type": "int64",
+			"rank": 1,
+			"shape": [256]
+		}
+	}
+}
+```
+
 # [Script Description](#contents)
 ## [Script and Sample Code](#contents)
 
@@ -304,9 +336,9 @@ The best acc is 0.891176
 ## [Model Description](#contents)
 ## [Performance](#contents)
 ### training Performance
-| Parameters                 | TinyBERT                                                   | TinyBERT                  |
+| Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Model Version              |                                                            |                           |
+| Model Version              | TinyBERT                                                   | TinyBERT                           |
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
 | uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
 | MindSpore Version          | 0.6.0                                                      | 0.7.0                     |
@@ -323,10 +355,10 @@ The best acc is 0.891176
 
 #### Inference Performance
 
-| Parameters                 |                               |                           |
+| Parameters                 | Ascend                        | GPU                       |
 | -------------------------- | ----------------------------- | ------------------------- | 
 | Model Version              |                               |                           |
-| Resource                   | Huawei 910                    | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910                    | NV SMX2 V100-32G          |
 | uploaded Date              | 08/20/2020                    | 08/24/2020                |
 | MindSpore Version          | 0.6.0                         | 0.7.0                     |
 | Dataset                    | SST-2,                        | SST-2                     |

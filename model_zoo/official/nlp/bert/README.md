@@ -73,6 +73,60 @@ For distributed training, a hccl configuration file with JSON format needs to be
 Please follow the instructions in the link below:
 https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
+For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) format.
+```
+For pretraining, schema file contains ["input_ids", "input_mask", "segment_ids", "next_sentence_labels", "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"]. 
+
+For ner or classification task, schema file contains ["input_ids", "input_mask", "segment_ids", "label_ids"].
+
+For squad task, training: schema file contains ["start_positions", "end_positions", "input_ids", "input_mask", "segment_ids"], evaluation: schema file contains ["input_ids", "input_mask", "segment_ids"].
+
+`numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+
+For example, the dataset is cn-wiki-128, the schema file for pretraining as following:
+{
+    "datasetType": "TF",
+    "numRows": 7680,
+    "columns": {
+        "input_ids": {
+            "type": "int64",
+            "rank": 1,
+            "shape": [256]
+        },
+        "input_mask": {
+            "type": "int64",
+            "rank": 1,
+            "shape": [256]
+        },
+        "segment_ids": {
+            "type": "int64",
+            "rank": 1,
+            "shape": [256]
+        },
+        "next_sentence_labels": {
+            "type": "int64",
+            "rank": 1,
+            "shape": [1]
+        },
+        "masked_lm_positions": {
+            "type": "int64",
+            "rank": 1,
+            "shape": [32]
+        },
+        "masked_lm_ids": {
+            "type": "int64",
+            "rank": 1,
+            "shape": [32]
+        },
+        "masked_lm_weights": {
+            "type": "float32",
+            "rank": 1,
+            "shape": [32]
+        }
+    }
+}
+``` 
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -87,11 +141,12 @@ https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
         ├─hyper_parameter_config.ini          # hyper paramter for distributed pretraining 
         ├─run_distribute_pretrain.py          # script for distributed pretraining
         ├─README.md    
-    ├─run_classifier.sh                       # shell script for standalone classifier task
-    ├─run_ner.sh                              # shell script for standalone NER task
-    ├─run_squad.sh                            # shell script for standalone SQUAD task  
+    ├─run_classifier.sh                       # shell script for standalone classifier task on ascend or gpu
+    ├─run_ner.sh                              # shell script for standalone NER task on ascend or gpu
+    ├─run_squad.sh                            # shell script for standalone SQUAD task on ascend or gpu
     ├─run_standalone_pretrain_ascend.sh       # shell script for standalone pretrain on ascend
     ├─run_distributed_pretrain_ascend.sh      # shell script for distributed pretrain on ascend
+    ├─run_distributed_pretrain_gpu.sh         # shell script for distributed pretrain on gpu
     └─run_standaloned_pretrain_gpu.sh         # shell script for distributed pretrain on gpu
   ├─src
     ├─__init__.py
@@ -363,55 +418,59 @@ The result will be as follows:
 ## [Model Description](#contents)
 ## [Performance](#contents)
 ### Pretraining Performance
-| Parameters                 | BERT                                                       | BERT                      |
+| Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Model Version              | base                                                       | base                      |
+| Model Version              | BERT_base                                                  | BERT_base                 |
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
 | uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
-| Dataset                    | cn-wiki-128                                                | ImageNet                  |
+| Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
 | Training Parameters        | src/config.py                                              | src/config.py             |
 | Optimizer                  | Lamb                                                       | Momentum                  |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
 | outputs                    | probability                                                |                           |
-| Loss                       |                                                            | 1.913                     |
-| Speed                      | 116.5 ms/step                                              | 1.913                     |
-| Total time                 |                                                            |                           |
+| Epoch                      | 40                                                         |                           |                      |
+| Batch_size                 | 256*8                                                      | 130(8P)                   |                      |
+| Loss                       | 1.7                                                        | 1.913                     |
+| Speed                      | 340ms/step                                                 | 1.913                     |
+| Total time                 | 73h                                                        |                           |
 | Params (M)                 | 110M                                                       |                           |
 | Checkpoint for Fine tuning | 1.2G(.ckpt file)                                           |                           |
 
 
-| Parameters                 | BERT                                                       | BERT                      |
+| Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Model Version              | NEZHA                                                      | NEZHA                     |
+| Model Version              | BERT_NEZHA                                                 | BERT_NEZHA                |
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
 | uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
-| Dataset                    | cn-wiki-128                                                | ImageNet                  |
+| Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
 | Training Parameters        | src/config.py                                              | src/config.py             |
 | Optimizer                  | Lamb                                                       | Momentum                  |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
 | outputs                    | probability                                                |                           |
-| Loss                       |                                                            | 1.913                     |
-| Speed                      |                                                            | 1.913                     |
-| Total time                 |                                                            |                           |
+| Epoch                      | 40                                                         |                           |                      |
+| Batch_size                 | 96*8                                                       | 130(8P)                   |
+| Loss                       | 1.7                                                        | 1.913                     |
+| Speed                      | 360ms/step                                                 | 1.913                     |
+| Total time                 | 200h                                                       |                           |
 | Params (M)                 | 340M                                                       |                           |
 | Checkpoint for Fine tuning | 3.2G(.ckpt file)                                           |                           |             
 
 #### Inference Performance
 
-| Parameters                 |                               |                           |                      |
-| -------------------------- | ----------------------------- | ------------------------- | -------------------- |
-| Model Version              | V1                            |                           |                      |
-| Resource                   | Huawei 910                    | NV SMX2 V100-32G          | Huawei 310           |
-| uploaded Date              | 08/22/2020                    | 05/22/2020                |                      |
-| MindSpore Version          | 0.6.0                         | 0.2.0                     | 0.2.0                | 
-| Dataset                    | cola, 1.2W                    | ImageNet, 1.2W            | ImageNet, 1.2W       |
-| batch_size                 | 32(1P)                        | 130(8P)                   |                      |
-| Accuracy                   | 0.588986                      | ACC1[72.07%] ACC5[90.90%] |                      |
-| Speed                      | 59.25ms/step                  |                           |                      |
-| Total time                 |                               |                           |                      |
-| Model for inference        | 1.2G(.ckpt file)              |                           |                      |
+| Parameters                 | Ascend                        | GPU                       |
+| -------------------------- | ----------------------------- | ------------------------- | 
+| Model Version              |                               |                           |                      
+| Resource                   | Ascend 910                    | NV SMX2 V100-32G          | 
+| uploaded Date              | 08/22/2020                    | 05/22/2020                |                      
+| MindSpore Version          | 0.6.0                         | 0.2.0                     | 
+| Dataset                    | cola, 1.2W                    | ImageNet, 1.2W            |
+| batch_size                 | 32(1P)                        | 130(8P)                   |                      
+| Accuracy                   | 0.588986                      | ACC1[72.07%] ACC5[90.90%] |                     
+| Speed                      | 59.25ms/step                  |                           |                     
+| Total time                 | 15min                         |                           |                     
+| Model for inference        | 1.2G(.ckpt file)              |                           |                     
 
 # [Description of Random Situation](#contents)
 
