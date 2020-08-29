@@ -46,6 +46,7 @@ Dataset used can refer to paper.
 ## [Mixed Precision(Ascend)](#contents)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
@@ -131,7 +132,7 @@ sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 sh run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 > Notes: 
-    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
+    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as [Link]https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
 - GPU:
 ```
@@ -178,8 +179,14 @@ Epoch time: 160917.911, per step time: 128.631
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: sh run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-- GPU: sh run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+- Ascend:
+```
+	sh run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+```
+- GPU:
+```
+	sh run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+```
 
 ### Launch
 
@@ -212,7 +219,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 
 | Parameters                 | InceptionV3                                    |                           |
 | -------------------------- | ---------------------------------------------- | ------------------------- |
-| Model Version              |                                                |                           |
+| Model Version              | V1                                             | V1                          |
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G   | NV SMI V100-16G(PCIE),cpu:2.10GHz 96cores, memory:250G           |
 | uploaded Date              | 08/21/2020                                     | 08/21/2020                |
 | MindSpore Version          | 0.6.0-beta                                     | 0.6.0-beta                |
@@ -232,7 +239,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 
 | Parameters          | InceptionV3                 |
 | ------------------- | --------------------------- |
-| Model Version       |  				            |
+| Model Version       | V1 				            |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 08/22/2020 (month/day/year) |
 | MindSpore Version   | 0.6.0-beta                  |
