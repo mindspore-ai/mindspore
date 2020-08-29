@@ -61,7 +61,7 @@ def get_rank_id(group=None):
 
 def get_rank_size(group=None):
     hccl = Hccl()
-    if group is None:
+    if group is None or "nccl_world_group" in group:
         return hccl.rank_size
     if isinstance(group, str):
         return int(group.split("-")[0])

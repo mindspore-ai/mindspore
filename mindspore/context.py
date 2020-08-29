@@ -434,7 +434,7 @@ def _context():
     return _k_context
 
 
-@args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
+@args_type_check(device_num=int, global_rank=int, mirror_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool)
 def set_auto_parallel_context(**kwargs):
@@ -454,9 +454,9 @@ def set_auto_parallel_context(**kwargs):
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
         mirror_mean (bool): Whether to perform mean operator after all-reduce of mirror.
                      "stand_alone" do not support mirror_mean. Default: False.
-        cast_before_mirror (bool): Insert Mirror Op after the cast if this flag is True.
+        gradient_fp32_sync (bool): Gradients allreduce by fp32 even though gradients is fp16 if this flag is True..
                      "stand_alone", "data_parallel" and "hybrid_parallel" do not support
-                     cast_before_mirror. Default: True.
+                     gradient_fp32_sync. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
@@ -492,7 +492,7 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(device_num=8)
         >>> context.set_auto_parallel_context(global_rank=0)
         >>> context.set_auto_parallel_context(mirror_mean=True)
-        >>> context.set_auto_parallel_context(cast_before_mirror=False)
+        >>> context.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
@@ -524,7 +524,7 @@ def reset_auto_parallel_context():
     - device_num: 1.
     - global_rank: 0.
     - mirror_mean: False.
-    - cast_before_mirror: True.
+    - gradient_fp32_sync: True.
     - parallel_mode: "stand_alone".
     - parameter_broadcast: False.
     - strategy_ckpt_load_file: "".

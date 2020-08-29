@@ -15,7 +15,6 @@
 """Communication management API"""
 import os
 from mindspore import context
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
@@ -85,9 +84,6 @@ def init(backend_name=None):
         GlobalComm.WORLD_COMM_GROUP = NCCL_WORLD_COMM_GROUP
     else:
         raise RuntimeError("Backend name {} is not supported.".format(backend_name))
-
-    auto_parallel_context().set_communication_backend(backend_name)
-
 
 def release():
     """

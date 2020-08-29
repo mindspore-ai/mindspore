@@ -43,6 +43,7 @@
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "utils/comm_manager.h"
 #include "utils/symbolic.h"
+#include "utils/ms_context.h"
 
 using mindspore::tensor::Tensor;
 
@@ -869,8 +870,8 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
 }
 
 bool IsCastBeforMirror(const CNodePtr &node, size_t index) {
-  // only if cast_before_mirror is true, pre node is cast and type is not float32 return true
-  if (!ParallelContext::GetInstance()->cast_before_mirror()) {
+  // only if gradient_fp32_sync is true, pre node is cast and type is not float32 return true
+  if (!ParallelContext::GetInstance()->gradient_fp32_sync()) {
     return false;
   }
   auto pre_node = node->input(index);
@@ -2421,13 +2422,17 @@ Status ParallelInit() {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   int32_t device_num = ParallelContext::GetInstance()->device_num();
   int32_t global_rank = ParallelContext::GetInstance()->global_rank();
-  std::string backend = ParallelContext::GetInstance()->communication_backend();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   std::string world_group;
-
-  if (backend == HCCL_BACKEND) {
+  std::string communication_backend;
+  if (backend == kAscendDevice || backend == kDavinciDevice) {
     world_group = HCCL_WORLD_GROUP;
-  } else if (backend == NCCL_BACKEND) {
+    communication_backend = HCCL_BACKEND;
+  } else if (backend == kGPUDevice) {
     world_group = NCCL_WORLD_GROUP;
+    communication_backend = NCCL_BACKEND;
   } else {
     MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend;
   }
@@ -2450,14 +2455,14 @@ Status ParallelInit() {
     MS_LOG(INFO) << "Get global rank from communication model, the global rank is  " << global_rank;
   }
 
-  if (!InitDevice(device_num, global_rank, backend)) {
+  if (!InitDevice(device_num, global_rank, communication_backend)) {
     MS_LOG(ERROR) << "Init device failed";
     return FAILED;
   }
 
   MS_LOG(INFO) << "The parallel context: dev num: " << device_num << ", global rank: " << global_rank
                << ", backend: " << backend << ", mirror_mean: " << ParallelContext::GetInstance()->mirror_mean()
-               << ", cast_before_mirror: " << ParallelContext::GetInstance()->cast_before_mirror();
+               << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
   return SUCCESS;
 }
 
