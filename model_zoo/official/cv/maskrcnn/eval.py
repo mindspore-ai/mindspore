@@ -24,7 +24,7 @@ from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
 
-from src.MaskRcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
+from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
 from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
 from src.util import coco_eval, bbox2result_1image, results2json, get_seg_masks
