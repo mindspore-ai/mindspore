@@ -13,8 +13,58 @@
 # limitations under the License.
 # ============================================================================
 """ResNet."""
+import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+from mindspore import Tensor
+from mindspore.nn import FakeQuantWithMinMax, Conv2dBnFoldQuant as Conv2dBatchNormQuant
+
+_ema_decay = 0.999
+_symmetric = True
+_fake = True
+_per_channel = True
+
+
+def _weight_variable(shape, factor=0.01):
+    init_value = np.random.randn(*shape).astype(np.float32) * factor
+    return Tensor(init_value)
+
+
+def _conv3x3(in_channel, out_channel, stride=1):
+    weight_shape = (out_channel, in_channel, 3, 3)
+    weight = _weight_variable(weight_shape)
+    return nn.Conv2d(in_channel, out_channel,
+                     kernel_size=3, stride=stride, padding=0, pad_mode='same', weight_init=weight)
+
+
+def _conv1x1(in_channel, out_channel, stride=1):
+    weight_shape = (out_channel, in_channel, 1, 1)
+    weight = _weight_variable(weight_shape)
+    return nn.Conv2d(in_channel, out_channel,
+                     kernel_size=1, stride=stride, padding=0, pad_mode='same', weight_init=weight)
+
+
+def _conv7x7(in_channel, out_channel, stride=1):
+    weight_shape = (out_channel, in_channel, 7, 7)
+    weight = _weight_variable(weight_shape)
+    return nn.Conv2d(in_channel, out_channel,
+                     kernel_size=7, stride=stride, padding=0, pad_mode='same', weight_init=weight)
+
+
+def _bn(channel):
+    return nn.BatchNorm2d(channel, eps=1e-4, momentum=0.9,
+                          gamma_init=1, beta_init=0, moving_mean_init=0, moving_var_init=1)
+
+
+def _bn_last(channel):
+    return nn.BatchNorm2d(channel, eps=1e-4, momentum=0.9,
+                          gamma_init=0, beta_init=0, moving_mean_init=0, moving_var_init=1)
+
+
+def _fc(in_channel, out_channel):
+    weight_shape = (out_channel, in_channel)
+    weight = _weight_variable(weight_shape)
+    return nn.Dense(in_channel, out_channel, has_bias=True, weight_init=weight, bias_init=0)
 
 
 class ConvBNReLU(nn.Cell):
@@ -38,9 +88,10 @@ class ConvBNReLU(nn.Cell):
     def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
-        conv = nn.Conv2dBnAct(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
-                              group=groups, has_bn=True, activation='relu')
-        self.features = conv
+        conv = Conv2dBatchNormQuant(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
+                                    group=groups, fake=_fake, per_channel=_per_channel, symmetric=_symmetric)
+        layers = [conv, nn.ActQuant(nn.ReLU())] if _fake else [conv, nn.ReLU()]
+        self.features = nn.SequentialCell(layers)
 
     def construct(self, x):
         output = self.features(x)
@@ -73,19 +124,39 @@ class ResidualBlock(nn.Cell):
         channel = out_channel // self.expansion
         self.conv1 = ConvBNReLU(in_channel, channel, kernel_size=1, stride=1)
         self.conv2 = ConvBNReLU(channel, channel, kernel_size=3, stride=stride)
-        self.conv3 = nn.Conv2dBnAct(channel, out_channel, kernel_size=1, stride=1, pad_mode='same', padding=0,
-                                    has_bn=True, activation='relu')
+        self.conv3 = nn.SequentialCell([Conv2dBatchNormQuant(channel, out_channel, fake=_fake, per_channel=_per_channel,
+                                                             symmetric=_symmetric,
+                                                             kernel_size=1, stride=1, pad_mode='same', padding=0),
+                                        FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay, symmetric=False)
+                                        ]) if _fake else Conv2dBatchNormQuant(channel, out_channel, fake=_fake,
+                                                                              per_channel=_per_channel,
+                                                                              symmetric=_symmetric,
+                                                                              kernel_size=1, stride=1,
+                                                                              pad_mode='same', padding=0)
 
         self.down_sample = False
+
         if stride != 1 or in_channel != out_channel:
             self.down_sample = True
         self.down_sample_layer = None
 
         if self.down_sample:
-            self.down_sample_layer = nn.Conv2dBnAct(in_channel, out_channel,
-                                                    kernel_size=1, stride=stride,
-                                                    pad_mode='same', padding=0, has_bn=True, activation='relu')
-        self.add = P.TensorAdd()
+            self.down_sample_layer = nn.SequentialCell([Conv2dBatchNormQuant(in_channel, out_channel,
+                                                                             per_channel=_per_channel,
+                                                                             symmetric=_symmetric,
+                                                                             kernel_size=1, stride=stride,
+                                                                             pad_mode='same', padding=0),
+                                                        FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay,
+                                                                            symmetric=False)
+                                                        ]) if _fake else Conv2dBatchNormQuant(in_channel, out_channel,
+                                                                                              fake=_fake,
+                                                                                              per_channel=_per_channel,
+                                                                                              symmetric=_symmetric,
+                                                                                              kernel_size=1,
+                                                                                              stride=stride,
+                                                                                              pad_mode='same',
+                                                                                              padding=0)
+        self.add = nn.TensorAddQuant()
         self.relu = P.ReLU()
 
     def construct(self, x):
@@ -164,7 +235,9 @@ class ResNet(nn.Cell):
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.flatten = nn.Flatten()
-        self.end_point = nn.DenseBnAct(out_channels[3], num_classes, has_bias=True, has_bn=False)
+        self.end_point = nn.DenseQuant(out_channels[3], num_classes, has_bias=True, per_channel=_per_channel,
+                                       symmetric=_symmetric)
+        self.output_fake = nn.FakeQuantWithMinMax(ema=True, ema_decay=_ema_decay)
 
     def _make_layer(self, block, layer_num, in_channel, out_channel, stride):
         """
@@ -206,6 +279,7 @@ class ResNet(nn.Cell):
         out = self.mean(c5, (2, 3))
         out = self.flatten(out)
         out = self.end_point(out)
+        out = self.output_fake(out)
         return out
 
 
