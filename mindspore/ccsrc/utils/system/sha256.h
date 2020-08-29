@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace system {
 namespace sha256 {
+constexpr int kPathMax = 4096;
 constexpr int kBitNumber = 8;
 constexpr int kDigestSize = 8;
 constexpr int kIterationNumber = 64;
@@ -46,7 +47,17 @@ inline uint32_t sigma2(uint32_t x) { return (x >> 7 | x << 25) ^ (x >> 18 | x <<
 inline uint32_t sigma3(uint32_t x) { return (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10); }
 
 std::string LoadFilePath(const std::string &path) {
-  std::ifstream bin_stream(path, std::ios::binary);
+  char real_path[kPathMax] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (path.size() > kPathMax || _fullpath(real_path, path.c_str(), kPathMax) == nullptr) {
+    return "";
+  }
+#else
+  if (path.size() > kPathMax || realpath(path.c_str(), real_path) == nullptr) {
+    return "";
+  }
+#endif
+  std::ifstream bin_stream(real_path, std::ios::binary);
   if (!bin_stream.is_open()) {
     return "";
   }
