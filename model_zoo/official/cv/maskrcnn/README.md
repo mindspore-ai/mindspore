@@ -50,7 +50,7 @@ MaskRcnn is a two-stage target detection network,This network uses a region prop
  
 ```shell
 .
-└─MaskRcnn      
+└─maskrcnn
   ├─README.md
   ├─scripts
     ├─run_download_process_data.sh       
@@ -58,7 +58,7 @@ MaskRcnn is a two-stage target detection network,This network uses a region prop
     ├─run_train.sh
     └─run_eval.sh
   ├─src
-    ├─MaskRcnn
+    ├─maskrcnn
       ├─__init__.py
       ├─anchor_generator.py
       ├─bbox_assign_sample.py

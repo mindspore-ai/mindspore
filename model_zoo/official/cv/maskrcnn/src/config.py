@@ -141,8 +141,8 @@ config = ed({
     "keep_checkpoint_max": 12,
     "save_checkpoint_path": "./checkpoint",
 
-    "mindrecord_dir": "/home/mxw/mask_rcnn/scripts/MindRecord_COCO2017_Train",
-    "coco_root": "/home/mxw/coco2017/",
+    "mindrecord_dir": "/home/mask_rcnn/MindRecord_COCO2017_Train",
+    "coco_root": "/home/mask_rcnn/coco2017/",
     "train_data_type": "train2017",
     "val_data_type": "val2017",
     "instance_set": "annotations/instances_{}.json",
