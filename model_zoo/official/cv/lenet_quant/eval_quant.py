@@ -38,8 +38,6 @@ parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')
 parser.add_argument('--ckpt_path', type=str, default="",
                     help='if mode is test, must provide path where the trained ckpt file')
-parser.add_argument('--dataset_sink_mode', type=bool, default=True,
-                    help='dataset_sink_mode is False or True')
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -67,5 +65,5 @@ if __name__ == "__main__":
         raise ValueError("Load param into net fail!")
 
     print("============== Starting Testing ==============")
-    acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
+    acc = model.eval(ds_eval, dataset_sink_mode=True)
     print("============== {} ==============".format(acc))

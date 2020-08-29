@@ -32,7 +32,6 @@ parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--device_target', type=str, default=None, help='Run device target')
-parser.add_argument('--quantization_aware', type=bool, default=False, help='Use quantization aware training')
 args_opt = parser.parse_args()
 
 if __name__ == '__main__':
@@ -51,9 +50,8 @@ if __name__ == '__main__':
 
     # define fusion network
     network = mobilenetV2(num_classes=config_device_target.num_classes)
-    if args_opt.quantization_aware:
-        # convert fusion network to quantization aware network
-        network = quant.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
+    # convert fusion network to quantization aware network
+    network = quant.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # define network loss
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
 

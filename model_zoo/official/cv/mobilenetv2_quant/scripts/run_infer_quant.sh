@@ -50,5 +50,4 @@ python ${BASEPATH}/../eval.py \
         --device_target=$1 \
         --dataset_path=$2 \
         --checkpoint_path=$3 \
-        --quantization_aware=True \
         &> infer.log &  # dataset val folder path
