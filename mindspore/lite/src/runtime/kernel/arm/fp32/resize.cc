@@ -61,6 +61,7 @@ int ResizeCPUKernel::ReSize() {
 }
 
 int ResizeCPUKernel::MallocTmpBuffer() {
+  int c = in_tensors_.at(0)->Channel();
   int h = new_height_;
   int w = new_width_;
   y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * h));
@@ -94,6 +95,12 @@ int ResizeCPUKernel::MallocTmpBuffer() {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
+  line_buffer_ = reinterpret_cast<float *>(malloc(sizeof(float) * w * c * 2 * context_->thread_num_));
+  if (line_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_NULL_PTR;
+  }
+
   return RET_OK;
 }
 void ResizeCPUKernel::FreeTmpBuffer() {
@@ -121,6 +128,10 @@ void ResizeCPUKernel::FreeTmpBuffer() {
   if (x_left_weights_ != nullptr) {
     free(x_left_weights_);
     x_left_weights_ = nullptr;
+  }
+  if (line_buffer_ != nullptr) {
+    free(line_buffer_);
+    line_buffer_ = nullptr;
   }
 }
 
@@ -158,9 +169,12 @@ int ResizeCPUKernel::RunImpl(int task_id) {
       int unit = UP_DIV(n * h, context_->thread_num_);
       n_h_begin = unit * task_id;
       n_h_end = std::min(n_h_begin + unit, n * h);
-
-      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), y_bottoms_,
-                           y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, n_h_begin, n_h_end);
+      int c = in_tensors_.at(0)->shape()[3];
+      line0_ = line_buffer_ + new_width_ * c * 2 * task_id;
+      line1_ = line0_ + new_width_ * c;
+      ret = ResizeBilinear2(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), y_bottoms_,
+                            y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0_, line1_, n_h_begin,
+                            n_h_end);
 
       break;
     }

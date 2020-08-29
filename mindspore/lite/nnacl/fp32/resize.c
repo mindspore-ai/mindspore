@@ -154,6 +154,129 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
   return NNACL_OK;
 }
 
+int InterpRow(const float *src_line, float *linear_output, int new_width, float *x_left_weights, int *x_lefts,
+              int *x_rights, int in_c) {
+  int w;
+  for (w = 0; w < new_width; w++) {
+    int c = 0;
+#ifdef ENABLE_NEON
+    float32x4_t left_w = vdupq_n_f32(x_left_weights[w]);
+    float32x4_t right_w = vdupq_n_f32(1.0f - x_left_weights[w]);
+
+    for (; c <= in_c - 4; c += 4) {
+      float32x4_t left = vld1q_f32(src_line + x_lefts[w] * in_c + c);
+      float32x4_t right = vld1q_f32(src_line + x_rights[w] * in_c + c);
+
+      float32x4_t interp_value = left * left_w + right * right_w;
+      vst1q_f32(linear_output + w * in_c + c, interp_value);
+    }
+#endif
+    int left_w_offset = x_lefts[w] * in_c;
+    int right_w_offset = x_rights[w] * in_c;
+    for (; c < in_c; c++) {
+      float left = src_line[left_w_offset + c];
+      float right = src_line[right_w_offset + c];
+      linear_output[w * in_c + c] = left * x_left_weights[w] + right * (1.0f - x_left_weights[w]);
+    }
+  }
+  return 0;
+}
+
+int InterpCol(const float *bottom_line, const float *top_line, float *output, int new_width, float y_bottom_weight,
+              int in_c) {
+  int w;
+  for (w = 0; w < new_width; w++) {
+    int c = 0;
+#ifdef ENABLE_NEON
+    float32x4_t bottom_w = vdupq_n_f32(y_bottom_weight);
+    float32x4_t top_w = vdupq_n_f32(1.0f - y_bottom_weight);
+
+    for (; c <= in_c - 4; c += 4) {
+      float32x4_t bottom = vld1q_f32(bottom_line + w * in_c + c);
+      float32x4_t top = vld1q_f32(top_line + w * in_c + c);
+      float32x4_t interp_value = bottom * bottom_w + top * top_w;
+      vst1q_f32(output + w * in_c + c, interp_value);
+    }
+#endif
+    for (; c < in_c; c++) {
+      float bottom = bottom_line[w * in_c + c];
+      float top = top_line[w * in_c + c];
+      output[w * in_c + c] = bottom * y_bottom_weight + top * (1.0f - y_bottom_weight);
+    }
+  }
+  return 0;
+}
+
+int ResizeBilinear2(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
+                    int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
+                    float *x_left_weights, float *line0, float *line1, int n_h_begin, int n_h_end) {
+  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
+      y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
+    return NNACL_NULL_PTR;
+  }
+
+  int in_h = input_shape[1];
+  int in_w = input_shape[2];
+  int in_c = input_shape[3];
+
+  int new_height = output_shape[1];
+  int new_width = output_shape[2];
+
+  int n_h;
+  int n_h_stride = new_width * in_c;
+
+  bool cache_line_used[2] = {false, false};
+  int cache_line_num[2] = {-1, -1};
+  float *const cache_line_ptr[2] = {line0, line1};
+  float *current_line_ptr[2] = {line0, line1};
+  int current_line_num[2] = {-1, -1};
+
+  for (n_h = n_h_begin; n_h < n_h_end; n_h++) {
+    int n, h;
+    n = n_h / new_height;
+    h = n_h % new_height;
+
+    current_line_num[0] = n * in_h + y_bottoms[h];
+    current_line_num[1] = n * in_h + y_tops[h];
+    int i;
+    for (i = 0; i < 2; i++) {
+      cache_line_used[i] = false;
+    }
+    // search if we cached
+    int j, k;
+    for (j = 0; j < 2; j++) {
+      bool find = false;
+      for (k = 0; k < 2; k++) {
+        if (current_line_num[j] == cache_line_num[k]) {
+          cache_line_used[k] = true;
+          current_line_ptr[j] = cache_line_ptr[k];
+          find = true;
+          break;
+        }
+      }
+
+      if (!find) {
+        const float *line = input_data + current_line_num[j] * in_w * in_c;
+        for (k = 0; k < 2; k++) {
+          if (!cache_line_used[k]) {
+            cache_line_num[k] = current_line_num[j];
+            cache_line_used[k] = true;
+            current_line_ptr[j] = cache_line_ptr[k];
+            InterpRow(line, current_line_ptr[j], new_width, x_left_weights, x_lefts, x_rights, in_c);
+            break;
+          }
+        }
+      }
+    }
+
+    // do col interp
+    InterpCol(current_line_ptr[0], current_line_ptr[1], output_data + n_h * n_h_stride, new_width, y_bottom_weights[h],
+              in_c);
+  }
+
+  return NNACL_OK;
+}
+
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                           int tid, int thread_num) {
   int batch, y, x, c;
