@@ -35,21 +35,22 @@ void LoadDataBiasAdd(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
     memset(dst, 0x00, dst_size);
   } else {
-    auto src_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &dst_size));
+    auto src_data = mindspore::lite::ReadFile(file_path.c_str(), &dst_size);
     memcpy(dst, src_data, dst_size);
   }
 }
 
+template <typename T>
 void CompareOutBiasAdd(lite::tensor::Tensor *output_tensor, const std::string &standard_answer_file) {
-  auto *output_data = reinterpret_cast<float *>(output_tensor->Data());
   size_t output_size = output_tensor->ElementsNum();
-  auto expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
+  auto output_data = reinterpret_cast<T *>(output_tensor->Data());
+  auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
     if (std::fabs(output_data[i] - expect_data[i]) > atol) {
-      printf("error at idx[%d] expect=%.3f output=%.3f\n", i, expect_data[i], output_data[i]);
-      printf("error at idx[%d] expect=%.3f output=%.3f\n", i, expect_data[i], output_data[i]);
-      printf("error at idx[%d] expect=%.3f output=%.3f\n\n\n", i, expect_data[i], output_data[i]);
+      printf("error at idx[%d] expect=%f output=%f\n", i, expect_data[i], output_data[i]);
+      printf("error at idx[%d] expect=%f output=%f\n", i, expect_data[i], output_data[i]);
+      printf("error at idx[%d] expect=%f output=%f\n\n\n", i, expect_data[i], output_data[i]);
       return;
     }
   }
@@ -58,22 +59,15 @@ void CompareOutBiasAdd(lite::tensor::Tensor *output_tensor, const std::string &s
   printf("compare success!\n\n\n");
 }
 
-void printf_tensor_BiasAdd(mindspore::lite::tensor::Tensor *in_data, int size) {
-  auto input_data = reinterpret_cast<float *>(in_data->Data());
+template <typename T>
+void printf_tensor_BiasAdd(const std::string log, mindspore::lite::tensor::Tensor *in_data, int size) {
+  MS_LOG(INFO) << log;
+  auto input_data = reinterpret_cast<T *>(in_data->Data());
   for (int i = 0; i < size; ++i) {
     printf("%f ", input_data[i]);
   }
   printf("\n");
   MS_LOG(INFO) << "Print tensor done";
-}
-
-void printf_float_BiasAdd(float *data, int num = 0) {
-  float *temp = data;
-  for (int i = 0; i < num; ++i) {
-    std::cout << *temp << " ";
-    temp++;
-  }
-  std::cout << std::endl;
 }
 
 TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
@@ -83,29 +77,34 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   MS_LOG(INFO) << "BiasAdd Begin test:";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
-
-  MS_LOG(INFO) << "BiasAdd init tensors.";
-
+  auto data_type = kNumberTypeFloat16;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   std::vector<int> input_shape = {1, 9};
   std::vector<int> output_shape = {1, 9};
-  auto data_type = kNumberTypeFloat32;
+
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  schema::Format type;
+  int weight_shape = 0;
+  if (input_shape.size() == 4) {
+    weight_shape = input_shape[3];
+    type = schema::Format_NHWC;
+  } else {
+    weight_shape = input_shape[1];
+    type = schema::Format_NC;
+  }
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, type, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, type, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
     return;
   }
   auto *weight_tensor = new (std::nothrow)
-    lite::tensor::Tensor(data_type, std::vector<int>{input_shape[1]}, schema::Format_NHWC, tensor_type);
+    lite::tensor::Tensor(data_type, std::vector<int>{weight_shape}, schema::Format_NHWC, tensor_type);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight tensor error!";
     delete output_tensor;
@@ -114,14 +113,18 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   }
   std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   inputs[1]->MallocData(allocator);
   LoadDataBiasAdd(input_tensor->Data(), input_tensor->Size(), in_file);
-  MS_LOG(INFO) << "BiasAdd==================input data================";
-  printf_tensor_BiasAdd(inputs[0], input_tensor->ElementsNum());
   LoadDataBiasAdd(weight_tensor->Data(), weight_tensor->Size(), weight_file);
-  MS_LOG(INFO) << "BiasAdd==================weight data================";
-  printf_tensor_BiasAdd(inputs[1], weight_tensor->ElementsNum());
+  if (ocl_runtime->GetFp16Enable()) {
+    printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--input data", inputs[0], input_tensor->ElementsNum());
+    printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--weight data", inputs[1], weight_tensor->ElementsNum());
+  } else {
+    printf_tensor_BiasAdd<float>("BiasAdd:FP32--input data", inputs[0], input_tensor->ElementsNum());
+    printf_tensor_BiasAdd<float>("BiasAdd:FP32--weight data", inputs[1], weight_tensor->ElementsNum());
+  }
 
   auto *param = new (std::nothrow) OpParameter();
   if (param == nullptr) {
@@ -189,9 +192,13 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
     return;
   }
 
-  MS_LOG(INFO) << "BiasAdd==================output data================";
-  printf_tensor_BiasAdd(outputs[0], output_tensor->ElementsNum());
-  CompareOutBiasAdd(output_tensor, standard_answer_file);
+  if (ocl_runtime->GetFp16Enable()) {
+    printf_tensor_BiasAdd<float16_t>("BiasAdd:FP16--output data", outputs[0], output_tensor->ElementsNum());
+    CompareOutBiasAdd<float16_t>(output_tensor, standard_answer_file);
+  } else {
+    printf_tensor_BiasAdd<float>("BiasAdd:FP32--output data", outputs[0], output_tensor->ElementsNum());
+    CompareOutBiasAdd<float>(output_tensor, standard_answer_file);
+  }
   delete input_tensor;
   delete weight_tensor;
   delete output_tensor;

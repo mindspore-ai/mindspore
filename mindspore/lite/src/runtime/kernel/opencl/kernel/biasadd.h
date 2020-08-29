@@ -42,9 +42,11 @@ class BiasAddOpenCLKernel : public OpenCLKernel {
 
  private:
   cl::Kernel kernel_;
-  FLOAT_t *BiasAdd_;
+  void *BiasAdd_;
   int in_size_;
   int out_size_;
+  size_t fp_size;
+  bool enable_fp16_{false};
 };
 
 }  // namespace mindspore::kernel
