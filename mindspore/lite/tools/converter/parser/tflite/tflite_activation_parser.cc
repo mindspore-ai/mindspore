@@ -51,7 +51,6 @@ STATUS TfliteActivationParser::Parse(const std::unique_ptr<tflite::OperatorT> &t
   if (std::strcmp(node_name,  "Relu") == 0) {
     MS_LOG(DEBUG) << "parse TfliteReluParser";
     attr->type = schema::ActivationType_RELU;
-
   } else if (std::strcmp(node_name,  "Relu6") == 0) {
     MS_LOG(DEBUG) << "parse TfliteRelu6Parser";
     attr->type = schema::ActivationType_RELU6;

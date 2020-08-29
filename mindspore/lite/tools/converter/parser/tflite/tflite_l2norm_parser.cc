@@ -51,10 +51,6 @@ STATUS TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     return RET_NULL_PTR;
   }
   auto data_index = tflite_op->inputs[0];
-  if (static_cast<int>(tflite_op->inputs.size()) <= data_index) {
-    MS_LOG(ERROR) << "the size of input should be greater than " << data_index;
-    return RET_ERROR;
-  }
   const auto &data_tensor = tflite_tensors[data_index];
   if (data_tensor == nullptr) {
     MS_LOG(ERROR) << "the input tensor is null";

@@ -57,9 +57,16 @@ STATUS TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
       MS_LOG(ERROR) << "shape_tensor is null";
       return RET_NULL_PTR;
     }
-    if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->shape)) {
-      MS_LOG(ERROR) << "get reshape -> shape failed";
-      return RET_ERROR;
+    auto &buf_data = tflite_model_buffer[shape_tensor->buffer];
+    if (buf_data == nullptr) {
+      MS_LOG(ERROR) << "buf_data is null";
+      return RET_NULL_PTR;
+    }
+    if (!buf_data->data.empty()) {
+      if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->shape)) {
+        MS_LOG(ERROR) << "get reshape -> shape failed";
+        return RET_ERROR;
+      }
     }
   } else {
     attr->format = schema::Format_NHWC;
