@@ -18,7 +18,7 @@ import os
 
 import numpy as np
 import mindspore.context as context
-from mindspore.train.serialization import _exec_save_checkpoint, load_checkpoint
+from mindspore.train.serialization import save_checkpoint, load_checkpoint
 
 from src.config import GatConfig
 from src.dataset import load_and_process
@@ -98,7 +98,7 @@ def train():
                 val_loss_model = eval_loss
                 if os.path.exists("ckpts/gat.ckpt"):
                     os.remove("ckpts/gat.ckpt")
-                _exec_save_checkpoint(train_net.network, "ckpts/gat.ckpt")
+                save_checkpoint(train_net.network, "ckpts/gat.ckpt")
             val_acc_max = np.max((val_acc_max, eval_acc))
             val_loss_min = np.min((val_loss_min, eval_loss))
             curr_step = 0
