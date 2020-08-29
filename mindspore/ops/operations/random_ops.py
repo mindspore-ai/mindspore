@@ -450,8 +450,8 @@ class Multinomial(PrimitiveWithInfer):
 
     Examples:
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
-        >>> multinomial = P.Multinomial(seed=10)
-        >>> output = multinomial(input, 2, True)
+        >>> multinomial = P.Multinomial(replacement=True, seed=10)
+        >>> output = multinomial(input, 2)
     """
 
     @prim_attr_register
