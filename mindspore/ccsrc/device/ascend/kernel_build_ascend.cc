@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <set>
+#include <map>
 #include <functional>
 
 #include "device/ascend/kernel_select_ascend.h"
