@@ -39,8 +39,8 @@ class UniqueCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  size_t n_;
-  TypeId dtype_;
+  size_t n_{0};
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(
@@ -57,5 +57,4 @@ MS_REG_CPU_KERNEL(
   UniqueCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNIQUE_CPU_KERNEL_H_

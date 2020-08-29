@@ -93,9 +93,9 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
     output_unit_offsets_[i] = offset;
   }
 
+  auto mem_size = inputs[0]->size;
   for (int i = 0; i < num_units_; i++) {
-    auto ret =
-      memcpy_s(x + output_unit_offsets_[i], unit_size_ * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
+    auto ret = memcpy_s(x + output_unit_offsets_[i], mem_size, updates + unit_size_ * i, unit_size_ * sizeof(T));
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
     }

@@ -195,8 +195,7 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, fusion_node, kLambNextMVWithDecayV1OutputNum, &fusion_node_outputs);
   if (fusion_node_outputs.size() != kLambNextMVWithDecayV1OutputNum) {
-    MS_LOG(ERROR) << "create multiple outputs for fusion node fail!";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "create multiple outputs for fusion node fail!";
   }
 
   (void)manager->Replace(add0, fusion_node_outputs[1]);

@@ -39,10 +39,10 @@ class ScatterNdUpdateCPUKernel : public CPUKernel {
 
  private:
   void Check(const CNodePtr &kernel_node);
-  TypeId dtype_;
-  int unit_size_;
-  int num_units_;
-  int indices_unit_rank_;
+  TypeId dtype_{kTypeUnknown};
+  int unit_size_{0};
+  int num_units_{0};
+  int indices_unit_rank_{0};
   std::vector<size_t> shape_;
   std::vector<int> output_unit_offsets_;
   std::vector<int> out_strides_;

@@ -40,7 +40,7 @@ class UniqueWithPadCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   int64_t n_{0};
-  TypeId dtype_{0};
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(UniqueWithPad,
@@ -58,8 +58,6 @@ MS_REG_CPU_KERNEL(UniqueWithPad,
                     .AddOutputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
                   UniqueWithPadCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNIQUE_WITH_PAD_CPU_KERNEL_H_
