@@ -1,16 +1,44 @@
-# LeNet Example
+# Contents
 
-## Description
+- [LeNet Description](#lenet-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)    
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training Process](#training-process)
+        - [Training](#training)  
+    - [Evaluation Process](#evaluation-process)
+        - [Evaluation](#evaluation)
+- [Model Description](#model-description)
+    - [Performance](#performance)  
+        - [Evaluation Performance](#evaluation-performance)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
-Training LeNet with dataset in MindSpore.
 
-This is the simple and basic tutorial for constructing a network in MindSpore.
+# [LeNet Description](#contents)
 
-## Requirements
+LeNet was proposed in 1998, a typical convolutional neural network. It was used for digit recognition and got big success.   
 
-- Install [MindSpore](https://www.mindspore.cn/install/en).
+[Paper](https://ieeexplore.ieee.org/document/726791): Y.Lecun, L.Bottou, Y.Bengio, P.Haffner. Gradient-Based Learning Applied to Document Recognition. *Proceedings of the IEEE*. 1998.
 
-- Download the dataset, the directory structure is as follows:
+# [Model Architecture](#contents)
+
+LeNet is very simple, which contains 5 layers. The layer composition consists of 2 convolutional layers and 3 fully connected layers.
+
+# [Dataset](#contents)
+
+Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>) 
+
+- Dataset size：52.4M，60,000 28*28 in 10 classes
+  - Train：60,000 images  
+  - Test：10,000 images 
+- Data format：binary files
+  - Note：Data will be processed in dataset.py
+
+- The directory structure is as follows:
 
 ```
 └─Data
@@ -23,40 +51,136 @@ This is the simple and basic tutorial for constructing a network in MindSpore.
            train-labels.idx1-ubyte
 ```
 
-## Running the example
+# [Environment Requirements](#contents)
+
+- Hardware（Ascend/GPU/CPU）
+  - Prepare hardware environment with Ascend, GPU, or CPU processor. 
+- Framework
+  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+
+# [Quick Start](#contents)
+
+After installing MindSpore via the official website, you can start training and evaluation as follows: 
 
 ```python
-# train LeNet, hyperparameter setting in config.py
-python train.py --data_path Data
+# enter script dir, train LeNet
+sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
+# enter script dir, evaluate LeNet
+sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
-You will get the loss value of each step as following:
+# [Script Description](#contents)
 
-```bash
-epoch: 1 step: 1, loss is 2.3040335
-...
-epoch: 1 step: 1739, loss is 0.06952668
-epoch: 1 step: 1740, loss is 0.05038793
-epoch: 1 step: 1741, loss is 0.05018193
-...
+## [Script and Sample Code](#contents)
+
+```
+├── cv
+    ├── lenet        
+        ├── README.md                    // descriptions about lenet
+        ├── requirements.txt             // package needed
+        ├── scripts 
+        │   ├──run_standalone_train_cpu.sh             // train in cpu 
+        │   ├──run_standalone_train_gpu.sh             // train in gpu 
+        │   ├──run_standalone_train_ascend.sh          // train in ascend 
+        │   ├──run_standalone_eval_cpu.sh             //  evaluate in cpu  
+        │   ├──run_standalone_eval_gpu.sh             //  evaluate in gpu 
+        │   ├──run_standalone_eval_ascend.sh          //  evaluate in ascend 
+        ├── src 
+        │   ├──dataset.py             // creating dataset
+        │   ├──lenet.py              // lenet architecture
+        │   ├──config.py            // parameter configuration 
+        ├── train.py               // training script 
+        ├── eval.py               //  evaluation script  
 ```
 
-Then, evaluate LeNet according to network model
+## [Script Parameters](#contents)
+
 ```python
-# evaluate LeNet
-python eval.py --data_path Data --ckpt_path checkpoint_lenet-1_1875.ckpt
+Major parameters in train.py and config.py as follows:
+
+--data_path: The absolute full path to the train and evaluation datasets. 
+--epoch_size: Total training epochs. 
+--batch_size: Training batch size.  
+--image_height: Image height used as input to the model.
+--image_width: Image width used as input the model. 
+--device_target: Device where the code will be implemented. Optional values
+                 are "Ascend", "GPU", "CPU". 
+--checkpoint_path: The absolute full path to the checkpoint file saved
+                   after training.
+--data_path: Path where the dataset is saved    
 ```
 
-## Note
-Here are some optional parameters:
+## [Training Process](#contents)
 
-```bash
---device_target {Ascend,GPU,CPU}
-                     device where the code will be implemented (default: Ascend)
---data_path DATA_PATH
-                     path where the dataset is saved
---dataset_sink_mode DATASET_SINK_MODE
-                     dataset_sink_mode is False or True
+### Training 
+
+```
+python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
+or enter script dir, and run the script
+sh run_standalone_train_ascend.sh Data ckpt
 ```
 
-You can run ```python train.py -h``` or ```python eval.py -h``` to get more information.
+After training, the loss value will be achieved as follows:
+
+```
+# grep "loss is " log.txt
+epoch: 1 step: 1, loss is 2.2791853
+...
+epoch: 1 step: 1536, loss is 1.9366643
+epoch: 1 step: 1537, loss is 1.6983616
+epoch: 1 step: 1538, loss is 1.0221305
+...
+```
+
+The model checkpoint will be saved in the current directory. 
+
+## [Evaluation Process](#contents)
+
+### Evaluation
+
+Before running the command below, please check the checkpoint path used for evaluation.
+
+```
+python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
+or enter script dir, and run the script
+sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
+```
+
+You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:
+
+```
+# grep "Accuracy: " log.txt
+'Accuracy': 0.9842 
+```
+
+# [Model Description](#contents)
+
+## [Performance](#contents)
+
+### Evaluation Performance 
+
+| Parameters                 | LeNet                                                   |
+| -------------------------- | ----------------------------------------------------------- |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
+| uploaded Date              | 06/09/2020 (month/day/year)                                 |
+| MindSpore Version          | 0.5.0-beta                                                      |
+| Dataset                    | MNIST                                                    |
+| Training Parameters        | epoch=10, steps=1875, batch_size = 32, lr=0.01              |
+| Optimizer                  | Momentum                                                         |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 0.002                                                      |
+| Speed                      | 1.70 ms/step                          |
+| Total time                 | 43.1s                          |                                       |
+| Checkpoint for Fine tuning | 482k (.ckpt file)                                         |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet |
+
+# [Description of Random Situation](#contents)
+
+In dataset.py, we set the seed inside ```create_dataset``` function.
+
+# [ModelZoo Homepage](#contents)  
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
