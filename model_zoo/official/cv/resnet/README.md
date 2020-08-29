@@ -427,7 +427,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | outputs                    | probability                                                 |  probability          |
 | Loss                       | 1.8464266                                                    | 1.9023  |
 | Speed                      | 18.4ms/step（8pcs）                     |67.1ms/step（8pcs）|
-| Total time                 | 139 mins                          | 258 mins|
+| Total time                 | 139 mins                          | 500 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                         |197M (.ckpt file)     |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
