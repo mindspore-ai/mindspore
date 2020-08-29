@@ -60,6 +60,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   for (int i = 0; i < weight_tensor->ElementsNum(); i++) {
     packed_weight_[i] = (int16_t)(tmp_weight[i] - weight_zp);
   }
+  free(tmp_weight);
 
   bias_data_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
   if (bias_data_ == nullptr) {
