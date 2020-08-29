@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANGER_H_
-#define MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANGER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANAGER_H_
+#define MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANAGER_H_
 #include <set>
 #include <map>
 #include <string>
@@ -42,4 +42,4 @@ class ExecutorManager {
 };
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANGER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_MANAGER_H_
