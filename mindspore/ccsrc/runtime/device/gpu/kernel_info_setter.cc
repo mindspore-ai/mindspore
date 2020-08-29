@@ -223,7 +223,7 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
 }
 }  // namespace
 
-void SetKernelInfo(const CNodePtr &kernel_node) {
+void SetKernelInfo(const CNodePtr &kernel_node, bool in_black_list) {
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
@@ -237,7 +237,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
   std::string origin_data_format = kOpFormat_DEFAULT;
-  if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
+  if (!in_black_list && IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
     UpdateKernelFormatInfo(kernel_node, inputs_type, &inputs_format, &outputs_format, &origin_data_format);
   }
   std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> builder =
