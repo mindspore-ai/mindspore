@@ -424,6 +424,8 @@ Tensor::Tensor(const Tensor &tensor)
       data_(tensor.data_),
       dirty_(tensor.dirty_),
       id_(tensor.id_),
+      event_(tensor.event_),
+      need_sync_(tensor.need_sync_),
       device_sync_(tensor.device_sync_),
       padding_type_(tensor.padding_type()) {}
 
@@ -433,6 +435,8 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
       dirty_(tensor.dirty_),
       id_(tensor.id_),
+      event_(tensor.event_),
+      need_sync_(tensor.need_sync_),
       device_sync_(tensor.device_sync_),
       padding_type_(tensor.padding_type()) {}
 
@@ -483,6 +487,8 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     device_sync_ = tensor.device_sync_;
     data_ = tensor.data_;
     id_ = tensor.id_;
+    event_ = tensor.event_;
+    need_sync_ = tensor.need_sync_;
     padding_type_ = tensor.padding_type_;
   }
   return *this;
@@ -547,6 +553,7 @@ std::string Tensor::ToStringRepr() const {
 }
 
 void Tensor::data_sync() const {
+  const_cast<Tensor *>(this)->Wait();
   if (device_sync_ != nullptr) {
     if (!device_sync_->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
       MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";

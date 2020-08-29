@@ -260,16 +260,10 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  {
-    py::gil_scoped_release gil_release;
-    // Run graph on GPU
-    Execute(kernel_graph);
-  }
+  Execute(kernel_graph);
 #ifdef ENABLE_DEBUGGER
   PostLoadTensor(kernel_graph);
 #endif
-  // Get result from GPU
-  UpdateOutputs(kernel_graph, outputs, inputs);
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -298,8 +292,8 @@ void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_in
   run_op_graphs_[graph_info] = kernel_graph;
 }
 
-py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                            const std::vector<tensor::TensorPtr> &input_tensors) {
+void GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                       const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NopOp from execution graph
@@ -307,12 +301,8 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   RunOpAllocateMemory(op_run_info.value, input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
-  {
-    py::gil_scoped_release gil_release;
-    Execute(kernel_graph);
-  }
+  Execute(kernel_graph);
   // Fetch outputs
-  VectorRef outputs;
   if (op_run_info.value != nullptr) {
     std::vector<tensor::TensorPtr> pre_output_tensors;
     TensorValueToTensor(op_run_info.value, &pre_output_tensors);
@@ -320,21 +310,12 @@ py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph
       tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
       tensor->set_device_address(pre_output->device_address());
       tensor->set_dirty(false);
-      outputs.emplace_back(tensor);
+      outputs->emplace_back(tensor);
     }
   } else {
-    UpdateOutputs(kernel_graph, &outputs, input_tensors);
+    UpdateOutputs(kernel_graph, outputs, input_tensors);
   }
-  // Trans output to tuple
-  auto output_tensors = TransformBaseRefListToTuple(outputs);
-  if (!utils::isa<PyObjectRef>(output_tensors) ||
-      !py::isinstance<py::tuple>(utils::cast<PyObjectRef>(output_tensors).object_)) {
-    MS_EXCEPTION(NotSupportError) << "The output tensors should be a tuple !";
-  }
-  py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
-  py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
   RunOpClearMemory(kernel_graph.get());
-  return tuple_tensors;
 }
 
 #ifdef ENABLE_DEBUGGER

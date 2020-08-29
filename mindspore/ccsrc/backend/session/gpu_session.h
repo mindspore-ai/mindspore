@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include "backend/session/session_basic.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/session_factory.h"
@@ -31,18 +32,15 @@ class GPUSession : public SessionBasic {
   GPUSession() = default;
   ~GPUSession() override = default;
 
-  void Init(uint32_t device_id) override {
-    SessionBasic::Init(device_id);
-    context_ = std::make_shared<Context>(kGPUDevice, device_id);
-  }
+  void Init(uint32_t device_id) override { InitDevice(kGPUDevice, device_id); }
 
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
 
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) override;
-  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                  const std::vector<tensor::TensorPtr> &input_tensors) override;
+  void RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+             const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;

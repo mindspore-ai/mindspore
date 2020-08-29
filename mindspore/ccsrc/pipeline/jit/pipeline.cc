@@ -37,6 +37,7 @@
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "backend/session/executor_manager.h"
 #include "debug/trace.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
@@ -1023,7 +1024,6 @@ void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   if (mindspore::parallel::ps::Util::IsParamServerMode()) {
     if (parallel::ps::Util::IsRoleOfWorker()) {
@@ -1047,6 +1047,8 @@ void ClearResAtexit() {
 #else
   ConfigManager::GetInstance().ResetIterNum();
 #endif
+  session::ExecutorManager::Instance().Clear();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
 }

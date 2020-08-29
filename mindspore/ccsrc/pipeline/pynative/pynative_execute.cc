@@ -574,9 +574,9 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
-  session->BuildOp(*op_exec_info, graph_info, input_tensors, tensors_mask);
+  session->BuildOpAsync(op_exec_info.get(), graph_info, input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, &input_tensors);
-  py::tuple result = session->RunOp(*op_exec_info, graph_info, input_tensors);
+  py::tuple result = session->RunOpAsync(op_exec_info.get(), graph_info, input_tensors);
   ms_context->set_enable_pynative_infer(false);
   *status = PYNATIVE_SUCCESS;
   MS_LOG(INFO) << "End run op[" << op_exec_info->op_name << "] with backend policy ms";

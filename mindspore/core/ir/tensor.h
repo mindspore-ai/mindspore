@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 #include <numeric>
+#include <mutex>
+#include <condition_variable>
 
 #include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
@@ -72,6 +74,30 @@ class TensorData {
 };
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
+
+struct WaitEvent {
+  bool need_wait_{false};
+  std::mutex mutex_;
+  std::condition_variable cond_var_;
+
+  void Wait() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (!need_wait_) {
+      return;
+    }
+    cond_var_.wait(lock, [this] { return !need_wait_; });
+  }
+
+  void set_need_wait(bool need_wait) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    need_wait_ = need_wait;
+    if (!need_wait_) {
+      cond_var_.notify_all();
+    }
+  }
+
+  bool need_wait() const { return need_wait_; }
+};
 
 // Tensor entity class
 class Tensor : public MetaTensor {
@@ -244,11 +270,40 @@ class Tensor : public MetaTensor {
 
   std::string id() const { return id_; }
 
+  void SetNeedWait(bool need_wait) {
+    if (event_ != nullptr) {
+      event_->set_need_wait(need_wait);
+    } else if (need_wait) {
+      event_ = std::make_shared<WaitEvent>();
+      event_->set_need_wait(need_wait);
+    }
+  }
+
+  bool NeedWait() const {
+    if (event_ != nullptr) {
+      return event_->need_wait();
+    }
+    return false;
+  }
+
+  void Wait() {
+    if (event_ != nullptr) {
+      event_->Wait();
+    }
+    event_ == nullptr;
+  }
+
+  void set_need_sync(bool need_sync) { need_sync_ = need_sync; }
+
+  bool need_sync() const { return need_sync_; }
+
  private:
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};
   bool dirty_{true};
   std::string id_{""};
+  std::shared_ptr<WaitEvent> event_{nullptr};
+  bool need_sync_{false};
   DeviceSyncPtr device_sync_{nullptr};
   std::vector<Axis> padding_type_;
 };

@@ -19,6 +19,7 @@
 #include <memory>
 #include <numeric>
 #include <utility>
+#include <functional>
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_context.h"
@@ -137,10 +138,8 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
 }
 
 tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node,
-                                                         size_t index,
-                                                         std::vector<tensor::TensorPtr> *need_sync_outputs) {
+                                                         size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(need_sync_outputs);
   size_t output_size = AnfAlgo::GetOutputTensorNum(node);
   if (index >= output_size) {
     MS_LOG(EXCEPTION) << "Invalid input index " << index;
@@ -163,16 +162,15 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
   }
   if (bound_addresses_.find(address) != bound_addresses_.end()) {
     tensor->set_device_address(address);
-    need_sync_outputs->emplace_back(tensor);
+    tensor->set_need_sync(true);
   } else {
     if (infer_type_id != device_type_id) {
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = resource_manager_.MemMalloc(tensor_size);
-      need_sync_outputs->emplace_back(tensor);
       tensor->set_device_address(address);
-      need_sync_outputs->emplace_back(tensor);
+      tensor->set_need_sync(true);
     } else {
       tensor->set_device_address(nullptr);
       address->ptr_ = tensor->data_c();
@@ -185,8 +183,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
 }
 
 BaseRef CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_graph,
-                                               const session::KernelWithIndex &kernel_with_index,
-                                               std::vector<tensor::TensorPtr> *need_sync_outputs) {
+                                               const session::KernelWithIndex &kernel_with_index) {
   auto &input_node = kernel_with_index.first;
   auto index = kernel_with_index.second;
   MS_EXCEPTION_IF_NULL(input_node);
@@ -197,12 +194,12 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_grap
       VectorRef ret;
       for (size_t i = 1; i < node->inputs().size(); i++) {
         auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
-        auto out = CreatTensorForOutput(kernel_graph, item_with_index, need_sync_outputs);
+        auto out = CreatTensorForOutput(kernel_graph, item_with_index);
         ret.push_back(out);
       }
       return ret;
     }
-    return CreatTensorForOutput(kernel_graph, node, index, need_sync_outputs);
+    return CreatTensorForOutput(kernel_graph, node, index);
   } else if (input_node->isa<Parameter>()) {
     auto iter = input_param_tensor_map_.find(input_node);
     if (iter != input_param_tensor_map_.end()) {
@@ -216,7 +213,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_grap
   return BaseRef();
 }
 void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
-                                       VectorRef *outputs, std::vector<tensor::TensorPtr> *need_sync_outputs) {
+                                       VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
   // bind input ptr
@@ -262,7 +259,7 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
   auto output_nodes = kernel_graph->outputs();
   for (const auto &item : output_nodes) {
     auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0, true);
-    auto out = CreatTensorForOutput(kernel_graph, item_with_index, need_sync_outputs);
+    auto out = CreatTensorForOutput(kernel_graph, item_with_index);
     outputs->push_back(std::move(out));
   }
 }
