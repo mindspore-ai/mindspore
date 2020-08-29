@@ -127,6 +127,9 @@ class KaimingInit(init.Initializer):
         self.mode = mode
         self.gain = _calculate_gain(nonlinearity, a)
 
+    def _initialize(self, arr):
+        pass
+
 
 class KaimingUniform(KaimingInit):
     r"""
