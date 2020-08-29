@@ -31,7 +31,7 @@ def argparse_init():
     parser.add_argument("--adam_lr", type=float, default=0.003)  # The Adam lr
     parser.add_argument("--ftrl_lr", type=float, default=0.1)  # The ftrl lr.
     parser.add_argument("--l2_coef", type=float, default=0.0)  # The l2 coefficient.
-    parser.add_argument("--is_tf_dataset", type=bool, default=True)  # The l2 coefficient.
+    parser.add_argument("--is_tf_dataset", type=int, default=1)  # The l2 coefficient.
     parser.add_argument("--dropout_flag", type=int, default=1) # The dropout rate
 
     parser.add_argument("--output_path", type=str, default="./output/")  # The location of the output file.
@@ -87,7 +87,7 @@ class WideDeepConfig():
         self.l2_coef = args.l2_coef
         self.ftrl_lr = args.ftrl_lr
         self.adam_lr = args.adam_lr
-        self.is_tf_dataset = args.is_tf_dataset
+        self.is_tf_dataset = bool(args.is_tf_dataset)
 
         self.output_path = args.output_path
         self.eval_file_name = args.eval_file_name
