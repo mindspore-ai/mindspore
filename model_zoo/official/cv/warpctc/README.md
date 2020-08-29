@@ -1,30 +1,104 @@
-# Warpctc Example
+# Contents
 
-## Description
+- [WarpCTC Description](#warpctc-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+        - [Training Script Parameters](#training-script-parameters)
+        - [Parameters Configuration](#parameters-configuration)
+    - [Dataset Preparation](#dataset-preparation)
+    - [Training Process](#training-process)
+      - [Training](#training)
+      - [Distributed Training](#distributed-training)
+    - [Evaluation Process](#evaluation-process)
+      - [Evaluation](#evaluation)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
+- [Description of Random Situation](#description-of-random-situation)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
-These is an example of training Warpctc with self-generated captcha image dataset in MindSpore.
+# [WarpCTC Description](#contents)
 
-## Requirements
+This is an example of training WarpCTC with self-generated captcha image dataset in MindSpore.
 
-- Install [MindSpore](https://www.mindspore.cn/install/en).
+# [Model Architecture](#content)
 
-- Generate captcha images.
+WarpCTC is a two-layer stacked LSTM appending with one-layer FC neural network. See src/warpctc.py for details.
 
-> The [captcha](https://github.com/lepture/captcha) library can be used to generate captcha images. You can generate the train and test dataset by yourself or just run the script `scripts/run_process_data.sh`. By default, the shell script will generate 10000 test images and 50000 train images separately.
-> ```
-> $ cd scripts
-> $ sh run_process_data.sh
-> 
-> # after execution, you will find the dataset like the follows:
-> .  
-> └─warpctc
->   └─data
->     ├─ train  # train dataset
->     └─ test   # evaluate dataset
->   ...
+# [Dataset](#content)
+
+The dataset is self-generated using a third-party library called [captcha](https://github.com/lepture/captcha), which can randomly generate digits from 0 to 9 in image. In this network, we set the length of digits varying from 1 to 4.
+
+# [Environment Requirements](#contents)
+
+- Hardware（Ascend/GPU）
+  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. You will be able to have access to related resources once approved. 
+- Framework
+  - [MindSpore](https://gitee.com/mindspore/mindspore)
+- For more information, please check the resources below：
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
 
 
-## Structure
+# [Quick Start](#contents)
+
+- Generate dataset.
+
+    Run the script `scripts/run_process_data.sh` to generate a dataset. By default, the shell script will generate 10000 test images and 50000 train images separately.
+ 
+    ```
+     $ cd scripts
+     $ sh run_process_data.sh
+     
+     # after execution, you will find the dataset like the follows:
+     .  
+     └─warpctc
+       └─data
+         ├─ train  # train dataset
+         └─ test   # evaluate dataset
+    ```
+
+- After the dataset is prepared, you may start running the training or the evaluation scripts as follows:
+
+    - Running on Ascend
+    ```
+    # distribute training example in Ascend
+    $ bash run_distribute_train.sh rank_table.json ../data/train
+  
+    # evaluation example in Ascend
+    $ bash run_eval.sh ../data/test warpctc-30-97.ckpt Ascend
+    
+    # standalone training example in Ascend
+    $ bash run_standalone_train.sh ../data/train Ascend
+    ```
+    For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+    Please follow the instructions in the link below:
+
+    https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
+    
+    - Running on GPU
+    
+    ```
+    # distribute training example in GPU
+    $ bash run_distribute_train_for_gpu.sh 8 ../data/train
+    
+    # standalone training example in GPU
+    $ bash run_standalone_train.sh ../data/train GPU
+  
+    # evaluation example in GPU
+    $ bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
+    ```
+
+# [Script Description](#contents)
+
+## [Script and Sample Code](#contents)
 
 ```shell
 .
@@ -43,14 +117,27 @@ These is an example of training Warpctc with self-generated captcha image datase
     ├── lr_generator.py                 # generate learning rate for each step
     ├── metric.py                       # accuracy metric for warpctc network
     ├── warpctc.py                      # warpctc network definition
-    └── warpctc_for_train.py            # warp network with grad, loss and gradient clip
+    └── warpctc_for_train.py            # warpctc network with grad, loss and gradient clip
   ├── eval.py                           # eval net
   ├── process_data.py                   # dataset generation script
   └── train.py                          # train net
 ```
 
+## [Script Parameters](#contents)
 
-## Parameter configuration
+### Training Script Parameters
+```
+# distributed training in Ascend
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+
+# distributed training in GPU
+Usage: bash run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
+
+# standalone training
+Usage: bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
+```
+
+### Parameters Configuration
 
 Parameters for both training and evaluation can be set in config.py.
 
@@ -69,82 +156,82 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint_path": "./checkpoint",     # path to save checkpoint
 ```
 
-## Running the example
+## [Dataset Preparation](#contents)
+- You may refer to "Generate dataset" in [Quick Start](#quick-start) to automatically generate a dataset, or you may choose to generate a captcha dataset by yourself.
 
-### Train
+## [Training Process](#contents)
 
-#### Usage
+- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#mindspore) for more information about dataset.
+   
+### [Training](#contents)
+- Run `run_standalone_train.sh` for non-distributed training of WarpCTC model, either on Ascend or on GPU.
 
+``` bash
+bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 ```
-# distributed training in Ascend
-Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+      
+### [Distributed Training](#contents)
+- Run `run_distribute_train.sh` for distributed training of WarpCTC model on Ascend.
 
-# distributed training in GPU
-Usage: bash run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
-
-# standalone training
-Usage: bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
-```
-
-
-#### Launch
-
-```
-# distribute training example in Ascend
-bash run_distribute_train.sh rank_table.json ../data/train
-
-# distribute training example in GPU
-bash run_distribute_train_for_gpu.sh 8 ../data/train
-
-# standalone training example in Ascend
-bash run_standalone_train.sh ../data/train Ascend
-
-# standalone training example in GPU
-bash run_standalone_train.sh ../data/train GPU
-```
-
-> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
-
-#### Result
-
-Training result will be stored in folder `scripts`, whose name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the followings in log.
-
-```
-# distribute training result(8 pcs)
-Epoch: [  1/ 30], step: [   97/   97], loss: [0.5853/0.5853], time: [376813.7944]
-Epoch: [  2/ 30], step: [   97/   97], loss: [0.4007/0.4007], time: [75882.0951]
-Epoch: [  3/ 30], step: [   97/   97], loss: [0.0921/0.0921], time: [75150.9385]
-Epoch: [  4/ 30], step: [   97/   97], loss: [0.1472/0.1472], time: [75135.0193]
-Epoch: [  5/ 30], step: [   97/   97], loss: [0.0186/0.0186], time: [75199.5809]
-...
+``` bash
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
 ```
 
 
-### Evaluation
-
-#### Usage
-
-```
-# evaluation
-Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
+- Run `run_distribute_train_gpu.sh` for distributed training of WarpCTC model on GPU.
+``` bash
+bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
 ```
 
-#### Launch
+## [Evaluation Process](#contents)
+### [Evaluation](#contents)
 
-```
-# evaluation example in Ascend
-bash run_eval.sh ../data/test warpctc-30-97.ckpt Ascend
-
-# evaluation example in GPU
-bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
+- Run `run_eval.sh` for evaluation.
+``` bash
+bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 ```
 
-> checkpoint can be produced in training process.
+# [Model Description](#contents)
 
-#### Result
+## [Performance](#contents)
 
-Evaluation result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
+### [Training Performance](#contents)
 
-```
-result: {'WarpCTCAccuracy': 0.9901472929936306}
-```
+| Parameters                 | Ascend 910                                    |   GPU |
+| -------------------------- | --------------------------------------------- |---------------------------------- |
+| Model Version              | v1.0                                          | v1.0 |
+| Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G   | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G /
+| uploaded Date              | 07/01/2020 (month/day/year)                   | 08/01/2020 (month/day/year) |
+| MindSpore Version          | 0.5.0-alpha                                   | 0.6.0-alpha |
+| Dataset                    | Captcha                                       | Captcha |
+| Training Parameters        | epoch=30, steps per epoch=98, batch_size = 64 | epoch=30, steps per epoch=98, batch_size = 64  |
+| Optimizer                  | SGD                                           | SGD |
+| Loss Function              | CTCLoss                                       | CTCLoss |
+| outputs                    | probability                                   | probability |
+| Loss                       | 0.0000157                                     | 0.0000246  |
+| Speed                      | 980ms/step（8pcs）                             | 150ms/step（8pcs）|
+| Total time                 | 30 mins                                       | 5 mins|
+| Parameters (M)             | 2.75                                          | 2.75 |
+| Checkpoint for Fine tuning | 20.3M (.ckpt file)                            | 20.3M (.ckpt file) |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc) |
+
+
+### [Evaluation Performance](#contents)
+
+| Parameters          | WarpCTC                     |
+| ------------------- | --------------------------- |
+| Model Version       | V1.0                        |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 08/01/2020 (month/day/year) |
+| MindSpore Version   | 0.6.0-alpha                 |
+| Dataset             | Captcha                     |
+| batch_size          | 64                          |
+| outputs             | ACC                         |
+| Accuracy            | 99.0%                       |
+| Model for inference | 20.3M (.ckpt file)          |
+
+# [Description of Random Situation](#contents)
+In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py for weight initialization.
+
+# [ModelZoo Homepage](#contents)
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
