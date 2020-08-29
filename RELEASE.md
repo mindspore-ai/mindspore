@@ -30,7 +30,6 @@
 * Executor and performance optimization
     * Minspore graph compilation process performance improved by 20%.
     * Decoupling C++ and Python modules to achieve separate compilation of core modules.
-    * Serving module supports restful interface [POST].
 * Data processing, augmentation, and save format
     * Support automatic data augmentation
     * Support GNN distributed cache in single node
@@ -38,7 +37,7 @@
 
 #### Other Hardware Support
 * GPU platform
-    * New model supported: VGG16, ResNet101, TinyBert, DeepFM.
+    * New model supported: VGG16, ResNet101, DeepFM.
     * Support some distributed operators in ResNet50 and Wide&Deep.
     * Support automatic parallel for Wide&Deep.
     * Support function funcs[i](*inputs) (such as switch-case).
