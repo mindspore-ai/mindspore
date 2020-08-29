@@ -28,7 +28,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-int SplitBaseCPUKernel::Init() { return RET_OK; }
+int SplitBaseCPUKernel::Init() {
+  auto split_dim = param->split_dim_;
+  param->split_dim_ = split_dim >= 0 ? split_dim : in_tensors_.front()->shape().size() + split_dim;
+  return RET_OK;
+}
 
 int SplitBaseCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
