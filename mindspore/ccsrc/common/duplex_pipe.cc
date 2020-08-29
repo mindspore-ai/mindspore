@@ -188,11 +188,6 @@ void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
     if (!dp_.expired()) {
       dp_.lock()->Close();
     }
-
-    // When run multiple processes by 'mpirun',
-    // parent process never quit even Exception happens,
-    // which caused by MPI_Finalize() never returned.
-    exit(-1);
   } else if (WIFSTOPPED(status)) {
     DP_INFO << "Child stopped, sig: " << WSTOPSIG(status) << ", pid: " << pid;
   } else if (WIFSIGNALED(status)) {
