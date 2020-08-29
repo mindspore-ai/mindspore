@@ -82,7 +82,7 @@ if __name__ == '__main__':
                                               mirror_mean=True)
             init()
     elif device_target == "GPU":
-        init("nccl")
+        init()
 
         if device_num > 1:
             context.reset_auto_parallel_context()

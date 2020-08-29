@@ -118,10 +118,7 @@ if __name__ == "__main__":
     wide_deep_config.argparse_init()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
-    if wide_deep_config.device_target == "Ascend":
-        init("hccl")
-    elif wide_deep_config.device_target == "GPU":
-        init("nccl")
+    init()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                       device_num=get_group_size())
 

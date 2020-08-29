@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
-init('nccl')
+init()
 rank = get_rank()
 size = get_group_size()
 x = np.ones([size, 1, 3, 3]).astype(np.float32) * 0.01 * (rank + 1)

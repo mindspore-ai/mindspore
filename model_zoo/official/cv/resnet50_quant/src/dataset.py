@@ -46,7 +46,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
         device_num = int(os.getenv("RANK_SIZE"))
         rank_id = int(os.getenv("RANK_ID"))
     else:
-        init("nccl")
+        init()
         rank_id = get_rank()
         device_num = get_group_size()
 
@@ -114,7 +114,7 @@ def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, targe
         device_num = int(os.getenv("RANK_SIZE"))
         rank_id = int(os.getenv("RANK_ID"))
     else:
-        init("nccl")
+        init()
         rank_id = get_rank()
         device_num = get_group_size()
 

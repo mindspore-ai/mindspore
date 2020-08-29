@@ -61,7 +61,7 @@ if __name__ == '__main__':
             device_num = int(os.environ.get("RANK_SIZE"))
             rank = int(os.environ.get("RANK_ID"))
         else:
-            init('nccl')
+            init()
             lr_scale = 0.5
             device_num = get_group_size()
             rank = get_rank()

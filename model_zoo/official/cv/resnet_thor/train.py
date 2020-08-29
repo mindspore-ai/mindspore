@@ -106,7 +106,7 @@ if __name__ == '__main__':
             init()
         # GPU target
         else:
-            init("nccl")
+            init()
             context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
                                               mirror_mean=True)
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
