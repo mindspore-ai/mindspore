@@ -71,8 +71,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ## [Script and Sample Code](#contents)
 
 ```
-├── model_zoo
-    ├── README.md                          // descriptions about all the models
+├── cv
     ├── alexnet        
         ├── README.md                    // descriptions about alexnet
         ├── requirements.txt             // package needed
@@ -116,8 +115,8 @@ sh run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
 
 After training, the loss value will be achieved as follows:
 
-# grep "loss is " train.log
 ```
+# grep "loss is " train.log
 epoch: 1 step: 1, loss is 2.2791853
 ...
 epoch: 1 step: 1536, loss is 1.9366643
@@ -171,7 +170,7 @@ You can view the results through the file "log.txt". The accuracy of the test da
 
 # [Description of Random Situation](#contents)
 
-In dataset.py, we set the seed inside “create_dataset" function.
+In dataset.py, we set the seed inside ```create_dataset``` function.
 
 # [ModelZoo Homepage](#contents)  
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  

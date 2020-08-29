@@ -77,8 +77,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ## [Script and Sample Code](#contents)
 
 ```
-├── model_zoo
-    ├── README.md                          // descriptions about all the models
+├── cv
     ├── lenet        
         ├── README.md                    // descriptions about lenet
         ├── requirements.txt             // package needed
@@ -181,7 +180,7 @@ You can view the results through the file "log.txt". The accuracy of the test da
 
 # [Description of Random Situation](#contents)
 
-In dataset.py, we set the seed inside “create_dataset" function.
+In dataset.py, we set the seed inside ```create_dataset``` function.
 
 # [ModelZoo Homepage](#contents)  
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
