@@ -227,8 +227,13 @@ int DeConvInt8Run(void *cdata, int task_id) {
 }
 
 int DeConvInt8CPUKernel::DoDeconv(int task_id) {
-  int cur_oc = MSMIN(thread_stride_, UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_);
-  int cur_oc_res = MSMIN(thread_stride_ * C4NUM, conv_param_->output_channel_ - task_id * thread_stride_ * C4NUM);
+  int cur_stride = thread_stride_;
+  int res_stride = UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_;
+  int cur_oc = MSMIN(cur_stride, res_stride);
+
+  cur_stride = thread_stride_ * C4NUM;
+  res_stride = conv_param_->output_channel_ - task_id * thread_stride_ * C4NUM;
+  int cur_oc_res = MSMIN(cur_stride, res_stride);
   if (cur_oc <= 0) {
     return RET_OK;
   }

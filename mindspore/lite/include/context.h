@@ -65,7 +65,7 @@ class MS_API Context {
   virtual ~Context();
 
  public:
-  bool float16_priority = false; /**< allow priority select float16 kernel */
+  bool float16_priority = false; /**< prior enable float16 inference */
   DeviceContext device_ctx_{DT_CPU};
   int thread_num_ = 2; /**< thread number config for thread pool */
   std::shared_ptr<Allocator> allocator = nullptr;

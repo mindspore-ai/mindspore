@@ -50,10 +50,10 @@ class OptimizeModule {
 
 #ifdef ENABLE_ARM64
     if (hwcap & HWCAP_ASIMDDP) {
-      printf("Hw cap support SMID Dot Product, hwcap: 0x%x \n", hwcap);
+      MS_LOG(INFO) << "Hw cap support SMID Dot Product, hwcap: 0x" << hwcap;
       support_optimize_ops = true;
     } else {
-      printf("Hw cap NOT support SIMD Dot Product, hwcap: 0x%x\n", hwcap);
+      MS_LOG(INFO) << "Hw cap NOT support SIMD Dot Product, hwcap: 0x" << hwcap;
     }
 #endif
 #endif
@@ -63,7 +63,7 @@ class OptimizeModule {
 #ifndef _WIN32
     optimized_op_handler_ = dlopen(OPTIMIZE_SHARED_LIBRARY_PATH, RTLD_LAZY);
     if (optimized_op_handler_ == nullptr) {
-      printf("Open optimize shared library failed: %s\n", dlerror());
+      MS_LOG(INFO) << "Open optimize shared library failed: " << dlerror();
     }
 #endif
   }
