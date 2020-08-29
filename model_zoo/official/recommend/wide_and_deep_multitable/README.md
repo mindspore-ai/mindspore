@@ -45,12 +45,12 @@ Wide&Deep model jointly trained wide linear models and deep neural network, whic
 
 1. Clone the Code
 ```bash
-git clone https://gitee.com/mindspore/mindspore.git
-cd mindspore/model_zoo/official/recommend/wide_and_deep_multitable
+    git clone https://gitee.com/mindspore/mindspore.git
+    cd mindspore/model_zoo/official/recommend/wide_and_deep_multitable
 ```
 2. Download the Dataset
 
-  > Please refer to [1] to obtain the download link and data preprocess
+    > Please refer to [1] to obtain the download link and data preprocess
 3. Start Training
    Once the dataset is ready, the model can be trained and evaluated on the single device(Ascend) by the command as follows:
 
