@@ -75,7 +75,7 @@ def all_to_all_common(strategy1):
     dataset = Dataset(predict, label, 2)
     net = all_to_all_net(strategy1)
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss.softmax_cross_entropy.set_strategy(((8, 1), (8, 1)))
     loss.one_hot.set_strategy(((8, 1), (), ()))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)

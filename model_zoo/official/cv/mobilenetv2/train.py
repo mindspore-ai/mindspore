@@ -172,7 +172,7 @@ if __name__ == '__main__':
             loss = CrossEntropyWithLabelSmooth(smooth_factor=config_gpu.label_smooth,
                                                num_classes=config_gpu.num_classes)
         else:
-            loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         # define dataset
         epoch_size = config_gpu.epoch_size
         dataset = create_dataset(dataset_path=args_opt.dataset_path,
@@ -236,8 +236,7 @@ if __name__ == '__main__':
             loss = CrossEntropyWithLabelSmooth(
                 smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
         else:
-            loss = SoftmaxCrossEntropyWithLogits(
-                is_grad=False, sparse=True, reduction='mean')
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         dataset = create_dataset(dataset_path=args_opt.dataset_path,
                                  do_train=True,
                                  config=config_ascend,

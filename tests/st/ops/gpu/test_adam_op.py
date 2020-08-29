@@ -49,7 +49,7 @@ def test_adam():
     net = NetAdam()
     optimizer = Adam(filter(lambda x: x.requires_grad,
                             net.get_parameters()), learning_rate=0.01)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(
         net_with_criterion, optimizer)

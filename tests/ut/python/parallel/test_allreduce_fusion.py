@@ -113,7 +113,7 @@ def train_common(net):
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
     dataset = Dataset(predict, label, 2)
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
 

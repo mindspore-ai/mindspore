@@ -141,7 +141,7 @@ class GradWrap(nn.Cell):
 def test_hook():
     net = LeNet5()
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.1, 0.9)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=False)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
     net_with_criterion = WithLossCell(net, criterion)
     train_network = GradWrap(net_with_criterion)
     train_network.set_train()

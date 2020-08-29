@@ -35,11 +35,11 @@ from tests.st.networks.models.resnet50.src.dataset import create_dataset
 from tests.st.networks.models.resnet50.src.lr_generator import get_learning_rate
 from tests.st.networks.models.resnet50.src.config import config
 from tests.st.networks.models.resnet50.src.metric import DistAccuracy, ClassifyCorrectCell
+from tests.st.networks.models.resnet50.src.CrossEntropySmooth import CrossEntropySmooth
 from tests.st.networks.models.resnet50.src_thor.config import config as thor_config
 from tests.st.networks.models.resnet50.src_thor.model_thor import Model as THOR_Model
 from tests.st.networks.models.resnet50.src_thor.resnet import resnet50 as resnet50_thor
 from tests.st.networks.models.resnet50.src_thor.thor import THOR
-
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_1.json"
 MINDSPORE_HCCL_CONFIG_PATH_2 = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_2.json"
@@ -150,8 +150,8 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
         config.label_smooth_factor = 0.0
 
     # loss
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", smooth_factor=config.label_smooth_factor,
-                                            num_classes=config.class_num)
+    loss = CrossEntropySmooth(sparse=True, reduction="mean", smooth_factor=config.label_smooth_factor,
+                              num_classes=config.class_num)
 
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True,
@@ -259,9 +259,8 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
         thor_config.label_smooth_factor = 0.0
 
     # loss
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean",
-                                            smooth_factor=thor_config.label_smooth_factor,
-                                            num_classes=thor_config.class_num)
+    loss = CrossEntropySmooth(sparse=True, reduction="mean", smooth_factor=thor_config.label_smooth_factor,
+                              num_classes=thor_config.class_num)
 
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True,

@@ -62,7 +62,7 @@ if __name__ == "__main__":
                                           symmetric=[False, False])
 
     # define network loss
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     # define network optimization
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
 

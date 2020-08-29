@@ -145,14 +145,14 @@ def test_multi_grads():
     net = LeNet()
 
     # grad operation
-    loss_fn = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=sparse)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=sparse)
     with_loss_cell = WithLossCell(net, loss_fn)
     grad_all = GradWrapWithLoss(with_loss_cell)
     grad_out = grad_all(Tensor(inputs_np), Tensor(labels_np)).asnumpy()
     assert np.any(grad_out != 0), 'grad result can not be all zeros'
 
     # train-one-step operation
-    loss_fn = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=sparse)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=sparse)
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()),
                          0.01, 0.9)
     loss_net = WithLossCell(net, loss_fn)

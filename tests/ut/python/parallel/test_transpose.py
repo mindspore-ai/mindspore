@@ -79,7 +79,7 @@ def transpose_common(strategy1, strategy2):
     dataset = Dataset(predict, label, 2)
     net = transpose_net(strategy1, strategy2)
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss.softmax_cross_entropy.set_strategy(((8, 1), (8, 1)))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     context.set_context(mode=context.GRAPH_MODE)

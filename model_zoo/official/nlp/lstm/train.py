@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if args.pre_trained:
         load_param_into_net(network, load_checkpoint(args.pre_trained))
 
-    loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
     loss_cb = LossMonitor()
 

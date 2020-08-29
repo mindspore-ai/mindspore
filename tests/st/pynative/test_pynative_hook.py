@@ -159,7 +159,7 @@ def test_pynative_lenet_train_hook_function_print_and_save_grad():
                                               cell_hook_function_print_grad)
     net = LeNet5(hook_function=function[0], cell_hook_function=function[1])
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.1, 0.9)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=False)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
     net_with_criterion = WithLossCell(net, criterion)
     train_network = GradWrap(net_with_criterion)
     train_network.set_train()

@@ -337,7 +337,7 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
     momentum = 0.9
     optimizer = Momentum(filter(lambda x: x.requires_grad,
                                 net.get_parameters()), lr, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(
         net_with_criterion, optimizer)  # optimizer
@@ -361,7 +361,7 @@ def test_trainTensor_big_batchSize(num_classes=10, epoch=8, batch_size=338):
     momentum = 0.9
     optimizer = Momentum(filter(lambda x: x.requires_grad,
                                 net.get_parameters()), lr, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(
         net_with_criterion, optimizer)  # optimizer
@@ -385,7 +385,7 @@ def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
     momentum = 0.9
     optimizer = Momentum(filter(lambda x: x.requires_grad,
                                 net.get_parameters()), lr, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     train_network = amp.build_train_network(
         net, optimizer, criterion, level="O2")
     train_network.set_train()

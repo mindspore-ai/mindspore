@@ -78,7 +78,7 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
     lr = 0.1
     momentum = 0.9
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, momentum, weight_decay=0.0001)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)
     train_network.set_train()

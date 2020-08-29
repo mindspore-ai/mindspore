@@ -107,7 +107,7 @@ def reshape_common(parallel_mode):
     dataset = Dataset(predict, label, 2)
     net = prelu_net()
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)

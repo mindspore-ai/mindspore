@@ -89,7 +89,7 @@ def train_on_ascend():
     if config.label_smooth > 0:
         loss = CrossEntropyWithLabelSmooth(smooth_factor=config.label_smooth, num_classes=config.num_classes)
     else:
-        loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     # define dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=True,
@@ -150,7 +150,7 @@ def train_on_gpu():
         loss = CrossEntropyWithLabelSmooth(smooth_factor=config.label_smooth,
                                            num_classes=config.num_classes)
     else:
-        loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     # define dataset
     epoch_size = config.epoch_size
     dataset = create_dataset(dataset_path=args_opt.dataset_path,

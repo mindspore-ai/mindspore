@@ -22,6 +22,7 @@ from mindspore import dataset as de
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from src.CrossEntropySmooth import CrossEntropySmooth
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet50 or resnet101')
@@ -79,8 +80,8 @@ if __name__ == '__main__':
     if args_opt.dataset == "imagenet2012":
         if not config.use_label_smooth:
             config.label_smooth_factor = 0.0
-        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean",
-                                             smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+        loss = CrossEntropySmooth(sparse=True, reduction='mean',
+                                  smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
     else:
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 

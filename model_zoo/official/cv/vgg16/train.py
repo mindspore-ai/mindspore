@@ -210,7 +210,7 @@ if __name__ == '__main__':
                    loss_scale=args.loss_scale)
 
     if args.dataset == "cifar10":
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         model = Model(network, loss_fn=loss, optimizer=opt, metrics={'acc'},
                       amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)
     else:

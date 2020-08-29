@@ -154,7 +154,7 @@ class TestSummary:
 
     def _run_network(self, dataset_sink_mode=True):
         lenet = LeNet5()
-        loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
         model = Model(lenet, loss_fn=loss, optimizer=optim, metrics={'acc': Accuracy()})
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)

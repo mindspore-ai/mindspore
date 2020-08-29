@@ -209,7 +209,7 @@ def bn_common(parallel_mode, train_flag, strategy_loss=None):
     dataset = Dataset(predict, label, 2)
     net = bn_net()
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss.softmax_cross_entropy.set_strategy(strategy_loss)
     opt = Momentum(net.trainable_params(), learning_rate, momentum, 0.0001, 1024 * rank_size)
 

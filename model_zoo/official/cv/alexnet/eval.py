@@ -42,7 +42,7 @@ if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     network = AlexNet(cfg.num_classes)
-    loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     repeat_size = cfg.epoch_size
     opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
     model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})

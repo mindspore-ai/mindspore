@@ -39,7 +39,7 @@ class MsWrapper(nn.Cell):
 
 
 def me_train_tensor(net, input_np, label_np, epoch_size=2):
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True)
     opt = nn.Momentum(Tensor(np.array([0.1])), Tensor(np.array([0.9])),
                       filter(lambda x: x.requires_grad, net.get_parameters()))
     context.set_context(mode=context.GRAPH_MODE)

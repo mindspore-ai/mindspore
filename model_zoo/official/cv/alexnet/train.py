@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     ds_train = create_dataset_cifar10(args.data_path, cfg.batch_size, 1)
     network = AlexNet(cfg.num_classes)
-    loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     lr = Tensor(get_lr(0, cfg.learning_rate, cfg.epoch_size, ds_train.get_dataset_size()))
     opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
     model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})

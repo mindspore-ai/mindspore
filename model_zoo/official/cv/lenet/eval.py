@@ -44,7 +44,7 @@ if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     network = LeNet5(cfg.num_classes)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     repeat_size = cfg.epoch_size
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})

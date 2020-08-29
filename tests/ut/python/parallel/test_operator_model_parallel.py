@@ -361,7 +361,7 @@ def test_resnet_operator_batch_parallel():
     dataset = DatasetLenet(predict, label, 2)
     net = resnet_operator_net(num_classes)
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
@@ -386,7 +386,7 @@ def test_resnet_model_parallel():
     dataset = DatasetLenet(predict, label, 2)
     net = resnet_model_parallel_net(num_classes)
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 

@@ -85,7 +85,7 @@ def test_lenet_nccl():
     learning_rate = multisteplr(epoch, 2)
     momentum = 0.9
     mom_optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, mom_optimizer)
     train_network.set_train()

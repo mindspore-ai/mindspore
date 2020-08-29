@@ -134,7 +134,7 @@ def test(cloud_args=None):
         net = vgg16(num_classes=args.num_classes, args=args)
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, args.momentum,
                        weight_decay=args.weight_decay)
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
         param_dict = load_checkpoint(args.pre_trained)
