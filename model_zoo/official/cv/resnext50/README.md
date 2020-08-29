@@ -48,6 +48,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 ## [Mixed Precision](#contents)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
@@ -228,7 +229,7 @@ acc=93.88%(TOP5)
 
 | Parameters                 |                               |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
-| Resource                   | Huawei 910                    | NV SMX2 V100-32G          | Huawei 310           |
+| Resource                   | Ascend 910                    | NV SMX2 V100-32G          | Ascend 310           |
 | uploaded Date              | 06/30/2020                    | 07/23/2020                | 07/23/2020           |
 | MindSpore Version          | 0.5.0                         | 0.6.0                     | 0.6.0                | 
 | Dataset                    | ImageNet, 1.2W                | ImageNet, 1.2W            | ImageNet, 1.2W       |

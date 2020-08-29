@@ -18,6 +18,7 @@ eval alexnet according to model file:
 python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 """
 
+import ast
 import argparse
 from src.config import alexnet_cfg as cfg
 from src.dataset import create_dataset_cifar10
@@ -36,7 +37,8 @@ if __name__ == "__main__":
     parser.add_argument('--data_path', type=str, default="./", help='path where the dataset is saved')
     parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
                         path where the trained ckpt file')
-    parser.add_argument('--dataset_sink_mode', type=bool, default=True, help='dataset_sink_mode is False or True')
+    parser.add_argument('--dataset_sink_mode', type=ast.literal_eval, default=True,
+                        help='dataset_sink_mode is False or True')
     args = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)

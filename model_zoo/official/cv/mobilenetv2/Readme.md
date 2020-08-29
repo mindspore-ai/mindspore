@@ -175,7 +175,7 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 | Parameters                 |                               |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
 | Model Version              | V1                            |                           |                      |
-| Resource                   | Huawei 910                    | NV SMX2 V100-32G          | Huawei 310           |
+| Resource                   | Ascend 910                    | NV SMX2 V100-32G          | Ascend 310           |
 | uploaded Date              | 05/06/2020                    | 05/22/2020                |                      |
 | MindSpore Version          | 0.2.0                         | 0.2.0                     | 0.2.0                | 
 | Dataset                    | ImageNet, 1.2W                | ImageNet, 1.2W            | ImageNet, 1.2W       |

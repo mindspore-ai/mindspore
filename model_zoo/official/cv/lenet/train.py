@@ -19,6 +19,7 @@ python train.py --data_path /YourDataPath
 """
 
 import os
+import ast
 import argparse
 from src.config import mnist_cfg as cfg
 from src.dataset import create_dataset
@@ -38,7 +39,8 @@ if __name__ == "__main__":
                         help='path where the dataset is saved')
     parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
                         path where the trained ckpt file')
-    parser.add_argument('--dataset_sink_mode', type=bool, default=True, help='dataset_sink_mode is False or True')
+    parser.add_argument('--dataset_sink_mode', type=ast.literal_eval, default=True,
+                        help='dataset_sink_mode is False or True')
 
     args = parser.parse_args()
 
