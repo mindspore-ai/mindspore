@@ -148,6 +148,7 @@ kernel::LiteKernel *CpuCastFp32KernelCreator(const std::vector<lite::tensor::Ten
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_Cast, CpuCastFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 #ifndef ENABLE_ARM64
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 #endif
