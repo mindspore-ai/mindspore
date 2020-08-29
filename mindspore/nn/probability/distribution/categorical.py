@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Categorical Distribution"""
-import numpy as np
 from mindspore.ops import operations as P
+import mindspore.nn as nn
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import logits_to_probs, probs_to_logits, check_type, check_tensor_type, cast_to_tensor, raise_probs_logits_error
@@ -119,17 +119,19 @@ class Categorical(Distribution):
         """
         return self._probs
 
-    def _sample(self, sample_shape=(1,)):
+    def _sample(self, sample_shape=()):
         """
         Sampling.
 
         Args:
-            sample_shape (tuple): shape of the sample. Default: (1,).
+            sample_shape (tuple): shape of the sample. Default: ().
 
         Returns:
             Tensor, shape is shape(probs)[:-1] + sample_shape
         """
         self.checktuple(sample_shape, 'shape')
+        if sample_shape == ():
+            sample_shape = (1,)
         num_sample = 1
         for i in sample_shape:
             num_sample *= i
@@ -184,16 +186,15 @@ class Categorical(Distribution):
         if value is not None:
             check_tensor_type("value", value, [mstype.float32, bool, mstype.int32])
             value = self.expandim(self.cast(value, mstype.float32), -1)
-            index = cast_to_tensor(np.arange(self.shape(value)[0]).astype(np.float32))
-            index = self.expandim(index, -1)
-            logits = self._logits if self._logits.dim() == 1 else self.expandim(self._logits, 0)
-            broad_shape = self._broad_cast_shape(value, logits)
+            broad_shape = self._broad_cast_shape(value, self._logits)
             broad = P.BroadcastTo(broad_shape)
-            value = broad(value)[..., :1]
-            index = broad(index)[..., :1]
+            logits_pmf = self.reshape(broad(self._logits), (-1, broad_shape[-1]))
+            value = self.reshape(broad(value)[..., :1], (-1, 1))
+            index = nn.Range(0., self.shape(value)[0], 1)()
+            index = self.reshape(index, (-1, 1))
             value = self.concat((index, value))
             value = self.cast(value, mstype.int32)
-            return self.gather(logits, value)
+            return self.reshape(self.gather(logits_pmf, value), broad_shape[:-1])
         return None
 
     def _entropy(self):
@@ -211,7 +212,7 @@ class Categorical(Distribution):
        Enumerate categories.
        """
         num_events = self._num_events
-        values = cast_to_tensor(np.arange(num_events).astype(np.int32), mstype.float32)
+        values = nn.Range(0., num_events, 1)()
         values = self.reshape(values, (num_events, 1))
         if expand:
             values = P.BroadcastTo((num_events, self._batch_shape))(values)
