@@ -254,7 +254,7 @@ void Debugger::PostExecuteNode() {
 
     // if kernel is watchpoint,and get hit. suspend.
     if (is_watchpoint) {
-      auto hits = CheckSingleWatchpoint(cur_name_);
+      auto hits = CheckWatchpoints(cur_name_);
       if (!hits.empty()) {
         SendWatchpointsAndSuspend(hits);
       }
@@ -547,7 +547,7 @@ void Debugger::Exit() {
   std::exit(EXIT_FAILURE);
 }
 
-std::list<WatchpointHit> Debugger::CheckWatchpoints() {
+std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode) {
   std::vector<std::string> name;
   std::vector<std::string> slot;
   std::vector<int> condition;
@@ -556,7 +556,15 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints() {
 #ifdef ENABLE_D
   overflow_ops = CheckOpOverflow();
 #endif
-  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, overflow_ops);
+  auto tensor_loader = debug_services_->tensor_loader();
+  std::vector<std::shared_ptr<TensorData>> tensor_list;
+  if (watchnode.empty()) {
+    tensor_list = tensor_loader->GetTensor();
+  } else {
+    tensor_list = tensor_loader->GetNodeTensorMap(watchnode);
+  }
+
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, overflow_ops, tensor_list);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
@@ -572,35 +580,6 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints() {
     condition_item->set_condition(debugger::WatchCondition_Condition(condition[i]));
 
     hits.push_back(hit);
-  }
-  return hits;
-}
-
-std::list<WatchpointHit> Debugger::CheckSingleWatchpoint(std::string watchnode) const {
-  auto tensor_loader = debug_services_->tensor_loader();
-  auto tensors = tensor_loader->GetNodeTensorMap(watchnode);
-  std::list<WatchpointHit> hits;
-  for (std::vector<std::shared_ptr<TensorData>>::iterator it = tensors.begin(); it != tensors.end(); ++it) {
-    auto cur_tensor = *it;
-    std::string name = "";
-    std::string slot = "";
-    char *data_ptr = nullptr;
-    unsigned int data_size = 0;
-    int condition = -1;
-    unsigned int watchpoint_id = -1;
-    WatchpointHit hit;
-    debug_services_->CheckSingleWatchpoint(cur_tensor, &name, &slot, &data_ptr, &data_size, &condition, &watchpoint_id);
-    if (name != "") {
-      hit.set_id(watchpoint_id);
-      // here TensorProto act as a tensor indicator, not sending tensor content
-      TensorProto *tensor_item = hit.mutable_tensor();
-      tensor_item->set_node_name(name);
-      tensor_item->set_slot(slot);
-      tensor_item->set_finished(true);
-      WatchCondition *condition_item = hit.mutable_watch_condition();
-      condition_item->set_condition(debugger::WatchCondition_Condition(condition));
-      hits.push_back(hit);
-    }
   }
   return hits;
 }

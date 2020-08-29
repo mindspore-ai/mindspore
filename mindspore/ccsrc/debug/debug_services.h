@@ -76,10 +76,8 @@ class DebugServices {
   void RemoveWatchpoint(unsigned int id);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
-                        std::vector<unsigned int> *watchpoint_id, const std::vector<std::string> &op_overflows);
-
-  void CheckSingleWatchpoint(std::shared_ptr<TensorData> watchnode, std::string *name, std::string *slot,
-                             char **data_ptr, unsigned int *data_size, int *condition, unsigned int *wacthpoint_id);
+                        std::vector<unsigned int> *watchpoint_id, const std::vector<std::string> &op_overflows,
+                        const std::vector<std::shared_ptr<TensorData>> &tensor_list);
 
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
