@@ -30,7 +30,7 @@ class Geometric(Distribution):
 
     Args:
         probs (float, list, numpy.ndarray, Tensor, Parameter): probability of success.
-        seed (int): seed to use in sampling. Default: 0.
+        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.int32.
         name (str): name of the distribution. Default: Geometric.
 
@@ -94,7 +94,7 @@ class Geometric(Distribution):
 
     def __init__(self,
                  probs=None,
-                 seed=0,
+                 seed=None,
                  dtype=mstype.int32,
                  name="Geometric"):
         """

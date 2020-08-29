@@ -27,7 +27,7 @@ class Bernoulli(Distribution):
 
     Args:
         probs (float, list, numpy.ndarray, Tensor, Parameter): probability of 1 as outcome.
-        seed (int): seed to use in sampling. Default: 0.
+        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.int32.
         name (str): name of the distribution. Default: Bernoulli.
 
@@ -91,7 +91,7 @@ class Bernoulli(Distribution):
 
     def __init__(self,
                  probs=None,
-                 seed=0,
+                 seed=None,
                  dtype=mstype.int32,
                  name="Bernoulli"):
         """

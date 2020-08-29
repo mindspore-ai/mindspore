@@ -29,7 +29,7 @@ class Normal(Distribution):
     Args:
         mean (int, float, list, numpy.ndarray, Tensor, Parameter): mean of the Normal distribution.
         sd (int, float, list, numpy.ndarray, Tensor, Parameter): stddev of the Normal distribution.
-        seed (int): seed to use in sampling. Default: 0.
+        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): name of the distribution. Default: Normal.
 
@@ -94,7 +94,7 @@ class Normal(Distribution):
     def __init__(self,
                  mean=None,
                  sd=None,
-                 seed=0,
+                 seed=None,
                  dtype=mstype.float32,
                  name="Normal"):
         """
