@@ -39,10 +39,6 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       free(transformed_filter_addr_);
       transformed_filter_addr_ = nullptr;
     }
-    if (tile_buffer_ != nullptr) {
-      free(tile_buffer_);
-      tile_buffer_ = nullptr;
-    }
   }
 
   int Init() override;
@@ -52,9 +48,14 @@ class Convolution3x3FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int InitWeightBias();
   int InitTmpBuffer();
   void ConfigInputOutput();
+  int PostProcess();
 
  private:
   void FreeTmpBuffer() {
+    if (tile_buffer_ != nullptr) {
+      ctx_->allocator->Free(tile_buffer_);
+      tile_buffer_ = nullptr;
+    }
     if (block_unit_buffer_ != nullptr) {
       ctx_->allocator->Free(block_unit_buffer_);
       block_unit_buffer_ = nullptr;

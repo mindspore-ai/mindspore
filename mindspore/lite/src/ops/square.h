@@ -20,17 +20,20 @@
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic_self.h"
 
 namespace mindspore {
 namespace lite {
 class Square : public ArithmeticSelf {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Square, ArithmeticSelf);
   Square() = default;
   explicit Square(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  explicit Square(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+  Square() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

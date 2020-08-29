@@ -24,10 +24,22 @@ int ExpandDims::GetDim() const { return this->primitive_->value.AsExpandDims()->
 void ExpandDims::SetDim(int dim) { this->primitive_->value.AsExpandDims()->dim = dim; }
 
 #else
+int ExpandDims::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_ExpandDims();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_ExpandDims return nullptr";
+    return RET_ERROR;
+  }
 
+  auto val_offset = schema::CreateExpandDims(*fbb, attr->dim());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ExpandDims, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int ExpandDims::GetDim() const { return this->primitive_->value_as_ExpandDims()->dim(); }
 
-void ExpandDims::SetDim(int dim) {}
 #endif
 
 int ExpandDims::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

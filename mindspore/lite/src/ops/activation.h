@@ -27,16 +27,19 @@ namespace lite {
 class Activation : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Activation, PrimitiveC);
   Activation() = default;
   explicit Activation(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void SetType(int type);
+  void SetAlpha(float alpha);
 #else
-  explicit Activation(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Activation() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetType() const;
   float GetAlpha() const;
-  void SetType(int type);
-  void SetAlpha(float alpha);
 };
 }  // namespace lite
 }  // namespace mindspore

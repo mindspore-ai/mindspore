@@ -28,10 +28,30 @@ namespace lite {
 class DeConv2D : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(DeConv2D, PrimitiveC);
   DeConv2D() = default;
   explicit DeConv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetGroup(int group);
+  void SetChannelIn(int channel_in);
+  void SetChannelOut(int channel_out);
+  void SetKernelW(int kernel_w);
+  void SetKernelH(int kernel_h);
+  void SetStrideW(int stride_w);
+  void SetStrideH(int stride_h);
+  void SetPadMode(int pad_mode);
+  void SetPadUp(int pad_up);
+  void SetPadDown(int pad_down);
+  void SetPadLeft(int pad_left);
+  void SetPadRight(int pad_right);
+  void SetDilateW(int dilate_w);
+  void SetDilateH(int dilate_h);
+  void SetHasBias(bool has_bias);
+  void SetActivationType(int activation_type);
 #else
-  explicit DeConv2D(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  DeConv2D() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
@@ -51,23 +71,6 @@ class DeConv2D : public PrimitiveC {
   int GetDilateH() const;
   bool GetHasBias() const;
   int GetActivationType() const;
-  void SetFormat(int format);
-  void SetGroup(int group);
-  void SetChannelIn(int channel_in);
-  void SetChannelOut(int channel_out);
-  void SetKernelW(int kernel_w);
-  void SetKernelH(int kernel_h);
-  void SetStrideW(int stride_w);
-  void SetStrideH(int stride_h);
-  void SetPadMode(int pad_mode);
-  void SetPadUp(int pad_up);
-  void SetPadDown(int pad_down);
-  void SetPadLeft(int pad_left);
-  void SetPadRight(int pad_right);
-  void SetDilateW(int dilate_w);
-  void SetDilateH(int dilate_h);
-  void SetHasBias(bool has_bias);
-  void SetActivationType(int activation_type);
 
   int PadUp() const { return this->pad_u_; }
   int PadDown() const { return this->pad_d_; }

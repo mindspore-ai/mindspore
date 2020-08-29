@@ -73,7 +73,7 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     MS_LOG(ERROR) << "input num should be 2";
     return RET_ERROR;
   }
-  std::unique_ptr<schema::CaffePReLUT> attr = std::make_unique<schema::CaffePReLUT>();
+  std::unique_ptr<schema::PReLUT> attr = std::make_unique<schema::PReLUT>();
   std::vector<onnx::TensorProto> params;
   const auto &input_name = onnx_node.input(1);
   for (const auto &it : onnx_graph.initializer()) {
@@ -102,7 +102,7 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     }
   }
 
-  op->primitive->value.type = schema::PrimitiveType_CaffePReLU;
+  op->primitive->value.type = schema::PrimitiveType_PReLU;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }

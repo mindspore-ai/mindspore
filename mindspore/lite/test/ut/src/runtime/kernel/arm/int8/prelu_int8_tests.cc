@@ -65,14 +65,14 @@ TEST_F(TestPreluInt8, prelu_1) {
   outputs_tensor[0] = output0_tensor;
 
   LeakyReluQuantArg op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_Prelu;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_LeakyReLU;
   op_param.slope_ = reinterpret_cast<float *>(malloc(sizeof(float)));
   op_param.slope_[0] = 0.25;
 
   lite::Context *ctx = new lite::Context;
   ctx->thread_num_ = 2;
   op_param.axis_ = 0.25;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Prelu};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_LeakyReLU};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =

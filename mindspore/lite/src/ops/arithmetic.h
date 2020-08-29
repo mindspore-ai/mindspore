@@ -28,10 +28,15 @@ namespace lite {
 class Arithmetic : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Arithmetic, PrimitiveC);
   Arithmetic() = default;
   explicit Arithmetic(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  explicit Arithmetic(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  //  explicit Arithmetic(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Arithmetic() = default;
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override {
+    return RET_ERROR;
+  }
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   bool Broadcasting() { return this->broadcasting_; }

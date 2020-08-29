@@ -52,7 +52,6 @@ class DeconvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel 
   int Execute(int task_id);
 
  private:
-  void FreeTmpBuffer();
   SlidingWindowParam *sliding_ = nullptr;
   float16_t *packed_weight_ = nullptr;
   float16_t *packed_input_ = nullptr;

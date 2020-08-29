@@ -20,6 +20,7 @@
 #include "nnacl/fp32/slice.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
+#include "src/ops/slice.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -29,18 +30,26 @@ using mindspore::schema::PrimitiveType_Slice;
 
 namespace mindspore::kernel {
 namespace {
-int SliceLaunch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
+int SliceLaunch(void *cdata, int task_id) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_NULL_PTR;
   }
   auto kernel = reinterpret_cast<SliceCPUKernel *>(cdata);
-  return kernel->SliceParallelRun(thread_id);
+  return kernel->SliceParallelRun(task_id);
 }
 }  // namespace
 
 int SliceCPUKernel::ReSize() {
-  auto *param = reinterpret_cast<SliceParameter *>(op_parameter_);
+  auto primitive_slice = reinterpret_cast<const mindspore::lite::Slice *>(primitive_);
+  auto begin = primitive_slice->GetPostProcessBegin();
+  auto size = primitive_slice->GetPostProcessSize();
+  auto param = reinterpret_cast<SliceParameter *>(op_parameter_);
+  param->param_length_ = in_tensors_[0]->shape().size();
+  for (int i = 0; i < param->param_length_; ++i) {
+    param->begin_[i] = begin[i];
+    param->size_[i] = size[i];
+  }
   auto input_shape = in_tensors_[0]->shape();
   if (static_cast<int>(input_shape.size()) != param->param_length_) {
     MS_LOG(ERROR) << "Input begin's lenth " << param->param_length_ << "is not equal to input shape size "
@@ -97,7 +106,7 @@ int SliceCPUKernel::Run() {
     DoSliceNoParallel(input_data, output_data, param);
     return RET_OK;
   }
-  ret = LiteBackendParallelLaunch(SliceLaunch, this, param->op_parameter_.thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, SliceLaunch, this, param->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
     return RET_ERROR;

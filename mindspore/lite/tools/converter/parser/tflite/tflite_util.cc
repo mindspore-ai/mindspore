@@ -107,7 +107,6 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_DEPTH_TO_SPACE, "DepthToSpace"},
   {tflite::BuiltinOperator_SPACE_TO_BATCH_ND, "SpaceToBatchND"},
   {tflite::BuiltinOperator_SPACE_TO_DEPTH, "SpaceToDepth"},
-  {tflite::BuiltinOperator_PRELU, "Prelu"},
   {tflite::BuiltinOperator_ROUND, "Round"},
   {tflite::BuiltinOperator_WHERE, "Where"},
   {tflite::BuiltinOperator_SPARSE_TO_DENSE, "SparseToDense"},

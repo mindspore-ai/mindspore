@@ -67,7 +67,7 @@ int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
   return ret;
 }
 
-static int ReduceImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ReduceImpl(void *cdata, int task_id) {
   auto reduce = reinterpret_cast<ReduceFp16CPUKernel *>(cdata);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {
@@ -112,7 +112,7 @@ int ReduceFp16CPUKernel::Run() {
       inner_size_ *= tmp_shape_[k];
     }
     axis_size_ = tmp_shape_[axis];
-    auto error_code = LiteBackendParallelLaunch(ReduceImpl, this, context_->thread_num_);
+    auto error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";

@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,14 +29,18 @@ namespace lite {
 class BroadcastTo : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(BroadcastTo, PrimitiveC);
   BroadcastTo() = default;
   explicit BroadcastTo(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetDstShape(const std::vector<int> &dst_shape);
+
 #else
-  explicit BroadcastTo(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  BroadcastTo() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetDstShape() const;
-  void SetDstShape(const std::vector<int> &dst_shape);
 };
 }  // namespace lite
 }  // namespace mindspore

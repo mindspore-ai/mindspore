@@ -30,22 +30,52 @@ void Concat::SetAxis(int axis) { this->primitive_->value.AsConcat()->axis = axis
 void Concat::SetN(int n) { this->primitive_->value.AsConcat()->n = n; }
 
 int Concat::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
-  this->primitive_ = new (schema::PrimitiveT);
-  auto attr = std::make_unique<schema::ConcatT>();
-  auto prim_axis = GetValue<int>(prim.GetAttr("axis"));
-  attr->axis = prim_axis;
-  this->primitive_->value.type = schema::PrimitiveType_Concat;
-  this->primitive_->value.value = attr.release();
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Concat;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Concat) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::ConcatT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    auto prim_axis = GetValue<int>(prim.GetAttr("axis"));
+    attr->axis = prim_axis;
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
 #else
-
+int Concat::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Concat();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Concat return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateConcat(*fbb, attr->axis(), attr->n());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Concat, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Concat::GetAxis() const { return this->primitive_->value_as_Concat()->axis(); }
 int Concat::GetN() const { return this->primitive_->value_as_Concat()->n(); }
 
-void Concat::SetAxis(int axis) {}
-void Concat::SetN(int n) {}
 #endif
 
 namespace {
@@ -78,17 +108,13 @@ int Concat::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   auto input0_shape_without_axis = input0_shape;
   input0_shape_without_axis.erase(input0_shape_without_axis.begin() + axis);
   auto input0_data_type = inputs_.at(0)->data_type();
-  schema::Format input0_format = inputs_[0]->GetFormat();
   int output_axis_dim = input0_shape.at(axis);
   for (size_t i = 1; i < inputs_.size(); ++i) {
     if (inputs_.at(i)->data_type() != input0_data_type) {
       MS_LOG(ERROR) << "All inputs should have the same data type!";
       return RET_PARAM_INVALID;
     }
-    if (inputs_.at(i)->GetFormat() != input0_format) {
-      MS_LOG(ERROR) << "All input format should be the same!";
-      return RET_PARAM_INVALID;
-    }
+
     auto shape_tmp = inputs_.at(i)->shape();
     if (shape_tmp.size() != input0_shape.size()) {
       MS_LOG(ERROR) << "All inputs should have the same dim num!";

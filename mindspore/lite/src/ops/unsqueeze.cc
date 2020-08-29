@@ -32,8 +32,25 @@ std::vector<int> Unsqueeze::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_Unsqueeze()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
-void Unsqueeze::SetAxis(const std::vector<int> &axis) {}
+int Unsqueeze::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Unsqueeze();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Unsqueeze return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateUnsqueezeDirect(*fbb, &axis);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Unsqueeze, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
@@ -54,7 +71,7 @@ int Unsqueeze::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<ten
     return RET_OK;
   }
 
-  auto dims = GetAxis().data();
+  auto dims = GetAxis();
   auto in_shape = input->shape();
   auto in_rank = in_shape.size();
   auto dim_rank = GetAxis().size();

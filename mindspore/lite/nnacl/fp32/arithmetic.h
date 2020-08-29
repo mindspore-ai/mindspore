@@ -27,8 +27,14 @@
 extern "C" {
 #endif
 int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptAddRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptAddRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptSub(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptSubRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptSubRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementOptMul(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptMulRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
+int ElementOptMulRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
 int ElementMul(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu(float *input0, float *input1, float *output, int element_size);
 int ElementMulRelu6(float *input0, float *input1, float *output, int element_size);

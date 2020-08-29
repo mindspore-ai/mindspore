@@ -4649,43 +4649,41 @@ void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float 
 // Utilize cost model to compute performance gain.
 // If the gain is greater than got from Im2col, winograd algorithm will be chosen.
 int SelectOutputUnit(ConvParameter *conv_param) {
-  int input_batch = conv_param->input_batch_;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  int in_channel = conv_param->input_channel_;
-  int out_h = conv_param->output_h_;
+  int in_c = conv_param->input_channel_;
   int out_w = conv_param->output_w_;
-  int out_channel = conv_param->output_channel_;
-  int out_plane = out_h * out_w;
+  int out_h = conv_param->output_h_;
+  int out_c = conv_param->output_channel_;
+  int unit2 = UP_DIV(out_w * out_h, C12NUM * conv_param->op_parameter_.thread_num_);
+  int max_out_unit = (int)(sqrtf((float)unit2));
+  max_out_unit = max_out_unit < MAX_UNIT ? MAX_UNIT : max_out_unit;
+  max_out_unit = max_out_unit > MIN_UNIT ? max_out_unit : MIN_UNIT;
 
-  int max_unit = sqrt((float)(out_plane));
-  max_unit = max_unit > MIN_UNIT ? max_unit : MIN_UNIT;
-  max_unit = max_unit < MAX_UNIT ? max_unit : MAX_UNIT;
-  int output_unit = 1;
-  float ratio = 0.0f;
-  // cost of conventional convolution multiplications
-  float ori_cost = out_plane * out_channel * in_channel * kernel_h * kernel_w;
+  int unit = 0;
+  float max_rate = 0.0f;
+  float common_cost = (float)out_h * out_w * in_c * out_c * kernel_h * kernel_w;
 
-  for (int u = MIN_UNIT; u < max_unit; u++) {
-    int input_unit = u + kernel_h - 1;
-    if (input_unit != 4 && input_unit != 8) {
+  for (int i = MIN_UNIT; i <= max_out_unit; ++i) {
+    int input_unit = i + kernel_w - 1;
+    OutputTransformUnitFunc output_trans_func = GetOutputTransFunc(input_unit, i);
+    if (output_trans_func == NULL) {
       continue;
     }
-    // don't count filter transform cost, because it can be processed once offline.
-    const float input_trans_unit_cost = 2 * input_unit * input_unit * input_unit * in_channel;
-    float gemm_unit_cost = input_unit * input_unit * in_channel * out_channel;
-    float output_trans_unit_cost = input_unit * u * (u + input_unit) * out_channel;
-    // equation (23) in papar
-    float winograd_cost = (input_trans_unit_cost + gemm_unit_cost + output_trans_unit_cost) *
-                          (UP_DIV(out_w, u) * (UP_DIV(out_h, u))) * input_batch;
-    float reduce_rate = ori_cost / winograd_cost;
-    if (reduce_rate > ratio && reduce_rate > 1) {
-      ratio = reduce_rate;
-      output_unit = u;
+    float penalty = ((float)input_unit * input_unit) / ((float)kernel_h * kernel_w) * 0.12f;
+    float wino_cost = ((2 + out_c) * (float)input_unit * input_unit * in_c + ((float)input_unit + i) * i * out_c) *
+                      UP_DIV(out_w, i) * UP_DIV(out_h, i);
+    float reduce_rate = common_cost / wino_cost - penalty;
+    if (reduce_rate > max_rate) {
+      max_rate = reduce_rate;
+      unit = i;
     }
   }
+  if (max_rate < 1.0f) {
+    return 1;
+  }
   // If output_unit is 1, then it is conventional convolution
-  return output_unit;
+  return unit;
 }
 
 InputTransformUnitFunc GetInputTransFunc(int input_unit) {
@@ -4719,17 +4717,6 @@ void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *con
     *output_unit = SelectOutputUnit(conv_param);
     if (*output_unit > 1) {
       *use_winograd = true;
-      int input_unit = conv_param->kernel_h_ + *output_unit - 1;
-      input_trans_func = GetInputTransFunc(input_unit);
-      if (input_trans_func == NULL) {
-        *use_winograd = false;
-      }
-      output_trans_func = GetOutputTransFunc(input_unit, *output_unit);
-      if (output_trans_func == NULL) {
-        *use_winograd = false;
-      }
-    } else {
-      *use_winograd = false;
     }
   } else {
     *use_winograd = false;

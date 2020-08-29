@@ -28,13 +28,17 @@ namespace lite {
 class Elu : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Elu, PrimitiveC);
   Elu() = default;
   explicit Elu(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAlpha(float alpha);
+
 #else
-  explicit Elu(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Elu() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetAlpha() const;
-  void SetAlpha(float alpha);
 };
 }  // namespace lite
 }  // namespace mindspore

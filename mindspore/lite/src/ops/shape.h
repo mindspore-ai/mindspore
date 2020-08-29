@@ -20,18 +20,21 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace lite {
 class Shape : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Shape, PrimitiveC);
   Shape() = default;
   explicit Shape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  explicit Shape(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Shape() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };

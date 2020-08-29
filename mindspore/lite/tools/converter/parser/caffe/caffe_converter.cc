@@ -15,7 +15,6 @@
  */
 
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_converter.h"
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_parse_utils.h"
 
 namespace mindspore {
 namespace lite {

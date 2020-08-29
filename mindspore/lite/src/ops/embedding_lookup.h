@@ -28,14 +28,18 @@ namespace lite {
 class EmbeddingLookup : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(EmbeddingLookup, PrimitiveC);
   EmbeddingLookup() = default;
   explicit EmbeddingLookup(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMaxNorm(float max_norm);
+
 #else
-  explicit EmbeddingLookup(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  EmbeddingLookup() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   float GetMaxNorm() const;
-  void SetMaxNorm(float max_norm);
 };
 }  // namespace lite
 }  // namespace mindspore

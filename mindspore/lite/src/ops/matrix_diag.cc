@@ -38,10 +38,20 @@ int MatrixDiag::GetNumRows() const { return this->primitive_->value_as_MatrixDia
 int MatrixDiag::GetNumCols() const { return this->primitive_->value_as_MatrixDiag()->numCols(); }
 float MatrixDiag::GetPaddingValue() const { return this->primitive_->value_as_MatrixDiag()->paddingValue(); }
 
-void MatrixDiag::SetK(int k) {}
-void MatrixDiag::SetNumRows(int num_rows) {}
-void MatrixDiag::SetNumCols(int num_cols) {}
-void MatrixDiag::SetPaddingValue(float padding_value) {}
+int MatrixDiag::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_MatrixDiag();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_MatrixDiag return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateMatrixDiag(*fbb, attr->k(), attr->numRows(), attr->numCols(), attr->paddingValue());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_MatrixDiag, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 }  // namespace lite
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,16 +29,19 @@ namespace lite {
 class Crop : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Crop, PrimitiveC);
   Crop() = default;
   explicit Crop(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int64_t axis);
+  void SetOffsets(const std::vector<int64_t> &offsets);
 #else
-  explicit Crop(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Crop() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int64_t GetAxis() const;
   std::vector<int64_t> GetOffsets() const;
-  void SetAxis(int64_t axis);
-  void SetOffsets(const std::vector<int64_t> &offsets);
 };
 }  // namespace lite
 }  // namespace mindspore

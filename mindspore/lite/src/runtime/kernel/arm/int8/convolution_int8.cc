@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/convolution_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
+#include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
 #include "nnacl/int8/conv_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "schema/model_generated.h"
@@ -246,9 +247,6 @@ void ConvolutionInt8CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionInt8CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   // config input output
   ConfigInputOutput();
   CheckSupportOptimize();
@@ -272,7 +270,9 @@ int ConvolutionInt8CPUKernel::Init() {
       return RET_ERROR;
     }
   }
-
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
   return ReSize();
 }
 
@@ -337,7 +337,7 @@ int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionInt8Impl(int task_id, LiteParallelGroupEnv *mpenv, void *cdata) {
+int ConvolutionInt8Impl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionInt8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -373,7 +373,7 @@ int ConvolutionInt8CPUKernel::Run() {
   convert_func_(ori_input_data, nhwc4_input_, conv_param_->input_batch_, conv_param_->input_h_ * conv_param_->input_w_,
                 conv_param_->input_channel_);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv int8 error error_code[" << error_code << "]";
     FreeTmpBuffer();
@@ -398,8 +398,11 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::tensor::Ten
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   kernel::LiteKernel *kernel;
+  auto filter_quant_size = inputs[kWeightIndex]->GetQuantParams().size();
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else if (kernel_h == 1 && kernel_w == 1 && filter_quant_size == 1) {
+    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   }

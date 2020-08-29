@@ -23,7 +23,6 @@
 #include "src/lite_kernel.h"
 #include "include/lite_session.h"
 #include "src/executor.h"
-#include "src/runtime/thread_pool.h"
 
 namespace mindspore::lite {
 class ParallelExecutor : public Executor {
@@ -40,10 +39,6 @@ class ParallelExecutor : public Executor {
   inline void SetResult(const int index, const int result) { results.at(index) = result; }
 
  private:
-  void PrepareReadyKernels(const std::vector<kernel::LiteKernel *> &kernels);
-
- private:
-  predict::ThreadPool *pool;
   std::unordered_map<kernel::LiteKernel *, size_t> refCount;
   std::vector<kernel::LiteKernel *> readyKernels;
   std::vector<int> results;

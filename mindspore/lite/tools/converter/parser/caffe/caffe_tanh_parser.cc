@@ -24,15 +24,31 @@ STATUS CaffeTanhParser::Parse(const caffe::LayerParameter &proto,
                                const caffe::LayerParameter &weight,
                                schema::CNodeT *op,
                                std::vector<schema::TensorT *> *weightVec) {
-  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
-  attr->type = schema::ActivationType_TANH;
+  MS_LOG(DEBUG) << "parse CaffeTanhParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
   op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  attr->type = schema::ActivationType_TANH;
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Activation;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
-CaffeNodeRegistrar g_caffeTanhParser("Tanh", new CaffeTanhParser());
+CaffeNodeRegistrar g_caffeTanhParser("TanH", new CaffeTanhParser());
 }  // namespace lite
 }  // namespace mindspore
 

@@ -41,10 +41,12 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   void FreeTmpBuffer();
 
  private:
-  float *a_c8_ptr_ = nullptr;
+  float *a_c12_ptr_ = nullptr;
   float *b_r8_ptr_ = nullptr;
-  float *c_r8x8_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
+  float *a_ptr_ = nullptr;
+  float *b_ptr_ = nullptr;
+  float *c_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

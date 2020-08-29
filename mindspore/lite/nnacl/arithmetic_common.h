@@ -51,6 +51,8 @@ void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *
                       int *outStrides, int *multiple);
 void ComputeStrides(int *shape, int *strides, int ndim);
 
+void CalcMultiplesAndStrides(ArithmeticParameter *param);
+
 void TileDimensions(float *data0, float *data1, float *tile_data0, float *tile_data1, ArithmeticParameter *param);
 void TileDimensionsUint8(uint8_t *data0, uint8_t *data1, uint8_t *tile_data0, uint8_t *tile_data1,
                          ArithmeticParameter *param);

@@ -28,18 +28,21 @@ namespace lite {
 class ROIPooling : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ROIPooling, PrimitiveC);
   ROIPooling() = default;
   explicit ROIPooling(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPooledH(int pooled_h);
+  void SetPooledW(int pooled_w);
+  void SetScale(float scale);
 #else
-  explicit ROIPooling(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  ROIPooling() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetPooledH() const;
   int GetPooledW() const;
   float GetScale() const;
-  void SetPooledH(int pooled_h);
-  void SetPooledW(int pooled_w);
-  void SetScale(float scale);
 };
 }  // namespace lite
 }  // namespace mindspore

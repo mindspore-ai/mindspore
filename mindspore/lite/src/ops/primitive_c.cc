@@ -17,6 +17,7 @@
 #include "src/ops/primitive_c.h"
 #include <memory>
 #include "src/ops/space_to_batch.h"
+#include "src/ops/space_to_batch_nd.h"
 #include "src/ops/conv2d.h"
 #include "src/ops/roi_pooling.h"
 #include "src/ops/topk.h"
@@ -71,8 +72,8 @@
 #include "src/ops/gather_nd.h"
 #include "src/ops/local_response_normalization.h"
 #include "src/ops/pad.h"
-#include "src/ops/prelu.h"
-#include "src/ops/caffe_p_relu.h"
+#include "src/ops/p_relu.h"
+#include "src/ops/leaky_relu.h"
 #include "src/ops/reverse_sequence.h"
 #include "src/ops/dedepthwise_conv2d.h"
 #include "src/ops/depthwise_conv2d.h"
@@ -109,6 +110,7 @@
 #include "src/ops/round.h"
 #include "src/ops/unique.h"
 #include "src/ops/zeros_like.h"
+#include "src/ops/return.h"
 #include "src/ops/where.h"
 #include "src/ops/scatter_nd.h"
 #include "src/ops/constant_of_shape.h"
@@ -116,13 +118,15 @@
 #include "src/ops/make_tuple.h"
 #include "src/ops/quant.h"
 #include "src/ops/tuple_get_item.h"
+#include "src/ops/l2_norm.h"
+#include "src/ops/sparse_to_dense.h"
 
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 schema::PrimitiveT *PrimitiveC::GetPrimitiveT() const { return this->primitive_; }
 
-void PrimitiveC::SetPrimitiveT(schema::PrimitiveT *prim) { this->primitive_ = prim; }
+void PrimitiveC::ClearPrimitiveT() { this->primitive_ = nullptr; }
 
 void PrimitiveC::SetInputQuantParam(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param) {
   this->input_quant_param_ = input_quant_param;
@@ -155,21 +159,21 @@ std::shared_ptr<PrimitiveC> GetReturnPrim() {
   auto return_primitiveT = new schema::PrimitiveT;
   return_primitiveT->value.type = schema::PrimitiveType_Return;
   return_primitiveT->value.value = new schema::ReturnT;
-  return std::make_shared<PrimitiveC>(return_primitiveT);
+  return std::make_shared<Return>(return_primitiveT);
 }
 
 std::shared_ptr<PrimitiveC> GetMakeTuplePrim() {
   auto make_tuple_primitiveT = new schema::PrimitiveT;
   make_tuple_primitiveT->value.type = schema::PrimitiveType_MakeTuple;
   make_tuple_primitiveT->value.value = new schema::MakeTupleT;
-  return std::make_shared<PrimitiveC>(make_tuple_primitiveT);
+  return std::make_shared<MakeTuple>(make_tuple_primitiveT);
 }
 
 std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
   auto tuple_get_item_primitiveT = new schema::PrimitiveT();
   tuple_get_item_primitiveT->value.type = schema::PrimitiveType_TupleGetItem;
   tuple_get_item_primitiveT->value.value = new schema::TupleGetItemT;
-  return std::make_shared<PrimitiveC>(tuple_get_item_primitiveT);
+  return std::make_shared<TupleGetItem>(tuple_get_item_primitiveT);
 }
 
 template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
@@ -344,10 +348,10 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new Minimum(primitive);
     case schema::PrimitiveType_StridedSlice:
       return new StridedSlice(primitive);
-    case schema::PrimitiveType_Prelu:
-      return new Prelu(primitive);
-    case schema::PrimitiveType_CaffePReLU:
-      return new CaffePReLU(primitive);
+    case schema::PrimitiveType_LeakyReLU:
+      return new (std::nothrow) LeakyReLU(primitive);
+    case schema::PrimitiveType_PReLU:
+      return new (std::nothrow) PReLU(primitive);
     case schema::PrimitiveType_Round:
       return new Round(primitive);
     case schema::PrimitiveType_Reverse:
@@ -414,6 +418,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new BatchToSpace(primitive);
     case schema::PrimitiveType_SpaceToBatch:
       return new SpaceToBatch(primitive);
+    case schema::PrimitiveType_SpaceToBatchND:
+      return new SpaceToBatchND(primitive);
     case schema::PrimitiveType_BroadcastTo:
       return new BroadcastTo(primitive);
     case schema::PrimitiveType_DepthToSpace:
@@ -430,6 +436,10 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new ScatterND(primitive);
     case schema::PrimitiveType_ConstantOfShape:
       return new ConstantOfShape(primitive);
+    case schema::PrimitiveType_L2Norm:
+      return new L2Norm(primitive);
+    case schema::PrimitiveType_SparseToDense:
+      return new SparseToDense(primitive);
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitiveT : "
                     << schema::EnumNamePrimitiveType(op_type);
@@ -438,204 +448,210 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
   return nullptr;
 }
 #else
-PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
+PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(const schema::Primitive *primitive) {
+  MS_ASSERT(primitive);
   auto op_type = primitive->value_type();
   switch (op_type) {
     case schema::PrimitiveType_SoftMax:
-      return new SoftMax(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<SoftMax>(primitive);
     case schema::PrimitiveType_Activation:
-      return new Activation(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Activation>(primitive);
     case schema::PrimitiveType_Conv2D:
-      return new Conv2D(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Conv2D>(primitive);
     case schema::PrimitiveType_DeConv2D:
-      return new DeConv2D(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<DeConv2D>(primitive);
     case schema::PrimitiveType_Reduce:
-      return new Reduce(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Reduce>(primitive);
     case schema::PrimitiveType_Pooling:
-      return new Pooling(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Pooling>(primitive);
     case schema::PrimitiveType_ROIPooling:
-      return new ROIPooling(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ROIPooling>(primitive);
     case schema::PrimitiveType_DepthwiseConv2D:
-      return new DepthwiseConv2D(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<DepthwiseConv2D>(primitive);
     case schema::PrimitiveType_FusedBatchNorm:
-      return new FusedBatchNorm(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<FusedBatchNorm>(primitive);
     case schema::PrimitiveType_BatchNorm:
-      return new BatchNorm(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<BatchNorm>(primitive);
     case schema::PrimitiveType_FullConnection:
-      return new FullConnection(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<FullConnection>(primitive);
     case schema::PrimitiveType_Power:
-      return new Power(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Power>(primitive);
     case schema::PrimitiveType_Pad:
-      return new Pad(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Pad>(primitive);
     case schema::PrimitiveType_Range:
-      return new Range(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Range>(primitive);
     case schema::PrimitiveType_Mul:
-      return new Mul(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Mul>(primitive);
     case schema::PrimitiveType_Add:
-      return new Add(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Add>(primitive);
     case schema::PrimitiveType_Sub:
-      return new Sub(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Sub>(primitive);
     case schema::PrimitiveType_Div:
-      return new Div(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Div>(primitive);
     case schema::PrimitiveType_BiasAdd:
-      return new BiasAdd(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<BiasAdd>(primitive);
     case schema::PrimitiveType_ExpandDims:
-      return new ExpandDims(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ExpandDims>(primitive);
     case schema::PrimitiveType_ArgMax:
-      return new ArgMax(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ArgMax>(primitive);
     case schema::PrimitiveType_ArgMin:
-      return new ArgMin(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ArgMin>(primitive);
     case schema::PrimitiveType_Cast:
-      return new Cast(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Cast>(primitive);
     case schema::PrimitiveType_Reshape:
-      return new Reshape(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Reshape>(primitive);
     case schema::PrimitiveType_Scale:
-      return new Scale(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Scale>(primitive);
     case schema::PrimitiveType_Eltwise:
-      return new Eltwise(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Eltwise>(primitive);
     case schema::PrimitiveType_Ceil:
-      return new Ceil(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Ceil>(primitive);
     case schema::PrimitiveType_Concat:
-      return new Concat(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Concat>(primitive);
     case schema::PrimitiveType_Fill:
-      return new Fill(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Fill>(primitive);
     case schema::PrimitiveType_Nhwc2Nchw:
-      return new Nhwc2Nchw(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Nhwc2Nchw>(primitive);
     case schema::PrimitiveType_Nchw2Nhwc:
-      return new Nchw2Nhwc(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Nchw2Nhwc>(primitive);
     case schema::PrimitiveType_Transpose:
-      return new Transpose(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Transpose>(primitive);
     case schema::PrimitiveType_Slice:
-      return new Slice(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Slice>(primitive);
     case schema::PrimitiveType_Squeeze:
-      return new Squeeze(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Squeeze>(primitive);
     case schema::PrimitiveType_Flatten:
-      return new Flatten(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Flatten>(primitive);
     case schema::PrimitiveType_Mean:
-      return new Mean(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Mean>(primitive);
     case schema::PrimitiveType_Stack:
-      return new Stack(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Stack>(primitive);
     case schema::PrimitiveType_Crop:
-      return new Crop(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Crop>(primitive);
     case schema::PrimitiveType_SquaredDifference:
-      return new SquaredDifference(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<SquaredDifference>(primitive);
     case schema::PrimitiveType_AddN:
-      return new AddN(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<AddN>(primitive);
     case schema::PrimitiveType_Abs:
-      return new Abs(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Abs>(primitive);
     case schema::PrimitiveType_Sin:
-      return new Sin(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Sin>(primitive);
     case schema::PrimitiveType_Cos:
-      return new Cos(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Cos>(primitive);
     case schema::PrimitiveType_Log:
-      return new Log(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Log>(primitive);
     case schema::PrimitiveType_Sqrt:
-      return new Sqrt(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Sqrt>(primitive);
     case schema::PrimitiveType_Rsqrt:
-      return new Rsqrt(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Rsqrt>(primitive);
     case schema::PrimitiveType_Square:
-      return new Square(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Square>(primitive);
     case schema::PrimitiveType_Exp:
-      return new Exp(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Exp>(primitive);
     case schema::PrimitiveType_Gather:
-      return new Gather(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Gather>(primitive);
     case schema::PrimitiveType_GatherNd:
-      return new GatherNd(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<GatherNd>(primitive);
     case schema::PrimitiveType_LocalResponseNormalization:
-      return new LocalResponseNormalization(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<LocalResponseNormalization>(primitive);
     case schema::PrimitiveType_Maximum:
-      return new Maximum(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Maximum>(primitive);
     case schema::PrimitiveType_Minimum:
-      return new Minimum(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Minimum>(primitive);
     case schema::PrimitiveType_StridedSlice:
-      return new StridedSlice(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_Prelu:
-      return new Prelu(const_cast<schema::Primitive *>(primitive));
-    case schema::PrimitiveType_CaffePReLU:
-      return new CaffePReLU(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<StridedSlice>(primitive);
+    case schema::PrimitiveType_LeakyReLU:
+      return NewPrimitiveC<LeakyReLU>(primitive);
+    case schema::PrimitiveType_PReLU:
+      return NewPrimitiveC<PReLU>(primitive);
     case schema::PrimitiveType_Round:
-      return new Round(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Round>(primitive);
     case schema::PrimitiveType_Reverse:
-      return new Reverse(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Reverse>(primitive);
     case schema::PrimitiveType_ReverseSequence:
-      return new ReverseSequence(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ReverseSequence>(primitive);
     case schema::PrimitiveType_LogicalAnd:
-      return new LogicalAnd(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<LogicalAnd>(primitive);
     case schema::PrimitiveType_LogicalOr:
-      return new LogicalOr(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<LogicalOr>(primitive);
     case schema::PrimitiveType_LogicalNot:
-      return new LogicalNot(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<LogicalNot>(primitive);
     case schema::PrimitiveType_FloorDiv:
-      return new FloorDiv(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<FloorDiv>(primitive);
     case schema::PrimitiveType_FloorMod:
-      return new FloorMod(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<FloorMod>(primitive);
     case schema::PrimitiveType_Equal:
-      return new Equal(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Equal>(primitive);
     case schema::PrimitiveType_NotEqual:
-      return new NotEqual(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<NotEqual>(primitive);
     case schema::PrimitiveType_Less:
-      return new Less(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Less>(primitive);
     case schema::PrimitiveType_LessEqual:
-      return new LessEqual(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<LessEqual>(primitive);
     case schema::PrimitiveType_Greater:
-      return new Greater(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Greater>(primitive);
     case schema::PrimitiveType_GreaterEqual:
-      return new GreaterEqual(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<GreaterEqual>(primitive);
     case schema::PrimitiveType_Floor:
-      return new Floor(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Floor>(primitive);
     case schema::PrimitiveType_Split:
-      return new Split(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Split>(primitive);
     case schema::PrimitiveType_OneHot:
-      return new OneHot(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<OneHot>(primitive);
     case schema::PrimitiveType_PriorBox:
-      return new PriorBox(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<PriorBox>(primitive);
     case schema::PrimitiveType_SpaceToDepth:
-      return new SpaceToDepth(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<SpaceToDepth>(primitive);
     case schema::PrimitiveType_Tile:
-      return new Tile(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Tile>(primitive);
     case schema::PrimitiveType_Resize:
-      return new Resize(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Resize>(primitive);
     case schema::PrimitiveType_Unstack:
-      return new Unstack(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Unstack>(primitive);
     case schema::PrimitiveType_Unique:
-      return new Unique(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Unique>(primitive);
     case schema::PrimitiveType_TopK:
-      return new TopK(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<TopK>(primitive);
     case schema::PrimitiveType_MatMul:
-      return new MatMul(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<MatMul>(primitive);
     case schema::PrimitiveType_QuantDTypeCast:
-      return new QuantDTypeCast(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<QuantDTypeCast>(primitive);
     case schema::PrimitiveType_EmbeddingLookup:
-      return new EmbeddingLookup(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<EmbeddingLookup>(primitive);
     case schema::PrimitiveType_Elu:
-      return new Elu(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Elu>(primitive);
     case schema::PrimitiveType_DeDepthwiseConv2D:
-      return new DeDepthwiseConv2D(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<DeDepthwiseConv2D>(primitive);
     case schema::PrimitiveType_Shape:
-      return new Shape(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Shape>(primitive);
     case schema::PrimitiveType_Unsqueeze:
-      return new Unsqueeze(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Unsqueeze>(primitive);
     case schema::PrimitiveType_BatchToSpace:
-      return new BatchToSpace(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<BatchToSpace>(primitive);
     case schema::PrimitiveType_SpaceToBatch:
-      return new SpaceToBatch(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<SpaceToBatch>(primitive);
+    case schema::PrimitiveType_SpaceToBatchND:
+      return NewPrimitiveC<SpaceToBatchND>(primitive);
     case schema::PrimitiveType_BroadcastTo:
-      return new BroadcastTo(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<BroadcastTo>(primitive);
     case schema::PrimitiveType_DepthToSpace:
-      return new DepthToSpace(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<DepthToSpace>(primitive);
     case schema::PrimitiveType_Lstm:
-      return new Lstm(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Lstm>(primitive);
     case schema::PrimitiveType_ZerosLike:
-      return new ZerosLike(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ZerosLike>(primitive);
     case schema::PrimitiveType_MakeTuple:
-      return new MakeTuple(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<MakeTuple>(primitive);
     case schema::PrimitiveType_Where:
-      return new Where(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<Where>(primitive);
     case schema::PrimitiveType_ScatterND:
-      return new ScatterND(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ScatterND>(primitive);
     case schema::PrimitiveType_ConstantOfShape:
-      return new ConstantOfShape(const_cast<schema::Primitive *>(primitive));
+      return NewPrimitiveC<ConstantOfShape>(primitive);
+    case schema::PrimitiveType_L2Norm:
+      return NewPrimitiveC<L2Norm>(primitive);
+    case schema::PrimitiveType_SparseToDense:
+      return NewPrimitiveC<SparseToDense>(primitive);
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitive : "
                     << schema::EnumNamePrimitiveType(op_type);
@@ -646,6 +662,9 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(mindspore::schema::Primitive *
 #endif
 
 int PrimitiveC::Type() const {
+  if (this->primitive_ == nullptr) {
+    return schema::PrimitiveType_NONE;
+  }
 #ifdef PRIMITIVE_WRITEABLE
   return this->primitive_->value.type;
 #else

@@ -15,9 +15,17 @@
  */
 
 #include "src/ops/space_to_batch_nd.h"
+#include "src/common/common.h"
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kSpaceToBatchNDOutputNum = 1;
+constexpr int kSpaceToBatchNDInputNum = 1;
+constexpr int kBlockSizesSize = 2;
+constexpr int kPaddingsSize = 4;
+}  // namespace
+
 #ifdef PRIMITIVE_WRITEABLE
 std::vector<int> SpaceToBatchND::GetBlockShape() const {
   return this->primitive_->value.AsSpaceToBatchND()->blockShape;
@@ -42,8 +50,74 @@ std::vector<int> SpaceToBatchND::GetPaddings() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
-void SpaceToBatchND::SetBlockShape(const std::vector<int> &block_shape) {}
-void SpaceToBatchND::SetPaddings(const std::vector<int> &paddings) {}
-#endif
+int SpaceToBatchND::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_SpaceToBatch();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_SpaceToBatch return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> blockShape;
+  if (attr->blockShape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->blockShape()->size()); i++) {
+      blockShape.push_back(attr->blockShape()->data()[i]);
+    }
+  }
+  std::vector<int32_t> paddings;
+  if (attr->paddings() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->paddings()->size()); i++) {
+      paddings.push_back(attr->paddings()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateSpaceToBatchDirect(*fbb, &blockShape, &paddings);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SpaceToBatch, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
+#endif  // PRIMITIVE_WRITEABLE
+
+int SpaceToBatchND::InferShape(std::vector<lite::tensor::Tensor *> inputs,
+                               std::vector<lite::tensor::Tensor *> outputs) {
+  if (outputs.size() != kSpaceToBatchNDOutputNum || inputs.size() != kSpaceToBatchNDInputNum) {
+    MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
+    return 1;
+  }
+
+  auto input = inputs.at(0);
+  if (input->GetFormat() != schema::Format_NHWC) {
+    MS_LOG(ERROR) << "space_to_batch_nd only support NHWC now!";
+    return RET_ERROR;
+  }
+  outputs[0]->set_data_type(input->data_type());
+  outputs[0]->SetFormat(input->GetFormat());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  auto input_shape = input->shape();
+  if (input_shape.size() != kDimension_4d) {
+    MS_LOG(ERROR) << "input shape dimension size only support " << kDimension_4d << " now!";
+    return RET_ERROR;
+  }
+  auto block_shape = GetBlockShape();
+  if (block_shape.size() != kBlockSizesSize) {
+    MS_LOG(ERROR) << "blockShape size != " << kBlockSizesSize;
+    return RET_ERROR;
+  }
+  auto pedding = GetPaddings();
+  if (pedding.size() != kPaddingsSize) {
+    MS_LOG(ERROR) << "pedding size should be " << kPaddingsSize;
+    return RET_ERROR;
+  }
+
+  std::vector<int32_t> output_shape(input_shape.size());
+  output_shape[NHWC_N] = input_shape[NHWC_N] * block_shape[0] * block_shape[1];
+  output_shape[NHWC_H] = (input_shape[NHWC_H] + pedding[0] + pedding[1]) / block_shape[0];
+  output_shape[NHWC_W] = (input_shape[NHWC_W] + pedding[2] + pedding[3]) / block_shape[1];
+  output_shape[NHWC_C] = input_shape[NHWC_C];
+  outputs[0]->set_shape(output_shape);
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

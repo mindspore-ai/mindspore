@@ -24,7 +24,7 @@ std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> 
   MS_ASSERT(tensor != nullptr);
   auto &quantParams = tensor->quantParams;
   if (!quantParams.empty()) {
-    return std::move(CopyQuantParamT(quantParams.front()));
+    return CopyQuantParamT(quantParams.front());
   } else {
     return nullptr;
   }
@@ -39,7 +39,7 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
   dstQuantParam->max = srcQuantParam->max;
   dstQuantParam->narrowRange = srcQuantParam->narrowRange;
   dstQuantParam->numBits = srcQuantParam->numBits;
-  return std::move(dstQuantParam);
+  return dstQuantParam;
 }
 
 size_t GetElementSize(const TensorT &tensor) { return GetElementSize(TypeId(tensor.dataType)); }
@@ -75,7 +75,7 @@ size_t GetShapeSize(const TensorT &tensor) {
 std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &oldTensor) {
   auto newTensor = std::unique_ptr<TensorT>(new (std::nothrow) TensorT);
   if (newTensor == nullptr) {
-    // MS_LOG(ERROR)("new TensorT failed");
+     MS_LOG(ERROR) << "new TensorT failed";
     return nullptr;
   }
   newTensor->dims = oldTensor->dims;
@@ -85,9 +85,9 @@ std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &oldTenso
   newTensor->nodeType = oldTensor->nodeType;
   newTensor->data = oldTensor->data;
   if (!oldTensor->quantParams.empty()) {
-    newTensor->quantParams.emplace_back(std::move(GetTensorQuantParam(oldTensor)));
+    newTensor->quantParams.emplace_back(GetTensorQuantParam(oldTensor));
   }
-  return std::move(newTensor);
+  return newTensor;
 }
 
 size_t GetRefCount(MetaGraphT *graphT, uint32_t tensorIdx) {

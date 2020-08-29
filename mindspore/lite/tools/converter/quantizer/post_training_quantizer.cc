@@ -41,201 +41,174 @@ using std::vector;
 namespace mindspore {
 namespace lite {
 namespace quant {
-struct DivergInfo {
-  std::vector<float> histogram;
-  CNodePtr cnode;
-  int bin_num;
-  float interval = 0;
-  float max;
-  float min;
-  float best_T = 0.0f;
-  size_t bit_num;
-  int quant_max = 255;
-  int quant_min = 0;
-  std::string method_x = kMethodKL;
-
-  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
-    this->method_x = method_x;
-    this->cnode = cnode;
-    this->bin_num = bins;
-    this->bit_num = bits;
-    histogram.resize(bin_num);
-    max = -FLT_MAX;
-    min = FLT_MAX;
-    this->quant_max = quant_max;
-    this->quant_min = quant_min;
-    std::fill(histogram.begin(), histogram.end(), 1.0e-7);
+STATUS DivergInfo::RecordMaxValue(const std::vector<float> &datas) {
+  for (float data : datas) {
+    max = std::max(data, max);
+    min = std::min(data, min);
   }
+  return RET_OK;
+}
 
-  STATUS RecordMaxValue(const std::vector<float> &datas) {
-    for (float data : datas) {
-      max = std::max(data, max);
-      min = std::min(data, min);
+void DivergInfo::UpdateInterval() {
+  auto max_value = std::max(fabs(this->max), fabs(this->min));
+  this->interval = max_value / static_cast<float>(bin_num);
+}
+
+STATUS DivergInfo::UpdateHistogram(const std::vector<float> &data) {
+  for (auto value : data) {
+    if (value == 0) {
+      continue;
     }
+    int bin_index = std::min(static_cast<int>(std::fabs(value) / this->interval), bin_num - 1);
+    this->histogram[bin_index]++;
+  }
+  return RET_OK;
+}
+
+void DivergInfo::DumpHistogram() {
+  MS_LOG(INFO) << "Print node " << cnode->fullname_with_scope() << " histogram";
+  for (float item : this->histogram) {
+    std::cout << item << " ";
+  }
+  std::cout << std::endl;
+}
+
+STATUS DivergInfo::ComputeThreshold() {
+  if (method_x == kMethodMaxMin) {
+    this->best_T = std::max(fabs(this->max), fabs(this->min));
+    MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T;
     return RET_OK;
   }
 
-  void UpdateInterval() {
-    auto max_value = std::max(fabs(this->max), fabs(this->min));
-    this->interval = max_value / static_cast<float>(bin_num);
-  }
+  constexpr int quant_bint_nums = 128;
+  int threshold = quant_bint_nums;
+  float min_kl = FLT_MAX;
+  float after_threshold_sum = std::accumulate(this->histogram.begin() + quant_bint_nums, this->histogram.end(), 0.0f);
 
-  STATUS UpdateHistogram(const std::vector<float> &data, const std::vector<int> &shape) {
-    for (auto value : data) {
-      if (value == 0) {
+  for (int i = quant_bint_nums; i < this->bin_num; ++i) {
+    std::vector<float> quantized_histogram(quant_bint_nums, 0);
+    std::vector<float> reference_histogram(this->histogram.begin(), this->histogram.begin() + i);
+    std::vector<float> expanded_histogram(i, 0);
+    reference_histogram[i - 1] += after_threshold_sum;
+    after_threshold_sum -= this->histogram[i];
+
+    const float bin_interval = static_cast<float>(i) / static_cast<float>(quant_bint_nums);
+
+    // merge i bins to target bins
+    for (int j = 0; j < quant_bint_nums; ++j) {
+      const float start = j * bin_interval;
+      const float end = start + bin_interval;
+      const int left_upper = static_cast<int>(std::ceil(start));
+      if (left_upper > start) {
+        const double left_scale = left_upper - start;
+        quantized_histogram[j] += left_scale * this->histogram[left_upper - 1];
+      }
+      const int right_lower = static_cast<int>(std::floor(end));
+      if (right_lower < end) {
+        const double right_scale = end - right_lower;
+        quantized_histogram[j] += right_scale * this->histogram[right_lower];
+      }
+      std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
+                    [&quantized_histogram, j](float item) { quantized_histogram[j] += item; });
+    }
+    // expand target bins to i bins in order to calculate KL with reference_histogram
+    for (int j = 0; j < quant_bint_nums; ++j) {
+      const float start = j * bin_interval;
+      const float end = start + bin_interval;
+      float count = 0;
+      const int left_upper = static_cast<int>(std::ceil(start));
+      float left_scale = 0.0f;
+      if (left_upper > start) {
+        left_scale = left_upper - start;
+        if (this->histogram[left_upper - 1] != 0) {
+          count += left_scale;
+        }
+      }
+      const int right_lower = static_cast<int>(std::floor(end));
+      double right_scale = 0.0f;
+      if (right_lower < end) {
+        right_scale = end - right_lower;
+        if (this->histogram[right_lower] != 0) {
+          count += right_scale;
+        }
+      }
+      std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower, [&count](float item) {
+        if (item != 0) {
+          count += 1;
+        }
+      });
+      if (count == 0) {
         continue;
       }
-      int bin_index = std::min(static_cast<int>(std::fabs(value) / this->interval), bin_num - 1);
-      this->histogram[bin_index]++;
-    }
-    return RET_OK;
-  }
-
-  void DumpHistogram() {
-    MS_LOG(INFO) << "Print node " << cnode->fullname_with_scope() << " histogram";
-    for (float item : this->histogram) {
-      std::cout << item << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  STATUS ComputeThreshold() {
-    if (method_x == kMethodMaxMin) {
-      this->best_T = std::max(fabs(this->max), fabs(this->min));
-      MS_LOG(DEBUG) << "using MAX_MIN, T: " << this->best_T;
-      return RET_OK;
-    }
-
-    constexpr int quant_bint_nums = 128;
-    int threshold = quant_bint_nums;
-    float min_kl = FLT_MAX;
-    float after_threshold_sum = std::accumulate(this->histogram.begin() + quant_bint_nums, this->histogram.end(), 0.0f);
-
-    for (int i = quant_bint_nums; i < this->bin_num; ++i) {
-      std::vector<float> quantized_histogram(quant_bint_nums, 0);
-      std::vector<float> reference_histogram(this->histogram.begin(), this->histogram.begin() + i);
-      std::vector<float> expanded_histogram(i, 0);
-      reference_histogram[i - 1] += after_threshold_sum;
-      after_threshold_sum -= this->histogram[i];
-
-      const float bin_interval = static_cast<float>(i) / static_cast<float>(quant_bint_nums);
-
-      // merge i bins to target bins
-      for (int j = 0; j < quant_bint_nums; ++j) {
-        const float start = j * bin_interval;
-        const float end = start + bin_interval;
-        const int left_upper = static_cast<int>(std::ceil(start));
-        if (left_upper > start) {
-          const double left_scale = left_upper - start;
-          quantized_histogram[j] += left_scale * this->histogram[left_upper - 1];
-        }
-        const int right_lower = static_cast<int>(std::floor(end));
-        if (right_lower < end) {
-          const double right_scale = end - right_lower;
-          quantized_histogram[j] += right_scale * this->histogram[right_lower];
-        }
-        std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
-                      [&quantized_histogram, j](float item) { quantized_histogram[j] += item; });
+      const float average_num = quantized_histogram[j] / count;
+      if (left_upper > start && this->histogram[left_upper - 1] != 0) {
+        expanded_histogram[left_upper - 1] += average_num * left_scale;
       }
-      // expand target bins to i bins in order to calculate KL with reference_histogram
-      for (int j = 0; j < quant_bint_nums; ++j) {
-        const float start = j * bin_interval;
-        const float end = start + bin_interval;
-        float count = 0;
-        const int left_upper = static_cast<int>(std::ceil(start));
-        float left_scale = 0.0f;
-        if (left_upper > start) {
-          left_scale = left_upper - start;
-          if (this->histogram[left_upper - 1] != 0) {
-            count += left_scale;
-          }
+      if (right_lower < end && this->histogram[right_lower] != 0) {
+        expanded_histogram[right_lower] += average_num * right_scale;
+      }
+      for (int k = left_upper; k < right_lower; ++k) {
+        if (this->histogram[k] != 0) {
+          expanded_histogram[k] += average_num;
         }
-        const int right_lower = static_cast<int>(std::floor(end));
-        double right_scale = 0.0f;
-        if (right_lower < end) {
-          right_scale = end - right_lower;
-          if (this->histogram[right_lower] != 0) {
-            count += right_scale;
-          }
-        }
-        std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
-                      [&count](float item) {
-                        if (item != 0) {
-                          count += 1;
-                        }
-                      });
-        if (count == 0) {
-          continue;
-        }
-        const float average_num = quantized_histogram[j] / count;
-        if (left_upper > start && this->histogram[left_upper - 1] != 0) {
-          expanded_histogram[left_upper - 1] += average_num * left_scale;
-        }
-        if (right_lower < end && this->histogram[right_lower] != 0) {
-          expanded_histogram[right_lower] += average_num * right_scale;
-        }
-        for (int k = left_upper; k < right_lower; ++k) {
-          if (this->histogram[k] != 0) {
-            expanded_histogram[k] += average_num;
+      }
+    }
+    auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
+      auto sum = 0.0f;
+      std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
+      std::for_each(p.begin(), p.end(), [sum](float &item) { item /= sum; });
+      sum = 0.0f;
+      std::for_each(q.begin(), q.end(), [&sum](float item) { sum += item; });
+      std::for_each(q.begin(), q.end(), [sum](float &item) { item /= sum; });
+
+      float result = 0.0f;
+      const int size = p.size();
+      for (int i = 0; i < size; ++i) {
+        if (p[i] != 0) {
+          if (q[i] == 0) {
+            result += 1.0f;
+          } else {
+            result += (p[i] * std::log((p[i]) / (q[i])));
           }
         }
       }
-      auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
-        auto sum = 0.0f;
-        std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
-        std::for_each(p.begin(), p.end(), [sum](float &item) { item /= sum; });
-        sum = 0.0f;
-        std::for_each(q.begin(), q.end(), [&sum](float item) { sum += item; });
-        std::for_each(q.begin(), q.end(), [sum](float &item) { item /= sum; });
-
-        float result = 0.0f;
-        const int size = p.size();
-        for (int i = 0; i < size; ++i) {
-          if (p[i] != 0) {
-            if (q[i] == 0) {
-              result += 1.0f;
-            } else {
-              result += (p[i] * std::log((p[i]) / (q[i])));
-            }
-          }
-        }
-        return result;
-      };
-      const float kl = KLDivergence(reference_histogram, expanded_histogram);
-      if (kl < min_kl) {
-        min_kl = kl;
-        threshold = i;
-      }
+      return result;
+    };
+    const float kl = KLDivergence(reference_histogram, expanded_histogram);
+    if (kl < min_kl) {
+      min_kl = kl;
+      threshold = i;
     }
-    this->best_T = (static_cast<float>(threshold) + 0.5f) * this->interval;
-    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " Best threshold bin index: " << threshold << " T: " << best_T
-                  << " max: " << std::max(fabs(this->max), fabs(this->min));
-    return RET_OK;
   }
+  this->best_T = (static_cast<float>(threshold) + 0.5f) * this->interval;
+  MS_LOG(DEBUG) << cnode->fullname_with_scope() << " Best threshold bin index: " << threshold << " T: " << best_T
+                << " max: " << std::max(fabs(this->max), fabs(this->min));
+  return RET_OK;
+}
 
-  std::pair<CNodePtr, float> GetScale() {
-    float max_value = this->best_T;
-    float min_value = -max_value;
+std::pair<CNodePtr, float> DivergInfo::GetScale() {
+  float max_value = this->best_T;
+  float min_value = -max_value;
 
-    MS_ASSERT(quant_max - quant_min != 0);
-    float scale = (max_value - min_value) / (quant_max - quant_min);
-    MS_ASSERT(scale != 0);
-    return std::make_pair(this->cnode, scale);
+  MS_ASSERT(quant_max - quant_min != 0);
+  float scale = (max_value - min_value) / (quant_max - quant_min);
+  MS_ASSERT(scale != 0);
+  return std::make_pair(this->cnode, scale);
+}
+
+std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
+  int zero_point = 0;
+  if (quant_min == 0 && quant_max == 255) {
+    zero_point = 128;
+  } else if (quant_min == -127 && quant_max == 127) {
+    zero_point = 0;
+  } else {
+    MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
   }
+  return std::make_pair(this->cnode, zero_point);
+}
 
-  std::pair<CNodePtr, int32_t> GetZeropoint() {
-    int zero_point = 0;
-    if (quant_min == 0 && quant_max == 255) {
-      zero_point = 128;
-    } else if (quant_min == -127 && quant_max == 127) {
-      zero_point = 0;
-    } else {
-      MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
-    }
-    return std::make_pair(this->cnode, zero_point);
-  }
-};
-std::unordered_map<CNodePtr, float> Calibrator::GetResult(
+std::unordered_map<CNodePtr, float> Calibrator::GetScale(
   std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
   std::unordered_map<CNodePtr, float> result;
   for (auto iter = diverg_info->begin(); iter != diverg_info->end(); iter++) {
@@ -246,9 +219,9 @@ std::unordered_map<CNodePtr, float> Calibrator::GetResult(
   return result;
 }
 std::unordered_map<CNodePtr, int32_t> Calibrator::GetZeropoint(
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *mDivergInfo) {
+  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
   std::unordered_map<CNodePtr, int32_t> result;
-  for (auto iter = mDivergInfo->begin(); iter != mDivergInfo->end(); iter++) {
+  for (auto iter = diverg_info->begin(); iter != diverg_info->end(); iter++) {
     DivergInfo *info = iter->second.get();
     auto zeropoint = info->GetZeropoint();
     result.insert(zeropoint);
@@ -257,9 +230,9 @@ std::unordered_map<CNodePtr, int32_t> Calibrator::GetZeropoint(
 }
 
 std::map<CNodePtr, MaxMin> Calibrator::GetMinMax(
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *mDivergInfo) {
+  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
   std::map<CNodePtr, MaxMin> result;
-  for (auto iter = mDivergInfo->begin(); iter != mDivergInfo->end(); iter++) {
+  for (auto iter = diverg_info->begin(); iter != diverg_info->end(); iter++) {
     DivergInfo *info = iter->second.get();
     mindspore::lite::quant::MaxMin input_maxmin{};
     input_maxmin.min = info->min;
@@ -284,10 +257,10 @@ std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *Calibrator::GetOut
   return &this->output_diverg_info_;
 }
 
-STATUS Calibrator::RecordMaxValue(std::string opName, vector<float> data,
-                                  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *mDivergInfo) {
-  auto got = (*mDivergInfo).find(opName);
-  if (got != (*mDivergInfo).end()) {
+STATUS Calibrator::RecordMaxValue(const std::string &op_name, const vector<float> &data,
+                                  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
+  auto got = (*diverg_info).find(op_name);
+  if (got != (*diverg_info).end()) {
     ((*got).second)->RecordMaxValue(data);
   }
   return RET_OK;
@@ -332,11 +305,11 @@ STATUS Calibrator::UpdateDivergInverval(std::unordered_map<std::string, std::uni
   return RET_OK;
 }
 
-STATUS Calibrator::UpdateDataFrequency(std::string op_name, vector<float> data, vector<int> shape,
+STATUS Calibrator::UpdateDataFrequency(const std::string &op_name, const vector<float> &data,
                                        std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info) {
   auto got = (*diverg_info).find(op_name);
   if (got != (*diverg_info).end()) {
-    ((*got).second)->UpdateHistogram(data, shape);
+    ((*got).second)->UpdateHistogram(data);
   }
   return RET_OK;
 }
@@ -347,10 +320,10 @@ STATUS Calibrator::AddQuantizedOp(CNodePtr node) {
     return RET_ERROR;
   }
   string node_name = node->fullname_with_scope();
-  std::unique_ptr<DivergInfo> input_diverg =
-    std::unique_ptr<DivergInfo>(new DivergInfo(node, 2048, bit_num_, quant_max_, quant_min_, config_param_.method_x));
-  std::unique_ptr<DivergInfo> output_diverg =
-    std::unique_ptr<DivergInfo>(new DivergInfo(node, 2048, bit_num_, quant_max_, quant_min_, config_param_.method_x));
+  std::unique_ptr<DivergInfo> input_diverg = std::unique_ptr<DivergInfo>(
+    new DivergInfo(node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, config_param_.method_x));
+  std::unique_ptr<DivergInfo> output_diverg = std::unique_ptr<DivergInfo>(
+    new DivergInfo(node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, config_param_.method_x));
 
   input_diverg_info_.insert(std::make_pair(string(node_name), std::move(input_diverg)));
   output_diverg_info_.insert(std::make_pair(string(node_name), std::move(output_diverg)));
@@ -359,29 +332,33 @@ STATUS Calibrator::AddQuantizedOp(CNodePtr node) {
 
 void Calibrator::AddImage(const string file) {
   auto exist = [](const string file) {
-    struct stat buf;
+    struct stat buf {};
     return stat(file.c_str(), &buf) == 0;
   };
   if (exist(file)) {
     MS_LOG(INFO) << "load image: " << file;
     this->images_.push_back(file);
   } else {
-    MS_LOG(WARNING) << "Invaild image file path: " << file;
+    MS_LOG(WARNING) << "invalid image file path: " << file;
   }
 }
 
-STATUS Calibrator::GenerateInputData(const int index, mindspore::tensor::MSTensor *tensor) const {
+STATUS Calibrator::GenerateInputData(int index, mindspore::tensor::MSTensor *tensor) const {
   string path = images_[index];
   MS_LOG(INFO) << "read image: " << path;
   size_t size;
-  char *binBuf = ReadFile(path.c_str(), &size);
+  char *bin_buf = ReadFile(path.c_str(), &size);
   auto data = tensor->MutableData();
   if (size != tensor->Size()) {
     MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
                   << " input tensor size: " << tensor->Size();
     return RET_ERROR;
   }
-  memcpy(data, binBuf, size);
+  auto ret = memcpy_s(data, tensor->Size(), bin_buf, size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s error: " << ret;
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -467,7 +444,7 @@ STATUS Calibrator::ReadConfig() {
   }
   MS_LOG(DEBUG) << "image_path: " << config_param_.image_path << "  "
                 << "batch_count: " << config_param_.batch_count << "  "
-                << "mothod_x: " << config_param_.method_x << "  "
+                << "method_x: " << config_param_.method_x << "  "
                 << "thread_num: " << config_param_.thread_num;
 
   delete[] resolved_path;
@@ -475,8 +452,8 @@ STATUS Calibrator::ReadConfig() {
   return RET_OK;
 }
 
-Calibrator::Calibrator(string path, size_t bitNum, int quantMax, int quantMin)
-    : config_path_(path), bit_num_(bitNum), quant_max_(quantMax), quant_min_(quantMin) {}
+Calibrator::Calibrator(string path, size_t bit_num, int quant_max, int quant_min)
+    : config_path_(path), bit_num_(bit_num), quant_max_(quant_max), quant_min_(quant_min) {}
 
 PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, int bit_num, TypeId target_type,
                                              bool per_channel)
@@ -486,7 +463,7 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   this->target_type_ = target_type;
   if (target_type == kNumberTypeInt8) {
     quant_max = (1 << (this->bit_num - 1)) - 1;  // 127
-    quant_min = -quant_max;     // -127
+    quant_min = -quant_max;                      // -127
   } else if (target_type == kNumberTypeUInt8) {
     quant_max = (1 << this->bit_num) - 1;  // 255
     quant_min = 0;
@@ -534,8 +511,8 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value,
-                                            bool perchanel, bool depthwise) {
+STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchanel,
+                                            bool depthwise) {
   // const vector<int> dims = filter->dims;
   // perlayer
   if (!weight->isa<Parameter>()) {
@@ -552,8 +529,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_ERROR;
   }
-  auto status = QuantFilter(paramValue, primitiveT_value, QuantType_PostTraining, quant_max, quant_min, bit_num,
-                            perchanel, depthwise);
+  auto status =
+    QuantFilter(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num, perchanel, depthwise);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -573,8 +550,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitiveT_value) {
-  if (primitiveT_value == nullptr || bias == nullptr) {
+STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitive_c) {
+  if (primitive_c == nullptr || bias == nullptr) {
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
   }
@@ -583,7 +560,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
   auto bias_default_param = bias_parameter_ptr->default_param();
   auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
 
-  auto active_weight_quant_params = primitiveT_value->GetInputQuantParams();
+  auto active_weight_quant_params = primitive_c->GetInputQuantParams();
   if (active_weight_quant_params.size() != 2) {
     MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
     return RET_ERROR;
@@ -627,7 +604,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
     quant_param.inited = true;
     quant_params.emplace_back(quant_param);
   }
-  primitiveT_value->AddInputQuantParam(quant_params);
+  primitive_c->AddInputQuantParam(quant_params);
   // quant bias data
   int32_t *quant_datas = new (std::nothrow) int32_t[shape_size];
   if (quant_datas == nullptr) {
@@ -669,11 +646,11 @@ STATUS PostTrainingQuantizer::DoBiasQuant(AnfNodePtr bias, std::shared_ptr<Primi
 
 STATUS PostTrainingQuantizer::QuantNode() {
   auto input_min_max = this->calibrator_->GetMinMax(this->calibrator_->GetInputDivergInfo());
-  auto input_scale = this->calibrator_->GetResult(this->calibrator_->GetInputDivergInfo());
+  auto input_scale = this->calibrator_->GetScale(this->calibrator_->GetInputDivergInfo());
   auto input_zero_point = this->calibrator_->GetZeropoint(this->calibrator_->GetInputDivergInfo());
 
   auto output_min_max = this->calibrator_->GetMinMax(this->calibrator_->GetOutputDivergInfo());
-  auto output_scale = this->calibrator_->GetResult(this->calibrator_->GetOutputDivergInfo());
+  auto output_scale = this->calibrator_->GetScale(this->calibrator_->GetOutputDivergInfo());
   auto output_zeropoint = this->calibrator_->GetZeropoint(this->calibrator_->GetOutputDivergInfo());
 
   auto cnodes = funcGraph->GetOrderedCnodes();
@@ -683,18 +660,18 @@ STATUS PostTrainingQuantizer::QuantNode() {
       MS_LOG(INFO) << cnode_name << " can not do quant";
       continue;
     }
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitiveT_value == nullptr) {
-      MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is nullptr";
       continue;
     }
     if (input_scale.find(cnode) == input_scale.end()) {
-      primitiveT_value->SetQuantType(schema::QuantType_QUANT_NONE);
+      primitive_c->SetQuantType(schema::QuantType_QUANT_NONE);
       continue;
     }
-    primitiveT_value->ClearInputOutputQuantParam();
+    primitive_c->ClearInputOutputQuantParam();
     auto op_name = cnode->fullname_with_scope();
-    auto op_type = (schema::PrimitiveType)primitiveT_value->Type();
+    auto op_type = (schema::PrimitiveType)primitive_c->Type();
     MS_LOG(INFO) << "OpName: " << op_name;
     if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D &&
         op_type != PrimitiveType_FullConnection) {
@@ -715,35 +692,35 @@ STATUS PostTrainingQuantizer::QuantNode() {
           auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
           if (abstractTensor->element()->GetTypeTrack()->type_id() == kNumberTypeFloat32) {
             MS_LOG(DEBUG) << "this parameter do quant";
-            DoWeightQuant(input_node, primitiveT_value, false, false);
+            DoWeightQuant(input_node, primitive_c, false, false);
           } else {
             MS_LOG(DEBUG) << "this parameter no need to do quant";
           }
           continue;
         }
         auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-        auto input_cnode_primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
-        if (input_cnode_primitiveT_value == nullptr) {
+        auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
+        if (input_cnode_primitive_c == nullptr) {
           MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
                         << " PrimitiveC is null";
           continue;
         }
-        if (!input_cnode_primitiveT_value->GetOutputQuantParams().empty()) {
-          for (auto &quant_param : input_cnode_primitiveT_value->GetOutputQuantParams()) {
-            primitiveT_value->AddInputQuantParam(quant_param);
+        if (!input_cnode_primitive_c->GetOutputQuantParams().empty()) {
+          for (auto &quant_param : input_cnode_primitive_c->GetOutputQuantParams()) {
+            primitive_c->AddInputQuantParam(quant_param);
           }
         } else {
           // do input quant
           double scale = input_scale[cnode];
           int32_t zp = input_zero_point[cnode];
-          DoQuantInput(scale, zp, &input_min_max[cnode], primitiveT_value);
+          DoQuantInput(scale, zp, &input_min_max[cnode], primitive_c);
         }
       }
     } else {
       // do input quant
       double scale = input_scale[cnode];
       int32_t convInputzeropoint = input_zero_point[cnode];
-      DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitiveT_value);
+      DoQuantInput(scale, convInputzeropoint, &input_min_max[cnode], primitive_c);
       // do weight quant
       auto weight = cnode->input(2);
       bool depthwise = op_type == PrimitiveType_DepthwiseConv2D;
@@ -751,18 +728,18 @@ STATUS PostTrainingQuantizer::QuantNode() {
       if (op_type == PrimitiveType_FullConnection) {
         perchannel = false;
       }
-      DoWeightQuant(weight, primitiveT_value, perchannel, depthwise);
+      DoWeightQuant(weight, primitive_c, perchannel, depthwise);
       // do bias quant
       if (cnode->inputs().size() == 4) {
         auto bias = cnode->input(3);
-        DoBiasQuant(bias, primitiveT_value);
+        DoBiasQuant(bias, primitive_c);
       }
     }
     // do output quant
     double OutputScale = output_scale[cnode];
     int32_t OutputZeropoint = output_zeropoint[cnode];
-    DoQuantOutput(OutputScale, OutputZeropoint, &output_min_max[cnode], primitiveT_value);
-    primitiveT_value->SetQuantType(schema::QuantType_PostTraining);
+    DoQuantOutput(OutputScale, OutputZeropoint, &output_min_max[cnode], primitive_c);
+    primitive_c->SetQuantType(schema::QuantType_PostTraining);
   }
   return RET_OK;
 }
@@ -803,7 +780,7 @@ STATUS PostTrainingQuantizer::PreProcess() {
   // from user input
   QuantStrategy strategy(10);
   auto cnodes = funcGraph->GetOrderedCnodes();
-  for (auto cnode : cnodes) {
+  for (auto &cnode : cnodes) {
     AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
     if (strategy.CanOpPostQuantized(anf)) {
       MS_LOG(INFO) << "node: " << cnode->fullname_with_scope() << " will be quantized";
@@ -813,16 +790,15 @@ STATUS PostTrainingQuantizer::PreProcess() {
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::CheckTensorVec(const std::string &nodeName,
-                                             const std::vector<mindspore::tensor::MSTensor *> &tensorVec) const {
-  if (tensorVec.size() < 1) {
-    MS_LOG(ERROR) << "node: " << nodeName << " input tensors is 0";
+STATUS PostTrainingQuantizer::CheckTensorVec(const std::string &node_name,
+                                             const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const {
+  if (tensor_vec.size() < 1) {
+    MS_LOG(ERROR) << "node: " << node_name << " input tensors is 0";
     return RET_ERROR;
   }
-  auto *tensor = tensorVec[0];
+  auto *tensor = tensor_vec[0];
   if (tensor->data_type() != kNumberTypeFloat32) {
-    //&& tensor->RefCount() != MSCONST_WEIGHT_REFCOUNT
-    MS_LOG(DEBUG) << "node: " << nodeName << " will not quantize"
+    MS_LOG(DEBUG) << "node: " << node_name << " will not quantize"
                   << " tensor data_type: " << tensor->data_type();
     return RET_ERROR;
   }
@@ -856,8 +832,8 @@ STATUS PostTrainingQuantizer::DoInference() {
       }
       auto tensor = beforeInputs[0];
       const float *tData = static_cast<const float *>(tensor->MutableData());
-      size_t shapeSize = tensor->ElementsNum();
-      vector<float> data(tData, tData + shapeSize);
+      size_t elem_count = tensor->ElementsNum();
+      vector<float> data(tData, tData + elem_count);
       this->calibrator_->RecordMaxValue(callParam.name_callback_param, data, this->calibrator_->GetInputDivergInfo());
       return true;
     };
@@ -871,8 +847,8 @@ STATUS PostTrainingQuantizer::DoInference() {
       }
       auto tensor = afterOutputs[0];
       const float *tensor_data = static_cast<const float *>(tensor->MutableData());
-      size_t shape_size = tensor->ElementsNum();
-      vector<float> data(tensor_data, tensor_data + shape_size);
+      size_t elem_count = tensor->ElementsNum();
+      vector<float> data(tensor_data, tensor_data + elem_count);
       this->calibrator_->RecordMaxValue(callParam.name_callback_param, data, this->calibrator_->GetOutputDivergInfo());
       return true;
     };
@@ -910,7 +886,7 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
         const float *tensor_data = static_cast<const float *>(tensor->MutableData());
         size_t shape_size = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + shape_size);
-        this->calibrator_->UpdateDataFrequency(callParam.name_callback_param, data, tensor->shape(),
+        this->calibrator_->UpdateDataFrequency(callParam.name_callback_param, data,
                                                this->calibrator_->GetInputDivergInfo());
         return true;
       };
@@ -926,7 +902,7 @@ STATUS PostTrainingQuantizer::CollectDataFrequency() {
         const float *tenosr_data = static_cast<const float *>(tensor->MutableData());
         size_t shape_size = tensor->ElementsNum();
         vector<float> data(tenosr_data, tenosr_data + shape_size);
-        this->calibrator_->UpdateDataFrequency(call_param.name_callback_param, data, tensor->shape(),
+        this->calibrator_->UpdateDataFrequency(call_param.name_callback_param, data,
                                                this->calibrator_->GetOutputDivergInfo());
         return true;
       };
@@ -951,7 +927,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
   }
 
   // anf -- fb
-  auto meta_graph = Export(funcGraph);
+  auto meta_graph = Export(funcGraph, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph return nullptr";
     return RET_ERROR;

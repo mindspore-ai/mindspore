@@ -69,6 +69,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     // activation
     auto input_quant_params = primitive->GetInputQuantParams();
     auto node_type = (schema::PrimitiveType)primitive->Type();
+    if (input_quant_params.empty()) {
+      MS_LOG(ERROR) << "node: " << dst_node->name << " input quant params is empty";
+      return RET_ERROR;
+    }
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
         MS_LOG(ERROR) << "node: " << dst_node->name << " input has " << input_quant_params.size()
@@ -93,7 +97,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto tensor_output = meta_graph->allTensors[output_index].get();
     auto output_quant_params = primitive->GetOutputQuantParams();
     if (output_quant_params.empty()) {
-      MS_LOG(WARNING) << "node: " << dst_node->name << " output quant params is empty";
+      if (node_type != schema::PrimitiveType_QuantDTypeCast) {
+        MS_LOG(ERROR) << "node: " << dst_node->name << " output quant params is empty";
+        return RET_ERROR;
+      }
     } else {
       for (auto output_quant_param : output_quant_params[0]) {
         if (tensor_output->quantParams.empty()) {
@@ -142,7 +149,10 @@ void AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_p
   MS_ASSERT(nullptr != return_node);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
-    if (input_node->isa<CNode>()) {
+    if (input_node == nullptr) {
+      MS_LOG(ERROR) << "output node is nullptr";
+      return;
+    } else if (input_node->isa<CNode>()) {
       auto ret = ConvertInputCNode(input_node, return_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "obtain outputs failed";
@@ -158,24 +168,27 @@ void AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_p
   }
 }
 
-schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
+schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   for (const auto &cnode : cnodes) {
-    auto primitiveT_value = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitiveT_value == nullptr) {
-      MS_LOG(ERROR) << "PrimitiveT_value is nullptr";
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is nullptr";
       return nullptr;
     }
-    auto primT = primitiveT_value->GetPrimitiveT();
-    if (primitiveT_value->Type() == schema::PrimitiveType_TupleGetItem ||
-        primitiveT_value->Type() == schema::PrimitiveType_MakeTuple) {
+    if (primitive_c->Type() == schema::PrimitiveType_TupleGetItem ||
+        primitive_c->Type() == schema::PrimitiveType_MakeTuple) {
       continue;
     }
     RemoveIfMakeTuple(cnode);
 
+    auto primT = primitive_c->GetPrimitiveT();
     auto node = std::make_unique<schema::CNodeT>();
-
+    if (node == nullptr) {
+      MS_LOG(ERROR) << "object failed to be constructed";
+      return nullptr;
+    }
     if (primT->value.type == schema::PrimitiveType_Return) {
       node->name = "return_node";
       SetGraphoutputIndex(cnode, meta_graphT, node.get());
@@ -190,12 +203,14 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph) {
       return nullptr;
     }
     SetOpOutputNode(cnode, meta_graphT, node.get());
-    ret = ConvertQuantParam(meta_graphT, primitiveT_value, node);
+    ret = ConvertQuantParam(meta_graphT, primitive_c, node);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ConvertQuantParam failed";
       return nullptr;
     }
-
+    if (!keep_graph) {
+      primitive_c->ClearPrimitiveT();
+    }
     meta_graphT->nodes.emplace_back(std::move(node));
   }
   // set graph input tensors
@@ -401,15 +416,15 @@ bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType
     return false;
   }
 
-  const auto &prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+  auto prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
   if (prim == nullptr) {
     return false;
   }
-  return (schema::PrimitiveType)prim->Type() == type;
+  return (schema::PrimitiveType)(prim->Type()) == type;
 }
 
-schema::MetaGraphT *Export(const FuncGraphPtr &func_graph) {
+schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph) {
   AnfExporter anf_exporter;
-  return anf_exporter.Export(func_graph);
+  return anf_exporter.Export(func_graph, keep_graph);
 }
 }  // namespace mindspore::lite

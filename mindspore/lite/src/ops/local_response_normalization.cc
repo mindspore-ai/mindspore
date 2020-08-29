@@ -60,10 +60,22 @@ float LocalResponseNormalization::GetBeta() const {
   return this->primitive_->value_as_LocalResponseNormalization()->beta();
 }
 
-void LocalResponseNormalization::SetDepthRadius(int depth_radius) {}
-void LocalResponseNormalization::SetBias(float bias) {}
-void LocalResponseNormalization::SetAlpha(float alpha) {}
-void LocalResponseNormalization::SetBeta(float beta) {}
+int LocalResponseNormalization::UnPackToFlatBuilder(const schema::Primitive *primitive,
+                                                    flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_LocalResponseNormalization();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_LocalResponseNormalization return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset =
+    schema::CreateLocalResponseNormalization(*fbb, attr->depth_radius(), attr->bias(), attr->alpha(), attr->beta());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_LocalResponseNormalization, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+
 #endif
 }  // namespace lite
 }  // namespace mindspore

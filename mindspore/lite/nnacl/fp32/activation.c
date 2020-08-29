@@ -43,15 +43,33 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
 }
 
 int Sigmoid(const float *src, int length, float *dst) {
+  const float upper_bound = 16.619047164916992188f;
+  const float lower_bound = -9.0f;
   for (int i = 0; i < length; ++i) {
-    dst[i] = 1.0f / (1.0f + exp(-src[i]));
+    float input_val = src[i];
+    float result;
+    if (input_val > upper_bound) {
+      result = 1.0f;
+    } else if (input_val < lower_bound) {
+      result = exp(input_val);
+    } else {
+      result = 1.0f / (1.0f + exp(-input_val));
+    }
+    dst[i] = result;
   }
   return NNACL_OK;
 }
 
 int Tanh(const float *src, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
-    dst[i] = 1.0f - 2.0f / (exp(2 * src[i]) + 1);
+    float tmp_in = src[i];
+    if (tmp_in > 5.0) {
+      dst[i] = 1.0f;
+    } else if (tmp_in < -5.0) {
+      dst[i] = -1.0f;
+    } else {
+      dst[i] = 1.0f - 2.0f / (exp(2 * tmp_in) + 1);
+    }
   }
   return NNACL_OK;
 }

@@ -28,13 +28,17 @@ namespace lite {
 class LeakyReLU : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(LeakyReLU, PrimitiveC);
   LeakyReLU() = default;
   explicit LeakyReLU(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetNegativeSlope(float negative_slope);
+
 #else
-  explicit LeakyReLU(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  LeakyReLU() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetNegativeSlope() const;
-  void SetNegativeSlope(float negative_slope);
 };
 }  // namespace lite
 }  // namespace mindspore

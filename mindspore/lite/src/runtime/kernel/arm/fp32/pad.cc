@@ -68,7 +68,7 @@ int PadCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int PadImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PadImpl(void *cdata, int task_id) {
   auto padKernel = reinterpret_cast<PadCPUKernel *>(cdata);
   int error_code = padKernel->RunImpl(task_id);
   if (error_code != NNACL_OK) {
@@ -102,7 +102,7 @@ int PadCPUKernel::Run() {
   auto output_data = reinterpret_cast<float *>(output->Data());
   memset(output_data, 0, output_size * sizeof(float));
 
-  int error_code = LiteBackendParallelLaunch(PadImpl, this, context_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PadImpl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
     return RET_ERROR;

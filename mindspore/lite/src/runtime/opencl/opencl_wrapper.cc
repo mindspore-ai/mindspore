@@ -66,19 +66,13 @@ static const std::vector<std::string> g_opencl_library_paths = {
 };
 
 OpenCLWrapper *OpenCLWrapper::GetInstance() {
-  static std::once_flag opencl_wrapper_once;
-  std::call_once(opencl_wrapper_once,
-                 []() { opencl_wrapper_singleton_ = std::shared_ptr<OpenCLWrapper>(new OpenCLWrapper()); });
-
-  return opencl_wrapper_singleton_.get();
+  static OpenCLWrapper ocl_wrapper;
+  return &ocl_wrapper;
 }
 
 OpenCLWrapper::OpenCLWrapper() {}
 
-OpenCLWrapper::~OpenCLWrapper() {
-  if (nullptr == opencl_wrapper_singleton_.get()) return;
-  opencl_wrapper_singleton_->UnLoadOpenCLLibrary();
-}
+OpenCLWrapper::~OpenCLWrapper() {}
 
 // load default library path
 bool OpenCLWrapper::LoadOpenCLLibrary() {
@@ -271,6 +265,15 @@ cl_program clCreateProgramWithSource(cl_context context, cl_uint count, const ch
   auto func = mindspore::lite::opencl::OpenCLWrapper::GetInstance()->clCreateProgramWithSource;
   MS_ASSERT(func != nullptr);
   return func(context, count, strings, lengths, errcode_ret);
+}
+
+// clCreateProgramWithBinary wrapper, use OpenCLWrapper function.
+cl_program clCreateProgramWithBinary(cl_context context, cl_uint num_devices, const cl_device_id *devices_list,
+                                     const size_t *lengths, const unsigned char **binaries, cl_int *binary_status,
+                                     cl_int *errcode_ret) {
+  auto func = mindspore::lite::opencl::OpenCLWrapper::GetInstance()->clCreateProgramWithBinary;
+  MS_ASSERT(func != nullptr);
+  return func(context, num_devices, devices_list, lengths, binaries, binary_status, errcode_ret);
 }
 
 // clGetProgramInfo wrapper, use OpenCLWrapper function.

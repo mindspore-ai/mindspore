@@ -21,6 +21,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/matmul.h"
+#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 class TestMatMulOpenCL : public mindspore::CommonTest {
@@ -28,29 +29,21 @@ class TestMatMulOpenCL : public mindspore::CommonTest {
   TestMatMulOpenCL() {}
 };
 
-TEST_F(TestMatMulOpenCL, MatMulFp32) {
+void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *weight_data, void *output_data,
+                       bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  size_t dtype_size = sizeof(float);
+  if (enable_fp16) {
+    ocl_runtime->SetFp16Enable(true);
+    dtype_size = sizeof(float16_t);
+  }
   auto allocator = ocl_runtime->GetAllocator();
-  size_t input_size;
-  int ci = 1280;
-  int co = 1001;
-  std::string input_path = "./test_data/matmul/matmul_fp32_input.bin";
-  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "input_data load error.";
-    return;
-  }
-  size_t weight_size;
-  std::string weight_path = "./test_data/matmul/matmul_fp32_weight.bin";
-  auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
-  if (weight_data == nullptr) {
-    MS_LOG(ERROR) << "weight_data load error.";
-    return;
-  }
+  int ci = shape[0];
+  int co = shape[1];
   std::vector<int> input_shape = {1, ci};
-  auto tensor_x_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), input_shape, schema::Format_NC);
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape, schema::Format_NC);
   auto tensor_x = tensor_x_ptr.get();
   if (tensor_x == nullptr) {
     MS_LOG(ERROR) << "tensor_x create error.";
@@ -58,7 +51,8 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   }
 
   std::vector<int> w_shape = {co, ci};
-  auto tensor_w_ptr = std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), w_shape);
+  auto tensor_w_ptr =
+    std::make_unique<lite::tensor::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), w_shape);
   auto tensor_w = tensor_w_ptr.get();
   if (tensor_w == nullptr) {
     MS_LOG(ERROR) << "tensor_w create error.";
@@ -67,8 +61,8 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   tensor_w->SetData(weight_data);
 
   std::vector<int> out_shape = {1, co};
-  auto tensor_out_ptr =
-    std::make_unique<lite::tensor::Tensor>(TypeId(kNumberTypeFloat32), out_shape, schema::Format_NC);
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape, schema::Format_NC);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -76,16 +70,16 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
   }
   std::vector<lite::tensor::Tensor *> inputs{tensor_x, tensor_w};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
-  auto arith_kernel_ptr = std::make_unique<kernel::MatMulOpenCLKernel>(nullptr, inputs, outputs, false);
-  auto arith_kernel = arith_kernel_ptr.get();
-  if (arith_kernel == nullptr) {
-    MS_LOG(ERROR) << "arith_kernel create error.";
+  auto op_kernel_ptr = std::make_unique<kernel::MatMulOpenCLKernel>(nullptr, inputs, outputs, false);
+  auto op_kernel = op_kernel_ptr.get();
+  if (op_kernel == nullptr) {
+    MS_LOG(ERROR) << "op_kernel create error.";
     return;
   }
-  arith_kernel->Init();
+  op_kernel->Init();
   inputs[0]->MallocData(allocator);
 
-  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
+  std::vector<kernel::LiteKernel *> kernels{op_kernel};
 
   std::vector<lite::tensor::Tensor *> inputs_g{tensor_x};
   auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_g, outputs, kernels, kernels, kernels);
@@ -95,27 +89,84 @@ TEST_F(TestMatMulOpenCL, MatMulFp32) {
     return;
   }
   pGraph->Init();
-  memcpy(inputs[0]->Data(), input_data, input_size);
+  memcpy(inputs[0]->Data(), input_data, ci * dtype_size);
   pGraph->Run();
-
-  size_t output_size;
-  std::string output_path = "./test_data/matmul/matmul_fp32_output.bin";
-  auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
-  printf("==================output data=================\n");
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
-  std::cout << std::endl;
-  int size_n = co;
-  size_n = size_n > 100 ? 100 : size_n;
-  for (int i = 0; i < size_n; i++) {
-    std::cout << output_data[i] << " ";
+  if (enable_fp16) {
+    CompareOutput(outputs[0]->Data(), output_data, co, static_cast<float16_t>(1e-3), 2e-2);
+  } else {
+    CompareOutput(outputs[0]->Data(), output_data, co, static_cast<float>(1e-5));
   }
-  std::cout << std::endl;
 
-  // compare
-  CompareOutputData(output_data, correct_data, co, 0.0001);
   tensor_x->SetData(nullptr);
   tensor_out->SetData(nullptr);
-  lite::opencl::OpenCLRuntime::DeleteInstance();
   MS_LOG(INFO) << "TestMatMulFp32 passed";
+  lite::opencl::OpenCLRuntime::DeleteInstance();
+}
+
+void RunTestCaseMatMul(const std::vector<int> shape, const std::vector<std::string> file_path, bool enable_fp16) {
+  size_t input_size;
+  std::string input_path = file_path[0];
+  auto input_data = mindspore::lite::ReadFile(input_path.c_str(), &input_size);
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data load error.";
+    return;
+  }
+  size_t weight_size;
+  std::string weight_path = file_path[1];
+  auto weight_data = mindspore::lite::ReadFile(weight_path.c_str(), &weight_size);
+  if (weight_data == nullptr) {
+    MS_LOG(ERROR) << "weight_data load error.";
+    return;
+  }
+  size_t output_size;
+  std::string output_path = file_path[2];
+  auto output_data = mindspore::lite::ReadFile(output_path.c_str(), &output_size);
+  if (output_data == nullptr) {
+    MS_LOG(ERROR) << "output_data load error.";
+    return;
+  }
+  RunTestCaseMatMul(shape, input_data, weight_data, output_data, enable_fp16);
+}
+
+TEST_F(TestMatMulOpenCL, MatMulFp32) {
+  int ci = 1280;
+  int co = 1001;
+  std::vector<int> shape = {ci, co};
+  std::vector<std::string> file_path = {"./test_data/matmul/matmul_fp32_input.bin",
+                                        "./test_data/matmul/matmul_fp32_weight.bin",
+                                        "./test_data/matmul/matmul_fp32_output.bin"};
+  RunTestCaseMatMul(shape, file_path, false);
+}
+
+TEST_F(TestMatMulOpenCL, MatMulFp16) {
+  int ci = 1280;
+  int co = 1001;
+  std::vector<int> shape = {ci, co};
+  std::vector<std::string> file_path = {"./test_data/matmul/matmul_fp16_input.bin",
+                                        "./test_data/matmul/matmul_fp16_weight.bin",
+                                        "./test_data/matmul/matmul_fp16_output.bin"};
+  RunTestCaseMatMul(shape, file_path, true);
+}
+
+TEST_F(TestMatMulOpenCL, MatMulFp32_2) {
+  int ci = 5;
+  int co = 3;
+  std::vector<int> shape = {ci, co};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
+  std::vector<float> weight_data = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                                    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  std::vector<float> output_data = {10.f, 10.f, 10.f};
+  RunTestCaseMatMul(shape, input_data.data(), weight_data.data(), output_data.data(), false);
+}
+
+TEST_F(TestMatMulOpenCL, MatMulFp16_2) {
+  int ci = 5;
+  int co = 3;
+  std::vector<int> shape = {ci, co};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
+  std::vector<float16_t> weight_data = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+                                        1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+  std::vector<float16_t> output_data = {10.f, 10.f, 10.f};
+  RunTestCaseMatMul(shape, input_data.data(), weight_data.data(), output_data.data(), true);
 }
 }  // namespace mindspore

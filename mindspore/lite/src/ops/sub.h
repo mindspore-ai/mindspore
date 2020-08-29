@@ -28,13 +28,17 @@ namespace lite {
 class Sub : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Sub, Arithmetic);
   Sub() = default;
   explicit Sub(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+  void SetActivationType(int activation_type);
+
 #else
-  explicit Sub(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  Sub() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetActivationType() const;
-  void SetActivationType(int activation_type);
 };
 }  // namespace lite
 }  // namespace mindspore

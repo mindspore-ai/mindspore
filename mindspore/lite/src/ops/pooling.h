@@ -28,10 +28,28 @@ namespace lite {
 class Pooling : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Pooling, PrimitiveC);
   Pooling() = default;
   explicit Pooling(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetPoolingMode(int pooling_mode);
+  void SetGlobal(bool global);
+  void SetWindowW(int window_w);
+  void SetWindowH(int window_h);
+  void SetStrideW(int stride_w);
+  void SetStrideH(int stride_h);
+  void SetPadMode(int pad_mode);
+  void SetPadUp(int pad_up);
+  void SetPadDown(int pad_down);
+  void SetPadLeft(int pad_left);
+  void SetPadRight(int pad_right);
+  void SetRoundMode(int round_mode);
+  void SetActivationType(int activation_type);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit Pooling(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Pooling() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
@@ -47,33 +65,19 @@ class Pooling : public PrimitiveC {
   int GetPadLeft() const;
   int GetPadRight() const;
   int GetRoundMode() const;
-  void SetFormat(int format);
-  void SetPoolingMode(int pooling_mode);
-  void SetGlobal(bool global);
-  void SetWindowW(int window_w);
-  void SetWindowH(int window_h);
-  void SetStrideW(int stride_w);
-  void SetStrideH(int stride_h);
-  void SetPadMode(int pad_mode);
-  void SetPadUp(int pad_up);
-  void SetPadDown(int pad_down);
-  void SetPadLeft(int pad_left);
-  void SetPadRight(int pad_right);
-  void SetRoundMode(int round_mode);
+  int GetActivationType() const;
 
   int PadUp() const;
   int PadDown() const;
   int PadLeft() const;
   int PadRight() const;
 
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
-
  protected:
   int pad_u_ = 0;
   int pad_d_ = 0;
   int pad_l_ = 0;
   int pad_r_ = 0;
-};
+};  // namespace lite
 }  // namespace lite
 }  // namespace mindspore
 

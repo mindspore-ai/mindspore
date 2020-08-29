@@ -180,7 +180,7 @@ int BatchnormInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int BatchNormInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int BatchNormInt8Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<BatchnormInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -199,7 +199,7 @@ int BatchnormInt8CPUKernel::Run() {
   in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->Data());
   out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
 
-  int ret = LiteBackendParallelLaunch(BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
+  int ret = ParallelLaunch(THREAD_POOL_DEFAULT, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
     return ret;

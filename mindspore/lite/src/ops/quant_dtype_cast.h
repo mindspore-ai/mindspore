@@ -28,17 +28,19 @@ namespace lite {
 class QuantDTypeCast : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(QuantDTypeCast, PrimitiveC);
   QuantDTypeCast() = default;
   explicit QuantDTypeCast(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  MS_DECLARE_PARENT(QuantDTypeCast, PrimitiveC);
+  void SetSrcT(int src_t);
+  void SetDstT(int dst_t);
 #else
-  explicit QuantDTypeCast(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  QuantDTypeCast() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetSrcT() const;
   int GetDstT() const;
-  void SetSrcT(int src_t);
-  void SetDstT(int dst_t);
 };
 }  // namespace lite
 }  // namespace mindspore

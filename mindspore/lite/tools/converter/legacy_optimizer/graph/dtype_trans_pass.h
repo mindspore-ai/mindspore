@@ -72,7 +72,7 @@ class DTypeTransPass : public GraphPass {
     QuantDTypeCastParam->srcT = oldQuantDTypeCastParam->srcT;
     QuantDTypeCastParam->dstT = oldQuantDTypeCastParam->dstT;
     newCNode->primitive->value.value = QuantDTypeCastParam;
-    return std::move(newCNode);
+    return newCNode;
   };
 };
 }  // namespace lite

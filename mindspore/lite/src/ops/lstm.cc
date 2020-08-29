@@ -26,8 +26,19 @@ void Lstm::SetBidirection(bool bidirection) { this->primitive_->value.AsLstm()->
 #else
 
 bool Lstm::GetBidirection() const { return this->primitive_->value_as_Lstm()->bidirection(); }
-
-void Lstm::SetBidirection(bool bidirection) {}
+int Lstm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Lstm();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Lstm return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateLstm(*fbb, attr->bidirection());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Lstm, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 const int kLstmInputNum = 6;

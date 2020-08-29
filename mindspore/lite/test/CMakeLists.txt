@@ -43,6 +43,7 @@ if(BUILD_CONVERTER)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/scope.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/value.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/value_extends.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/ref.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/container.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/empty.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/number.cc
@@ -155,9 +156,9 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/transpose.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/reshape.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
-            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/caffe_prelu.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/prelu.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/to_format.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/kernel/biasadd.cc
             )
 endif()
 ### minddata lite
@@ -177,7 +178,7 @@ set(TEST_LITE_SRC
         ${KERNEL_OP_SRC}
         ${LITE_DIR}/src/runtime/allocator.cc
         ${LITE_DIR}/src/runtime/runtime_api.cc
-        ${LITE_DIR}/src/runtime/thread_pool.cc
+        ${LITE_DIR}/src/runtime/thread_pool.c
         ${LITE_DIR}/src/runtime/workspace_pool.cc
         ${LITE_DIR}/src/runtime/parallel_executor.cc
         ${LITE_DIR}/src/ir/tensor.cc
@@ -228,6 +229,7 @@ if(BUILD_CONVERTER)
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${TOP_DIR}/mindspore/core/utils/flags.cc
+            ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
@@ -244,6 +246,7 @@ if(BUILD_CONVERTER)
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_activation_fusion.cc
+             ${LITE_DIR}/tools/optimizer/fusion/conv_tuple_activation_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_transform_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_scale_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_bn_fusion.cc
@@ -335,9 +338,9 @@ if (SUPPORT_GPU)
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/convolution_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/activation_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/to_format_tests.cc
-            ${TEST_DIR}/ut/src/runtime/kernel/opencl/caffe_prelu_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/prelu_tests.cc
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/reshape_tests.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/opencl/biasadd_tests.cc
             )
 endif()
 

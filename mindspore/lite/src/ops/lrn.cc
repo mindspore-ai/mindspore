@@ -36,10 +36,19 @@ float Lrn::GetBeta() const { return this->primitive_->value_as_Lrn()->beta(); }
 float Lrn::GetBias() const { return this->primitive_->value_as_Lrn()->bias(); }
 int Lrn::GetSize() const { return this->primitive_->value_as_Lrn()->size(); }
 
-void Lrn::SetAlpha(float alpha) {}
-void Lrn::SetBeta(float beta) {}
-void Lrn::SetBias(float bias) {}
-void Lrn::SetSize(int size) {}
+int Lrn::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Lrn();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Lrn return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateLrn(*fbb, attr->alpha(), attr->beta(), attr->bias(), attr->size());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Lrn, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

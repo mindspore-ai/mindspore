@@ -66,7 +66,22 @@ void Conv2DGradInput::SetActivationType(int activation_type) {
 }
 
 #else
-
+int Conv2DGradInput::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Conv2DGradInput();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Conv2DGradInput return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateConv2DGradInput(
+    *fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(), attr->kernelW(), attr->kernelH(),
+    attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
+    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Conv2DGradInput, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int Conv2DGradInput::GetFormat() const { return this->primitive_->value_as_Conv2DGradInput()->format(); }
 int Conv2DGradInput::GetGroup() const { return this->primitive_->value_as_Conv2DGradInput()->group(); }
 int Conv2DGradInput::GetChannelIn() const { return this->primitive_->value_as_Conv2DGradInput()->channelIn(); }
@@ -87,23 +102,6 @@ int Conv2DGradInput::GetActivationType() const {
   return this->primitive_->value_as_Conv2DGradInput()->activationType();
 }
 
-void Conv2DGradInput::SetFormat(int format) {}
-void Conv2DGradInput::SetGroup(int group) {}
-void Conv2DGradInput::SetChannelIn(int channel_in) {}
-void Conv2DGradInput::SetChannelOut(int channel_out) {}
-void Conv2DGradInput::SetKernelW(int kernel_w) {}
-void Conv2DGradInput::SetKernelH(int kernel_h) {}
-void Conv2DGradInput::SetStrideW(int stride_w) {}
-void Conv2DGradInput::SetStrideH(int stride_h) {}
-void Conv2DGradInput::SetPadMode(int pad_mode) {}
-void Conv2DGradInput::SetPadUp(int pad_up) {}
-void Conv2DGradInput::SetPadDown(int pad_down) {}
-void Conv2DGradInput::SetPadLeft(int pad_left) {}
-void Conv2DGradInput::SetPadRight(int pad_right) {}
-void Conv2DGradInput::SetDilateW(int dilate_w) {}
-void Conv2DGradInput::SetDilateH(int dilate_h) {}
-void Conv2DGradInput::SetHasBias(bool has_bias) {}
-void Conv2DGradInput::SetActivationType(int activation_type) {}
 #endif
 }  // namespace lite
 }  // namespace mindspore

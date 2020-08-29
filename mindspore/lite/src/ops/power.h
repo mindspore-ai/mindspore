@@ -28,18 +28,21 @@ namespace lite {
 class Power : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Power, PrimitiveC);
   Power() = default;
   explicit Power(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPower(float power);
+  void SetScale(float scale);
+  void SetShift(float shift);
 #else
-  explicit Power(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Power() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   float GetPower() const;
   float GetScale() const;
   float GetShift() const;
-  void SetPower(float power);
-  void SetScale(float scale);
-  void SetShift(float shift);
 };
 }  // namespace lite
 }  // namespace mindspore

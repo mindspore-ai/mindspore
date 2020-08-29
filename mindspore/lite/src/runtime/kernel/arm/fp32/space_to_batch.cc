@@ -29,8 +29,18 @@ using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_SpaceToBatch;
+using mindspore::schema::PrimitiveType_SpaceToBatchND;
 
 namespace mindspore::kernel {
+namespace {
+size_t EnumElement(int *shape, int n_dims) {
+  size_t total = 1;
+  for (int i = 0; i < n_dims; i++) {
+    total *= shape[i];
+  }
+  return total;
+}
+}
 
 int SpaceToBatchCPUKernel::Init() {
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
@@ -40,37 +50,26 @@ int SpaceToBatchCPUKernel::Init() {
       break;
     }
   }
-  param->n_dims_ = DIMENSION_4D;
-  param->n_space_dims_ = SPACE_TO_BATCH_BLOCK_SIZES_SIZE;
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int SpaceToBatchCPUKernel::SpaceToBatchParallel(int task_id) {
-  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
-  if (num_unit_thread <= 0) {
-    return RET_OK;
+void SpaceToBatchCPUKernel::FreeTmpBuffer() {
+  if (pedding_h_data_ != nullptr) {
+    context_->allocator->Free(pedding_h_data_);
+    pedding_h_data_ = nullptr;
   }
-  int thread_offset = task_id * thread_h_stride_;
-  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
-  auto ret = SpaceToBatch(input_ptr_, output_ptr_, *param, thread_offset, thread_offset + num_unit_thread);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SpaceToDepth error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
+  if (pedding_w_data_ != nullptr) {
+    context_->allocator->Free(pedding_w_data_);
+    pedding_w_data_ = nullptr;
   }
-  return RET_OK;
-}
-
-int SpaceToBatchRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
-  auto g_kernel = reinterpret_cast<SpaceToBatchCPUKernel *>(cdata);
-  auto ret = g_kernel->SpaceToBatchParallel(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SpaceToBatchRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_OP_EXECUTE_FAILURE;
+  if (pedding_input_ != nullptr) {
+    context_->allocator->Free(pedding_input_);
+    pedding_input_ = nullptr;
   }
-  return RET_OK;
 }
 
 int SpaceToBatchCPUKernel::ReSize() {
@@ -78,13 +77,39 @@ int SpaceToBatchCPUKernel::ReSize() {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
     return RET_FORMAT_ERR;
   }
+  FreeTmpBuffer();
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
-  param->num_elements_ = EnumElement(param->in_shape_, param->n_dims_);
-  param->num_elements_padded_ = EnumElement(param->padded_in_shape_, param->n_dims_);
-  num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(kNHWC_H));
-  num_unit_ /= param->block_sizes_[0];
-  thread_h_num_ = MSMIN(thread_num_, num_unit_);
-  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
+  if (!param->need_paddings_) {
+    return RET_OK;
+  }
+  auto input = in_tensors_[0];
+  auto in_shape = input->shape();
+  padded_in_shape_ = in_shape;
+  padded_in_shape_[1] = in_shape[1] + param->paddings_[0] + param->paddings_[1];
+  padded_in_shape_[2] = in_shape[2] + param->paddings_[2] + param->paddings_[3];
+  auto num_elements_padded = EnumElement(padded_in_shape_.data(), in_shape.size());
+  auto output_shape = out_tensors_[0]->shape();
+  auto pedding_h_size = output_shape[2] * output_shape[3] * sizeof(float);
+  pedding_h_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(pedding_h_size));
+  if (pedding_h_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc pedding h data fail!";
+    return RET_ERROR;
+  }
+  auto pedding_w_size = output_shape[3] * sizeof(float);
+  pedding_w_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(pedding_w_size));
+  if (pedding_w_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc pedding w data fail!";
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
+  pedding_input_ =
+      reinterpret_cast<float *>(context_->allocator->Malloc(num_elements_padded * sizeof(float)));
+  if (pedding_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc pedding buffer fail!";
+    return RET_ERROR;
+  }
+  memset(pedding_h_data_, 0, pedding_h_size);
+  memset(pedding_w_data_, 0, pedding_w_size);
   return RET_OK;
 }
 
@@ -96,54 +121,32 @@ int SpaceToBatchCPUKernel::Run() {
   }
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  input_ptr_ = reinterpret_cast<const float *>(input->Data());
-  output_ptr_ = reinterpret_cast<float *>(output->Data());
+  const float *input_ptr_ = reinterpret_cast<const float *>(input->Data());
+  float *output_ptr_ = reinterpret_cast<float *>(output->Data());
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
-
-  float *tmp_space[3] = {nullptr, nullptr, nullptr};
+  auto in_shape = input->shape();
+  auto out_shape = output->shape();
   if (param->need_paddings_) {
-    for (int i = 0; i < 3; ++i) {
-      tmp_space[i] =
-        reinterpret_cast<float *>(context_->allocator->Malloc(param->num_elements_padded_ * sizeof(float)));
-      (void)memset(tmp_space[i], 0, param->num_elements_padded_ * sizeof(float));
-      if (tmp_space[i] == nullptr) {
-        MS_LOG(ERROR) << "malloc tmp buffer fail!";
-        return RET_ERROR;
-      }
-    }
-    auto padded_input = tmp_space[0];
-    DoPadding(input_ptr_, padded_input, *param, tmp_space + 1);
-    input_ptr_ = padded_input;
-  }
-
-  if (input->GetFormat() == schema::Format_NHWC) {
-    ret = LiteBackendParallelLaunch(SpaceToBatchRun, this, thread_h_num_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "SpaceToBatch error error_code[" << ret << "]";
-    }
+    DoSpaceToBatchPaddingNHWC(input_ptr_, pedding_input_, in_shape.data(), param->paddings_,
+                              padded_in_shape_.data(), pedding_h_data_, pedding_w_data_);
+    DoSpaceToBatchNHWC(pedding_input_, output_ptr_, param, padded_in_shape_.data(), out_shape.data());
+    return RET_OK;
   } else {
-    MS_LOG(ERROR) << "Only support NHWC now!";
-    ret = RET_FORMAT_ERR;
+    DoSpaceToBatchNHWC(input_ptr_, output_ptr_, param, in_shape.data(), out_shape.data());
+    return RET_OK;
   }
-  if (param->need_paddings_) {
-    for (int i = 0; i < 3; ++i) {
-      context_->allocator->Free(tmp_space[i]);
-    }
-  }
-
-  return ret;
 }  // namespace mindspore::kernel
 
 kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                      const std::vector<lite::tensor::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
+                                                     OpParameter *param, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Input param is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) SpaceToBatchCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SpaceToBatchCPUKernel(param, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SpaceToBatchCPUKernel fail!";
     return nullptr;
@@ -152,12 +155,13 @@ kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::ten
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
     return nullptr;
   }
   return kernel;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatch, CpuSpaceToBatchFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatchND, CpuSpaceToBatchFp32KernelCreator)
 }  // namespace mindspore::kernel

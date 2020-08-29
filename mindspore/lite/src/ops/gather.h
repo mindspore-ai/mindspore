@@ -28,16 +28,19 @@ namespace lite {
 class Gather : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Gather, PrimitiveC);
   Gather() = default;
   explicit Gather(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+  void SetBatchDims(int batch_dims);
 #else
-  explicit Gather(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Gather() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   int GetBatchDims() const;
-  void SetAxis(int axis);
-  void SetBatchDims(int batch_dims);
 };
 }  // namespace lite
 }  // namespace mindspore

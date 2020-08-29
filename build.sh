@@ -393,7 +393,7 @@ build_mindspore()
       CMAKE_VERBOSE="--verbose"
     fi
     cmake --build . --target package ${CMAKE_VERBOSE} -j$THREAD_NUM
-    echo "success to build mindspore project!"
+    echo "success building mindspore project!"
 }
 
 checkndk() {
@@ -618,10 +618,12 @@ build_lite()
 
     if [[ "${COMPILE_RET}" -ne 0 ]]; then
         echo "---------------- mindspore lite: build failed ----------------"
+        exit 1
     else
         mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         rm -rf ${BASEPATH}/output/tmp/
         echo "---------------- mindspore lite: build success ----------------"
+        exit 0
     fi
 }
 

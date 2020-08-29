@@ -121,7 +121,8 @@ STATUS EltwiseFormatTransPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
-    if (node->primitive->value.type != PrimitiveType_Eltwise) {
+    auto type = node->primitive->value.type;
+    if (type != PrimitiveType_Eltwise && type != PrimitiveType_Activation) {
       continue;
     }
     auto node_name = node->name;

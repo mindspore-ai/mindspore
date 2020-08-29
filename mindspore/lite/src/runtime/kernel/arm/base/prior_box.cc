@@ -40,8 +40,14 @@ int PriorBoxCPUKernel::Init() {
     return RET_NULL_PTR;
   }
 
-  MS_ASSERT(in_tensors_.size() == kInputNum);
-  MS_ASSERT(out_tensors_.size() == kOutputNum);
+  if (in_tensors_.size() != kInputNum) {
+    MS_LOG(ERROR) << "Size of input tensors is wrong.";
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() != kOutputNum) {
+    MS_LOG(ERROR) << "Size of input tensors is wrong.";
+    return RET_ERROR;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -147,7 +153,7 @@ int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   return ret;
 }
 
-int RunPriorBox(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int RunPriorBox(void *cdata, int task_id) {
   auto prior_box = reinterpret_cast<PriorBoxCPUKernel *>(cdata);
 
   auto error_code = prior_box->PriorBoxImpl(task_id);
@@ -164,7 +170,7 @@ int PriorBoxCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail! Ret error code[" << prepare_ret << "]";
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(RunPriorBox, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, RunPriorBox, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "PriorBox run error, error_code[" << error_code << "]";
     return RET_ERROR;

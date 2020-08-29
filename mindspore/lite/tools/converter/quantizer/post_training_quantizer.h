@@ -23,6 +23,7 @@
 #include <vector>
 #include <cfloat>
 #include <map>
+#include <utility>
 #include "src/lite_session.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/converter.h"
@@ -39,21 +40,15 @@ struct MaxMin {
   float max;
 };
 
-enum ImageFormat {
-  RGB = 0,
-  GRAY = 1,
-  BGR = 2,
-};
-
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
+constexpr int kDefaultBinNumber = 2048;
 
 struct ConfigParam {
-  // ImageFormat imageFormat;
   std::string image_path;
   uint32_t batch_count{100};
   std::string method_x{kMethodKL};
-  uint32_t thread_num;
+  uint32_t thread_num{1};
 };
 
 class PostTrainingQuantizer : public Quantizer {
@@ -78,7 +73,8 @@ class PostTrainingQuantizer : public Quantizer {
 
   STATUS PreProcess();
 
-  STATUS CheckTensorVec(const std::string &nodeName, const std::vector<mindspore::tensor::MSTensor *> &tensorVec) const;
+  STATUS CheckTensorVec(const std::string &node_name,
+                        const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const;
 
   STATUS DoInference();
 
@@ -95,17 +91,55 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
 
-  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitiveT_value, bool perchannel,
-                       bool depthwise);
+  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel, bool depthwise);
 
-  STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitiveT_value);
+  STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitive_c);
 };
 
-struct DivergInfo;
+struct DivergInfo {
+  std::vector<float> histogram;
+  CNodePtr cnode;
+  int bin_num;
+  float interval = 0;
+  float max;
+  float min;
+  float best_T = 0.0f;
+  size_t bit_num;
+  int quant_max = 255;
+  int quant_min = 0;
+  std::string method_x = kMethodKL;
+
+  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
+    this->method_x = method_x;
+    this->cnode = cnode;
+    this->bin_num = bins;
+    this->bit_num = bits;
+    histogram.resize(bin_num);
+    max = -FLT_MAX;
+    min = FLT_MAX;
+    this->quant_max = quant_max;
+    this->quant_min = quant_min;
+    std::fill(histogram.begin(), histogram.end(), 1.0e-7);
+  }
+
+  STATUS RecordMaxValue(const std::vector<float> &datas);
+
+  void UpdateInterval();
+
+  STATUS UpdateHistogram(const std::vector<float> &data);
+
+  void DumpHistogram();
+
+  STATUS ComputeThreshold();
+
+  std::pair<CNodePtr, float> GetScale();
+
+  std::pair<CNodePtr, int32_t> GetZeropoint();
+};
 
 class Calibrator {
  public:
-  explicit Calibrator(std::string path, size_t quant_size, int quant_max, int quant_msin);
+  explicit Calibrator(std::string path, size_t bit_num, int quant_max, int quant_min);
 
   ~Calibrator() = default;
 
@@ -123,18 +157,18 @@ class Calibrator {
 
   STATUS AddQuantizedOp(CNodePtr node);
 
-  STATUS RecordMaxValue(std::string opName, std::vector<float> data,
+  STATUS RecordMaxValue(const std::string &op_name, const std::vector<float> &data,
                         std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
   STATUS UpdateDivergInverval(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  STATUS UpdateDataFrequency(std::string op_name, std::vector<float> data, std::vector<int> shape,
+  STATUS UpdateDataFrequency(const std::string &op_name, const std::vector<float> &data,
                              std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
   void Dump();
 
   STATUS ComputeThreshold();
 
-  std::unordered_map<CNodePtr, float> GetResult(
+  std::unordered_map<CNodePtr, float> GetScale(
     std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
   std::unordered_map<CNodePtr, int32_t> GetZeropoint(

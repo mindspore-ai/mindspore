@@ -32,10 +32,19 @@ void Power::SetShift(float shift) { this->primitive_->value.AsPower()->shift = s
 float Power::GetPower() const { return this->primitive_->value_as_Power()->power(); }
 float Power::GetScale() const { return this->primitive_->value_as_Power()->scale(); }
 float Power::GetShift() const { return this->primitive_->value_as_Power()->shift(); }
-
-void Power::SetPower(float power) {}
-void Power::SetScale(float scale) {}
-void Power::SetShift(float shift) {}
+int Power::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Power();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Power return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreatePower(*fbb, attr->power(), attr->scale(), attr->shift());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Power, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {

@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include <set>
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -93,11 +94,10 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
     }
 
     out_tensors->emplace_back(new_tensor);
-#ifdef ENABLE_FP16
-    KernelKey desc{kGPU, kNumberTypeFloat16, schema::PrimitiveType_ToFormat};
-#else
     KernelKey desc{kGPU, kNumberTypeFloat32, schema::PrimitiveType_ToFormat};
-#endif
+    if (lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
+      desc.data_type = kNumberTypeFloat16;
+    }
     OpenCLToFormatParameter *parameter = new (std::nothrow) OpenCLToFormatParameter;
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
@@ -207,7 +207,7 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
       output->set_allocator(allocator_);
     }
     for (auto input_kernel : kernel->in_kernels()) {
-      MS_EXCEPTION_IF_NULL(input_kernel);
+      MS_ASSERT(nullptr != input_kernel);
       auto ret = input_kernel->DecOutTensorRefCount();
       if (0 != ret) {
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
@@ -215,21 +215,21 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
     }
   }
   for (auto kernel : out_kernels_) {
-    MS_EXCEPTION_IF_NULL(kernel);
+    MS_ASSERT(nullptr != kernel);
     auto ret = kernel->DecOutTensorRefCount();
     if (0 != ret) {
       MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
     }
   }
   for (auto kernel : in_convert_ops_) {
-    MS_EXCEPTION_IF_NULL(kernel);
+    MS_ASSERT(nullptr != kernel);
     auto ret = kernel->DecOutTensorRefCount();
     if (0 != ret) {
       MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
     }
   }
   for (auto kernel : out_convert_ops_) {
-    MS_EXCEPTION_IF_NULL(kernel);
+    MS_ASSERT(nullptr != kernel);
     auto ret = kernel->DecOutTensorRefCount();
     if (0 != ret) {
       MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
@@ -262,24 +262,19 @@ int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::tensor::
 }
 
 int SubGraphOpenCLKernel::UnInit() {
-  for (const auto tensor : in_convert_tensors_) {
+  for (const auto &tensor : in_convert_tensors_) {
     if (tensor != nullptr) {
       delete tensor;
     }
   }
-  for (const auto tensor : out_convert_tensors_) {
+  for (const auto &tensor : out_convert_tensors_) {
     if (tensor != nullptr) {
       delete tensor;
     }
   }
-  for (const auto op : in_convert_ops_) {
+  for (const auto &op : in_convert_ops_) {
     if (op != nullptr) {
       delete op;
-    }
-  }
-  for (const auto parameter : in_parameters_) {
-    if (parameter != nullptr) {
-      delete parameter;
     }
   }
   return RET_OK;

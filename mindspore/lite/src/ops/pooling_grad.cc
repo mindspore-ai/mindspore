@@ -69,19 +69,22 @@ int PoolingGrad::GetPadLeft() const { return this->primitive_->value_as_PoolingG
 int PoolingGrad::GetPadRight() const { return this->primitive_->value_as_PoolingGrad()->padRight(); }
 int PoolingGrad::GetRoundMode() const { return this->primitive_->value_as_PoolingGrad()->roundMode(); }
 
-void PoolingGrad::SetFormat(int format) {}
-void PoolingGrad::SetPoolingMode(int pooling_mode) {}
-void PoolingGrad::SetGlobal(bool global) {}
-void PoolingGrad::SetWindowW(int window_w) {}
-void PoolingGrad::SetWindowH(int window_h) {}
-void PoolingGrad::SetStrideW(int stride_w) {}
-void PoolingGrad::SetStrideH(int stride_h) {}
-void PoolingGrad::SetPadMode(int pad_mode) {}
-void PoolingGrad::SetPadUp(int pad_up) {}
-void PoolingGrad::SetPadDown(int pad_down) {}
-void PoolingGrad::SetPadLeft(int pad_left) {}
-void PoolingGrad::SetPadRight(int pad_right) {}
-void PoolingGrad::SetRoundMode(int round_mode) {}
+int PoolingGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_PoolingGrad();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_PoolingGrad return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset =
+    schema::CreatePoolingGrad(*fbb, attr->format(), attr->poolingMode(), attr->global(), attr->windowW(),
+                              attr->windowH(), attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(),
+                              attr->padDown(), attr->padLeft(), attr->padRight(), attr->roundMode());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_PoolingGrad, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

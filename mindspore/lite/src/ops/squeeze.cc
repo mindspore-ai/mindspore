@@ -29,8 +29,25 @@ std::vector<int> Squeeze::GetAxis() const {
   auto fb_vector = this->primitive_->value_as_Squeeze()->axis();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
-void Squeeze::SetAxis(const std::vector<int> &axis) {}
+int Squeeze::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Squeeze();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Squeeze return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> axis;
+  if (attr->axis() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axis()->size()); i++) {
+      axis.push_back(attr->axis()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateSqueezeDirect(*fbb, &axis);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Squeeze, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

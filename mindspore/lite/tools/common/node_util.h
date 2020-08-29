@@ -89,7 +89,7 @@ static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, in
     MS_LOG(ERROR) << "Dim size invalid";
     return RET_ERROR;
   }
-  std::unique_ptr<T> buf(new (std::nothrow) T[count]);
+  std::unique_ptr<T[]> buf(new (std::nothrow) T[count]);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "new buf failed";
     return RET_ERROR;

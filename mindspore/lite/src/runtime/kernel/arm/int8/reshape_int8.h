@@ -46,7 +46,7 @@ class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
   int8_t *output_data_ = nullptr;
 };
 
-int ReshapeInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata);
+int ReshapeInt8Run(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESHAPE_INT8_H_

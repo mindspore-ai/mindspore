@@ -30,10 +30,21 @@ float ConstantOfShape::GetValue() const { return this->primitive_->value.AsConst
 void ConstantOfShape::SetValue(float value) { this->primitive_->value.AsConstantOfShape()->value = value; }
 
 #else
-
+int ConstantOfShape::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_ConstantOfShape();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_ConstantOfShape return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateConstantOfShape(*fbb, attr->value());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ConstantOfShape, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 float ConstantOfShape::GetValue() const { return this->primitive_->value_as_ConstantOfShape()->value(); }
 
-void ConstantOfShape::SetValue(float value) {}
 #endif
 
 int ConstantOfShape::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

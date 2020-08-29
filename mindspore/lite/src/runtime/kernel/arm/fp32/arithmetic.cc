@@ -29,6 +29,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
+
+ArithmeticCPUKernel::~ArithmeticCPUKernel() {}
+
 int ArithmeticCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -42,23 +45,77 @@ int ArithmeticCPUKernel::ReSize() {
   arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();
 
   if (arithmeticParameter_->in_elements_num0_ == 1 || arithmeticParameter_->in_elements_num1_ == 1) {
-    if (arithmeticParameter_->activation_type_ == schema::ActivationType_NO_ACTIVATION) {
-      switch (arithmeticParameter_->op_parameter_.type_) {
-        case PrimitiveType_Mul:
-          arithmeticParameter_->broadcasting_ = false;
-          arithmetic_opt_run_ = ElementOptMul;
-          break;
-        case PrimitiveType_Add:
-          arithmeticParameter_->broadcasting_ = false;
-          arithmetic_opt_run_ = ElementOptAdd;
-          break;
-        case PrimitiveType_Sub:
-          arithmeticParameter_->broadcasting_ = false;
-          arithmetic_opt_run_ = ElementOptSub;
-          break;
-        default:
-          break;
-      }
+    switch (arithmeticParameter_->op_parameter_.type_) {
+      case PrimitiveType_Mul:
+        switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptMulRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptMulRelu6;
+            break;
+          default:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptMul;
+            break;
+        }
+        break;
+      case PrimitiveType_Add:
+        switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptAddRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptAddRelu6;
+            break;
+          default:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptAdd;
+            break;
+        }
+        break;
+      case PrimitiveType_Sub:
+        switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptSubRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptSubRelu6;
+            break;
+          default:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptSub;
+            break;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return RET_OK;
+}
+
+int ArithmeticCPUKernel::BroadcastRun(float *input0, float *input1, float *output, int dim, int out_count,
+                                        int out_thread_stride) {
+  if (dim > break_pos_) {
+    return arithmetic_run_(input0 + out_thread_stride, input1 + out_thread_stride, output + out_thread_stride,
+                           out_count);
+  }
+  for (int i = 0; i < arithmeticParameter_->out_shape_[dim]; ++i) {
+    int pos0_ = arithmeticParameter_->in_shape0_[dim] == 1 ? 0 : i;
+    int pos1_ = arithmeticParameter_->in_shape1_[dim] == 1 ? 0 : i;
+    int error_code =
+      BroadcastRun(input0 + pos0_ * arithmeticParameter_->in_strides0_[dim],
+                     input1 + pos1_ * arithmeticParameter_->in_strides1_[dim],
+                     output + i * arithmeticParameter_->out_strides_[dim], dim + 1, out_count, out_thread_stride);
+    if (error_code != RET_OK) {
+      return error_code;
     }
   }
   return RET_OK;
@@ -81,8 +138,10 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
 
   int error_code = RET_OK;
   if (arithmeticParameter_->broadcasting_) {
-    error_code = arithmetic_run_(tile_data0_ + stride * task_id, tile_data1_ + stride * task_id,
-                                 output_data + stride * task_id, count);
+    stride = UP_DIV(outside_, thread_count_);
+    out_count_ = MSMIN(stride, outside_ - stride * task_id);
+    out_thread_stride_ = stride * task_id;
+    error_code = BroadcastRun(input0_data, input1_data1, output_data, 0, out_count_, out_thread_stride_);
   } else if (arithmetic_opt_run_ != nullptr) {
     if (arithmeticParameter_->in_elements_num0_ == 1) {
       error_code = arithmetic_opt_run_(input0_data, input1_data1 + stride * task_id, output_data + stride * task_id,
@@ -104,7 +163,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   return RET_OK;
 }
 
-int ArithmeticsRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ArithmeticsRun(void *cdata, int task_id) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticCPUKernel *>(cdata);
   auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {
@@ -120,31 +179,27 @@ int ArithmeticCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
     return ret;
   }
-
   if (arithmeticParameter_->broadcasting_) {
-    auto input_data0 = reinterpret_cast<float *>(in_tensors_[0]->Data());
-    auto input_data1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
-    auto length = arithmeticParameter_->out_elements_num_ * sizeof(float);
-    MS_ASSERT(context_->allocator != nullptr);
-    tile_data0_ = reinterpret_cast<float *>(context_->allocator->Malloc(length));
-    tile_data1_ = reinterpret_cast<float *>(context_->allocator->Malloc(length));
-    if (tile_data0_ == nullptr || tile_data1_ == nullptr) {
-      MS_LOG(ERROR) << "Memory allocation failed";
-      context_->allocator->Free(tile_data0_);
-      context_->allocator->Free(tile_data1_);
-      return RET_ERROR;
+    outside_ = 1;
+    for (auto i = arithmeticParameter_->ndim_ - 1; i >= 0; --i) {
+      if (arithmeticParameter_->in_shape0_[i] != arithmeticParameter_->in_shape1_[i]) {
+        break_pos_ = i;
+        break;
+      }
+      outside_ *= arithmeticParameter_->out_shape_[i];
     }
-    TileDimensions(input_data0, input_data1, tile_data0_, tile_data1_, arithmeticParameter_);
+    ComputeStrides(arithmeticParameter_->in_shape0_, arithmeticParameter_->in_strides0_, arithmeticParameter_->ndim_);
+    ComputeStrides(arithmeticParameter_->in_shape1_, arithmeticParameter_->in_strides1_, arithmeticParameter_->ndim_);
+    ComputeStrides(arithmeticParameter_->out_shape_, arithmeticParameter_->out_strides_, arithmeticParameter_->ndim_);
   }
-  ret = LiteBackendParallelLaunch(ArithmeticsRun, this, thread_count_);
-  if (arithmeticParameter_->broadcasting_) {
-    context_->allocator->Free(tile_data0_);
-    context_->allocator->Free(tile_data1_);
+
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsRun, this, thread_count_);
+
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Arithmetic function error error_code[" << error_code << "]";
+    return RET_ERROR;
   }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Arithmetic function error error_code[" << ret << "]";
-  }
-  return ret;
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuArithmeticFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,

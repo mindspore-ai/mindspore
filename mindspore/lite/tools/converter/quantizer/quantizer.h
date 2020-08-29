@@ -51,7 +51,7 @@ class Quantizer {
 
   virtual STATUS DetermineNodeQuantType();
 
-  virtual STATUS DoQuantize(FuncGraphPtr funcGraph) = 0;
+  virtual STATUS DoQuantize(FuncGraphPtr func_graph) = 0;
 
     mindspore::lite::converter::Flags flags;
  protected:

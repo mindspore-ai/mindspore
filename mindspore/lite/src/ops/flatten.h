@@ -28,14 +28,16 @@ namespace lite {
 class Flatten : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Flatten, PrimitiveC);
   Flatten() = default;
   explicit Flatten(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit Flatten(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Flatten() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
-
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 };
 }  // namespace lite
 }  // namespace mindspore

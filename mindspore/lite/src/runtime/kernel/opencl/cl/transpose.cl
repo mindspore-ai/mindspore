@@ -1,3 +1,4 @@
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void transpose_IMG(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 HW, int2 C) {
   int X = get_global_id(0);
@@ -75,8 +76,8 @@ __kernel void transpose_BUF(__read_only image2d_t src_data, global FLT4 *dst_dat
   result[3].z = x2.w;
   result[3].w = x3.w;
 
-  dst_data[4 * Y * HW.y + X] = result[0];
-  dst_data[(4 * Y + 1) * HW.y + X] = result[1];
-  dst_data[(4 * Y + 2) * HW.y + X] = result[2];
-  dst_data[(4 * Y + 3) * HW.y + X] = result[3];
+  if (4 * Y < C.x) dst_data[4 * Y * HW.y + X] = result[0];
+  if (4 * Y + 1 < C.x) dst_data[(4 * Y + 1) * HW.y + X] = result[1];
+  if (4 * Y + 2 < C.x) dst_data[(4 * Y + 2) * HW.y + X] = result[2];
+  if (4 * Y + 3 < C.x) dst_data[(4 * Y + 3) * HW.y + X] = result[3];
 }

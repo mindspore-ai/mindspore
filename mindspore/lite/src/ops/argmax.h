@@ -28,10 +28,18 @@ namespace lite {
 class ArgMax : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ArgMax, PrimitiveC);
   ArgMax() = default;
   explicit ArgMax(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+  void SetOutMaxValue(bool out_max_value);
+  void SetTopK(int top_k);
+  void SetKeepDims(bool keep_dims);
+  void SetAxisType(int axis_type);
 #else
-  explicit ArgMax(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  ArgMax() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
@@ -39,11 +47,6 @@ class ArgMax : public PrimitiveC {
   int GetTopK() const;
   bool GetKeepDims() const;
   int GetAxisType() const;
-  void SetAxis(int axis);
-  void SetOutMaxValue(bool out_max_value);
-  void SetTopK(int top_k);
-  void SetKeepDims(bool keep_dims);
-  void SetAxisType(int axis_type);
 };
 }  // namespace lite
 }  // namespace mindspore

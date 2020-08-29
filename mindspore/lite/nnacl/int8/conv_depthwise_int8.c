@@ -20,6 +20,99 @@
 #include "nnacl/int8/common_func.h"
 
 /*conv depthwise int8 begin*/
+// only support perlayer
+#ifndef ENABLE_ARM64
+void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
+                   int output_channel, int input_step, int8_t input_zp) {
+  for (int i = 0; i < num_pixels; i++) {
+    for (int c = 0; c < output_channel; c++) {
+      const int16_t input = input_ptr[c] - input_zp;
+      *output_ptr++ += input * weight_ptr[c];
+    }
+    input_ptr += input_step;
+  }
+}
+#endif
+
+void ConvDwInt8Post(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,
+                    int32_t left_shift, int32_t right_shift, int32_t acc_min, int32_t acc_max) {
+  int align_num = 0;
+#ifdef ENABLE_ARM64
+  align_num = num_pixels / 4 * 4;
+  ConvDwInt8PostAlign4(dst, buffer, align_num, output_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
+#endif
+  for (int i = align_num; i < num_pixels; i++) {
+    buffer[i] = RoundingDivideByPOT(
+      SaturatingRoundingDoublingHighMul(buffer[i] * (1 << (unsigned int)left_shift), out_multiplier), -right_shift);
+    buffer[i] += output_zp;
+    buffer[i] = MSMAX(buffer[i], acc_min);
+    buffer[i] = MSMIN(buffer[i], acc_max);
+    dst[i] = (buffer[i]);
+  }
+}
+
+void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_data, const int16_t *weight_data,
+                const int32_t *bias_data, const ConvParameter *conv_param, int task_id) {
+  int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
+  int h_start = h_step * task_id;
+  int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
+
+  int out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_[0];
+  int left_shift = conv_param->conv_quant_arg_.left_shift_[0];
+  int right_shift = conv_param->conv_quant_arg_.right_shift_[0];
+
+  int intput_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
+  int output_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
+  int acc_min = conv_param->conv_quant_arg_.out_act_min_[0];
+  int acc_max = conv_param->conv_quant_arg_.out_act_max_[0];
+
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    const int8_t *src = input_data + b * conv_param->input_h_ * conv_param->input_w_ * conv_param->input_channel_;
+    int8_t *dst = output_data + b * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
+    for (int oh = h_start; oh < h_end; oh++) {
+      int8_t *dst_data = dst + oh * conv_param->output_w_ * conv_param->output_channel_;
+
+      int ih_origin = oh * conv_param->stride_h_ - conv_param->pad_u_;
+      int start_kh = MSMAX(0, UP_DIV(-ih_origin, conv_param->dilation_h_));
+      int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih_origin, conv_param->dilation_h_));
+
+      // init acc
+      for (int ow = 0; ow < conv_param->output_w_; ow++) {
+        memcpy(row_buffer + ow * conv_param->output_channel_, bias_data, conv_param->output_channel_ * sizeof(int32_t));
+      }
+      for (int kh = start_kh; kh < end_kh; kh++) {
+        int ih = ih_origin + conv_param->dilation_w_ * kh;
+
+        const int8_t *src_kh = src + ih * conv_param->input_w_ * conv_param->input_channel_;
+        const int16_t *weight_kh = weight_data + kh * conv_param->kernel_w_ * conv_param->output_channel_;
+
+        int in_sw_step = conv_param->stride_w_ * conv_param->input_channel_;
+        for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
+          int out_w_start = MSMAX(
+            0, (conv_param->pad_l_ - conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) / conv_param->stride_w_);
+          int out_w_end = MSMIN(conv_param->output_w_, (conv_param->input_w_ + conv_param->pad_l_ -
+                                                        conv_param->dilation_w_ * kw + conv_param->stride_w_ - 1) /
+                                                         conv_param->stride_w_);
+
+          int32_t *acc_w = row_buffer + out_w_start * conv_param->output_channel_;
+          int iw_origin = (out_w_start * conv_param->stride_w_) - conv_param->pad_l_ + conv_param->dilation_w_ * kw;
+
+          const int8_t *src_kw = src_kh + iw_origin * conv_param->input_channel_;
+          int num_pixels = out_w_end - out_w_start;
+
+          ConvDwInt8Row(acc_w, src_kw, weight_kh, num_pixels, conv_param->output_channel_, in_sw_step, intput_zp);
+          weight_kh += conv_param->output_channel_;
+        }
+      }
+      // post func, acc int32 -> dst int8
+      ConvDwInt8Post(dst_data, row_buffer, conv_param->output_w_ * conv_param->output_channel_, output_zp,
+                     out_multiplier, left_shift, right_shift, acc_min, acc_max);
+    }
+  }
+}
+/*conv depthwise int8 end*/
+
+/*conv depthwise sliding window int8 begin*/
 void DepthwiseBorderPixelInt8(int8_t *dst, const int16_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int kernel_w, int *out_multiplier,
                               int *left_shift, int *right_shift, int32_t out_zp, int32_t acc_min, int32_t acc_max,
@@ -68,14 +161,14 @@ void DepthwiseBorderInt8(int8_t *dst, const int16_t *src, const int16_t *weight,
                          bool per_channel) {
   int8_t *dst_h = dst + top * sliding->out_h_step_;
   for (int oh = top; oh < bottom; oh++) {
-    int ih = oh * conv_param->stride_h_ - conv_param->pad_h_;
+    int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
     int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
     int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
     const int16_t *src_h = src + ih * sliding->in_h_step_;
 
     int8_t *dst_kernel = dst_h + left * sliding->block_channel_;
     for (int ow = left; ow < right; ow++) {
-      int iw = ow * conv_param->stride_w_ - conv_param->pad_w_;
+      int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
       int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
       int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
       const int16_t *src_w = src_h + iw * sliding->block_channel_;
@@ -153,8 +246,8 @@ void DepthwiseCenterInt8(int8_t *dst, const int16_t *src, const int16_t *weight,
 }
 #endif
 
-void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
-                const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
+void ConvDwSWInt8(int8_t *output_data, const int16_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
+                  const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
   const int16_t *src = input_data;
   int8_t *dst = output_data;
   bool per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
@@ -186,8 +279,8 @@ void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *w
                           per_channel);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
-        int in_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_h_;
-        int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_w_;
+        int in_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
+        int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const int16_t *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         int8_t *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
 #ifdef ENABLE_ARM64
@@ -215,7 +308,7 @@ void ConvDwInt8(int8_t *output_data, const int16_t *input_data, const int16_t *w
   }  // batch loop
   // output nhwc4
 }
-/*conv depthwise int8 end*/
+/*conv depthwise sliding window int8 end*/
 
 /*deconv depthwise int8 begin*/
 void DeconvDepthwiseBorderPixelInt8(int32_t *dst, const int16_t *src, const int16_t *weight, int height, int width,
@@ -241,14 +334,14 @@ void DeconvDepthwiseBorderInt8(int32_t *dst, const int16_t *src, const int16_t *
                                int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
   const int16_t *src_h = src + top * sliding->out_h_step_;
   for (int ih = top; ih < bottom; ih++) {
-    int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
+    int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
     int start_kh = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
     int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
     int32_t *dst_h = dst + oh * sliding->in_h_step_;
 
     const int16_t *src_kernel = src_h + left * sliding->block_channel_;
     for (int iw = left; iw < right; iw++) {
-      int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
+      int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
       int start_kw = MSMAX(0, UP_DIV(-ow, conv_param->dilation_w_));
       int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->output_w_ - ow, conv_param->dilation_w_));
       int32_t *dst_w = dst_h + ow * C4NUM;
@@ -341,8 +434,8 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
                                 conv_param->input_w_, conv_param, sliding);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
-        int oh_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_h_;
-        int oh_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_w_;
+        int oh_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
+        int oh_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         int32_t *out_t = output_buffer + oh_h_start * sliding->in_h_step_ + oh_w_start * sliding->block_channel_;
         const int16_t *in_t =
           src_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;

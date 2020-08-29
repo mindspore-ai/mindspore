@@ -37,20 +37,6 @@ DeconvolutionDepthwiseFp16CPUKernel::~DeconvolutionDepthwiseFp16CPUKernel() {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
-  FreeTmpBuffer();
-}
-
-void DeconvolutionDepthwiseFp16CPUKernel::FreeTmpBuffer() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
@@ -69,14 +55,14 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
 int DeconvolutionDepthwiseFp16CPUKernel::InitBuffer() {
   int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
   int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM * C8;
-  packed_input_ = reinterpret_cast<float16_t *>(malloc(pack_input_size * sizeof(float16_t)));
+  packed_input_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_input_size * sizeof(float16_t)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
 
   int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM * C8;
-  packed_output_ = reinterpret_cast<float16_t *>(malloc(pack_output_size * sizeof(float16_t)));
+  packed_output_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_output_size * sizeof(float16_t)));
   if (packed_output_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -137,16 +123,10 @@ int DeconvolutionDepthwiseFp16CPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
-  FreeTmpBuffer();
   InitSlideParam();
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
-  }
-  ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitBuffer failed.";
-    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -157,7 +137,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-static int DeconvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int DeconvDwFp16Run(void *cdata, int task_id) {
   auto deconv_dw_fp16 = reinterpret_cast<DeconvolutionDepthwiseFp16CPUKernel *>(cdata);
   auto ret = deconv_dw_fp16->Execute(task_id);
   if (ret != RET_OK) {
@@ -168,13 +148,18 @@ static int DeconvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata)
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::Run() {
+  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
+    MS_LOG(ERROR) << "Only support input channel equals output channel.";
+    return RET_ERROR;
+  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
+  ret = InitBuffer();
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitBuffer failed.";
     return RET_ERROR;
   }
 
@@ -193,7 +178,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   if (!need_align_) {
     packed_output_ = execute_output_;
   }
-  ret = LiteBackendParallelLaunch(DeconvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -202,6 +187,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   if (need_align_) {
     PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();

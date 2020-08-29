@@ -42,45 +42,13 @@ int RoundingDivideByPOT(int x, int exponent);
 
 int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t left_shift, int32_t right_shift);
 
-int FractionsBits(int kIntegerBits);
-
-int FixedPoint_One(int kIntegerBits, int kFractionsBits);
-
-int RoundingHalfSum(int a, int b);
-
-int32_t BitAnd(int32_t a, int32_t b);
-
-int32_t BitOr(int32_t a, int32_t b);
-
-int32_t BitXor(int32_t a, int32_t b);
-
-int32_t BitNot(int32_t a);
-
-int SelectUsingMask(int mask, int bound, int val);
-
-int32_t MaskNonZero(int32_t a);
-
 int32_t Rescale(int x, int kIntegerBitsSrc, int kIntegerBitsDst);
-
-int32_t one_over_one_plus_x_for_x_in_0_1(int32_t a);
-
-int CountLeadingZeroBits(uint32_t x);
 
 int CountLeadingSignBits(int32_t x);
 
-int32_t ComputerReciproal(int32_t x, int x_digits, int *recip_shift);
+int32_t ComputerReciprocal(int32_t x, int x_digits, int *recip_shift);
 
 int exp_on_negative_values(int a, const int tIntegerBits);
-
-int ConstantPOT(int fractional_bits, int exponent);
-
-int32_t MaskIfNonZero(int32_t a);
-
-int32_t MaskIfZero(int32_t a);
-
-int32_t MaskIfLessThan(int32_t a, int32_t b);
-
-int exp_on_interval_between_negative_one_quarter_and_0_excl(int a);
 
 #ifdef __cplusplus
 }

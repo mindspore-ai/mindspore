@@ -20,53 +20,453 @@
 #define ACCURACY_DATA 0.00000001
 
 int ElementOptMul(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+#endif
   if (param->in_elements_num0_ == 1) {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[0] * input1[i];
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vmulq_f32(vin0, vin1);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = in0_opt * input1[i];
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
     }
-  } else if (param->in_elements_num1_ == 1) {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[i] * input1[0];
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = in0_opt * input1[index];
     }
   } else {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[i] * input1[i];
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vmulq_f32(vin0, vin1);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = input0[i] * in1_opt;
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = input0[index] * in1_opt;
     }
   }
+
+  return NNACL_OK;
+}
+int ElementOptMulRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+  float32x4_t zeros = {0, 0, 0, 0};
+#endif
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vmaxq_f32(vmulq_f32(vin0, vin1), zeros);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMAX(in0_opt * input1[i], 0);
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMAX(in0_opt * input1[index], 0);
+    }
+  } else {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vmaxq_f32(vmulq_f32(vin0, vin1), zeros);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMAX(input0[i] * in1_opt, 0);
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMAX(input0[index] * in1_opt, 0);
+    }
+  }
+
+  return NNACL_OK;
+}
+int ElementOptMulRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+  float32x4_t zeros = {0, 0, 0, 0};
+  float32x4_t bounds = {6, 6, 6, 6};
+#endif
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vminq_f32(vmaxq_f32(vmulq_f32(vin0, vin1), zeros), bounds);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMIN(MSMAX(in0_opt * input1[i], 0), 6);
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMIN(MSMAX(in0_opt * input1[index], 0), 6);
+    }
+  } else {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vminq_f32(vmaxq_f32(vmulq_f32(vin0, vin1), zeros), bounds);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMIN(MSMAX(input0[i] * in1_opt, 0), 6);
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMIN(MSMAX(input0[index] * in1_opt, 0), 6);
+    }
+  }
+
   return NNACL_OK;
 }
 
 int ElementOptSub(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+#endif
   if (param->in_elements_num0_ == 1) {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[0] - input1[i];
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vsubq_f32(vin0, vin1);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = in0_opt - input1[i];
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
     }
-  } else if (param->in_elements_num1_ == 1) {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[i] - input1[0];
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = in0_opt - input1[index];
     }
   } else {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[i] - input1[i];
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vsubq_f32(vin0, vin1);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = input0[i] - in1_opt;
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = input0[index] - in1_opt;
     }
   }
   return NNACL_OK;
 }
-
-int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+int ElementOptSubRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+  float32x4_t zeros = {0, 0, 0, 0};
+#endif
   if (param->in_elements_num0_ == 1) {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[0] + input1[i];
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vmaxq_f32(vsubq_f32(vin0, vin1), zeros);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMAX(in0_opt - input1[i], 0);
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
     }
-  } else if (param->in_elements_num1_ == 1) {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[i] + input1[0];
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMAX(in0_opt - input1[index], 0);
     }
   } else {
-    for (int i = 0; i < element_size; ++i) {
-      output[i] = input0[i] + input1[i];
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vmaxq_f32(vsubq_f32(vin0, vin1), zeros);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMAX(input0[i] - in1_opt, 0);
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMAX(input0[index] - in1_opt, 0);
     }
   }
+
+  return NNACL_OK;
+}
+int ElementOptSubRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+  float32x4_t zeros = {0, 0, 0, 0};
+  float32x4_t bounds = {6, 6, 6, 6};
+#endif
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vminq_f32(vmaxq_f32(vsubq_f32(vin0, vin1), zeros), bounds);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMIN(MSMAX(in0_opt - input1[i], 0), 6);
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMIN(MSMAX(in0_opt - input1[index], 0), 6);
+    }
+  } else {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vminq_f32(vmaxq_f32(vsubq_f32(vin0, vin1), zeros), bounds);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMIN(MSMAX(input0[i] - in1_opt, 0), 6);
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMIN(MSMAX(input0[index] - in1_opt, 0), 6);
+    }
+  }
+
+  return NNACL_OK;
+}
+
+int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+#endif
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vaddq_f32(vin0, vin1);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = in0_opt + input1[i];
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = in0_opt + input1[index];
+    }
+  } else {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vaddq_f32(vin0, vin1);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = input0[i] + in1_opt;
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = input0[index] + in1_opt;
+    }
+  }
+  return NNACL_OK;
+}
+int ElementOptAddRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+  float32x4_t zeros = {0, 0, 0, 0};
+#endif
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vmaxq_f32(vaddq_f32(vin0, vin1), zeros);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMAX(in0_opt + input1[i], 0);
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMAX(in0_opt + input1[index], 0);
+    }
+  } else {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vmaxq_f32(vaddq_f32(vin0, vin1), zeros);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMAX(input0[i] + in1_opt, 0);
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMAX(input0[index] + in1_opt, 0);
+    }
+  }
+
+  return NNACL_OK;
+}
+int ElementOptAddRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  int block_mod = element_size % C4NUM;
+  int block_c4 = element_size - block_mod;
+  float in0_opt = input0[0];
+  float in1_opt = input1[0];
+#ifdef ENABLE_NEON
+  float32x4_t vin0_opt = {input0[0], input0[0], input0[0], input0[0]};
+  float32x4_t vin1_opt = {input1[0], input1[0], input1[0], input1[0]};
+  float32x4_t zeros = {0, 0, 0, 0};
+  float32x4_t bounds = {6, 6, 6, 6};
+#endif
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vin0_opt;
+      float32x4_t vin1 = vld1q_f32(input1);
+      float32x4_t vout = vminq_f32(vmaxq_f32(vaddq_f32(vin0, vin1), zeros), bounds);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMIN(MSMAX(in0_opt + input1[i], 0), 6);
+      }
+#endif
+      input1 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMIN(MSMAX(in0_opt + input1[index], 0), 6);
+    }
+  } else {
+    for (int index = 0; index < block_c4; index += C4NUM) {
+#ifdef ENABLE_NEON
+      float32x4_t vin0 = vld1q_f32(input0);
+      float32x4_t vin1 = vin1_opt;
+      float32x4_t vout = vminq_f32(vmaxq_f32(vaddq_f32(vin0, vin1), zeros), bounds);
+      vst1q_f32(output, vout);
+#else
+      for (int i = 0; i < C4NUM; ++i) {
+        output[i] = MSMIN(MSMAX(input0[i] + in1_opt, 0), 6);
+      }
+#endif
+      input0 += C4NUM;
+      output += C4NUM;
+    }
+    for (int index = 0; index < block_mod; ++index) {
+      output[index] = MSMIN(MSMAX(input0[index] + in1_opt, 0), 6);
+    }
+  }
+
   return NNACL_OK;
 }
 

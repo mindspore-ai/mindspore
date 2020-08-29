@@ -29,9 +29,19 @@ void Unstack::SetAxis(int axis) { this->primitive_->value.AsUnstack()->axis = ax
 
 int Unstack::GetNum() const { return this->primitive_->value_as_Unstack()->num(); }
 int Unstack::GetAxis() const { return this->primitive_->value_as_Unstack()->axis(); }
-
-void Unstack::SetNum(int num) {}
-void Unstack::SetAxis(int axis) {}
+int Unstack::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Unstack();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Unstack return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateUnstack(*fbb, attr->num(), attr->axis());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Unstack, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Unstack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {

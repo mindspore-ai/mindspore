@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-
 #include "common/jni_utils.h"
 #include <cstring>
 
 char *JstringToChar(JNIEnv *env, jstring jstr) {
-  char *rtn = NULL;
+  char *rtn = nullptr;
   jclass clsstring = env->FindClass("java/lang/String");
   jstring strencode = env->NewStringUTF("GB2312");
   jmethodID mid = env->GetMethodID(clsstring, "getBytes", "(Ljava/lang/String;)[B");

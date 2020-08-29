@@ -468,7 +468,7 @@ int DeConvTestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -537,7 +537,7 @@ int DeConvTestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -548,14 +548,14 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   float *correct;
   int total_size = DeConvTestInit2(&inputs_, &outputs_, deconv_param, &correct);
   lite::Context *ctx = new lite::Context;
-  ctx->thread_num_ = 4;
+  ctx->thread_num_ = 1;
   kernel::DeConvolutionCPUKernel *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx, nullptr);
 
   deconv->Init();
   deconv->Run();
-  EXPECT_EQ(0, lite::CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size));
-  delete deconv_param;
+  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
+
   delete deconv;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
@@ -616,7 +616,7 @@ int DeConvTestInit3(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 2;
   conv_param->stride_h_ = conv_param->stride_w_ = 3;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 2;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
   return out_t->ElementsNum();
 }
 
@@ -635,7 +635,6 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   deconv->Run();
   CompareOutputData(reinterpret_cast<float *>(outputs_[0]->Data()), correct, total_size, 0.0001);
 
-  delete deconv_param;
   delete deconv;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
@@ -686,8 +685,8 @@ int DeConvTestInit4(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<li
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
-  conv_param->is_relu_ = conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->act_type_ = ActType_No;
 
   return out_t->ElementsNum();
 }
@@ -723,7 +722,6 @@ TEST_F(TestDeConvolutionFp32, DeConvTest4) {
   uint64_t time_avg = cost / loop_count;
   printf("deconv fp32 average time : %f ms\n", time_avg / 1000.0f);
 
-  delete deconv_param;
   delete deconv;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;

@@ -24,11 +24,14 @@ namespace lite {
 class MakeTuple : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(MakeTuple, PrimitiveC);
   MakeTuple() = default;
   explicit MakeTuple(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  explicit MakeTuple(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  MakeTuple() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

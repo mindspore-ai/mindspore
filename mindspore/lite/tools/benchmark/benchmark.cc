@@ -25,6 +25,7 @@
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
+#include "src/runtime/runtime_api.h"
 
 namespace mindspore {
 namespace lite {
@@ -107,7 +108,7 @@ int Benchmark::ReadInputFile() {
       }
       auto inputData = cur_tensor->MutableData();
       memcpy(inputData, binBuf, tensorDataSize);
-      delete binBuf;
+      delete[](binBuf);
     }
   }
   return RET_OK;
@@ -190,7 +191,7 @@ float Benchmark::CompareData(const std::string &nodeName, std::vector<int> msSha
       }
       oss << ") are different";
       std::cerr << oss.str() << std::endl;
-      MS_LOG(ERROR) << "%s", oss.str().c_str();
+      MS_LOG(ERROR) << oss.str().c_str();
       return RET_ERROR;
     }
     size_t errorCount = 0;
@@ -239,14 +240,16 @@ int Benchmark::CompareOutput() {
   bool hasError = false;
   for (const auto &calibTensor : calibData) {
     std::string nodeName = calibTensor.first;
-    auto tensors = session->GetOutputsByName(nodeName);
+    auto tensors = session->GetOutputsByNodeName(nodeName);
     if (tensors.empty()) {
       MS_LOG(ERROR) << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail.";
+      std::cerr << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail." << std::endl;
       return RET_ERROR;
     }
     // make sure tensor size is 1
     if (tensors.size() != 1) {
       MS_LOG(ERROR) << "Only support 1 tensor with a name now.";
+      std::cerr << "Only support 1 tensor with a name now." << std::endl;
       return RET_ERROR;
     }
     auto &tensor = tensors.front();
@@ -274,13 +277,15 @@ int Benchmark::CompareOutput() {
     std::cout << "=======================================================" << std::endl << std::endl;
 
     if (meanBias > this->_flags->accuracyThreshold) {
-      MS_LOG(ERROR) << "Mean bias of all nodes is too big: " << meanBias << "%%";
+      MS_LOG(ERROR) << "Mean bias of all nodes is too big: " << meanBias << "%";
+      std::cerr << "Mean bias of all nodes is too big: " << meanBias << "%" << std::endl;
       return RET_ERROR;
     } else {
       return RET_OK;
     }
   } else {
     MS_LOG(ERROR) << "Error in CompareData";
+    std::cerr << "Error in CompareData" << std::endl;
     std::cout << "=======================================================" << std::endl << std::endl;
     return RET_ERROR;
   }
@@ -288,15 +293,18 @@ int Benchmark::CompareOutput() {
 
 int Benchmark::MarkPerformance() {
   MS_LOG(INFO) << "Running warm up loops...";
+  std::cout << "Running warm up loops..." << std::endl;
   for (int i = 0; i < _flags->warmUpLoopCount; i++) {
     auto status = session->RunGraph();
     if (status != 0) {
-      MS_LOG(ERROR) << "Inference error %d" << status;
+      MS_LOG(ERROR) << "Inference error " << status;
+      std::cerr << "Inference error " << status << std::endl;
       return status;
     }
   }
 
   MS_LOG(INFO) << "Running benchmark loops...";
+  std::cout << "Running benchmark loops..." << std::endl;
   uint64_t timeMin = 1000000;
   uint64_t timeMax = 0;
   uint64_t timeAvg = 0;
@@ -306,7 +314,8 @@ int Benchmark::MarkPerformance() {
     auto start = GetTimeUs();
     auto status = session->RunGraph();
     if (status != 0) {
-      MS_LOG(ERROR) << "Inference error %d" << status;
+      MS_LOG(ERROR) << "Inference error " << status;
+      std::cerr << "Inference error " << status;
       return status;
     }
 
@@ -332,6 +341,7 @@ int Benchmark::MarkPerformance() {
 
 int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
+  std::cout << "MarkAccuracy" << std::endl;
   for (size_t i = 0; i < msInputs.size(); i++) {
     MS_ASSERT(msInputs.at(i) != nullptr);
     MS_ASSERT(msInputs.at(i)->data_type() == TypeId::kNumberTypeFloat32);
@@ -345,18 +355,21 @@ int Benchmark::MarkAccuracy() {
   auto status = session->RunGraph();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
+    std::cerr << "Inference error " << status << std::endl;
     return status;
   }
 
   status = ReadCalibData();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Read calib data error " << status;
+    std::cerr << "Read calib data error " << status << std::endl;
     return status;
   }
 
   status = CompareOutput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Compare output error " << status;
+    std::cerr << "Compare output error " << status << std::endl;
     return status;
   }
   return RET_OK;
@@ -368,22 +381,26 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   std::string modelName = _flags->modelPath.substr(_flags->modelPath.find_last_of(DELIM_SLASH) + 1);
 
   MS_LOG(INFO) << "start reading model file";
+  std::cout << "start reading model file" << std::endl;
   size_t size = 0;
   char *graphBuf = ReadFile(_flags->modelPath.c_str(), &size);
   if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed while running %s", modelName.c_str();
+    MS_LOG(ERROR) << "Read model file failed while running " << modelName.c_str();
+    std::cerr << "Read model file failed while running " << modelName.c_str() << std::endl;
     return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
   if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model file failed while running %s", modelName.c_str();
+    MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
+    std::cerr << "Import model file failed while running " << modelName.c_str() << std::endl;
     delete[](graphBuf);
     return RET_ERROR;
   }
   delete[](graphBuf);
   auto context = new (std::nothrow) lite::Context;
   if (context == nullptr) {
-    MS_LOG(ERROR) << "New context failed while running %s", modelName.c_str();
+    MS_LOG(ERROR) << "New context failed while running " << modelName.c_str();
+    std::cerr << "New context failed while running " << modelName.c_str() << std::endl;
     return RET_ERROR;
   }
   if (_flags->device == "CPU") {
@@ -406,12 +423,14 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   session = session::LiteSession::CreateSession(context);
   delete (context);
   if (session == nullptr) {
-    MS_LOG(ERROR) << "CreateSession failed while running %s", modelName.c_str();
+    MS_LOG(ERROR) << "CreateSession failed while running ", modelName.c_str();
+    std::cout << "CreateSession failed while running ", modelName.c_str();
     return RET_ERROR;
   }
   auto ret = session->CompileGraph(model);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileGraph failed while running %s", modelName.c_str();
+    MS_LOG(ERROR) << "CompileGraph failed while running ", modelName.c_str();
+    std::cout << "CompileGraph failed while running ", modelName.c_str();
     delete (session);
     delete (model);
     return ret;
@@ -437,8 +456,15 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   }
   if (!_flags->calibDataPath.empty()) {
     status = MarkAccuracy();
+    for (auto &data : calibData) {
+      data.second->shape.clear();
+      data.second->data.clear();
+      delete data.second;
+    }
+    calibData.clear();
     if (status != 0) {
-      MS_LOG(ERROR) << "Run MarkAccuracy error: %d" << status;
+      MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
+      std::cout << "Run MarkAccuracy error: " << status << std::endl;
       delete (session);
       delete (model);
       return status;
@@ -446,22 +472,13 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   } else {
     status = MarkPerformance();
     if (status != 0) {
-      MS_LOG(ERROR) << "Run MarkPerformance error: %d" << status;
+      MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
+      std::cout << "Run MarkPerformance error: " << status << std::endl;
       delete (session);
       delete (model);
       return status;
     }
   }
-
-  if (cleanData) {
-    for (auto &data : calibData) {
-      data.second->shape.clear();
-      data.second->data.clear();
-      delete data.second;
-    }
-    calibData.clear();
-  }
-
   delete (session);
   delete (model);
   return RET_OK;
@@ -515,32 +532,45 @@ int Benchmark::Init() {
 
   if (this->_flags->loopCount < 1) {
     MS_LOG(ERROR) << "LoopCount:" << this->_flags->loopCount << " must be greater than 0";
+    std::cerr << "LoopCount:" << this->_flags->loopCount << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
 
   if (this->_flags->numThreads < 1) {
     MS_LOG(ERROR) << "numThreads:" << this->_flags->numThreads << " must be greater than 0";
+    std::cerr << "numThreads:" << this->_flags->numThreads << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
 
   if (this->_flags->cpuBindMode == -1) {
     MS_LOG(INFO) << "cpuBindMode = MID_CPU";
+    std::cout << "cpuBindMode = MID_CPU" << std::endl;
   } else if (this->_flags->cpuBindMode == 1) {
     MS_LOG(INFO) << "cpuBindMode = HIGHER_CPU";
+    std::cout << "cpuBindMode = HIGHER_CPU" << std::endl;
   } else {
     MS_LOG(INFO) << "cpuBindMode = NO_BIND";
+    std::cout << "cpuBindMode = NO_BIND" << std::endl;
   }
 
   this->_flags->inDataType = this->_flags->inDataTypeIn == "img" ? kImage : kBinary;
 
   if (_flags->modelPath.empty()) {
     MS_LOG(ERROR) << "modelPath is required";
+    std::cerr << "modelPath is required" << std::endl;
     return 1;
   }
   _flags->InitInputDataList();
   _flags->InitResizeDimsList();
   if (!_flags->resizeDims.empty() && _flags->resizeDims.size() != _flags->input_data_list.size()) {
     MS_LOG(ERROR) << "Size of input resizeDims should be equal to size of input inDataPath";
+    std::cerr << "Size of input resizeDims should be equal to size of input inDataPath" << std::endl;
+    return RET_ERROR;
+  }
+
+  if (_flags->device != "CPU" && _flags->device != "GPU") {
+    MS_LOG(ERROR) << "Device type:" << _flags->device << " is not supported.";
+    std::cerr << "Device type:" << _flags->device << " is not supported." << std::endl;
     return RET_ERROR;
   }
 
@@ -573,23 +603,32 @@ int RunBenchmark(int argc, const char **argv) {
   auto status = mBenchmark.Init();
   if (status != 0) {
     MS_LOG(ERROR) << "Benchmark init Error : " << status;
+    std::cerr << "Benchmark init Error : " << status << std::endl;
     return RET_ERROR;
   }
 
-  if (flags.device == "NPU") {
-    status = mBenchmark.RunBenchmark("NPU");
-  } else {
+  if (flags.device == "GPU") {
+    status = mBenchmark.RunBenchmark("GPU");
+  } else if (flags.device == "CPU") {
     status = mBenchmark.RunBenchmark("CPU");
+  } else {
+    MS_LOG(ERROR) << "Device type" << flags.device << " not support.";
+    std::cerr << "Device type" << flags.device << " not support." << std::endl;
+    return RET_ERROR;
   }
 
   if (status != 0) {
     MS_LOG(ERROR) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
                   << " Failed : " << status;
+    std::cerr << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+              << " Failed : " << status << std::endl;
     return RET_ERROR;
   }
 
   MS_LOG(INFO) << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
                << " Success.";
+  std::cout << "Run Benchmark " << flags.modelPath.substr(flags.modelPath.find_last_of(DELIM_SLASH) + 1).c_str()
+            << " Success." << std::endl;
   return RET_OK;
 }
 }  // namespace lite

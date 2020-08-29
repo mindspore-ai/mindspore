@@ -33,8 +33,8 @@ int DeConvPostInt8C8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
-        int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
-        int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
+        int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
+        int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
 
         int kh_start = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
         int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
@@ -88,8 +88,8 @@ int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
 
     for (int ih = 0; ih < conv_param->input_h_; ih++) {
       for (int iw = 0; iw < conv_param->input_w_; iw++) {
-        int oh = ih * conv_param->stride_h_ - conv_param->pad_h_;
-        int ow = iw * conv_param->stride_w_ - conv_param->pad_w_;
+        int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
+        int ow = iw * conv_param->stride_w_ - conv_param->pad_l_;
 
         int kh_start = MSMAX(0, UP_DIV(-oh, conv_param->dilation_h_));
         int kh_end = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->output_h_ - oh, conv_param->dilation_h_));
@@ -172,73 +172,7 @@ void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, 
 void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16,
                         bool suppport_opt) {
   /* optimize normal -> same layout */
-#ifdef ENABLE_ARM64
-  asm volatile(
-    "mov x10, %[src] \n"
-    "mov x11, %[dst] \n"
-    "dup v15.4s, %w[filter_zp]  \n"
-
-    "mov x0, #0 \n"
-    "1: \n"
-    "cmp x0, %[row4] \n"
-    "beq 4f \n"
-    "add x0, x0, #4\n"
-    "dup v10.4s, wzr \n"
-    "mov x2, #0 \n"
-
-    "2: \n"
-    "cmp x2, %[col16] \n"
-    "beq 3f \n"
-    "add x2, x2, #16\n"
-
-    "ld1 {v0.16b}, [x10], #16\n"
-    "ld1 {v1.16b}, [x10], #16\n"
-    "ld1 {v2.16b}, [x10], #16\n"
-    "ld1 {v3.16b}, [x10], #16\n"
-
-    "saddlp v4.8h, v0.16b \n"
-    "saddlp v5.8h, v1.16b \n"
-    "saddlp v6.8h, v2.16b \n"
-    "saddlp v7.8h, v3.16b \n"
-
-    "saddlp v0.4S, v4.8h \n"
-    "saddlp v1.4S, v5.8h \n"
-    "saddlp v2.4S, v6.8h \n"
-    "saddlp v3.4S, v7.8h \n"
-
-    "addv s4, v0.4S \n"
-    "addv s5, v1.4S \n"
-    "addv s6, v2.4S \n"
-    "addv s7, v3.4S \n"
-
-    "mov v0.s[0], v4.s[0] \n"
-    "mov v0.s[1], v5.s[0] \n"
-    "mov v0.s[2], v6.s[0] \n"
-    "mov v0.s[3], v7.s[0] \n"
-
-    "add v10.4s, v10.4s, v0.4s \n"
-    "b 2b\n"
-
-    "3: \n"
-    "mul v10.4s, v10.4s, v15.4s \n"
-    "st1 {v10.4s}, [x11], #16 \n"
-    "beq 1b \n"
-
-    "4: \n"
-
-    :
-    : [ dst ] "r"(dst), [ src ] "r"(src), [ row4 ] "r"(row4), [ col16 ] "r"(col16), [ filter_zp ] "r"(filter_zp)
-    : "x0", "x1", "x2", "x3", "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v15");
-#else
-  for (int r = 0; r < row4; r++) {
-    int32_t tmp_value = 0;
-    for (int c = 0; c < col16; c++) {
-      int r4div = r / C4NUM, r4mod = r % C4NUM, c16div = c / C16NUM, c16mod = c % C16NUM;
-      int src_index = r4div * C4NUM * col16 + c16div * C16NUM * C4NUM + r4mod * C16NUM + c16mod;
-      tmp_value += src[src_index];
-    }
-  }
-#endif
+  PackInputSum16x4PerLayer(src, dst, filter_zp, row4, col16);
   return;
 }
 

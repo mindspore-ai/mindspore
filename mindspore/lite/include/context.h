@@ -28,17 +28,17 @@ namespace mindspore::lite {
 class Allocator;
 
 /// \brief CpuBindMode defined for holding bind cpu strategy argument.
-enum CpuBindMode {
+typedef enum {
   MID_CPU = -1,   /**< bind middle cpu first */
   HIGHER_CPU = 1, /**< bind higher cpu first */
   NO_BIND = 0     /**< no bind */
-};
+} CpuBindMode;
 
 /// \brief DeviceType defined for holding user's preferred backend.
 typedef enum {
   DT_CPU, /**< CPU device type */
   DT_GPU, /**< GPU device type */
-  DT_NPU  /**< NPU device type */
+  DT_NPU  /**< NPU device type, not supported yet */
 } DeviceType;
 
 /// \brief DeviceContext defined for holding DeviceType.

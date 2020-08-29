@@ -43,13 +43,20 @@ int64_t Resize::GetNewHeight() const { return this->primitive_->value_as_Resize(
 int64_t Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()->newWidth(); }
 bool Resize::GetAlignCorners() const { return this->primitive_->value_as_Resize()->alignCorners(); }
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value_as_Resize()->preserveAspectRatio(); }
-
-void Resize::SetFormat(int format) {}
-void Resize::SetMethod(int method) {}
-void Resize::SetNewHeight(int64_t new_height) {}
-void Resize::SetNewWidth(int64_t new_width) {}
-void Resize::SetAlignCorners(bool align_corners) {}
-void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {}
+int Resize::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Resize();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Resize return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateResize(*fbb, attr->format(), attr->method(), attr->newHeight(), attr->newWidth(),
+                                         attr->alignCorners(), attr->preserveAspectRatio());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Resize, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 namespace {
 constexpr int kInputRank = 4;
@@ -60,7 +67,10 @@ int Resize::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<
   if (input == nullptr) {
     return 1;
   }
-  MS_ASSERT(input->shape().size() == kInputRank);
+  if (input->shape().size() != kInputRank) {
+    MS_LOG(ERROR) << "Size of input shape is wrong.";
+    return RET_ERROR;
+  }
 
   auto output = outputs_.front();
   if (output == nullptr) {

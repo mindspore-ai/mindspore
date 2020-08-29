@@ -28,14 +28,18 @@ namespace lite {
 class ExpandDims : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ExpandDims, PrimitiveC);
   ExpandDims() = default;
   explicit ExpandDims(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetDim(int dim);
+
 #else
-  explicit ExpandDims(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  ExpandDims() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetDim() const;
-  void SetDim(int dim);
 };
 }  // namespace lite
 }  // namespace mindspore

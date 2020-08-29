@@ -39,6 +39,30 @@ int LiteKernel::DecOutTensorRefCount() {
   return 0;
 }
 
+int LiteKernel::Prepare() {
+  if (!InferShapeDone()) {
+    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(true);
+    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+    if (ret != 0) {
+      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(false);
+      MS_LOG(ERROR) << "InferShape fail!";
+      return ret;
+    }
+    ret = ReSize();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
+      return ret;
+    }
+  }
+
+  auto &outputs = this->out_tensors();
+  for (auto *output : outputs) {
+    MS_ASSERT(output != nullptr);
+    output->MallocData();
+  }
+  return RET_OK;
+}
+
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
   const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> input_kernels;

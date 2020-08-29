@@ -31,8 +31,25 @@ std::vector<bool> Where::GetCondition() const {
   auto fb_vector = this->primitive_->value_as_Where()->condition();
   return std::vector<bool>(fb_vector->begin(), fb_vector->end());
 }
-
-void Where::SetCondition(const std::vector<bool> &condition) {}
+int Where::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Where();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Where return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<uint8_t> condition;
+  if (attr->condition() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->condition()->size()); i++) {
+      condition.push_back(attr->condition()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateWhereDirect(*fbb, &condition);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Where, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Where::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

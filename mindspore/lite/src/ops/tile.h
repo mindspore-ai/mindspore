@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,16 +29,20 @@ namespace lite {
 class Tile : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Tile, PrimitiveC);
   Tile() = default;
   explicit Tile(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMultiples(const std::vector<int> &multiples);
+  void SetDims(const std::vector<int> &dims);
+
 #else
-  explicit Tile(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Tile() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetMultiples() const;
-  void SetMultiples(const std::vector<int> &multiples);
   std::vector<int> GetDims() const;
-  void SetDims(const std::vector<int> &dims);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -28,15 +28,18 @@ namespace lite {
 class Clip : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Clip, PrimitiveC);
   Clip() = default;
   explicit Clip(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetMax(float max);
+  void SetMin(float min);
 #else
-  explicit Clip(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Clip() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetMax() const;
   float GetMin() const;
-  void SetMax(float max);
-  void SetMin(float min);
 };
 }  // namespace lite
 }  // namespace mindspore

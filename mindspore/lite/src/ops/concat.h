@@ -28,17 +28,20 @@ namespace lite {
 class Concat : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Concat, PrimitiveC);
   Concat() = default;
   explicit Concat(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void SetAxis(int axis);
+  void SetN(int n);
 #else
-  explicit Concat(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Concat() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
   int GetN() const;
-  void SetAxis(int axis);
-  void SetN(int n);
 };
 }  // namespace lite
 }  // namespace mindspore

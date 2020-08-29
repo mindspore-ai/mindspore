@@ -26,12 +26,22 @@ void DepthToSpace::SetBlockSize(int block_size) { this->primitive_->value.AsDept
 void DepthToSpace::SetFormat(int format) { this->primitive_->value.AsDepthToSpace()->format = (schema::Format)format; }
 
 #else
-
+int DepthToSpace::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_DepthToSpace();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_DepthToSpace return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateDepthToSpace(*fbb, attr->blockSize(), attr->format());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_DepthToSpace, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int DepthToSpace::GetBlockSize() const { return this->primitive_->value_as_DepthToSpace()->blockSize(); }
 int DepthToSpace::GetFormat() const { return this->primitive_->value_as_DepthToSpace()->format(); }
 
-void DepthToSpace::SetBlockSize(int block_size) {}
-void DepthToSpace::SetFormat(int format) {}
 #endif
 namespace {
 constexpr int kDepthToSpaceOutputNum = 1;

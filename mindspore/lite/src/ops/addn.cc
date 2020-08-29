@@ -24,10 +24,21 @@ int AddN::GetN() const { return this->primitive_->value.AsAddN()->N; }
 void AddN::SetN(int n) { this->primitive_->value.AsAddN()->N = n; }
 
 #else
-
+int AddN::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_AddN();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_AddN return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateAddN(*fbb, attr->N());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_AddN, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 int AddN::GetN() const { return this->primitive_->value_as_AddN()->N(); }
 
-void AddN::SetN(int n) {}
 #endif
 
 namespace {

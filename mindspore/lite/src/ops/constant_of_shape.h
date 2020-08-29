@@ -28,14 +28,17 @@ namespace lite {
 class ConstantOfShape : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(ConstantOfShape, PrimitiveC);
   ConstantOfShape() = default;
   explicit ConstantOfShape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetValue(float value);
 #else
-  explicit ConstantOfShape(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  ConstantOfShape() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   float GetValue() const;
-  void SetValue(float value);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -170,7 +170,7 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (a.m_ptr->isa<lite::PrimitiveC>() && b.m_ptr->isa<lite::PrimitiveC>()) {
     auto a_value_node_ptr = a.m_ptr->cast<PrimitiveCPtr>();
     auto b_value_node_ptr = b.m_ptr->cast<PrimitiveCPtr>();
-    return a_value_node_ptr->GetPrimitiveT()->value.type == b_value_node_ptr->GetPrimitiveT()->value.type;
+    return a_value_node_ptr->Type() == b_value_node_ptr->Type();
   }
 
   return a == b;
@@ -295,6 +295,9 @@ ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, in
   MS_ASSERT(param_value != nullptr);
   param_value->set_tensor_addr(bias_data);
   param_value->set_tensor_size(kernel_num * sizeof(float) / sizeof(uint8_t));
+  param_value->set_format(weight_tensor->format());
+  param_value->set_tensor_type(weight_tensor->tensor_type());
+  param_value->set_tensor_shape(shape);
   bias_parameter->set_default_param(param_value);
   return bias_parameter;
 }
@@ -316,7 +319,7 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
   if (utils::isa<PrimitiveCPtr>(value)) {
     auto primitive = value->cast<PrimitiveCPtr>();
     MS_ASSERT(primitive != nullptr);
-    return primitive->GetPrimitiveT()->value.type;
+    return (schema::PrimitiveType)primitive->Type();
   } else if (utils::isa<Primitive>(value)) {
     auto primitive = value->cast<PrimitivePtr>();
     MS_ASSERT(primitive != nullptr);
@@ -342,6 +345,14 @@ bool IsConvNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
     auto type = opt::GetCNodeType(n);
     return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D;
+  }
+  return false;
+}
+
+bool IsPoolingNode(const BaseRef &n) {
+  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
+    auto type = opt::GetCNodeType(n);
+    return type == schema::PrimitiveType_Pooling;
   }
   return false;
 }

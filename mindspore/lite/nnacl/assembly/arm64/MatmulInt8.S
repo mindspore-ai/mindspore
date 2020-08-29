@@ -24,7 +24,7 @@
 
 //void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, 
 //                      const int *a_sums, const int *bias, int act_min, int act_max, int out_zp,
-//                      int multiplier, int left_shift, int right_shift);
+//                      int multiplier, int left_shift, int right_shift, int row, int col, int stride);
 
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
@@ -40,13 +40,18 @@
 // w11: multiplier
 // w12: left_shift
 // w13: right_shift 
+// w14: row
+// w15: col
+// w24: stride
 
 MatmulInt8Neon64:
-  sub sp, sp, #160
+  sub sp, sp, #192
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   stp x19, x20, [sp], #16
   stp x21, x22, [sp], #16
+  stp x23, x24, [sp], #16
+  stp x25, x26, [sp], #16
 
   ldr w8, [sp]
   ldr w9, [sp, #8]
@@ -54,25 +59,28 @@ MatmulInt8Neon64:
   ldr w11, [sp, #24]
   ldr w12, [sp, #32]
   ldr w13, [sp, #40]
+  ldr w14, [sp, #48]
+  ldr w15, [sp, #56]
+  ldr w24, [sp, #64]
 
-  mov w15, #0       // b col index
-  mov w16, #0       // a row index
   mov w17, #4       // sizeof(int8)*4
   mul w21, w5, w17  // the stride of a/b: sizeof(int8)*4*deep16
-
+  mov w17, #1
+  mov x25, x2
 L1:
-  cmp w15, w4      
+  cmp w4, #0      // if at the end of col4
   beq End1
 
-  mov w16, #0     // reset a row index
+  mov w16, w3     // reset a row4 counter
+  mov w23, w14    // reset a row counter
   mov x17, x0     // reload a ptr
   mov x22, x6     // reload a_sums ptr 
 L2:
-  cmp w16, w3
+  cmp w16, #0
   beq End2
 
   mov x18, x1     // reload b ptr
-  mov x19, x7    // reload bias ptr
+  mov x19, x7     // reload bias ptr
   mov w20, w5     // reload depth
   dup v16.4s, wzr
   dup v17.4s, wzr
@@ -256,21 +264,128 @@ End3:
   sqxtn v15.8b, v13.8h
   sqxtn2 v15.16b, v14.8h
 
-  st1 {v15.16b}, [x2], #16
-  add w16, w16, #4      // a row index + 4
+  cmp w23, #4
+  blt Write     // if rows < 4
+  cmp w15, #4
+  blt Write     // if cols < 4
+
+  st1 {v15.s}[0], [x2], x24
+  st1 {v15.s}[1], [x2], x24
+  st1 {v15.s}[2], [x2], x24
+  st1 {v15.s}[3], [x2], x24
+  b Endwrite
+
+Write:
+  cmp w15, #4
+  beq WriteCol4
+  cmp w15, #3
+  beq WriteCol3
+  cmp w15, #2
+  beq WriteCol2
+  cmp w15, #1
+  beq WriteCol1
+  
+WriteCol4:
+  st1 {v15.s}[0], [x2], x24
+  cmp w23, #1
+  beq Endwrite
+  st1 {v15.s}[1], [x2], x24
+  cmp w23, #2
+  beq Endwrite
+  st1 {v15.s}[2], [x2], x24
+  cmp w23, #3
+  beq Endwrite
+  st1 {v15.s}[3], [x2], x24
+  b Endwrite
+
+WriteCol3:
+  mov x26, x2
+  st1 {v15.b}[0], [x26], #1
+  st1 {v15.b}[1], [x26], #1
+  st1 {v15.b}[2], [x26], #1
+  add x2, x2, x24
+  cmp w23, #1
+  beq Endwrite
+  mov x26, x2
+  st1 {v15.b}[4], [x26], #1
+  st1 {v15.b}[5], [x26], #1
+  st1 {v15.b}[6], [x26], #1
+  add x2, x2, x24
+  cmp w23, #2
+  beq Endwrite
+  mov x26, x2
+  st1 {v15.b}[8], [x26], #1
+  st1 {v15.b}[9], [x26], #1
+  st1 {v15.b}[10], [x26], #1
+  add x2, x2, x24
+  cmp w23, #3
+  beq Endwrite
+  mov x26, x2
+  st1 {v15.b}[12], [x26], #1
+  st1 {v15.b}[13], [x26], #1
+  st1 {v15.b}[14], [x26], #1
+  add x2, x2, x24
+  b Endwrite
+
+WriteCol2:
+  mov x26, x2
+  st1 {v15.b}[0], [x26], #1
+  st1 {v15.b}[1], [x26], #1
+  add x2, x2, x24
+  cmp w23, #1
+  beq Endwrite
+  mov x26, x2
+  st1 {v15.b}[4], [x26], #1
+  st1 {v15.b}[5], [x26], #1
+  add x2, x2, x24
+  cmp w23, #2
+  beq Endwrite
+  mov x26, x2
+  st1 {v15.b}[8], [x26], #1
+  st1 {v15.b}[9], [x26], #1
+  add x2, x2, x24
+  cmp w23, #3
+  beq Endwrite
+  mov x26, x2
+  st1 {v15.b}[12], [x26], #1
+  st1 {v15.b}[13], [x26], #1
+  add x2, x2, x24
+  b Endwrite
+
+WriteCol1:
+  st1 {v15.b}[0], [x2], x24
+  cmp w23, #1
+  beq Endwrite
+  st1 {v15.b}[4], [x2], x24
+  cmp w23, #2
+  beq Endwrite
+  st1 {v15.b}[8], [x2], x24
+  cmp w23, #3
+  beq Endwrite
+  st1 {v15.b}[12], [x2], x24
+  b Endwrite
+
+Endwrite:  
+  sub w16, w16, #4      // a row4 counter - 4
+  sub w23, w23, #4      // a row counter - 4
   b L2
 
 End2:
-  add w15, w15, #4      // b col index + 4
+  sub w4, w4, #4        // b col4 counter - 4
+  sub w15, w15, #4      // b col counter - 4
   add x1, x1, x21       // b ptr + stride
   add x7, x7, #16       // bias ptr + stride
+  add x25, x25, #4      // output + stride(4 * sizeof(int8))
+  mov x2, x25
   b L1
 
 End1:
-  sub sp, sp, #160
+  sub sp, sp, #192
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   ldp x19, x20, [sp], #16
   ldp x21, x22, [sp], #16
+  ldp x23, x24, [sp], #16
+  ldp x25, x26, [sp], #16
   ret
 #endif

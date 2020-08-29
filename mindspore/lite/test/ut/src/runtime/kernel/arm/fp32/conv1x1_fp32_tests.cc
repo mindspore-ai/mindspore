@@ -19,9 +19,8 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/strassen_matmul.h"
+#include "src/runtime/kernel/arm/fp32/convolution_1x1.h"
 
 namespace mindspore {
 using mindspore::lite::tensor::Tensor;
@@ -51,10 +50,10 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack1) {
   conv_param->output_h_ = 4;
   conv_param->output_w_ = 5;
   conv_param->stride_h_ = conv_param->stride_w_ = 4;
-  conv_param->pad_h_ = conv_param->pad_w_ = 2;
+  conv_param->pad_u_ = conv_param->pad_l_ = 2;
 
   float out[20] = {0};
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   EXPECT_EQ(0, lite::CompareOutputData(out, correct, 20));
   delete conv_param;
 }
@@ -92,10 +91,10 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack2) {
   conv_param->output_h_ = 7;
   conv_param->output_w_ = 4;
   conv_param->stride_h_ = conv_param->stride_w_ = 3;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
 
   float out[28] = {0};
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   CompareOutputData(out, correct, 28, 0.0001);
   delete conv_param;
 }
@@ -106,7 +105,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack3) {
   conv_param->input_h_ = conv_param->input_w_ = 3;
   conv_param->output_h_ = conv_param->output_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
 
   float in[] = {1.6767339, 12.25904,  19.018835, 3.0790641,  -9.252135, -8.685675, 3.6115494, 3.2282279, 17.025112,
                 -5.052577, 12.750252, 12.701241, -8.9477215, -9.080522, 19.03931,  -6.501229, -4.122992, 9.540845};
@@ -114,7 +113,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack3) {
   float correct[] = {0.0,       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.025112,
                      -5.052577, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   EXPECT_EQ(0, lite::CompareOutputData(out, correct, 18));
   delete conv_param;
 }
@@ -125,7 +124,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack4) {
   conv_param->input_h_ = conv_param->input_w_ = 3;
   conv_param->output_h_ = conv_param->output_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
   float in[] = {4.1795, 13.142, -3.593, 16.505, 19.899, 8.5562, 19.969, -6.235, -2.380, -9.027, 9.5542,
                 18.974, 23.622, 8.3608, 47.325, -14.36, 15.370, 4.3049, -0.784, 37.925, -0.081, 6.1298,
                 0.6721, -1.517, 37.998, 13.719, 11.029, 1.7127, -1.770, 41.903, 9.0560, 14.988, 3.1866,
@@ -136,7 +135,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack4) {
                      -1.770, 41.903, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,    0.0,
                      0.0,    0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0};
   float out[54] = {0};
-  Conv1x1InputPackFp32(in, out, conv_param);
+  Conv1x1InputPack(in, out, conv_param, sizeof(float));
   EXPECT_EQ(0, lite::CompareOutputData(out, correct, 54));
   delete conv_param;
 }
@@ -282,8 +281,8 @@ int Conv1x1TestInit1(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<l
   conv_param->kernel_h_ = conv_param->kernel_w_ = 1;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 1;
-  conv_param->is_relu_ = conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 1;
+  conv_param->act_type_ = ActType_No;
   return out_t->ElementsNum();
 }
 
@@ -349,9 +348,8 @@ int Conv1x1TestInit2(std::vector<lite::tensor::Tensor *> *inputs_, std::vector<l
   conv_param->kernel_h_ = conv_param->kernel_w_ = 1;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
-  conv_param->pad_h_ = conv_param->pad_w_ = 0;
-  conv_param->is_relu_ = false;
-  conv_param->is_relu6_ = false;
+  conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->act_type_ = ActType_No;
   return out_t->ElementsNum();
 }
 

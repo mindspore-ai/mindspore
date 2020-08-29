@@ -230,8 +230,8 @@ void Conv3x3Fp16InputTransform(const float16_t *input_data, float16_t *trans_inp
   int input_channel = conv_param->input_channel_;
   int input_width = conv_param->input_w_;
   int input_height = conv_param->input_h_;
-  int pad_w = conv_param->pad_w_;
-  int pad_h = conv_param->pad_h_;
+  int pad_w = conv_param->pad_l_;
+  int pad_h = conv_param->pad_u_;
   int ic8 = UP_DIV(input_channel, C8NUM);
   if (out_w_block == 0) {
     return;
@@ -576,8 +576,8 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
   int ic8 = UP_DIV(in_channel, C8NUM);
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int input_h = conv_param->input_h_;
   int input_w = conv_param->input_w_;
   if (out_w_block_num == 0) {
@@ -607,7 +607,7 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
         for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
           int src_x_offset = src_y_offset + j * ic8 * C8NUM;
           int dst_x_offset = dst_y_offset + j * C8NUM;
-          float16_t *src_addr = input_data + src_x_offset;
+          const float16_t *src_addr = input_data + src_x_offset;
           float16_t *dst_addr = tmp_data + dst_x_offset;
 #ifdef ENABLE_NEON
           vst1q_f16(dst_addr, vld1q_f16(src_addr));

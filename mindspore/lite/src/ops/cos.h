@@ -21,7 +21,7 @@
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic_self.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +31,9 @@ class Cos : public ArithmeticSelf {
   Cos() = default;
   explicit Cos(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  explicit Cos(schema::Primitive *primitive) : ArithmeticSelf(primitive) {}
+  Cos() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

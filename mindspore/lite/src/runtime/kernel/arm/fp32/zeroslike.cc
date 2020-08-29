@@ -27,9 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ZerosLike;
 
 namespace mindspore::kernel {
-constexpr int kInputNum = 1;
-constexpr int kOutputNum = 1;
-
 int ZerosLikeCPUKernel::Init() { return RET_OK; }
 
 int ZerosLikeCPUKernel::Run() {

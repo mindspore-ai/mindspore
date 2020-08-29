@@ -70,6 +70,7 @@ STATUS TflitePoolingParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfli
 
   attr->global = false;
   attr->roundMode = schema::RoundMode_FLOOR;
+  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
 
   // calculate pad params
   auto data_index = tflite_op->inputs[0];

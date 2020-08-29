@@ -28,14 +28,18 @@ namespace lite {
 class SoftMax : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SoftMax, PrimitiveC);
   SoftMax() = default;
   explicit SoftMax(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetAxis(int axis);
+
 #else
-  explicit SoftMax(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  SoftMax() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetAxis() const;
-  void SetAxis(int axis);
 };
 }  // namespace lite
 }  // namespace mindspore

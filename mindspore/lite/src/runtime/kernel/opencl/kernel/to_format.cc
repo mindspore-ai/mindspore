@@ -50,7 +50,7 @@ int ToFormatOpenCLKernel::Init() {
 
   this->set_name(kernel_name);
 #ifdef PROGRAM_WITH_IL
-  ocl_runtime->CreateKernelFromIL(kernel_(), kernel_name);
+  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   std::set<std::string> build_options;
   std::string source = to_format_source;
@@ -126,13 +126,14 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     im_dst_y = h;
   } else {
     MS_LOG(ERROR) << "Unsupported format. " << out_tensors_[0]->GetFormat();
+    return RET_ERROR;
   }
   img_size->clear();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
+  auto enable_fp16_ = lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable();
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
   return RET_OK;
@@ -146,8 +147,10 @@ int ToFormatOpenCLKernel::Run() {
 
   cl_int4 shape{(cl_int)nhwc_shape_[0], (cl_int)nhwc_shape_[1], (cl_int)nhwc_shape_[2], (cl_int)nhwc_shape_[3]};
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data());
+  auto src_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
+  auto dst_mem_type = (out_mem_type_ == OpenCLMemType::IMG) ? lite::opencl::MemType::IMG : lite::opencl::MemType::BUF;
+  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data(), src_mem_type);
+  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data(), dst_mem_type);
   ocl_runtime->SetKernelArg(kernel_, 2, gsize);
   ocl_runtime->SetKernelArg(kernel_, 3, shape);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
@@ -172,5 +175,6 @@ kernel::LiteKernel *OpenCLToFormatKernelCreator(const std::vector<lite::tensor::
   return kernel;
 }
 
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ToFormat, OpenCLToFormatKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ToFormat, OpenCLToFormatKernelCreator)
 }  // namespace mindspore::kernel

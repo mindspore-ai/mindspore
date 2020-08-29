@@ -29,7 +29,16 @@ class BatchnormFp16CPUKernel : public BatchnormCPUKernel {
       : BatchnormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   virtual ~BatchnormFp16CPUKernel() {}
 
-  virtual int DoExecute(int task_id);
+  int Run() override;
+  int InitConstTensor() override;
+  int DoExecute(int task_id) override;
+
+ private:
+  void FreeInputAndOutput();
+  bool is_input_fp32_ = false;
+  bool is_output_fp32_ = false;
+  float16_t *input_ = nullptr;
+  float16_t *output_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

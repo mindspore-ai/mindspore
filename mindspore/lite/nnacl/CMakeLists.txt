@@ -32,9 +32,11 @@ if (PLATFORM_ARM64)
     )
     set_target_properties(optimize PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
-    add_custom_command(TARGET optimize POST_BUILD
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        add_custom_command(TARGET optimize POST_BUILD
             COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
             ${TOP_DIR}/build/nnacl/liboptimize.so)
+    endif ()
 
     add_custom_command(TARGET optimize POST_BUILD
             COMMAND rm -rf ${TOP_DIR}/output/lib/liboptimize.so

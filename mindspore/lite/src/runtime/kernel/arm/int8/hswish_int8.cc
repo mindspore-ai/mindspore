@@ -78,7 +78,7 @@ int HswishInt8CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int HswishInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int HswishInt8Run(void *cdata, int task_id) {
   auto activation_kernel = reinterpret_cast<HswishInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
@@ -94,7 +94,7 @@ int HswishInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = LiteBackendParallelLaunch(HswishInt8Run, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, HswishInt8Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "HswishInt8Run function error error_code[" << error_code << "]";
     return RET_ERROR;

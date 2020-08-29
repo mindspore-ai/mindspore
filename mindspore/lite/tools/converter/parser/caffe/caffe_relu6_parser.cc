@@ -14,14 +14,32 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "mindspore/lite/tools/converter/parser/caffe/caffe_relu6_parser.h"
+#include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
+STATUS CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto,
+                               const caffe::LayerParameter &weight,
+                               schema::CNodeT *op,
+                               std::vector<schema::TensorT *> *weightVec) {
+  MS_LOG(DEBUG) << "parse CaffeRelu6Parser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
   std::unique_ptr<schema::ActivationT> attr(new schema::ActivationT());
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+
   attr->type = schema::ActivationType_RELU6;
   // relu: negative_slope = 0, no parameter;
   // leakyrelu: negative_slope != 0;
@@ -32,9 +50,10 @@ STATUS CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::
       attr->alpha = negative_slope;
     }
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  op->primitive->value.value = attr.release();
+
+  op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Activation;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 

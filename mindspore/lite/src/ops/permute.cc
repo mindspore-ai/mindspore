@@ -31,6 +31,25 @@ std::vector<int64_t> Permute::GetOrder() const {
 }
 
 void Permute::SetOrder(const std::vector<int64_t> &order) {}
+int Permute::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Permute();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Permute return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int64_t> order;
+  if (attr->order() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->order()->size()); i++) {
+      order.push_back(attr->order()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreatePermuteDirect(*fbb, &order);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Permute, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 }  // namespace lite
 }  // namespace mindspore

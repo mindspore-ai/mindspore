@@ -100,15 +100,14 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *
                                               const std::vector<tensor::Tensor *> &out_tensors,
                                               const PrimitiveC *primitive, const Context *ctx,
                                               const kernel::KernelKey &key) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(ctx);
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != ctx);
   auto parameter = kernel::PopulateParameter(primitive);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
                   << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
     return nullptr;
   }
-  this->op_parameters_.emplace_back(parameter);
   auto creator = GetCreator(key);
   if (creator != nullptr) {
     auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key, primitive);
@@ -117,10 +116,5 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<tensor::Tensor *
   return nullptr;
 }
 
-KernelRegistry::~KernelRegistry() {
-  for (auto op_parameter : op_parameters_) {
-    delete(op_parameter);
-  }
-  op_parameters_.clear();
-}
+KernelRegistry::~KernelRegistry() {}
 }  // namespace mindspore::lite

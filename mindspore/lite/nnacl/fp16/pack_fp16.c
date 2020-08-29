@@ -21,14 +21,14 @@
 void Conv1x1InputPackFp16(const float16_t *src, float16_t *dst, ConvParameter *conv_param) {
   /* support nhwc */
   for (int dst_h = 0; dst_h < conv_param->output_h_; dst_h++) {
-    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_h_;
+    int src_h = dst_h * conv_param->stride_h_ - conv_param->pad_u_;
     if (src_h < 0 || src_h >= conv_param->input_h_) {
       continue;
     }
     const float16_t *src_h_ptr = src + src_h * conv_param->input_w_ * conv_param->input_channel_;
     float16_t *dst_h_ptr = dst + dst_h * conv_param->output_w_ * conv_param->input_channel_;
     for (int dst_w = 0; dst_w < conv_param->output_w_; dst_w++) {
-      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_w_;
+      int src_w = dst_w * conv_param->stride_w_ - conv_param->pad_l_;
       if (src_w < 0 || src_w >= conv_param->input_w_) {
         continue;
       }
@@ -46,44 +46,40 @@ void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float1
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_h_;
-  int pad_w = conv_param->pad_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   int in_channel = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   int out_w = conv_param->output_w_;
-  int channel_block = UP_DIV(in_channel, 4);
-  int kernel_plane = kernel_h * kernel_w;
+  int ic4 = UP_DIV(in_channel, 4);
+  memset(packed_input, 0, kernel_w * kernel_h * ic4 * C4NUM * 16 * sizeof(float16_t));
 
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;
     int input_h = block_start / out_w * stride_h - pad_h;
     int input_w = block_start % out_w * stride_w - pad_w;
-    for (int j = 0; j < kernel_h; j++) {
-      int input_y = input_h + j * dilation_h;
-      if (input_y < 0 || input_y >= in_h) {
-        continue;
-      }
-      int input_y_stride = input_y * in_w * channel_block * C4NUM;
-      for (int n = 0; n < kernel_w; n++) {
-        int input_x = input_w + n * dilation_w;
-        if (input_x < 0 || input_x >= in_w) {
-          continue;
-        }
-        int input_x_stride = input_y_stride + input_x * channel_block * C4NUM;
-        int input_plane_offset = (j * kernel_w + n) * 16 * C4NUM * channel_block + i * C4NUM;
-        for (int m = 0; m < channel_block; m++) {
+    int input_stride = input_h * in_w * ic4 * C4NUM + input_w * ic4 * C4NUM;
+    int kh_s = MSMAX(0, UP_DIV(-input_h, dilation_h));
+    int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
+    int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
+    int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
+    for (int j = kh_s; j < kh_e; j++) {
+      int input_y_stride = j * dilation_h * in_w * ic4 * C4NUM + input_stride;
+      for (int n = kw_s; n < kw_e; n++) {
+        int input_x_stride = input_y_stride + n * dilation_w * ic4 * C4NUM;
+        int input_plane_offset = (j * kernel_w + n) * 16 * C4NUM * ic4 + i * C4NUM;
+        for (int m = 0; m < ic4; m++) {
           int channel_block_stride = input_x_stride + m * C4NUM;
           int channel_block_offset = input_plane_offset + m * 16 * C4NUM;
 #ifdef ENABLE_ARM64
           vst1_f16(packed_input + channel_block_offset, vld1_f16(input_data + channel_block_stride));
 #else
-          (packed_input + channel_block_offset)[0] = (input_data + channel_block_stride)[0];
-          (packed_input + channel_block_offset)[1] = (input_data + channel_block_stride)[1];
-          (packed_input + channel_block_offset)[2] = (input_data + channel_block_stride)[2];
-          (packed_input + channel_block_offset)[3] = (input_data + channel_block_stride)[3];
+          for (int l = 0; l < C4NUM; ++l) {
+            (packed_input + channel_block_offset)[l] = (input_data + channel_block_stride)[l];
+          }
 #endif
         }  // channel_block loop
       }    // kernel_w loop
@@ -219,6 +215,19 @@ void PackNCHWToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int 
       }
     }
   }
+}
+
+void PackNCHWToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel) {
+  for (int n = 0; n < batch; n++) {
+    for (int c = 0; c < channel; c++) {
+      for (int hw = 0; hw < plane; hw++) {
+        int nhwc_index = n * channel * plane + hw * channel + c;
+        int nchw_index = n * channel * plane + c * plane + hw;
+        ((float16_t *)(dst))[nhwc_index] = ((const float16_t *)(src))[nchw_index];
+      }
+    }
+  }
+  return;
 }
 
 void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel) {

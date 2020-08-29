@@ -32,7 +32,7 @@ class ExpandDimsCPUKernel : public LiteKernel {
   ExpandDimsCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                       const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~ExpandDimsCPUKernel() override = default;
 
   int Init() override;
@@ -46,7 +46,6 @@ class ExpandDimsCPUKernel : public LiteKernel {
   size_t data_size_;
   float *in_ptr_;
   float *out_ptr_;
-  const Context *ctx_;
   int thread_count_;
 };
 }  // namespace mindspore::kernel

@@ -40,9 +40,31 @@ std::vector<int> SpaceToBatch::GetPaddings() const {
   auto fb_vector = this->primitive_->value_as_SpaceToBatch()->paddings();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-
-void SpaceToBatch::SetBlockShape(const std::vector<int> &block_shape) {}
-void SpaceToBatch::SetPaddings(const std::vector<int> &paddings) {}
+int SpaceToBatch::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_SpaceToBatch();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_SpaceToBatch return nullptr";
+    return RET_ERROR;
+  }
+  std::vector<int32_t> blockShape;
+  if (attr->blockShape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->blockShape()->size()); i++) {
+      blockShape.push_back(attr->blockShape()->data()[i]);
+    }
+  }
+  std::vector<int32_t> paddings;
+  if (attr->paddings() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->paddings()->size()); i++) {
+      paddings.push_back(attr->paddings()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateSpaceToBatchDirect(*fbb, &blockShape, &paddings);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SpaceToBatch, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 namespace {
 constexpr int kSpaceToBatchNDOutputNum = 1;
@@ -107,8 +129,8 @@ int SpaceToBatch::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::ve
 
   std::vector<int32_t> output_shape(input_shape.size());
   output_shape[NHWC_N] = input_shape[NHWC_N] * (block_sizes_[NHWC_N] * block_sizes_[NHWC_H]);
-  output_shape[NHWC_H] = input_shape[NHWC_H] / block_sizes_[NHWC_N];
-  output_shape[NHWC_W] = input_shape[NHWC_W] / block_sizes_[NHWC_H];
+  output_shape[NHWC_H] = (input_shape[NHWC_H] + paddings_[0] + paddings_[1]) / block_sizes_[NHWC_N];
+  output_shape[NHWC_W] = (input_shape[NHWC_W] + paddings_[2] + paddings_[3]) / block_sizes_[NHWC_H];
   output_shape[NHWC_C] = input_shape[NHWC_C];
   outputs[0]->set_shape(output_shape);
   return RET_OK;

@@ -26,10 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Shape;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kShapeInputNum = 1;
-constexpr int kShapeOutputNum = 1;
-}  // namespace
 int ShapeCPUKernel::Init() { return RET_OK; }
 
 int ShapeCPUKernel::ReSize() { return RET_OK; }

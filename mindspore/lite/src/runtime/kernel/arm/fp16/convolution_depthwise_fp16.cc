@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_depthwise_slidewindow_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "schema/model_generated.h"
@@ -30,72 +31,34 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseFp16CPUKernel::~ConvolutionDepthwiseFp16CPUKernel() {
-  if (sliding_ != nullptr) {
-    delete sliding_;
-    sliding_ = nullptr;
-  }
   if (packed_weight_ != nullptr) {
     delete packed_weight_;
     packed_weight_ = nullptr;
   }
-  FreeTmpBuffer();
-}
-
-void ConvolutionDepthwiseFp16CPUKernel::FreeTmpBuffer() {
-  if (need_align_) {
-    if (packed_input_ != nullptr) {
-      delete packed_input_;
-      packed_input_ = nullptr;
-    }
-    if (packed_output_ != nullptr) {
-      delete packed_output_;
-      packed_output_ = nullptr;
-    }
-  }
-}
-
-int ConvolutionDepthwiseFp16CPUKernel::InitBuffer() {
-  if (conv_param_->input_channel_ % C4NUM != 0) {
-    need_align_ = true;
-    int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
-    int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM * C8;
-    packed_input_ = reinterpret_cast<float16_t *>(malloc(pack_input_size * sizeof(float16_t)));
-    if (packed_input_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-
-    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM * C8;
-    packed_output_ = reinterpret_cast<float16_t *>(malloc(pack_output_size * sizeof(float16_t)));
-    if (packed_output_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
+  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+
   auto weight_tensor = in_tensors_[kWeightIndex];
-  int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
-  int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
+  int channel = weight_tensor->Batch();
+  int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNCHWFp32ToNC8HW8Fp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
-                           weight_tensor->Batch());
+  PackNCHWToNHWCFp16(fp16_weight_, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
+                     weight_tensor->Batch());
 
-  bias_data_ = reinterpret_cast<float16_t *>(malloc(C8NUM * OC8 * sizeof(float16_t)));
+  bias_data_ = reinterpret_cast<float16_t *>(malloc(channel * sizeof(float16_t)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
+  memset(bias_data_, 0, channel * sizeof(float16_t));
   auto bias_fp16 = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
@@ -104,18 +67,10 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }
   }
-
-  conv_param_->thread_num_ = MSMIN(thread_count_, OC8);
   return RET_OK;
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
-  sliding_ = new (std::nothrow) SlidingWindowParam;
-  if (sliding_ == nullptr) {
-    MS_LOG(ERROR) << "new sliding window param failed.";
-    return RET_ERROR;
-  }
-
   auto ret = InitWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitWeightBias failed.";
@@ -129,28 +84,21 @@ int ConvolutionDepthwiseFp16CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::ReSize() {
-  FreeTmpBuffer();
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
-  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
-
-  ret = InitBuffer();
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp16 InitBuffer failed.";
-    return RET_ERROR;
-  }
+  conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
   return RET_OK;
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
-  ConvDwC8Fp16(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), conv_param_,
-               sliding_, task_id);
+  ConvDwFp16(execute_output_, execute_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), conv_param_,
+             task_id);
   return RET_OK;
 }
 
-static int ConvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+static int ConvDwFp16Run(void *cdata, int task_id) {
   auto conv_dw_fp16 = reinterpret_cast<ConvolutionDepthwiseFp16CPUKernel *>(cdata);
   auto ret = conv_dw_fp16->Execute(task_id);
   if (ret != RET_OK) {
@@ -161,13 +109,13 @@ static int ConvDwFp16Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
+  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
+    MS_LOG(ERROR) << "Only support input channel equals output channel.";
+    return RET_ERROR;
+  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
-    return RET_ERROR;
-  }
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
 
@@ -176,25 +124,13 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
     return ret;
   }
-  if (need_align_) {
-    PackNHWCToNHWC8Fp16(execute_input_, packed_input_, conv_param_->input_batch_,
-                        conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
-  } else {
-    packed_input_ = execute_input_;
-  }
-  if (!need_align_) {
-    packed_output_ = execute_output_;
-  }
 
-  ret = LiteBackendParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwFp16Run error: error_code[" << ret << "]";
     return RET_ERROR;
   }
-  if (need_align_) {
-    PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
-                        conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-  }
+
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
@@ -207,7 +143,14 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::tensor::T
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  auto kernel = new (std::nothrow) ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  kernel::LiteKernel *kernel;
+  if (conv_param->input_channel_ < 32) {
+    kernel =
+      new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

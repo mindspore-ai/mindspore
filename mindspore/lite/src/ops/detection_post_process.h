@@ -28,10 +28,26 @@ namespace lite {
 class DetectionPostProcess : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(DetectionPostProcess, PrimitiveC);
   DetectionPostProcess() = default;
   explicit DetectionPostProcess(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetFormat(int format);
+  void SetInputSize(int input_size);
+  void SetHScale(float h_scale);
+  void SetWScale(float w_scale);
+  void SetXScale(float x_scale);
+  void SetYScale(float y_scale);
+  void SetNmsIouThreshold(float nms_iou_threshold);
+  void SetNmsScoreThreshold(float nms_score_threshold);
+  void SetMaxDetections(int64_t max_detections);
+  void SetDetectionsPreClass(int64_t detections_pre_class);
+  void SetMaxClassesPreDetection(int64_t max_classes_pre_detection);
+  void SetNumClasses(int64_t num_classes);
+  void SetUseRegularNms(bool use_regular_nms);
 #else
-  explicit DetectionPostProcess(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  DetectionPostProcess() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetFormat() const;
   int GetInputSize() const;
@@ -46,19 +62,6 @@ class DetectionPostProcess : public PrimitiveC {
   int64_t GetMaxClassesPreDetection() const;
   int64_t GetNumClasses() const;
   bool GetUseRegularNms() const;
-  void SetFormat(int format);
-  void SetInputSize(int input_size);
-  void SetHScale(float h_scale);
-  void SetWScale(float w_scale);
-  void SetXScale(float x_scale);
-  void SetYScale(float y_scale);
-  void SetNmsIouThreshold(float nms_iou_threshold);
-  void SetNmsScoreThreshold(float nms_score_threshold);
-  void SetMaxDetections(int64_t max_detections);
-  void SetDetectionsPreClass(int64_t detections_pre_class);
-  void SetMaxClassesPreDetection(int64_t max_classes_pre_detection);
-  void SetNumClasses(int64_t num_classes);
-  void SetUseRegularNms(bool use_regular_nms);
 };
 }  // namespace lite
 }  // namespace mindspore

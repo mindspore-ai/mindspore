@@ -18,8 +18,7 @@
 #define LITE_MINDSPORE_LITE_C_OPS_SPACE_TO_BATCH_N_D_H_
 
 #include <vector>
-#include <set>
-#include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,15 +27,19 @@ namespace lite {
 class SpaceToBatchND : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(SpaceToBatchND, PrimitiveC);
   SpaceToBatchND() = default;
   explicit SpaceToBatchND(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBlockShape(const std::vector<int> &block_shape);
+  void SetPaddings(const std::vector<int> &paddings);
 #else
-  explicit SpaceToBatchND(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  SpaceToBatchND() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;
-  void SetBlockShape(const std::vector<int> &block_shape);
-  void SetPaddings(const std::vector<int> &paddings);
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) override;
 };
 }  // namespace lite
 }  // namespace mindspore

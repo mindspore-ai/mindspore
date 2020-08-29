@@ -25,13 +25,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
-                  const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
-                  int task_id);
+void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
+                const float16_t *bias_data, const ConvParameter *conv_param, int task_id);
 #ifdef __cplusplus
 }
 #endif
-
 
 namespace mindspore::kernel {
 class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
@@ -46,17 +44,11 @@ class ConvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int ReSize() override;
   int Run() override;
 
-  int InitBuffer();
   int InitWeightBias();
   int Execute(int task_id);
 
  private:
-  void FreeTmpBuffer();
-  SlidingWindowParam *sliding_ = nullptr;
   float16_t *packed_weight_ = nullptr;
-  float16_t *packed_input_ = nullptr;
-  float16_t *packed_output_ = nullptr;
-  bool need_align_ = false;
 };
 }  // namespace mindspore::kernel
 

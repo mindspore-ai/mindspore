@@ -18,6 +18,20 @@
 
 namespace mindspore {
 namespace lite {
+
+#ifdef PRIMITIVE_WRITEABLE
+#else
+int ZerosLike::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+
+  auto val_offset = schema::CreateZerosLike(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ZerosLike, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
+#endif
+
 int ZerosLike::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
@@ -37,5 +51,6 @@ int ZerosLike::InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vect
   output->set_shape(input->shape());
   return RET_OK;
 }
+
 }  // namespace lite
 }  // namespace mindspore

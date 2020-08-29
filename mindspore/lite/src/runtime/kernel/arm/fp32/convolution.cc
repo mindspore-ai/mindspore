@@ -83,7 +83,28 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   int out_channel = conv_param_->output_channel_;
   MS_ASSERT(ctx_->allocator != nullptr);
 
-  tmp_output_block_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(TILE_NUM * out_channel * sizeof(float)));
+  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
+  size_t nhwc4_input_size =
+    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
+  nhwc4_input_ = ctx_->allocator->Malloc(nhwc4_input_size);
+  if (nhwc4_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
+    return RET_ERROR;
+  }
+
+  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
+  int output_tile_count = UP_DIV(output_count, TILE_NUM);
+  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * ic4 * C4NUM;
+  int packed_input_size = output_tile_count * TILE_NUM * unit_size;
+  packed_input_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(conv_param_->input_batch_ * packed_input_size * sizeof(float)));
+  if (packed_input_ == nullptr) {
+    MS_LOG(ERROR) << "malloc packed input failed.";
+    return RET_ERROR;
+  }
+
+  tmp_output_block_ =
+    reinterpret_cast<float *>(ctx_->allocator->Malloc(thread_count_ * TILE_NUM * out_channel * sizeof(float)));
   if (tmp_output_block_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp output block failed.";
     return RET_ERROR;
@@ -104,13 +125,13 @@ void ConvolutionCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionCPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
   ConfigInputOutput();
   return ReSize();
@@ -123,40 +144,11 @@ int ConvolutionCPUKernel::ReSize() {
     return ret;
   }
 
-  if (nhwc4_input_ != nullptr) {
-    free(nhwc4_input_);
-    nhwc4_input_ = nullptr;
-  }
-  if (packed_input_ != nullptr) {
-    free(packed_input_);
-    packed_input_ = nullptr;
-  }
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;
   }
-
-  int ic4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  size_t nhwc4_input_size =
-    ic4 * C4NUM * conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * sizeof(float);
-  nhwc4_input_ = malloc(nhwc4_input_size);
-  if (nhwc4_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc nhwc4 input failed.";
-    return RET_ERROR;
-  }
-  memset(nhwc4_input_, 0, nhwc4_input_size);
-
-  int output_count = conv_param_->output_h_ * conv_param_->output_w_;
-  int output_tile_count = UP_DIV(output_count, TILE_NUM);
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * ic4 * C4NUM;
-  int packed_input_size = output_tile_count * TILE_NUM * unit_size;
-  packed_input_ = reinterpret_cast<float *>(malloc(conv_param_->input_batch_ * packed_input_size * sizeof(float)));
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed input failed.";
-    return RET_ERROR;
-  }
-  memset(packed_input_, 0, conv_param_->input_batch_ * packed_input_size * sizeof(float));
   return RET_OK;
 }
 
@@ -171,7 +163,7 @@ int ConvolutionCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionImpl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvolutionImpl(void *cdata, int task_id) {
   auto conv = reinterpret_cast<ConvolutionCPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -199,7 +191,7 @@ int ConvolutionCPUKernel::Run() {
   PackNHWCToNHWC4Fp32(ori_input_data, nhwc4_input_, conv_param_->input_batch_,
                       conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
 
-  int error_code = LiteBackendParallelLaunch(ConvolutionImpl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ConvolutionImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     FreeTmpBuffer();
@@ -232,34 +224,31 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int dilation_h = conv_param->dilation_h_;
-  int dilation_w = conv_param->dilation_w_;
   conv_param->input_h_ = inputs.front()->Height();
   conv_param->input_w_ = inputs.front()->Width();
+  conv_param->input_channel_ = inputs.front()->Channel();
   conv_param->output_h_ = outputs.front()->Height();
   conv_param->output_w_ = outputs.front()->Width();
+  conv_param->output_channel_ = outputs.front()->Channel();
+  conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
   bool use_winograd = false;
-  bool use_sw = false;
   int out_unit;
   InputTransformUnitFunc input_trans_func = nullptr;
   OutputTransformUnitFunc output_trans_func = nullptr;
   if (primitive != nullptr && primitive->GetInferFlag()) {
     CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
-    use_sw = CheckIfUseSlideWindow(conv_param);
   }
 
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  } else if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   } else if (use_winograd) {
-    kernel =
-      new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
-  } else if (use_sw) {
-    kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    if (kernel_h == 3 && kernel_w == 3 && out_unit == 2) {
+      kernel = new (std::nothrow) kernel::Convolution3x3CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    } else {
+      kernel = new (std::nothrow)
+        kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
+    }
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   }

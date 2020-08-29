@@ -28,14 +28,17 @@ namespace lite {
 class BatchNorm : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(BatchNorm, PrimitiveC);
   BatchNorm() = default;
   explicit BatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void SetEpsilon(float epsilon);
 #else
-  explicit BatchNorm(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  BatchNorm() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetEpsilon() const;
-  void SetEpsilon(float epsilon);
 };
 }  // namespace lite
 }  // namespace mindspore

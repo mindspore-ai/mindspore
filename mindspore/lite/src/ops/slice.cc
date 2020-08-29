@@ -29,6 +29,7 @@ constexpr int kSliceOutputNum = 1;
 int Slice::GetFormat() const { return this->primitive_->value.AsSlice()->format; }
 std::vector<int> Slice::GetBegin() const { return this->primitive_->value.AsSlice()->begin; }
 std::vector<int> Slice::GetSize() const { return this->primitive_->value.AsSlice()->size; }
+std::vector<int> Slice::GetAxes() const { return this->primitive_->value.AsSlice()->axes; }
 
 void Slice::SetFormat(int format) { this->primitive_->value.AsSlice()->format = (schema::Format)format; }
 void Slice::SetBegin(const std::vector<int> &begin) { this->primitive_->value.AsSlice()->begin = begin; }
@@ -45,12 +46,42 @@ std::vector<int> Slice::GetSize() const {
   auto fb_vector = this->primitive_->value_as_Slice()->size();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
+std::vector<int> Slice::GetAxes() const {
+  auto fb_vector = this->primitive_->value_as_Slice()->axes();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
+int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
 
-void Slice::SetFormat(int format) {}
-void Slice::SetBegin(const std::vector<int> &begin) {}
-void Slice::SetSize(const std::vector<int> &size) {}
+  auto attr = primitive->value_as_Slice();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Slice return nullptr";
+    return RET_ERROR;
+  }
+
+  std::vector<int32_t> begin;
+  if (attr->begin() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->begin()->size()); i++) {
+      begin.push_back(attr->begin()->data()[i]);
+    }
+  }
+  std::vector<int32_t> size;
+  if (attr->size() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->size()->size()); i++) {
+      size.push_back(attr->size()->data()[i]);
+    }
+  }
+
+  auto val_offset = schema::CreateSliceDirect(*fbb, attr->format(), &begin, &size);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Slice, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
+std::vector<int> Slice::GetPostProcessBegin() const { return this->begin; }
+std::vector<int> Slice::GetPostProcessSize() const { return this->size; }
 int Slice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<lite::tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs.size() != kSliceInputNum || outputs.size() != kSliceOutputNum) {
@@ -64,30 +95,36 @@ int Slice::InferShape(std::vector<lite::tensor::Tensor *> inputs, std::vector<li
     return RET_OK;
   }
   auto input_shape = input->shape();
-  std::vector<int32_t> slice_begin(GetBegin().begin(), GetBegin().end());
-  std::vector<int32_t> slice_size(GetSize().begin(), GetSize().end());
+  std::vector<int32_t> slice_begin(GetBegin());
+  std::vector<int32_t> slice_size(GetSize());
+  std::vector<int32_t> slice_axes(GetAxes());
   std::vector<int32_t> output_shape(input_shape.size());
+  begin.assign(input_shape.size(), 0);
+  size.assign(input_shape.size(), -1);
+  for (size_t i = 0; i < slice_axes.size(); ++i) {
+    begin[slice_axes[i]] = slice_begin[i];
+    size[slice_axes[i]] = slice_size[i];
+  }
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    if (slice_size[i] < 0 && slice_size[i] != -1) {
-      MS_LOG(ERROR) << "Invalid size input!size[" << i << "]=" << slice_size[i];
+    if (size[i] < 0 && size[i] != -1) {
+      MS_LOG(ERROR) << "Invalid size input!size[" << i << "]=" << size[i];
       return RET_PARAM_INVALID;
     }
-    if (slice_begin[i] < 0) {
-      MS_LOG(ERROR) << "Invalid begin input " << slice_begin[i] << " which should be >= 0";
+    if (begin[i] < 0) {
+      MS_LOG(ERROR) << "Invalid begin input " << begin[i] << " which should be >= 0";
       return RET_PARAM_INVALID;
     }
-    if (input_shape[i] <= slice_begin[i]) {
-      MS_LOG(ERROR) << "Invalid begin input!begin[" << i << "]=" << slice_begin[i]
+    if (input_shape[i] <= begin[i]) {
+      MS_LOG(ERROR) << "Invalid begin input!begin[" << i << "]=" << begin[i]
                     << " which should be <= " << input_shape[i];
       return RET_PARAM_INVALID;
     }
-    if (slice_size[i] > (input_shape[i] - slice_begin[i])) {
-      MS_LOG(ERROR) << "Invalid size input " << slice_size[i]
-                    << " which should be <= " << input_shape[i] - slice_begin[i];
+    if (size[i] > (input_shape[i] - begin[i])) {
+      MS_LOG(ERROR) << "Invalid size input " << size[i] << " which should be <= " << input_shape[i] - begin[i];
       return RET_PARAM_INVALID;
     }
 
-    output_shape[i] = slice_size[i] < 0 ? input_shape[i] - slice_begin[i] : slice_size[i];
+    output_shape[i] = size[i] < 0 ? input_shape[i] - begin[i] : size[i];
   }
 
   outputs[0]->set_shape(output_shape);

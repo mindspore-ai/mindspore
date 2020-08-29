@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 
+#include "schema/inner/model_generated.h"
+#include "src/ir/tensor.h"
+#include "src/lite_kernel.h"
+#include "nnacl/op_base.h"
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
@@ -30,4 +34,3 @@ class ConstFoldPass : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
-

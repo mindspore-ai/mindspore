@@ -104,12 +104,12 @@ int ConcatInt8CPUKernel::Run() {
   }
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->Data());
 
-  ret = LiteBackendParallelLaunch(ConcatInt8Run, this, thread_count_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConcatInt8Run, this, thread_count_);
 
   return ret;
 }
 
-int ConcatInt8Run(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConcatInt8Run(void *cdata, int task_id) {
   auto concat = reinterpret_cast<ConcatInt8CPUKernel *>(cdata);
   concat->DoExecute(task_id);
   return lite::RET_OK;

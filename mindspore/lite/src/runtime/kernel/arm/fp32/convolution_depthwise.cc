@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -30,13 +31,13 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::kernel {
 ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
 }
 
 int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
-  // init weight: o, h, w, i; o == group, i == 1
+  // init weight: k, h, w, c; k == group == output_channel, c == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->Data());
   int channel = weight_tensor->Batch();
@@ -47,7 +48,7 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(), channel);
+  PackWeightKHWToHWKFp32(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(), channel);
 
   auto bias_tensor = in_tensors_[kBiasIndex];
   bias_data_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
@@ -88,7 +89,7 @@ int ConvolutionDepthwiseCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ConvDwRun(void *cdata, int task_id) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseCPUKernel *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {
@@ -99,22 +100,23 @@ int ConvDwRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
+  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
+    MS_LOG(ERROR) << "Only support input channel equals output channel.";
+    return RET_ERROR;
+  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare failed.";
     return ret;
   }
-  if (conv_param_->input_channel_ != conv_param_->output_channel_) {
-    MS_LOG(ERROR) << "Only support input channel equals output channel.";
-    return RET_ERROR;
-  }
+
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->Data());
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->Data());
 
-  ret = LiteBackendParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -129,9 +131,13 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel;
-  kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-
+  if (conv_param->input_channel_ < 32) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     return nullptr;

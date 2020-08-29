@@ -28,19 +28,22 @@ namespace lite {
 class MatrixDiag : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(MatrixDiag, PrimitiveC);
   MatrixDiag() = default;
   explicit MatrixDiag(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetK(int k);
+  void SetNumRows(int num_rows);
+  void SetNumCols(int num_cols);
+  void SetPaddingValue(float padding_value);
 #else
-  explicit MatrixDiag(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  MatrixDiag() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetK() const;
   int GetNumRows() const;
   int GetNumCols() const;
   float GetPaddingValue() const;
-  void SetK(int k);
-  void SetNumRows(int num_rows);
-  void SetNumCols(int num_cols);
-  void SetPaddingValue(float padding_value);
 };
 }  // namespace lite
 }  // namespace mindspore

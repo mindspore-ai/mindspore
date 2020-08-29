@@ -26,8 +26,19 @@ void Unique::SetOutType(int out_type) { this->primitive_->value.AsUnique()->outT
 #else
 
 int Unique::GetOutType() const { return this->primitive_->value_as_Unique()->outType(); }
-
-void Unique::SetOutType(int out_type) {}
+int Unique::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_Unique();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_Unique return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateUnique(*fbb, attr->outType());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Unique, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 int Unique::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {

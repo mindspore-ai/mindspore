@@ -16,132 +16,79 @@
 #include "nnacl/fp32/space_to_batch.h"
 #include "nnacl/arithmetic_common.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/fp32/concat.h"
 #include "nnacl/op_base.h"
 
-int EnumElement(int *shape, int n_dims) {
-  int total = 1;
-  for (int i = 0; i < n_dims; i++) {
-    total *= shape[i];
-  }
-  return total;
-}
-
-void TransposeForNHWC(const float *in_data, float *out_data, int *strides, int *out_strides, int *perm,
-                      int *output_shape, int h_start, int h_end) {
-  const int stride0 = strides[perm[0]];
-  const int stride1 = strides[perm[1]];
-  const int stride2 = strides[perm[2]];
-  const int stride3 = strides[perm[3]];
-  const int stride4 = strides[perm[4]];
-  const int out_stride0 = out_strides[0];
-  const int out_stride1 = out_strides[1];
-  const int out_stride2 = out_strides[2];
-  const int out_stride3 = out_strides[3];
-  const int out_stride4 = out_strides[4];
-  const int output0 = output_shape[0];
-  const int output2 = output_shape[2];
-  const int output3 = output_shape[3];
-  const int output4 = output_shape[4];
-
-  for (int i = 0; i < output0; ++i) {
-    int out_stride0_i = i * out_stride0;
-    int stride0_i = i * stride0;
-    for (int j = h_start; j < h_end; ++j) {
-      int out_stride1_j = j * out_stride1;
-      int stride1_j = j * stride1;
-      for (int k = 0; k < output2; ++k) {
-        int out_stride2_k = k * out_stride2;
-        int stride2_k = k * stride2;
-        for (int m = 0; m < output3; ++m) {
-          int out_stride3_m = m * out_stride3;
-          int stride3_m = m * stride3;
-          for (int n = 0; n < output4; ++n) {
-            int out_stride4_n = n * out_stride4;
-            int stride4_n = n * stride4;
-            memcpy(out_data + out_stride0_i + out_stride1_j + out_stride2_k + out_stride3_m + out_stride4_n,
-                   in_data + stride0_i + stride1_j + stride2_k + stride3_m + stride4_n, stride4 * sizeof(float));
-          }
-        }
+void DoSpaceToBatchNHWC(const float *input, float *output, SpaceToBatchParameter *param, int *in_shape,
+                        int *out_shape) {
+  int out_dim0 = out_shape[0];
+  int out_dim1 = out_shape[1];
+  int out_dim2 = out_shape[2];
+  int copy_num = out_shape[3];
+  int block_w = param->block_sizes_[1];
+  int block_h = param->block_sizes_[0];
+  int in_strides[4];
+  ComputeStrides(in_shape, in_strides, 4);
+  int out_strides[4];
+  ComputeStrides(out_shape, out_strides, 4);
+  size_t copy_size = copy_num * sizeof(float);
+  size_t out_offset = 0;
+  for (int n = 0; n < out_dim0; ++n) {
+    int in_n = n % in_shape[0];
+    int32_t stride_w = (n / in_shape[0]) % block_w;
+    int32_t stride_h = (n / in_shape[0]) / block_w;
+    size_t in_offset0 = in_n * in_strides[0];
+    for (int h = 0; h < out_dim1; ++h) {
+      size_t in_offset1 = in_offset0 + (h * block_h + stride_h) * in_strides[1];
+      for (int w = 0; w < out_dim2; ++w) {
+        size_t in_offset2 = in_offset1 + (w * block_w + stride_w) * in_strides[2];
+        memcpy(output + out_offset, input + in_offset2, copy_size);
+        out_offset += copy_num;
       }
     }
   }
 }
 
-int SpaceToBatchForNHWC(const float *input, float *output, int *in_shape, int shape_size, int *block_sizes, int h_start,
-                        int h_end) {
-  int trans_in_shape[6] = {in_shape[0],    in_shape[1] / block_sizes[0],
-                           block_sizes[0], in_shape[2] / block_sizes[1],
-                           block_sizes[1], in_shape[3]};
-  int trans_out_shape[6] = {
-    in_shape[0], block_sizes[0], block_sizes[1], in_shape[1] / block_sizes[0], in_shape[2] / block_sizes[1],
-    in_shape[3]};
-  int in_strides[C4NUM + 2];
-  ComputeStrides(trans_in_shape, in_strides, shape_size + 2);
-  int out_strides[C4NUM + 2];
-  ComputeStrides(trans_out_shape, out_strides, shape_size + 2);
-
-  int perm[6] = {0, 2, 4, 1, 3, 5};
-  TransposeForNHWC(input, output, in_strides, out_strides, perm, trans_out_shape, h_start, h_end);
-  return NNACL_OK;
-}
-
-void DoPadding(const float *input, float *padded_input, SpaceToBatchParameter param, float *tmp_space[]) {
-  float *tmp = padded_input;
-  (void)memcpy(tmp, input, param.num_elements_ * sizeof(float));
-  float *target = tmp_space[0];
-  float *tmp_zeros = tmp_space[1];
-  float *tmp2 = NULL;
-  int cur_shape[param.n_dims_], cur_start_shape[param.n_dims_], cur_end_shape[param.n_dims_],
-    cur_target_shape[param.n_dims_];
-  float *concat_inputs[3];
-  int *concat_shapes[4];
-
-  for (int i = 0; i < param.n_dims_; i++) {
-    cur_shape[i] = param.in_shape_[i];
-    cur_start_shape[i] = param.in_shape_[i];
-    cur_end_shape[i] = param.in_shape_[i];
-    cur_target_shape[i] = param.in_shape_[i];
-  }
-  for (int i = 0; i < param.n_space_dims_; ++i) {
-    if (param.padded_in_shape_[i + 1] > param.in_shape_[i + 1]) {
-      int concat_idx = 0;
-      cur_target_shape[i + 1] = 0;
-      if (param.paddings_[2 * i] != 0) {
-        cur_start_shape[i + 1] = param.paddings_[2 * i];
-        concat_inputs[concat_idx] = tmp_zeros;
-        concat_shapes[concat_idx++] = cur_start_shape;
-        cur_target_shape[i + 1] += cur_start_shape[i + 1];
+void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, int *padding, int *out_shape,
+                              const float *pedding_h_data, const float *pedding_w_data) {
+  int in_h = in_shape[1];
+  int in_w = in_shape[2];
+  int in_c = in_shape[3];
+  int out_w = out_shape[2];
+  int out_c = out_shape[3];
+  size_t ped_h_num = out_w * out_c;
+  size_t ped_h_size = ped_h_num * sizeof(float);
+  size_t ped_w_size = out_c * sizeof(float);
+  size_t out_offset = 0;
+  int in_strides[4];
+  ComputeStrides(in_shape, in_strides, 4);
+  int out_strides[4];
+  ComputeStrides(out_shape, out_strides, 4);
+  size_t copy_size = in_c * sizeof(float);
+  for (int i = 0; i < in_shape[0]; ++i) {
+    size_t in_offset0 = i * in_strides[0];
+    for (int pad_h_top = 0; pad_h_top < padding[0]; ++pad_h_top) {
+        memcpy(output + out_offset, pedding_h_data, ped_h_size);
+        out_offset += ped_h_num;
+    }
+    for (int j = 0; j < in_h; ++j) {
+      size_t in_offset1 = in_offset0 + j * in_strides[1];
+      for (int pad_w_left = 0; pad_w_left < padding[2]; ++pad_w_left) {
+        memcpy(output + out_offset, pedding_w_data, ped_w_size);
+        out_offset += out_c;
       }
-
-      concat_inputs[concat_idx] = tmp;
-      concat_shapes[concat_idx++] = cur_shape;
-      cur_target_shape[i + 1] += cur_shape[i + 1];
-      if (param.paddings_[2 * i + 1] != 0) {
-        cur_end_shape[i + 1] = param.paddings_[2 * i + 1];
-        concat_inputs[concat_idx] = tmp_zeros;
-        concat_shapes[concat_idx++] = cur_end_shape;
-        cur_target_shape[i + 1] += cur_end_shape[i + 1];
+      for (int k = 0; k < in_w; ++k) {
+        size_t in_offset2 = in_offset1 + k * in_strides[2];
+        memcpy(output + out_offset, input + in_offset2, copy_size);
+        out_offset += in_c;
       }
-      concat_shapes[concat_idx] = cur_target_shape;
-      Concat((void **)concat_inputs, concat_idx, i + 1, concat_shapes, param.n_dims_, target);
-
-      tmp2 = tmp;
-      tmp = target;
-      target = tmp2;
-      cur_start_shape[i + 1] = cur_end_shape[i + 1] = cur_shape[i + 1] = concat_shapes[concat_idx][i + 1];
+      for (int pad_w_right = 0; pad_w_right < padding[3]; ++pad_w_right) {
+        memcpy(output + out_offset, pedding_w_data, ped_w_size);
+        out_offset += out_c;
+      }
+    }
+    for (int pad_h_bottom = 0; pad_h_bottom < padding[1]; ++pad_h_bottom) {
+      memcpy(output + out_offset, pedding_h_data, ped_h_size);
+      out_offset += ped_h_num;
     }
   }
-  if (padded_input != tmp) {
-    memcpy(padded_input, tmp, param.num_elements_padded_ * sizeof(float));
-  }
-}
-
-int SpaceToBatch(const float *input, float *output, SpaceToBatchParameter param, int h_start, int h_end) {
-  if (input == NULL || output == NULL) {
-    return NNACL_NULL_PTR;
-  }
-  int ret =
-    SpaceToBatchForNHWC(input, output, param.padded_in_shape_, param.n_dims_, param.block_sizes_, h_start, h_end);
-  return ret;
 }

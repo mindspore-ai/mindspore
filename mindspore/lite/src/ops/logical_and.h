@@ -21,17 +21,20 @@
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
-#include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic.h"
 
 namespace mindspore {
 namespace lite {
 class LogicalAnd : public Arithmetic {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(LogicalAnd, Arithmetic);
   LogicalAnd() = default;
   explicit LogicalAnd(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  explicit LogicalAnd(schema::Primitive *primitive) : Arithmetic(primitive) {}
+  LogicalAnd() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite

@@ -36,11 +36,11 @@ using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
 namespace {
-int ArithmeticsInt8Launch(int thread_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ArithmeticsInt8Launch(void *cdata, int task_id) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticInt8CPUKernel *>(cdata);
-  auto error_code = arithmetic_kernel->DoArithmetic(thread_id);
+  auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticsRun error thread_id[" << thread_id << "] error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "ArithmeticsRun error thread_id[" << task_id << "] error_code[" << error_code << "]";
     return error_code;
   }
   return RET_OK;
@@ -151,7 +151,7 @@ int ArithmeticInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  ret = LiteBackendParallelLaunch(ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(THREAD_POOL_DEFAULT, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
   if (param->broadcasting_) {
     context_->allocator->Free(tile_data0_);
     context_->allocator->Free(tile_data1_);

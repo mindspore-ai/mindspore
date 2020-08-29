@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -28,18 +29,21 @@ namespace lite {
 class Pad : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Pad, PrimitiveC);
   Pad() = default;
   explicit Pad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetPaddings(const std::vector<int> &paddings);
+  void SetPaddingMode(int padding_mode);
+  void SetConstantValue(float constant_value);
 #else
-  explicit Pad(schema::Primitive *primitive) : PrimitiveC(primitive) {}
+  Pad() = default;
+
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   std::vector<int> GetPaddings() const;
   int GetPaddingMode() const;
   float GetConstantValue() const;
-  void SetPaddings(const std::vector<int> &paddings);
-  void SetPaddingMode(int padding_mode);
-  void SetConstantValue(float constant_value);
 };
 }  // namespace lite
 }  // namespace mindspore

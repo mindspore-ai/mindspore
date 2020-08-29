@@ -69,7 +69,11 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::Conv2DT> attr(new (std::nothrow) schema::Conv2DT());
+  auto attr = std::make_unique<schema::Conv2DT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new attr failed";
+    return RET_NULL_PTR;
+  }
 
   attr->format = schema::Format_NCHW;
 
@@ -135,9 +139,9 @@ STATUS CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
 
   op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Conv2D;
-  op->primitive->value.value = attr.get();
+  op->primitive->value.value = attr.release();
 
-  status = ParseGroupConvolution(op, attr.release());
+  status = ParseGroupConvolution(op, static_cast<schema::Conv2DT *>(op->primitive->value.value));
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Parse group convolution failed";
     return RET_ERROR;

@@ -35,9 +35,17 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int real_cal_num, int block_index,
                            int32_t *input_sum, ConvParameter *conv_param);
 
-void Conv1x1InputPackFp32(const float *src, float *dst, ConvParameter *conv_param);
+void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16);
+
+void Conv1x1InputPack(const void *src_ptr, void *dst_ptr, ConvParameter *conv_param, int data_size);
 
 void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParameter *conv_param);
+
+void PackInputSum16x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
+                          size_t plane_size, ConvParameter *conv_param);
+
+void PackInputSum8x4Int8(const int8_t *input_value, int32_t *input_sum, size_t input_channel, size_t output_channel,
+                         size_t plane_size, ConvParameter *conv_param);
 
 void MatrixPack(const float *src, float *dst, int row, int ic4, int stride);
 
@@ -45,6 +53,8 @@ void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvPara
 
 void PackWeightFp32(float *weight_data, ConvParameter *conv_param, float *packed_weight, int oc_block,
                     int oc_block_num);
+
+void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel);
 
 void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *packed_weight, int32_t *weight_sum);
 
@@ -75,6 +85,8 @@ void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
 void PackNC4HW4ToNHWCReluFp32(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNC4HW4ToNHWCRelu6Fp32(const void *src, void *dst, int batch, int plane, int channel);
+
+void PackNC4HW4ToNHWCPreluFp32(const void *src, void *dst, const void *slope, int batch, int plane, int channel);
 
 void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel);
 

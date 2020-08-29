@@ -70,7 +70,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int ActivationGradRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int ActivationGradRun(void *cdata, int task_id) {
   auto activationGrad_kernel = reinterpret_cast<ActivationGradCPUKernel *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
@@ -81,7 +81,7 @@ int ActivationGradRun(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
 }
 
 int ActivationGradCPUKernel::Run() {
-  int error_code = LiteBackendParallelLaunch(ActivationGradRun, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ActivationGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
     return RET_ERROR;

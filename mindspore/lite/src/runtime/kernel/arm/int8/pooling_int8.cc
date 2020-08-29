@@ -61,15 +61,19 @@ int PoolingInt8CPUKernel::ReSize() {
 int PoolingInt8CPUKernel::RunImpl(int task_id) {
   auto input_data = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->Data());
   auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->Data());
-  if (pooling_param_->max_pooling_) {
-    MaxPoolingInt8(input_data, output_data, pooling_param_, task_id);
+  if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
+    if (pooling_param_->quantize_) {
+      MaxPoolingWithQuantInt8(input_data, output_data, pooling_param_, task_id);
+    } else {
+      MaxPoolingOptInt8(input_data, output_data, pooling_param_, task_id);
+    }
   } else {
-    AvgPoolingInt8(input_data, output_data, pooling_param_, task_id);
+    AvgPoolingOptInt8(input_data, output_data, pooling_param_, task_id);
   }
   return RET_OK;
 }
 
-int PoolingInt8Impl(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int PoolingInt8Impl(void *cdata, int task_id) {
   auto pooling = reinterpret_cast<PoolingInt8CPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -85,7 +89,7 @@ int PoolingInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  int error_code = LiteBackendParallelLaunch(PoolingInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, PoolingInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "poolingInt8 error error_code[" << error_code << "]";
     return RET_ERROR;

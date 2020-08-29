@@ -27,7 +27,19 @@ void OneHot::SetAxis(int axis) { this->primitive_->value.AsOneHot()->axis = axis
 
 int OneHot::GetAxis() const { return this->primitive_->value_as_OneHot()->axis(); }
 
-void OneHot::SetAxis(int axis) {}
+int OneHot::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
+  MS_ASSERT(nullptr != primitive);
+  MS_ASSERT(nullptr != fbb);
+  auto attr = primitive->value_as_OneHot();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "value_as_OneHot return nullptr";
+    return RET_ERROR;
+  }
+  auto val_offset = schema::CreateOneHot(*fbb, attr->axis());
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_OneHot, val_offset.o);
+  fbb->Finish(prim_offset);
+  return RET_OK;
+}
 #endif
 
 namespace {

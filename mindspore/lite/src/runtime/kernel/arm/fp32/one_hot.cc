@@ -81,7 +81,7 @@ int OneHotCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int RunOneHot(int task_id, LiteParallelGroupEnv *penv, void *cdata) {
+int RunOneHot(void *cdata, int task_id) {
   auto onehot_kernel = reinterpret_cast<OneHotCPUKernel *>(cdata);
   if (onehot_kernel == nullptr) {
     MS_LOG(ERROR) << "cast OneHotCPUKernel failed";
@@ -166,7 +166,7 @@ int OneHotCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
     return prepare_ret;
   }
-  int error_code = LiteBackendParallelLaunch(RunOneHot, this, context_->thread_num_);
+  int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, RunOneHot, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";
     return RET_ERROR;
