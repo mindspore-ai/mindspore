@@ -41,8 +41,6 @@ parser.add_argument('--data_path', type=str, default="./MNIST_Data",
                     help='path where the dataset is saved')
 parser.add_argument('--ckpt_path', type=str, default="",
                     help='if mode is test, must provide path where the trained ckpt file')
-parser.add_argument('--dataset_sink_mode', type=bool, default=True,
-                    help='dataset_sink_mode is False or True')
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -76,5 +74,5 @@ if __name__ == "__main__":
 
     print("============== Starting Training ==============")
     model.train(cfg['epoch_size'], ds_train, callbacks=[ckpt_callback, LossMonitor()],
-                dataset_sink_mode=args.dataset_sink_mode)
+                dataset_sink_mode=True)
     print("============== End Training ==============")
