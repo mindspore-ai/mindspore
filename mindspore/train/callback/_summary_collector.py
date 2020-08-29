@@ -602,7 +602,7 @@ class SummaryCollector(Callback):
             return
         train_lineage = {}
         loss = self._get_loss(cb_params)
-        if loss:
+        if loss is not None:
             loss_numpy = loss.asnumpy()
             loss = float(np.atleast_1d(loss_numpy)[0])
             train_lineage[LineageMetadata.loss] = loss
