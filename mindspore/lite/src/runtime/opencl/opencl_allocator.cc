@@ -24,6 +24,9 @@
 namespace mindspore::lite::opencl {
 
 OpenCLAllocator::OpenCLAllocator() {}
+
+OpenCLAllocator::OpenCLAllocator(OpenCLRuntime *ocl_runtime) : ocl_runtime_(ocl_runtime) {}
+
 OpenCLAllocator::~OpenCLAllocator() { Clear(); }
 
 void OpenCLAllocator::SetContext(const AllocatorContext &ctx) {
@@ -46,14 +49,16 @@ void OpenCLAllocator::UnLock() {
 void *OpenCLAllocator::Malloc(size_t size) { return Malloc(size, std::vector<size_t>{}); }
 
 void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) {
-  auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
-  auto svm_capabilities = ocl_runtime->GetSVMCapabilities();
+  if (ocl_runtime_ == nullptr) {
+    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
+  }
+  auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
 
   size_t img_pitch = 0;
   size_t dtype_size = 1;
   if (!img_size.empty()) {
     dtype_size = img_size[2] == CL_FLOAT ? sizeof(cl_float4) : sizeof(cl_half4);
-    uint32_t image_alignment = ocl_runtime->GetImagePitchAlignment();
+    uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
     img_pitch = (img_size[0] + image_alignment - 1) / image_alignment * image_alignment;
     size = img_pitch * img_size[1] * dtype_size;
   }
@@ -87,28 +92,28 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
     cl_svm_mem_flags flags = (svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) ? CL_MEM_SVM_FINE_GRAIN_BUFFER : 0;
     flags |= (svm_capabilities & CL_DEVICE_SVM_ATOMICS) ? CL_MEM_SVM_ATOMICS : 0;
     flags = flags | CL_MEM_READ_WRITE;
-    host_ptr = clSVMAlloc((*ocl_runtime->Context())(), flags, size, 0);
+    host_ptr = clSVMAlloc((*ocl_runtime_->Context())(), flags, size, 0);
   } else {
     cl_int ret = CL_SUCCESS;
     cl::Buffer *buffer = new (std::nothrow)
-      cl::Buffer(*ocl_runtime->Context(), CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, size, NULL, &ret);
+      cl::Buffer(*ocl_runtime_->Context(), CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, size, NULL, &ret);
     if (buffer == nullptr || ret != CL_SUCCESS) {
       UnLock();
       MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
       return nullptr;
     }
     device_ptr = static_cast<void *>(buffer);
-    host_ptr = ocl_runtime->MapBuffer(*buffer, CL_MAP_READ | CL_MAP_WRITE, size);
+    host_ptr = ocl_runtime_->MapBuffer(*buffer, CL_MAP_READ | CL_MAP_WRITE, size);
     if (host_ptr == nullptr) {
       UnLock();
       MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
       return nullptr;
     }
     cl::Memory *mem = buffer;
-    ocl_runtime->UnmapBuffer(*mem, host_ptr);
+    ocl_runtime_->UnmapBuffer(*mem, host_ptr);
     if (!img_size.empty()) {
       cl::ImageFormat image_format(CL_RGBA, img_size[2]);
-      cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime->Context(), image_format, *buffer, img_size[0],
+      cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), image_format, *buffer, img_size[0],
                                                           img_size[1], img_pitch * dtype_size, &ret);
       if (image == nullptr || ret != CL_SUCCESS) {
         delete buffer;
@@ -139,7 +144,9 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
     return nullptr;
   }
-  auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
+  if (ocl_runtime_ == nullptr) {
+    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
+  }
   Lock();
   auto iter = free_list_.lower_bound(size);
   while (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
@@ -164,7 +171,7 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
   cl_int ret = CL_SUCCESS;
   // CL_HALF_FLOAT, CL_FLOAT
   cl::ImageFormat image_format(CL_RGBA, img_size[2]);
-  cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+  cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                                       image_format, img_size[0], img_size[1], 0, data, &ret);
   if (image == nullptr || ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
@@ -174,14 +181,14 @@ void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::v
   }
   image_ptr = static_cast<void *>(image);
   std::vector<size_t> region{img_size[0], img_size[1], 1};
-  host_ptr = ocl_runtime->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
+  host_ptr = ocl_runtime_->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
   if (host_ptr == nullptr) {
     MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
     UnLock();
     return nullptr;
   }
   cl::Memory *mem = image;
-  ocl_runtime->UnmapBuffer(*mem, host_ptr);
+  ocl_runtime_->UnmapBuffer(*mem, host_ptr);
   std::unique_ptr<MemBuf> mem_buf = std::make_unique<MemBuf>();
   mem_buf->size_ = size;
   mem_buf->device_ptr_ = device_ptr;
@@ -251,28 +258,46 @@ void *OpenCLAllocator::GetBuffer(void *buffer) {
 
 void OpenCLAllocator::Clear() {
   Lock();
-  auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
-  auto svm_capabilities = ocl_runtime->GetSVMCapabilities();
+  if (ocl_runtime_ == nullptr) {
+    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
+  }
+  auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   for (auto it = allocated_list_.begin(); it != allocated_list_.end(); it++) {
     if (svm_capabilities) {
-      clSVMFree((*ocl_runtime->Context())(), it->second->host_ptr_);
+      clSVMFree((*ocl_runtime_->Context())(), it->second->host_ptr_);
       MS_LOG(DEBUG) << "OpenCL free svm buffer : " << it->second->host_ptr_;
     } else {
-      cl::Buffer *buff = static_cast<cl::Buffer *>(it->second->device_ptr_);
-      MS_LOG(DEBUG) << "OpenCL free device buffer : " << buff;
-      delete buff;
+      cl::Buffer *buffer = static_cast<cl::Buffer *>(it->second->device_ptr_);
+      MS_LOG(DEBUG) << "OpenCL free device buffer : " << buffer;
+      if (buffer != nullptr) {
+        delete buffer;
+        it->second->device_ptr_ = nullptr;
+      }
+      cl::Image *image = static_cast<cl::Image *>(it->second->image_ptr_);
+      if (image != nullptr) {
+        delete image;
+        it->second->image_ptr_ = nullptr;
+      }
     }
   }
   allocated_list_.clear();
 
   for (auto it = free_list_.begin(); it != free_list_.end(); it++) {
     if (svm_capabilities) {
-      clSVMFree((*ocl_runtime->Context())(), it->second->host_ptr_);
+      clSVMFree((*ocl_runtime_->Context())(), it->second->host_ptr_);
       MS_LOG(DEBUG) << "OpenCL free svm buffer : " << it->second->host_ptr_;
     } else {
-      cl::Buffer *buff = static_cast<cl::Buffer *>(it->second->device_ptr_);
-      MS_LOG(DEBUG) << "OpenCL free device buffer : " << buff;
-      delete buff;
+      cl::Buffer *buffer = static_cast<cl::Buffer *>(it->second->device_ptr_);
+      MS_LOG(DEBUG) << "OpenCL free device buffer : " << buffer;
+      if (buffer != nullptr) {
+        delete buffer;
+        it->second->device_ptr_ = nullptr;
+      }
+      cl::Image *image = static_cast<cl::Image *>(it->second->image_ptr_);
+      if (image != nullptr) {
+        delete image;
+        it->second->image_ptr_ = nullptr;
+      }
     }
   }
   free_list_.clear();
@@ -280,8 +305,10 @@ void OpenCLAllocator::Clear() {
 }
 
 void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue, bool sync) {
-  auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
-  auto svm_capabilities = ocl_runtime->GetSVMCapabilities();
+  if (ocl_runtime_ == nullptr) {
+    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
+  }
+  auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   if (svm_capabilities) {
     if (!(svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
       auto it = allocated_list_.find(host_ptr);
@@ -289,7 +316,7 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
         MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << host_ptr;
         return nullptr;
       }
-      ocl_runtime->MapBuffer(host_ptr, flags, it->second->size_, static_cast<cl::CommandQueue *>(command_queue), sync);
+      ocl_runtime_->MapBuffer(host_ptr, flags, it->second->size_, static_cast<cl::CommandQueue *>(command_queue), sync);
     }
     return host_ptr;
   }
@@ -310,12 +337,12 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
   void *new_host_ptr{nullptr};
   if (mem_buf->img_size.empty()) {
     cl::Buffer *buffer = static_cast<cl::Buffer *>(mem_buf->device_ptr_);
-    new_host_ptr = ocl_runtime->MapBuffer(*buffer, flags, mem_buf->size_, nullptr, sync);
+    new_host_ptr = ocl_runtime_->MapBuffer(*buffer, flags, mem_buf->size_, nullptr, sync);
   } else {
     cl::ImageFormat image_format(CL_RGBA, mem_buf->img_size[2]);
     std::vector<size_t> region{mem_buf->img_size[0], mem_buf->img_size[1], 1};
     cl::Image2D *image = static_cast<cl::Image2D *>(mem_buf->image_ptr_);
-    new_host_ptr = ocl_runtime->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
+    new_host_ptr = ocl_runtime_->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
   }
   if (new_host_ptr == nullptr) {
     UnLock();
@@ -334,11 +361,13 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
 }
 
 int OpenCLAllocator::UnmapBuffer(void *host_ptr, void *command_queue) {
-  auto ocl_runtime = opencl::OpenCLRuntime::GetInstance();
-  auto svm_capabilities = ocl_runtime->GetSVMCapabilities();
+  if (ocl_runtime_ == nullptr) {
+    ocl_runtime_ = opencl::OpenCLRuntime::GetInstance();
+  }
+  auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   if (svm_capabilities) {
     if (!(svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
-      return ocl_runtime->UnmapBuffer(host_ptr);
+      return ocl_runtime_->UnmapBuffer(host_ptr);
     }
     return RET_OK;
   }
@@ -351,7 +380,7 @@ int OpenCLAllocator::UnmapBuffer(void *host_ptr, void *command_queue) {
     it->second->map_flags = false;
     cl::Memory *mem =
       static_cast<cl::Memory *>(it->second->img_size.empty() ? it->second->device_ptr_ : it->second->image_ptr_);
-    return ocl_runtime->UnmapBuffer(*mem, it->second->host_ptr_, static_cast<cl::CommandQueue *>(command_queue));
+    return ocl_runtime_->UnmapBuffer(*mem, it->second->host_ptr_, static_cast<cl::CommandQueue *>(command_queue));
   } else {
     MS_LOG(WARNING) << "Host ptr " << host_ptr << " do not mapped";
     return RET_OK;
