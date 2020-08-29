@@ -29,7 +29,6 @@ from mindspore.common import ms_function
 
 context.set_context(mode=context.GRAPH_MODE)
 
-
 grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
@@ -122,6 +121,7 @@ def test_if_none():
     z = None
     net = Net(z)
     assert np.all(net(x, y).asnumpy() == y.asnumpy())
+
 
 def test_if_str_is_not_none_right():
     class Net(nn.Cell):
@@ -455,8 +455,10 @@ def test_parser_switch_layer_switch_in_bprop():
             super(OneInputBprop, self).__init__()
             self.op = P.ReLU()
             self.funcs = funcs
+
         def construct(self, i, x):
-            return  self.op(x)
+            return self.op(x)
+
         def bprop(self, i, x, out, dout):
             return i, self.funcs[i](x, dout)
 
@@ -475,6 +477,7 @@ def test_parser_switch_layer_switch_in_bprop():
 
         def construct(self, x, y):
             return self.op(x, y)
+
     func1 = Add()
     func2 = Mul()
     funcs = (func1, func2)
@@ -572,6 +575,7 @@ def test_switch_layer_env_eliminate():
             weights = self.weights
             grad = self.grad_op(self.net, weights)(x, index)
             return grad
+
     net = Net()
     net2 = NetGrad(net)
     x = Tensor(np.ones((3, 1, 12, 12)), ms.float32)
@@ -601,6 +605,7 @@ def test_switch_layer_single_layer():
             weights = self.weights
             grad = self.grad_op(self.net, weights)(x, index)
             return grad
+
     net = Net()
     net2 = NetGrad(net)
     x = Tensor(np.ones((3, 1, 12, 12)), ms.float32)
@@ -638,6 +643,7 @@ def test_if_nested_compile():
                 else:
                     res = self.squre(self.value)
             return res
+
     x = Tensor(1.0, dtype=ms.float32)
     y = Tensor(2.0, dtype=ms.float32)
     net = Net()
@@ -660,6 +666,7 @@ def test_if_inside_for():
                 else:
                     res = res - y
             return res
+
     c1 = Tensor(1, dtype=ms.int32)
     c2 = Tensor(1, dtype=ms.int32)
     net = Net()
@@ -671,6 +678,7 @@ def test_while_in_while():
     c2 = Tensor(2, dtype=ms.int32)
     c3 = Tensor(3, dtype=ms.int32)
     c4 = Tensor(4, dtype=ms.int32)
+
     @ms_function
     def while_in_while(x, y, z, u):
         out = c4
@@ -683,6 +691,7 @@ def test_while_in_while():
 
         out = out + 3
         return out
+
     while_in_while(c1, c2, c3, c4)
 
 
@@ -692,6 +701,7 @@ def test_tensor_cond():
             super(Net, self).__init__()
             self.t = Tensor(np.array(0, np.bool))
             self.t1 = Tensor(np.array([True], np.bool))
+
         def construct(self, x, y):
             t = 0
             if self.t:
@@ -703,18 +713,19 @@ def test_tensor_cond():
             else:
                 t = t + x * y
             return t
-            
-            
+
     x = Tensor(np.ones([6, 8, 10], np.int32))
     y = Tensor(np.ones([6, 8, 10], np.int32))
     net = Net()
     out = net(x, y)
+
 
 def test_tensor_cond_exception():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
             self.t = Tensor(np.array([True, False], np.bool))
+
         def construct(self, x, y):
             t = 0
             if self.t:
@@ -722,19 +733,20 @@ def test_tensor_cond_exception():
             else:
                 t = t - x / y
             return t
-            
-            
+
     x = Tensor(np.ones([6, 8, 10], np.int32))
     y = Tensor(np.ones([6, 8, 10], np.int32))
     net = Net()
     with pytest.raises(ValueError):
         out = net(x, y)
 
+
 def test_while_scalar():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
             self.x = 10
+
         def construct(self, x, y):
             i = 0
             t = 0
@@ -742,10 +754,12 @@ def test_while_scalar():
                 t = t + x + y
                 i = i + 1
             return t
+
     net = Net()
     x = Tensor(np.ones([6, 8, 10], np.int32))
     y = Tensor(np.ones([6, 8, 10], np.int32))
     out = net(x, y)
+
 
 def test_while_tensor():
     class Net(nn.Cell):
@@ -753,6 +767,7 @@ def test_while_tensor():
             super(Net, self).__init__()
             self.t = Tensor(np.ones([6, 8, 10], np.int32))
             self.count = Tensor(np.array([10], np.int32))
+
         def construct(self, x, y):
             i = 0
             t = self.t
@@ -760,6 +775,7 @@ def test_while_tensor():
                 t = t + x + y
                 i = i + 1
             return t
+
     net = Net()
     x = Tensor(np.ones([6, 8, 10], np.int32))
     y = Tensor(np.ones([6, 8, 10], np.int32))
@@ -770,7 +786,7 @@ def test_large_for_loop():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.flatten = P.ReLU() #nn.Flatten()
+            self.flatten = P.ReLU()  # nn.Flatten()
 
         def construct(self, x):
             for elem in range(1, 1900):
@@ -791,7 +807,7 @@ def test_large_for_loop_with_continue_break():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.flatten = P.ReLU() #nn.Flatten()
+            self.flatten = P.ReLU()  # nn.Flatten()
 
         def construct(self, x):
             idx = 0
@@ -854,7 +870,7 @@ def test_tensor_all_construct_lack_branch():
             if input1.all():
                 return self.logicaland(input1, input2)
             while input1.any():
-                return  self.logicalor(input1, input2)
+                return self.logicalor(input1, input2)
             # NOTICE: here missing return statement, default return None
 
     input_np_1 = np.random.choice([True], size=(2, 3, 4, 5))
@@ -891,28 +907,29 @@ def test_parser_switch_layer_func_primitive():
 def test_recursive_call():
     class Net(nn.Cell):
         """ Net definition """
-    
+
         def __init__(self):
             super(Net, self).__init__()
             self.fc = nn.Dense(10, 10)  # padding=0
-            #self.net2 = Net2()
-    
+            # self.net2 = Net2()
+
         def construct(self, x):
             net2 = Net2()
             x = net2(x)
             out = self.fc(x)
             return out
-    
+
     class Net2(nn.Cell):
         def __init__(self):
             super(Net2, self).__init__()
             self.net = Net()
             self.fc = nn.Dense(10, 10)
+
         def construct(self, x):
             x = self.net(x)
             out = self.fc(x)
             return out
-    
+
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=80)
@@ -949,7 +966,6 @@ def test_switch_layer_shape_join_failed():
 
     funcs = (func1, func2)
 
-
     net = AddFuncNet(funcs, func3)
 
     inp = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
@@ -979,7 +995,6 @@ def test_switch_layer_dtype_join_failed():
             x = self.funcs[i](inputs)
             x = self.op(x)
             return x
-
 
     func1 = nn.ReLU()
     func2 = Cast(mstype.int32)

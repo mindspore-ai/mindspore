@@ -19,7 +19,10 @@ import filecmp
 import glob
 import json
 import os
+
 import numpy as np
+from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
+from util import config_get_set_num_parallel_workers
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
@@ -27,8 +30,6 @@ import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 from mindspore.dataset.transforms.vision import Inter
 
-from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
-from util import config_get_set_num_parallel_workers
 
 def test_imagefolder(remove_json_files=True):
     """

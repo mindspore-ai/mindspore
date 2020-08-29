@@ -21,9 +21,9 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
 
 class Slice(nn.Cell):
     def __init__(self):
@@ -32,6 +32,7 @@ class Slice(nn.Cell):
 
     def construct(self, x):
         return self.slice(x, (0, 1, 0), (2, 1, 3))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -47,6 +48,7 @@ def test_slice():
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
+
 class Slice2(nn.Cell):
     def __init__(self):
         super(Slice2, self).__init__()
@@ -55,18 +57,20 @@ class Slice2(nn.Cell):
     def construct(self, x):
         return self.slice(x, (1, 0, 0), (1, 2, 3))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice2():
     x = Tensor(np.arange(3 * 2 * 3).reshape(3, 2, 3), mstype.float32)
-    expect = [[[6., 7.,  8.],
+    expect = [[[6., 7., 8.],
                [9., 10., 11.]]]
 
     slice_op = Slice2()
     output = slice_op(x)
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
+
 
 if __name__ == '__main__':
     test_slice()

@@ -24,8 +24,8 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from tests.summary_utils import SummaryReader
 from mindspore.train.summary.summary_record import SummaryRecord
+from tests.summary_utils import SummaryReader
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 

@@ -16,8 +16,10 @@
 """train bert network without lossscale"""
 
 import os
-import pytest
+
 import numpy as np
+from src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
+from src.bert_model import BertConfig
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
@@ -25,14 +27,11 @@ import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
+from mindspore.nn import learning_rate_schedule as lr_schedules
 from mindspore.nn.optim import Lamb
 from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.model import Model
-from mindspore.nn import learning_rate_schedule as lr_schedules
-from src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
-from src.bert_model import BertConfig
-
 
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
