@@ -31,11 +31,7 @@ namespace mindspore {
 namespace parallel {
 Status ReduceMethod::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 
@@ -360,11 +356,7 @@ Status ReduceMethod::InferTensorInfo() {
 
 Status ReduceMethod::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
 
@@ -380,7 +372,6 @@ Status ReduceMethod::GenerateStrategies(int32_t stage_id) {
 
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
-  is_auto_parallel_ = true;
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
@@ -408,11 +399,7 @@ Status ReduceMethod::Init(const StrategyPtr &strategy) {
 
 Status ReduceMethod::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed";
     return FAILED;
   }
 
@@ -453,11 +440,7 @@ std::vector<int32_t> ArgMaxWithValueInfo::reduce_dim() {
 
 Status ArgMaxWithValueInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (ReduceMethod::CheckStrategy(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": CheckStrategy for parent class ReduceMethod failed";
-    } else {
-      MS_LOG(ERROR) << name_ << ": CheckStrategy for parent class ReduceMethod failed";
-    }
+    MS_LOG(ERROR) << name_ << ": CheckStrategy for parent class ReduceMethod failed";
     return FAILED;
   }
   std::vector<int32_t> dim_list = reduce_dim();
@@ -552,7 +535,6 @@ Status ArgMaxWithValueInfo::GenerateStrategies(int32_t stage_id) {
   }
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
-  is_auto_parallel_ = true;
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed.";

@@ -269,7 +269,6 @@ Status LayerNormInfo::GenerateStrategies(int32_t stage_id) {
   Shapes splittable_inputs = {input_split};
   Shapes tmp_inputs_shape = {input_shape_};
   std::vector<StrategyPtr> sp_vector;
-  is_auto_parallel_ = true;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Generate input strategy failed";
     return FAILED;

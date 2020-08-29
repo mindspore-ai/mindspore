@@ -151,11 +151,7 @@ Status CheckRelevantDimension(const Dimensions &long_strategy, const Dimensions 
 
 Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
 
@@ -166,11 +162,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   size_t mat_a_size = mat_a_strategy.size();
   size_t mat_b_size = mat_b_strategy.size();
   if ((mat_a_size != mat_a_dimension_) || (mat_b_size != mat_b_dimension_)) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : The dimensions of mat_a or mat_b's strategy is wrong.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : The dimensions of mat_a or mat_b's strategy is wrong.";
-    }
+    MS_LOG(ERROR) << name_ << " : The dimensions of mat_a or mat_b's strategy is wrong.";
     return FAILED;
   }
 
@@ -405,11 +397,7 @@ Status MatMulBase::Init(const StrategyPtr &strategy) {
 
 Status MatMulBase::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
   }
 
@@ -455,7 +443,6 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
 
   // Combining the input0_shape and input1_shape
   // E.g., combined_shape = [100, 200, 300, 400]
-  is_auto_parallel_ = true;
   size_t input1_shape_size = input1_shape.size(), input0_shape_size = input0_shape.size();
   Dimensions combined_partitions;
   Shape combined_shape;
@@ -622,11 +609,7 @@ std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
 
 Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (InitForCostModel(strategy) == FAILED) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Initialization under the strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Initialization under the strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Initialization under the strategy failed.";
     return FAILED;
   }
   PrintStrategy(strategy);

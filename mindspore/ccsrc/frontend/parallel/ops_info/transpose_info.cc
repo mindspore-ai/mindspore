@@ -29,11 +29,7 @@ namespace mindspore {
 namespace parallel {
 Status TransposeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 
@@ -190,11 +186,7 @@ Status TransposeInfo::Init(const StrategyPtr &strategy) {
 
 Status TransposeInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
 
@@ -204,11 +196,7 @@ Status TransposeInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status TransposeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
 
@@ -225,7 +213,6 @@ Status TransposeInfo::GenerateStrategies(int32_t stage_id) {
                   << outputs_shape_.size();
     return FAILED;
   }
-  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
   std::vector<StrategyPtr> sp_vector;
