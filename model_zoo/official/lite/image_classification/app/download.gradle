@@ -1,0 +1,139 @@
+/**
+ * To download necessary library from HuaWei server.
+ * Including mindspore-lite .so file, opencv .so file and model file.
+ * The libraries can be downloaded manually.
+ */
+
+def targetopenCVInclude = "src/main/cpp/include"
+def targetMindSporeInclude = "src/main/cpp/include"
+
+
+def targetModelFile = "src/main/assets/model/mobilenetv2.ms"
+def openCVLibrary_arm64 = "libs/arm64-v8a/libopencv_java4.so"
+def mindSporeLibrary_arm64 = "libs/arm64-v8a/libmindspore-lite.so"
+def openCVlibIncluding_arm64 = "src/main/cpp/include/opencv2/include.zip"
+def mindSporeLibIncluding_arm64 = "src/main/cpp/include/MindSpore/include.zip"
+
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms"
+def opencvDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/opencv%204.4.0/libopencv_java4.so"
+def mindsporeLiteDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so"
+def opencvincludeDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/opencv%204.4.0/include.zip"
+def mindsporeIncludeDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/include.zip"
+
+def cleantargetopenCVInclude = "src/main/cpp/include/opencv2"
+def cleantargetMindSporeInclude = "src/main/cpp/include/MindSpore"
+
+
+task downloadModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelDownloadUrl}"
+    }
+    sourceUrl = "${modelDownloadUrl}"
+    target = file("${targetModelFile}")
+}
+
+
+task downloadOpenCVLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${opencvDownloadUrl}"
+    }
+    sourceUrl = "${opencvDownloadUrl}"
+    target = file("${openCVLibrary_arm64}")
+}
+
+task downloadMindSporeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${mindsporeLiteDownloadUrl}"
+    }
+    sourceUrl = "${mindsporeLiteDownloadUrl}"
+    target = file("${mindSporeLibrary_arm64}")
+}
+
+task downloadopecvIncludeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${opencvincludeDownloadUrl}"
+    }
+    sourceUrl = "${opencvincludeDownloadUrl}"
+    target = file("${openCVlibIncluding_arm64}")
+}
+
+task downloadMindSporeIncludeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${mindsporeIncludeDownloadUrl}"
+    }
+    sourceUrl = "${mindsporeIncludeDownloadUrl}"
+    target = file("${mindSporeLibIncluding_arm64}")
+}
+
+task unzipopencvInclude(type: Copy, dependsOn: 'downloadopecvIncludeLibrary') {
+    doFirst {
+        println "Unzipping ${openCVlibIncluding_arm64}"
+    }
+    from zipTree("${openCVlibIncluding_arm64}")
+    into "${targetopenCVInclude}"
+}
+
+task unzipMindSporeInclude(type: Copy, dependsOn: 'downloadMindSporeIncludeLibrary') {
+    doFirst {
+        println "Unzipping ${mindSporeLibIncluding_arm64}"
+    }
+    from zipTree("${mindSporeLibIncluding_arm64}")
+    into "${targetMindSporeInclude}"
+}
+
+task cleanUnusedopencvFiles(type: Delete, dependsOn: ['unzipopencvInclude']) {
+    delete fileTree("${cleantargetopenCVInclude}").matching {
+        include "*.zip"
+    }
+}
+task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
+    delete fileTree("${cleantargetMindSporeInclude}").matching {
+        include "*.zip"
+    }
+}
+/*
+ * Using preBuild to download mindspore library, opencv library and model file.
+ * Run before gradle build.
+ */
+if (file("libs/arm64-v8a/libmindspore-lite.so").exists()){
+    downloadMindSporeLibrary.enabled = false
+}
+
+if (file("libs/arm64-v8a/libopencv_java4.so").exists()){
+    downloadOpenCVLibrary.enabled = false
+}
+if (file("src/main/assets/model/mobilenetv2.ms").exists()){
+    downloadModelFile.enabled = false
+}
+
+if (file("src/main/cpp/include/MindSpore/lite_session.h").exists()){
+    downloadMindSporeIncludeLibrary.enabled = false
+    unzipopencvInclude.enabled = false
+    cleanUnusedopencvFiles.enabled =false
+}
+if (file("src/main/cpp/include/opencv2/core.hpp").exists()){
+    downloadopecvIncludeLibrary.enabled = false
+    unzipMindSporeInclude.enabled = false
+    cleanUnusedmindsporeFiles.enabled =false
+}
+
+preBuild.dependsOn downloadMindSporeLibrary
+preBuild.dependsOn downloadOpenCVLibrary
+preBuild.dependsOn downloadModelFile
+preBuild.dependsOn unzipopencvInclude
+preBuild.dependsOn unzipMindSporeInclude
+preBuild.dependsOn cleanUnusedopencvFiles
+preBuild.dependsOn cleanUnusedmindsporeFiles
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}
