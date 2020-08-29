@@ -640,7 +640,7 @@ CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const std::vector<An
   return NewCNode(input_node_list);
 }
 
-ParameterPtr FuncGraph::add_parameter(const tensor::MetaTensorPtr &meta_tensor) {
+ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
   auto parameter = add_parameter();
   parameter->set_default_param(MakeValue(meta_tensor));
   parameter->set_abstract(meta_tensor->ToAbstract());

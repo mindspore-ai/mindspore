@@ -64,23 +64,36 @@ std::vector<int> CheckAndConvertUtils::CheckPositiveVector(const std::string &ar
                                                            const std::vector<int> &arg_value,
                                                            const std::string &prim_name, bool allow_four,
                                                            bool ret_four) {
+  auto raise_message = [allow_four, prim_name, arg_value, arg_name]() -> void {
+    std::ostringstream buffer;
+    buffer << "For " << prim_name << " attr " << arg_name << " should be a positive vector of size two ";
+    if (allow_four) {
+      buffer << "or four ";
+    }
+    buffer << " positive int numbers , but got [";
+    for (auto item : arg_value) {
+      buffer << item << ",";
+    }
+    buffer << "]";
+    MS_EXCEPTION(ValueError) << buffer.str();
+  };
+  for (auto item : arg_value) {
+    if (item < 0) {
+      raise_message();
+    }
+  }
+  if (arg_value.size() == 1) {
+    return ret_four ? std::vector<int>{1, 1, arg_value[0], arg_value[0]} : std::vector<int>{arg_value[0], arg_value[0]};
+  }
   if (arg_value.size() == 2) {
     return ret_four ? std::vector<int>{1, 1, arg_value[0], arg_value[1]} : arg_value;
   } else if (arg_value.size() == 4 && allow_four) {
     return ret_four ? arg_value : std::vector<int>{arg_value[2], arg_value[3]};
   }
-  std::ostringstream buffer;
-  buffer << "For " << prim_name << " attr " << arg_name << " should be a positive vector of size two ";
-  if (allow_four) {
-    buffer << "or four ";
-  }
-  buffer << " positive int numbers , but got [";
-  for (auto item : arg_value) {
-    buffer << item << ",";
-  }
-  buffer << "]";
-  MS_EXCEPTION(ValueError) << buffer.str();
+  raise_message();
+  return arg_value;
 }
+
 std::string CheckAndConvertUtils::CheckString(const std::string &arg_name, const std::string &arg_value,
                                               const std::set<std::string> &check_list, const std::string &prim_name) {
   if (check_list.find(arg_value) != check_list.end()) {
@@ -130,6 +143,10 @@ void CheckAndConvertUtils::CheckInRange(const std::string &arg_name, int arg_val
   auto iter = kCompareRangeMap.find(compare_operator);
   if (iter == kCompareRangeMap.end()) {
     MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
+  }
+  if (range.first >= range.second) {
+    MS_EXCEPTION(ArgumentError) << "the check range left must be larger than right number bug got [ " << range.first
+                                << "," << range.second;
   }
   if (iter->second(arg_value, range)) {
     return;

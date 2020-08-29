@@ -70,6 +70,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
   virtual GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
+  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) {
+    MS_EXCEPTION(NotExistsError) << "Call an empty function";
+  }
   // build graph, used to handle multiple child graphs
   virtual void BuildGraph(GraphId) {}
 
@@ -129,6 +132,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs);
 
  protected:
+  void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
   // Get graph by graph id ,if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;
 

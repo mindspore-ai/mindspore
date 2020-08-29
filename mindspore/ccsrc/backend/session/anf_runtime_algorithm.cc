@@ -444,14 +444,9 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
   if (!anf_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode.";
   }
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->inputs().size()) {
-    MS_LOG(EXCEPTION) << "Input index " << input_idx << " is larger than input number " << GetInputTensorNum(cnode);
-  }
-  auto node = cnode->input(input_idx + 1);
-  MS_EXCEPTION_IF_NULL(node);
-  return VisitKernelWithReturnType(node, 0);
+  auto input_node = AnfAlgo::GetInputNode(anf_node->cast<CNodePtr>(), input_idx);
+  MS_EXCEPTION_IF_NULL(input_node);
+  return VisitKernelWithReturnType(input_node, 0);
 }
 
 std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx) {
@@ -975,7 +970,7 @@ bool AnfRuntimeAlgorithm::IsTupleOutput(const AnfNodePtr &anf) {
 AnfNodePtr AnfRuntimeAlgorithm::GetInputNode(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto get_input_index = index + 1;
-  if (index + 1 > node->inputs().size()) {
+  if (index + 1 >= node->inputs().size()) {
     MS_LOG(EXCEPTION) << "Input index size " << get_input_index << "but the node input size just"
                       << node->inputs().size();
   }
