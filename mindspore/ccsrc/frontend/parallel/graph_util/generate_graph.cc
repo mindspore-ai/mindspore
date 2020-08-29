@@ -21,6 +21,7 @@
 #include <string>
 
 #include "pipeline/jit/parse/python_adapter.h"
+#include "utils/convert_utils_py.h"
 
 using mindspore::tensor::Tensor;
 

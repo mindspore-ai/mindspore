@@ -30,6 +30,7 @@
 #include "transform/graph_ir/graph_runner.h"
 #include "debug/draw.h"
 #include "abstract/abstract_value.h"
+#include "utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace pipeline {

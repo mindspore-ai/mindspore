@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "debug/dump_proto.h"
 
+#include <algorithm>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <utility>
-#include <algorithm>
+#include <vector>
 
-#include "debug/anf_ir_utils.h"
 #include "proto/anf_ir.pb.h"
 #include "ir/graph_utils.h"
+#include "utils/ms_context.h"
 #include "utils/symbolic.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 class ProtoExporter {
@@ -514,4 +518,64 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) {
   ProtoExporter exporter;
   return exporter.GetFuncGraphProtoString(func_graph);
 }
+
+#ifdef ENABLE_DUMP_IR
+void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Func graph is nullptr";
+    return;
+  }
+  auto ms_context = MsContext::GetInstance();
+  if (ms_context == nullptr) {
+    MS_LOG(ERROR) << "ms_context is nullptr";
+    return;
+  }
+  auto save_graphs_path = ms_context->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  std::string file_path = save_graphs_path + "/" + "ms_output_" + suffix + ".pb";
+  if (file_path.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << file_path << " is too long.";
+    return;
+  }
+  char real_path[PATH_MAX] = {0};
+  char *real_path_ret = nullptr;
+#if defined(_WIN32) || defined(_WIN64)
+  real_path_ret = _fullpath(real_path, file_path.c_str(), PATH_MAX);
+#else
+  real_path_ret = realpath(file_path.c_str(), real_path);
+#endif
+  if (nullptr == real_path_ret) {
+    MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
+  } else {
+    std::string path_string = real_path;
+    if (chmod(common::SafeCStr(path_string), S_IRUSR | S_IWUSR) == -1) {
+      MS_LOG(ERROR) << "Modify file:" << real_path << " to rw fail.";
+      return;
+    }
+  }
+
+  // write to pb file
+  std::ofstream ofs(real_path);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file '" << real_path << "' failed!";
+    return;
+  }
+  ofs << GetFuncGraphProtoString(func_graph);
+  ofs.close();
+  // set file mode to read only by user
+  ChangeFileMode(file_path, S_IRUSR);
+}
+#else
+void DumpIRProto(const FuncGraphPtr &, const std::string &) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping function graph IR in protobuf format is disabled, "
+                  << "please recompile source to enable it. See help of building script.";
+}
+#endif
 }  // namespace mindspore

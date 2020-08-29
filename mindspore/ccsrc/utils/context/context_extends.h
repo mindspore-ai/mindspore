@@ -22,7 +22,6 @@
 #include <memory>
 #include "utils/ms_context.h"
 #include "utils/tensorprint_utils.h"
-#include "utils/convert_utils.h"
 
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"

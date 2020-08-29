@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,38 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_PASS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_PASS_H_
 
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include "ir/anf.h"
-#include "ir/manager.h"
+
+#include "frontend/optimizer/cse.h"
+
+#include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
+
 // Common subexpression elimination.
-class CSE {
+class CSEPass : public CSE {
  public:
-  CSE() = default;
-  virtual ~CSE() = default;
+  explicit CSEPass(bool report_changes = true) : CSE(), report_changes_(report_changes) {}
+  virtual ~CSEPass() = default;
 
-  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect = true) const;
-
-  virtual bool CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const;
-
-  bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
+  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) {
+    bool chg = Cse(root, optimizer->resource()->manager());
+    return chg && report_changes_;
+  }
 
  private:
-  bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const;
-  bool DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
-                 std::unordered_map<std::size_t, std::vector<AnfNodePtr>> *groups) const;
+  bool report_changes_;
 };
 
 BasePtr AbsOf(const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_PASS_H_

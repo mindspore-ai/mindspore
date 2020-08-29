@@ -21,6 +21,13 @@
 #include <thread>
 #include <atomic>
 
+#include "pybind11/pybind11.h"
+
+#include "utils/ms_utils.h"
+#include "utils/convert_utils_base.h"
+
+namespace py = pybind11;
+
 namespace mindspore {
 namespace context {
 #ifdef ENABLE_GE

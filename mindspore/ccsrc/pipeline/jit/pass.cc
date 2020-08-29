@@ -28,7 +28,7 @@
 #include "pipeline/jit/validator.h"
 #include "pipeline/jit/remove_value_node_dup.h"
 #include "frontend/optimizer/optimizer.h"
-#include "frontend/optimizer/cse.h"
+#include "frontend/optimizer/cse_pass.h"
 #include "frontend/optimizer/graph_kernel_reuse.h"
 #include "frontend/optimizer/clean.h"
 #include "frontend/optimizer/irpass.h"
@@ -158,7 +158,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"resolve", resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
-                         {"cse", opt::OptPassConfig(opt::CSE(false))},
+                         {"cse", opt::OptPassConfig(opt::CSEPass(false))},
                          {"a_3", a_3}});
 
   return map_a;
@@ -192,7 +192,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
     {"b_1", b_1},
     {"b_2", b_2},
     {"renormalize", opt::OptPassConfig::Renormalize()},
-    {"cse", opt::OptPassConfig(opt::CSE(false))},
+    {"cse", opt::OptPassConfig(opt::CSEPass(false))},
   });
   return map;
 }
@@ -205,7 +205,7 @@ OptPassGroupMap GetOptPassesGraphKernelA(const opt::irpass::OptimizeIRPassLib &i
     {"graph_kernel_reuse", opt::OptPassConfig(opt::GraphKernelReuse())},
     {"interface_fusion", interface_fusion},
     {"renormalize", opt::OptPassConfig::Renormalize()},
-    {"cse", opt::OptPassConfig(opt::CSE(false))},
+    {"cse", opt::OptPassConfig(opt::CSEPass(false))},
   });
   return map;
 }

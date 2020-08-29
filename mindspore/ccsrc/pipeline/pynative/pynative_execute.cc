@@ -30,6 +30,7 @@
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
 #include "utils/config_manager.h"
+#include "utils/convert_utils_py.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/do_signature.h"

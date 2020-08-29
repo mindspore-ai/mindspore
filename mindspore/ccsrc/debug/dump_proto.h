@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/dump_proto.h"
+#ifndef MINDSPORE_CCSRC_DEBUG_DUMP_PROTO_H_
+#define MINDSPORE_CCSRC_DEBUG_DUMP_PROTO_H_
+
+#include <string>
+
+#include "ir/func_graph.h"
 
 namespace mindspore {
+std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 
-void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) { return; }
+std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
 
-std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) { return ""; }
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph);
 
-std::string GetOnnxProtoString(const FuncGraphPtr &func_graph) { return ""; }
-
-std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) { return ""; }
+void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_DEBUG_DUMP_PROTO_H_

@@ -21,6 +21,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pybind11/pytypes.h"
 #include "utils/convert_utils_base.h"
+#include "utils/convert_utils_py.h"
 #include "utils/primitive_utils.h"
 #include "utils/base_ref_extends.h"
 #include "utils/ms_context.h"

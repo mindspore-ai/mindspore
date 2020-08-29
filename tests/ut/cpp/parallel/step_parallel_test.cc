@@ -20,6 +20,7 @@
 #include "debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace parallel {

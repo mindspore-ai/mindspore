@@ -29,6 +29,7 @@
 #include "vm/transform.h"
 #include "ir/tensor.h"
 #include "utils/convert_utils.h"
+#include "utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
