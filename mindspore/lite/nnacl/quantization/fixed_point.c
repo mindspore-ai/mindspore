@@ -54,9 +54,9 @@ int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t lef
   return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value * (1 << left_shift), multiplier), -right_shift);
 }
 
-inline int FractionsBits(int integer_bits) { return 8 * sizeof(int32_t) - 1 - integer_bits; }
+int FractionsBits(int integer_bits) { return 8 * sizeof(int32_t) - 1 - integer_bits; }
 
-inline int FixedPoint_One(int integer_bits, int fractions_bits) {
+int FixedPoint_One(int integer_bits, int fractions_bits) {
   return (integer_bits == 0 ? INT32_MAX : ((1) << (uint32_t)(integer_bits == 0 ? 0 : fractions_bits)));
 }
 
@@ -65,23 +65,23 @@ int RoundingHalfSum(int32_t a, int32_t b) {
   return (int32_t)((sum + (sum > 0 ? 1 : -1)) / 2);
 }
 
-inline int32_t BitAnd(int32_t a, int32_t b) { return (uint32_t)a & (uint32_t)b; }
+int32_t BitAnd(int32_t a, int32_t b) { return (uint32_t)a & (uint32_t)b; }
 
-inline int32_t BitOr(int32_t a, int32_t b) { return (uint32_t)a | (uint32_t)b; }
+int32_t BitOr(int32_t a, int32_t b) { return (uint32_t)a | (uint32_t)b; }
 
-inline int32_t BitXor(int32_t a, int32_t b) { return (uint32_t)a ^ (uint32_t)b; }
+int32_t BitXor(int32_t a, int32_t b) { return (uint32_t)a ^ (uint32_t)b; }
 
-inline int32_t BitNot(int32_t a) { return ~(uint32_t)a; }
+int32_t BitNot(int32_t a) { return ~(uint32_t)a; }
 
-inline int BitsSelect(int mask, int bound, int val) { return BitXor(BitAnd(mask, bound), BitAnd(BitNot(mask), val)); }
+int BitsSelect(int mask, int bound, int val) { return BitXor(BitAnd(mask, bound), BitAnd(BitNot(mask), val)); }
 
-inline int ConstantPOT(int fractional_bits, int exponent) { return (1 << (uint32_t)(fractional_bits + exponent)); }
+int ConstantPOT(int fractional_bits, int exponent) { return (1 << (uint32_t)(fractional_bits + exponent)); }
 
-inline int32_t MaskIfNonZero(int32_t a) { return a ? BitNot(0) : 0; }
+int32_t MaskIfNonZero(int32_t a) { return a ? BitNot(0) : 0; }
 
-inline int32_t MaskIfZero(int32_t a) { return MaskIfNonZero(!a); }
+int32_t MaskIfZero(int32_t a) { return MaskIfNonZero(!a); }
 
-inline int32_t MaskIfLessThan(int32_t a, int32_t b) { return MaskIfNonZero((a < b)); }
+int32_t MaskIfLessThan(int32_t a, int32_t b) { return MaskIfNonZero((a < b)); }
 
 int CountLeadingZeroBits(uint32_t x) {
 #if defined(__GUNC__)
