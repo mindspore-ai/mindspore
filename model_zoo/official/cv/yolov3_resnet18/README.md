@@ -47,12 +47,12 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 - Dataset
 
     1. The directory structure is as follows:
-        > ```
-        > .
-        > ├── annotations  # annotation jsons
-        > ├── train2017    # train dataset
-        > └── val2017      # infer dataset
-        > ```
+        ```
+        .
+        ├── annotations  # annotation jsons
+        ├── train2017    # train dataset
+        └── val2017      # infer dataset
+        ```
 
     2. Organize the dataset infomation into a TXT file, each row in the file is as follows:
 
