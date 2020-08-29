@@ -215,7 +215,6 @@ Status TileInfo::GenerateStrategies(int32_t stage_id) {
   Shapes splittable_inputs = {multiples_split};
 
   std::vector<StrategyPtr> sp_vector;
-  is_auto_parallel_ = true;
   Shapes tmp_inputs_shape = {full_multiples_};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
     return FAILED;

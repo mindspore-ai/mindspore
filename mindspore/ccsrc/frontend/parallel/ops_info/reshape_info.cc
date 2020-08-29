@@ -31,23 +31,10 @@ namespace mindspore {
 namespace parallel {
 Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 
-  size_t strategy_size = strategy->GetInputNumber();
-  if (strategy_size != 1) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy size " << strategy_size;
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy size " << strategy_size;
-    }
-    return FAILED;
-  }
   return SUCCESS;
 }
 
@@ -398,11 +385,7 @@ Status ReshapeInfo::Init(const StrategyPtr &strategy) {
 
 Status ReshapeInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
 
@@ -412,11 +395,7 @@ Status ReshapeInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status ReshapeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
 
@@ -468,7 +447,6 @@ Status ReshapeInfo::GenerateStrategies(int32_t stage_id) {
                   << outputs_shape_.size();
     return FAILED;
   }
-  is_auto_parallel_ = true;
   Shape input0_split;
   (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};

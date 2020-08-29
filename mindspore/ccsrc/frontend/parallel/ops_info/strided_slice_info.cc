@@ -265,7 +265,6 @@ Status StridedSliceInfo::GenerateStrategies(int32_t stage_id) {
   Shapes splittable_inputs = {input_split};
 
   std::vector<StrategyPtr> sp_vector;
-  is_auto_parallel_ = true;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
     return FAILED;
   }

@@ -28,11 +28,7 @@ namespace mindspore {
 namespace parallel {
 Status L2NormalizeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(INFO) << name_ << " : Init success.";
-    }
+    MS_LOG(INFO) << name_ << " : Init success.";
     return FAILED;
   }
 
@@ -94,7 +90,6 @@ Status L2NormalizeInfo::GenerateStrategies(int32_t stage_id) {
     MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
     return FAILED;
   }
-  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size() - 1, 1);
   int32_t axis_index = axis_;
   if (axis_ < 0) {

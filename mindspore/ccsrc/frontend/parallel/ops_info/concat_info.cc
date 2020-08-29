@@ -229,7 +229,6 @@ Status ConcatInfo::GenerateStrategies(int32_t stage_id) {
   Shapes tmp_inputs_shape = {inputs_shape_[0]};
 
   std::vector<StrategyPtr> sp_vector;
-  is_auto_parallel_ = true;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Generate strategies failed";
     return FAILED;

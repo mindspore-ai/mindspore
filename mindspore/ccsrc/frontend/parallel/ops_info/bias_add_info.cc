@@ -28,11 +28,7 @@ namespace mindspore {
 namespace parallel {
 Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
   Strategys stra = strategy->GetInputDim();
@@ -41,11 +37,7 @@ Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
   int64_t channel_a_strategy = sub_a_strategy.at(1);
   int64_t channel_b_strategy = sub_b_strategy.at(0);
   if (channel_a_strategy != channel_b_strategy) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
   return SUCCESS;
@@ -186,11 +178,7 @@ Status BiasAddInfo::InferTensorInfo() {
 
 Status BiasAddInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
 
@@ -202,7 +190,6 @@ Status BiasAddInfo::GenerateStrategies(int32_t stage_id) {
   Shapes splittable_inputs = {input0_split, input0_split};
 
   std::vector<StrategyPtr> sp_vector;
-  is_auto_parallel_ = true;
   Shapes tmp_inputs_shape = {inputs_shape_[0], inputs_shape_[0]};
   Shapes tmp_splittable_inputs = {splittable_inputs[0], splittable_inputs[0]};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, tmp_splittable_inputs, &sp_vector) !=
@@ -245,11 +232,7 @@ Status BiasAddInfo::Init(const StrategyPtr &strategy) {
 
 Status BiasAddInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
 

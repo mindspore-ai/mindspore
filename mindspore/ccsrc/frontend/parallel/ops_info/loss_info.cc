@@ -29,11 +29,7 @@ namespace mindspore {
 namespace parallel {
 Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
 
@@ -55,15 +51,8 @@ Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::paralle
   int64_t label_axis_strategy = label_strategy.at(IntToSize(axis_index));
   // Dimension corresponding to axis is un-splittable
   if ((input_axis_strategy != MIN_SLICE_NUM) && (label_axis_strategy != MIN_SLICE_NUM)) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_
-                    << " : The strategy corresponding to axis dimension is not 1, input: " << input_axis_strategy
-                    << ", label: " << label_axis_strategy;
-    } else {
-      MS_LOG(ERROR) << name_
-                    << " : The strategy corresponding to axis dimension is not 1, input: " << input_axis_strategy
-                    << ", label: " << label_axis_strategy;
-    }
+    MS_LOG(ERROR) << name_ << " : The strategy corresponding to axis dimension is not 1, input: " << input_axis_strategy
+                  << ", label: " << label_axis_strategy;
     return FAILED;
   }
 
@@ -163,11 +152,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::Init(const StrategyPtr &strategy) {
 
 Status SoftmaxCrossEntropyWithLogitsInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
   }
 
@@ -191,7 +176,6 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int32_t stage_id) {
     size_t input_dim = inputs_shape_[0].size();
     axis_index = static_cast<int32_t>(input_dim) + axis_;
   }
-  is_auto_parallel_ = true;
 
   Shape input0_split;
   (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
@@ -218,11 +202,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int32_t stage_id) {
 Status SoftmaxCrossEntropyWithLogitsInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   PrintStrategy(strategy);
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
     return FAILED;
   }
   return SUCCESS;

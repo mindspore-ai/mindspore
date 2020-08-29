@@ -74,11 +74,7 @@ Strategys ExpendStrategy(const StrategyPtr &strategy) {
 
 Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
   Shapes input_shapes = InferExpendShape();
@@ -90,11 +86,7 @@ Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
 
   for (size_t i = 0; i < input_a_shape.size(); ++i) {
     if ((sub_a_strategy[i] != sub_b_strategy[i]) && (input_a_shape[i] != 1) && (input_b_shape[i] != 1)) {
-      if (is_auto_parallel_) {
-        MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-      } else {
-        MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-      }
+      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
       return FAILED;
     }
   }
@@ -300,11 +292,7 @@ Status ArithmeticBase::InferTensorInfo() {
 
 Status ArithmeticBase::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
     return FAILED;
   }
 
@@ -317,7 +305,6 @@ Status ArithmeticBase::GenerateStrategies(int32_t stage_id) {
   Shapes splittable_inputs = {input0_split, input1_split};
 
   std::vector<StrategyPtr> sp_vector;
-  is_auto_parallel_ = true;
   if (GenerateStrategiesWithBroadcast(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Generate strategies with broadcast failed.";
     return FAILED;
@@ -347,11 +334,7 @@ Status ArithmeticBase::Init(const StrategyPtr &strategy) {
 
 Status ArithmeticBase::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
   }
 

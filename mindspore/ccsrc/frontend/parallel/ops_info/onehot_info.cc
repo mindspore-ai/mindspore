@@ -65,11 +65,7 @@ Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
   if (CheckStrategyValue(strategy, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)},
                          is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 
@@ -246,11 +242,7 @@ Status OneHotInfo::Init(const StrategyPtr &strategy) {
 
 Status OneHotInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
   MS_LOG(INFO) << name_ << ": Init for cost model success.";
@@ -268,7 +260,6 @@ Status OneHotInfo::GenerateStrategies(int32_t stage_id) {
     MS_LOG(ERROR) << name_ << ": outputs_shape_ size must be 1, but is " << outputs_shape_.size();
     return FAILED;
   }
-  is_auto_parallel_ = true;
   if (GenerateStrategiesForIndependentInputs(stage_id, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)},
                                              splittable_inputs, &sp_vector) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GenerateStrategies failed.";
@@ -289,11 +280,7 @@ Status OneHotInfo::GenerateStrategies(int32_t stage_id) {
 
 Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
   return SUCCESS;

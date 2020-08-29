@@ -35,28 +35,16 @@ namespace parallel {
  */
 Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
   Strategys stra = strategy->GetInputDim();
   if (stra[1].size() != PRELU_SECOND_INPUT_SIZE) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy size.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy size.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy size.";
     return FAILED;
   }
   if (stra[0][PRELU_CHANNEL_INDEX] != stra[1][0] && inputs_shape_[1][0] != 1) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid channel strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid channel strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid channel strategy.";
     return FAILED;
   }
   return SUCCESS;
@@ -195,11 +183,7 @@ Status PReLUInfo::Init(const StrategyPtr &strategy) {
 
 Status PReLUInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
 
@@ -214,7 +198,6 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
   if (inputs_shape_[1].size() != PRELU_SECOND_INPUT_SIZE) {
     return FAILED;
   }
-  is_auto_parallel_ = true;
   Shape input0_split;
   input0_split.emplace_back(1);
   input0_split.emplace_back(0);
@@ -239,11 +222,7 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
 
 Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
   return SUCCESS;

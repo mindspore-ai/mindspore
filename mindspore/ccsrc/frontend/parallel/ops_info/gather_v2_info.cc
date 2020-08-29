@@ -83,11 +83,7 @@ Status GatherV2Info::CheckStrategy(const StrategyPtr &strategy) {
   }
   // Only strategy of the first input should be set.
   if (CheckStrategyValue(strategy, {inputs_shape_.at(0)}, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
   axis_strategy_ = strategy->GetInputDim().at(0).at(axis_);
@@ -272,11 +268,7 @@ Status GatherV2Info::Init(const StrategyPtr &strategy) {
 
 Status GatherV2Info::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
   MS_LOG(INFO) << name_ << ": Init for cost model success.";
@@ -289,8 +281,6 @@ Status GatherV2Info::GenerateStrategies(int32_t stage_id) {
                   << outputs_shape_.size() << "is wrong.";
     return FAILED;
   }
-
-  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
@@ -313,11 +303,7 @@ Status GatherV2Info::GenerateStrategies(int32_t stage_id) {
 
 Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
   return SUCCESS;

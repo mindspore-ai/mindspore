@@ -30,21 +30,13 @@ namespace mindspore {
 namespace parallel {
 Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 
   Strategys stra = strategy->GetInputDim();
   if (stra.size() < 1) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Strategy size must be larger than 1.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
-    }
+    MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
     return FAILED;
   }
   if (stra.size() == 1) {
@@ -57,21 +49,13 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
       MS_LOG(ERROR) << name_ << ": iter_strategy size is zero.";
     }
     if (strategy_first.at(0) != *(iter_strategy->begin())) {
-      if (is_auto_parallel_) {
-        MS_LOG(DEBUG) << name_ << ": The first dimension of each strategy must be the same.";
-      } else {
-        MS_LOG(ERROR) << name_ << ": The first dimension of each strategy must be the same.";
-      }
+      MS_LOG(ERROR) << name_ << ": The first dimension of each strategy must be the same.";
       return FAILED;
     }
 
     for (auto iter_element = iter_strategy->begin() + 1; iter_element != iter_strategy->end(); ++iter_element) {
       if (*iter_element != 1) {
-        if (is_auto_parallel_) {
-          MS_LOG(DEBUG) << name_ << ": All dimension except the first dimension of each strategy must be 1.";
-        } else {
-          MS_LOG(ERROR) << name_ << ": All dimension except the first dimension of each strategy must be 1.";
-        }
+        MS_LOG(ERROR) << name_ << ": All dimension except the first dimension of each strategy must be 1.";
         return FAILED;
       }
     }
@@ -144,11 +128,7 @@ Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {
 
 Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithManualRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
 
@@ -164,11 +144,7 @@ void VirtualDatasetInfo::ReComputeBatchSplitFlagList() {
 
 Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
     return FAILED;
   }
 
@@ -186,7 +162,6 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
   }
 
   CheckGlobalDeviceManager();
-  is_auto_parallel_ = true;
   if (full_batch) {
     total_dev_num = 1;
   } else {

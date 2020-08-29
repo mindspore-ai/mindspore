@@ -28,11 +28,7 @@ namespace mindspore {
 namespace parallel {
 Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    }
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
 
@@ -51,11 +47,7 @@ Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
       int64_t strategy_value = sub_strategy.at(j);
       if (strategy_value > 1) {
         if (flag || strategy_value != dev_num_) {
-          if (is_auto_parallel_) {
-            MS_LOG(DEBUG) << name_ << " : It is not a valid data parallel strategy.";
-          } else {
-            MS_LOG(ERROR) << name_ << " : It is not a valid data parallel strategy.";
-          }
+          MS_LOG(ERROR) << name_ << " : It is not a valid data parallel strategy.";
           return FAILED;
         }
         flag = true;
@@ -171,11 +163,7 @@ Status BatchParallelInfo::Init(const StrategyPtr &strategy) {
 
 Status BatchParallelInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
   }
 
@@ -185,11 +173,7 @@ Status BatchParallelInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
     return FAILED;
   }
   return SUCCESS;
@@ -197,7 +181,6 @@ Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 
 Status BatchParallelInfo::GenerateStrategies(int32_t stage_id) {
   CheckGlobalDeviceManager();
-  is_auto_parallel_ = true;
   size_t total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
   StrategyPtr sp;
   Strategys strategy;

@@ -51,11 +51,7 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   // only check the input[0]
   Shapes input_shape = {inputs_shape_[0]};
   if (CheckStrategyValue(strategy, input_shape, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy";
-    }
+    MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
   return SUCCESS;
@@ -130,11 +126,7 @@ Status DropoutDoMaskInfo::InferTensorInfo() {
 
 Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed";
     return FAILED;
   }
 
@@ -147,7 +139,6 @@ Status DropoutDoMaskInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
 
-  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
   Shapes used_inputs_shape = {inputs_shape_[0]};
@@ -189,15 +180,11 @@ Status DropoutDoMaskInfo::Init(const StrategyPtr &strategy) {
 
 Status DropoutDoMaskInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Init for cost model failed";
     return FAILED;
   }
 
-  MS_LOG(INFO) << name_ << ": Init for cost model success.";
+  MS_LOG(INFO) << name_ << ": Init for cost model success";
   return SUCCESS;
 }
 

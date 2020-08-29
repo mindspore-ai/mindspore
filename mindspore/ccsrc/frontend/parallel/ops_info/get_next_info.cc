@@ -121,11 +121,7 @@ Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
   Strategys stras = strategy->GetInputDim();
   for (Dimensions stra : stras) {
     if (stra.size() != 0) {
-      if (is_auto_parallel_) {
-        MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
-      } else {
-        MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-      }
+      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
       return FAILED;
     }
   }
@@ -237,11 +233,7 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
 
 Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
     return FAILED;
   }
   MS_LOG(INFO) << name_ << " : Init for cost model success.";
@@ -250,18 +242,13 @@ Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
     return FAILED;
   }
   return SUCCESS;
 }
 
 Status GetNextInfo::GenerateStrategies(int32_t stage_id) {
-  is_auto_parallel_ = true;
   Strategys stra;
   StrategyPtr sp = std::make_shared<Strategy>(stage_id, stra);
   if (SetCostUnderStrategy(sp) == SUCCESS) {
