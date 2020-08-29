@@ -31,4 +31,4 @@ export GLOG_logtostderr=0
 python eval.py  \
     --device_id=$DEVICE_ID \
     --checkpoint_url=$PATH_CHECKPOINT \
-    --data_url=$DATA_DIR > log.txt 2>&1 &
+    --data_url=$DATA_DIR > eval.log 2>&1 &

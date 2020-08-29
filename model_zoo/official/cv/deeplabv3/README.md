@@ -46,8 +46,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend/GPU）
-  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Hardware（Ascend）
+  - Prepare hardware environment with Ascend. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
 - Framework
   - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
 - For more information, please check the resources below：
@@ -107,7 +107,7 @@ Major parameters in train.py and config.py are:
 									to refine segmentation results, default is None.
 	image_pyramid					Input scales for multi-scale feature extraction, default is None.
 	epoch_size						Epoch size, default is 6.
-    batch_size                      batch size of input dataset: N, default is 2.
+    batch_size                      Batch size of input dataset: N, default is 2.
 	enable_save_ckpt				Enable save checkpoint, default is true.
 	save_checkpoint_steps			Save checkpoint steps, default is 1000.
 	save_checkpoint_num				Save checkpoint numbers, default is 1.
@@ -123,7 +123,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
 
 > Notes: 
-    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got in /etc/hccn.conf in ascend server.
+    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
 ### Launch
 
@@ -133,7 +133,7 @@ sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
       python train.py --dataset_url DATA_PATH 
 
   shell:
-      sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
+      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH (CKPT_PATH)
 ```
 > Notes: 
   If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
@@ -171,7 +171,7 @@ sh scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the followings in `log.txt`. 
+Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`. 
 
 ``` 
 mIoU = 0.65049
@@ -197,6 +197,7 @@ mIoU = 0.65049
 | Total time                 | 5mins                                                      | 
 | Params (M)                 | 94M                                                        | 
 | Checkpoint for Fine tuning | 100M                                                       | 
+| Scripts                    | [deeplabv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) | [deeplabv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) |
 
 #### Inference Performance
 

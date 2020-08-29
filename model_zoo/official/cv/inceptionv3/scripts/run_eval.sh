@@ -21,4 +21,4 @@ PATH_CHECKPOINT=$3
 python eval.py  \
     --platform=Ascend \
     --checkpoint=$PATH_CHECKPOINT \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+    --dataset_path=$DATA_DIR > eval.log 2>&1 &
