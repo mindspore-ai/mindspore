@@ -421,13 +421,37 @@ End3:
   smax v17.4s, v17.4s, v7.4s
   smax v18.4s, v18.4s, v7.4s
   smax v19.4s, v19.4s, v7.4s
+  smax v20.4s, v20.4s, v7.4s
+  smax v21.4s, v21.4s, v7.4s
+  smax v22.4s, v22.4s, v7.4s
+  smax v23.4s, v23.4s, v7.4s
+  smax v24.4s, v24.4s, v7.4s
+  smax v25.4s, v25.4s, v7.4s
+  smax v26.4s, v26.4s, v7.4s
+  smax v27.4s, v27.4s, v7.4s
+  smax v28.4s, v28.4s, v7.4s
+  smax v29.4s, v29.4s, v7.4s
+  smax v30.4s, v30.4s, v7.4s
+  smax v31.4s, v31.4s, v7.4s
 
-  // Apply the act_min bound
+  // Apply the act_max bound
   dup v6.4s, w9
   smin v16.4s, v16.4s, v6.4s
   smin v17.4s, v17.4s, v6.4s
   smin v18.4s, v18.4s, v6.4s
   smin v19.4s, v19.4s, v6.4s
+  smin v20.4s, v20.4s, v6.4s
+  smin v21.4s, v21.4s, v6.4s
+  smin v22.4s, v22.4s, v6.4s
+  smin v23.4s, v23.4s, v6.4s
+  smin v24.4s, v24.4s, v6.4s
+  smin v25.4s, v25.4s, v6.4s
+  smin v26.4s, v26.4s, v6.4s
+  smin v27.4s, v27.4s, v6.4s
+  smin v28.4s, v28.4s, v6.4s
+  smin v29.4s, v29.4s, v6.4s
+  smin v30.4s, v30.4s, v6.4s
+  smin v31.4s, v31.4s, v6.4s
 
   // int32 -> int16
   sqxtn v0.4h, v16.4s
