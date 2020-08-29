@@ -53,7 +53,7 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimAddN->name(), {{}, {0}}},
 };
 
-void SetKernelInfo(const CNodePtr &kernel_node, bool in_black_list = false);
+void SetKernelInfo(const CNodePtr &kernel_node, bool graph_format_transform = false);
 
 class KernelAttr {
  public:

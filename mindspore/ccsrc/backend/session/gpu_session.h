@@ -67,7 +67,7 @@ class GPUSession : public SessionBasic {
 
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
-  bool CheckInModeBlackList(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+  bool IsSupportFormatTransform(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
 #ifdef ENABLE_DEBUGGER
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
