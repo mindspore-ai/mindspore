@@ -88,7 +88,7 @@ AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph,
   if (inputInferType == "FLOAT") {
     inArr.reset(new (std::nothrow) InputArray(mean, stdValue));
   } else {
-    inArr.reset(new (std::nothrow) InputArray(mean, stdValue, TypeId::kNumberTypeUInt8));
+    inArr.reset(new (std::nothrow) InputArray(mean, stdValue, TypeId::kNumberTypeInt8));
   }
   mInputArray = inArr.get();
   mInputArray->InitQuantParam();

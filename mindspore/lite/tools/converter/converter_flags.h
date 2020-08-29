@@ -63,10 +63,10 @@ class Flags : public virtual mindspore::lite::FlagParser {
   // used for quantization
   std::string quantTypeIn;
   QuantType quantType;
-  std::string inferenceType;
+  std::string inferenceTypeIn;
+  TypeId inferenceType = TypeId::kNumberTypeFloat;
   // used for parse aware trainning
   std::string inputInferenceTypeIn;
-  //  mindspore::predict::DataType inputInferenceType = DataType_DT_FLOAT;
   TypeId inputInferenceType = TypeId::kNumberTypeFloat;
   std::string stdDev;
   std::string mean;

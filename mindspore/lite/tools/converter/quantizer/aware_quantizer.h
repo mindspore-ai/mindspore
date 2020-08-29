@@ -37,8 +37,8 @@ struct InputArray {
   InputArray(float mean, float stdDev,
              TypeId dataType = TypeId::kNumberTypeFloat) {
     this->dataType = dataType;
-    constexpr float qmin = 0;
-    constexpr float qmax = 255;
+    constexpr float qmin = -128;
+    constexpr float qmax = 127;
     mMin = (qmin - mean) / stdDev;
     mMax = (qmax - mean) / stdDev;
   }

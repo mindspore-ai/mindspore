@@ -246,8 +246,8 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
     return RET_OK;
   }
 
-  int quantMin = narrowRange ? 1 : 0;
-  int quantMax = (1 << (unsigned int) numBits) - 1;
+  int quantMin = narrowRange ? 1 : 0 - 128;
+  int quantMax = (1 << (unsigned int) numBits) - 1 - 128;
   auto quantMinFloat = static_cast<double>(quantMin);
   auto quantMaxFloat = static_cast<double>(quantMax);
   double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);

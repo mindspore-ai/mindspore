@@ -194,6 +194,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       return RET_ERROR;
     }
     dTypeTransPass->SetInputDataDType(ctx.inputInferenceType);
+    dTypeTransPass->SetOutputDataDType(ctx.inferenceType);
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
