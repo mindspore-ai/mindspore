@@ -53,7 +53,7 @@ usage()
   echo "    -n Compile minddata lite"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
-  echo "    -I Compile lite"
+  echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compiling"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
   echo "    -w Enable acl module, default off"
