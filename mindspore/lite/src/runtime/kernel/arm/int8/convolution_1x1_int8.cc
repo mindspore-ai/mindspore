@@ -272,7 +272,9 @@ int Convolution1x1Int8CPUKernel::RunImpl(int task_id) {
 }
 
 int Convolution1x1Int8CPUKernel::RunPre(int task_id) {
-  int cur_hw = MSMIN(thread_stride_hw_ * C8NUM, matmul_param_->row_ - task_id * thread_stride_hw_ * C8NUM);
+  int cur_stride = thread_stride_hw_ * C8NUM;
+  int res_stride = matmul_param_->row_ - task_id * thread_stride_hw_ * C8NUM;
+  int cur_hw = MSMIN(cur_stride, res_stride);
   if (cur_hw <= 0) {
     return RET_OK;
   }

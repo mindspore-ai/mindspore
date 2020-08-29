@@ -103,8 +103,11 @@ int DeConvFp32Run(void *cdata, int task_id) {
 }
 
 int DeConvolutionCPUKernel::DoDeconv(int task_id) {
-  int oc = MSMIN(thread_stride_, UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_);
-  int oc_res = MSMIN(thread_stride_ * C8NUM, conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM);
+  int res_stride = UP_DIV(conv_param_->output_channel_, C8NUM) - task_id * thread_stride_;
+  int oc = MSMIN(thread_stride_, res_stride);
+  int cur_stride = thread_stride_ * C8NUM;
+  res_stride = conv_param_->output_channel_ - task_id * thread_stride_ * C8NUM;
+  int oc_res = MSMIN(cur_stride, res_stride);
   if (oc <= 0 || oc_res <= 0) {
     return RET_OK;
   }

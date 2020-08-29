@@ -178,7 +178,8 @@ void Convolution1x1FP16CPUKernel::Pre1x1Trans(float16_t *src_input, float16_t *s
 }
 
 int Convolution1x1FP16CPUKernel::RunImpl(int task_id) {
-  int cur_oc = MSMIN(thread_stride_, matmul_param_->col_ - task_id * thread_stride_);
+  int cur_stride = matmul_param_->col_ - task_id * thread_stride_;
+  int cur_oc = MSMIN(thread_stride_, cur_stride);
   if (cur_oc <= 0) {
     return RET_OK;
   }
