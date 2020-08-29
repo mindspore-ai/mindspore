@@ -143,18 +143,22 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
 def run_ner():
     """run ner task"""
     parser = argparse.ArgumentParser(description="run classifier")
-    parser.add_argument("--device_target", type=str, default="Ascend", help="Device type, default is Ascend")
-    parser.add_argument("--assessment_method", type=str, default="accuracy", help="assessment_method include: "
-                                                                                  "[F1, clue_benchmark], default is F1")
-    parser.add_argument("--do_train", type=str, default="false", help="Eable train, default is false")
-    parser.add_argument("--do_eval", type=str, default="false", help="Eable eval, default is false")
-    parser.add_argument("--use_crf", type=str, default="false", help="Use crf, default is false")
+    parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
+                        help="Device type, default is Ascend")
+    parser.add_argument("--assessment_method", type=str, default="accuracy", choices=["f1", "clue_benchmark"],
+                        help="assessment_method include: [F1, clue_benchmark], default is F1")
+    parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
+                        help="Eable train, default is false")
+    parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
+                        help="Eable eval, default is false")
+    parser.add_argument("--use_crf", type=str, default="false", choices=["true", "false"],
+                        help="Use crf, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
     parser.add_argument("--num_class", type=int, default="2", help="The number of class, default is 2.")
-    parser.add_argument("--train_data_shuffle", type=str, default="true",
+    parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
-    parser.add_argument("--eval_data_shuffle", type=str, default="false",
+    parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
                         help="Enable eval data shuffle, default is false")
     parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path, used in clue benchmark")
     parser.add_argument("--label2id_file_path", type=str, default="", help="label2id file path, used in clue benchmark")

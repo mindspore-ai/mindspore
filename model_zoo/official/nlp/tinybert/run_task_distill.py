@@ -49,14 +49,18 @@ def parse_args():
     parser = argparse.ArgumentParser(description='tinybert task distill')
     parser.add_argument("--device_target", type=str, default="Ascend", choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument("--do_train", type=str, default="true", help="Do train task, default is true.")
-    parser.add_argument("--do_eval", type=str, default="true", help="Do eval task, default is true.")
+    parser.add_argument("--do_train", type=str, default="true", choices=["true", "false"],
+                        help="Do train task, default is true.")
+    parser.add_argument("--do_eval", type=str, default="true", choices=["true", "false"],
+                        help="Do eval task, default is true.")
     parser.add_argument("--td_phase1_epoch_size", type=int, default=10,
                         help="Epoch size for td phase 1, default is 10.")
     parser.add_argument("--td_phase2_epoch_size", type=int, default=3, help="Epoch size for td phase 2, default is 3.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--do_shuffle", type=str, default="true", help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="true", help="Enable data sink, default is true.")
+    parser.add_argument("--do_shuffle", type=str, default="true", choices=["true", "false"],
+                        help="Enable shuffle for dataset, default is true.")
+    parser.add_argument("--enable_data_sink", type=str, default="true", choices=["true", "false"],
+                        help="Enable data sink, default is true.")
     parser.add_argument("--save_ckpt_step", type=int, default=100, help="Enable data sink, default is true.")
     parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is true.")
     parser.add_argument("--data_sink_steps", type=int, default=1, help="Sink steps for each epoch, default is 1.")

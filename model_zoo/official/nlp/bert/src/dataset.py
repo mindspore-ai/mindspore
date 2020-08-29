@@ -67,9 +67,6 @@ def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
     ds = ds.repeat(repeat_count)
-    # apply shuffle operation
-    buffer_size = 960
-    ds = ds.shuffle(buffer_size=buffer_size)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     return ds
@@ -90,9 +87,6 @@ def create_classification_dataset(batch_size=1, repeat_count=1, assessment_metho
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
     ds = ds.repeat(repeat_count)
-    # apply shuffle operation
-    buffer_size = 960
-    ds = ds.shuffle(buffer_size=buffer_size)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     return ds
@@ -116,9 +110,6 @@ def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, sche
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
     ds = ds.repeat(repeat_count)
-    # apply shuffle operation
-    buffer_size = 960
-    ds = ds.shuffle(buffer_size=buffer_size)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     return ds

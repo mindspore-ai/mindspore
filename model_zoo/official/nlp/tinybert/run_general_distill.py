@@ -42,14 +42,17 @@ def run_general_distill():
     parser = argparse.ArgumentParser(description='tinybert general distill')
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument("--distribute", type=str, default="false", help="Run distribute, default is false.")
+    parser.add_argument("--distribute", type=str, default="false", choices=["true", "false"],
+                        help="Run distribute, default is false.")
     parser.add_argument("--epoch_size", type=int, default="3", help="Epoch size, default is 1.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
     parser.add_argument("--save_ckpt_step", type=int, default=100, help="Enable data sink, default is true.")
     parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is true.")
-    parser.add_argument("--do_shuffle", type=str, default="true", help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="true", help="Enable data sink, default is true.")
+    parser.add_argument("--do_shuffle", type=str, default="true", choices=["true", "false"],
+                        help="Enable shuffle for dataset, default is true.")
+    parser.add_argument("--enable_data_sink", type=str, default="true", choices=["true", "false"],
+                        help="Enable data sink, default is true.")
     parser.add_argument("--data_sink_steps", type=int, default=1, help="Sink steps for each epoch, default is 1.")
     parser.add_argument("--save_ckpt_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_teacher_ckpt_path", type=str, default="", help="Load checkpoint file path")

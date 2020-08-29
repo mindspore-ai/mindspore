@@ -18,18 +18,18 @@
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 # [BERT Description](#contents)
-The BERT network was proposed by Google in 2018. The network has made a breakthrough in the field of NLP. The network uses pre-training and fine-tune to achieve a large network structure without modifying the large network structure, and only by adding an output layer to achieve multiple text types tasks. The backbone code of BERT adopts the Encoder structure of Transformer. The attention mechanism is introduced to enable the output layer to capture high-latitude global semantic information. The pre-training uses denosing and self-encoding tasks, namely MLM(Masked Language Model) and NSP(Next Sentence Prediction). No need to label data, pre-training can be performed on massive text data, and a small amount of fine-tune can be used for downstream tasks to obtain better results. The pre-training plus fune-tune mode created by BERT is widely adopted by subsequent NLP networks.
+The BERT network was proposed by Google in 2018. The network has made a breakthrough in the field of NLP. The network uses pre-training to achieve a large network structure without modifying, and only by adding an output layer to achieve multiple text-based tasks in fine-tuning. The backbone code of BERT adopts the Encoder structure of Transformer. The attention mechanism is introduced to enable the output layer to capture high-latitude global semantic information. The pre-training uses denoising and self-encoding tasks, namely MLM(Masked Language Model) and NSP(Next Sentence Prediction). No need to label data, pre-training can be performed on massive text data, and only a small amount of data to fine-tuning downstream tasks to obtain good results. The pre-training plus fune-tuning mode created by BERT is widely adopted by subsequent NLP networks.
 
 [Paper](https://arxiv.org/abs/1810.04805):  Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova. [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding]((https://arxiv.org/abs/1810.04805)). arXiv preprint arXiv:1810.04805. 
 
 [Paper](https://arxiv.org/abs/1909.00204):  Junqiu Wei, Xiaozhe Ren, Xiaoguang Li, Wenyong Huang, Yi Liao, Yasheng Wang, Jiashu Lin, Xin Jiang, Xiao Chen, Qun Liu. [NEZHA: Neural Contextualized Representation for Chinese Language Understanding](https://arxiv.org/abs/1909.00204). arXiv preprint arXiv:1909.00204.
 
 # [Model Architecture](#contents)
-The backbone structure of BERT is transformer. For BERT_base, the transformer contains 12 encoder modules, one encoder contains one selfattention module and one selfattention module contains one attention module; For BERT_NEZHA, the transformer contains 24 encoder modules, one encoder contains one selfattention module and one selfattention module contains one attention module. The difference between BERT_base and BERT_NEZHA is that BERT_base uses absolute position encoding to produce position embedding vector and BERT_NEZHA uses relative position encoding.  
+The backbone structure of BERT is transformer. For BERT_base, the transformer contains 12 encoder modules, each module contains one self-attention module and each self-attention module contains one attention module. For BERT_NEZHA, the transformer contains 24 encoder modules, each module contains one self-attention module and each self-attention module contains one attention module. The difference between BERT_base and BERT_NEZHA is that BERT_base uses absolute position encoding to produce position embedding vector and BERT_NEZHA uses relative position encoding.  
 
 # [Dataset](#contents)
 - Download the zhwiki or enwiki dataset for pre-training. Extract and refine texts in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format. Please refer to create_pretraining_data.py file in [BERT](https://github.com/google-research/bert) repository.
-- Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc. Convert dataset files from json format to tfrecord format, please refer to run_classifier.py which in [BERT](https://github.com/google-research/bert) repository.
+- Download dataset for fine-tuning and evaluation such as CLUENER, TNEWS, SQuAD v1.1, etc. Convert dataset files from JSON format to TFRECORD format, please refer to run_classifier.py file in [BERT](https://github.com/google-research/bert) repository.
 
 # [Environment Requirements](#contents)
 - Hardware（Ascend）
@@ -50,7 +50,7 @@ bash scripts/run_standalone_pretrain_ascend.sh 0 1 /path/cn-wiki-128
 bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.json
 
 # run fine-tuning and evaluation example
-- If you are going to run a fine-tuning task, please prepare a checkpoint from pre-training.
+- If you are going to run a fine-tuning task, please prepare a checkpoint generated from pre-training.
 - Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`. 
     
 - Classification task: Set task related hyperparameters in scripts/run_classifier.sh. 
@@ -69,7 +69,7 @@ bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.jso
   bash scripts/run_squad.sh    
 ```
 
-For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+For distributed training, an hccl configuration file with JSON format needs to be created in advance.
 Please follow the instructions in the link below:
 https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
@@ -81,9 +81,9 @@ For ner or classification task, schema file contains ["input_ids", "input_mask",
 
 For squad task, training: schema file contains ["start_positions", "end_positions", "input_ids", "input_mask", "segment_ids"], evaluation: schema file contains ["input_ids", "input_mask", "segment_ids"].
 
-`numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+`numRows` is the only option which could be set by user, other values must be set according to the dataset.
 
-For example, the dataset is cn-wiki-128, the schema file for pretraining as following:
+For example, the schema file of cn-wiki-128 dataset for pretraining shows as follows:
 {
     "datasetType": "TF",
     "numRows": 7680,
@@ -91,17 +91,17 @@ For example, the dataset is cn-wiki-128, the schema file for pretraining as foll
         "input_ids": {
             "type": "int64",
             "rank": 1,
-            "shape": [256]
+            "shape": [128]
         },
         "input_mask": {
             "type": "int64",
             "rank": 1,
-            "shape": [256]
+            "shape": [128]
         },
         "segment_ids": {
             "type": "int64",
             "rank": 1,
-            "shape": [256]
+            "shape": [128]
         },
         "next_sentence_labels": {
             "type": "int64",
@@ -111,17 +111,17 @@ For example, the dataset is cn-wiki-128, the schema file for pretraining as foll
         "masked_lm_positions": {
             "type": "int64",
             "rank": 1,
-            "shape": [32]
+            "shape": [20]
         },
         "masked_lm_ids": {
             "type": "int64",
             "rank": 1,
-            "shape": [32]
+            "shape": [20]
         },
         "masked_lm_weights": {
             "type": "float32",
             "rank": 1,
-            "shape": [32]
+            "shape": [20]
         }
     }
 }
@@ -218,7 +218,7 @@ usage: run_ner.py   [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----d
                     [--eval_data_file_path EVAL_DATA_FILE_PATH] 
                     [--schema_file_path SCHEMA_FILE_PATH]
 options:
-    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
+    --device_target                   device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
     --do_train                        whether to run training on training set: true | false
     --do_eval                         whether to run eval on dev set: true | false
     --assessment_method               assessment method to do evaluation: f1 | clue_benchmark
@@ -250,7 +250,7 @@ usage: run_squad.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----d
                     [--eval_data_file_path EVAL_DATA_FILE_PATH] 
                     [--schema_file_path SCHEMA_FILE_PATH]
 options:
-    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
+    --device_target                   device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
     --do_train                        whether to run training on training set: true | false
     --do_eval                         whether to run eval on dev set: true | false
     --device_id                       device id to run task
@@ -353,11 +353,11 @@ Parameters for optimizer:
 
 ## [Training Process](#contents)
 ### Training
-#### running on Ascend
+#### Running on Ascend
 ```
 bash scripts/run_standalone_pretrain_ascend.sh 0 1 /path/cn-wiki-128
 ```
-The command above will run in the background, you can view the results the file pretraining_log.txt. After training, you will get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
+The command above will run in the background, you can view training logs in pretraining_log.txt. After training finished, you will get some checkpoint files under the script folder by default. The loss values will be displayed as follows:
 ```
 # grep "epoch" pretraining_log.txt
 epoch: 0.0, current epoch percent: 0.000, step: 1, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
@@ -366,11 +366,11 @@ epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1],
 ```
 
 ### Distributed Training
-#### running on Ascend
+#### Running on Ascend
 ```
 bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.json
 ```
-The command above will run in the background, you can view the results the file pretraining_log.txt. After training, you will get some checkpoint files under the LOG* folder by default. The loss value will be achieved as follows:
+The command above will run in the background, you can view training logs in pretraining_log.txt. After training finished, you will get some checkpoint files under the LOG* folder by default. The loss value will be displayed as follows:
 ```
 # grep "epoch" LOG*/pretraining_log.txt
 epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
@@ -388,7 +388,7 @@ Before running the command below, please check the load pretrain checkpoint path
 ```
 bash scripts/run_classifier.sh
 
-The command above will run in the background, you can view the results the file classfier_log.txt.
+The command above will run in the background, you can view training logs in classfier_log.txt.
 
 If you choose accuracy as assessment method, the result will be as follows:
 acc_num XXX, total_num XXX, accuracy 0.588986
@@ -398,7 +398,7 @@ acc_num XXX, total_num XXX, accuracy 0.588986
 ```
 bash scripts/ner.sh
 
-The command above will run in the background, you can view the results the file ner_log.txt.
+The command above will run in the background, you can view training logs in ner_log.txt.
 
 If you choose F1 as assessment method, the result will be as follows:
 Precision 0.920507
@@ -410,7 +410,7 @@ F1 0.920507
 ```
 bash scripts/squad.sh
 
-The command above will run in the background, you can view the results the file squad_log.txt.
+The command above will run in the background, you can view training logs in squad_log.txt.
 The result will be as follows:
 {"exact_match": 80.3878923040233284, "f1": 87.6902384023850329}
 ```
@@ -474,13 +474,13 @@ The result will be as follows:
 
 # [Description of Random Situation](#contents)
 
-In run_standalone_pretrain.sh and run_distributed_pretrain.sh, we set do_shuffle to shuffle the dataset. 
+In run_standalone_pretrain.sh and run_distributed_pretrain.sh, we set do_shuffle to True to shuffle the dataset by default. 
 
-In run_classifier.sh, run_ner.sh and run_squad.sh, we set train_data_shuffle and eval_data_shuffle to shuffle the dataset.
+In run_classifier.sh, run_ner.sh and run_squad.sh, we set train_data_shuffle and eval_data_shuffle to True to shuffle the dataset by default.
 
-In config.py, we set the hidden_dropout_prob and attention_pros_dropout_prob to dropout some network node.
+In config.py, we set the hidden_dropout_prob and attention_pros_dropout_prob to 0.1 to dropout some network node by default.
 
-In run_pretrain.py, we set the random seed to make sure distribute training has the same init weight.
+In run_pretrain.py, we set a random seed to make sure that each node has the same initial weight in distribute training.
 
 # [ModelZoo Homepage](#contents)
  
