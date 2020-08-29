@@ -25,11 +25,13 @@
 #include "tools/converter/legacy_optimizer/fusion/format_trans_transpose_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
+#include "tools/converter/legacy_optimizer/graph/trans_format_remove_pass.h"
+#include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
 #include "tools/converter/legacy_optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/converter/legacy_optimizer/graph/weight_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
-#include "tools/converter/legacy_optimizer/graph/eltwise_format_trans_pass.h"
+#include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
@@ -145,11 +147,14 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransPass->SetQuantType(ctx.quantType);
     formatTransPass->SetFmk(ctx.fmk);
     formatTransOptimizer.AddPass(formatTransPass);
-    formatTransOptimizer.AddPass(new EltwiseFormatTransPass());
+    formatTransOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+    formatTransOptimizer.AddPass(new (std::nothrow) InferShapePass());
+    formatTransOptimizer.AddPass(new (std::nothrow) TransOpRemovePass());
+    formatTransOptimizer.AddPass(new (std::nothrow) TransOpInsertPass());
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     status = formatTransOptimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
+    if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_ERR) {
       MS_LOG(ERROR) << "Run formatTransOptimizer graphPasses Failed";
       return status;
     }

@@ -30,6 +30,8 @@ namespace lite {
 using STATUS = int;
 STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<schema::CNodeT> &node);
 
+std::vector<schema::PrimitiveType> GetInsertOpList();
+
 std::vector<schema::PrimitiveType> GetNhwcOpList();
 
 std::vector<schema::PrimitiveType> Getfp32FullOpList();
