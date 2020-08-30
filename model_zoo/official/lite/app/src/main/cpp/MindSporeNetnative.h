@@ -1,8 +1,0 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
- */
-
-#ifndef MINDSPORE_JNI_HMS_DEBUG_MINDSPORENETNATIVE_H
-#define MINDSPORE_JNI_HMS_DEBUG_MINDSPORENETNATIVE_H
-
-#endif //MINDSPORE_JNI_HMS_DEBUG_MINDSPORENETNATIVE_H
