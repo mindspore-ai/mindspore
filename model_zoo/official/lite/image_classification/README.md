@@ -1,5 +1,5 @@
 ## MindSpore Lite 端侧图像分类demo（Android）
-  
+
 本示例程序演示了如何在端侧利用MindSpore Lite C++ API（Android JNI）以及MindSpore Lite 图像分类模型完成端侧推理，实现对设备摄像头捕获的内容进行分类，并在App图像预览界面中显示出最可能的分类结果。
 
 
@@ -46,7 +46,7 @@
 
 ## 示例程序详细说明  
 
-本端侧图像分类Android示例程序分为JAVA层和JNI层，其中，JAVA层主要通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理等功能；JNI层在[Runtime](https://www.mindspore.cn/tutorial/zh-CN/master/use/lite_runtime.html)中完成模型推理的过程。
+本端侧图像分类Android示例程序分为JAVA层和JNI层，其中，JAVA层主要通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理等功能；JNI层完成模型推理的过程。
 
 > 此处详细说明示例程序的JNI层实现，JAVA层运用Android Camera 2 API实现开启设备摄像头以及图像帧处理等功能，需读者具备一定的Android开发基础知识。
 
@@ -91,15 +91,23 @@ app
 
 ### 配置MindSpore Lite依赖项
 
-Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/lite/docs/zh-CN/master/deploy.html)生成`libmindspore-lite.so`库文件，或直接下载MindSpore Lite提供的已编译完成的AMR64、ARM32、x86等[软件包](#TODO)。
+Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite源码编译生成`libmindspore-lite.so`库文件。
 
 在Android Studio中将编译完成的`libmindspore-lite.so`库文件（可包含多个兼容架构），分别放置在APP工程的`app/libs/arm64-v8a`（ARM64）或`app/libs/armeabi-v7a`（ARM32）目录下，并在应用的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`和`armeabi-v7a`的编译支持。
 
 本示例中，build过程由download.gradle文件自动从华为服务器下载libmindspore-lite.so以及OpenCV的libopencv_java4.so库文件，并放置在`app/libs/arm64-v8a`目录下。
 
 * 注：若自动下载失败，请手动下载相关库文件并将其放在对应位置：
-* libmindspore-lite.so [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so)
-* libopencv_java4.so [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/opencv%204.4.0/libopencv_java4.so)
+
+  libmindspore-lite.so [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/libmindspore-lite.so)
+
+  libmindspore-lite include文件  [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%200.7/include.zip)
+
+  libopencv_java4.so  [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/opencv%204.4.0/libopencv_java4.so)
+
+  libopencv include文件  [下载链接](https://download.mindspore.cn/model_zoo/official/lite/lib/opencv%204.4.0/include.zip)
+
+  
 
 ```
 android{
@@ -219,8 +227,8 @@ target_link_libraries(
     memcpy(inTensor->MutableData(), dataHWC,
         inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
     delete[] (dataHWC);
-    ```
-    
+   ```
+   
 3. 对输入Tensor按照模型进行推理，获取输出Tensor，并进行后处理。    
 
    - 图执行，端测推理。
