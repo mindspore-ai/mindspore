@@ -34,9 +34,6 @@ class ModelImpl {
   int BuildOps();
 
  protected:
-  PrimitiveC *CopyPrimitive(const schema::Primitive *src_prim);
-
- protected:
   const char *model_buf_;
   size_t buf_size_;
   const schema::MetaGraph *meta_graph_ = nullptr;

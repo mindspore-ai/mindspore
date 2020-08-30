@@ -54,8 +54,6 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     // common
     AddFlag(&BenchmarkFlags::modelPath, "modelPath", "Input model path", "");
     AddFlag(&BenchmarkFlags::inDataPath, "inDataPath", "Input data path, if not set, use random input", "");
-    AddFlag(&BenchmarkFlags::inDataTypeIn, "inDataType", "Input data type. img | bin", "bin");
-    AddFlag(&BenchmarkFlags::omModelPath, "omModelPath", "OM model path, only required when device is NPU", "");
     AddFlag(&BenchmarkFlags::device, "device", "CPU | GPU", "CPU");
     AddFlag(&BenchmarkFlags::cpuBindMode, "cpuBindMode",
             "Input -1 for MID_CPU, 1 for HIGHER_CPU, 0 for NO_BIND, defalut value: 1", 1);
@@ -67,8 +65,6 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     // MarkAccuracy
     AddFlag(&BenchmarkFlags::calibDataPath, "calibDataPath", "Calibration data file path", "");
     AddFlag(&BenchmarkFlags::accuracyThreshold, "accuracyThreshold", "Threshold of accuracy", 0.5);
-    // Resize
-    AddFlag(&BenchmarkFlags::resizeDimsIn, "resizeDims", "Dims to resize to", "");
   }
 
   ~BenchmarkFlags() override = default;
@@ -83,7 +79,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string inDataPath;
   std::vector<std::string> input_data_list;
   InDataType inDataType;
-  std::string inDataTypeIn;
+  std::string inDataTypeIn = "bin";
   int cpuBindMode = 1;
   // MarkPerformance
   int loopCount;
@@ -94,10 +90,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string calibDataPath;
   float accuracyThreshold;
   // Resize
-  std::string resizeDimsIn;
+  std::string resizeDimsIn = "";
   std::vector<std::vector<int64_t>> resizeDims;
 
-  std::string omModelPath;
   std::string device;
 };
 

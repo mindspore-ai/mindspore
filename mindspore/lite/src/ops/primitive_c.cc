@@ -156,23 +156,50 @@ void PrimitiveC::SetQuantType(schema::QuantType quant_type) { this->quant_type_ 
 schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_; }
 
 std::shared_ptr<PrimitiveC> GetReturnPrim() {
-  auto return_primitiveT = new schema::PrimitiveT;
+  auto return_primitiveT = new (std::nothrow) schema::PrimitiveT;
+  if (return_primitiveT == nullptr) {
+    MS_LOG(ERROR) << "new PrimitiveT failed";
+    return nullptr;
+  }
   return_primitiveT->value.type = schema::PrimitiveType_Return;
   return_primitiveT->value.value = new schema::ReturnT;
+  if (return_primitiveT->value.value == nullptr) {
+    MS_LOG(ERROR) << "new ReturnT failed";
+    delete (return_primitiveT);
+    return nullptr;
+  }
   return std::make_shared<Return>(return_primitiveT);
 }
 
 std::shared_ptr<PrimitiveC> GetMakeTuplePrim() {
   auto make_tuple_primitiveT = new schema::PrimitiveT;
+  if (make_tuple_primitiveT == nullptr) {
+    MS_LOG(ERROR) << "new PrimitiveT failed";
+    return nullptr;
+  }
   make_tuple_primitiveT->value.type = schema::PrimitiveType_MakeTuple;
   make_tuple_primitiveT->value.value = new schema::MakeTupleT;
+  if (make_tuple_primitiveT->value.value == nullptr) {
+    MS_LOG(ERROR) << "new MakeTupleT failed";
+    delete (make_tuple_primitiveT);
+    return nullptr;
+  }
   return std::make_shared<MakeTuple>(make_tuple_primitiveT);
 }
 
 std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
   auto tuple_get_item_primitiveT = new schema::PrimitiveT();
+  if (tuple_get_item_primitiveT == nullptr) {
+    MS_LOG(ERROR) << "new PrimitiveT failed";
+    return nullptr;
+  }
   tuple_get_item_primitiveT->value.type = schema::PrimitiveType_TupleGetItem;
   tuple_get_item_primitiveT->value.value = new schema::TupleGetItemT;
+  if (tuple_get_item_primitiveT->value.value == nullptr) {
+    MS_LOG(ERROR) << "new TupleGetItemT failed";
+    delete (tuple_get_item_primitiveT);
+    return nullptr;
+  }
   return std::make_shared<TupleGetItem>(tuple_get_item_primitiveT);
 }
 

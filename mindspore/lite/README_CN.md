@@ -45,7 +45,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
    MindSpore提供的预训练模型包括：[图像分类（Image Classification）](https://download.mindspore.cn/model_zoo/official/lite/)和[目标检测（Object Detection）](https://download.mindspore.cn/model_zoo/official/lite/)。后续MindSpore团队会增加更多的预置模型。
 
-   MindSpore允许您重新训练预训练模型，以执行其他任务。比如：使用预训练的图像分类模型，可以重新训练来识别新的图像类型。参见[重训练](https://www.mindspore.cn/lite/tutorial/zh-CN/master/advanced_use/retraining_of_quantized_network.html)。
+   MindSpore允许您重新训练预训练模型，以执行其他任务。比如：使用预训练的图像分类模型，可以重新训练来识别新的图像类型。
 
 2. 模型转换/优化
 
