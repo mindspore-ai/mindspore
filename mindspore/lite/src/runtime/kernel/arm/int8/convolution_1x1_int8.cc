@@ -38,7 +38,7 @@ Convolution1x1Int8CPUKernel::~Convolution1x1Int8CPUKernel() {
     matmul_param_ = nullptr;
   }
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
   FreeResizeBuf();
