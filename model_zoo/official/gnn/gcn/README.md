@@ -53,7 +53,7 @@ GCN contains two graph convolution layers. Each layer takes nodes features and a
 
 - Download the dataset Cora or Citeseer provided by /kimiyoung/planetoid from github.
  
-> Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
+- Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
  
 ```
 .
@@ -68,15 +68,15 @@ GCN contains two graph convolution layers. Each layer takes nodes features and a
     └─ind.cora.y
 ```
 
-> Generate dataset in mindrecord format for cora or citeseer.
->> Usage
+- Generate dataset in mindrecord format for cora or citeseer.
+####Usage
 ```buildoutcfg
 cd ./scripts
 # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
 sh run_process_data.sh [SRC_PATH] [DATASET_NAME]
 ```
 
->> Launch
+####Launch
 ```
 #Generate dataset in mindrecord format for cora
 sh run_process_data.sh ./data cora
