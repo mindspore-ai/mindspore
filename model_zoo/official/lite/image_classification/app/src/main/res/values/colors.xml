@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+
+
+    <color name="mindspore_color_primary">#00D4EF</color>
+    <color name="mindspore_color_primary_dark">#03A9F4</color>
+    <color name="mindspore_color_accent">#769DDA</color>
+
+    <color name="mindspore_semi_transparent">#66000000</color>
+
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="gray">#A69D9D</color>
+
+</resources>
