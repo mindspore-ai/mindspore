@@ -41,7 +41,7 @@ class AnfImporterFromMetaGraphT : public AnfImporter {
 
   ValueNodePtr ConvertPrimitive(const std::unique_ptr<schema::CNodeT> &cNode);
   abstract::AbstractTensorPtr ConvertTensorToAbstractTensor(const std::unique_ptr<schema::TensorT> &tensor);
-  void ConvertAbstract(const std::unique_ptr<schema::CNodeT> &src_cnode, const CNodePtr &dst_cnode);
+  int ConvertAbstract(const std::unique_ptr<schema::CNodeT> &src_cnode, const CNodePtr &dst_cnode);
 
   int AddReturnCNode() override;
 
