@@ -42,6 +42,7 @@ Dataset used: [VOC2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.htm
 ## [Mixed Precision(Ascend)](#contents)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
@@ -119,9 +120,9 @@ Major parameters in train.py and config.py are:
 
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
-
-sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
-
+```
+	sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
+```
 > Notes: 
     RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
@@ -140,7 +141,7 @@ sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /LOG0/chec_deeplabv3-*` by default, and training log  will be redirected to `./log.txt` like followings. 
+Training result(8p) will be stored in the example path. Checkpoints will be stored at `. /train_parallel0/` by default, and training log  will be redirected to `./train_parallel0/log.txt` like followings. 
 
 ``` 
 epoch: 1 step: 732, loss is 0.11594
@@ -154,8 +155,9 @@ Epoch time: 160917.911, per step time: 36.631
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-sh scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
-
+```
+	sh scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
+```
 ### Launch
 
 ``` 
@@ -184,14 +186,15 @@ mIoU = 0.65049
 
 | Parameters                 | DeeplabV3                                                |
 | -------------------------- | ---------------------------------------------------------- |
-| Model Version              |                                                            |          
+| Model Version              | V1                                                           |          
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | 
-| uploaded Date              | 08/24/2020                                                 | 
-| MindSpore Version          | 0.6.0-beta                                                 | 
-| Training Parameters        | src/config.py                                              | 
+| Uploaded Date              | 08/24/2020(month/day/year)                                                 | 
+| MindSpore Version          | 0.6.0-beta                                                 |
+| Dataset                    | voc2012/train                 								  |
+| Batch_size                 | 2                           								  |   
 | Optimizer                  | Momentum                                                   | 
 | Loss Function              | SoftmaxCrossEntropy                                        | 
-| outputs                    | probability                                                | 
+| Outputs                    | probability                                                | 
 | Loss                       | 0.98                                                       | 
 | Accuracy                   | mIoU:65%                                   				  | 
 | Total time                 | 5mins                                                      | 
@@ -201,15 +204,15 @@ mIoU = 0.65049
 
 #### Inference Performance
 
-| Parameters          | DeeplabV3                 |
-| ------------------- | --------------------------- |
-| Model Version       |  				            |
-| Resource            | Ascend 910                  |
+| Parameters                 | DeeplabV3                 |
+| -------------------------- | ---------------------------------------------------------- |
+| Model Version       | V1                          |
+| Resource            | Ascend 910, cpu:2.60GHz 56cores, memory:314G                  |
 | Uploaded Date       | 08/24/2020 (month/day/year) |
 | MindSpore Version   | 0.6.0-beta                  |
 | Dataset             | voc2012/val                 |
-| batch_size          | 2                           |
-| outputs             | probability                 |
+| Batch_size          | 2                           |
+| Outputs             | probability                 |
 | Accuracy            | mIoU:65%                    |
 | Total time          | 10mins                      |
 | Model for inference | 97M (.GEIR file)            |
