@@ -45,7 +45,7 @@ Note that according to whether this attention layer is the output layer of the n
   | # Test Nodes       |           1000 |           1000 |
 
 - Data Preparation
-  > Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
+  - Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
  
   ```
   .
@@ -60,15 +60,14 @@ Note that according to whether this attention layer is the output layer of the n
       └─ind.cora.y
   ```
 
-  > Generate dataset in mindrecord format for cora or citeseer.
-  >> Usage
+  - Generate dataset in mindrecord format for cora or citeseer.
   ```buildoutcfg
   cd ./scripts
   # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
   sh run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
   ```
 
-  >> Launch
+    - Launch
   ```
   #Generate dataset in mindrecord format for cora
   ./run_process_data_ascend.sh ./data cora
