@@ -37,11 +37,11 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
    The pre-trained models provided by MindSpore include: [Image Classification](https://download.mindspore.cn/model_zoo/official/lite/) and [Object Detection](https://download.mindspore.cn/model_zoo/official/lite/). More models will be provided in the feature.
 
-   MindSpore allows you to retrain pre-trained models to perform other tasks. For example: using a pre-trained image classification model, it can be retrained to recognize new image types. See [Retraining](https://www.mindspore.cn/lite/tutorial/zh-CN/master/advanced_use/retraining_of_quantized_network.html).
+   MindSpore allows you to retrain pre-trained models to perform other tasks. For example: using a pre-trained image classification model, it can be retrained to recognize new image types.
 
 2. Model converter and optimization
 
-   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/lite/tutorial/zh-CN/master/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
+   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/lite/tutorial/en/master/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
 
    MindSpore also provides a tool to convert models running on IoT devices .
 
@@ -51,6 +51,6 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
 4. Inference 
 
-   Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/tutorial/zh-CN/master/use/runtime.html) is the process of running input data through the model to get output.
+   Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/tutorial/en/master/use/runtime.html) is the process of running input data through the model to get output.
 
    MindSpore provides a series of pre-trained models that can be deployed on mobile device [example](#TODO).
