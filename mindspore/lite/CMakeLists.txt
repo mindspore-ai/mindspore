@@ -29,7 +29,7 @@ elseif (WIN32)
     set(PARSER_NAME libconverter-parser-win-${PROCESS_UNIT})
     set(COMPONENT_NAME converter-win-${PROCESS_UNIT})
 else ()
-    set(COMPONENT_NAME convert-ubuntu)
+    set(COMPONENT_NAME converter-ubuntu)
 endif()
 set(RUN_X86_COMPONENT_NAME runtime-x86-${PROCESS_UNIT})
 
