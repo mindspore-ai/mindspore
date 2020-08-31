@@ -227,7 +227,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBu
                                                                                          jobject buffer) {
   jbyte *p_data = reinterpret_cast<jbyte *>(env->GetDirectBufferAddress(buffer));  // get buffer poiter
   jlong data_len = env->GetDirectBufferCapacity(buffer);                           // get buffer capacity
-  if (!p_data) {
+  if (p_data == nullptr) {
     MS_LOGE("GetDirectBufferAddress return null");
     return NULL;
   }
