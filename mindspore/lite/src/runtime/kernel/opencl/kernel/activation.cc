@@ -38,15 +38,33 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 
+void ActivationOpenClKernel::InitBuffer() {
+  auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  alpha_buff_ = allocator->Malloc(fp_size);
+  alpha_buff_ = allocator->MapBuffer(alpha_buff_, CL_MAP_WRITE, nullptr, true);
+  memset(alpha_buff_, 0x00, fp_size);
+  if (enable_fp16_) {
+    auto fp16 = (float16_t)alpha_;
+    memcpy(alpha_buff_, &fp16, fp_size);
+  } else {
+    memcpy(alpha_buff_, &alpha_, fp_size);
+  }
+  allocator->UnmapBuffer(alpha_buff_);
+}
+
 int ActivationOpenClKernel::Init() {
   in_size_ = in_tensors_[0]->shape().size();
   out_size_ = out_tensors_[0]->shape().size();
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   if (in_size_ != 2 && in_size_ != 4) {
     MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
     return RET_ERROR;
   }
+  InitBuffer();
   std::map<int, std::vector<std::string>> Program_Kernel{
-    {ActivationType_LEAKY_RELU, std::vector<std::string>{"LEAKY_RELU", "ReluScalar"}},
+    {ActivationType_LEAKY_RELU, std::vector<std::string>{"LEAKY_RELU", "LeakyRelu"}},
     {ActivationType_RELU, std::vector<std::string>{"RELU", "Relu"}},
     {ActivationType_SIGMOID, std::vector<std::string>{"SIGMOID", "Sigmoid"}},
     {ActivationType_RELU6, std::vector<std::string>{"RELU6", "Relu6"}}};
@@ -57,7 +75,6 @@ int ActivationOpenClKernel::Init() {
 
   std::string source = activation_source;
   std::set<std::string> build_options;
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->LoadSource(Program_Kernel[type_][0], source);
   ocl_runtime->BuildKernel(kernel_, Program_Kernel[type_][0], Program_Kernel[type_][1], build_options);
 
@@ -87,7 +104,7 @@ int ActivationOpenClKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, img2d_shape);
   if (type_ == ActivationType_LEAKY_RELU) {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_);
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_buff_, lite::opencl::MemType::BUF);
   }
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
@@ -114,12 +131,10 @@ cl_int4 ActivationOpenClKernel::GetImg2dShape() {
 
 int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   cl_int4 img_shape = GetImg2dShape();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
-
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   img_size->push_back(img_shape.s[2] * UP_DIV(img_shape.s[3], C4NUM));
   img_size->push_back(img_shape.s[1]);

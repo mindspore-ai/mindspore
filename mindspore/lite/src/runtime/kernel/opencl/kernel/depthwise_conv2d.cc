@@ -44,13 +44,17 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::string kernel_name = "DepthwiseConv2d";
   auto in_format = in_tensors_[0]->GetFormat();
-  in_ori_format_ = in_format;
+  in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(in_format);
+  in_format = (in_format == schema::Format_NHWC)
+                ? schema::Format_NHWC4
+                : ((in_format == schema::Format_NCHW) ? schema::Format_NC4HW4 : in_format);
   if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
   }
+  in_tensors_[0]->SetFormat(in_format);
+  out_tensors_[0]->SetFormat(in_format);
   if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";
   } else {
@@ -182,7 +186,7 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   GetLocalSize(0, global, &local);
 
   std::map<ActType, std::pair<float, float>> relu_clips{
-    {ActType_No, {FLT_MIN, FLT_MAX}}, {ActType_Relu, {0.0, FLT_MAX}}, {ActType_Relu6, {0, 6.0}}};
+    {ActType_No, {-FLT_MAX, FLT_MAX}}, {ActType_Relu, {0.0, FLT_MAX}}, {ActType_Relu6, {0, 6.0}}};
   cl_int2 kernel_size = {parameter->kernel_h_, parameter->kernel_w_};
   cl_int2 stride = {parameter->stride_h_, parameter->stride_w_};
   cl_int2 padding = {-parameter->pad_u_, -parameter->pad_l_};

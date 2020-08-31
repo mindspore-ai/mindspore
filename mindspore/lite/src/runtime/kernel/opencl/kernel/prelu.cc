@@ -68,7 +68,7 @@ int PReluOpenCLKernel::Init() {
   std::string kernel_name = "PRelu";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
-  fp_size = enable_fp16_ ? sizeof(float) / 2 : sizeof(float);
+  fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   InitBuffer();
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);

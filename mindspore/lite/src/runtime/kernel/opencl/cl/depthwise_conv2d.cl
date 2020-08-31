@@ -84,7 +84,7 @@ __kernel void DepthwiseConv2d_IMG_NHWC4_1x1(__read_only image2d_t src_data, __gl
       bool outside_x = x_c < 0 || x_c >= src_size.x;
       if (!outside_x && !outside_y) {
         FLT4 flt_p = filter[fx_c];
-        FLT4 src_p = READ_IMAGE(src_data, smp_zero, (int2)(Z, (y_c * src_size.x + x_c) * src_size.z));
+        FLT4 src_p = READ_IMAGE(src_data, smp_zero, (int2)(Z + x_c * src_size.z, y_c));
         r += TO_FLT4(src_p * flt_p);
       }
     }
@@ -92,7 +92,7 @@ __kernel void DepthwiseConv2d_IMG_NHWC4_1x1(__read_only image2d_t src_data, __gl
   FLT4 bias_p = bias[Z];
   FLT4 res = TO_FLT4(r) + bias_p;
   res = clamp(res, (FLT)(relu_clip_min), (FLT)(relu_clip_max));
-  WRITE_IMAGE(dst_data, (int2)(Z, (Y * dst_size.x + X) * dst_size.z), res);
+  WRITE_IMAGE(dst_data, (int2)(X * dst_size.z + Z, Y), res);
 }
 __kernel void DepthwiseConv2d_BUF_NC4HW4(__global FLT4 *src_data, __global FLT4 *filter, __global FLT4 *bias,
                                          __global FLT4 *dst_data, int2 kernel_size, int2 stride,
