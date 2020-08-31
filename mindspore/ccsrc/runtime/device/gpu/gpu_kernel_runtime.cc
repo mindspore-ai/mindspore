@@ -404,7 +404,9 @@ void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::v
   // Release the kernel resource.
   for (const auto &kernel : execution_order) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
+    if (kernel_mod == nullptr) {
+      continue;
+    }
     kernel_mod->ReleaseResource();
   }
 }
