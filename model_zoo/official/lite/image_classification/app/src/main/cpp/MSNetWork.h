@@ -32,7 +32,6 @@
 #include <memory>
 #include <utility>
 
-
 struct ImgDims {
   int channel = 0;
   int width = 0;
@@ -42,8 +41,6 @@ struct ImgDims {
 /*struct SessIterm {
     std::shared_ptr<mindspore::session::LiteSession> sess = nullptr;
 };*/
-
-
 
 class MSNetWork {
  public:
@@ -55,6 +52,7 @@ class MSNetWork {
 
   int ReleaseNets(void);
 
+ protected:
   mindspore::session::LiteSession *session;
   mindspore::lite::Model *model;
   static const int RET_CATEGORY_SUM = 601;
