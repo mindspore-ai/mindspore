@@ -119,9 +119,10 @@ class TensorAdd(_MathBinaryOp):
     """
     Adds two input tensors element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -156,6 +157,13 @@ class TensorAdd(_MathBinaryOp):
 class AssignAdd(PrimitiveWithInfer):
     """
     Updates a `Parameter` by adding a value to it.
+
+    Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    If `value` is a number, the number is automatically converted to Tensor,
+    and the data type is consistent with the Tensor data type involved in the operation.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
@@ -199,6 +207,13 @@ class AssignAdd(PrimitiveWithInfer):
 class AssignSub(PrimitiveWithInfer):
     """
     Updates a `Parameter` by subtracting a value from it.
+
+    Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    If `value` is a number, the number is automatically converted to Tensor,
+    and the data type is consistent with the Tensor data type involved in the operation.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
@@ -574,6 +589,7 @@ class CumProd(PrimitiveWithInfer):
         >>> op3 = P.CumProd(exclusive=True, reverse=True)
         >>> output = op3(input_x, 0) # output=[b * c, c, 1]
     """
+
     @prim_attr_register
     def __init__(self, exclusive=False, reverse=False):
         cls_name = self.name
@@ -1056,9 +1072,10 @@ class Sub(_MathBinaryOp):
     """
     Subtracts the second input tensor from the first input tensor element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1094,9 +1111,10 @@ class Mul(_MathBinaryOp):
     """
     Multiplies two tensors element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1132,6 +1150,7 @@ class SquaredDifference(_MathBinaryOp):
     """
     Subtracts the second input tensor from the first input tensor element-wise and returns square of it.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
@@ -1322,9 +1341,10 @@ class Pow(_MathBinaryOp):
     """
     Computes a tensor to the power of the second input.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1607,9 +1627,10 @@ class Minimum(_MathBinaryOp):
     """
     Computes the element-wise minimum of input tensors.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1645,9 +1666,10 @@ class Maximum(_MathBinaryOp):
     """
     Computes the element-wise maximum of input tensors.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1683,9 +1705,10 @@ class RealDiv(_MathBinaryOp):
     """
     Divide the first input tensor by the second input tensor in floating-point type element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1721,9 +1744,10 @@ class Div(_MathBinaryOp):
     """
     Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1761,9 +1785,10 @@ class DivNoNan(_MathBinaryOp):
     """
     Computes a safe divide which returns 0 if the y is zero.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1803,9 +1828,10 @@ class FloorDiv(_MathBinaryOp):
     """
     Divide the first input tensor by the second input tensor element-wise and rounds down to the closest integer.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -1833,6 +1859,7 @@ class TruncateDiv(_MathBinaryOp):
     Divide the first input tensor by the second input tensor element-wise for integer types, negative numbers will
     round fractional quantities towards zero.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
@@ -1862,6 +1889,7 @@ class TruncateMod(_MathBinaryOp):
     """
     Returns element-wise remainder of division.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
@@ -1891,6 +1919,7 @@ class Mod(_MathBinaryOp):
     """
     Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors,
     both dtypes cannot be bool, and the shapes of them could be broadcast. When the inputs are one tensor
     and one scalar, the scalar only could be a constant.
@@ -1956,9 +1985,10 @@ class FloorMod(_MathBinaryOp):
     """
     Compute element-wise remainder of division.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool , and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2014,6 +2044,7 @@ class Xdivy(_MathBinaryOp):
     """
     Divide the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
@@ -2047,6 +2078,7 @@ class Xlogy(_MathBinaryOp):
     Computes first input tensor multiplied by the logarithm of second input tensor element-wise.
     Returns zero when `x` is zero.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
@@ -2210,6 +2242,7 @@ class Equal(_LogicBinaryOp):
     """
     Computes the equivalence between two tensors element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar, the scalar only could be a constant.
@@ -2243,6 +2276,11 @@ class Equal(_LogicBinaryOp):
 class ApproximateEqual(_LogicBinaryOp):
     """
     Returns the truth value of abs(x1-x2) < tolerance element-wise.
+
+    Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
@@ -2319,6 +2357,7 @@ class NotEqual(_LogicBinaryOp):
     """
     Computes the non-equivalence of two tensors element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar, the scalar only could be a constant.
@@ -2353,9 +2392,10 @@ class Greater(_LogicBinaryOp):
     """
     Computes the boolean value of :math:`x > y` element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2375,6 +2415,7 @@ class Greater(_LogicBinaryOp):
         >>> greater(input_x, input_y)
         [False, True, False]
     """
+
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
@@ -2388,9 +2429,10 @@ class GreaterEqual(_LogicBinaryOp):
     """
     Computes the boolean value of :math:`x >= y` element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2410,6 +2452,7 @@ class GreaterEqual(_LogicBinaryOp):
         >>> greater_equal(input_x, input_y)
         [True, True, False]
     """
+
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
@@ -2423,9 +2466,10 @@ class Less(_LogicBinaryOp):
     """
     Computes the boolean value of :math:`x < y` element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2445,6 +2489,7 @@ class Less(_LogicBinaryOp):
         >>> less(input_x, input_y)
         [False, False, True]
     """
+
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
@@ -2458,9 +2503,10 @@ class LessEqual(_LogicBinaryOp):
     """
     Computes the boolean value of :math:`x <= y` element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    both dtypes cannot be bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be both bool , and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar only could be a constant.
 
@@ -2480,6 +2526,7 @@ class LessEqual(_LogicBinaryOp):
         >>> less_equal(input_x, input_y)
         [True, False, True]
     """
+
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
@@ -2523,6 +2570,7 @@ class LogicalAnd(_LogicBinaryOp):
     """
     Computes the "logical AND" of two tensors element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
@@ -2553,6 +2601,7 @@ class LogicalOr(_LogicBinaryOp):
     """
     Computes the "logical OR" of two tensors element-wise.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
@@ -3179,6 +3228,11 @@ class Atan2(_MathBinaryOp):
     It returns :math:`\theta\ \in\ [-\pi, \pi]`
     such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
 
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **input_x** (Tensor) - The input tensor.
         - **input_y** (Tensor) - The input tensor.
@@ -3235,6 +3289,12 @@ class BitwiseAnd(_BitwiseBinaryOp):
     """
     Returns bitwise `and` of two tensors element-wise.
 
+    Inputs of `input_x1` and `input_x2` comply with the implicit type conversion rules to
+    make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **input_x1** (Tensor) - The input tensor with int16, int32 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
@@ -3255,6 +3315,12 @@ class BitwiseOr(_BitwiseBinaryOp):
     """
     Returns bitwise `or` of two tensors element-wise.
 
+    Inputs of `input_x1` and `input_x2` comply with the implicit type conversion rules to
+    make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **input_x1** (Tensor) - The input tensor with int16, int32 or uint16 data type.
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
@@ -3274,6 +3340,12 @@ class BitwiseOr(_BitwiseBinaryOp):
 class BitwiseXor(_BitwiseBinaryOp):
     """
     Returns bitwise `xor` of two tensors element-wise.
+
+    Inputs of `input_x1` and `input_x2` comply with the implicit type conversion rules to
+    make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Inputs:
         - **input_x1** (Tensor) - The input tensor with int16, int32 or uint16 data type.
