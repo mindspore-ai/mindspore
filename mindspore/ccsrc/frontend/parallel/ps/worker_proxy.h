@@ -502,6 +502,11 @@ void WorkerProxy<T>::SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, c
 
       kvs.lens = reduced_lens;
       kvs.vals = reduced_data;
+
+      delete[] src_grad_data;
+      delete[] src_indice_data;
+      delete[] new_grad;
+      delete[] new_indices;
     }
 
     if (indices_size <= 0) {
