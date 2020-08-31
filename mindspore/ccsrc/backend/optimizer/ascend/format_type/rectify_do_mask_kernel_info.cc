@@ -44,7 +44,7 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   auto cnode = node->cast<CNodePtr>();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() == kPynativeMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return RectifyKernelInfoInPynativeProcess(node);
   }
   if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutGenMask->name()) {

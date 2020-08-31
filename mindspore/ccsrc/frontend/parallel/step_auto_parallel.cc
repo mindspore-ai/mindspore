@@ -69,7 +69,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-  if (MsContext::GetInstance()->save_graphs_flag()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw(STEP_AUTO_PARALLEL_BEGIN, root);
   }
   MS_LOG(INFO) << "Now entering step auto parallel";

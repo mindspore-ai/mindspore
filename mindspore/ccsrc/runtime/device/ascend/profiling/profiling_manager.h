@@ -41,7 +41,7 @@ class ProfilingManager {
   inline bool IsProfiling() const {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    return context->enable_profiling();
+    return context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
   }
 
  protected:

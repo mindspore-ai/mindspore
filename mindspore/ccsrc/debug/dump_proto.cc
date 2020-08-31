@@ -530,7 +530,7 @@ void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
     MS_LOG(ERROR) << "ms_context is nullptr";
     return;
   }
-  auto save_graphs_path = ms_context->save_graphs_path();
+  auto save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }

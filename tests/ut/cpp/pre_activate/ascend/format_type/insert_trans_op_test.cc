@@ -112,7 +112,7 @@ TEST_F(TestHWInsertTransOp, test_insert_trans_op_for_single_output) {
    */
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->set_execution_mode(kGraphMode);
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   auto fg = GetSingleOutputGraph("test_insert_trans_op_for_single_output", "before", "NC1HWC0");
   // Do insert_trans_op_ pass of hardware opt
   auto graph_optimizer = std::make_shared<opt::GraphOptimizer>();

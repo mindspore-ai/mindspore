@@ -49,7 +49,7 @@ inline std::string GetFilePathName(const std::string &file_name) {
   if (ms_context == nullptr) {
     MS_LOG(EXCEPTION) << "ms_context is nullptr";
   }
-  auto save_graphs_path = ms_context->save_graphs_path();
+  auto save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }

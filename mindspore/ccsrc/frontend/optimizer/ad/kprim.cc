@@ -182,7 +182,7 @@ void KPrim::TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bp
 void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool check_bprop_flag = context->check_bprop_flag();
+  bool check_bprop_flag = context->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG);
   // Skip checking if check_bprop not set
   if (!check_bprop_flag) {
     return;

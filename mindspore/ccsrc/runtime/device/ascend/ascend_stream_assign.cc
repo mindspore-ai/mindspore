@@ -1373,7 +1373,7 @@ vector<CNodePtr>::iterator AscendStreamAssign::FindTargetOp(vector<CNodePtr>::it
 bool AscendStreamAssign::IsTaskSink() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->enable_task_sink()) {
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
     MS_LOG(INFO) << "Task sink mode is not enable";
     return false;
   } else {

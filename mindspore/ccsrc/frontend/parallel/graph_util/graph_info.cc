@@ -44,7 +44,7 @@ std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr &graph, const std::str
 }
 
 void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
-  if (MsContext::GetInstance()->save_graphs_flag()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw(name + ".dot", root);
     DumpIR(name + ".ir", root);
     ExportIR(name + ".dat", "0", root);

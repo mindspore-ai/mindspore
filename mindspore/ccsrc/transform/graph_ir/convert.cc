@@ -1070,7 +1070,7 @@ void DfGraphConvertor::ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNod
   convertor.inputs_ = inputs;
   (void)convertor.ConvertAllNode().BuildGraph();
   std::string name = graph_node->ToString() + "_ge_graph.dot";
-  if (MsContext::GetInstance()->save_graphs_flag()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     convertor.DrawComputeGraph(name);
   }
   branches_map_[node.get()] = *(convertor.df_graph_);

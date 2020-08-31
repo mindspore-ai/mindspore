@@ -53,7 +53,7 @@ bool DataDumpParser::DumpEnabled() const {
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->execution_mode() == kPynativeMode) {
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     MS_LOG(EXCEPTION) << "[DataDump] PyNative mode not support data dump";
   }
   return true;

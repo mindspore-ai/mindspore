@@ -249,8 +249,8 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -262,7 +262,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  if (context_ptr->execution_mode() == kPynativeMode) {
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
     ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   } else {
@@ -276,7 +276,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
-  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) &&
+      ConfigManager::GetInstance().iter_num() > 1) {
     ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForGetNext>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
@@ -296,12 +297,12 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->ir_fusion_flag()) {
+  if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
     MS_LOG(INFO) << "IRFusion is not enable, skip";
     return;
   }
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -331,8 +332,8 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -367,7 +368,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other2_pm = std::make_shared<PassManager>("other2_pm");
   other2_pm->AddPass(std::make_shared<GetitemTuple>());
   other2_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
-  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) &&
+      ConfigManager::GetInstance().iter_num() > 1) {
     other2_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
   }
   other2_pm->AddPass(std::make_shared<CheckConsistency>());
@@ -388,11 +390,11 @@ void AscendBackendGraphKernelOpt(const std::shared_ptr<session::KernelGraph> &ke
                                  bool is_before_kernel_select) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->enable_graph_kernel())) {
+  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
     return;
   }
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -418,11 +420,11 @@ void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kern
                                bool is_before_kernel_select) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->enable_graph_kernel())) {
+  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
     return;
   }
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -447,11 +449,11 @@ void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kern
 void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->enable_graph_kernel())) {
+  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
     return;
   }
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -473,12 +475,12 @@ void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &ke
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->ir_fusion_flag()) {
+  if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
     MS_LOG(INFO) << "UBFusion is not enable, skip";
     return;
   }
-  bool save_graphs = context_ptr->save_graphs_flag();
-  auto save_graphs_path = context_ptr->save_graphs_path();
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }

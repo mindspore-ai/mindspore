@@ -62,7 +62,7 @@ class Evaluator : public Base {
   virtual EvalResultPtr AbstractEval(const AbstractBasePtrList &args_spec_list) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    bool enable_sparse = context->enable_sparse();
+    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
     if (!enable_sparse) {
       return nullptr;
     }

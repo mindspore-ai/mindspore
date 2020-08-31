@@ -114,7 +114,7 @@ const AnfNodePtr ConstToAttrStridedSliceGradPass::Process(const FuncGraphPtr &gr
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
-  if (ms_context->device_target() == kAscendDevice) {
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     if (!CheckAttrs(strided_slice_grad)) {
       MS_LOG(INFO) << "Check strided_slice_grad's attrs failed, graph not changed";
       return nullptr;

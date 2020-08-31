@@ -416,7 +416,7 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   mem_manager_->ResetDynamicMemory();
   AssignStaticMemoryInput(graph);
   AssignStaticMemoryValueNode(graph);
-  bool is_enable_dynamic_mem = context_ptr->enable_dynamic_mem_pool();
+  bool is_enable_dynamic_mem = context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL);
   if (is_enable_dynamic_mem) {
     // Use the dynamic memory pool.
     InitKernelRefCount(graph);
@@ -435,8 +435,8 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
   bool ret = true;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_enable_dynamic_mem = context_ptr->enable_dynamic_mem_pool();
-  bool is_enable_pynative_infer = context_ptr->enable_pynative_infer();
+  bool is_enable_dynamic_mem = context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL);
+  bool is_enable_pynative_infer = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   if (is_enable_dynamic_mem && !is_enable_pynative_infer) {
     auto graph_id = graph->graph_id();
     auto iter = mem_swap_map_.find(graph_id);

@@ -118,8 +118,9 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                 << ", current function call depth: " << engine->function_call_depth();
   AbstractBasePtr ret_base = nullptr;
   engine->IncreaseFunctionCallDepth();
-  if (engine->function_call_depth() > MsContext::GetInstance()->max_call_depth()) {
-    MS_LOG(EXCEPTION) << "Exceed function call depth limit " << MsContext::GetInstance()->max_call_depth() << ".";
+  if (engine->function_call_depth() > MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
+    MS_LOG(EXCEPTION) << "Exceed function call depth limit "
+                      << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH) << ".";
   }
   std::vector<AnfNodePtr> nodes = FastShadowSort(func_node);
   for (auto it = nodes.crbegin(); it != nodes.crend(); it++) {
@@ -409,7 +410,7 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   bparams.push_back(SensitivityTransform(orig_func_));
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool enable_sparse = context->enable_sparse();
+  bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(bparams),
                        [&enable_sparse](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
                          if (enable_sparse && arg_spec->isa<AbstractTensor>()) {

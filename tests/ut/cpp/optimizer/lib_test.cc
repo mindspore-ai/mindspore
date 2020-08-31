@@ -42,7 +42,7 @@ class TestOptLib : public UT::Common {
     parse::data_converter::ClearObjectCache();
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    ms_context->set_execution_mode(kGraphMode);
+    ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   }
   FuncGraphPtr RunTransform(FuncGraphPtr gbefore, const SubstitutionList &transform) {
     equiv_node.clear();

@@ -112,7 +112,7 @@ bool Dump::IsConfigValid(const nlohmann::json &dumpSettings) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   // dump_enable_ is true, close mem reuse
-  context_ptr->set_enable_mem_reuse(!dump_enable_);
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, !dump_enable_);
   trans_flag_ = trans_flag;
   dump_mode_ = mode;
   dump_path_ = path;
@@ -135,7 +135,7 @@ bool Dump::SetDumpConfFromJsonFile() {
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto id = context_ptr->device_id();
+  auto id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   char real_path[PATH_MAX] = {0};
   if (nullptr == realpath(config_path_str, real_path)) {
     MS_LOG(ERROR) << "Env e2e dump path error, " << config_path_str;

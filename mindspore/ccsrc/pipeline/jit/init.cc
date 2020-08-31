@@ -48,6 +48,56 @@ using OpLib = mindspore::kernel::OpLib;
 using OpInfoLoaderPy = mindspore::kernel::OpInfoLoaderPy;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
+using mindspore::MsCtxParam;
+
+namespace mindspore {
+void MsCtxSetParameter(std::shared_ptr<MsContext> ctx, MsCtxParam param, const py::object &value) {
+  MS_LOG(DEBUG) << "set param(" << param << ") with value '" << py::str(value) << "' of type '"
+                << py::str(value.get_type()) << "'.";
+  if (param >= MS_CTX_TYPE_BOOL_BEGIN && param < MS_CTX_TYPE_BOOL_END && py::isinstance<py::bool_>(value)) {
+    ctx->set_param<bool>(param, value.cast<bool>());
+    return;
+  }
+  if (param >= MS_CTX_TYPE_INT_BEGIN && param < MS_CTX_TYPE_INT_END && py::isinstance<py::int_>(value)) {
+    ctx->set_param<int>(param, value.cast<int>());
+    return;
+  }
+  if (param >= MS_CTX_TYPE_UINT32_BEGIN && param < MS_CTX_TYPE_UINT32_END && py::isinstance<py::int_>(value)) {
+    ctx->set_param<uint32_t>(param, value.cast<uint32_t>());
+    return;
+  }
+  if (param >= MS_CTX_TYPE_FLOAT_BEGIN && param < MS_CTX_TYPE_FLOAT_END && py::isinstance<py::float_>(value)) {
+    ctx->set_param<float>(param, value.cast<float>());
+    return;
+  }
+  if (param >= MS_CTX_TYPE_STRING_BEGIN && param < MS_CTX_TYPE_STRING_END && py::isinstance<py::str>(value)) {
+    ctx->set_param<std::string>(param, value.cast<std::string>());
+    return;
+  }
+
+  MS_LOG(EXCEPTION) << "Got illegal param " << param << " and value with type " << py::str(value.get_type());
+}
+
+py::object MsCtxGetParameter(const std::shared_ptr<MsContext> &ctx, MsCtxParam param) {
+  if (param >= MS_CTX_TYPE_BOOL_BEGIN && param < MS_CTX_TYPE_BOOL_END) {
+    return py::bool_(ctx->get_param<bool>(param));
+  }
+  if (param >= MS_CTX_TYPE_INT_BEGIN && param < MS_CTX_TYPE_INT_END) {
+    return py::int_(ctx->get_param<int>(param));
+  }
+  if (param >= MS_CTX_TYPE_UINT32_BEGIN && param < MS_CTX_TYPE_UINT32_END) {
+    return py::int_(ctx->get_param<uint32_t>(param));
+  }
+  if (param >= MS_CTX_TYPE_FLOAT_BEGIN && param < MS_CTX_TYPE_FLOAT_END) {
+    return py::float_(ctx->get_param<float>(param));
+  }
+  if (param >= MS_CTX_TYPE_STRING_BEGIN && param < MS_CTX_TYPE_STRING_END) {
+    return py::str(ctx->get_param<std::string>(param));
+  }
+
+  MS_LOG(EXCEPTION) << "Got illegal param " << param << ".";
+}
+}  // namespace mindspore
 
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
@@ -101,53 +151,48 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
 
+  (void)m.def("ms_ctx_get_param", &mindspore::MsCtxGetParameter, "Get value of specified paramter.");
+  (void)m.def("ms_ctx_set_param", &mindspore::MsCtxSetParameter, "Set value for specified paramter.");
+
+  (void)py::enum_<MsCtxParam>(*m, "ms_ctx_param", py::arithmetic())
+    .value("auto_mixed_precision_flag", MsCtxParam::MS_CTX_AUTO_MIXED_PRECISION_FLAG)
+    .value("check_bprop_flag", MsCtxParam::MS_CTX_CHECK_BPROP_FLAG)
+    .value("enable_dump", MsCtxParam::MS_CTX_ENABLE_DUMP)
+    .value("enable_dynamic_mem_pool", MsCtxParam::MS_CTX_ENABLE_DYNAMIC_MEM_POOL)
+    .value("enable_gpu_summary", MsCtxParam::MS_CTX_ENABLE_GPU_SUMMARY)
+    .value("enable_graph_kernel", MsCtxParam::MS_CTX_ENABLE_GRAPH_KERNEL)
+    .value("enable_hccl", MsCtxParam::MS_CTX_ENABLE_HCCL)
+    .value("enable_loop_sink", MsCtxParam::MS_CTX_ENABLE_LOOP_SINK)
+    .value("enable_mem_reuse", MsCtxParam::MS_CTX_ENABLE_MEM_REUSE)
+    .value("enable_pynative_hook", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_HOOK)
+    .value("enable_pynative_infer", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_INFER)
+    .value("enable_reduce_precision", MsCtxParam::MS_CTX_ENABLE_REDUCE_PRECISION)
+    .value("enable_sparse", MsCtxParam::MS_CTX_ENABLE_SPARSE)
+    .value("enable_task_sink", MsCtxParam::MS_CTX_ENABLE_TASK_SINK)
+    .value("ir_fusion_flag", MsCtxParam::MS_CTX_IR_FUSION_FLAG)
+    .value("is_multi_graph_sink", MsCtxParam::MS_CTX_IS_MULTI_GRAPH_SINK)
+    .value("is_pynative_ge_init", MsCtxParam::MS_CTX_IS_PYNATIVE_GE_INIT)
+    .value("precompile_only", MsCtxParam::MS_CTX_PRECOMPILE_ONLY)
+    .value("enable_profiling", MsCtxParam::MS_CTX_ENABLE_PROFILING)
+    .value("save_graphs_flag", MsCtxParam::MS_CTX_SAVE_GRAPHS_FLAG)
+    .value("max_device_memory", MsCtxParam::MS_CTX_MAX_DEVICE_MEMORY)
+    .value("execution_mode", MsCtxParam::MS_CTX_EXECUTION_MODE)
+    .value("device_target", MsCtxParam::MS_CTX_DEVICE_TARGET)
+    .value("graph_memory_max_size", MsCtxParam::MS_CTX_GRAPH_MEMORY_MAX_SIZE)
+    .value("print_file_path", MsCtxParam::MS_CTX_PRINT_FILE_PATH)
+    .value("profiling_options", MsCtxParam::MS_CTX_PROFILING_OPTIONS)
+    .value("save_dump_path", MsCtxParam::MS_CTX_SAVE_DUMP_PATH)
+    .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
+    .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)
+    .value("device_id", MsCtxParam::MS_CTX_DEVICE_ID)
+    .value("ge_ref", MsCtxParam::MS_CTX_GE_REF)
+    .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
+    .value("tsd_ref", MsCtxParam::MS_CTX_TSD_REF);
+
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_backend_policy", &mindspore::MsContext::backend_policy, "Get backend policy.")
-    .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.")
-    .def("get_execution_mode", &mindspore::MsContext::execution_mode, "Get execution mode.")
-    .def("set_execution_mode", &mindspore::MsContext::set_execution_mode, "Set execution mode.")
-    .def("set_precompile_only", &mindspore::MsContext::set_precompile_only, "Set enable precompile only.")
-    .def("get_precompile_only", &mindspore::MsContext::precompile_only, "Get enable precompile only.")
-    .def("get_device_target", &mindspore::MsContext::device_target, "Get device target.")
-    .def("set_device_target", &mindspore::MsContext::set_device_target, "Set device target.")
-    .def("get_device_id", &mindspore::MsContext::device_id, "Get device id.")
-    .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
-    .def("get_max_call_depth", &mindspore::MsContext::max_call_depth, "Get max call depth.")
-    .def("set_max_call_depth", &mindspore::MsContext::set_max_call_depth, "Set max call depth.")
-    .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
-    .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
-    .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,
-         "Get whether to enable auto mixed precision.")
-    .def("set_auto_mixed_precision_flag", &mindspore::MsContext::set_auto_mixed_precision_flag,
-         "Set whether to enable auto mixed precision.")
-    .def("get_enable_reduce_precision_flag", &mindspore::MsContext::enable_reduce_precision,
-         "Get whether to enable reduce precision.")
-    .def("set_enable_reduce_precision_flag", &mindspore::MsContext::set_enable_reduce_precision,
-         "Set whether to enable reduce precision.")
-    .def("get_save_graphs_path", &mindspore::MsContext::save_graphs_path, "Get save graphs path.")
-    .def("set_save_graphs_path", &mindspore::MsContext::set_save_graphs_path, "Set save graphs path.")
-    .def("get_enable_dump", &mindspore::MsContext::enable_dump, "Get whether to enable dump.")
-    .def("set_enable_dump", &mindspore::MsContext::set_enable_dump, "Set whether to enable dump.")
-    .def("get_save_dump_path", &mindspore::MsContext::save_dump_path, "Get path to dump.")
-    .def("set_save_dump_path", &mindspore::MsContext::set_save_dump_path, "Set path to dump.")
-    .def("set_graph_memory_max_size", &mindspore::MsContext::set_graph_memory_max_size, "set graph memory max size.")
-    .def("set_variable_memory_max_size", &mindspore::MsContext::set_variable_memory_max_size,
-         "set variable memory max size")
-    .def("get_enable_profiling", &mindspore::MsContext::enable_profiling, "Get whether to open profiling.")
-    .def("set_enable_profiling", &mindspore::MsContext::set_enable_profiling, "Set whether to open profiling.")
-    .def("get_profiling_options", &mindspore::MsContext::profiling_options, "Get options to profiling.")
-    .def("set_profiling_options", &mindspore::MsContext::set_profiling_options, "Set options to profiling.")
-    .def("get_check_bprop_flag", &mindspore::MsContext::check_bprop_flag, "Get whether to check bprop.")
-    .def("set_check_bprop_flag", &mindspore::MsContext::set_check_bprop_flag, "Set whether to check bprop.")
-    .def("get_max_device_memory", &mindspore::MsContext::max_device_memory, "Get deivce memory max size.")
-    .def("set_max_device_memory", &mindspore::MsContext::set_max_device_memory, "Set deivce memory max size.")
-    .def("set_print_file_path", &mindspore::MsContext::set_print_file_path, "Set path to print.")
-    .def("set_enable_graph_kernel", &mindspore::MsContext::set_enable_graph_kernel,
-         "Set the GraphKernel switch to on or off.")
-    .def("get_enable_graph_kernel", &mindspore::MsContext::enable_graph_kernel, "Get the value of GraphKernel switch.")
-    .def("get_enable_sparse", &mindspore::MsContext::enable_sparse, "Get whether to enable sparsity.")
-    .def("set_enable_sparse", &mindspore::MsContext::set_enable_sparse, "Set whether to enable sparsity.");
+    .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")

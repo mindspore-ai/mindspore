@@ -142,7 +142,7 @@ void Debugger::EnableDebugger() {
   // switch memory reuse on or off
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  context_ptr->set_enable_mem_reuse(partial_memory_);
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, partial_memory_);
   // print some message about memory reuse to user
   if (partial_memory_) {
     MS_LOG(WARNING) << "Partial Memory Reuse is enabled. Note: 1. Please only set watchpoints before running the first "

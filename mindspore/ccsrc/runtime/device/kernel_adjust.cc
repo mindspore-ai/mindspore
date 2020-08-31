@@ -60,8 +60,8 @@ void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &k
 bool KernelAdjust::NeedInsertSwitch() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  return (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() &&
-          ConfigManager::GetInstance().iter_num() > 1);
+  return (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) &&
+          context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && ConfigManager::GetInstance().iter_num() > 1);
 }
 
 CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,

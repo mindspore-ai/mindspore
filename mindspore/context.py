@@ -22,7 +22,7 @@ import threading
 from collections import namedtuple
 from types import FunctionType
 from mindspore import log as logger
-from mindspore._c_expression import MSContext
+from mindspore._c_expression import MSContext, ms_ctx_param, ms_ctx_get_param, ms_ctx_set_param
 from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
@@ -157,9 +157,15 @@ class _Context:
             raise ValueError("Context handle is none in context!!!")
         return value
 
+    def get_param(self, param):
+        return ms_ctx_get_param(self._context_handle, param)
+
+    def set_param(self, param, value):
+        ms_ctx_set_param(self._context_handle, param, value)
+
     @property
     def mode(self):
-        return self._context_handle.get_execution_mode()
+        return self.get_param(ms_ctx_param.execution_mode)
 
     @mode.setter
     def mode(self, mode):
@@ -169,15 +175,17 @@ class _Context:
         Args:
             mode (int): GRAPH_MODE or PYNATIVE_MODE.
         """
-        self._context_handle.set_execution_mode(mode)
         if mode == PYNATIVE_MODE:
             if self.enable_debug_runtime:
                 self.set_backend_policy("vm")
             self._context_switches.push(True, None)
-        else:
+        elif mode == GRAPH_MODE:
             if self.enable_debug_runtime:
                 self.set_backend_policy("ge")
             self._context_switches.push(False, None)
+        else:
+            raise ValueError(f'The execution mode {mode} is invalid!')
+        self.set_param(ms_ctx_param.execution_mode, mode)
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -186,110 +194,106 @@ class _Context:
 
     @property
     def precompile_only(self):
-        return self._context_handle.get_precompile_only()
+        return self.get_param(ms_ctx_param.precompile_only)
 
     @precompile_only.setter
     def precompile_only(self, precompile_only):
-        self._context_handle.set_precompile_only(precompile_only)
+        self.set_param(ms_ctx_param.precompile_only, precompile_only)
 
     @property
     def save_graphs(self):
-        return self._context_handle.get_save_graphs_flag()
+        return self.get_param(ms_ctx_param.save_graphs_flag)
 
     @save_graphs.setter
     def save_graphs(self, save_graphs_flag):
-        self._context_handle.set_save_graphs_flag(save_graphs_flag)
+        self.set_param(ms_ctx_param.save_graphs_flag, save_graphs_flag)
 
     @property
     def save_graphs_path(self):
-        return self._context_handle.get_save_graphs_path()
+        return self.get_param(ms_ctx_param.save_graphs_path)
 
     @save_graphs_path.setter
     def save_graphs_path(self, save_graphs_path):
-        self._context_handle.set_save_graphs_path(
-            _make_directory(save_graphs_path))
+        self.set_param(ms_ctx_param.save_graphs_path, _make_directory(save_graphs_path))
 
     @property
     def device_target(self):
-        return self._context_handle.get_device_target()
+        return self.get_param(ms_ctx_param.device_target)
 
     @device_target.setter
     def device_target(self, target):
-        success = self._context_handle.set_device_target(target)
-        if not success:
-            raise ValueError("Target device name is invalid!!!")
-        if self.enable_debug_runtime and self.device_target == "CPU":
+        valid_targets = ["CPU", "GPU", "Ascend", "Davinci"]
+        if not target in valid_targets:
+            raise ValueError(f"Target device name {target} is invalid! It must be one of {valid_targets}")
+        if target == "Davinci":
+            target = "Ascend"
+        self.set_param(ms_ctx_param.device_target, target)
+        if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
 
     @property
     def device_id(self):
-        return self._context_handle.get_device_id()
+        return self.get_param(ms_ctx_param.device_id)
 
     @device_id.setter
     def device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
-            raise ValueError(
-                "Device id must be in [0, 4095], but got {}".format(device_id))
-        success = self._context_handle.set_device_id(device_id)
-        if not success:
-            raise RuntimeError("Device id set failed!!!")
+            raise ValueError(f"Device id must be in [0, 4095], but got {device_id}")
+        self.set_param(ms_ctx_param.device_id, device_id)
 
     @property
     def max_call_depth(self):
-        return self._context_handle.get_max_call_depth()
+        return self.get_param(ms_ctx_param.max_call_depth)
 
     @max_call_depth.setter
     def max_call_depth(self, max_call_depth):
         if max_call_depth <= 0:
-            raise ValueError(
-                "Max call depth must be greater than 0, but got {}".format(max_call_depth))
-        self._context_handle.set_max_call_depth(max_call_depth)
+            raise ValueError(f"Max call depth must be greater than 0, but got {max_call_depth}")
+        self.set_param(ms_ctx_param.max_call_depth, max_call_depth)
 
     @property
     def enable_auto_mixed_precision(self):
-        return self._context_handle.get_auto_mixed_precision_flag()
+        return self.get_param(ms_ctx_param.auto_mixed_precision_flag)
 
     @enable_auto_mixed_precision.setter
     def enable_auto_mixed_precision(self, enable_auto_mixed_precision):
-        self._context_handle.set_auto_mixed_precision_flag(
-            enable_auto_mixed_precision)
+        self.set_param(ms_ctx_param.auto_mixed_precision_flag, enable_auto_mixed_precision)
 
     @property
     def enable_reduce_precision(self):
-        return self._context_handle.get_enable_reduce_precision_flag()
+        return self.get_param(ms_ctx_param.enable_reduce_precision_flag)
 
     @enable_reduce_precision.setter
     def enable_reduce_precision(self, enable_reduce_precision):
-        self._context_handle.set_enable_reduce_precision_flag(
-            enable_reduce_precision)
+        self.set_param(ms_ctx_param.enable_reduce_precision_flag, enable_reduce_precision)
 
     @property
     def enable_dump(self):
-        return self._context_handle.get_enable_dump()
+        return self.get_param(ms_ctx_param.enable_dump)
 
     @enable_dump.setter
     def enable_dump(self, enable_dump):
-        self._context_handle.set_enable_dump(enable_dump)
+        self.set_param(ms_ctx_param.enable_dump, enable_dump)
 
     @property
     def save_dump_path(self):
-        return self._context_handle.get_save_dump_path()
+        return self.get_param(ms_ctx_param.save_dump_path)
 
     @save_dump_path.setter
     def save_dump_path(self, save_dump_path):
-        self._context_handle.set_save_dump_path(save_dump_path)
+        self.set_param(ms_ctx_param.save_dump_path, save_dump_path)
 
     @property
     def enable_profiling(self):
-        return self._context_handle.get_enable_profiling()
+        return self.get_param(ms_ctx_param.enable_profiling)
 
     @enable_profiling.setter
     def enable_profiling(self, flag):
-        self._context_handle.set_enable_profiling(flag)
+        self.set_param(ms_ctx_param.enable_profiling, flag)
 
     @property
     def profiling_options(self):
-        return self._context_handle.get_profiling_options()
+        return self.get_param(ms_ctx_param.profiling_options)
 
     @profiling_options.setter
     def profiling_options(self, option):
@@ -298,15 +302,15 @@ class _Context:
         if option not in options:
             raise ValueError("Profiling options must be in 'training_trace' 'task_trace' "
                              "'task_trace:training_trace' 'training_trace:task_trace' or 'op_trace'.")
-        self._context_handle.set_profiling_options(option)
+        self.set_param(ms_ctx_param.profiling_options, option)
 
     @property
     def enable_graph_kernel(self):
-        return self._context_handle.get_enable_graph_kernel()
+        return self.get_param(ms_ctx_param.enable_graph_kernel)
 
     @enable_graph_kernel.setter
     def enable_graph_kernel(self, graph_kernel_switch_):
-        self._context_handle.set_enable_graph_kernel(graph_kernel_switch_)
+        self.set_param(ms_ctx_param.enable_graph_kernel, graph_kernel_switch_)
 
     @property
     def reserve_class_name_in_scope(self):
@@ -325,20 +329,14 @@ class _Context:
     @variable_memory_max_size.setter
     def variable_memory_max_size(self, variable_memory_max_size):
         if not check_input_format(variable_memory_max_size):
-            raise ValueError(
-                "Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
+            raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
         if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
-            raise ValueError(
-                "Context param variable_memory_max_size should be less than 31GB.")
-        variable_memory_max_size_ = variable_memory_max_size[:-
-                                                             2] + " * 1024 * 1024 * 1024"
-        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - \
-            int(variable_memory_max_size[:-2])
-        graph_memory_max_size_ = str(
-            graph_memory_max_size) + " * 1024 * 1024 * 1024"
-        self._context_handle.set_variable_memory_max_size(
-            variable_memory_max_size_)
-        self._context_handle.set_graph_memory_max_size(graph_memory_max_size_)
+            raise ValueError("Context param variable_memory_max_size should be less than 31GB.")
+        variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
+        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
+        graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
+        self.set_param(ms_ctx_param.variable_memory_max_size, variable_memory_max_size_)
+        self.set_param(ms_ctx_param.graph_memory_max_size, graph_memory_max_size_)
 
     @property
     def enable_ge(self):
@@ -355,15 +353,15 @@ class _Context:
 
     @property
     def check_bprop(self):
-        return self._context_handle.get_check_bprop_flag()
+        return self.get_param(ms_ctx_param.check_bprop_flag)
 
     @check_bprop.setter
     def check_bprop(self, check_bprop_flag):
-        self._context_handle.set_check_bprop_flag(check_bprop_flag)
+        self.set_param(ms_ctx_param.check_bprop_flag, check_bprop_flag)
 
     @property
     def max_device_memory(self):
-        return self._context_handle.get_max_device_memory()
+        return self.get_param(ms_ctx_param.max_device_memory)
 
     @max_device_memory.setter
     def max_device_memory(self, max_device_memory):
@@ -372,7 +370,7 @@ class _Context:
         max_device_memory_value = float(max_device_memory[:-2])
         if max_device_memory_value == 0:
             raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
-        self._context_handle.set_max_device_memory(max_device_memory_value)
+        self.set_param(ms_ctx_param.max_device_memory, max_device_memory_value)
 
     @property
     def print_file_path(self):
@@ -392,15 +390,15 @@ class _Context:
             full_file_name = os.path.join(path, file_name)
         else:
             full_file_name = print_file_path
-        self._context_handle.set_print_file_path(full_file_name)
+        self.set_param(ms_ctx_param.print_file_path, full_file_name)
 
     @property
     def enable_sparse(self):
-        return self._context_handle.get_enable_sparse()
+        return self.get_param(ms_ctx_param.enable_sparse)
 
     @enable_sparse.setter
     def enable_sparse(self, enable_sparse):
-        self._context_handle.set_enable_sparse(enable_sparse)
+        self.set_param(ms_ctx_param.enable_sparse, enable_sparse)
 
 def check_input_format(x):
     import re
@@ -486,8 +484,6 @@ def set_auto_parallel_context(**kwargs):
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
         enable_parallel_optimizer(bool): This is a developing feature, which shards the weight update  computation in
                        data parallel training in the benefit of time and memory saving.
-        max_call_depth(int): Specify the function call depth limit. Default: 1000.
-
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -501,7 +497,6 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
-        >>> context.set_auto_parallel_context(max_call_depth=80)
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -603,6 +598,7 @@ def set_context(**kwargs):
             a file by default, and turn off printing to the screen. If the file already exists, add a timestamp
             suffix to the file.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
+        max_call_depth(int): Specify the function call depth limit. Default: 1000.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -623,6 +619,7 @@ def set_context(**kwargs):
         >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
         >>> context.set_context(max_device_memory="3.5GB")
         >>> context.set_context(print_file_path="print.pb")
+        >>> context.set_context(max_call_depth=80)
     """
     for key, value in kwargs.items():
         if not hasattr(_context(), key):

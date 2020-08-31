@@ -88,7 +88,7 @@ std::string GetBaseNameForIR(int stage_idx, const std::string &action_name) {
   if (ms_context == nullptr) {
     MS_LOG(EXCEPTION) << "ms_context is nullptr";
   }
-  auto save_graphs_path = ms_context->save_graphs_path();
+  auto save_graphs_path = ms_context->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
@@ -646,7 +646,7 @@ void Pipeline::Run() {
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
-      if (MsContext::GetInstance()->save_graphs_flag() && resource_->func_graph() != nullptr) {
+      if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && resource_->func_graph() != nullptr) {
         auto graph = resource_->func_graph();
         if (graph != nullptr) {
           user_graph = graph;
@@ -688,7 +688,7 @@ void Pipeline::Run() {
   MsProfile::Reset();
 #endif
 
-  if (MsContext::GetInstance()->save_graphs_flag() && (user_graph != nullptr)) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && (user_graph != nullptr)) {
     std::string user_graph_file = GetFilePathName("ModelDigraph.dot");
     MS_LOG(DEBUG) << "Save user graph to: " << user_graph_file;
     draw::DrawUserFuncGraph(user_graph_file, user_graph);
@@ -710,7 +710,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     if (!succ) {
       MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
     }
-    if (MsContext::GetInstance()->execution_mode() == 0 && !converted->isa<tensor::Tensor>()) {
+    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == 0 && !converted->isa<tensor::Tensor>()) {
       MS_EXCEPTION(TypeError) << "For 'graph mode', the " << i << "th arg: " << converted->ToString()
                               << " is not tensor.";
     }
@@ -891,7 +891,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // Convert CNodeList to LinConvertResult.
   ConfigManager::GetInstance().set_iter_num(1);
   auto runner = convert_fn({app_init}, "");
-  if (MsContext::GetInstance()->execution_mode() != kPynativeMode) {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     backend->Link(runner.graph_id);
   }
   ConfigManager::GetInstance().set_iter_num(size);
@@ -965,10 +965,11 @@ void InitHccl() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   (void)context::OpenTsd(ms_context);
-  uint32_t device_id = ms_context->device_id();
-  std::string device_name = ms_context->device_target();
-  ms_context->set_enable_hccl(true);
-  if (ms_context->backend_policy() == "ms" && ms_context->device_target() == kAscendDevice) {
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
+  if (ms_context->backend_policy() == "ms" &&
+      ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance);
     if (!runtime_instance->Init()) {

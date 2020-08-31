@@ -53,7 +53,8 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() == kPynativeMode && !ms_context->enable_pynative_hook()) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+      !ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK)) {
     if (IsGraphOutput(node, AnfAlgo::GetAllOutput(func_graph->output(), {prim::kPrimTupleGetItem}))) {
       return new_node;
     }

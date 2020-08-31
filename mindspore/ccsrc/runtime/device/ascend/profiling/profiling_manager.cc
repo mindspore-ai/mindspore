@@ -117,7 +117,7 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  const string prof_options_str = context->profiling_options();
+  const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
   std::vector<string> opts = Split(prof_options_str, ':');
   if (opts.empty()) {
     MS_LOG(WARNING) << "Profiling is enabled, but profiling option is not set!";

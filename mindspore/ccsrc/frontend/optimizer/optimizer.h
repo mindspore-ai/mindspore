@@ -181,7 +181,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             }
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
-          if (is_on_debug_ && MsContext::GetInstance()->save_graphs_flag()) {
+          if (is_on_debug_ && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
             MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
             auto fg_name =
               "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];

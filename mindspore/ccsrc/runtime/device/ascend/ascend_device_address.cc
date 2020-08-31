@@ -154,7 +154,7 @@ bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *s
 DeviceAddressPtr AssignLaunchMemory(size_t size, const std::string &format, TypeId type) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->device_id();
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto address_ptr = runtime_instance->AssignSingleOpLaunchMemory(size, format, type);
@@ -261,11 +261,12 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(INFO) << "Start!";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() != kPynativeMode && !ms_context->enable_pynative_infer()) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+      !ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
     MS_LOG(INFO) << "Finish!";
     return;
   }
-  auto device_id = ms_context->device_id();
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto ret = runtime_instance->SyncStream();
@@ -348,7 +349,7 @@ void AscendDeviceAddress::LaunchTransData(kernel::KernelModPtr kernel_mod_ptr, v
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->device_id();
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto ret =
@@ -475,7 +476,8 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
   std::vector<size_t> device_shape = GetDeviceShape(&host_shape);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->execution_mode() != kGraphMode && ms_context->execution_mode() != kPynativeMode &&
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode &&
+      ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       type_id_name_map.find(type_id_) != type_id_name_map.end()) {
     std::pair<std::string, std::string> type_format = std::make_pair(type_id_name_map.at(type_id_), format_);
     if (use_trans_data.find(type_format) != use_trans_data.end()) {
