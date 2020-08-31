@@ -46,7 +46,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
     transforms_2 = [
         vision.Decode(),
         vision.TenCrop(crop_size, use_vertical_flip=vertical_flip),
-        lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
+        lambda *images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
     ]
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
     data2 = data2.map(operations=transform_2, input_columns=["image"])
@@ -109,7 +109,7 @@ def test_ten_crop_md5():
     transforms_2 = [
         vision.Decode(),
         vision.TenCrop((200, 100), use_vertical_flip=True),
-        lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
+        lambda *images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
     ]
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
     data2 = data2.map(operations=transform_2, input_columns=["image"])
@@ -176,7 +176,7 @@ def test_ten_crop_wrong_img_error_msg():
 
     with pytest.raises(RuntimeError) as info:
         data.create_tuple_iterator(num_epochs=1).get_next()
-    error_msg = "TypeError: img should be PIL image or NumPy array. Got <class 'tuple'>"
+    error_msg = "TypeError: __call__() takes 2 positional arguments but 11 were given"
 
     # error msg comes from ToTensor()
     assert error_msg in str(info.value)

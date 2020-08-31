@@ -48,7 +48,7 @@ def test_five_crop_op(plot=False):
     transforms_2 = [
         vision.Decode(),
         vision.FiveCrop(200),
-        lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
+        lambda *images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
     ]
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
     data2 = data2.map(operations=transform_2, input_columns=["image"])
@@ -91,7 +91,7 @@ def test_five_crop_error_msg():
     with pytest.raises(RuntimeError) as info:
         for _ in data:
             pass
-    error_msg = "TypeError: img should be PIL image or NumPy array. Got <class 'tuple'>"
+    error_msg = "TypeError: __call__() takes 2 positional arguments but 6 were given"
 
     # error msg comes from ToTensor()
     assert error_msg in str(info.value)
@@ -108,7 +108,7 @@ def test_five_crop_md5():
     transforms = [
         vision.Decode(),
         vision.FiveCrop(100),
-        lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
+        lambda *images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])

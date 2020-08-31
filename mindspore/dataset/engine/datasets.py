@@ -37,6 +37,9 @@ from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
+
+import mindspore.dataset.transforms.py_transforms as py_transforms
+
 from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp, Iterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
@@ -406,7 +409,7 @@ class Dataset:
         return dataset
 
     @check_map
-    def map(self, operations=None, input_columns=None, output_columns=None, column_order=None,
+    def map(self, operations, input_columns=None, output_columns=None, column_order=None,
             num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
         """
         Apply each operation in operations to this dataset.
@@ -427,7 +430,7 @@ class Dataset:
         Args:
             operations (Union[list[TensorOp], list[functions]]): List of operations to be
                 applied on the dataset. Operations are applied in the order they appear in this list.
-            input_columns (list[str]): List of the names of the columns that will be passed to
+            input_columns (list[str], optional): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
                 input columns expected by the first operator. (default=None, the first
                 operation will be passed however many columns that is required, starting from
@@ -2021,8 +2024,25 @@ class MapDataset(DatasetOp):
                  num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
         super().__init__(num_parallel_workers)
         self.children.append(input_dataset)
-        if operations is not None and not isinstance(operations, list):
-            operations = [operations]
+        if operations is not None:
+            if not isinstance(operations, list):
+                operations = [operations]
+            elif isinstance(operations, list) and len(operations) > 1:
+                # wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations
+                new_ops, start_ind, end_ind = [], 0, 0
+                for i, op in enumerate(operations):
+                    if not callable(op):
+                        # reset counts
+                        if start_ind != end_ind:
+                            new_ops.append(py_transforms.Compose(operations[start_ind:end_ind]))
+                        new_ops.append(op)
+                        start_ind, end_ind = i + 1, i + 1
+                    else:
+                        end_ind += 1
+                # do additional check in case the last operation is a Python operation
+                if start_ind != end_ind:
+                    new_ops.append(py_transforms.Compose(operations[start_ind:end_ind]))
+                operations = new_ops
         self.operations = operations
         if input_columns is not None and not isinstance(input_columns, list):
             input_columns = [input_columns]
