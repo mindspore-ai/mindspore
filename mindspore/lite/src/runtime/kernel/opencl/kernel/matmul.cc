@@ -164,7 +164,7 @@ int MatMulOpenCLKernel::Run() {
   int arg_count = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
-  ocl_runtime->SetKernelArg(kernel_, arg_count++, bias_, lite::opencl::MemType::BUF);
+  ocl_runtime->SetKernelArg(kernel_, arg_count++, bias_);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCI);
   ocl_runtime->SetKernelArg(kernel_, arg_count++, sizeCO);

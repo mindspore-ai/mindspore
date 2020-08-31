@@ -37,15 +37,16 @@ void LoadDataPRelu(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
     memset(dst, 0x00, dst_size);
   } else {
-    auto src_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &dst_size));
+    auto src_data = mindspore::lite::ReadFile(file_path.c_str(), &dst_size);
     memcpy(dst, src_data, dst_size);
   }
 }
 
+template <typename T>
 void CompareOutPRelu(lite::tensor::Tensor *output_tensor, const std::string &standard_answer_file) {
-  auto *output_data = reinterpret_cast<float *>(output_tensor->Data());
+  auto *output_data = reinterpret_cast<T *>(output_tensor->Data());
   size_t output_size = output_tensor->Size();
-  auto expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
+  auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
     if (std::fabs(output_data[i] - expect_data[i]) > atol) {
@@ -60,6 +61,17 @@ void CompareOutPRelu(lite::tensor::Tensor *output_tensor, const std::string &sta
   printf("compare success!\n\n\n");
 }
 
+template <typename T>
+void printf_tensor_Prelu(const std::string &log, mindspore::lite::tensor::Tensor *in_data, int size) {
+  MS_LOG(INFO) << log;
+  auto input_data = reinterpret_cast<T *>(in_data->Data());
+  for (int i = 0; i < size; ++i) {
+    printf("%f ", input_data[i]);
+  }
+  printf("\n");
+  MS_LOG(INFO) << "Print tensor done";
+}
+
 TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string weight_file = "/data/local/tmp/weight_data.bin";
@@ -71,16 +83,14 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 4, 3, 9};
-
-  auto data_type = kNumberTypeFloat32;
+  auto data_type = kNumberTypeFloat16;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   auto tensor_type = schema::NodeType_ValueNode;
-  auto input_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  auto input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input_tensor error!";
     return;
   }
-
   auto output_tensor =
     new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
@@ -88,9 +98,8 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
     delete input_tensor;
     return;
   }
-
-  auto weight_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, std::vector<int>{9}, schema::Format_NHWC, tensor_type);
+  auto weight_tensor = new (std::nothrow)
+    lite::tensor::Tensor(data_type, std::vector<int>{input_shape[3]}, schema::Format_NHWC, tensor_type);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight_tensor error";
     delete input_tensor;
@@ -99,20 +108,20 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   }
   std::vector<lite::tensor::Tensor *> inputs{input_tensor, weight_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
-
-  // freamework to do!!! allocate memory by hand
   inputs[0]->MallocData(allocator);
   inputs[1]->MallocData(allocator);
 
   MS_LOG(INFO) << "initialize input data";
   LoadDataPRelu(input_tensor->Data(), input_tensor->Size(), in_file);
   LoadDataPRelu(weight_tensor->Data(), weight_tensor->Size(), weight_file);
-  auto weight_data = reinterpret_cast<float *>(weight_tensor->Data());
-  PrintData("Weight data", weight_data, inputs[1]->ElementsNum());
-  auto *input_data = reinterpret_cast<float *>(inputs[0]->Data());
-  PrintData("PRelu input data", input_data, inputs[0]->ElementsNum());
-  std::cout << inputs[0]->ElementsNum() << std::endl;
-  std::cout << "--------------------------------------------" << std::endl;
+  if (ocl_runtime->GetFp16Enable()) {
+    printf_tensor_Prelu<float16_t>("PRELU:FP16--input data", input_tensor, inputs[0]->ElementsNum());
+    printf_tensor_Prelu<float16_t>("PRELU:FP16--weight data", weight_tensor, weight_tensor->ElementsNum());
+  } else {
+    printf_tensor_Prelu<float>("PRELU:FP32--input data", input_tensor, inputs[0]->ElementsNum());
+    printf_tensor_Prelu<float>("PRELU:FP32--weight data", weight_tensor, inputs[1]->ElementsNum());
+  }
+
   auto param = new (std::nothrow) PReluParameter();
   if (param == nullptr) {
     MS_LOG(ERROR) << "new PreluParameter error";
@@ -173,10 +182,13 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
     return;
   }
 
-  MS_LOG(INFO) << "PRelu==================output data================";
-  auto *output_data = reinterpret_cast<float *>(outputs[0]->Data());
-  PrintData("output_data", output_data, outputs[0]->ElementsC4Num());
-  CompareOutPRelu(output_tensor, standard_answer_file);
+  if (ocl_runtime->GetFp16Enable()) {
+    printf_tensor_Prelu<float16_t>("PRelu:FP16--output_data", output_tensor, outputs[0]->ElementsNum());
+    CompareOutPRelu<float16_t>(output_tensor, standard_answer_file);
+  } else {
+    printf_tensor_Prelu<float>("PRelu:FP32--output_data", output_tensor, outputs[0]->ElementsNum());
+    CompareOutPRelu<float>(output_tensor, standard_answer_file);
+  }
   delete input_tensor;
   delete output_tensor;
   delete weight_tensor;

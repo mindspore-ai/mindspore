@@ -39,19 +39,24 @@ void BiasAddOpenCLKernel::InitBuffer() {
   int C = in_tensors_[1]->shape()[0];
   int div_ci = UP_DIV(C, C4NUM);
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
-  BiasAdd_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(div_ci * C4NUM * sizeof(FLOAT_t)));
-  BiasAdd_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(BiasAdd_, CL_MAP_WRITE, nullptr, true));
-  memset(BiasAdd_, 0x00, div_ci * C4NUM * sizeof(FLOAT_t));
-  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_[1]->Data());
-  for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
-    BiasAdd_[i] = origin_weight[i];
+  size_t img_dtype = CL_FLOAT;
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
   }
+  std::vector<size_t> img_size{size_t(div_ci), 1, img_dtype};
+  BiasAdd_ = allocator->Malloc(div_ci * C4NUM * fp_size, img_size);
+  BiasAdd_ = allocator->MapBuffer(BiasAdd_, CL_MAP_WRITE, nullptr, true);
+  memset(BiasAdd_, 0x00, div_ci * C4NUM * fp_size);
+  memcpy(BiasAdd_, in_tensors_[1]->Data(), C * fp_size);
   allocator->UnmapBuffer(BiasAdd_);
 }
 
 int BiasAddOpenCLKernel::Init() {
   in_size_ = in_tensors_[0]->shape().size();
   out_size_ = out_tensors_[0]->shape().size();
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  fp_size = enable_fp16_ ? sizeof(float) / 2 : sizeof(float);
   if (in_size_ != 4 && in_size_ != 2) {
     MS_LOG(ERROR) << "BiasAdd only support dim=4 or 2, but your dim=" << in_size_;
     return RET_ERROR;
@@ -67,7 +72,6 @@ int BiasAddOpenCLKernel::Init() {
   std::string source = biasadd_source;
   std::string program_name = "BiasAdd";
   std::string kernel_name = "BiasAdd";
-  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 

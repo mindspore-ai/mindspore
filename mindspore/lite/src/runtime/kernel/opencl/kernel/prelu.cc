@@ -36,15 +36,16 @@ namespace mindspore::kernel {
 void PReluOpenCLKernel::InitBuffer() {
   int C = in_tensors_[1]->shape()[0];
   int div_ci = UP_DIV(C, C4NUM);
-  std::cout << div_ci << std::endl;
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
-  PReluWeight_ = reinterpret_cast<FLOAT_t *>(allocator->Malloc(div_ci * C4NUM * sizeof(FLOAT_t)));
-  PReluWeight_ = reinterpret_cast<FLOAT_t *>(allocator->MapBuffer(PReluWeight_, CL_MAP_WRITE, nullptr, true));
-  memset(PReluWeight_, 0x00, div_ci * C4NUM * sizeof(FLOAT_t));
-  auto origin_weight = reinterpret_cast<FLOAT_t *>(in_tensors_[1]->Data());
-  for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
-    PReluWeight_[i] = origin_weight[i];
+  size_t img_dtype = CL_FLOAT;
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
   }
+  std::vector<size_t> img_size{size_t(div_ci), 1, img_dtype};
+  PReluWeight_ = allocator->Malloc(div_ci * C4NUM * fp_size, img_size);
+  PReluWeight_ = allocator->MapBuffer(PReluWeight_, CL_MAP_WRITE, nullptr, true);
+  memset(PReluWeight_, 0x00, div_ci * C4NUM * fp_size);
+  memcpy(PReluWeight_, in_tensors_[1]->Data(), C * fp_size);
   allocator->UnmapBuffer(PReluWeight_);
 }
 
@@ -61,14 +62,14 @@ int PReluOpenCLKernel::Init() {
       << C_Weight << " and your input channel size is " << C;
     return RET_ERROR;
   }
-  if (C_Weight != 1) {
-    InitBuffer();
-  }
   std::set<std::string> build_options;
   std::string source = prelu_source;
   std::string program_name = "PRelu";
   std::string kernel_name = "PRelu";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
+  fp_size = enable_fp16_ ? sizeof(float) / 2 : sizeof(float);
+  InitBuffer();
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
   in_ori_format_ = in_tensors_[0]->GetFormat();
@@ -92,11 +93,7 @@ int PReluOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
-  if (in_tensors_[1]->shape()[0] == 1) {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<float *>(in_tensors_[1]->Data()));
-  } else {
-    ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
-  }
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<int>(in_tensors_[1]->shape()[0]));
 
   std::vector<size_t> local = {1, 1};
