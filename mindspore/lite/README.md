@@ -54,3 +54,14 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
    Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/tutorial/en/master/use/runtime.html) is the process of running input data through the model to get output.
 
    MindSpore provides a series of pre-trained models that can be deployed on mobile device [example](#TODO).
+   
+## MindSpore Lite benchmark test result
+Base on MindSpore r0.7, we test a couple of networks on HUAWEI Mate30 (Hisilicon Kirin990) mobile phone, and get the test results below for your reference.
+
+| NetWork             | Thread Number | Average Run Time(ms) |
+| ------------------- | ------------- | -------------------- |
+| basic_squeezenet    | 4             | 9.10                 |
+| inception_v3        | 4             | 69.361               |
+| mobilenet_v1_10_224 | 4             | 7.137                |
+| mobilenet_v2_10_224 | 4             | 5.569                |
+| resnet_v2_50        | 4             | 48.691               |

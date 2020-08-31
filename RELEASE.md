@@ -57,7 +57,6 @@
     * Add 93 TFLite op.
     * Add 24 Caffe op.
     * Add 62 ONNX op.
-    * Add support for windows.
     * Add 11 optimized passes, include fusion/const fold.
     * Support aware-training and Post-training quantization.
 * CPU
