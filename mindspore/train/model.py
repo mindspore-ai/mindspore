@@ -378,8 +378,8 @@ class Model:
         with _CallbackManager(callbacks) as list_callback:
             if not dataset_sink_mode:
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
-            elif context.get_context("mode") == context.PYNATIVE_MODE:
-                logger.warning("The pynative mode cannot support dataset sink mode currently."
+            elif context.get_context("mode") == context.PYNATIVE_MODE or context.get_context("device_target") == "CPU":
+                logger.warning("The pynative mode and CPU cannot support dataset sink mode currently."
                                "So the training process will be performed with dataset not sink.")
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
