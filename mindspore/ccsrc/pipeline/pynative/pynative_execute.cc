@@ -373,7 +373,7 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
       auto tensor = py::cast<tensor::TensorPtr>(input);
       auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
       new_tensor->set_device_address(tensor->device_address());
-      new_tensor->set_dirty(tensor->is_dirty());
+      new_tensor->set_sync_status(tensor->sync_status());
       result[i] = new_tensor;
     }
     *status = PYNATIVE_SUCCESS;

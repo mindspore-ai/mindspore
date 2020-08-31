@@ -534,7 +534,7 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
       auto pk_node = input_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       MS_EXCEPTION_IF_NULL(pk_node);
-      if (tensor->is_dirty() || !pk_node->has_default()) {
+      if (tensor->NeedSyncHostToDevice() || !pk_node->has_default()) {
         need_sync = true;
       }
     }
@@ -551,7 +551,7 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
         return false;
       }
     }
-    tensor->set_dirty(false);
+    tensor->set_sync_status(kNoNeedSync);
   }
   return true;
 }

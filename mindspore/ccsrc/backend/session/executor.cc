@@ -38,9 +38,9 @@ void UpdateOutputTensors(VectorRef *outputs,
         auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         tensor->set_device_address(address);
       }
-      if (tensor->need_sync()) {
+      if (tensor->NeedSyncDeviceToHostImmediately()) {
         tensor->data_sync();
-        tensor->set_need_sync(false);
+        tensor->set_sync_status(kNoNeedSync);
       }
     }
   }
