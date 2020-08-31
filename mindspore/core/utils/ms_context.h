@@ -53,7 +53,7 @@ const float kDefaultMaxDeviceMemory = 1024;
 enum MsCtxParam : unsigned {
   // paramater of type bool
   MS_CTX_TYPE_BOOL_BEGIN,
-  MS_CTX_AUTO_MIXED_PRECISION_FLAG = MS_CTX_TYPE_BOOL_BEGIN,
+  MS_CTX_ENABLE_AUTO_MIXED_PRECISION = MS_CTX_TYPE_BOOL_BEGIN,
   MS_CTX_CHECK_BPROP_FLAG,
   MS_CTX_ENABLE_DUMP,
   MS_CTX_ENABLE_DYNAMIC_MEM_POOL,
@@ -132,22 +132,22 @@ class MsContext {
 
   template <typename T>
   void set_param(MsCtxParam param, const T &value) {
-    MS_LOG(EXCEPTION) << "Need implemet " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
+    MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
   template <typename T>
   const T &get_param(MsCtxParam param) const {
-    MS_LOG(EXCEPTION) << "Need implemet " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
+    MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
   template <typename T>
   void increase_param(MsCtxParam param) {
-    MS_LOG(EXCEPTION) << "Need implemet " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
+    MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
   template <typename T>
   void decrease_param(MsCtxParam param) {
-    MS_LOG(EXCEPTION) << "Need implemet " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
+    MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
  private:
