@@ -17,7 +17,8 @@
 This module py_transforms is implemented basing on Python. It provides common
 operations including OneHotOp.
 """
-from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list
+from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list, \
+    check_compose_call
 from . import py_transforms_util as util
 
 
@@ -92,6 +93,7 @@ class Compose:
     def __init__(self, transforms):
         self.transforms = transforms
 
+    @check_compose_call
     def __call__(self, img):
         """
         Call method.
