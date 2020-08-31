@@ -257,6 +257,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::UnPackFromPrimitive(const Primitive &pri
     return NewPrimitiveC<Transpose>(prim, inputs);
   } else if (op_type == "tuple_getitem") {
     return NewPrimitiveC<TupleGetItem>(prim, inputs);
+  } else if (op_type == "Softmax") {
+    return NewPrimitiveC<SoftMax>(prim, inputs);
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromPrimitive : " << op_type;
     return nullptr;
