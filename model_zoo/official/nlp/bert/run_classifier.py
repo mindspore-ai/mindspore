@@ -134,17 +134,22 @@ def do_eval(dataset=None, network=None, num_class=2, assessment_method="accuracy
 def run_classifier():
     """run classifier task"""
     parser = argparse.ArgumentParser(description="run classifier")
-    parser.add_argument("--device_target", type=str, default="Ascend", help="Device type, default is Ascend")
-    parser.add_argument("--assessment_method", type=str, default="accuracy",
-                        help="assessment_method including [MCC, Spearman_correlation, Accuracy], default is accuracy")
-    parser.add_argument("--do_train", type=str, default="false", help="Enable train, default is false")
-    parser.add_argument("--do_eval", type=str, default="false", help="Enable eval, default is false")
+    parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
+                        help="Device type, default is Ascend")
+    parser.add_argument("--assessment_method", type=str, default="Accuracy",
+                        choices=["Mcc", "Spearman_correlation", "Accuracy", "F1"],
+                        help="assessment_method including [Mcc, Spearman_correlation, Accuracy, F1],\
+                             default is Accuracy")
+    parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
+                        help="Enable train, default is false")
+    parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
+                        help="Enable eval, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
     parser.add_argument("--num_class", type=int, default="2", help="The number of class, default is 2.")
-    parser.add_argument("--train_data_shuffle", type=str, default="true",
+    parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
-    parser.add_argument("--eval_data_shuffle", type=str, default="false",
+    parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
                         help="Enable eval data shuffle, default is false")
     parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_pretrain_checkpoint_path", type=str, default="", help="Load checkpoint file path")
