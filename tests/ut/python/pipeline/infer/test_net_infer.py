@@ -70,9 +70,9 @@ def test_assign_in_while():
 
 
 def test_dup_context():
-    ''' different func_with_fv in net1 and net2 should produce 2 different FuncGraphAbstractClosure and
+    """ different func_with_fv in net1 and net2 should produce 2 different FuncGraphAbstractClosure and
         Evaluator.
-    '''
+    """
     context.set_context(mode=context.GRAPH_MODE)
 
     class Net(nn.Cell):
@@ -102,7 +102,7 @@ def test_dup_context():
 
 
 def test_maybe_poly_func():
-    ''' different func_with_fv in net1 and net2 may produce poly node. '''
+    """ different func_with_fv in net1 and net2 may produce poly node. """
     context.set_context(mode=context.GRAPH_MODE)
 
     class Net(nn.Cell):

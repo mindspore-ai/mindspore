@@ -435,7 +435,7 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     FuncGraphPtr bprop_graph = bprop->second.func_graph();
     resources_->manager()->AddFuncGraph(bprop_graph);
 
-    if (bprop_graph->free_variables_nodes().size() != 0 || primal->free_variables_nodes().size() != 0) {
+    if (!bprop_graph->free_variables_nodes().empty() || !primal->free_variables_nodes().empty()) {
       MS_LOG(EXCEPTION) << "User defined Cell bprop " << primal->ToString() << " in scope "
                         << primal->output()->scope()->name() << " does not support Parameter data type.";
     }
