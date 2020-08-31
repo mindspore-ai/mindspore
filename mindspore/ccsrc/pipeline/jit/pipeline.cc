@@ -481,9 +481,9 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   SaveCompiledGraph(phase_s);
 
   opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
-  resource->Clean();
   // Reclaim all resource used by optimizer;
   ReclaimOptimizer();
+  resource->Clean();
 
   MS_LOG(INFO) << "End ExecutorPy compile!";
   return true;
