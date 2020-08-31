@@ -32,13 +32,21 @@ then
 exit 1
 fi
 
-BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
-cd $BASE_PATH/../ || exit
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
 
 ulimit -u unlimited
 export DEVICE_NUM=$3
 export RANK_SIZE=$3
-export RANK_TABLE_FILE=$1
+export RANK_TABLE_FILE=$PATH1
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do
@@ -46,12 +54,12 @@ do
     export RANK_ID=$i
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp *.py ./train_parallel$i
-    cp -r ./src ./train_parallel$i
+    cp ../*.py ./train_parallel$i
+    cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
 
     env > env.log
-    python train.py --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$2 > log 2>&1 &
+    python train.py --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 > log 2>&1 &
     cd ..
 done
