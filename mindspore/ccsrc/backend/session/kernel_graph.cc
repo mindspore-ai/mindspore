@@ -279,6 +279,59 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
   return re_order;
 }
 
+void KernelGraph::GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_input_it = node_input_edges_.find(node);
+  if (node_input_it == node_input_edges_.end()) {
+    MS_LOG(DEBUG) << "Node [" << node->DebugString() << "] don't have input edges.";
+    return;
+  }
+  visited_nodes_.insert(node);
+  for (auto input_edge : node_input_edges_[node]) {
+    size_t input_num = node_input_num_[input_edge.first];
+    if (input_num == 0) {
+      continue;
+    }
+    if (find(visited_nodes_.begin(), visited_nodes_.end(), input_edge.first) == visited_nodes_.end()) {
+      MS_EXCEPTION_IF_NULL(input_edge.first);
+      edge_to_[input_edge.first] = node;
+      GetLoopNodesByDFS(input_edge.first, loop_num);
+    } else {
+      AnfNodePtr node_iter = node;
+      MS_EXCEPTION_IF_NULL(node_iter);
+      MS_LOG(DEBUG) << "Print loop nodes start:";
+      for (; node_iter != input_edge.first; node_iter = edge_to_[node_iter]) {
+        MS_EXCEPTION_IF_NULL(node_iter);
+        loop_nodes_.push(node_iter);
+        node_input_num_[node_iter]--;
+        MS_LOG(DEBUG) << "Get loop node:" << node_iter->DebugString();
+      }
+      loop_nodes_.push(node_iter);
+      loop_nodes_.push(node);
+      (*loop_num)++;
+      node_input_num_[node_iter]--;
+      MS_LOG(DEBUG) << "Get loop node:" << node_iter->DebugString();
+      MS_LOG(DEBUG) << "Get loop node:" << node->DebugString();
+      MS_LOG(DEBUG) << "Print loop nodes end, Loop num:" << *loop_num;
+    }
+  }
+}
+
+uint32_t KernelGraph::GetLoopNum(std::map<AnfNodePtr, size_t> none_zero_nodes) {
+  uint32_t loop_num = 0;
+  for (auto iter = none_zero_nodes.begin(); iter != none_zero_nodes.end(); iter++) {
+    auto node = iter->first;
+    MS_EXCEPTION_IF_NULL(node);
+    if (node_input_num_[node] == 0) {
+      continue;
+    }
+    edge_to_.clear();
+    visited_nodes_.clear();
+    GetLoopNodesByDFS(node, &loop_num);
+  }
+  return loop_num;
+}
+
 void KernelGraph::CheckLoop() {
   std::map<AnfNodePtr, size_t> none_zero_nodes;
   if (node_input_edges_.size() != node_input_num_.size()) {
@@ -303,6 +356,7 @@ void KernelGraph::CheckLoop() {
   }
   // if don't consider control depend and loop exit,a exception will be throw
   if (!none_zero_nodes.empty()) {
+    MS_LOG(WARNING) << "Nums of loop:" << GetLoopNum(none_zero_nodes);
     MS_LOG(EXCEPTION) << "Nodes have loop, left node num:" << none_zero_nodes.size();
   }
 }
