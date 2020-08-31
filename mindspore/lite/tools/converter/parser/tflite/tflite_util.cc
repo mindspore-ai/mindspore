@@ -126,14 +126,10 @@ std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationF
 };
 
 std::map<int, TypeId> type_map = {
-  {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64},
-  {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
-  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16},
-  {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
-  {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},
-  {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
-  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},
-  {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
+  {tflite::TensorType_FLOAT64, TypeId::kNumberTypeFloat64}, {tflite::TensorType_FLOAT32, TypeId::kNumberTypeFloat32},
+  {tflite::TensorType_FLOAT16, TypeId::kNumberTypeFloat16}, {tflite::TensorType_INT32, TypeId::kNumberTypeInt32},
+  {tflite::TensorType_INT16, TypeId::kNumberTypeInt16},     {tflite::TensorType_INT8, TypeId::kNumberTypeInt8},
+  {tflite::TensorType_INT64, TypeId::kNumberTypeInt64},     {tflite::TensorType_UINT8, TypeId::kNumberTypeUInt8},
   {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
 };
 
@@ -190,11 +186,8 @@ size_t GetDataTypeSize(const TypeId &data_type) {
   }
 }
 
-STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
-                       schema::PadMode pad_mode,
-                       int strideH, int strideW,
-                       int windowH, int windowW,
-                       std::vector<int> *params) {
+STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::PadMode pad_mode, int strideH,
+                       int strideW, int windowH, int windowW, std::vector<int> *params) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "the input tensor is null";
     return RET_ERROR;
@@ -208,12 +201,18 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
     auto shape = tensor->shape;
     int H_input = shape.at(1);
     int W_input = shape.at(2);
-
+    if (strideH == 0) {
+      MS_LOG(ERROR) << "strideH is zero";
+      return RET_ERROR;
+    }
     int H_output = ceil(H_input * 1.0 / strideH);
     int pad_needed_H = (H_output - 1) * strideH + windowH - H_input;
     padUp = floor(pad_needed_H / 2.0);
     padDown = pad_needed_H - padUp;
-
+    if (strideW == 0) {
+      MS_LOG(ERROR) << "strideW is zero";
+      return RET_ERROR;
+    }
     int W_output = ceil(W_input * 1.0 / strideW);
     int pad_needed_W = (W_output - 1) * strideW + windowW - W_input;
     padLeft = floor(pad_needed_W / 2.0);
@@ -227,9 +226,7 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor,
   return RET_OK;
 }
 
-void Split(const std::string &src_str,
-           std::vector<std::string> *dst_str,
-           const std::string &chr) {
+void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {
   std::string ::size_type p1 = 0, p2 = src_str.find(chr);
   while (std::string::npos != p2) {
     dst_str->push_back(src_str.substr(p1, p2 - p1));
