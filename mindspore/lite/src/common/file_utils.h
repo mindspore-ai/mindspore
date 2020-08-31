@@ -34,7 +34,7 @@ char *ReadFile(const char *file, size_t *size);
 std::string RealPath(const char *path);
 
 template <typename T>
-void WriteToTxt(const std::string& file_path, void *data, size_t element_size) {
+void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {
   std::ofstream out_file;
   out_file.open(file_path, std::ios::out);
   auto real_data = reinterpret_cast<T *>(data);
@@ -44,7 +44,7 @@ void WriteToTxt(const std::string& file_path, void *data, size_t element_size) {
   out_file.close();
 }
 
-int WriteToBin(const std::string& file_path, void *data, size_t size);
+int WriteToBin(const std::string &file_path, void *data, size_t size);
 
 int CompareOutputData(float *output_data, float *correct_data, int data_size);
 void CompareOutput(float *output_data, std::string file_path);
@@ -55,4 +55,3 @@ std::string GetAndroidPackagePath();
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_COMMON_FILE_UTILS_H_
-
