@@ -23,7 +23,8 @@ __all__ = [
     "unregiste_pass",
     "gen_new_parameter",
     "cancel_new_parameter",
-    "set_renorm"
+    "set_renorm",
+    "set_reopt"
 ]
 class PyPassManager(PyPassManager_):
     r"""
@@ -74,6 +75,11 @@ class PyPassManager(PyPassManager_):
         if not isinstance(should_renorm, bool):
             raise TypeError(f"Expect should_renorm to be a bool, got {should_renorm}")
         super().set_renorm(should_renorm)
+
+    def set_reopt(self, do_reopt):
+        if not isinstance(do_reopt, bool):
+            raise TypeError(f"Expect do_reopt to be a bool, got {do_reopt}")
+        super().set_reopt(do_reopt)
 
 def registe_pass(run_only_once=False):
     """
@@ -164,3 +170,17 @@ def set_renorm(should_renorm):
     """
     ppm = PyPassManager()
     ppm.set_renorm(should_renorm)
+
+def set_reopt(do_reopt):
+    """
+    Set whether or not to do optimization after modified graph in python pass(es).
+
+    Args:
+        do_reopt(bool): whether or not to do optimization after modified graph in python pass(es).
+
+    NOTE:
+        This interface is mainly intended for testing modifying graph without worrying about its validity. Turn off
+        renormalization may BREAK the network.
+    """
+    ppm = PyPassManager()
+    ppm.set_reopt(do_reopt)

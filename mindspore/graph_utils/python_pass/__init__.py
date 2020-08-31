@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Top-level reference to python pass."""
-from .python_pass_register import registe_pass, unregiste_pass, gen_new_parameter, cancel_new_parameter, set_renorm
+"""Reference for python pass registration."""
+from .python_pass_register import registe_pass, unregiste_pass, gen_new_parameter, cancel_new_parameter, set_renorm,\
+    set_reopt
 
 __all__ = [
     "registe_pass",
     "unregiste_pass",
     "gen_new_parameter",
     "cancel_new_parameter",
-    "set_renorm"
+    "set_renorm",
+    "set_reopt"
     ]
