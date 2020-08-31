@@ -239,7 +239,19 @@ void ShardReader::FileStreamsOperator() {
 ShardReader::~ShardReader() { Close(); }
 
 void ShardReader::Close() {
-  (void)Finish();  // interrupt reading and stop threads
+  {
+    std::lock_guard<std::mutex> lck(mtx_delivery_);
+    interrupt_ = true;  // interrupt reading and stop threads
+  }
+  cv_delivery_.notify_all();
+
+  // Wait for all threads to finish
+  for (auto &i_thread : thread_set_) {
+    if (i_thread.joinable()) {
+      i_thread.join();
+    }
+  }
+
   FileStreamsOperator();
 }
 
@@ -757,22 +769,6 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
 
 bool ResortRowGroups(std::tuple<int, int, int, int> a, std::tuple<int, int, int, int> b) {
   return std::get<1>(a) < std::get<1>(b) || (std::get<1>(a) == std::get<1>(b) && std::get<0>(a) < std::get<0>(b));
-}
-
-MSRStatus ShardReader::Finish() {
-  {
-    std::lock_guard<std::mutex> lck(mtx_delivery_);
-    interrupt_ = true;
-  }
-  cv_delivery_.notify_all();
-
-  // Wait for all threads to finish
-  for (auto &i_thread : thread_set_) {
-    if (i_thread.joinable()) {
-      i_thread.join();
-    }
-  }
-  return SUCCESS;
 }
 
 int64_t ShardReader::GetNumClasses(const std::string &category_field) {

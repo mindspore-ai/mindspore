@@ -260,7 +260,7 @@ def test_cv_file_reader_partial_tutorial():
         count = count + 1
         logger.info("#item{}: {}".format(index, x))
         if count == 5:
-            reader.finish()
+            reader.close()
     assert count == 5
 
 

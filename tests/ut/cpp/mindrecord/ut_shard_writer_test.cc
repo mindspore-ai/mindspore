@@ -74,7 +74,7 @@ TEST_F(TestShardWriter, TestShardWriterOneSample) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
   for (int i = 1; i <= 4; i++) {
     string filename = std::string("./OneSample.shard0") + std::to_string(i);
     string db_name = std::string("./OneSample.shard0") + std::to_string(i) + ".db";
@@ -775,7 +775,7 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberColumnInIndex) {
     }
   }
   ASSERT_TRUE(count == 10);
-  dataset.Finish();
+  dataset.Close();
 
   for (const auto &filename : file_names) {
     auto filename_db = filename + ".db";
@@ -858,7 +858,7 @@ TEST_F(TestShardWriter, TestShardNoBlob) {
     }
   }
   ASSERT_TRUE(count == 10);
-  dataset.Finish();
+  dataset.Close();
   for (const auto &filename : file_names) {
     auto filename_db = filename + ".db";
     remove(common::SafeCStr(filename_db));
@@ -952,7 +952,7 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberNotColumnInIndex) {
     }
   }
   ASSERT_TRUE(count == 10);
-  dataset.Finish();
+  dataset.Close();
   for (const auto &filename : file_names) {
     auto filename_db = filename + ".db";
     remove(common::SafeCStr(filename_db));
@@ -1060,7 +1060,7 @@ TEST_F(TestShardWriter, TestShardWriter10Sample40Shard) {
     count++;
   }
   ASSERT_TRUE(count == 10);
-  dataset.Finish();
+  dataset.Close();
   for (const auto &filename : file_names) {
     auto filename_db = filename + ".db";
     remove(common::SafeCStr(filename_db));

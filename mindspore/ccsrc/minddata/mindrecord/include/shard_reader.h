@@ -174,10 +174,6 @@ class ShardReader {
   ROW_GROUP_BRIEF ReadRowGroupCriteria(int group_id, int shard_id, const std::pair<std::string, std::string> &criteria,
                                        const std::vector<std::string> &columns = std::vector<std::string>());
 
-  /// \brief join all created threads
-  /// \return MSRStatus the status of MSRStatus
-  MSRStatus Finish();
-
   /// \brief return a batch, given that one is ready
   /// \return a batch of images and image data
   std::vector<std::tuple<std::vector<uint8_t>, json>> GetNext();

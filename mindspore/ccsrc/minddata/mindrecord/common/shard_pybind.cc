@@ -93,7 +93,6 @@ void BindShardReader(const py::module *m) {
     .def("get_blob_fields", &ShardReader::GetBlobFields)
     .def("get_next", (std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>>(ShardReader::*)()) &
                        ShardReader::GetNextPy)
-    .def("finish", &ShardReader::Finish)
     .def("close", &ShardReader::Close);
 }
 
