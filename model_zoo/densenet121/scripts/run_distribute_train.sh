@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE DATASET"
-echo "for example: sh run_distribute_train.sh 8 /data/hccl.json /path/to/dataset"
+echo "sh scipts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE DATASET"
+echo "for example: sh scipts/run_distribute_train.sh 8 /data/hccl.json /path/to/dataset"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
