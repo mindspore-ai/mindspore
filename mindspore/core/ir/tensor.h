@@ -268,6 +268,8 @@ class Tensor : public MetaTensor {
   std::vector<Axis> padding_type() const { return padding_type_; }
 
   std::string id() const { return id_; }
+  TypePtr cast_dtype() { return cast_dtype_; }
+  void set_cast_dtype(TypePtr dtype) { cast_dtype_ = dtype; }
 
   void SetNeedWait(bool need_wait) {
     if (event_ != nullptr) {
@@ -310,6 +312,7 @@ class Tensor : public MetaTensor {
   mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   DeviceSyncPtr device_sync_{nullptr};
   std::vector<Axis> padding_type_;
+  TypePtr cast_dtype_{nullptr};
 };
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;

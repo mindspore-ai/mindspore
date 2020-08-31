@@ -217,16 +217,6 @@ class Parameter(MetaTensor):
         self._param_info.name = name_
 
     @property
-    def cast_type(self):
-        return self._cast_type
-
-    @cast_type.setter
-    def cast_type(self, dst_type):
-        if dst_type not in (mstype.float16, mstype.float32, None):
-            raise ValueError("The type of the name should be type of [float32, float16] or `None`.")
-        self._cast_type = dst_type
-
-    @property
     def sliced(self):
         """Get slice status of the parameter."""
         return self._sliced

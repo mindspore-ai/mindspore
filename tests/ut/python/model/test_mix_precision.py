@@ -74,7 +74,7 @@ def test_add_cast_flag():
     net.fc3.to_float(mstype.float32)
     net = train_step_with_loss_warp(net)
     net.set_train()
-    _executor.compile(net, predict, label)
+    net(predict, label)
 
 
 def test_add_cast_flag_tensor():
@@ -82,7 +82,7 @@ def test_add_cast_flag_tensor():
     net = NetForConcat()
     net.add_flags_recursive(fp16=True)
     net.set_train()
-    _executor.compile(net, x1)
+    net(x1)
 
 
 def test_on_momentum():
@@ -91,7 +91,7 @@ def test_on_momentum():
     net = LeNet5()
     net = train_step_with_loss_warp(net).to_float(mstype.float16)
     net.set_train()
-    _executor.compile(net, predict, label)
+    net(predict, label)
 
 
 def test_data_parallel_with_cast():
@@ -134,7 +134,6 @@ def test_nn_prelu():
 class NetForCast(nn.Cell):
     def __init__(self):
         super(NetForCast, self).__init__()
-        self.concat = P.Concat()
         self.x1 = Tensor(1.0, mstype.float32)
         self.x2 = Parameter(Tensor(np.zeros([1, 10]).astype(np.float32)), name='x2')
 
@@ -144,11 +143,10 @@ class NetForCast(nn.Cell):
 
 
 def test_cast():
-    context.set_context(save_graphs=True)
     x = Tensor(np.ones([1, 16, 10, 10]).astype(np.float32) * 0.01)
     net = NetForCast()
     net.add_flags_recursive(fp16=True)
-    _executor.compile(net, x)
+    net(x)
 
 
 class IRBlockZ(nn.Cell):
