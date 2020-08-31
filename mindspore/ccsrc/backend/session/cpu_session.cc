@@ -35,7 +35,7 @@
 
 namespace mindspore {
 namespace session {
-ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
+ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
   if (!anf->isa<Parameter>()) {
@@ -49,7 +49,7 @@ ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, 
   ParameterPtr new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
   TraceManager::EndTrace();
   graph_inputs->push_back(new_parameter);
-  valid_inputs->push_back(valid_input);
+  valid_inputs->push_back(true);
   return new_parameter;
 }
 
