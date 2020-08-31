@@ -119,8 +119,8 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
   } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    int h = 1;
-    int w = 1;
+    const int h = 1;
+    const int w = 1;
     int c = shapex[1];
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;

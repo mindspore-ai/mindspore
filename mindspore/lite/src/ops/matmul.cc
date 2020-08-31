@@ -31,8 +31,8 @@ void MatMul::SetTransposeA(bool transpose_a) { this->primitive_->value.AsMatMul(
 void MatMul::SetTransposeB(bool transpose_b) { this->primitive_->value.AsMatMul()->transposeB = transpose_b; }
 
 void MatMul::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
-  constexpr float qmin = 0;
-  constexpr float qmax = 255;
+  const float qmin = 0;
+  const float qmax = 255;
   *mMin = static_cast<float>((qmin - mean) / stdDev);
   *mMax = static_cast<float>((qmax - mean) / stdDev);
 }

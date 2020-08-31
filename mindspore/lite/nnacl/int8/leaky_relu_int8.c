@@ -17,6 +17,9 @@
 #include "nnacl/int8/leaky_relu_int8.h"
 
 void DoLeakReluInt8(int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_prelu_parm, int task_id) {
+  if (quant_prelu_parm == NULL) {
+    return;
+  }
   float output_scale = quant_prelu_parm->quant_arg.out_args_.scale_;
   int output_zp = quant_prelu_parm->quant_arg.out_args_.zp_;
   const float output_inverse_scale = 1.f / output_scale;

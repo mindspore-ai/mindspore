@@ -328,7 +328,7 @@ void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weig
       }
     }
     dst[c] = row * input_zp * weight_zp - input_zp * sum;
-    if (bias) {
+    if (bias != NULL) {
       dst[c] += bias[c];
     }
   }

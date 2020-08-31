@@ -402,6 +402,7 @@ STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_v
       data_size = data_count * sizeof(int32_t);
       buffer = std::make_unique<int32_t[]>(data_count);
       const int64_t *in_data;
+      in_data = nullptr;
       if (onnx_const_value.int64_data_size() == 0) {
         in_data = reinterpret_cast<const int64_t *>(onnx_const_value.raw_data().data());
       } else {

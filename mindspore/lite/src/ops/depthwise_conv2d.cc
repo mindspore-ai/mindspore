@@ -70,8 +70,8 @@ void DepthwiseConv2D::SetActivationType(int activation_type) {
 }
 
 void DepthwiseConv2D::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
-  constexpr float qmin = 0;
-  constexpr float qmax = 255;
+  const float qmin = 0;
+  const float qmax = 255;
   *mMin = static_cast<float>((qmin - mean) / stdDev);
   *mMax = static_cast<float>((qmax - mean) / stdDev);
 }
