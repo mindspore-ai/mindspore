@@ -511,28 +511,27 @@ void ParameterServer<T>::UpdateWeights() {
       MS_EXCEPTION_IF_NULL(optimizer);
 
       std::shared_ptr<OptimizerInfo> optim_info = optim_infos_[key];
-      if (optim_info == nullptr) {
-        continue;
-      }
-      const std::vector<kernel::AddressPtr> &inputs = optim_info->inputs();
-      const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
-      const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
+      if (optim_info != nullptr) {
+        const std::vector<kernel::AddressPtr> &inputs = optim_info->inputs();
+        const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
+        const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
 
-      std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
-        std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
-      std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>();
-      indices_shape->emplace_back(optim_info->indice_size());
-      shapes->push_back(indices_shape);
+        std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
+          std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
+        std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>();
+        indices_shape->emplace_back(optim_info->indice_size());
+        shapes->push_back(indices_shape);
 
-      if (original_optim_inputs_shape_.count(key) != 0) {
-        for (auto &input_shapes : *(original_optim_inputs_shape_[key])) {
-          shapes->push_back(input_shapes);
+        if (original_optim_inputs_shape_.count(key) != 0) {
+          for (auto &input_shapes : *(original_optim_inputs_shape_[key])) {
+            shapes->push_back(input_shapes);
+          }
         }
+        optimizer->ReInit(shapes);
+        optim_info->ComputeMean(shapes, worker_num_, pserver_num_, rank_id_);
+        optimizer->Execute(inputs, workspaces, outputs);
+        optim_info->Reset();
       }
-      optimizer->ReInit(shapes);
-      optim_info->ComputeMean(shapes, worker_num_, pserver_num_, rank_id_);
-      optimizer->Execute(inputs, workspaces, outputs);
-      optim_info->Reset();
       if (!is_embedding_[key]) {
         tokens_[key] = worker_num_;
       }
@@ -545,23 +544,26 @@ template <typename T>
 void ParameterServer<T>::AccumGrad(const Keys &keys, const Values &values, const Lengths &lengths) {
   std::unique_lock<std::mutex> lock(mutex_);
   const Key &key = keys[0];
-  std::shared_ptr<OptimizerInfo> optim_info = optim_infos_[key];
+  bool no_sparse_grad = values.size() == 1 && values[0] == -100;
+  if (!no_sparse_grad) {
+    std::shared_ptr<OptimizerInfo> optim_info = optim_infos_[key];
 
-  // Create or update the optimizer info
-  if (optim_info == nullptr) {
-    const std::shared_ptr<OptimizerInfoBuilder> &builder = optim_info_builders_[weight_key_to_optims_[key]];
-    std::shared_ptr<kernel::ps::PServerKernel> pserver_kernel = optimizers_[key];
-    if (pserver_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "no optimizer found for key " << key << " optim name " << weight_key_to_optims_[key];
+    // Create or update the optimizer info
+    if (optim_info == nullptr) {
+      const std::shared_ptr<OptimizerInfoBuilder> &builder = optim_info_builders_[weight_key_to_optims_[key]];
+      std::shared_ptr<kernel::ps::PServerKernel> pserver_kernel = optimizers_[key];
+      if (pserver_kernel == nullptr) {
+        MS_LOG(EXCEPTION) << "no optimizer found for key " << key << " optim name " << weight_key_to_optims_[key];
+      }
+      MS_EXCEPTION_IF_NULL(pserver_kernel);
+      OptimizerInfo *optim =
+        builder->Build(pserver_kernel, weights_[key], keys, values, lengths, optim_inputs_shape_[key], worker_num_);
+      optim_info.reset(optim);
+      optim_infos_[key] = optim_info;
+    } else {
+      optim_info->Update(values, lengths);
+      optim_info->Accumulate(values, lengths);
     }
-    MS_EXCEPTION_IF_NULL(pserver_kernel);
-    OptimizerInfo *optim =
-      builder->Build(pserver_kernel, weights_[key], keys, values, lengths, optim_inputs_shape_[key], worker_num_);
-    optim_info.reset(optim);
-    optim_infos_[key] = optim_info;
-  } else {
-    optim_info->Update(values, lengths);
-    optim_info->Accumulate(values, lengths);
   }
 
   grads_accum_counter_[key] += 1;

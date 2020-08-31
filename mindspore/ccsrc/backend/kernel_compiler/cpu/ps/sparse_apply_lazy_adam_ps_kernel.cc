@@ -86,10 +86,6 @@ bool SparseApplyLazyAdamPSKernel::Execute(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
                                           const std::vector<AddressPtr> &outputs) {
   ReInit(inputs);
-  int *indices = reinterpret_cast<int *>(inputs[10]->addr);
-  for (size_t i = 0; i < inputs[10]->size / sizeof(int); i++) {
-    indices[i] -= row_offset_;
-  }
   return Launch(inputs, workspace, outputs);
 }
 
