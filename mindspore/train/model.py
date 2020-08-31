@@ -448,6 +448,7 @@ class Model:
             for inputs in dataset_helper:
                 if _need_to_full() and context.get_context("device_target") == "GPU":
                     inputs = _to_full_tensor(inputs, self._device_number, self._global_rank)
+                cb_params.train_dataset_element = inputs
                 list_callback.step_begin(run_context)
                 outputs = self._train_network(*inputs)
                 cb_params.cur_step_num += dataset_helper.sink_size()
@@ -499,7 +500,6 @@ class Model:
                     raise ValueError("when loss_fn is not None, train_dataset should"
                                      "return two elements, but got {}".format(len_element))
                 cb_params.cur_step_num += 1
-                list_callback.step_begin(run_context)
 
                 overflow = False
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
@@ -507,6 +507,7 @@ class Model:
                     next_element = tuple(next_element) + (Tensor(scaling_sens, mstype.float32),)
 
                 cb_params.train_dataset_element = next_element
+                list_callback.step_begin(run_context)
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():

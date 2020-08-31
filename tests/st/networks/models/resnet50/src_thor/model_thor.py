@@ -454,7 +454,6 @@ class Model:
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
-                list_callback.step_begin(run_context)
                 if switch_branch_one:
                     cb_params.cur_step_num += loop_size
                     self._train_network.add_flags_recursive(thor=True)
@@ -467,6 +466,8 @@ class Model:
                         _exec_datagraph(train_dataset, iter_first_order, phase='train1_dataset')
                         self._has_do_dataset_init = True
                 switch_branch_one = not switch_branch_one
+                cb_params.train_dataset_element = inputs
+                list_callback.step_begin(run_context)
                 outputs = self._train_network(*inputs)
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
@@ -514,13 +515,14 @@ class Model:
                     raise ValueError("when loss_fn is not None, train_dataset should"
                                      "return two elements, but got {}".format(len_element))
                 cb_params.cur_step_num += 1
-                list_callback.step_begin(run_context)
 
                 overflow = False
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
                     scaling_sens = self._get_scaling_sens()
                     next_element = tuple(next_element) + (Tensor(scaling_sens, mstype.float32),)
 
+                cb_params.train_dataset_element = next_element
+                list_callback.step_begin(run_context)
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
