@@ -35,7 +35,7 @@ The overall network architecture of InceptionV3 is show below:
 
 Dataset used can refer to paper.
 
-- Dataset size: ~125G, 1.2W colorful images in 1000 classes
+- Dataset size: 125G, 1250k colorful images in 1000 classes
 	- Train: 120G, 1200k images
 	- Test: 5G, 50k images
 - Data format: RGB images.
@@ -217,19 +217,21 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 
 ### Training Performance
 
-| Parameters                 | InceptionV3                                    |                           |
+| Parameters                 | Ascend                                    |      GPU                     |
 | -------------------------- | ---------------------------------------------- | ------------------------- |
-| Model Version              | V1                                             | V1                          |
+| Model Version              | InceptionV3                                    | InceptionV3                           |
 | Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G   | NV SMI V100-16G(PCIE),cpu:2.10GHz 96cores, memory:250G           |
 | uploaded Date              | 08/21/2020                                     | 08/21/2020                |
 | MindSpore Version          | 0.6.0-beta                                     | 0.6.0-beta                |
+| Dataset                    | 1200k images                                   | 1200k images              |
+| Batch_size                 | 128                                            | 128                       |
 | Training Parameters        | src/config.py                                  | src/config.py             |
 | Optimizer                  | RMSProp                                        | RMSProp                   |
 | Loss Function              | SoftmaxCrossEntropy                            | SoftmaxCrossEntropy       |
-| outputs                    | probability                                    | probability               |
+| Outputs                    | probability                                    | probability               |
 | Loss                       | 1.98                                           | 1.98                      |
-| Accuracy (8p)                  | ACC1[78.8%] ACC5[94.2%]                        | ACC1[78.7%] ACC5[94.1%]   |
-| Total time (8p)                | 11h                                            | 72h                       |
+| Accuracy (8p)              | ACC1[78.8%] ACC5[94.2%]                        | ACC1[78.7%] ACC5[94.1%]   |
+| Total time (8p)            | 11h                                            | 72h                       |
 | Params (M)                 | 103M                                           | 103M                      |
 | Checkpoint for Fine tuning | 313M                                           | 312M                      |
 | Scripts                    | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
@@ -237,15 +239,15 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 
 #### Inference Performance
 
-| Parameters          | InceptionV3                 |
+| Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
-| Model Version       | V1 				            |
-| Resource            | Ascend 910                  |
-| Uploaded Date       | 08/22/2020 (month/day/year) |
+| Model Version       | InceptionV3 				|
+| Resource            | Ascend 910, cpu:2.60GHz 56cores, memory:314G                  |
+| Uploaded Date       | 08/22/2020                  |
 | MindSpore Version   | 0.6.0-beta                  |
 | Dataset             | 50k images                  |
-| batch_size          | 128                         |
-| outputs             | probability                 |
+| Batch_size          | 128                         |
+| Outputs             | probability                 |
 | Accuracy            | ACC1[78.8%] ACC5[94.2%]     |
 | Total time          | 2mins                       |
 | Model for inference | 92M (.onnx file)            |
