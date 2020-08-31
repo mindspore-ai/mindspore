@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package com.mindspore.lite.context;
+package com.mindspore.lite.config;
 
-public class Context {
-    private long contextPtr;
+public class MSConfig {
+    private long msConfigPtr;
 
-    public Context() {
-        this.contextPtr = 0;
+    public MSConfig() {
+        this.msConfigPtr = 0;
     }
 
-    public long getContextPtr() {
-        return contextPtr;
+    public long getMSConfigPtr() {
+        return msConfigPtr;
     }
 
-    public void setContextPtr(long contextPtr) {
-        this.contextPtr = contextPtr;
+    public void setMSConfigPtr(long msConfigPtr) {
+        this.msConfigPtr = msConfigPtr;
     }
 
     public boolean init(int deviceType, int threadNum, int cpuBindMode) {
-        this.contextPtr = createContext(deviceType, threadNum, cpuBindMode);
-        return this.contextPtr != 0;
+        this.msConfigPtr = createMSConfig(deviceType, threadNum, cpuBindMode);
+        return this.msConfigPtr != 0;
     }
 
     public boolean init(int deviceType, int threadNum) {
@@ -49,11 +49,11 @@ public class Context {
     }
 
     public void free() {
-        this.free(this.contextPtr);
-        this.contextPtr = 0;
+        this.free(this.msConfigPtr);
+        this.msConfigPtr = 0;
     }
 
-    private native long createContext(int deviceType, int threadNum, int cpuBindMode);
+    private native long createMSConfig(int deviceType, int threadNum, int cpuBindMode);
 
-    private native void free(long contextPtr);
+    private native void free(long msConfigPtr);
 }

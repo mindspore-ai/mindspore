@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.lite.context;
+package com.mindspore.lite.config;
 
 public class CpuBindMode {
     public static final int MID_CPU = -1;

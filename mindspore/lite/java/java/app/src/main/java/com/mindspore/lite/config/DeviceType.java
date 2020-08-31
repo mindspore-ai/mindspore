@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.lite.context;
+package com.mindspore.lite.config;
 
 public class DeviceType {
     public static final int DT_CPU = 0;
