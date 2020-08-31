@@ -109,7 +109,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::tensor::Tensor *
     parameter->dst_format = dst_format;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
-    LiteKernel *in_convert_op;
+    LiteKernel *in_convert_op = nullptr;
     if (mem_type == OpenCLMemType::IMG) {
       in_convert_op =
         lite::GetOpenCLKernel({in_tensors[i]}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), nullptr, desc);

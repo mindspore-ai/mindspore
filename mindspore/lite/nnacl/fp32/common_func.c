@@ -17,8 +17,14 @@
 #include "nnacl/fp32/common_func.h"
 void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_ptr, size_t output_channel,
                       size_t plane_size, size_t stride, bool is_relu, bool is_relu6, int size) {
+  int oc_div = 0, oc_mod = 0;
   for (int oc = 0; oc < output_channel; oc++) {
-    int oc_div = oc / size, oc_mod = oc % size;
+    if (size != 0) {
+      oc_div = oc / size;
+      oc_mod = oc % size;
+    } else {
+      return;
+    }
     for (int hw = 0; hw < plane_size; hw++) {
       int src_index = oc_div * size * plane_size + hw * size + oc_mod;
       int dst_index = hw * stride + oc;

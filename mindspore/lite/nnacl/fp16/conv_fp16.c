@@ -279,7 +279,7 @@ void ConvSWFp16(const float16_t *input_data, const float16_t *packed_weight, con
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
   int oc4_res = conv_param->output_channel_ % C4NUM;
   const float16_t *src = input_data;
-  float16_t *dst;
+  float16_t *dst = NULL;
   if (oc4_res == 0) {
     dst = output_data;
   } else {

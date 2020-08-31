@@ -35,7 +35,7 @@ int ROIPooling(float *in_ptr, float *out_ptr, float *roi, int tid, ROIPoolingPar
   int scale = param->scale_;
   int pooled_height = param->pooledH_;
   int pooled_width = param->pooledW_;
-  int roi_stride = 5;
+  const int roi_stride = 5;
   int roi_ind_st = roi_st * roi_stride;
   float *max_c = malloc(channels_ * sizeof(float));
   for (int i = roi_st; i < roi_end; ++i) {

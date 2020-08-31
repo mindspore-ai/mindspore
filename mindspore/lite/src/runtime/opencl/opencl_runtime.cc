@@ -198,7 +198,7 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Compute Unit: " << compute_units_;
   MS_LOG(INFO) << "Clock Frequency: " << max_freq_ << " MHz";
 
-  cl_command_queue_properties properties = 0;
+  const cl_command_queue_properties properties = 0;
 #if MS_OPENCL_PROFILE
   properties |= CL_QUEUE_PROFILING_ENABLE;
 #endif
