@@ -52,7 +52,7 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
       delete lite_tensor;
       return input_tensors;
     }
-    auto tensor_data = reinterpret_cast<uint8_t *>(malloc(lite_tensor_size / sizeof(char)));
+    auto tensor_data = new (std::nothrow) uint8_t[lite_tensor_size / sizeof(char)];
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
       delete lite_tensor;
@@ -92,7 +92,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
     }
     auto ret = memcpy_s(tensor_data, size * sizeof(float), tensor->Data(), size * sizeof(float));
     if (ret != EOK) {
-      delete tensor_data;
+      delete[] tensor_data;
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return nullptr;
     }
