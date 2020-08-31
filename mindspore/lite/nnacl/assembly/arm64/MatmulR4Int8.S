@@ -6,22 +6,6 @@
     .type MatMulR4Int8Neon64, %function
 #endif
 
-//
-//                                      int8 RM 16x4 block
-//                           /-----------------------------------------|
-//                           |v4.b[0]   v5.b[0]    v6.b[0]   v7.b[0]   |
-//                           |  ...      ...        ...       ...      |
-//                           |v4.b[15]  v5.b[15]   v5.b[15]  v7.b[15]  |
-//                           \-----------------------------------------/
-//    int8 LM 4x16 block
-//  /---------------------\  /-----------------------------------------|
-//  |v0.b[0] ... v0.b[15] |  |v16.4s    v17.4s     v18.4s    v19.4s    |
-//  |v1.b[0] ... v1.b[15] |  |v20.4s    v21.4s     v22.4s    v23.4s    |
-//  |v2.b[0] ... v2.b[15] |  |v24.4s    v25.4s     v26.4s    v27.4s    |
-//  |v3.b[0] ... v3.b[15] |  |v28.4s    v29.4s     v30.4s    v31.4s    |
-//  \---------------------/  \-----------------------------------------/
-//                                  int32 accumulators 4x4 block
-
 //void MatMulR4Int8Neon64(const int8_t *a, const int8_t *b, int32_t *dst, int row4, int col4, int deep16,
 //                        const int *input_sum, const int *bias)
 
