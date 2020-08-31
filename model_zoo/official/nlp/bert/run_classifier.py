@@ -136,9 +136,10 @@ def run_classifier():
     parser = argparse.ArgumentParser(description="run classifier")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="Device type, default is Ascend")
-    parser.add_argument("--assessment_method", type=str, default="accuracy",
-                        choices=["Mcc", "Spearman_correlation", "Accuracy"],
-                        help="assessment_method including [MCC, Spearman_correlation, Accuracy], default is accuracy")
+    parser.add_argument("--assessment_method", type=str, default="Accuracy",
+                        choices=["Mcc", "Spearman_correlation", "Accuracy", "F1"],
+                        help="assessment_method including [Mcc, Spearman_correlation, Accuracy, F1],\
+                             default is Accuracy")
     parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
                         help="Enable train, default is false")
     parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],

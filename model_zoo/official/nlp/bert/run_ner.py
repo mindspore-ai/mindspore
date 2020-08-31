@@ -145,7 +145,7 @@ def run_ner():
     parser = argparse.ArgumentParser(description="run classifier")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="Device type, default is Ascend")
-    parser.add_argument("--assessment_method", type=str, default="accuracy", choices=["f1", "clue_benchmark"],
+    parser.add_argument("--assessment_method", type=str, default="F1", choices=["F1", "clue_benchmark"],
                         help="assessment_method include: [F1, clue_benchmark], default is F1")
     parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
                         help="Eable train, default is false")
