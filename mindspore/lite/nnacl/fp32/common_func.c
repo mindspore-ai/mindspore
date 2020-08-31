@@ -15,54 +15,6 @@
  */
 
 #include "nnacl/fp32/common_func.h"
-
-#ifndef ENABLE_ARM64
-void MatrixAdd(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
-               size_t row, size_t col) {
-  for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
-      int a_index = c * a_stride + r * C4NUM;
-      int b_index = c * b_stride + r * C4NUM;
-      int c_index = c * c_stride + r * C4NUM;
-      for (int i = 0; i < C4NUM; i++) {
-        dst[c_index + i] = a_ptr[a_index + i] + b_ptr[b_index + i];
-      }
-    }
-  }
-  return;
-}
-
-void MatrixSub(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
-               size_t row, size_t col) {
-  for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
-      int a_index = c * a_stride + r * C4NUM;
-      int b_index = c * b_stride + r * C4NUM;
-      int c_index = c * c_stride + r * C4NUM;
-      for (int i = 0; i < C4NUM; i++) {
-        dst[c_index + i] = a_ptr[a_index + i] - b_ptr[b_index + i];
-      }
-    }
-  }
-  return;
-}
-#endif
-
-void MatrixMultiAdd(float *c11, float *c12, float *c21, float *c22, float *x_ptr, size_t row, size_t col,
-                    size_t c_stride, size_t x_stride) {
-  /* U2 = P1 + P6 */
-  MatrixAdd(x_ptr, c12, c12, x_stride, c_stride, c_stride, row, col);
-  /* U3 = U2 + P7 */
-  MatrixAdd(c12, c21, c21, c_stride, c_stride, c_stride, row, col);
-  /* U4 = U2 + P5 */
-  MatrixAdd(c12, c22, c12, c_stride, c_stride, c_stride, row, col);
-  /* U7 = U3 + P5 */
-  MatrixAdd(c21, c22, c22, c_stride, c_stride, c_stride, row, col);
-  /* U5 = U4 + P3 */
-  MatrixAdd(c12, c11, c12, c_stride, c_stride, c_stride, row, col);
-  return;
-}
-
 void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_ptr, size_t output_channel,
                       size_t plane_size, size_t stride, bool is_relu, bool is_relu6, int size) {
   for (int oc = 0; oc < output_channel; oc++) {

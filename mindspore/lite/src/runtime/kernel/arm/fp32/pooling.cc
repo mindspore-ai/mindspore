@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/pooling.h"
+#include <float.h>
 #include "nnacl/fp32/pooling.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -52,28 +53,18 @@ int PoolingCPUKernel::ReSize() {
 int PoolingCPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->Data());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->Data());
+  float minf = -FLT_MAX;
+  float maxf = FLT_MAX;
+  if (pooling_param_->act_type_ == ActType_Relu) {
+    minf = 0.f;
+  } else if (pooling_param_->act_type_ == ActType_Relu6) {
+    minf = 0.f;
+    maxf = 6.f;
+  }
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
-    switch (pooling_param_->act_type_) {
-      case ActType_Relu:
-        MaxPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);
-        break;
-      case ActType_Relu6:
-        MaxPoolingRelu6(input_ptr, output_ptr, pooling_param_, task_id);
-        break;
-      default:
-        MaxPooling(input_ptr, output_ptr, pooling_param_, task_id);
-    }
+    MaxPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
   } else {
-    switch (pooling_param_->act_type_) {
-      case ActType_Relu:
-        AvgPoolingRelu(input_ptr, output_ptr, pooling_param_, task_id);
-        break;
-      case ActType_Relu6:
-        AvgPoolingRelu6(input_ptr, output_ptr, pooling_param_, task_id);
-        break;
-      default:
-        AvgPooling(input_ptr, output_ptr, pooling_param_, task_id);
-    }
+    AvgPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
   }
   return RET_OK;
 }
