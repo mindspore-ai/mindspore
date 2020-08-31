@@ -336,7 +336,14 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   }
   auto cnode = node->cast<CNodePtr>();
   auto inputs = cnode->inputs();
-  (void)std::copy(params.begin(), params.end(), std::back_inserter(inputs));
+  std::vector<AnfNodePtr> add_params{params.begin(), params.end()};
+  for (size_t i = 2; i < inputs.size(); i++) {
+    auto ret = std::find(add_params.begin(), add_params.end(), inputs[i]);
+    if (ret != add_params.end()) {
+      add_params.erase(ret);
+    }
+  }
+  (void)std::copy(add_params.begin(), add_params.end(), std::back_inserter(inputs));
   cnode->set_inputs(inputs);
   OrderParameters(func_graph, inputs);
 }
