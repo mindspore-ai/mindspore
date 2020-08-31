@@ -67,12 +67,7 @@ Status TileInfo::GetAttrs() {
 
 Status TileInfo::CheckStrategy(const StrategyPtr &strategy) {
   Shapes multiples = {full_multiples_};
-  if (CheckStrategyValue(strategy, multiples, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  return CheckStrategyValue(strategy, multiples);
 }
 
 Status TileInfo::InferDevMatrixShape() {
@@ -197,14 +192,7 @@ std::shared_ptr<Strategys> TileInfo::GenerateBatchStrategies() {
   return GenerateBatchStrategiesBySplitFlag(multiples_shape, split_flag_list_);
 }
 
-Status TileInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status TileInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status TileInfo::GenerateStrategies(int32_t stage_id) {
   if (InferAttrs() != SUCCESS) {

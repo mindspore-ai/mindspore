@@ -73,7 +73,7 @@ Strategys ExpendStrategy(const StrategyPtr &strategy) {
 }
 
 Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
@@ -290,14 +290,7 @@ Status ArithmeticBase::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status ArithmeticBase::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status ArithmeticBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status ArithmeticBase::GenerateStrategies(int32_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);

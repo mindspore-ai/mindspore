@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace parallel {
 Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
@@ -176,14 +176,7 @@ Status BiasAddInfo::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status BiasAddInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status BiasAddInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status BiasAddInfo::GenerateStrategies(int32_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);

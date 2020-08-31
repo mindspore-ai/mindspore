@@ -27,14 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status TransposeInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status TransposeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 Status TransposeInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
@@ -195,12 +188,7 @@ Status TransposeInfo::InitForCostModel(const StrategyPtr &strategy) {
 }
 
 Status TransposeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  return SetCostUnderStrategyBase(strategy);
 }
 
 Status TransposeInfo::GenerateStrategies(int32_t stage_id) {

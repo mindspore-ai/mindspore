@@ -33,19 +33,21 @@
 
 namespace mindspore {
 namespace parallel {
-Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape, bool is_auto_parallel) {
+Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape) {
   if (strategy == nullptr) {
-    MS_LOG(ERROR) << "The strategy is null.";
+    MS_LOG(ERROR) << name_ << ": The strategy is null.";
     return FAILED;
   }
 
   size_t strategy_size = strategy->GetInputNumber();
   size_t inputs_shape_size = inputs_shape.size();
   if (strategy_size != inputs_shape_size) {
-    if (is_auto_parallel) {
-      MS_LOG(DEBUG) << "Strategy size: " << strategy_size << " is not equal to inputs size: " << inputs_shape_size;
+    if (is_auto_parallel_) {
+      MS_LOG(DEBUG) << name_ << ": Strategy size: " << strategy_size
+                    << " is not equal to inputs size: " << inputs_shape_size;
     } else {
-      MS_LOG(ERROR) << "Strategy size: " << strategy_size << " is not equal to inputs size: " << inputs_shape_size;
+      MS_LOG(ERROR) << name_ << ": Strategy size: " << strategy_size
+                    << " is not equal to inputs size: " << inputs_shape_size;
     }
     return FAILED;
   }
@@ -57,11 +59,11 @@ Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shap
     size_t strategy_len = sub_strategy.size();
     size_t inputs_len = sub_input_shape.size();
     if (strategy_len != inputs_len) {
-      if (is_auto_parallel) {
-        MS_LOG(DEBUG) << "Strategy len: " << strategy_len << " is not equal to inputs len: " << inputs_len
+      if (is_auto_parallel_) {
+        MS_LOG(DEBUG) << name_ << ": Strategy len: " << strategy_len << " is not equal to inputs len: " << inputs_len
                       << ", index: " << i;
       } else {
-        MS_LOG(ERROR) << "Strategy len: " << strategy_len << " is not equal to inputs len: " << inputs_len
+        MS_LOG(ERROR) << name_ << ": Strategy len: " << strategy_len << " is not equal to inputs len: " << inputs_len
                       << ", index: " << i;
       }
       return FAILED;
@@ -70,29 +72,29 @@ Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shap
     for (size_t j = 0; j < strategy_len; ++j) {
       int64_t strategy_value = sub_strategy.at(j);
       if (strategy_value < MIN_SLICE_NUM) {
-        if (is_auto_parallel) {
-          MS_LOG(DEBUG) << "Invalid strategy value: " << strategy_value;
+        if (is_auto_parallel_) {
+          MS_LOG(DEBUG) << name_ << ": Invalid strategy value: " << strategy_value;
         } else {
-          MS_LOG(ERROR) << "Invalid strategy value: " << strategy_value;
+          MS_LOG(ERROR) << name_ << ": Invalid strategy value: " << strategy_value;
         }
         return FAILED;
       }
 
       if ((IntToUint(strategy_value) & IntToUint(strategy_value - 1)) != 0) {
-        if (is_auto_parallel) {
-          MS_LOG(DEBUG) << "Invalid Strategy value it is not the power of 2, " << strategy_value;
+        if (is_auto_parallel_) {
+          MS_LOG(DEBUG) << name_ << ": Invalid Strategy value it is not the power of 2, " << strategy_value;
         } else {
-          MS_LOG(ERROR) << "Invalid Strategy value it is not the power of 2, " << strategy_value;
+          MS_LOG(ERROR) << name_ << ": Invalid Strategy value it is not the power of 2, " << strategy_value;
         }
         return FAILED;
       }
 
       int64_t shape_value = sub_input_shape.at(j);
       if ((shape_value % strategy_value) != 0) {
-        if (is_auto_parallel) {
-          MS_LOG(DEBUG) << "Shape " << shape_value << " cannot be divisible by strategy " << strategy_value;
+        if (is_auto_parallel_) {
+          MS_LOG(DEBUG) << name_ << ": Shape " << shape_value << " cannot be divisible by strategy " << strategy_value;
         } else {
-          MS_LOG(ERROR) << "Shape " << shape_value << " cannot be divisible by strategy " << strategy_value;
+          MS_LOG(ERROR) << name_ << ": Shape " << shape_value << " cannot be divisible by strategy " << strategy_value;
         }
         return FAILED;
       }

@@ -50,11 +50,7 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   // only check the input[0]
   Shapes input_shape = {inputs_shape_[0]};
-  if (CheckStrategyValue(strategy, input_shape, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy";
-    return FAILED;
-  }
-  return SUCCESS;
+  return CheckStrategyValue(strategy, input_shape);
 }
 
 Status DropoutDoMaskInfo::InferDevMatrixShape() {
@@ -125,12 +121,7 @@ Status DropoutDoMaskInfo::InferTensorInfo() {
 }
 
 Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  return SetCostUnderStrategyBase(strategy);
 }
 
 Status DropoutDoMaskInfo::GenerateStrategies(int32_t stage_id) {

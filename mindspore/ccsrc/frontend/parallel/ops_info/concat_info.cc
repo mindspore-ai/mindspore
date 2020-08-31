@@ -60,7 +60,7 @@ Status ConcatInfo::GetAttrs() {
 
 Status ConcatInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
@@ -197,14 +197,7 @@ void ConcatInfo::ReComputeBatchSplitFlagList() {
   }
 }
 
-Status ConcatInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status ConcatInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status ConcatInfo::GenerateStrategies(int32_t stage_id) {
   if (InferAttrs() != SUCCESS) {
