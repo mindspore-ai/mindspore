@@ -70,7 +70,7 @@
     * add optimized convolution1X1/3X3/depthwise/convolution_transposed for OpenCL.
 * Tool & example
     * Add benchmark and TimeProfile tools.
-    * Add image classification and object detection Android Demo.
+    * Add image classification Android Demo.
 
 ## Bugfixes
 * Models

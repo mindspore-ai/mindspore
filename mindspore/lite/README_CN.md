@@ -43,7 +43,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
    MindSpore团队提供了一系列预训练模型，用于解决图像分类、目标检测等场景的学习问题。可以在您的应用程序中使用这些预训练模型对应的终端模型。
 
-   MindSpore提供的预训练模型包括：[图像分类（Image Classification）](https://download.mindspore.cn/model_zoo/official/lite/)和[目标检测（Object Detection）](https://download.mindspore.cn/model_zoo/official/lite/)。后续MindSpore团队会增加更多的预置模型。
+   MindSpore提供的预训练模型：[图像分类（Image Classification）](https://download.mindspore.cn/model_zoo/official/lite/)。后续MindSpore团队会增加更多的预置模型。
 
    MindSpore允许您重新训练预训练模型，以执行其他任务。比如：使用预训练的图像分类模型，可以重新训练来识别新的图像类型。
 
@@ -63,15 +63,15 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
    主要完成模型推理工作，即加载模型，完成模型相关的所有计算。[推理](https://www.mindspore.cn/lite/tutorial/zh-CN/master/use/runtime.html)是通过模型运行输入数据，获取预测的过程。
 
-   MindSpore提供了一系列预训练模型部署在智能终端的[样例](#TODO)。
+   MindSpore提供了预训练模型部署在智能终端的[样例](https://www.mindspore.cn/lite/examples)。
    
 ## MindSpore Lite性能参考数据
 我们在HUAWEI Mate30（Hisilicon Kirin990）手机上，基于MindSpore r0.7，测试了一组端侧常见网络的性能数据，供您参考：
-   
-   | 网络                | 线程数 | 平均推理时间(毫秒) |
-   | ------------------- | ------ | ------------------ |
-   | basic_squeezenet    | 4      | 9.10               |
-   | inception_v3        | 4      | 69.361             |
-   | mobilenet_v1_10_224 | 4      | 7.137              |
-   | mobilenet_v2_10_224 | 4      | 5.569              |
-   | resnet_v2_50        | 4      | 48.691             |
+
+| 网络                | 线程数 | 平均推理时间(毫秒) |
+| ------------------- | ------ | ------------------ |
+| basic_squeezenet    | 4      | 9.10               |
+| inception_v3        | 4      | 69.361             |
+| mobilenet_v1_10_224 | 4      | 7.137              |
+| mobilenet_v2_10_224 | 4      | 5.569              |
+| resnet_v2_50        | 4      | 48.691             |

@@ -35,7 +35,7 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
    The MindSpore team provides a series of pre-training models used for image classification, object detection. You can use these pre-trained models in your application.
 
-   The pre-trained models provided by MindSpore include: [Image Classification](https://download.mindspore.cn/model_zoo/official/lite/) and [Object Detection](https://download.mindspore.cn/model_zoo/official/lite/). More models will be provided in the feature.
+   The pre-trained model provided by MindSpore: [Image Classification](https://download.mindspore.cn/model_zoo/official/lite/). More models will be provided in the feature.
 
    MindSpore allows you to retrain pre-trained models to perform other tasks. 
 
@@ -53,7 +53,7 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
    Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/tutorial/en/master/use/runtime.html) is the process of running input data through the model to get output.
 
-   MindSpore provides a series of pre-trained models that can be deployed on mobile device [example](#TODO).
+   MindSpore provides pre-trained model that can be deployed on mobile device [example](https://www.mindspore.cn/lite/examples/en).
    
 ## MindSpore Lite benchmark test result
 Base on MindSpore r0.7, we test a couple of networks on HUAWEI Mate30 (Hisilicon Kirin990) mobile phone, and get the test results below for your reference.
