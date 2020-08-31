@@ -232,6 +232,11 @@ class Tensor(Tensor_):
             raise TypeError("virtual_flag must be bool.")
         self._virtual_flag = value
 
+    @staticmethod
+    def from_numpy(array):
+        """Convert numpy array to Tensor without copy data."""
+        return Tensor(Tensor_.from_numpy(array))
+
     def asnumpy(self):
         """Convert tensor to numpy array."""
         return Tensor_.asnumpy(self)
