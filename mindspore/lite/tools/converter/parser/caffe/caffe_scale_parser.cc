@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_scale_parser.h"
+#include "tools/converter/parser/caffe/caffe_scale_parser.h"
 #include <memory>
 
 const int32_t NCHW_DIM_C = 1;

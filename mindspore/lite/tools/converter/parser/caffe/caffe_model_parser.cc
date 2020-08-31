@@ -91,7 +91,12 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
 STATUS CaffeModelParser::SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op,
                                        TensorCache *tensorCache) {
   for (int i = 0; i < layer.bottom_size(); i++) {
-    int index = tensorCache->FindTensor(layer.bottom(i));
+    int index = -1;
+    if (splitLayer.find(layer.bottom(i)) != splitLayer.end()) {
+      index = tensorCache->FindTensor(splitLayer.find(layer.bottom(i))->second);
+    } else {
+      index = tensorCache->FindTensor(layer.bottom(i));
+    }
     if (index >= 0) {
       op->inputIndex.emplace_back(index);
     } else {
@@ -193,6 +198,10 @@ STATUS CaffeModelParser::ParseLayer(const caffe::NetParameter &proto, const caff
       std::unique_ptr<schema::CNodeT> op = std::make_unique<schema::CNodeT>();
       op->name = layer.name();
 
+      if (layer.type() == "Split") {
+        splitLayer.emplace(layer.name(), layer.bottom(0));
+        continue;
+      }
       auto status = SetOpInputIdx(layer, op.get(), tensorCache);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Set Op " << layer.name() << " Input Index Failed!";

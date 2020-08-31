@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_relu6_parser.h"
+#include "tools/converter/parser/caffe/caffe_relu6_parser.h"
 #include <memory>
 
 namespace mindspore {

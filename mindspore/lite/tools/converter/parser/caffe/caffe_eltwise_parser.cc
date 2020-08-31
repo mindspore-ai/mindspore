@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_eltwise_parser.h"
+#include "tools/converter/parser/caffe/caffe_eltwise_parser.h"
 #include <cmath>
 #include <memory>
 

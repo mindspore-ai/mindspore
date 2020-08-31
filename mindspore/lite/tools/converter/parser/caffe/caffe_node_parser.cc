@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
+#include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include <memory>
 #include "securec/include/securec.h"
 #include "ir/dtype/type_id.h"

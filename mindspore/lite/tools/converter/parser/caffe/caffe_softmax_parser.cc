@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_softmax_parser.h"
+#include "tools/converter/parser/caffe/caffe_softmax_parser.h"
 #include <memory>
 
 static const int32_t CAFFE_SOFTMAX_DEFAULT_AXIS = 1;

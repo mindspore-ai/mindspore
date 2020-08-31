@@ -21,7 +21,8 @@
 #include <vector>
 #include <memory>
 #include <set>
-#include "mindspore/lite/tools/converter/model_parser.h"
+#include <unordered_map>
+#include "tools/converter/model_parser.h"
 #include "tools/converter/parser/caffe/caffe.pb.h"
 #include "tools/common/tensor_util.h"
 
@@ -55,6 +56,8 @@ class CaffeModelParser : public ModelParser {
   STATUS GetModelInput(const caffe::NetParameter &proto, TensorCache *tensorCache);
 
   static const std::set<std::string> skipedLayerType;
+
+  std::unordered_map<std::string, std::string> splitLayer;
 };
 }  // namespace lite
 }  // namespace mindspore

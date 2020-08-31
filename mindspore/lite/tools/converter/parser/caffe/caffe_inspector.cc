@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_inspector.h"
+#include "tools/converter/parser/caffe/caffe_inspector.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

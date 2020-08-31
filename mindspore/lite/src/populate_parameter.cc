@@ -111,6 +111,7 @@
 #include "src/ops/squared_difference.h"
 #include "src/ops/ceil.h"
 #include "src/ops/round.h"
+#include "src/ops/sparse_to_dense.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
 #include "nnacl/fp32/cast.h"
@@ -167,6 +168,7 @@
 #include "nnacl/fp32/embedding_lookup.h"
 #include "nnacl/fp32/elu.h"
 #include "nnacl/leaky_relu_parameter.h"
+#include "nnacl/sparse_to_dense.h"
 
 namespace mindspore::kernel {
 
@@ -678,11 +680,11 @@ OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive) {
       break;
   }
   auto tmp_shape = ((lite::Arithmetic *)primitive)->InShape0();
-  (void)memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
   tmp_shape = ((lite::Arithmetic *)primitive)->InShape1();
-  (void)memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
   tmp_shape = ((lite::Arithmetic *)primitive)->OutputShape();
-  (void)memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
@@ -1015,6 +1017,18 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
   return reinterpret_cast<OpParameter *>(slice_param);
 }
 
+OpParameter *PopulateSparseToDenseParameter(const mindspore::lite::PrimitiveC *primitive) {
+  SparseToDenseParameter *sparse_to_dense_param =
+          reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  if (sparse_to_dense_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SparseToDenseParameter failed.";
+    return nullptr;
+  }
+  memset(sparse_to_dense_param, 0, sizeof(SparseToDenseParameter));
+  sparse_to_dense_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(sparse_to_dense_param);
+}
+
 OpParameter *PopulateBroadcastToParameter(const mindspore::lite::PrimitiveC *primitive) {
   BroadcastToParameter *broadcast_param =
       reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
@@ -1205,28 +1219,26 @@ OpParameter *PopulateSpaceToBatchParameter(const mindspore::lite::PrimitiveC *pr
   }
   memset(space_batch_param, 0, sizeof(SpaceToBatchParameter));
   space_batch_param->op_parameter_.type_ = primitive->Type();
-  space_batch_param->op_parameter_.type_ = primitive->Type();
   auto block_sizes = ((mindspore::lite::SpaceToBatch *)primitive)->BlockSizes();
-  (void)memcpy(space_batch_param->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
+  memcpy(space_batch_param->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
   auto paddings = ((mindspore::lite::SpaceToBatch *)primitive)->Paddings();
-  (void)memcpy(space_batch_param->paddings_, (paddings.data()), paddings.size() * sizeof(int));
+  memcpy(space_batch_param->paddings_, (paddings.data()), paddings.size() * sizeof(int));
   return reinterpret_cast<OpParameter *>(space_batch_param);
 }
 
-OpParameter *PopulateSpaceToBatchParameterND(const mindspore::lite::PrimitiveC *primitivec) {
-  auto *space_batch_param = new (std::nothrow) SpaceToBatchParameter();
-  if (space_batch_param == nullptr) {
+OpParameter *PopulateSpaceToBatchNDParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto *space_batch_param_nd = new (std::nothrow) SpaceToBatchParameter();
+  if (space_batch_param_nd == nullptr) {
     MS_LOG(ERROR) << "new SpaceToBatchParameter failed.";
     return nullptr;
   }
 
-  mindspore::lite::SpaceToBatchND *primitive = (mindspore::lite::SpaceToBatchND *)primitivec;
-  space_batch_param->op_parameter_.type_ = primitive->Type();
-  auto block_sizes = primitive->GetBlockShape();
-  (void)memcpy(space_batch_param->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
-  auto paddings = primitive->GetPaddings();
-  (void)memcpy(space_batch_param->paddings_, (paddings.data()), paddings.size() * sizeof(int));
-  return reinterpret_cast<OpParameter *>(space_batch_param);
+  space_batch_param_nd->op_parameter_.type_ = primitive->Type();
+  auto block_sizes = ((mindspore::lite::SpaceToBatchND *)primitive)->GetBlockShape();
+  memcpy(space_batch_param_nd->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
+  auto paddings = ((mindspore::lite::SpaceToBatchND *)primitive)->GetPaddings();
+  memcpy(space_batch_param_nd->paddings_, (paddings.data()), paddings.size() * sizeof(int));
+  return reinterpret_cast<OpParameter *>(space_batch_param_nd);
 }
 
 OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -1359,13 +1371,13 @@ OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *pr
   auto n_dims = ((lite::StridedSlice *)primitive)->NDims();
   strided_slice_param->num_axes_ = n_dims;
   auto begin = ((lite::StridedSlice *)primitive)->GetBegins();
-  (void)memcpy(strided_slice_param->begins_, (begin.data()), begin.size() * sizeof(int));
+  memcpy(strided_slice_param->begins_, (begin.data()), begin.size() * sizeof(int));
   auto end = ((lite::StridedSlice *)primitive)->GetEnds();
-  (void)memcpy(strided_slice_param->ends_, (end.data()), end.size() * sizeof(int));
+  memcpy(strided_slice_param->ends_, (end.data()), end.size() * sizeof(int));
   auto stride = ((lite::StridedSlice *)primitive)->GetStrides();
-  (void)memcpy(strided_slice_param->strides_, (stride.data()), stride.size() * sizeof(int));
+  memcpy(strided_slice_param->strides_, (stride.data()), stride.size() * sizeof(int));
   auto in_shape = ((lite::StridedSlice *)primitive)->GetInShape();
-  (void)memcpy(strided_slice_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
+  memcpy(strided_slice_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }
 
@@ -1405,9 +1417,9 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
     return nullptr;
   }
   prior_box_param->max_sizes_size = prior_box_attr->GetMaxSizes().size();
-  (void)memcpy(prior_box_param->max_sizes, prior_box_attr->GetMaxSizes().data(),
+  memcpy(prior_box_param->max_sizes, prior_box_attr->GetMaxSizes().data(),
                prior_box_attr->GetMaxSizes().size() * sizeof(int32_t));
-  (void)memcpy(prior_box_param->min_sizes, prior_box_attr->GetMinSizes().data(),
+  memcpy(prior_box_param->min_sizes, prior_box_attr->GetMinSizes().data(),
                prior_box_attr->GetMinSizes().size() * sizeof(int32_t));
 
   if (prior_box_attr->GetAspectRatios().size() > PRIOR_BOX_MAX_NUM) {
@@ -1417,7 +1429,7 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
     return nullptr;
   }
   prior_box_param->aspect_ratios_size = prior_box_attr->GetAspectRatios().size();
-  (void)memcpy(prior_box_param->aspect_ratios, prior_box_attr->GetAspectRatios().data(),
+  memcpy(prior_box_param->aspect_ratios, prior_box_attr->GetAspectRatios().data(),
                prior_box_attr->GetAspectRatios().size() * sizeof(float));
   if (prior_box_attr->GetVariances().size() != PRIOR_BOX_VAR_NUM) {
     MS_LOG(ERROR) << "PriorBox variances size should be " << PRIOR_BOX_VAR_NUM << ", got "
@@ -1425,7 +1437,7 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
     free(prior_box_param);
     return nullptr;
   }
-  (void)memcpy(prior_box_param->variances, prior_box_attr->GetVariances().data(), PRIOR_BOX_VAR_NUM * sizeof(float));
+  memcpy(prior_box_param->variances, prior_box_attr->GetVariances().data(), PRIOR_BOX_VAR_NUM * sizeof(float));
   prior_box_param->flip = prior_box_attr->GetFlip();
   prior_box_param->clip = prior_box_attr->GetClip();
   prior_box_param->offset = prior_box_attr->GetOffset();
@@ -1501,6 +1513,7 @@ OpParameter *PopulateEluParameter(const mindspore::lite::PrimitiveC *primitive) 
 }
 
 PopulateParameterRegistry::PopulateParameterRegistry() {
+  populate_parameter_funcs_[schema::PrimitiveType_SparseToDense] = PopulateSparseToDenseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Activation] = PopulateActivationParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Conv2D] = PopulateConvParameter;
@@ -1578,7 +1591,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_BatchToSpace] = PopulateBatchToSpaceParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToDepth] = PopulateSpaceToDepthParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatch] = PopulateSpaceToBatchParameter;
-  populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatchND] = PopulateSpaceToBatchParameterND;
+  populate_parameter_funcs_[schema::PrimitiveType_SpaceToBatchND] = PopulateSpaceToBatchNDParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Crop] = PopulateCropParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Unsqueeze] = PopulateUnsqueezeParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Flatten] = PopulateFlattenParameter;

@@ -212,6 +212,9 @@ STATUS TfliteSingleInputOpParser::Parse(const std::unique_ptr<tflite::OperatorT>
   } else if (std::strcmp(node_name, "Exp") == 0) {
     MS_LOG(DEBUG) << "parse TfliteExpParser";
     auto attr = std::make_unique<schema::ExpT>();
+    attr->base = -1;  // -1 represent base = e
+    attr->scale = 1;
+    attr->shift = 0;
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new op failed";
       return RET_NULL_PTR;
