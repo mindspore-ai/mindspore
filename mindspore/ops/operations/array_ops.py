@@ -2528,6 +2528,11 @@ class ScatterUpdate(_ScatterOp):
 
     Using given values to update tensor value, along with the input indices.
 
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
 
@@ -2568,6 +2573,11 @@ class ScatterNdUpdate(_ScatterNdOp):
     Update tensor value by using input indices and value.
 
     Using given values to update tensor value, along with the input indices.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
@@ -2610,6 +2620,11 @@ class ScatterMax(_ScatterOp):
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
 
@@ -2645,6 +2660,11 @@ class ScatterMin(_ScatterOp):
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
 
@@ -2673,6 +2693,11 @@ class ScatterAdd(_ScatterOp):
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -2703,6 +2728,11 @@ class ScatterSub(_ScatterOp):
     Using given values to update tensor value through the sub operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
 
@@ -2731,6 +2761,11 @@ class ScatterMul(_ScatterOp):
 
     Using given values to update tensor value through the mul operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -2761,6 +2796,11 @@ class ScatterDiv(_ScatterOp):
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
 
@@ -2789,6 +2829,11 @@ class ScatterNdAdd(_ScatterNdOp):
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -2819,6 +2864,11 @@ class ScatterNdSub(_ScatterNdOp):
     Using given values to update tensor value through the sub operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
 
@@ -2847,6 +2897,11 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Inputs:
         - **input_x** (Parameter) - The target parameter. The data type should be float16, float32 or int32.
