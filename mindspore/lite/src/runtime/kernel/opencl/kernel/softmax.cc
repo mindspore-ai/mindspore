@@ -23,7 +23,6 @@
 #include "src/runtime/kernel/opencl/utils.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/softmax.cl.inc"
-#include "src/runtime/kernel/opencl/cl/softmax1x1.cl.inc"
 #endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -42,8 +41,8 @@ std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
 }
 
 int SoftmaxOpenCLKernel::InitGlobalSize() {
-  const size_t global_x = out_tensors_[0]->Height();
-  const size_t global_y = out_tensors_[0]->Width();
+  const size_t global_x = out_tensors_[0]->shape()[1];
+  const size_t global_y = out_tensors_[0]->shape()[2];
   const size_t global_z = 1;
   global_size_ = {global_x, global_y, global_z};
   return lite::RET_OK;
@@ -74,11 +73,10 @@ int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
     im_dst_x = out_tensors_[0]->Width() * CO4;
     im_dst_y = out_tensors_[0]->Height();
   }
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -90,27 +88,28 @@ int SoftmaxOpenCLKernel::Init() {
   std::string program_name = "SoftMax";
   std::string source = softmax_source;
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
+  enable_fp16_ = runtime_->GetFp16Enable();
   // framework not set this param yet! just use default.
-  if (parameter_->axis_ == -1) {
-    parameter_->axis_ = 1;
-  }
-  if (in_tensors_[0]->shape().size() == 4 && parameter_->axis_ == 3) {
+  if (in_tensors_[0]->shape().size() == 4) {
     // support 4d tensor
     onexone_flag_ = false;
-  } else if (in_tensors_[0]->shape().size() == 2 && parameter_->axis_ == 1) {
+  } else if (in_tensors_[0]->shape().size() == 2) {
     // support 2d tensor
     kernel_name += "1x1";
     program_name += "1x1";
-    source = softmax1x1_source;
     onexone_flag_ = true;
   } else {
-    MS_LOG(EXCEPTION) << "Init `Softmax` kernel failed: Unsupported axis: " << parameter_->axis_;
+    MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported shape size: " << in_tensors_[0]->shape().size();
+    return RET_ERROR;
   }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   if (!is_image_out_) {
     out_mem_type_ = OpenCLMemType::BUF;
+  } else {
+    MS_LOG(ERROR) << "image2d output not support yet.";
+    return RET_ERROR;
   }
   if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";
@@ -124,12 +123,23 @@ int SoftmaxOpenCLKernel::Init() {
   runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  if (!is_image_out_) {
-    out_ori_format_ = schema::Format_NC;
-    out_tensors_[0]->SetFormat(schema::Format_NC);
+  if (in_tensors_[0]->shape().size() == 2) {
+    in_tensors_[0]->SetFormat(schema::Format_NC4);
+  } else {
+    in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  }
+
+  if (is_image_out_) {
+    if (out_tensors_[0]->shape().size() == 2) {
+      out_ori_format_ = schema::Format_NC;
+      out_tensors_[0]->SetFormat(schema::Format_NC4);
+    } else {
+      out_ori_format_ = schema::Format_NHWC;
+      out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+    }
+  } else {
+    out_tensors_[0]->SetFormat(out_ori_format_);
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return lite::RET_OK;
@@ -147,17 +157,25 @@ int SoftmaxOpenCLKernel::Run() {
     cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
 
     runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-    runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+    if (is_image_out_) {
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+    } else {
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data(), lite::opencl::MemType::BUF);
+    }
     runtime_->SetKernelArg(kernel_, arg_idx++, mask);
     runtime_->SetKernelArg(kernel_, arg_idx++, slices);
     runtime_->SetKernelArg(kernel_, arg_idx, slices_x32);
     SetWorkGroupSize1x1();
   } else {
-    int slices = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    cl_int4 input_shape = {in_tensors_[0]->Height(), in_tensors_[0]->Width(), in_tensors_[0]->Channel(), slices};
+    int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
+    cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
 
     runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
-    runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+    if (is_image_out_) {
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+    } else {
+      runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data(), lite::opencl::MemType::BUF);
+    }
     runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
     SetWorkGroupSize();
   }
@@ -193,4 +211,5 @@ kernel::LiteKernel *OpenCLSoftMaxKernelCreator(const std::vector<lite::tensor::T
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SoftMax, OpenCLSoftMaxKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SoftMax, OpenCLSoftMaxKernelCreator)
 }  // namespace mindspore::kernel

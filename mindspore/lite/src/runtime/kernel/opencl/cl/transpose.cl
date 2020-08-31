@@ -1,4 +1,6 @@
+#ifdef cl_khr_fp16
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#endif
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void transpose_IMG(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 HW, int2 C) {
   int X = get_global_id(0);
@@ -41,7 +43,7 @@ __kernel void transpose_IMG(__read_only image2d_t src_data, __write_only image2d
   WRITE_IMAGE(dst_data, (int2)(X, 4 * Y + 3), result[3]);
 }
 
-__kernel void transpose_BUF(__read_only image2d_t src_data, global FLT4 *dst_data, int2 HW, int2 C) {
+__kernel void transpose_BUF(__read_only image2d_t src_data, global FLT4 *dst_data, int2 HW, int2 C, int W) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   if (X >= HW.y || Y >= C.y) {
@@ -52,10 +54,10 @@ __kernel void transpose_BUF(__read_only image2d_t src_data, global FLT4 *dst_dat
   result[1] = (FLT4)(0.0f);
   result[2] = (FLT4)(0.0f);
   result[3] = (FLT4)(0.0f);
-  FLT4 x0 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X));
-  FLT4 x1 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X + 1));
-  FLT4 x2 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X + 2));
-  FLT4 x3 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X + 3));
+  FLT4 x0 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X) % W * C.y + Y, (4 * X) / W));
+  FLT4 x1 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 1) % W * C.y + Y, (4 * X + 1) / W));
+  FLT4 x2 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 2) % W * C.y + Y, (4 * X + 2) / W));
+  FLT4 x3 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 3) % W * C.y + Y, (4 * X + 3) / W));
   result[0].x = x0.x;
   result[0].y = x1.x;
   result[0].z = x2.x;

@@ -68,10 +68,16 @@ int ReshapeOpenCLKernel::ReSize() { return RET_OK; }
 
 int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  std::vector<int> shapex = in_tensors_[0]->shape();
-  int h = shapex[1];
-  int w = shapex[2];
-  int c = shapex[3];
+  std::vector<int> shapex = out_tensors_[0]->shape();
+  int h, w, c;
+  if (shapex.size() == 2) {
+    h = w = 1;
+    c = shapex[1];
+  } else {
+    h = shapex[1];
+    w = shapex[2];
+    c = shapex[3];
+  }
   im_dst_x = w * UP_DIV(c, C4NUM);
   im_dst_y = h;
   size_t img_dtype = CL_FLOAT;
@@ -91,13 +97,23 @@ int ReshapeOpenCLKernel::Run() {
   int w = shapex[2];
   int c = shapex[3];
   int c4 = UP_DIV(c, C4NUM);
+  int oh, ow;
+  if (out_tensors_[0]->shape().size() == 2) {
+    oh = ow = 1;
+  } else {
+    oh = out_tensors_[0]->shape()[1];
+    ow = out_tensors_[0]->shape()[2];
+  }
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   std::vector<size_t> local = {};
-  std::vector<size_t> global = {(size_t)h, (size_t)w, (size_t)c4};
+  std::vector<size_t> global = {(size_t)oh, (size_t)ow, (size_t)c4};
   cl_int4 size = {h, w, c4, 1};
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 2, size);
+  cl_int4 size_out = {oh, ow, c4, 1};
+  int arg_idx = 0;
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, size);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, size_out);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }

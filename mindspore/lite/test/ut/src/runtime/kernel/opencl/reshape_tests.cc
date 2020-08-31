@@ -86,14 +86,14 @@ void RunTestCaseReshape(const std::vector<int> &shape, void *input_data, void *o
   inputs[0]->SetData(nullptr);
   outputs[0]->SetData(nullptr);
 
-  MS_LOG(INFO) << "Test ReshapeFp32 passed";
+  MS_LOG(INFO) << "Test Reshape passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
 TEST_F(TestReshapeOpenCL, ReshapeFp32) {
   int c = 7;
   std::vector<int> shape = {c};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
   std::vector<float> output_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
 
   RunTestCaseReshape(shape, input_data.data(), output_data.data(), false);
@@ -102,7 +102,7 @@ TEST_F(TestReshapeOpenCL, ReshapeFp32) {
 TEST_F(TestReshapeOpenCL, ReshapeFp16) {
   int c = 7;
   std::vector<int> shape = {c};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
   std::vector<float16_t> output_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
 
   RunTestCaseReshape(shape, input_data.data(), output_data.data(), true);
