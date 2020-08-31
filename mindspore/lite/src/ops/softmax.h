@@ -31,6 +31,7 @@ class SoftMax : public PrimitiveC {
   MS_DECLARE_PARENT(SoftMax, PrimitiveC);
   SoftMax() = default;
   explicit SoftMax(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetAxis(int axis);
 
 #else
