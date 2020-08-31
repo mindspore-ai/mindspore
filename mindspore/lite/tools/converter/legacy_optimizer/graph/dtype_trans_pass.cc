@@ -104,7 +104,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
   if (outputDataDType == TypeId::kNumberTypeInt8) {
     return RET_OK;
   }
-  MS_ASSERT(inputDataDType == TypeId::kNumberTypeFloat);
+  MS_ASSERT(outputDataDType == TypeId::kNumberTypeFloat);
   auto &graphOutIdxes = graph->outputIndex;
   for (auto graphOutIdx : graphOutIdxes) {
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
@@ -115,11 +115,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
         if (node->outputIndex.at(outputIndexIdx) == graphOutIdx) {
           // insert transNode
           STATUS status = RET_OK;
-          if (inputDataDType == TypeId::kNumberTypeFloat) {
-            iter = InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, kInt8ToFP32, &status);
-          } else {
-            iter = InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, kInt8ToUInt8, &status);
-          }
+          iter = InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, kInt8ToFP32, &status);
           if (status != RET_OK) {
             MS_LOG(ERROR) << "InsertDTypeTransNode after " << nodeName.c_str() << " failed";
             return status;
