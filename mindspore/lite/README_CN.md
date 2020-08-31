@@ -64,3 +64,14 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
    主要完成模型推理工作，即加载模型，完成模型相关的所有计算。[推理](https://www.mindspore.cn/lite/tutorial/zh-CN/master/use/runtime.html)是通过模型运行输入数据，获取预测的过程。
 
    MindSpore提供了一系列预训练模型部署在智能终端的[样例](#TODO)。
+   
+## MindSpore Lite性能参考数据
+我们在HUAWEI Mate30（Hisilicon Kirin990）手机上，基于MindSpore r0.7，测试了一组端侧常见网络的性能数据，供您参考：
+   
+   | 网络                | 线程数 | 平均推理时间(毫秒) |
+   | ------------------- | ------ | ------------------ |
+   | basic_squeezenet    | 4      | 9.10               |
+   | inception_v3        | 4      | 69.361             |
+   | mobilenet_v1_10_224 | 4      | 7.137              |
+   | mobilenet_v2_10_224 | 4      | 5.569              |
+   | resnet_v2_50        | 4      | 48.691             |
