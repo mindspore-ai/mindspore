@@ -27,6 +27,11 @@ class Assign(Primitive):
     """
     Assign `Parameter` with a value.
 
+    Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Tensor) - The value to assign.
