@@ -53,7 +53,9 @@ STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<
   auto buffer_idx = tflite_tensor->buffer;
   if (!tflite_model_buffer[buffer_idx]->data.empty()) {
     tensor->data.resize(data_size);
-    if (memcpy_s(tensor->data.data(), data_size, tflite_model_buffer[buffer_idx]->data.data(), data_size)) {
+    if (memcpy_s(tensor->data.data(), tensor->data.size(),
+                 tflite_model_buffer[buffer_idx]->data.data(),
+                 tflite_model_buffer[buffer_idx]->data.size())) {
       MS_LOG(ERROR) << "memcpy tensor data failed";
       return RET_ERROR;
     }
