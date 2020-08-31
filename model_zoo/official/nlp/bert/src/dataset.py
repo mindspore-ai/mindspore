@@ -112,9 +112,6 @@ def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, sche
     else:
         ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
                                 columns_list=["input_ids", "input_mask", "segment_ids", "unique_ids"])
-        ds = ds.map(input_columns="input_ids", operations=type_cast_op)
-        ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-        ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
     ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
     ds = ds.map(input_columns="input_mask", operations=type_cast_op)
     ds = ds.map(input_columns="input_ids", operations=type_cast_op)
