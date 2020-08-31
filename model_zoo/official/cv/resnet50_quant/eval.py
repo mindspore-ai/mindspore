@@ -21,7 +21,8 @@ from src.config import quant_set, config_quant, config_noquant
 from src.dataset import create_dataset
 from src.crossentropy import CrossEntropy
 from src.utils import _load_param_into_net
-from models.resnet_quant import resnet50_quant
+#from models.resnet_quant import resnet50_quant #auto construct quantative network of resnet50
+from models.resnet_quant_manual import resnet50_quant #manually construct quantative network of resnet50
 
 from mindspore import context
 from mindspore.train.model import Model
