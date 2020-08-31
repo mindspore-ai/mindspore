@@ -60,6 +60,12 @@ int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
     return RET_ERROR;
   }
 
+  std::vector<int32_t> axes;
+  if (attr->axes() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->axes()->size()); i++) {
+      axes.push_back(attr->axes()->data()[i]);
+    }
+  }
   std::vector<int32_t> begin;
   if (attr->begin() != nullptr) {
     for (int i = 0; i < static_cast<int>(attr->begin()->size()); i++) {
@@ -73,7 +79,7 @@ int Slice::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
     }
   }
 
-  auto val_offset = schema::CreateSliceDirect(*fbb, attr->format(), &begin, &size);
+  auto val_offset = schema::CreateSliceDirect(*fbb, attr->format(), &axes, &begin, &size);
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Slice, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
