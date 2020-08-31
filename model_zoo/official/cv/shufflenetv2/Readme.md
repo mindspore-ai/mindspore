@@ -55,7 +55,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
   +-- Readme.md     # descriptions about ShuffleNetV2
   +-- scripts
   ¦   +--run_distribute_train_for_gpu.sh   # shell script for distributed training
-  ¦   +--run_eval_for_multi_gpu.sh         # shell script for evaluation
+  ¦   +--run_eval_for_gpu.sh         # shell script for evaluation
   ¦   +--run_standalone_train_for_gpu.sh   # shell script for standalone training
   +-- src
   ¦   +--config.py      # parameter configuration
@@ -75,23 +75,23 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ditributed training on GPU: sh run_distribute_train_for_gpu.sh [DATA_DIR]
-- Standalone training on GPU: sh run_standalone_train_for_gpu.sh [DEVICE_ID] [DATA_DIR]
+- Ditributed training on GPU: sh run_standalone_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
+- Standalone training on GPU: sh run_standalone_train_for_gpu.sh [DATASET_PATH]
 
 ### Launch
 
 ```
 # training example
   python:
-      GPU: mpirun --allow-run-as-root -n 8 python train.py --is_distributed --platform 'GPU' --dataset_path '~/imagenet/train/' > train.log 2>&1 &
+      GPU: mpirun --allow-run-as-root -n 8 python train.py --is_distributed=True --platform='GPU' --dataset_path='~/imagenet/train/' > train.log 2>&1 &
 
   shell:
-      GPU: sh run_distribute_train_for_gpu.sh ~/imagenet/train/
+      GPU: cd scripts & sh run_distribute_train_for_gpu.sh 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train/train.log`.
+Training result will be stored in the example path. Checkpoints will be stored at `./checkpoint` by default, and training log will be redirected to `./train/train.log`.
 
 ## [Eval process](#contents)
 
@@ -99,21 +99,21 @@ Training result will be stored in the example path. Checkpoints will be stored a
 
 You can start evaluation using python or shell scripts. The usage of shell scripts as follows:
 
-- GPU: sh run_eval_for_multi_gpu.sh [DEVICE_ID] [EPOCH]
+- GPU: sh run_eval_for_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
 ``` 
 # infer example
   python:
-      GPU: CUDA_VISIBLE_DEVICES=0 python eval.py --platform 'GPU' --dataset_path '~/imagenet/val/' --epoch 250 > eval.log 2>&1 &
+      GPU: CUDA_VISIBLE_DEVICES=0 python eval.py --platform='GPU' --dataset_path='~/imagenet/val/' > eval.log 2>&1 &
 
   shell:
-      GPU: sh run_eval_for_multi_gpu.sh 0 250
+      GPU: cd scripts & sh run_eval_for_gpu.sh '~/imagenet/val/' 'checkpoint_file' 
 ```
 
 > checkpoint can be produced in training process.
 
 ### Result
 
-Inference result will be stored in the example path, you can find result in `val.log`.
+Inference result will be stored in the example path, you can find result in `eval.log`.

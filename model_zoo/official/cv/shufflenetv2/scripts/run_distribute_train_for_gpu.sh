@@ -13,5 +13,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-DATA_DIR=$1
-mpirun --allow-run-as-root -n 8 python ./train.py --is_distributed --platform 'GPU' --dataset_path $DATA_DIR > train.log 2>&1 &
+if [ $# -lt 3 ]
+then
+    echo "Usage: \
+          sh run_distribute_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] \
+          "
+exit 1
+fi
+
+if [ $1 -lt 1 ] && [ $1 -gt 8 ]
+then
+    echo "error: DEVICE_NUM=$1 is not in (1-8)"
+exit 1
+fi
+
+# check dataset file
+if [ ! -d $3 ]
+then
+    echo "error: DATASET_PATH=$3 is not a directory"    
+exit 1
+fi
+
+export DEVICE_NUM=$1
+export RANK_SIZE=$1
+
+BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+if [ -d "../train" ];
+then
+    rm -rf ../train
+fi
+mkdir ../train
+cd ../train || exit
+
+export CUDA_VISIBLE_DEVICES="$2"
+
+if [ $1 -gt 1 ]
+then
+    mpirun -n $1 --allow-run-as-root \
+    python ${BASEPATH}/../train.py --platform='GPU' --is_distributed=True --dataset_path=$3 > train.log 2>&1 &
+else
+    python ${BASEPATH}/../train.py --platform='GPU' --dataset_path=$3 > train.log 2>&1 &
+fi

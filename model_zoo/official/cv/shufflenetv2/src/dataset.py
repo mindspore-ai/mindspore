@@ -75,7 +75,5 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
     ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=cfg.work_nums)
     # apply batch operations
     ds = ds.batch(cfg.batch_size, drop_remainder=True)
-    # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
 
     return ds

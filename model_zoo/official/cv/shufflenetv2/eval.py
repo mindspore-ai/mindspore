@@ -31,7 +31,6 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint', type=str, default='', help='checkpoint of ShuffleNetV2 (Default: None)')
     parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
     parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU'), help='run platform')
-    parser.add_argument('--epoch', type=str, default='')
     args_opt = parser.parse_args()
 
     if args_opt.platform == 'Ascend':
@@ -43,7 +42,7 @@ if __name__ == '__main__':
     ckpt = load_checkpoint(args_opt.checkpoint)
     load_param_into_net(net, ckpt)
     net.set_train(False)
-    dataset = create_dataset(args_opt.dataset_path, cfg, False)
+    dataset = create_dataset(args_opt.dataset_path, False, 0, 1)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False,
                                             smooth_factor=0.1, num_classes=cfg.num_classes)
     eval_metrics = {'Loss': nn.Loss(),
