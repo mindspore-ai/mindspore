@@ -51,6 +51,12 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
         int in_w_index = out_w_index * stride_w - pad_w;
         int in_h_index = out_h_index * stride_h - pad_h;
         int out_plane_offset = out_batch_offset + index * channel;
+
+        int real_win_h_start = MSMAX(0, -in_h_index);
+        int real_win_h_end = MSMIN(win_h, in_h - in_h_index);
+        int resl_win_w_start = MSMAX(0, -in_w_index);
+        int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
+
         for (int j = 0; j < c8; j++) {
           int in_channel_offset = in_batch_offset + j * C8NUM;
           int out_channel_offset = out_plane_offset + j * C8NUM;
@@ -60,22 +66,17 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
           float16_t tmp_avg[8]{0};
 #endif
           int real_count = 0;
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
-              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
-                  (in_w_index + w) >= in_w) {
-                continue;
-              } else {
-                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+          for (int h = real_win_h_start; h < real_win_h_end; h++) {
+            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+              int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
 #ifdef ENABLE_NEON
-                tmp_avg = vaddq_f16(tmp_avg, vld1q_f16(input_ptr + in_offset));
+              tmp_avg = vaddq_f16(tmp_avg, vld1q_f16(input_ptr + in_offset));
 #else
-                for (int t = 0; t < 8; t++) {
-                  tmp_avg[t] += *(input_ptr + in_offset + t);
-                }
-#endif
-                ++real_count;
+              for (int t = 0; t < 8; t++) {
+                tmp_avg[t] += *(input_ptr + in_offset + t);
               }
+#endif
+              ++real_count;
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
@@ -97,22 +98,17 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
           float16_t tmp_avg[4]{0};
 #endif
           int real_count = 0;
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
-              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
-                  (in_w_index + w) >= in_w) {
-                continue;
-              } else {
-                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+          for (int h = real_win_h_start; h < real_win_h_end; h++) {
+            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+              int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
 #ifdef ENABLE_NEON
-                tmp_avg = vadd_f16(tmp_avg, vld1_f16(input_ptr + in_offset));
+              tmp_avg = vadd_f16(tmp_avg, vld1_f16(input_ptr + in_offset));
 #else
-                for (int j = 0; j < C4NUM; ++j) {
-                  tmp_avg[j] += *(input_ptr + in_offset);
-                }
-#endif
-                ++real_count;
+              for (int j = 0; j < C4NUM; ++j) {
+                tmp_avg[j] += *(input_ptr + in_offset);
               }
+#endif
+              ++real_count;
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
@@ -130,16 +126,11 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
           int out_channel_offset = out_plane_offset + k;
           float16_t tmp_avg = 0;
           int real_count = 0;
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
-              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
-                  (in_w_index + w) >= in_w) {
-                continue;
-              } else {
-                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
-                tmp_avg += *(input_ptr + in_offset);
-                ++real_count;
-              }
+          for (int h = real_win_h_start; h < real_win_h_end; h++) {
+            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+              int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+              tmp_avg += *(input_ptr + in_offset);
+              ++real_count;
             }  // win_w loop
           }    // win_h loop
           *(output_ptr + out_channel_offset) = tmp_avg / (float16_t)real_count;
@@ -148,7 +139,6 @@ void AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
     }      // out_plane loop
   }        // out_batch loop
 }
-
 void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
@@ -183,6 +173,12 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
         int in_w_index = out_w_index * stride_w - pad_w;
         int in_h_index = out_h_index * stride_h - pad_h;
         int out_plane_offset = out_batch_offset + index * channel;
+
+        int real_win_h_start = MSMAX(0, -in_h_index);
+        int real_win_h_end = MSMIN(win_h, in_h - in_h_index);
+        int resl_win_w_start = MSMAX(0, -in_w_index);
+        int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
+
         for (int j = 0; j < c8; j++) {
           int in_channel_offset = in_batch_offset + j * C8NUM;
           int out_channel_offset = out_plane_offset + j * C8NUM;
@@ -191,21 +187,16 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
 #else
           float16_t tmp_max[8]{-FLT_MAX};
 #endif
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
-              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
-                  (in_w_index + w) >= in_w) {
-                continue;
-              } else {
-                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+          for (int h = real_win_h_start; h < real_win_h_end; h++) {
+            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+              int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
 #ifdef ENABLE_NEON
-                tmp_max = vmaxq_f16(tmp_max, vld1q_f16(input_ptr + in_offset));
+              tmp_max = vmaxq_f16(tmp_max, vld1q_f16(input_ptr + in_offset));
 #else
-                for (int k = 0; k < C8NUM; k++) {
-                  tmp_max[k] = fmax(tmp_max[k], *(input_ptr + in_offset + k));
-                }
-#endif
+              for (int k = 0; k < C8NUM; k++) {
+                tmp_max[k] = fmax(tmp_max[k], *(input_ptr + in_offset + k));
               }
+#endif
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
@@ -226,21 +217,16 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
 #else
           float16_t tmp_max[4]{-FLT_MAX};
 #endif
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
-              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
-                  (in_w_index + w) >= in_w) {
-                continue;
-              } else {
-                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+          for (int h = real_win_h_start; h < real_win_h_end; h++) {
+            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+              int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
 #ifdef ENABLE_NEON
-                tmp_max = vmax_f16(tmp_max, vld1_f16(input_ptr + in_offset));
+              tmp_max = vmax_f16(tmp_max, vld1_f16(input_ptr + in_offset));
 #else
-                for (int k = 0; k < C4NUM; k++) {
-                  tmp_max[k] = fmax(tmp_max[k], *(input_ptr + in_offset + k));
-                }
-#endif
+              for (int k = 0; k < C4NUM; k++) {
+                tmp_max[k] = fmax(tmp_max[k], *(input_ptr + in_offset + k));
               }
+#endif
             }  // win_w loop
           }    // win_h loop
 #ifdef ENABLE_NEON
@@ -257,15 +243,10 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, PoolingPa
           int in_channel_offset = in_batch_offset + k;
           int out_channel_offset = out_plane_offset + k;
           float16_t tmp_max = -FLT_MAX;
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
-              if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
-                  (in_w_index + w) >= in_w) {
-                continue;
-              } else {
-                int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
-                tmp_max = fmax(tmp_max, *(input_ptr + in_offset));
-              }
+          for (int h = real_win_h_start; h < real_win_h_end; h++) {
+            for (int w = resl_win_w_start; w < real_win_w_end; w++) {
+              int in_offset = in_channel_offset + ((in_h_index + h) * in_w + in_w_index + w) * channel;
+              tmp_max = fmax(tmp_max, *(input_ptr + in_offset));
             }  // win_w loop
           }    // win_h loop
           *(output_ptr + out_channel_offset) = tmp_max;

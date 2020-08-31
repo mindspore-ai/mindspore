@@ -31,12 +31,6 @@ void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bi
                         size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
-void MatrixAdd(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
-               size_t row, size_t col);
-void MatrixSub(const float *a_ptr, const float *b_ptr, float *dst, size_t a_stride, size_t b_stride, size_t c_stride,
-               size_t row, size_t col);
-void MatrixMultiAdd(float *c11, float *c12, float *c21, float *c22, float *x_ptr, size_t row, size_t col,
-                    size_t c_stride, size_t x_stride);
 float ShortToFloat32(uint16_t srcValue);
 
 uint16_t Float32ToShort(float srcValue);
