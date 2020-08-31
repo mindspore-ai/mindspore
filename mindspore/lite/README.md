@@ -6,7 +6,7 @@ MindSpore lite is a high-performance, lightweight open source reasoning framewor
 
 <img src="../../docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
 
-For more details please check out our [MindSpore Lite Architecture Guide](https://www.mindspore.cn/lite/docs/en/master/architecture.html).
+For more details please check out our [MindSpore Lite Architecture Guide](https://www.mindspore.cn/lite/docs/en/r0.7/architecture.html).
 
 ### MindSpore Lite features
 
@@ -35,13 +35,13 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
    The MindSpore team provides a series of pre-training models used for image classification, object detection. You can use these pre-trained models in your application.
 
-   The pre-trained models provided by MindSpore include: [Image Classification](https://download.mindspore.cn/model_zoo/official/lite/) and [Object Detection](https://download.mindspore.cn/model_zoo/official/lite/). More models will be provided in the feature.
+   The pre-trained model provided by MindSpore: [Image Classification](https://download.mindspore.cn/model_zoo/official/lite/). More models will be provided in the feature.
 
    MindSpore allows you to retrain pre-trained models to perform other tasks. For example: using a pre-trained image classification model, it can be retrained to recognize new image types.
 
 2. Model converter and optimization
 
-   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/lite/tutorial/en/master/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
+   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/lite/tutorial/en/r0.7/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
 
    MindSpore also provides a tool to convert models running on IoT devices .
 
@@ -51,17 +51,17 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
 4. Inference 
 
-   Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/tutorial/en/master/use/runtime.html) is the process of running input data through the model to get output.
+   Load the model and perform inference. [Inference](https://www.mindspore.cn/lite/tutorial/en/r0.7/use/runtime.html) is the process of running input data through the model to get output.
 
-   MindSpore provides a series of pre-trained models that can be deployed on mobile device [example](#TODO).
+   MindSpore provides pre-trained model that can be deployed on mobile device [example](https://www.mindspore.cn/lite/examples/en).
    
 ## MindSpore Lite benchmark test result
 Base on MindSpore r0.7, we test a couple of networks on HUAWEI Mate30 (Hisilicon Kirin990) mobile phone, and get the test results below for your reference.
-   
-   | NetWork             | Thread Number | Average Run Time(ms) |
-   | ------------------- | ------------- | -------------------- |
-   | basic_squeezenet    | 4             | 9.10                 |
-   | inception_v3        | 4             | 69.361               |
-   | mobilenet_v1_10_224 | 4             | 7.137                |
-   | mobilenet_v2_10_224 | 4             | 5.569                |
-   | resnet_v2_50        | 4             | 48.691               |
+
+| NetWork             | Thread Number | Average Run Time(ms) |
+| ------------------- | ------------- | -------------------- |
+| basic_squeezenet    | 4             | 9.10                 |
+| inception_v3        | 4             | 69.361               |
+| mobilenet_v1_10_224 | 4             | 7.137                |
+| mobilenet_v2_10_224 | 4             | 5.569                |
+| resnet_v2_50        | 4             | 48.691               |
