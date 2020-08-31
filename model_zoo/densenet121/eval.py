@@ -190,21 +190,21 @@ def test(cloud_args=None):
         args.logger.info('before results={}'.format(results))
         if args.is_distributed:
             model_md5 = model.replace('/', '')
-            tmp_dir = '/cache'
+            tmp_dir = '../cache'
             if not os.path.exists(tmp_dir):
                 os.mkdir(tmp_dir)
-            top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(args.rank, model_md5)
-            top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(args.rank, model_md5)
-            img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(args.rank, model_md5)
+            top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, args.rank, model_md5)
+            top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, args.rank, model_md5)
+            img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, args.rank, model_md5)
             np.save(top1_correct_npy, top1_correct)
             np.save(top5_correct_npy, top5_correct)
             np.save(img_tot_npy, img_tot)
             while True:
                 rank_ok = True
                 for other_rank in range(args.group_size):
-                    top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
-                    top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
-                    img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
+                    top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+                    top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+                    img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
                     if not os.path.exists(top1_correct_npy) or not os.path.exists(top5_correct_npy) \
                        or not os.path.exists(img_tot_npy):
                         rank_ok = False
@@ -215,9 +215,9 @@ def test(cloud_args=None):
             top5_correct_all = 0
             img_tot_all = 0
             for other_rank in range(args.group_size):
-                top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
-                top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
-                img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
+                top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+                top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+                img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
                 top1_correct_all += np.load(top1_correct_npy)
                 top5_correct_all += np.load(top5_correct_npy)
                 img_tot_all += np.load(img_tot_npy)

@@ -168,7 +168,7 @@ You can modify the training behaviour through the various flags in the `train.py
 - running on Ascend
 
   ```
-  python train.py --data_dir /PATH/TO/DATASET --is_distributed 0> train.log 2>&1 & 
+  python train.py --data_dir /PATH/TO/DATASET --is_distributed 0 > train.log 2>&1 & 
   ```
   
   The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`. The loss value will be achieved as follows:
