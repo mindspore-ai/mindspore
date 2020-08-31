@@ -52,6 +52,7 @@ class AscendSession : public SessionBasic {
   }
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) override;
+  GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) override;
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildGraph(GraphId) override;
   void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,

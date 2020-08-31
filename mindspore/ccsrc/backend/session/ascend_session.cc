@@ -1061,5 +1061,10 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
     }
   }
 }
+
+GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph, const vector<tensor::TensorPtr> &inputs) {
+  RunInfer(func_graph, inputs);
+  return CompileGraph(func_graph);
+}
 }  // namespace session
 }  // namespace mindspore

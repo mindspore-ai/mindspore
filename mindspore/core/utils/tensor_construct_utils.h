@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
-#define MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
-#include <string>
+#ifndef MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_
+#define MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_
 #include <vector>
-#include "ir/primitive.h"
-#include "abstract/primitive_infer_map.h"
-#include "ir/value.h"
+#include "ir/tensor.h"
 namespace mindspore {
-class PrimitiveC : public Primitive {
+class TensorConstructUtils {
  public:
-  explicit PrimitiveC(const std::string &name) : Primitive(name) {}
-  MS_DECLARE_PARENT(PrimitiveC, Primitive);
-  ~PrimitiveC() = default;
-  AbstractBasePtr Infer(const AbstractBasePtrList &abstract_list);
-
- protected:
-  void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name);
+  static tensor::TensorPtr CreateZerosTensor(TypeId type, const std::vector<int> &shape);
+  static tensor::TensorPtr CreateOnesTensor(TypeId type, const std::vector<int> &shape);
+  static tensor::TensorPtr CreateTensor(TypeId type, const std::vector<int> &shape, void *data);
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#endif  // MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H
-#define MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H
+#ifndef MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_
+#define MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_
 #include <vector>
 #include <string>
 #include <map>
@@ -67,4 +67,4 @@ class CheckAndConvertUtils {
   static bool IsEqualVector(const std::vector<int> &vec_1, const std::vector<int> &vec_2);
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H
+#endif  // MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_

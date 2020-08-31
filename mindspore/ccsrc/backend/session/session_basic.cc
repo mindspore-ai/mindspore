@@ -17,6 +17,7 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+#include "c_ops/primitive_c.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/manager.h"
 #include "ir/param_info.h"
@@ -1038,6 +1039,45 @@ void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
 }
 
 void SessionBasic::Reorder(std::vector<CNodePtr> *node_list) { AnfAlgo::ReorderExecList(NOT_NULL(node_list)); }
+
+void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) {
+  auto node_list = TopoSort(func_graph->get_return());
+  size_t tensor_index = 0;
+  for (const auto &node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<CNode>()) {
+      AbstractBasePtrList input_abstracts;
+      for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(node); ++index) {
+        auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), index);
+        MS_EXCEPTION_IF_NULL(input_node);
+        auto abstract = input_node->abstract();
+        MS_EXCEPTION_IF_NULL(abstract);
+        input_abstracts.emplace_back(abstract);
+      }
+      auto prim = AnfAlgo::GetCNodePrimitive(node);
+      if (prim->isa<PrimitiveC>()) {
+        auto prim_c = prim->cast<std::shared_ptr<PrimitiveC>>();
+        MS_EXCEPTION_IF_NULL(prim_c);
+        auto abstract = prim_c->Infer(input_abstracts);
+        node->set_abstract(abstract);
+      } else {
+        node->set_abstract(
+          std::make_shared<tensor::Tensor>(kNumberTypeFloat32, std::vector<int>{32, 64, 218, 218})->ToAbstract());
+      }
+    } else if (node->isa<Parameter>()) {
+      if (tensor_index > inputs.size()) {
+        MS_EXCEPTION(IndexError) << "Index " << tensor_index << "is out of " << inputs.size() << "tensor's size";
+      }
+      node->set_abstract(inputs[tensor_index++]->ToAbstract());
+    } else {
+      auto value_node = node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      value_node->set_abstract(value->ToAbstract());
+    }
+  }
+}
 
 void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";

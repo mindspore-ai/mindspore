@@ -37,10 +37,10 @@ constexpr auto kPadList = "pad_list";
 constexpr auto kConv2DName = "Conv2D";
 abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto conv_prim = std::dynamic_pointer_cast<Conv2d>(primitive);
+  auto conv_prim = primitive->cast<PrimConv2dPtr>();
   MS_EXCEPTION_IF_NULL(conv_prim);
   auto prim_name = conv_prim->name();
-  CheckAndConvertUtils::CheckInRange("Conv2d Infer", input_args.size(), kIncludeLeft, {2, 3}, prim_name);
+  CheckAndConvertUtils::CheckInRange("Conv2d Infer", input_args.size(), kIncludeBoth, {2, 3}, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->GetShapeTrack(), prim_name);
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", input_args[1]->GetShapeTrack(), prim_name);
 
@@ -99,7 +99,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
 }
 
 TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInRange("", input_args.size(), kIncludeLeft, {2, 3}, prim->name());
+  CheckAndConvertUtils::CheckInRange("", input_args.size(), kIncludeBoth, {2, 3}, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
