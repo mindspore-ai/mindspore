@@ -46,16 +46,17 @@ void LoadActivationData(void *dst, size_t dst_size, const std::string &file_path
   }
 }
 
+template <typename T>
 void CompareRes(lite::tensor::Tensor *output_tensor, const std::string &standard_answer_file) {
-  auto *output_data = reinterpret_cast<float *>(output_tensor->Data());
+  auto *output_data = reinterpret_cast<T *>(output_tensor->Data());
   size_t output_size = output_tensor->Size();
-  auto expect_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
+  auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
   constexpr float atol = 0.0002;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
     if (std::fabs(output_data[i] - expect_data[i]) > atol) {
-      printf("error at idx[%d] expect=%.3f output=%.3f\n", i, expect_data[i], output_data[i]);
-      printf("error at idx[%d] expect=%.3f output=%.3f\n", i, expect_data[i], output_data[i]);
-      printf("error at idx[%d] expect=%.3f output=%.3f\n\n\n", i, expect_data[i], output_data[i]);
+      printf("error at idx[%d] expect=%f output=%f\n", i, expect_data[i], output_data[i]);
+      printf("error at idx[%d] expect=%f output=%f\n", i, expect_data[i], output_data[i]);
+      printf("error at idx[%d] expect=%f output=%f\n\n\n", i, expect_data[i], output_data[i]);
       return;
     }
   }
@@ -64,8 +65,10 @@ void CompareRes(lite::tensor::Tensor *output_tensor, const std::string &standard
   printf("compare success!\n\n\n");
 }
 
-void printf_tensor(mindspore::lite::tensor::Tensor *in_data) {
-  auto input_data = reinterpret_cast<float *>(in_data->Data());
+template <typename T>
+void printf_tensor(const std::string &str, mindspore::lite::tensor::Tensor *in_data) {
+  MS_LOG(INFO) << str;
+  auto input_data = reinterpret_cast<T *>(in_data->Data());
   for (int i = 0; i < in_data->ElementsNum(); ++i) {
     printf("%f ", input_data[i]);
   }
@@ -73,24 +76,29 @@ void printf_tensor(mindspore::lite::tensor::Tensor *in_data) {
   MS_LOG(INFO) << "Print tensor done";
 }
 
-TEST_F(TestActivationOpenCL, ReluFp32_dim4) {
+TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/relu.bin";
   MS_LOG(INFO) << "Relu Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
-
+  auto data_type = kNumberTypeFloat16;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  bool enable_fp16 = ocl_runtime->GetFp16Enable();
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  auto data_type = kNumberTypeFloat32;
+  schema::Format format = schema::Format_NHWC;
+  if (input_shape.size() == 2) {
+    format = schema::Format_NC;
+  }
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
@@ -99,10 +107,12 @@ TEST_F(TestActivationOpenCL, ReluFp32_dim4) {
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
   inputs[0]->MallocData(allocator);
-  MS_LOG(INFO) << "Initialize input data";
   LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
-  MS_LOG(INFO) << "==================input data================";
-  printf_tensor(inputs[0]);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("ReluFp16:--input data---", inputs[0]);
+  } else {
+    printf_tensor<float>("ReluFp32:--input data---", inputs[0]);
+  }
 
   auto *param = new (std::nothrow) ActivationParameter();
   if (param == nullptr) {
@@ -164,35 +174,44 @@ TEST_F(TestActivationOpenCL, ReluFp32_dim4) {
     MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
     return;
   }
-
-  MS_LOG(INFO) << "==================output data================";
-  printf_tensor(outputs[0]);
-  CompareRes(output_tensor, out_file);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("ReluFp16--output data---", outputs[0]);
+    CompareRes<float16_t>(output_tensor, out_file);
+  } else {
+    printf_tensor<float>("ReluFp32--output data--", outputs[0]);
+    CompareRes<float>(output_tensor, out_file);
+  }
   delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-TEST_F(TestActivationOpenCL, Relu6Fp32_dim4) {
+TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/relu6.bin";
   MS_LOG(INFO) << "Relu6 Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto data_type = kNumberTypeFloat32;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  bool enable_fp16 = ocl_runtime->GetFp16Enable();
   ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  auto data_type = kNumberTypeFloat32;
+  schema::Format format = schema::Format_NHWC;
+  if (input_shape.size() == 2) {
+    format = schema::Format_NC;
+  }
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
@@ -200,11 +219,15 @@ TEST_F(TestActivationOpenCL, Relu6Fp32_dim4) {
   }
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
   LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
-  MS_LOG(INFO) << "==================input data================";
-  printf_tensor(inputs[0]);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Relu6:FP16--input data--", inputs[0]);
+  } else {
+    printf_tensor<float>("Relu6:FP32--input data--", inputs[0]);
+  }
 
   auto *param = new (std::nothrow) ActivationParameter();
   if (param == nullptr) {
@@ -267,34 +290,44 @@ TEST_F(TestActivationOpenCL, Relu6Fp32_dim4) {
     return;
   }
 
-  MS_LOG(INFO) << "==================output data================";
-  printf_tensor(outputs[0]);
-  CompareRes(output_tensor, out_file);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Relu6:FP16--output data---", outputs[0]);
+    CompareRes<float16_t>(output_tensor, out_file);
+  } else {
+    printf_tensor<float>("Relu6:FP32--output data---", outputs[0]);
+    CompareRes<float>(output_tensor, out_file);
+  }
   delete kernel;
   delete param;
   delete input_tensor;
   delete output_tensor;
   delete sub_graph;
+  lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
+TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/sigmoid.bin";
   MS_LOG(INFO) << "Sigmoid Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
+  auto data_type = kNumberTypeFloat16;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  bool enable_fp16 = ocl_runtime->GetFp16Enable();
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  auto data_type = kNumberTypeFloat32;
+  schema::Format format = schema::Format_NHWC;
+  if (input_shape.size() == 2) {
+    format = schema::Format_NC;
+  }
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
@@ -302,11 +335,15 @@ TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
   }
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
   LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
-  MS_LOG(INFO) << "==================input data================";
-  printf_tensor(inputs[0]);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Sigmoid:FP16--input data--", inputs[0]);
+  } else {
+    printf_tensor<float>("Sigmoid:FP32--input data--", inputs[0]);
+  }
 
   auto *param = new (std::nothrow) ActivationParameter();
   if (param == nullptr) {
@@ -369,9 +406,13 @@ TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
     return;
   }
 
-  MS_LOG(INFO) << "==================output data================";
-  printf_tensor(outputs[0]);
-  CompareRes(output_tensor, out_file);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Sigmoid:FP16--output data---", outputs[0]);
+    CompareRes<float16_t>(output_tensor, out_file);
+  } else {
+    printf_tensor<float>("Sigmoid:FP32--output data---", outputs[0]);
+    CompareRes<float>(output_tensor, out_file);
+  }
   delete kernel;
   delete param;
   delete input_tensor;
@@ -380,24 +421,29 @@ TEST_F(TestActivationOpenCL, SigmoidFp32_dim4) {
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
-TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
+TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   std::string in_file = "/data/local/tmp/in_data.bin";
   std::string out_file = "/data/local/tmp/leaky_relu.bin";
   MS_LOG(INFO) << "Leaky relu Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
+  auto data_type = kNumberTypeFloat32;
+  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  bool enable_fp16 = ocl_runtime->GetFp16Enable();
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
-  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  schema::Format format = schema::Format_NHWC;
+  if (input_shape.size() == 2) {
+    format = schema::Format_NC;
+  }
+  auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
     return;
   }
-  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NC, tensor_type);
+  auto *output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output tensor error!";
     delete input_tensor;
@@ -405,11 +451,15 @@ TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
   }
   std::vector<lite::tensor::Tensor *> inputs{input_tensor};
   std::vector<lite::tensor::Tensor *> outputs{output_tensor};
+  auto allocator = ocl_runtime->GetAllocator();
   inputs[0]->MallocData(allocator);
   MS_LOG(INFO) << "Initialize input data";
   LoadActivationData(inputs[0]->Data(), inputs[0]->Size(), in_file);
-  MS_LOG(INFO) << "==================input data================";
-  printf_tensor(inputs[0]);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Leaky Relu:FP16--input data--", inputs[0]);
+  } else {
+    printf_tensor<float>("Leaky Relu:FP32--input data--", inputs[0]);
+  }
 
   auto *param = new (std::nothrow) ActivationParameter();
   if (param == nullptr) {
@@ -418,7 +468,7 @@ TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
     delete output_tensor;
     return;
   }
-  param->alpha_ = 0.3;
+  param->alpha_ = 0.3f;
   param->type_ = ActivationType_LEAKY_RELU;
   auto *kernel =
     new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
@@ -472,10 +522,13 @@ TEST_F(TestActivationOpenCL, LeakyReluFp32_dim4) {
     MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
     return;
   }
-
-  MS_LOG(INFO) << "==================output data================";
-  printf_tensor(outputs[0]);
-  CompareRes(output_tensor, out_file);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Leaky Relu:FP16--output data---", outputs[0]);
+    CompareRes<float16_t>(output_tensor, out_file);
+  } else {
+    printf_tensor<float>("Leaky Relu:FP32--output data---", outputs[0]);
+    CompareRes<float>(output_tensor, out_file);
+  }
   delete kernel;
   delete param;
   delete input_tensor;

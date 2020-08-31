@@ -56,7 +56,7 @@ int BiasAddOpenCLKernel::Init() {
   out_size_ = out_tensors_[0]->shape().size();
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
-  fp_size = enable_fp16_ ? sizeof(float) / 2 : sizeof(float);
+  fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   if (in_size_ != 4 && in_size_ != 2) {
     MS_LOG(ERROR) << "BiasAdd only support dim=4 or 2, but your dim=" << in_size_;
     return RET_ERROR;

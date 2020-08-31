@@ -39,13 +39,17 @@ class ActivationOpenClKernel : public OpenCLKernel {
   int Run() override;
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
   cl_int4 GetImg2dShape();
+  void InitBuffer();
 
  private:
   cl::Kernel kernel_;
   int type_;
   float alpha_;
+  void *alpha_buff_;
   int in_size_;
   int out_size_;
+  size_t fp_size;
+  bool enable_fp16_{false};
 };
 
 }  // namespace mindspore::kernel
