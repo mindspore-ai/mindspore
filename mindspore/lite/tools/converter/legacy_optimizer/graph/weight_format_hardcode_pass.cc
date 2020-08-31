@@ -191,6 +191,7 @@ STATUS WeightFormatHardCodePass::HardCodeTFLITE(const std::unique_ptr<CNodeT> &n
   switch (this->quantType) {
     case QuantType_AwareTraining:
     case QuantType_PostTraining:
+    case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       if (opType == schema::PrimitiveType_Conv2D) {
         weightTensor->format = schema::Format_KHWC;

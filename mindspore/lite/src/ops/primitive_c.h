@@ -145,6 +145,9 @@ class PrimitiveC {
 
   int Type() const;
 
+  void SetQuantType(schema::QuantType quant_type);
+  schema::QuantType GetQuantType() const;
+
  protected:
   template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
   static PrimitiveC *NewPrimitiveC(const schema::Primitive *primitive) {
@@ -194,6 +197,7 @@ class PrimitiveC {
   const schema::Primitive *primitive_ = nullptr;
   char *primitive_buf_ = nullptr;
   bool infer_flag_ = true;
+  schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
 #endif
 }  // namespace lite

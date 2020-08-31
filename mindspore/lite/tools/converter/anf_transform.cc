@@ -26,6 +26,7 @@
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
+#include "tools/converter/quantizer/weight_quantizer.h"
 
 using std::string;
 namespace mindspore {
@@ -57,11 +58,20 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   FuncGraphPtr new_graph = optimizer->Optimize(old_graph);
 
   // quant
-  if (config != nullptr && config->quantType == schema::QuantType_PostTraining) {
-    this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, 8);
-    if (mQuantizer == nullptr) {
-      MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
-      return nullptr;
+  if (config != nullptr) {
+    if (config->quantType == schema::QuantType_PostTraining) {
+      this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, 8);
+      if (mQuantizer == nullptr) {
+        MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
+        return nullptr;
+      }
+    } else if (config->quantType == schema::QuantType_WeightQuant) {
+      this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, config->quantSize,
+        config->convWeightQuantChannelThreshold, config->bitNum);
+      if (mQuantizer == nullptr) {
+        MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
+        return nullptr;
+      }
     }
   }
   if (mQuantizer != nullptr) {
@@ -71,12 +81,14 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
       MS_LOG(ERROR) << "Quant failed " << status;
       return nullptr;
     }
-    quant::QuantCast quant_cast;
-    quant_cast.SetInputDataDType(kNumberTypeFloat32);
-    status = quant_cast.Run(new_graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "add QuantCast error";
-      return nullptr;
+    if (config->quantType == schema::QuantType_PostTraining) {
+      quant::QuantCast quant_cast;
+      quant_cast.SetInputDataDType(kNumberTypeFloat32);
+      status = quant_cast.Run(new_graph);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "add QuantCast error";
+        return nullptr;
+      }
     }
   }
 

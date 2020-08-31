@@ -36,6 +36,8 @@ Flags::Flags() {
   AddFlag(&Flags::stdDev, "stdDev", "Standard deviation value for aware-quantization", "128");
   AddFlag(&Flags::mean, "mean", "Mean value for aware-quantization", "-0.5");
   AddFlag(&Flags::quantSize, "quantSize", "Weight quantization size threshold", "0");
+  AddFlag(&Flags::convWeightQuantChannelThreshold, "convWeightQuantChannelThreshold",
+    "convWeightQuantChannelThreshold", "16");
   AddFlag(&Flags::configFile, "config_file", "Configuration for post-training.", "");
   AddFlag(&Flags::formatTrans, "formatTrans", "whether transform format. true | false", "true");
 }

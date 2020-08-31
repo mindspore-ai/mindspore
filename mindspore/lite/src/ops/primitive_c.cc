@@ -688,6 +688,10 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(const schema::Primitive *primi
   }
   return nullptr;
 }
+void PrimitiveC::SetQuantType(schema::QuantType quant_type) {
+  this->quant_type_ = quant_type;
+}
+schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_;}
 #endif
 
 int PrimitiveC::Type() const {

@@ -31,7 +31,7 @@ void WeightFormatTransformPass::SetDstFormat(Format format) { this->dstFormat = 
 
 STATUS WeightFormatTransformPass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  if (this->quantType == QuantType_AwareTraining) {
+  if (this->quantType == QuantType_AwareTraining || this->quantType == QuantType_WeightQuant) {
     auto status = QuantDataFormatTrans(graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantDataFormatTrans failed: " << status;

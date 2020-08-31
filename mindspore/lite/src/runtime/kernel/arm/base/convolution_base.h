@@ -60,6 +60,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int SetQuantMultiplier();
   int CheckResizeValid();
   void FreeQuantParam();
+  static int RestoreFilter(lite::tensor::Tensor *input_tensor);
 
  protected:
   int tile_num_;

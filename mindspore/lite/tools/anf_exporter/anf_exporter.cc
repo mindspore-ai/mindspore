@@ -64,7 +64,8 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   MS_ASSERT(dst_node != nullptr);
   // add quant param
   dst_node->quantType = primitive->GetQuantType();
-  if (dst_node->quantType == schema::QuantType_PostTraining || dst_node->quantType == schema::QuantType_AwareTraining) {
+  if (dst_node->quantType == schema::QuantType_PostTraining || dst_node->quantType == schema::QuantType_AwareTraining
+      || dst_node->quantType == schema::QuantType_WeightQuant) {
     MS_LOG(DEBUG) << "node: " << dst_node->name << " add QuantParam";
     // activation
     auto input_quant_params = primitive->GetInputQuantParams();
@@ -103,7 +104,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       }
     } else {
       for (auto output_quant_param : output_quant_params[0]) {
-        if (tensor_output->quantParams.empty()) {
+        if (tensor_output->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
           std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
             std::make_unique<schema::QuantParamT>(output_quant_param);
           MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
