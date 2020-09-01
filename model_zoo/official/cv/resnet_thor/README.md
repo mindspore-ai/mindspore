@@ -58,7 +58,7 @@ After installing MindSpore via the official website, you can start training and 
 - Running on Ascend
 ```python
 # run distributed training example
-sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
+sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
 
 # run evaluation example
 sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
@@ -68,7 +68,7 @@ sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 - Running on GPU
 ```python
 # run distributed training example
-sh scripts/run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
+sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
 
 # run evaluation example
 sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
@@ -132,18 +132,18 @@ Parameters for both training and inference can be set in config.py.
 "loss_scale": 128,                # loss scale
 "momentum": 0.9,                  # momentum of THOR optimizer
 "weight_decay": 5e-4,             # weight decay 
-"epoch_size": 45,                 # only valid for taining, which is always 1 for inference 
+"epoch_size": 40,                 # only valid for taining, which is always 1 for inference 
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the checkpoint will be saved every epoch
 "keep_checkpoint_max": 15,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "label_smooth": True,             # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
-"lr_init": 0.04,                 # learning rate init value
-"lr_decay": 5,                    # learning rate decay rate value
-"lr_end_epoch": 58,               # learning rate end epoch value
-"damping_init": 0.02,             # damping init value for Fisher information matrix
-"damping_decay": 0.87,            # damping decay rate
+"lr_init": 0.05672,               # learning rate init value
+"lr_decay": 4.9687,               # learning rate decay rate value
+"lr_end_epoch": 50,               # learning rate end epoch value
+"damping_init": 0.02345,          # damping init value for Fisher information matrix
+"damping_decay": 0.5467,          # damping decay rate
 "frequency": 834,                 # the step interval to update second-order information matrix
 ```
 ### Training Process

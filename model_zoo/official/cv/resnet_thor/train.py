@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
     # define net
     step_size = dataset.get_dataset_size()
-    damping = get_model_damping(0, config.damping_init, config.damping_decay, 90, step_size)
+    damping = get_model_damping(0, config.damping_init, config.damping_decay, 70, step_size)
     lr = get_model_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
     net = resnet50(class_num=config.class_num, damping=damping, loss_scale=config.loss_scale,
                    frequency=config.frequency, batch_size=config.batch_size)
