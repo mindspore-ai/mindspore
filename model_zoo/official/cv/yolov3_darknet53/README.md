@@ -314,7 +314,7 @@ The above python command will run in the background. You can view the results th
 | Loss Function              | Sigmoid Cross Entropy with logits                           |
 | outputs                    | boxes and label                                             |
 | Loss                       | 34                                                          |
-| Speed                      | 1pc: 350 ms/step;                                           |
+| Speed                      | 1pc: 410 ms/step;                                           |
 | Total time                 | 8pc: 25 hours                                               |
 | Parameters (M)             | 62.1                                                        |
 | Checkpoint for Fine tuning | 474M (.ckpt file)                                           |
