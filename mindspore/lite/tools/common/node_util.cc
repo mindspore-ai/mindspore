@@ -52,6 +52,12 @@ static const std::vector<schema::PrimitiveType> int8OpList = {
   schema::PrimitiveType_Squeeze,   schema::PrimitiveType_Sub,
   schema::PrimitiveType_TopK,      schema::PrimitiveType_Unsqueeze};
 
+static const std::vector<schema::PrimitiveType> needInsertOpList = {
+  schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation,
+  schema::PrimitiveType_Concat, schema::PrimitiveType_Power};
+
+std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; }
+
 std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
 
 std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }

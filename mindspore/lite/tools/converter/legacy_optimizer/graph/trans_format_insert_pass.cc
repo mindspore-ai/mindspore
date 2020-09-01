@@ -17,7 +17,7 @@
 #include <string>
 #include <memory>
 #include <utility>
-#include "tools/converter/legacy_optimizer/graph/eltwise_format_trans_pass.h"
+#include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
 #include "tools/common/converter_op_utils.h"
 #include "tools/common/node_util.h"
 #include "utils/log_adapter.h"
@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace lite {
-bool EltwiseFormatTransPass::CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node) {
+bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node) {
   auto input_node_indexes = GetInputNodeIdx(*graph, *node);
   pre_type_ = schema::PrimitiveType_NONE;
   size_t has_trans_count = 0;
@@ -95,7 +95,7 @@ bool EltwiseFormatTransPass::CanFusion(schema::MetaGraphT *graph, const std::uni
   return can_fusion;
 }
 
-STATUS EltwiseFormatTransPass::FindOutTransType() {
+STATUS TransOpInsertPass::FindOutTransType() {
   pre_insert_trans_type_ = kNHWC2NCHW;
   post_insert_trans_type_ = kNHWC2NCHW;
   if (pre_type_ == PrimitiveType_NONE && post_type_ != PrimitiveType_NONE) {
@@ -117,12 +117,12 @@ STATUS EltwiseFormatTransPass::FindOutTransType() {
   return RET_OK;
 }
 
-STATUS EltwiseFormatTransPass::Run(schema::MetaGraphT *graph) {
+STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto type = node->primitive->value.type;
-    if (type != PrimitiveType_Eltwise && type != PrimitiveType_Activation) {
+    if (!IsContain(GetInsertOpList(), type)) {
       continue;
     }
     auto node_name = node->name;
@@ -134,7 +134,14 @@ STATUS EltwiseFormatTransPass::Run(schema::MetaGraphT *graph) {
       MS_LOG(ERROR) << "FindOutTransType error";
       return ret;
     }
-
+    // 4 dims means infershape success,can delete
+    if (type == PrimitiveType_Concat) {
+      if (graph->allTensors.at(node->inputIndex[0])->dims.size() == 4) {
+        node->primitive->value.AsConcat()->axis = -1;
+      } else {
+        continue;
+      }
+    }
     STATUS status = RET_OK;
     auto input_tensor_size = (*iter)->inputIndex.size();
     for (size_t i = 0; i < input_tensor_size; i++) {

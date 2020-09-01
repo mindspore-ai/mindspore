@@ -52,7 +52,7 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
   for (auto &opDef : graphDefT->nodes) {
     for (auto pass : this->nodePasses) {
       status = pass->Run(new GraphNode(graphDefT, opDef.get()));
-      if (status != RET_OK && status != RET_NO_CHANGE) {
+      if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_ERR) {
         MS_LOG(ERROR) << "Run NodePass failed";
         return status;
       } else {
@@ -65,7 +65,7 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
 
   for (auto pass : this->graphPasses) {
     status = pass->Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
+    if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_ERR) {
       MS_LOG(ERROR) << "Run GraphPass failed";
       return status;
     } else {

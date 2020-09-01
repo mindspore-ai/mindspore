@@ -24,11 +24,11 @@
 
 namespace mindspore {
 namespace lite {
-class EltwiseFormatTransPass : public FormatTransPass {
+class TransOpInsertPass : public FormatTransPass {
  public:
-  EltwiseFormatTransPass() : FormatTransPass() {}
+  TransOpInsertPass() : FormatTransPass() {}
 
-  ~EltwiseFormatTransPass() override = default;
+  ~TransOpInsertPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
