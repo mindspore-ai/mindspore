@@ -27,8 +27,7 @@
 namespace mindspore {
 namespace parallel {
 Status L2NormalizeInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(INFO) << name_ << " : Init success.";
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
 

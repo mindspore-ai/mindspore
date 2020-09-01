@@ -176,6 +176,7 @@ class OperatorInfo {
   virtual Status GetAttrs() = 0;
   virtual Status InferTensorInfo() = 0;
   virtual Status InferDevMatrixShape() = 0;
+  Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetDeviceListByStrategy();
   void SetRepeatedCalcDevMatrix();
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);

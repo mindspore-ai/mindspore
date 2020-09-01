@@ -213,12 +213,7 @@ Status GatherV2PInfo::CheckManualSplit(const Strategys &strategy) {
 }
 
 Status GatherV2PInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    }
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
 
@@ -716,17 +711,7 @@ Status GatherV2PInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherV2PInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    }
-    return FAILED;
-  }
-  return SUCCESS;
-}
+Status GatherV2PInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status GatherV2PInfo::GenerateStrategies(int32_t stage_id) {
   if (GetAttrs() != SUCCESS) {

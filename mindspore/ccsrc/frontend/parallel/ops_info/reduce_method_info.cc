@@ -29,14 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status ReduceMethod::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status ReduceMethod::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 Status ReduceMethod::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
@@ -354,14 +347,7 @@ Status ReduceMethod::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status ReduceMethod::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status ReduceMethod::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status ReduceMethod::GenerateStrategies(int32_t stage_id) {
   if ((inputs_shape_.size() != 1) || (outputs_shape_.size() != 1)) {

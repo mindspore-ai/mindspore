@@ -55,7 +55,7 @@ Status LayerNormInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy value";
     return FAILED;
   }
@@ -207,13 +207,7 @@ Status LayerNormInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-Status LayerNormInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Set cost failed";
-    return FAILED;
-  }
-  return SUCCESS;
-}
+Status LayerNormInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status LayerNormInfo::GenerateGammaAndBetaStrategies(const std::vector<StrategyPtr> &sp_vector) {
   if ((gamma_shape_.size() > input_shape_.size()) || (beta_shape_.size() > input_shape_.size())) {

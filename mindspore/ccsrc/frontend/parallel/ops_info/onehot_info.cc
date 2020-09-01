@@ -55,21 +55,7 @@ Status OneHotInfo::GetAttrs() {
 }
 
 Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (inputs_shape_.size() != 3) {
-    MS_LOG(ERROR) << name_ << ": inputs_shape_ size must be 3, but is " << inputs_shape_.size();
-    return FAILED;
-  }
-  if (outputs_shape_.size() != 1) {
-    MS_LOG(ERROR) << name_ << ": outputs_shape_ size must be 1, but is " << outputs_shape_.size();
-    return FAILED;
-  }
-  if (CheckStrategyValue(strategy, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)},
-                         is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  return CheckStrategyValue(strategy, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)});
 }
 
 Status OneHotInfo::InferDevMatrixShape() {
@@ -278,13 +264,7 @@ Status OneHotInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
-}
+Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::shared_ptr<Strategys> OneHotInfo::GenerateBatchStrategies() {
   CheckGlobalDeviceManager();

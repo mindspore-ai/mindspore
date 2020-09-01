@@ -82,7 +82,7 @@ Status GatherV2Info::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   // Only strategy of the first input should be set.
-  if (CheckStrategyValue(strategy, {inputs_shape_.at(0)}, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, {inputs_shape_.at(0)}) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
@@ -301,13 +301,7 @@ Status GatherV2Info::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
-}
+Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::shared_ptr<Strategys> GatherV2Info::GenerateBatchStrategies() {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {

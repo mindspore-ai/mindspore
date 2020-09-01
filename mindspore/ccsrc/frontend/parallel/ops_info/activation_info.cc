@@ -30,26 +30,12 @@
 
 namespace mindspore {
 namespace parallel {
-Status Activation::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    return FAILED;
-  }
+Status Activation::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-  return SUCCESS;
-}
-
-Status Activation::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status Activation::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 Status DropoutInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
@@ -153,7 +139,7 @@ Status DropoutInfo::GenerateStrategies(int32_t stage_id) {
 }
 
 Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
@@ -229,14 +215,7 @@ Status Softmax::GetAttrs() {
   return SUCCESS;
 }
 
-Status Softmax::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status Softmax::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status Softmax::GenerateStrategies(int32_t stage_id) {
   if (GetAttrs() != SUCCESS) {

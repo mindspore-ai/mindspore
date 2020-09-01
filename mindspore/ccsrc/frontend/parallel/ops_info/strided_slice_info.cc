@@ -98,7 +98,7 @@ Status StridedSliceInfo::GetAttrs() {
 
 Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
@@ -232,12 +232,7 @@ std::shared_ptr<Strategys> StridedSliceInfo::GenerateBatchStrategies() {
 }
 
 Status StridedSliceInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  return SetCostUnderStrategyBase(strategy);
 }
 
 Status StridedSliceInfo::GenerateStrategies(int32_t stage_id) {

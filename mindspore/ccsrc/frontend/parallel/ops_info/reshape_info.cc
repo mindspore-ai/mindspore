@@ -29,14 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 /*
  * support parallel degree smaller than device number, set the duplicate device dimension to the first dimension of
@@ -394,12 +387,7 @@ Status ReshapeInfo::InitForCostModel(const StrategyPtr &strategy) {
 }
 
 Status ReshapeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
+  return SetCostUnderStrategyBase(strategy);
 }
 
 void ReshapeInfo::SetCostForReshapeWithParameter() {

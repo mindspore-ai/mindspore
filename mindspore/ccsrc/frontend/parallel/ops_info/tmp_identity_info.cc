@@ -25,11 +25,7 @@
 namespace mindspore {
 namespace parallel {
 Status TmpIdentityInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": invalid strategy.";
-    return FAILED;
-  }
-  return SUCCESS;
+  return CheckStrategyValue(strategy, inputs_shape_);
 }
 
 Status TmpIdentityInfo::InferDevMatrixShape() {
@@ -98,14 +94,7 @@ Status TmpIdentityInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status TmpIdentityInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
+Status TmpIdentityInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status TmpIdentityInfo::GenerateStrategies(int32_t stage_id) {
   if ((inputs_shape_.size() != 1) || (outputs_shape_.size() != 1)) {

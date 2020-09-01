@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace parallel {
 Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
@@ -172,11 +172,7 @@ Status BatchParallelInfo::InitForCostModel(const StrategyPtr &strategy) {
 }
 
 Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
-  if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Set cost under strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
+  return SetCostUnderStrategyBase(strategy);
 }
 
 Status BatchParallelInfo::GenerateStrategies(int32_t stage_id) {
