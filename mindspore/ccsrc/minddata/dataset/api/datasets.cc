@@ -1367,7 +1367,7 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
 // ValideParams for RandomDataset
 bool RandomDataset::ValidateParams() {
   if (total_rows_ < 0) {
-    MS_LOG(ERROR) << "RandomDataset: total_rows must be greater than 0, now get " << total_rows_;
+    MS_LOG(ERROR) << "RandomDataset: total_rows must be greater than or equal 0, now get " << total_rows_;
     return false;
   }
   if (!ValidateDatasetSampler("RandomDataset", sampler_)) {
@@ -1413,6 +1413,9 @@ std::vector<std::shared_ptr<DatasetOp>> RandomDataset::Build() {
 
   std::unique_ptr<DataSchema> data_schema;
   std::vector<std::string> columns_to_load;
+  if (columns_list_.size() > 0) {
+    columns_to_load = columns_list_;
+  }
   if (!schema_file_path.empty() || !schema_json_string.empty()) {
     data_schema = std::make_unique<DataSchema>();
     if (!schema_file_path.empty()) {

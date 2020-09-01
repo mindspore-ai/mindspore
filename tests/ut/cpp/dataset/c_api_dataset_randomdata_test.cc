@@ -191,7 +191,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic3.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic4.";
 
   // Create a RandomDataset
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
@@ -261,6 +261,133 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
   }
 
   EXPECT_EQ(i, 984);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic5.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+
+  std::string SCHEMA_FILE = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = RandomData(0, SCHEMA_FILE, {"col_sint32", "col_sint64", "col_1d"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  ds = ds->Repeat(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check if RandomDataOp read correct columns
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    EXPECT_EQ(row.size(), 3);
+
+    auto col_sint32 = row["col_sint32"];
+    auto col_sint64 = row["col_sint64"];
+    auto col_1d = row["col_1d"];
+
+    // validate shape
+    ASSERT_EQ(col_sint32->shape(), TensorShape({1}));
+    ASSERT_EQ(col_sint64->shape(), TensorShape({1}));
+    ASSERT_EQ(col_1d->shape(), TensorShape({2}));
+
+    // validate Rank
+    ASSERT_EQ(col_sint32->Rank(), 1);
+    ASSERT_EQ(col_sint64->Rank(), 1);
+    ASSERT_EQ(col_1d->Rank(), 1);
+
+    // validate type
+    ASSERT_EQ(col_sint32->type(), DataType::DE_INT32);
+    ASSERT_EQ(col_sint64->type(), DataType::DE_INT64);
+    ASSERT_EQ(col_1d->type(), DataType::DE_INT64);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 984);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetBasic6) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic6.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+
+  std::string SCHEMA_FILE = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = RandomData(10, nullptr, {"col_sint32", "col_sint64", "col_1d"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check if RandomDataOp read correct columns
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic7.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+
+  std::string SCHEMA_FILE = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = RandomData(10, "", {"col_sint32", "col_sint64", "col_1d"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  // Check if RandomDataOp read correct columns
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
 
   // Manually terminate the pipeline
   iter->Stop();
