@@ -168,7 +168,7 @@ void DuplexPipe::SignalHandler::CancelAlarm() { alarm(0); }
 void DuplexPipe::SignalHandler::SigAlarmHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
   if (!dp_.expired()) {
-    dp_.lock()->TimeOut();
+    dp_.lock()->NotifyTimeOut();
   }
 }
 
@@ -184,9 +184,9 @@ void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
   int status;
   auto pid = waitpid(child_pid_, &status, WNOHANG | WUNTRACED);
   if (WIFEXITED(status)) {
-    DP_INFO << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid;
-    if (!dp_.expired()) {
-      dp_.lock()->Close();
+    DP_INFO << "Child exited, status: " << WEXITSTATUS(status) << ", pid: " << pid << ", dp expired: " << dp_.expired();
+    if (pid > 0 && !dp_.expired()) {
+      dp_.lock()->NotifyFinalize();
     }
   } else if (WIFSTOPPED(status)) {
     DP_INFO << "Child stopped, sig: " << WSTOPSIG(status) << ", pid: " << pid;
