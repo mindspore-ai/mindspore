@@ -303,7 +303,7 @@ def test_repeat_count0():
     with pytest.raises(ValueError) as info:
         data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
         data1.repeat(0)
-    assert "count" in str(info)
+    assert "count" in str(info.value)
 
 def test_repeat_countneg2():
     """
@@ -313,7 +313,7 @@ def test_repeat_countneg2():
     with pytest.raises(ValueError) as info:
         data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
         data1.repeat(-2)
-    assert "count" in str(info)
+    assert "count" in str(info.value)
 
 if __name__ == "__main__":
     test_tf_repeat_01()
