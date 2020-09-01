@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-pow_ = base.MultitypeFuncGraph("pow")
+pow_ = base.MultitypeFuncGraph("pow", True)
 """
 `pow` is a metafuncgraph object which will compute the pow of two objects
 using ".register" decorator.

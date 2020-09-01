@@ -15,9 +15,7 @@
 
 """Other operators."""
 import functools
-from ..._c_expression import signature_rw as sig_rw
-from ..._c_expression import signature_kind as sig_kind
-from ..._c_expression import signature_dtype as sig_dtype
+from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
@@ -53,8 +51,8 @@ class Assign(Primitive):
         >>> net(x)
     """
     __mindspore_signature__ = (
-        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('value', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register

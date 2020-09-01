@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-floordiv = base.MultitypeFuncGraph("floordiv")
+floordiv = base.MultitypeFuncGraph("floordiv", True)
 """
 `floordiv` is a metafuncgraph object which will compute the floordiv of two objects
 using ".register" decorator.

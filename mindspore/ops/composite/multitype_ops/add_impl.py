@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-add = base.MultitypeFuncGraph('add')
+add = base.MultitypeFuncGraph('add', True)
 """`add` is a metafuncgraph object which will add two objects according to input type using ".register" decorator."""
 
 

@@ -15,8 +15,7 @@
 
 """Operators for gradients."""
 
-from ..._c_expression import signature_rw as sig_rw
-from ..._c_expression import signature_kind as sig_kind
+from .. import signature as sig
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
@@ -1500,7 +1499,7 @@ class RefToEmbed(Primitive):
         >>>         return key, self.weight
     """
     __mindspore_signature__ = (
-        ('variable', sig_rw.RW_REF, sig_kind.KIND_POSITIONAL_KEYWORD),
+        sig.make_sig('variable', sig.sig_rw.RW_REF),
     )
 
     @prim_attr_register

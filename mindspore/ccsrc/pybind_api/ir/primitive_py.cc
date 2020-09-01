@@ -48,22 +48,9 @@ void SyncData(const py::object &arg) {
 }
 }  // namespace
 std::map<std::string, py::object> PrimitivePy::hook_grad_;
-static ValuePtr PyArgToValue(const py::object &arg) {
-  if (py::isinstance<SignatureEnumKind>(arg) &&
-      py::cast<SignatureEnumKind>(arg) == SignatureEnumKind::kKindEmptyDefaultValue) {
-    return nullptr;
-  }
-  return parse::data_converter::PyDataToValue(arg);
-}
 
-void PrimitivePy::set_signatures(
-  std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>> signatures) {
-  signatures_.clear();
-  for (auto &signature : signatures) {
-    auto [name, rw, kind, arg_default, dtype] = signature;
-    auto default_value = PyArgToValue(arg_default);
-    signatures_.emplace_back(name, rw, kind, default_value, dtype);
-  }
+void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
+  signatures_ = signatures;
   set_has_signature(true);
 }
 

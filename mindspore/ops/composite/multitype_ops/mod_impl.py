@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-mod = base.MultitypeFuncGraph("mod")
+mod = base.MultitypeFuncGraph("mod", True)
 """
 `mod` is a metafuncgraph object which will compute the mod of two objects
 using ".register" decorator.

@@ -262,6 +262,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   std::set<size_t> write_indices;
   std::vector<TypePtr> input_types;
   op_inputs.push_back(NewValueNode(function));
+  auto cast_type = parse::GetMixedPrecisionTargetType(func_graph);
   // Assume, the write input of op is always the first input. We check if any write op,
   // and add cast op on other inputs to keep the same type with assigned parameter.
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
@@ -280,7 +281,6 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
 
     TypePtr type = args_spec_list[i]->BuildType();
     if (type && type->isa<RefType>()) {
-      auto cast_type = parse::GetMixedPrecisionTargetType(func_graph);
       if (sig == SignatureEnumRW::kRWRead) {
         auto source_tensor_type = type->cast<TensorTypePtr>();
         if (source_tensor_type != nullptr) {
@@ -300,8 +300,8 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "
                               << type->ToString();
     }
-    MS_LOG(DEBUG) << "Function " << func_name << "'s input " << i << " " << param->DebugString(2) << " type "
-                  << args_spec_list[i]->ToString();
+    MS_LOG(DEBUG) << "Function " << func_name << "'s input " << i << " " << param->DebugString(2) << " abs "
+                  << args_spec_list[i]->ToString() << " type " << type->ToString();
     input_types.push_back(type);
     op_inputs.push_back(param);
   }

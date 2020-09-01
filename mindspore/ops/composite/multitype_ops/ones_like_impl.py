@@ -22,7 +22,7 @@ from ... import functional as F
 from ... import operations as P
 
 
-ones_like_leaf = base.MultitypeFuncGraph('ones_like_leaf')
+ones_like_leaf = base.MultitypeFuncGraph('ones_like_leaf', True)
 """
 `ones_like_leaf` is a metafuncgraph object which will generate a tensor filled with one according to its input type
 using ".register" decorator.

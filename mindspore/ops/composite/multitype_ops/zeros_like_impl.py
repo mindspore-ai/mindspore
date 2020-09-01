@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf')
+zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf', True)
 """
 `zeros_like_leaf` is a metafuncgraph object which will generate a tensor filled with one according to its input type
 using ".register" decorator.

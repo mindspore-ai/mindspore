@@ -42,9 +42,7 @@ class PrimitivePy : public Primitive {
   MS_DECLARE_PARENT(PrimitivePy, Primitive);
   py::function GetBpropFunction();
 
-  void set_signatures(
-    std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>>
-      signatures);
+  void set_signatures(const std::vector<Signature> &signatures);
 
   const std::vector<Signature> &signatures() const { return signatures_; }
 

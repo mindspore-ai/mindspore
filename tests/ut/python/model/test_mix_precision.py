@@ -136,13 +136,15 @@ class NetForCast(nn.Cell):
         super(NetForCast, self).__init__()
         self.concat = P.Concat()
         self.x1 = Tensor(1.0, mstype.float32)
+        self.x2 = Parameter(Tensor(np.zeros([1, 10]).astype(np.float32)), name='x2')
 
     def construct(self, x0):
-        x = self.x1 * x0
+        x = self.x1 * x0 * self.x2
         return x
 
 
 def test_cast():
+    context.set_context(save_graphs=True)
     x = Tensor(np.ones([1, 16, 10, 10]).astype(np.float32) * 0.01)
     net = NetForCast()
     net.add_flags_recursive(fp16=True)

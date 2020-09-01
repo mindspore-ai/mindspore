@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 
 # less_equal is a metagraph object which will determine if two objects are less_equal according to input type
 # using ".register" decorator
-less_equal = base.MultitypeFuncGraph("less_equal")
+less_equal = base.MultitypeFuncGraph("less_equal", True)
 
 
 @less_equal.register("Number", "Number")

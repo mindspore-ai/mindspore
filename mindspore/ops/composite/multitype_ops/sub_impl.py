@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-sub = base.MultitypeFuncGraph("sub")
+sub = base.MultitypeFuncGraph("sub", True)
 """
 `sub` is a metafuncgraph object which will compute the subtraction of two objects
 using ".register" decorator.

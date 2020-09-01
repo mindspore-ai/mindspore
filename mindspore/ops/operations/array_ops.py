@@ -28,10 +28,7 @@ import numpy as np
 from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
-from ..._c_expression import signature_dtype as sig_dtype
-from ..._c_expression import signature_kind as sig_kind
-from ..._c_expression import signature_rw as sig_rw
-from ..._c_expression import typing
+from .. import signature as sig
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
@@ -44,9 +41,9 @@ class _ScatterOp(PrimitiveWithInfer):
     Define Scatter operators
     """
     __mindspore_signature__ = (
-        ('x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T1),
-        ('updates', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
 
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
@@ -1396,7 +1393,7 @@ class Tile(PrimitiveWithInfer):
         validator.check_value_type("shape", multiples_v, [tuple], self.name)
         for i, multiple in enumerate(multiples_v):
             validator.check_value_type("multiples[%d]" % i, multiple, [int], self.name)
-        validator.check_value_type("x[\'dtype\']", x["dtype"], typing.TensorType, self.name)
+        validator.check_value_type("x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
         len_sub = len(multiples_v) - len(x_shp)
         multiples_w = None
         if len_sub == 0:

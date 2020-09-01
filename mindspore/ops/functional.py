@@ -21,7 +21,6 @@ from mindspore.common._register_for_tensor import tensor_operator_registry
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
-from .._extends import builtin_operations as BP
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -182,5 +181,6 @@ tensor_operator_registry.register('__gt__', tensor_gt)
 tensor_operator_registry.register('__ge__', tensor_ge)
 tensor_operator_registry.register('shape', shape)
 # support GE backend for no compare operators
-tensor_operator_registry.register('vm_compare', BP.vm_compare)
 tensor_operator_registry.register('cast', cast)
+
+__all__ = [name for name in dir() if name[0] != "_"]

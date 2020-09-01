@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 
 # logical_or is a metagraph object which will generate function according to input type
 # using ".register" decorator
-logical_or = base.MultitypeFuncGraph("logical_or")
+logical_or = base.MultitypeFuncGraph("logical_or", True)
 
 
 @logical_or.register("Number", "Number")

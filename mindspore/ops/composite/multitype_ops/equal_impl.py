@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-equal = base.MultitypeFuncGraph("equal")
+equal = base.MultitypeFuncGraph("equal", True)
 """
 equal is a metafuncgraph object which will determine if two objects are equal according to input type
 using ".register" decorator

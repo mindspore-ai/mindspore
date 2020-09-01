@@ -18,9 +18,7 @@
 import copy
 import numpy as np
 from ... import context
-from ..._c_expression import signature_rw as sig_rw
-from ..._c_expression import signature_kind as sig_kind
-from ..._c_expression import signature_dtype as sig_dtype
+from .. import signature as sig
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
@@ -68,7 +66,7 @@ class _BinaryOp(PrimitiveWithInfer):
     Define binary operators.
     """
 
-    __mindspore_signature__ = (sig_dtype.T, sig_dtype.T)
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
     @prim_attr_register
     def __init__(self):
@@ -186,8 +184,8 @@ class AssignAdd(PrimitiveWithInfer):
         >>> net(value)
     """
     __mindspore_signature__ = (
-        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('value', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
@@ -237,8 +235,8 @@ class AssignSub(PrimitiveWithInfer):
     """
 
     __mindspore_signature__ = (
-        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T)
+        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('value', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
@@ -264,8 +262,8 @@ class _Reduce(PrimitiveWithInfer):
     """
 
     __mindspore_signature__ = (
-        ('input_x', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD),
-        ('axis', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, ()),
+        sig.make_sig('input_x'),
+        sig.make_sig('axis', default=())
     )
 
     @prim_attr_register
