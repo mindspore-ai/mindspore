@@ -46,7 +46,7 @@ const AnfNodePtr RemoveFormatTransformPair::Process(const FuncGraphPtr &graph, c
     MS_LOG(EXCEPTION) << "The  pattern is not transpose pair, "
                       << "node:" << AnfAlgo::GetCNodeName(node) << " node input:" << AnfAlgo::GetCNodeName(input_node);
   }
-  // If transpose operator used by more than one other operators, it cant not be deleted  directly.
+  // If transpose operator used by more than one other operators, it cant not be deleted directly.
   if (IsUsedByOthers(graph, input_node)) {
     MS_LOG(DEBUG) << "The transpose node [" << input_node->fullname_with_scope()
                   << "] is used by more than one other operators.";

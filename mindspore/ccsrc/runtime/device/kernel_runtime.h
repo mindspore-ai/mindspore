@@ -72,6 +72,9 @@ class KernelRuntime {
   virtual void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
                                          const std::unordered_set<ValueNodePtr> &value_nodes,
                                          const std::vector<CNodePtr> &execution_order);
+  virtual void ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
+                                  const std::unordered_set<ValueNodePtr> &value_nodes,
+                                  const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
 
 #ifdef ENABLE_DUMP_E2E

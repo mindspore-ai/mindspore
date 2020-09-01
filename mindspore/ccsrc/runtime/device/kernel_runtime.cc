@@ -854,6 +854,40 @@ void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vect
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
 }
 
+void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
+                                       const std::unordered_set<ValueNodePtr> &value_nodes,
+                                       const std::vector<CNodePtr> &execution_order) {
+  // clear input parameter output address.
+  for (const auto &input_node : inputs) {
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (!input_node->isa<Parameter>()) {
+      continue;
+    }
+    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(input_node); ++index) {
+      if (!AnfAlgo::OutputAddrExist(input_node, index)) {
+        continue;
+      }
+      AnfAlgo::SetOutputAddr(nullptr, 0, input_node.get());
+    }
+  }
+  // clear input value node output address.
+  for (const auto &value_node : value_nodes) {
+    if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
+      continue;
+    }
+    AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
+  }
+  // clear cnode output address.
+  for (const auto &cnode : execution_order) {
+    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
+      if (!AnfAlgo::OutputAddrExist(cnode, index)) {
+        continue;
+      }
+      AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
+    }
+  }
+}
+
 bool KernelRuntime::LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr,
                                                   const AddressPtrList &kernel_inputs,
                                                   const AddressPtrList &kernel_outputs,
