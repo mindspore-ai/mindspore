@@ -329,7 +329,7 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
 /// \param[in] mode Set the data list txt file to be readed
-/// \param[in] class_indexing A str-to-int mapping from label name to index
+/// \param[in] class_indexing A str-to-int mapping from label name to index, only valid in "Detection" task
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())

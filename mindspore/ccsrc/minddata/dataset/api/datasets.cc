@@ -726,7 +726,7 @@ bool ValidateDatasetSampler(const std::string &dataset_name, const std::shared_p
 bool ValidateDatasetColumnParam(const std::string &dataset_name, const std::string &column_param,
                                 const std::vector<std::string> &columns) {
   if (columns.empty()) {
-    MS_LOG(ERROR) << dataset_name << ":" << column_param << " should not be empty";
+    MS_LOG(ERROR) << dataset_name << ":" << column_param << " should not be empty string";
     return false;
   }
   for (uint32_t i = 0; i < columns.size(); ++i) {
@@ -1202,6 +1202,11 @@ bool CSVDataset::ValidateParams() {
   }
 
   if (!ValidateDatasetShardParams("CSVDataset", num_shards_, shard_id_)) {
+    return false;
+  }
+
+  if (find(column_defaults_.begin(), column_defaults_.end(), nullptr) != column_defaults_.end()) {
+    MS_LOG(ERROR) << "CSVDataset: column_default should not be null.";
     return false;
   }
 
@@ -1723,6 +1728,11 @@ bool BuildVocabDataset::ValidateParams() {
                   << "but got [" << freq_range_.first << ", " << freq_range_.second << "]";
     return false;
   }
+  if (!columns_.empty()) {
+    if (!ValidateDatasetColumnParam("BuildVocab", "columns", columns_)) {
+      return false;
+    }
+  }
   return true;
 }
 #endif
@@ -1811,7 +1821,10 @@ ProjectDataset::ProjectDataset(const std::vector<std::string> &columns) : column
 
 bool ProjectDataset::ValidateParams() {
   if (columns_.empty()) {
-    MS_LOG(ERROR) << "No columns are specified.";
+    MS_LOG(ERROR) << "ProjectDataset: No columns are specified.";
+    return false;
+  }
+  if (!ValidateDatasetColumnParam("ProjectDataset", "columns", columns_)) {
     return false;
   }
   return true;
@@ -1947,6 +1960,10 @@ ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) : 
 bool ZipDataset::ValidateParams() {
   if (datasets_.empty()) {
     MS_LOG(ERROR) << "Zip: dataset to zip are not specified.";
+    return false;
+  }
+  if (find(datasets_.begin(), datasets_.end(), nullptr) != datasets_.end()) {
+    MS_LOG(ERROR) << "ZipDataset: zip dataset should not be null.";
     return false;
   }
   return true;
