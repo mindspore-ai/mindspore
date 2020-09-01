@@ -1151,10 +1151,13 @@ void PynativeExecutor::EndGraphInner(const py::object &cell, const py::object &o
       auto cnode = curr_g_->NewCNode(args);
       for (int i = 0; i < tuple_size; i++) {
         args.push_back(GetInput(tuple[i], false));
+      }
+      cnode->set_inputs(args);
+
+      for (int i = 0; i < tuple_size; i++) {
         set_obj_node_map(curr_g_, GetId(tuple[i]), cnode, i);
         SetTupleOutput(tuple[i], cnode, std::vector<int>{i});
       }
-      cnode->set_inputs(args);
       set_obj_node_map(curr_g_, out_id, cnode);
     } else {
       MS_LOG(DEBUG) << "Set ValueNode as output for graph, out id: " << out_id;
