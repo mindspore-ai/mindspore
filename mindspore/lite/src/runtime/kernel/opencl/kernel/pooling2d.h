@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_POOLING_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_POOLING_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_POOLING_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_POOLING_H_
 
 #include <vector>
 
@@ -48,4 +48,4 @@ class PoolingOpenCLKernel : public OpenCLKernel {
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_POOLING_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_POOLING_H_

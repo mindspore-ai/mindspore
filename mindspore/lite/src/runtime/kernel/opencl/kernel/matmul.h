@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_MATMUL_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_MATMUL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_
 
 #include <vector>
 
@@ -51,4 +51,4 @@ class MatMulOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_MATMUL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_

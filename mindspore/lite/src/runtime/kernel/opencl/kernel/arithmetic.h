@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_ARITHMETIC_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_ARITHMETIC_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ARITHMETIC_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ARITHMETIC_H_
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/arithmetic.h"
@@ -51,4 +51,4 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_ARITHMETIC_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ARITHMETIC_H_

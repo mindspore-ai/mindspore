@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_RESHAPE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_RESHAPE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_RESHAPE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_RESHAPE_H_
 
 #include <vector>
 
@@ -42,4 +42,4 @@ class ReshapeOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_RESHAPE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_RESHAPE_H_

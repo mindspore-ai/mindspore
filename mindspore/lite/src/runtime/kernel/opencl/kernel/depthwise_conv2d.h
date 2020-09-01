@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_DEPTHWISE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_DEPTHWISE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_DEPTHWISE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_DEPTHWISE_H_
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
@@ -51,4 +51,4 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_DEPTHWISE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_DEPTHWISE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_UTILS_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_UTILS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_UTILS_H_
 
 #include <string>
 #include <vector>
@@ -159,4 +159,4 @@ void PackNHWCToNC4HW4(void *src, void *dst, int batch, int plane, int channel,
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_UTILS_H_

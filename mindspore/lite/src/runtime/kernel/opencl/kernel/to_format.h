@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_TO_FORMAT_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_TO_FORMAT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_TO_FORMAT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_TO_FORMAT_H_
 
 #include <vector>
 
@@ -45,4 +45,4 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_RESHAPE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_RESHAPE_H_
