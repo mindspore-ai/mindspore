@@ -134,7 +134,7 @@ def run_predistill():
     dataset = create_tinybert_dataset('td', td_teacher_net_cfg.batch_size,
                                       device_num, rank, args_opt.do_shuffle,
                                       args_opt.train_data_dir, args_opt.schema_dir,
-                                      data_tpye=dataset_type)
+                                      data_type=dataset_type)
 
     dataset_size = dataset.get_dataset_size()
     print('td1 dataset size: ', dataset_size)
