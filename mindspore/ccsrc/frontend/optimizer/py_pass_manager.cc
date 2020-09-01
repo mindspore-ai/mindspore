@@ -98,7 +98,8 @@ REGISTER_PYBIND_DEFINE(
       .def("registe", &PyPassManager::Registe, "Registe python pass")
       .def("unregiste", &PyPassManager::Unregiste, "Delete Python Pass")
       .def("gen_new_parameter", &PyPassManager::GenNewParameter, "Generate new parameter")
-      .def("set_renorm", &PyPassManager::SetRenorm, "Set whether or not to do renorm after modified graph");
+      .def("set_renorm", &PyPassManager::SetRenorm, "Set whether or not to do renorm after modified graph")
+      .def("set_reopt", &PyPassManager::SetReOpt, "Set whether or not to do optimization after modified graph");
   }));
 }  // namespace python_pass
 }  // namespace opt

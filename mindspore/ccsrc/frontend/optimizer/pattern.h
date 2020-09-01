@@ -59,6 +59,7 @@ class Pattern : public Base {
   string unique_name() const { return unique_name_; }
   vector<PatternPtr> inputs() { return inputs_; }
   virtual void reset() {}
+  static void reset_gid() { g_id_ = 0; }
 
  protected:
   static int g_id_;
@@ -213,7 +214,6 @@ class NewParameter : public Pattern {
   explicit NewParameter(string para_name, tensor::TensorPtr default_tensor, bool requires_grad, bool layerwise_parallel)
       : para_name_(para_name), requires_grad_(requires_grad), layerwise_parallel_(layerwise_parallel) {
     unique_name_ = std::to_string(g_id_++) + "NewParameter_" + para_name;
-    // clone input tensor
     default_tensor_ = std::make_shared<tensor::Tensor>(*default_tensor.get());
     built_ = false;
   }
@@ -257,7 +257,7 @@ class MatchResult {
   MatchResult() {}
   ~MatchResult() = default;
   void add_entry(PatternPtr pattern, AnfNodePtr node) { match_result_[pattern] = node; }
-  PatternNodeMap _result() { return match_result_; }
+  PatternNodeMap &_result() { return match_result_; }
   AnfNodePtr get_node(const PatternPtr &pattern);
   void merge(const MatchResultPtr &other_result);
   void clear() { match_result_.clear(); }

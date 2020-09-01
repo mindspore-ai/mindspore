@@ -451,35 +451,55 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
 
 bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
 
-void ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
+bool ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
   MS_EXCEPTION_IF_NULL(res->manager());
   MS_EXCEPTION_IF_NULL(res->func_graph());
   auto ppm = opt::python_pass::PyPassManager::GetInstance();
   ppm->SetResource(res);
-  if (!ppm->GetPassGroup(phase)->Run(res->func_graph())) {
-    MS_LOG(DEBUG) << "No match.\n";
-  } else if (phase == opt::python_pass::Phase::OPT && opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
-    MS_LOG(DEBUG) << "Entered PyStub Renorm";
-    // Renomalize
-    MS_EXCEPTION_IF_NULL(res->func_graph());
-    FuncGraphPtr func_graph = res->func_graph();
-    abstract::AbstractBasePtrList args_spec;
-    auto parameters = func_graph->parameters();
-    (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
-                         [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-    FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
-    res->set_func_graph(new_fg);
-    res->set_args_spec(args_spec);
-  }
+  return ppm->GetPassGroup(phase)->Run(res->func_graph());
 }
 
-bool ResolveActionPyStub(const ResourcePtr &res) {
-  ActionPyStub(res, opt::python_pass::Phase::RESOLVE);
+bool ResolveActionPyStub(const ResourcePtr &res) { return true || ActionPyStub(res, opt::python_pass::Phase::RESOLVE); }
+
+bool OptActionVmPyStub(const ResourcePtr &res) {
+  if (ActionPyStub(res, opt::python_pass::Phase::OPT)) {
+    if (opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
+      // Renomalize
+      MS_EXCEPTION_IF_NULL(res->func_graph());
+      FuncGraphPtr func_graph = res->func_graph();
+      abstract::AbstractBasePtrList args_spec;
+      auto parameters = func_graph->parameters();
+      (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
+                           [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+      FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
+      res->set_func_graph(new_fg);
+      res->set_args_spec(args_spec);
+    }
+    if (opt::python_pass::PyPassManager::GetInstance()->ShouldReOpt()) {
+      return VmOptimizeAction(res);
+    }
+  }
   return true;
 }
 
-bool OptActionPyStub(const ResourcePtr &res) {
-  ActionPyStub(res, opt::python_pass::Phase::OPT);
+bool OptActionGePyStub(const ResourcePtr &res) {
+  if (ActionPyStub(res, opt::python_pass::Phase::OPT)) {
+    if (opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
+      // Renomalize
+      MS_EXCEPTION_IF_NULL(res->func_graph());
+      FuncGraphPtr func_graph = res->func_graph();
+      abstract::AbstractBasePtrList args_spec;
+      auto parameters = func_graph->parameters();
+      (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
+                           [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+      FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
+      res->set_func_graph(new_fg);
+      res->set_args_spec(args_spec);
+    }
+    if (opt::python_pass::PyPassManager::GetInstance()->ShouldReOpt()) {
+      return GeOptimizeAction(res);
+    }
+  }
   return true;
 }
 
@@ -510,7 +530,7 @@ std::vector<ActionItem> GePipeline() {
   // optimize
   actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
   // Add opt-stage python pass stub
-  actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
+  actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
   actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
   actions.emplace_back(std::make_pair("validate", ValidateAction));
   return actions;
@@ -523,7 +543,7 @@ std::vector<ActionItem> VmPipeline() {
   actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
 
   // Add opt-stage python pass stub
-  actions.emplace_back(std::make_pair("py_opt", OptActionPyStub));
+  actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))

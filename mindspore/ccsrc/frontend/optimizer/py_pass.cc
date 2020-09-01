@@ -27,8 +27,6 @@
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #include "utils/info.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/draw.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,29 +39,6 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
 AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph, const MatchResultPtr &res);
 void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
                               bool requires_grad, bool layerwise_parallel);
-
-std::string GetNodeRepr(AnfNodePtr node) {
-  if (node != nullptr) {
-    if (node->isa<CNode>()) {
-      std::string repr = "(";
-      auto const &inputs = node->cast<CNodePtr>()->inputs();
-      for (auto &input : inputs) {
-        repr += " ";
-        repr += GetNodeRepr(input);
-        repr += " ";
-      }
-      repr += ")";
-      return repr;
-    }
-    if (node->isa<Parameter>()) {
-      return "[Parameter]" + node->ToString();
-    } else if (node->isa<ValueNode>()) {
-      return "[Value]" + GetValueNode(node)->ToString();
-    }
-    return node->ToString();
-  }
-  return "";
-}
 
 bool IsTraversable(const AnfNodePtr &node) {
   if (node == nullptr) {
@@ -215,23 +190,6 @@ AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph
   return new_node;
 }
 
-void DrawNode(string name, AnfNodePtr node) {
-  auto context_ptr = MsContext::GetInstance();
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
-  auto new_func_graph = std::make_shared<FuncGraph>();
-  new_func_graph->set_output(node, true);
-  if (save_graphs) {
-    auto ir_dump_path = save_graphs_path + "/" + name + ".ir";
-    auto dot_dump_path = save_graphs_path + "/" + name + ".dot";
-    DumpIR(ir_dump_path, new_func_graph);
-    draw::Draw(dot_dump_path, new_func_graph);
-  }
-}
-
 void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
                               bool requires_grad, bool layerwise_parallel) {
   // 1. Get current cell object
@@ -241,12 +199,15 @@ void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor
   if (py::isinstance<py::none>(top_cell)) {
     MS_LOG(EXCEPTION) << "Failed to get top cell from resource.";
   }
-  // 2. New a Parameter object with the above-specified args
+  // 2. Clone default_input tensor
+  auto default_tensor = std::make_shared<tensor::Tensor>(default_input->data_type(), default_input->shape_c(),
+                                                         default_input->data_c(), (size_t)default_input->Size());
+  // 3. New a Parameter object with the above-specified args
   py::object parameter_class = py::module::import(PARAMETER_MODULE).attr(PARAMETER_CLASS);
-  py::object new_parameter = parameter_class(default_input, param_name, requires_grad, layerwise_parallel);
-  // 3. Add the new python Parameter object to Cell's _params atttributes
+  py::object new_parameter = parameter_class(default_tensor, param_name, requires_grad, layerwise_parallel);
+  // 4. Add the new python Parameter object to Cell's _params atttributes
   top_cell.attr(SET_PARAM)(param_name, new_parameter);
-  // 4. Set default_param for param_node
+  // 5. Set default_param for param_node
   ValuePtr param_value = nullptr;
   bool converted = parse::ConvertData(new_parameter, &param_value, false);
   if (!converted) {
@@ -282,11 +243,9 @@ void Reset(PatternPtr pattern) {
 AnfNodePtr PythonPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const MatchResultPtr &res) {
   auto match_res = src_pattern_->match(node);
   if (match_res != nullptr) {
-    MS_LOG(DEBUG) << "Matched pattern: " + src_pattern_->unique_name() + " node : " + internal::GetNodeRepr(node);
     res->merge(match_res);
     auto new_node = internal::BuildTarget(dst_pattern_, func_graph, res);
     internal::Reset(dst_pattern());
-    MS_LOG(WARNING) << "To be replaced node: " + internal::GetNodeRepr(new_node) + "\n";
     return new_node;
   }
   internal::Reset(src_pattern());
@@ -303,7 +262,6 @@ bool PythonPass::Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res) 
       MS_LOG(EXCEPTION) << "Expect NewParameter pattern for target if src pattern is null.";
     }
     auto para_name = new_para_pattern->para_name() + new_para_pattern->unique_name();
-    MS_LOG(DEBUG) << "Adding New parameter : " + para_name;
     auto para_node = std::make_shared<Parameter>(func_graph);
     MS_EXCEPTION_IF_NULL(para_node);
     para_node->set_name(para_name);
@@ -321,7 +279,7 @@ bool PythonPass::Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res) 
     // Reflect back to Cell._params
     internal::ReflectParamBackToPython(para_node, para_name, default_value, new_para_pattern->requires_grad(),
                                        new_para_pattern->layerwise_parallel());
-    MS_LOG(WARNING) << "Adding parameter: " + para_node->ToString() + " parameter name:" + para_node->name();
+    MS_LOG(WARNING) << "[Gen]Adding parameter: " + para_node->ToString() + " parameter name:" + para_node->name();
     return true;
   }
   FuncGraphManagerPtr manager = func_graph->manager();
@@ -334,7 +292,6 @@ bool PythonPass::Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res) 
   for (auto &node : graph_nodes_sorted) {
     AnfNodePtr new_node = Run(func_graph, node, res);
     if (new_node != nullptr && new_node != node) {
-      internal::DrawNode(dst_pattern_->unique_name(), new_node);
       (void)manager->Replace(node, new_node);
       changes = true;
     }
