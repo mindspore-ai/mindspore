@@ -1182,6 +1182,11 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
   resource_->manager()->AddFuncGraph(curr_g_);
   // custom bprop debug
   if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
+    size_t par_number = py::tuple(parse::python_adapter::CallPyObjMethod(cell, "get_parameters")).size();
+    if (par_number > 0) {
+      MS_LOG(EXCEPTION) << "When user defines the net bprop, there are " << par_number
+                        << " parameters that is not supported in the net.";
+    }
     MS_LOG(DEBUG) << "Use cell custom bprop function.";
     FuncGraphPtr bprop_graph = parse::ConvertToBpropCut(cell);
     if (bprop_graph != nullptr) {
