@@ -236,6 +236,136 @@ MetaGraphTptr BuildMixGraph() {
   // final output
   return meta_graph;
 }
+MetaGraphTptr BuildSplitGraph() {
+  auto meta_graph = std::make_shared<schema::MetaGraphT>();
+  meta_graph->name = "graph";
+  // slice node
+  auto split_node = std::make_unique<schema::CNodeT>();
+  split_node->inputIndex = {0};
+  split_node->outputIndex = {1, 2};
+  split_node->primitive = std::make_unique<schema::PrimitiveT>();
+  split_node->primitive->value.type = schema::PrimitiveType_Split;
+  std::unique_ptr<schema::SplitT> attr = std::make_unique<schema::SplitT>();
+  attr->numberSplit = 2;
+  attr->splitDim = 1;
+  split_node->primitive->value.value = attr.release();
+  split_node->name = "split";
+  meta_graph->nodes.emplace_back(std::move(split_node));
+
+  meta_graph->inputIndex = {0, 3, 4};
+  meta_graph->outputIndex = {5, 6};
+
+  auto mul_node1 = std::make_unique<schema::CNodeT>();
+  mul_node1->inputIndex = {1, 3};
+  mul_node1->outputIndex = {5};
+  mul_node1->primitive = std::make_unique<schema::PrimitiveT>();
+  mul_node1->primitive->value.type = schema::PrimitiveType_Mul;
+  std::unique_ptr<schema::MulT> mul_attr = std::make_unique<schema::MulT>();
+  mul_node1->primitive->value.value = mul_attr.release();
+  mul_node1->name = "mul1";
+  meta_graph->nodes.emplace_back(std::move(mul_node1));
+
+  auto mul_node2 = std::make_unique<schema::CNodeT>();
+  mul_node2->inputIndex = {2, 4};
+  mul_node2->outputIndex = {6};
+  mul_node2->primitive = std::make_unique<schema::PrimitiveT>();
+  mul_node2->primitive->value.type = schema::PrimitiveType_Mul;
+  std::unique_ptr<schema::MulT> mul2_attr = std::make_unique<schema::MulT>();
+  mul_node2->primitive->value.value = mul2_attr.release();
+  mul_node2->name = "mul2";
+  meta_graph->nodes.emplace_back(std::move(mul_node2));
+
+  // input 0: data1
+  auto input0 = std::make_unique<schema::TensorT>();
+  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->format = schema::Format_NHWC;
+  input0->dataType = TypeId::kNumberTypeFloat32;
+  input0->dims = {1, 2, 2, 3};
+  input0->offset = -1;
+  auto input0_data = new(std::nothrow) float[2 * 2 * 3];
+  for (auto i = 0; i < 2 * 2 * 3; i++) {
+    input0_data[i] = i;
+  }
+  input0->data.resize(sizeof(float) * 2 * 2 * 3);
+  memcpy(input0->data.data(), input0_data, 2 * 2 * 3 * sizeof(float));
+  delete[] input0_data;
+  meta_graph->allTensors.emplace_back(std::move(input0));
+
+  // split output1
+  auto split_output1 = std::make_unique<schema::TensorT>();
+  split_output1->nodeType = schema::NodeType::NodeType_Parameter;
+  split_output1->format = schema::Format_NHWC;
+  split_output1->dataType = TypeId::kNumberTypeFloat32;
+  split_output1->dims = {1, 1, 2, 3};
+  split_output1->offset = -1;
+  split_output1->data.resize(sizeof(float) * 1 * 2 * 3);
+  auto split_output_data1 = new(std::nothrow) float[1 * 2 * 3];
+  memcpy(split_output1->data.data(), split_output_data1, 1 * 2 * 3 * sizeof(float));
+  delete[] split_output_data1;
+  meta_graph->allTensors.emplace_back(std::move(split_output1));
+
+  // split output2
+  auto split_output2 = std::make_unique<schema::TensorT>();
+  split_output2->nodeType = schema::NodeType::NodeType_Parameter;
+  split_output2->format = schema::Format_NHWC;
+  split_output2->dataType = TypeId::kNumberTypeFloat32;
+  split_output2->dims = {1, 1, 2, 3};
+  split_output2->offset = -1;
+  split_output2->data.resize(sizeof(float) * 1 * 2 * 3);
+  auto split_output_data2 = new(std::nothrow) float[1 * 2 * 3];
+  memcpy(split_output2->data.data(), split_output_data2, 1 * 2 * 3 * sizeof(float));
+  delete[] split_output_data2;
+  meta_graph->allTensors.emplace_back(std::move(split_output2));
+
+  // input 1: data2
+  auto input1 = std::make_unique<schema::TensorT>();
+  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->format = schema::Format_NHWC;
+  input1->dataType = TypeId::kNumberTypeFloat32;
+  input1->dims = {1, 1, 2, 3};
+  input1->offset = -1;
+  input1->data.resize(sizeof(float) * 2 * 3);
+  auto input1_data = new(std::nothrow) float[2 * 3];
+  for (auto i = 0; i < 2 * 3; i++) {
+    input1_data[i] = i;
+  }
+  memcpy(input1->data.data(), input1_data, 2 * 3 * sizeof(float));
+  delete[] input1_data;
+  meta_graph->allTensors.emplace_back(std::move(input1));
+
+  // input 2: data3
+  auto input2 = std::make_unique<schema::TensorT>();
+  input2->nodeType = schema::NodeType::NodeType_ValueNode;
+  input2->format = schema::Format_NHWC;
+  input2->dataType = TypeId::kNumberTypeFloat32;
+  input2->dims = {1, 1, 2, 3};
+  input2->offset = -1;
+  input2->data.resize(sizeof(float) * 2 * 3);
+  auto input2_data = new(std::nothrow) float[2 * 3];
+  for (auto i = 0; i < 2 * 3; i++) {
+    input2_data[i] = 10;
+  }
+  memcpy(input2->data.data(), input2_data, 2 * 3 * sizeof(float));
+  delete[] input2_data;
+  meta_graph->allTensors.emplace_back(std::move(input2));
+
+  // final mul output1
+  auto mul_output = std::make_unique<schema::TensorT>();
+  mul_output->nodeType = schema::NodeType::NodeType_Parameter;
+  mul_output->format = schema::Format_NHWC;
+  mul_output->dataType = TypeId::kNumberTypeFloat32;
+  mul_output->dims = {1, 1, 2, 3};
+  meta_graph->allTensors.emplace_back(std::move(mul_output));
+
+  // final mul output2
+  auto mul_output2 = std::make_unique<schema::TensorT>();
+  mul_output2->nodeType = schema::NodeType::NodeType_Parameter;
+  mul_output2->format = schema::Format_NHWC;
+  mul_output2->dataType = TypeId::kNumberTypeFloat32;
+  mul_output2->dims = {1, 1, 2, 3};
+  meta_graph->allTensors.emplace_back(std::move(mul_output2));
+  return meta_graph;
+}
 }  //  namespace
 TEST_F(ConstantFoldingFusionTest, TestADDConstantFold) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Add, new schema::AddT);
@@ -476,6 +606,21 @@ TEST_F(ConstantFoldingFusionTest, TestCastDimsConstantFold) {
   auto func_graph = lite::ModelParser::Fb2Anf(meta_graph.get());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::ConstFoldPass>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(func_graph);
+  ASSERT_NE(nullptr, new_graph);
+  auto new_meta_graph = lite::Export(new_graph);
+  ASSERT_EQ(new_meta_graph->nodes.size(), 0);
+}
+
+TEST_F(ConstantFoldingFusionTest, TestSplitConstantFold) {
+  auto meta_graph = BuildSplitGraph();
+  auto input_tensor = meta_graph->allTensors.at(0).get();
+  input_tensor->dataType = kNumberTypeFloat32;
+  auto func_graph = lite::ModelParser::Fb2Anf(meta_graph.get());
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>("test", false);
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(func_graph);
