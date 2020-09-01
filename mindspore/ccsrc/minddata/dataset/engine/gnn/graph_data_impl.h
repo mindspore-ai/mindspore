@@ -251,8 +251,9 @@ class GraphDataImpl : public GraphData {
   // @param int32_t samples_num -
   // @param std::vector<NodeIdType> *out_samples - Sampling results returned
   // @return Status - The error code return
-  Status NegativeSample(const std::vector<NodeIdType> &input_data, const std::unordered_set<NodeIdType> &exclude_data,
-                        int32_t samples_num, std::vector<NodeIdType> *out_samples);
+  Status NegativeSample(const std::vector<NodeIdType> &data, const std::vector<NodeIdType> shuffled_ids,
+                        size_t *start_index, const std::unordered_set<NodeIdType> &exclude_data, int32_t samples_num,
+                        std::vector<NodeIdType> *out_samples);
 
   Status CheckSamplesNum(NodeIdType samples_num);
 

@@ -87,7 +87,7 @@ def test_graphdata_distributed():
 
     p1 = Process(target=graphdata_startserver, args=(server_port,))
     p1.start()
-    time.sleep(2)
+    time.sleep(5)
 
     g = ds.GraphData(DATASET_FILE, 1, 'client', port=server_port)
     nodes = g.get_all_nodes(1)
