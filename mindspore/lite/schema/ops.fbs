@@ -355,6 +355,7 @@ table DetectionPostProcess {
     MaxClassesPreDetection: long;
     NumClasses: long;
     UseRegularNms: bool;
+    OutQuantized: bool;
 }
 
 table FullConnection {

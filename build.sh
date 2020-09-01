@@ -428,7 +428,7 @@ build_flatbuffer() {
     if [[ ! -f "${FLATC}" ]]; then
         git submodule update --init --recursive third_party/flatbuffers
         cd ${BASEPATH}/third_party/flatbuffers
-        rm -rf build && mkdir -pv build && cd build && cmake .. && make -j$THREAD_NUM
+        rm -rf build && mkdir -pv build && cd build && cmake -DFLATBUFFERS_BUILD_SHAREDLIB=ON .. && make -j$THREAD_NUM
         gene_flatbuffer
     fi
     if [[ "${INC_BUILD}" == "off" ]]; then

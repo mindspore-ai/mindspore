@@ -67,6 +67,7 @@ else ()
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so DESTINATION ${LIB_DIR_RUN_X86} COMPONENT ${RUN_X86_COMPONENT_NAME})
 
     install(FILES ${TOP_DIR}/third_party/protobuf/build/lib/libprotobuf.so.19.0.0 DESTINATION ${PROTOBF_DIR}/lib RENAME libprotobuf.so.19 COMPONENT ${COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/third_party/flatbuffers/build/libflatbuffers.so.1.11.0 DESTINATION ${FLATBF_DIR}/lib RENAME libflatbuffers.so.1 COMPONENT ${COMPONENT_NAME})
 endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")

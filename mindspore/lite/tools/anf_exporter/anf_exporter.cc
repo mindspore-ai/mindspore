@@ -98,8 +98,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto output_quant_params = primitive->GetOutputQuantParams();
     if (output_quant_params.empty()) {
       if (node_type != schema::PrimitiveType_QuantDTypeCast) {
-        MS_LOG(ERROR) << "node: " << dst_node->name << " output quant params is empty";
-        return RET_ERROR;
+        MS_LOG(DEBUG) << "node: " << dst_node->name << " output quant params is empty";
       }
     } else {
       for (auto output_quant_param : output_quant_params[0]) {

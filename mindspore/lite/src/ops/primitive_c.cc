@@ -120,6 +120,7 @@
 #include "src/ops/tuple_get_item.h"
 #include "src/ops/l2_norm.h"
 #include "src/ops/sparse_to_dense.h"
+#include "src/ops/detection_post_process.h"
 
 namespace mindspore {
 namespace lite {
@@ -467,6 +468,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new L2Norm(primitive);
     case schema::PrimitiveType_SparseToDense:
       return new SparseToDense(primitive);
+    case schema::PrimitiveType_DetectionPostProcess:
+      return new DetectionPostProcess(primitive);
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitiveT : "
                     << schema::EnumNamePrimitiveType(op_type);
@@ -679,6 +682,8 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(const schema::Primitive *primi
       return NewPrimitiveC<L2Norm>(primitive);
     case schema::PrimitiveType_SparseToDense:
       return NewPrimitiveC<SparseToDense>(primitive);
+    case schema::PrimitiveType_DetectionPostProcess:
+      return NewPrimitiveC<DetectionPostProcess>(primitive);
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitive : "
                     << schema::EnumNamePrimitiveType(op_type);
