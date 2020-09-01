@@ -194,6 +194,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
 bool AscendKernelRuntime::Init() {
   if (initialized_) {
+    SetContext();
     return true;
   }
   bool ret = false;
