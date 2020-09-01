@@ -106,7 +106,7 @@ def run_general_distill():
 
     if args_opt.dataset_type == "tfrecord":
         dataset_type = DataType.TFRECORD
-    elif arg_opt.dataset_type == "mindrecord":
+    elif args_opt.dataset_type == "mindrecord":
         dataset_type = DataType.MINDRECORD
     else:
         raise Exception("dataset format is not supported yet")

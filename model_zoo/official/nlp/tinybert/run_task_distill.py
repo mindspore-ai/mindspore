@@ -125,9 +125,9 @@ def run_predistill():
     rank = 0
     device_num = 1
 
-    if arg_opt.dataset_type == "tfrecord":
+    if args_opt.dataset_type == "tfrecord":
         dataset_type = DataType.TFRECORD
-    elif arg_opt.dataset_type == "mindrecord":
+    elif args_opt.dataset_type == "mindrecord":
         dataset_type = DataType.MINDRECORD
     else:
         raise Exception("dataset format is not supported yet")
