@@ -1387,9 +1387,46 @@ void PynativeExecutor::ClearRes() {
   resource_.reset();
 }
 
+size_t GetTupleSize(const py::tuple &args) {
+  size_t count = 0;
+  for (size_t i = 0; i < args.size(); i++) {
+    if (py::isinstance<py::tuple>(args[i])) {
+      count += GetTupleSize(args[i]);
+    } else {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+void ConvertTupleArg(py::tuple *res, size_t *index, const py::tuple &arg) {
+  for (size_t i = 0; i < arg.size(); i++) {
+    if (py::isinstance<py::tuple>(arg[i])) {
+      ConvertTupleArg(res, index, arg[i]);
+    } else {
+      (*res)[(*index)++] = arg[i];
+    }
+  }
+}
+
+py::tuple ConvertArgs(const py::tuple &args) {
+  size_t tuple_size = GetTupleSize(args);
+  py::tuple res(tuple_size);
+  size_t index = 0;
+  for (size_t i = 0; i < args.size(); i++) {
+    if (py::isinstance<py::tuple>(args[i])) {
+      ConvertTupleArg(&res, &index, args[i]);
+    } else {
+      res[index++] = args[i];
+    }
+  }
+  return res;
+}
+
 py::object PynativeExecutor::Run(const py::tuple &args, const py::object &phase) {
   VectorRef arg_list;
-  pipeline::ProcessVmArgInner(args, resource_, &arg_list);
+  py::tuple converted_args = ConvertArgs(args);
+  pipeline::ProcessVmArgInner(converted_args, resource_, &arg_list);
   if (resource_->results().find(pipeline::kOutput) == resource_->results().end() ||
       !resource_->results()[pipeline::kOutput].is<compile::VmEvalFuncPtr>()) {
     MS_LOG(EXCEPTION) << "Can't find run graph func for ";
