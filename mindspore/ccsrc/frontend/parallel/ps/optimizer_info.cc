@@ -103,17 +103,16 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   float *incr_indice_data = values.data() + indice_offset;
   size_t incr_indice_size = lengths[indices_index];
   size_t incr_indice_data_size = incr_indice_size * sizeof(int);
-  int *converted_indices = new int[incr_indice_size];
+  std::vector<int> converted_indices(incr_indice_size);
   for (size_t i = 0; i < incr_indice_size; i++) {
     converted_indices[i] = static_cast<int>(incr_indice_data[i]);
   }
 
-  auto ret2 =
-    memcpy_s(accum_indices_data + indices_offset_, incr_indice_data_size, converted_indices, incr_indice_data_size);
+  auto ret2 = memcpy_s(accum_indices_data + indices_offset_, incr_indice_data_size, converted_indices.data(),
+                       incr_indice_data_size);
   if (ret2 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
   }
-  delete[] converted_indices;
   indices_offset_ += lengths[indices_index];
   indices()->size += incr_indice_data_size;
 }
@@ -123,9 +122,9 @@ void SparseOptimInfo::ComputeMean(const std::shared_ptr<std::vector<std::shared_
   size_t indices_size = static_cast<size_t>(indices()->size / sizeof(int));
   int segment_size = gradient()->size / indices()->size;
 
-  float *new_grad = new float[indices_size * segment_size];
-  int *new_indices = new int[indices_size];
-  mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad, new_indices, indices_size});
+  std::vector<float> new_grad(indices_size * segment_size);
+  std::vector<int> new_indices(indices_size);
+  mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size});
 
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shape_vec.size() < 2 || shape_vec[1] == nullptr) {
@@ -181,9 +180,6 @@ void SparseOptimInfo::ComputeMean(const std::shared_ptr<std::vector<std::shared_
   for (size_t i = 0; i < unique_sparse_grad.indices_size_ * segment_size; i++) {
     grad_data[i] = grad_data[i] / n;
   }
-
-  delete[] new_grad;
-  delete[] new_indices;
 }
 
 void SparseOptimInfo::Reset() {

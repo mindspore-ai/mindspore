@@ -345,7 +345,6 @@ void Worker<T>::AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count)
   }
   kv_worker_->AddEmbeddingTable(key, row_count);
 }
-
 }  // namespace ps
 }  // namespace parallel
 }  // namespace mindspore

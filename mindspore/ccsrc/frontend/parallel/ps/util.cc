@@ -171,15 +171,14 @@ void Util::ReduceSparseGradient(float *gradients, int *indices, const size_t ind
                                 const size_t first_dim_size, const size_t outer_dim_size,
                                 mindspore::kernel::SparseGradient<int> *unique_sparse_grad) {
   size_t slice_segment_size = indices_size * segment_size;
-  auto workspace_grad = new float[slice_segment_size];
-  auto workspace_indices = new int[indices_size];
+  std::vector<float> workspace_grad(slice_segment_size);
+  std::vector<int> workspace_indices(indices_size);
 
   MS_EXCEPTION_IF_NULL(gradients);
   MS_EXCEPTION_IF_NULL(indices);
-  MS_EXCEPTION_IF_NULL(workspace_grad);
-  MS_EXCEPTION_IF_NULL(workspace_indices);
 
-  mindspore::kernel::SparseGradient<int> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size});
+  mindspore::kernel::SparseGradient<int> workspace_sparse_grad(
+    {workspace_grad.data(), workspace_indices.data(), indices_size});
   mindspore::kernel::SparseGradient<int> input_sparse_grad({gradients, indices, indices_size});
   mindspore::kernel::ReduceSparseGradientParam<int> param;
   param.input_grad_ = &input_sparse_grad;
@@ -189,8 +188,6 @@ void Util::ReduceSparseGradient(float *gradients, int *indices, const size_t ind
   param.value_stride_ = outer_dim_size;
 
   mindspore::kernel::SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
-  delete[] workspace_grad;
-  delete[] workspace_indices;
 }
 }  // namespace ps
 }  // namespace parallel
