@@ -46,7 +46,7 @@ Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 
 - Dataset size：175M，60,000 32*32 colorful images in 10 classes
   - Train：146M，50,000 images  
-  - Test：29.3M，10,000 images 
+  - Test：29M，10,000 images 
 - Data format：binary files
   - Note：Data will be processed in src/dataset.py
 
@@ -301,8 +301,8 @@ Parameters for both training and evaluation can be set in config.py
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | NV SMX2 V100-32G       |
-| uploaded Date              | 06/09/2020 (month/day/year)                                 | 08/20/2020             |
-| MindSpore Version          | 0.2.0-alpha                                                 | 0.6.0-alpha            |
+| uploaded Date              | 08/31/2020 (month/day/year)                                 | 08/20/2020 (month/day/year) |
+| MindSpore Version          | 0.7.0-alpha                                                 | 0.6.0-alpha            |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |
 | Training Parameters        | epoch=125, steps=390, batch_size = 128, lr=0.1              | epoch=125, steps=390, batch_size=128, lr=0.1    |
 | Optimizer                  | SGD                                                         | SGD                    |
@@ -314,7 +314,7 @@ Parameters for both training and evaluation can be set in config.py
 | Parameters (M)             | 13.0                                                        | 13.0                   |
 | Checkpoint for Fine tuning | 43.07M (.ckpt file)                                         | 43.07M (.ckpt file)    |
 | Model for inference        | 21.50M (.onnx file),  21.60M(.air file)                     |      | 
-| Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet) | [googlenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet) |
+| Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.7/model_zoo/official/cv/googlenet) | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.6/model_zoo/official/cv/googlenet) |
 
 
 ### Inference Performance
@@ -323,8 +323,8 @@ Parameters for both training and evaluation can be set in config.py
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | Inception V1                | Inception V1                |
 | Resource            | Ascend 910                  | GPU                         |
-| Uploaded Date       | 06/09/2020 (month/day/year) | 08/20/2020 (month/day/year) |
-| MindSpore Version   | 0.2.0-alpha                 | 0.6.0-alpha                 |
+| Uploaded Date       | 08/31/2020 (month/day/year) | 08/20/2020 (month/day/year) |
+| MindSpore Version   | 0.7.0-alpha                 | 0.6.0-alpha                 |
 | Dataset             | CIFAR-10, 10,000 images     | CIFAR-10, 10,000 images     |
 | batch_size          | 128                         | 128                         |
 | outputs             | probability                 | probability                 |
