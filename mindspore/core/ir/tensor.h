@@ -42,6 +42,8 @@ namespace tensor {
 // Tensor data interface.
 class TensorData {
  public:
+  /// virtual destructor is required for base classes.
+  virtual ~TensorData() = default;
   /// Total number of elements.
   virtual ssize_t size() const = 0;
   /// Byte size of a single element.
