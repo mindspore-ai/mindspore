@@ -127,6 +127,7 @@ constexpr char kToFloat16Op[] = "ToFloat16Op";
 constexpr char kTypeCastOp[] = "TypeCastOp";
 
 // other
+constexpr char kCFuncOp[] = "CFuncOp";
 constexpr char kPyFuncOp[] = "PyFuncOp";
 constexpr char kNoOp[] = "NoOp";
 

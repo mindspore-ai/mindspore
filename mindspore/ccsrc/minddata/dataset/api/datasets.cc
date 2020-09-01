@@ -37,6 +37,7 @@
 #endif
 // Dataset operator headers (in alphabetical order)
 #include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/bucket_batch_by_length_op.h"
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 #include "minddata/dataset/engine/datasetops/concat_op.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
@@ -270,6 +271,25 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map;
   bool pad = false;
   auto ds = std::make_shared<BatchDataset>(batch_size, drop_remainder, pad, cols_to_map, pad_map);
+
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+
+  ds->children.push_back(shared_from_this());
+
+  return ds;
+}
+
+// Function to create a BucketBatchByLength dataset
+std::shared_ptr<BucketBatchByLengthDataset> Dataset::BucketBatchByLength(
+  const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
+  const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow),
+  const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
+  bool drop_remainder) {
+  auto ds = std::make_shared<BucketBatchByLengthDataset>(column_names, bucket_boundaries, bucket_batch_sizes,
+                                                         element_length_function, pad_info, pad_to_bucket_boundary,
+                                                         drop_remainder);
 
   if (!ds->ValidateParams()) {
     return nullptr;
@@ -1587,6 +1607,79 @@ bool BatchDataset::ValidateParams() {
     return false;
   }
 
+  return true;
+}
+
+BucketBatchByLengthDataset::BucketBatchByLengthDataset(
+  const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
+  const std::vector<int32_t> &bucket_batch_sizes, TensorRow (*element_length_function)(TensorRow),
+  const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
+  bool drop_remainder)
+    : column_names_(column_names),
+      bucket_boundaries_(bucket_boundaries),
+      bucket_batch_sizes_(bucket_batch_sizes),
+      element_length_function_(element_length_function),
+      pad_info_(pad_info),
+      pad_to_bucket_boundary_(pad_to_bucket_boundary),
+      drop_remainder_(drop_remainder) {}
+
+std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  std::shared_ptr<TensorOp> c_func;
+  if (element_length_function_ != nullptr) {
+    c_func = std::make_shared<CFuncOp>(element_length_function_);
+  } else {
+    c_func = nullptr;
+  }
+  node_ops.push_back(std::make_shared<BucketBatchByLengthOp>(column_names_, bucket_boundaries_, bucket_batch_sizes_,
+                                                             c_func, pad_info_, pad_to_bucket_boundary_,
+                                                             drop_remainder_, connector_que_size_));
+  return node_ops;
+}
+
+bool BucketBatchByLengthDataset::ValidateParams() {
+  if (element_length_function_ == nullptr && column_names_.size() != 1) {
+    MS_LOG(ERROR) << "BucketBatchByLength: If element_length_function is not specified, exactly one column name "
+                     "should be passed.";
+    return false;
+  }
+
+  // Check bucket_boundaries: must be positive and strictly increasing
+  if (bucket_boundaries_.empty()) {
+    MS_LOG(ERROR) << "BucketBatchByLength: bucket_boundaries cannot be empty.";
+    return false;
+  }
+  for (int i = 0; i < bucket_boundaries_.size(); i++) {
+    if (bucket_boundaries_[i] <= 0) {
+      MS_LOG(ERROR)
+        << "BucketBatchByLength: bucket_boundaries must only contain positive numbers. However, the element at index: "
+        << i << " was: " << bucket_boundaries_[i];
+      return false;
+    }
+    if (i > 0 && bucket_boundaries_[i - 1] >= bucket_boundaries_[i]) {
+      MS_LOG(ERROR)
+        << "BucketBatchByLength: bucket_boundaries must be strictly increasing. However, the elements at index: "
+        << i - 1 << " and " << i << " were: " << bucket_boundaries_[i - 1] << " and " << bucket_boundaries_[i]
+        << " respectively.";
+      return false;
+    }
+  }
+
+  // Check bucket_batch_sizes: must be positive
+  if (bucket_batch_sizes_.empty()) {
+    MS_LOG(ERROR) << "BucketBatchByLength: bucket_batch_sizes must be non-empty";
+    return false;
+  }
+  if (bucket_batch_sizes_.size() != bucket_boundaries_.size() + 1) {
+    MS_LOG(ERROR) << "BucketBatchByLength: bucket_batch_sizes's size must equal the size of bucket_boundaries + 1";
+    return false;
+  }
+  if (std::any_of(bucket_batch_sizes_.begin(), bucket_batch_sizes_.end(), [](int i) { return i <= 0; })) {
+    MS_LOG(ERROR) << "BucketBatchByLength: bucket_batch_sizes must only contain positive numbers.";
+    return false;
+  }
   return true;
 }
 

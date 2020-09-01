@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -57,7 +58,7 @@ class BucketBatchByLengthOp : public PipelineOp {
       return *this;
     }
 
-    Builder &SetElementLengthFunction(py::function element_length_function) {
+    Builder &SetElementLengthFunction(std::shared_ptr<TensorOp> element_length_function) {
       builder_element_length_function_ = element_length_function;
       return *this;
     }
@@ -90,7 +91,7 @@ class BucketBatchByLengthOp : public PipelineOp {
     std::vector<std::string> builder_length_dependent_columns_;
     std::vector<int32_t> builder_bucket_boundaries_;
     std::vector<int32_t> builder_bucket_batch_sizes_;
-    py::function builder_element_length_function_;
+    std::shared_ptr<TensorOp> builder_element_length_function_;
     PadInfo builder_pad_info_;
     bool builder_pad_to_bucket_boundary_;
     bool builder_drop_remainder_;
@@ -98,8 +99,8 @@ class BucketBatchByLengthOp : public PipelineOp {
   };
 
   BucketBatchByLengthOp(std::vector<std::string> length_dependent_columns, std::vector<int32_t> bucket_boundaries,
-                        std::vector<int32_t> bucket_batch_sizes, py::function element_length_function, PadInfo pad_info,
-                        bool pad_to_bucket_boundary, bool drop_remainder, int32_t op_connector_size);
+                        std::vector<int32_t> bucket_batch_sizes, std::shared_ptr<TensorOp> element_length_function,
+                        PadInfo pad_info, bool pad_to_bucket_boundary, bool drop_remainder, int32_t op_connector_size);
 
   // Destructor
   ~BucketBatchByLengthOp() = default;
@@ -137,7 +138,7 @@ class BucketBatchByLengthOp : public PipelineOp {
   std::vector<std::string> length_dependent_columns_;
   std::vector<int32_t> bucket_boundaries_;
   std::vector<int32_t> bucket_batch_sizes_;
-  py::function element_length_function_;
+  std::shared_ptr<TensorOp> element_length_function_;
   PadInfo pad_info_;
   bool pad_to_bucket_boundary_;
   bool drop_remainder_;

@@ -7,6 +7,7 @@ if (ENABLE_PYTHON)
             data/compose_op.cc
             data/random_apply_op.cc
             data/random_choice_op.cc
+        c_func_op.cc
         py_func_op.cc
         tensor_op.cc)
     target_include_directories(kernels PRIVATE ${pybind11_INCLUDE_DIRS})
