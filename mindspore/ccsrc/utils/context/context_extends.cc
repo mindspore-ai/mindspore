@@ -225,7 +225,7 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   }
 
   // Enable auto mixed precision according to the context options
-  if (ms_context_ptr->get_param<bool>(MS_CTX_AUTO_MIXED_PRECISION_FLAG)) {
+  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_AUTO_MIXED_PRECISION)) {
     (*ge_options)["ge.exec.precision_mode"] = "allow_mix_precision";
   } else {
     (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
@@ -337,7 +337,7 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     if (ge::GEFinalize() != ge::GRAPH_SUCCESS) {
       MS_LOG(WARNING) << "Finalize GE failed!";
     }
-    ms_context_ptr->set_pynative_ge_init(false);
+    ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
   } else {
     MS_LOG(INFO) << "Ge is used, no need to finalize, tsd reference = "
                  << ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) << ".";

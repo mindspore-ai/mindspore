@@ -60,7 +60,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
 #endif
   set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
   set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
-  set_param<bool>(MS_CTX_AUTO_MIXED_PRECISION_FLAG, false);
+  set_param<bool>(MS_CTX_ENABLE_AUTO_MIXED_PRECISION, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
   set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);

@@ -22,7 +22,7 @@ import threading
 from collections import namedtuple
 from types import FunctionType
 from mindspore import log as logger
-from mindspore._c_expression import MSContext, ms_ctx_param, ms_ctx_get_param, ms_ctx_set_param
+from mindspore._c_expression import MSContext, ms_ctx_param
 from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
@@ -158,17 +158,12 @@ class _Context:
         return value
 
     def get_param(self, param):
-        return ms_ctx_get_param(self._context_handle, param)
+        return self._context_handle.get_param(param)
 
     def set_param(self, param, value):
-        ms_ctx_set_param(self._context_handle, param, value)
+        self._context_handle.set_param(param, value)
 
-    @property
-    def mode(self):
-        return self.get_param(ms_ctx_param.execution_mode)
-
-    @mode.setter
-    def mode(self, mode):
+    def set_mode(self, mode):
         """
         Switch between Graph mode and PyNative mode.
 
@@ -185,43 +180,17 @@ class _Context:
             self._context_switches.push(False, None)
         else:
             raise ValueError(f'The execution mode {mode} is invalid!')
-        self.set_param(ms_ctx_param.execution_mode, mode)
+        self.set_param(ms_ctx_param.mode, mode)
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
             raise RuntimeError("Backend policy must be one of ge, vm, ms.")
 
-    @property
-    def precompile_only(self):
-        return self.get_param(ms_ctx_param.precompile_only)
-
-    @precompile_only.setter
-    def precompile_only(self, precompile_only):
-        self.set_param(ms_ctx_param.precompile_only, precompile_only)
-
-    @property
-    def save_graphs(self):
-        return self.get_param(ms_ctx_param.save_graphs_flag)
-
-    @save_graphs.setter
-    def save_graphs(self, save_graphs_flag):
-        self.set_param(ms_ctx_param.save_graphs_flag, save_graphs_flag)
-
-    @property
-    def save_graphs_path(self):
-        return self.get_param(ms_ctx_param.save_graphs_path)
-
-    @save_graphs_path.setter
-    def save_graphs_path(self, save_graphs_path):
+    def set_save_graphs_path(self, save_graphs_path):
         self.set_param(ms_ctx_param.save_graphs_path, _make_directory(save_graphs_path))
 
-    @property
-    def device_target(self):
-        return self.get_param(ms_ctx_param.device_target)
-
-    @device_target.setter
-    def device_target(self, target):
+    def set_device_target(self, target):
         valid_targets = ["CPU", "GPU", "Ascend", "Davinci"]
         if not target in valid_targets:
             raise ValueError(f"Target device name {target} is invalid! It must be one of {valid_targets}")
@@ -231,72 +200,17 @@ class _Context:
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
 
-    @property
-    def device_id(self):
-        return self.get_param(ms_ctx_param.device_id)
-
-    @device_id.setter
-    def device_id(self, device_id):
+    def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
             raise ValueError(f"Device id must be in [0, 4095], but got {device_id}")
         self.set_param(ms_ctx_param.device_id, device_id)
 
-    @property
-    def max_call_depth(self):
-        return self.get_param(ms_ctx_param.max_call_depth)
-
-    @max_call_depth.setter
-    def max_call_depth(self, max_call_depth):
+    def set_max_call_depth(self, max_call_depth):
         if max_call_depth <= 0:
             raise ValueError(f"Max call depth must be greater than 0, but got {max_call_depth}")
         self.set_param(ms_ctx_param.max_call_depth, max_call_depth)
 
-    @property
-    def enable_auto_mixed_precision(self):
-        return self.get_param(ms_ctx_param.auto_mixed_precision_flag)
-
-    @enable_auto_mixed_precision.setter
-    def enable_auto_mixed_precision(self, enable_auto_mixed_precision):
-        self.set_param(ms_ctx_param.auto_mixed_precision_flag, enable_auto_mixed_precision)
-
-    @property
-    def enable_reduce_precision(self):
-        return self.get_param(ms_ctx_param.enable_reduce_precision_flag)
-
-    @enable_reduce_precision.setter
-    def enable_reduce_precision(self, enable_reduce_precision):
-        self.set_param(ms_ctx_param.enable_reduce_precision_flag, enable_reduce_precision)
-
-    @property
-    def enable_dump(self):
-        return self.get_param(ms_ctx_param.enable_dump)
-
-    @enable_dump.setter
-    def enable_dump(self, enable_dump):
-        self.set_param(ms_ctx_param.enable_dump, enable_dump)
-
-    @property
-    def save_dump_path(self):
-        return self.get_param(ms_ctx_param.save_dump_path)
-
-    @save_dump_path.setter
-    def save_dump_path(self, save_dump_path):
-        self.set_param(ms_ctx_param.save_dump_path, save_dump_path)
-
-    @property
-    def enable_profiling(self):
-        return self.get_param(ms_ctx_param.enable_profiling)
-
-    @enable_profiling.setter
-    def enable_profiling(self, flag):
-        self.set_param(ms_ctx_param.enable_profiling, flag)
-
-    @property
-    def profiling_options(self):
-        return self.get_param(ms_ctx_param.profiling_options)
-
-    @profiling_options.setter
-    def profiling_options(self, option):
+    def set_profiling_options(self, option):
         options = ["training_trace", "task_trace",
                    "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
         if option not in options:
@@ -304,30 +218,7 @@ class _Context:
                              "'task_trace:training_trace' 'training_trace:task_trace' or 'op_trace'.")
         self.set_param(ms_ctx_param.profiling_options, option)
 
-    @property
-    def enable_graph_kernel(self):
-        return self.get_param(ms_ctx_param.enable_graph_kernel)
-
-    @enable_graph_kernel.setter
-    def enable_graph_kernel(self, graph_kernel_switch_):
-        self.set_param(ms_ctx_param.enable_graph_kernel, graph_kernel_switch_)
-
-    @property
-    def reserve_class_name_in_scope(self):
-        """Gets whether to save the network class name in the scope."""
-        return self._thread_local_info.reserve_class_name_in_scope
-
-    @reserve_class_name_in_scope.setter
-    def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
-        """Sets whether to save the network class name in the scope."""
-        self._thread_local_info.reserve_class_name_in_scope = reserve_class_name_in_scope
-
-    @property
-    def variable_memory_max_size(self):
-        return None
-
-    @variable_memory_max_size.setter
-    def variable_memory_max_size(self, variable_memory_max_size):
+    def set_variable_memory_max_size(self, variable_memory_max_size):
         if not check_input_format(variable_memory_max_size):
             raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
         if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
@@ -338,33 +229,7 @@ class _Context:
         self.set_param(ms_ctx_param.variable_memory_max_size, variable_memory_max_size_)
         self.set_param(ms_ctx_param.graph_memory_max_size, graph_memory_max_size_)
 
-    @property
-    def enable_ge(self):
-        return self._context_handle.get_backend_policy() == 'ge'
-
-    @property
-    def enable_debug_runtime(self):
-        return self._thread_local_info.debug_runtime
-
-    @enable_debug_runtime.setter
-    def enable_debug_runtime(self, enable):
-        thread_info = self._thread_local_info
-        thread_info.debug_runtime = enable
-
-    @property
-    def check_bprop(self):
-        return self.get_param(ms_ctx_param.check_bprop_flag)
-
-    @check_bprop.setter
-    def check_bprop(self, check_bprop_flag):
-        self.set_param(ms_ctx_param.check_bprop_flag, check_bprop_flag)
-
-    @property
-    def max_device_memory(self):
-        return self.get_param(ms_ctx_param.max_device_memory)
-
-    @max_device_memory.setter
-    def max_device_memory(self, max_device_memory):
+    def set_max_device_memory(self, max_device_memory):
         if not check_input_format(max_device_memory):
             raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
         max_device_memory_value = float(max_device_memory[:-2])
@@ -372,12 +237,7 @@ class _Context:
             raise ValueError("Context param max_device_memory should be in correct format! Such as \"3.5GB\"")
         self.set_param(ms_ctx_param.max_device_memory, max_device_memory_value)
 
-    @property
-    def print_file_path(self):
-        return None
-
-    @print_file_path.setter
-    def print_file_path(self, file_path):
+    def set_print_file_path(self, file_path):
         """Add timestamp suffix to file name. Sets print file path."""
         print_file_path = os.path.realpath(file_path)
         if os.path.isdir(print_file_path):
@@ -392,13 +252,42 @@ class _Context:
             full_file_name = print_file_path
         self.set_param(ms_ctx_param.print_file_path, full_file_name)
 
-    @property
-    def enable_sparse(self):
-        return self.get_param(ms_ctx_param.enable_sparse)
+    setters = {
+        'mode': set_mode,
+        'backend_policy': set_backend_policy,
+        'save_graphs_path': set_save_graphs_path,
+        'device_target': set_device_target,
+        'device_id': set_device_id,
+        'max_call_depth': set_max_call_depth,
+        'profiling_options': set_profiling_options,
+        'variable_memory_max_size': set_variable_memory_max_size,
+        'max_device_memory': set_max_device_memory,
+        'print_file_path': set_print_file_path
+    }
 
-    @enable_sparse.setter
-    def enable_sparse(self, enable_sparse):
-        self.set_param(ms_ctx_param.enable_sparse, enable_sparse)
+    @property
+    def reserve_class_name_in_scope(self):
+        """Gets whether to save the network class name in the scope."""
+        return self._thread_local_info.reserve_class_name_in_scope
+
+    @reserve_class_name_in_scope.setter
+    def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
+        """Sets whether to save the network class name in the scope."""
+        self._thread_local_info.reserve_class_name_in_scope = reserve_class_name_in_scope
+
+    @property
+    def enable_ge(self):
+        return self._context_handle.get_backend_policy() == 'ge'
+
+    @property
+    def enable_debug_runtime(self):
+        return self._thread_local_info.debug_runtime
+
+    @enable_debug_runtime.setter
+    def enable_debug_runtime(self, enable):
+        thread_info = self._thread_local_info
+        thread_info.debug_runtime = enable
+
 
 def check_input_format(x):
     import re
@@ -621,10 +510,18 @@ def set_context(**kwargs):
         >>> context.set_context(print_file_path="print.pb")
         >>> context.set_context(max_call_depth=80)
     """
+    ctx = _context()
     for key, value in kwargs.items():
-        if not hasattr(_context(), key):
-            raise ValueError("Set context keyword %s is not recognized!" % key)
-        setattr(_context(), key, value)
+        if hasattr(ctx, key):
+            setattr(ctx, key, value)
+            continue
+        if key in ctx.setters:
+            ctx.setters[key](ctx, value)
+            continue
+        if key in ms_ctx_param.__members__:
+            ctx.set_param(ms_ctx_param.__members__[key], value)
+            continue
+        raise ValueError("Set context keyword %s is not recognized!" % key)
 
 
 def get_context(attr_key):
@@ -640,10 +537,13 @@ def get_context(attr_key):
     Raises:
         ValueError: If input key is not an attribute in context.
     """
-    if not hasattr(_context(), attr_key):
-        raise ValueError(
-            "Get context keyword %s is not recognized!" % attr_key)
-    return getattr(_context(), attr_key)
+    ctx = _context()
+    if hasattr(ctx, attr_key):
+        return getattr(ctx, attr_key)
+    if attr_key in ms_ctx_param.__members__:
+        return ctx.get_param(ms_ctx_param.__members__[attr_key])
+    raise ValueError("Get context keyword %s is not recognized!" % attr_key)
+
 
 class ParallelMode:
     """
