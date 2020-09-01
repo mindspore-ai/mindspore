@@ -47,7 +47,7 @@ class AscendControlParser {
   static void EraseParameter(NotNull<KernelGraphPtr> root_graph, const std::set<KernelGraphPtr> &graph_list);
   static void EraseAssign(std::shared_ptr<ReferenceCounter> parameter_count, const std::set<CNodePtr> &all_nodes,
                           const std::map<AnfNodePtr, CNodePtr> &para_to_written_node,
-                          NotNull<KernelGraphPtr> root_graph);
+                          NotNull<KernelGraphPtr> root_graph, const std::set<KernelGraphPtr> &graph_list);
   static void EraseLabel(NotNull<KernelGraphPtr> root_graph);
   static void ChildGraphDataAssign(NotNull<KernelGraphPtr> kg,
                                    const NotNull<std::vector<std::pair<AnfNodePtr, AnfNodePtr>> *> link_list,

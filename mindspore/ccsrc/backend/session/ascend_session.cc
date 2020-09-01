@@ -153,9 +153,6 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   HardwareOptimize(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
 
-  AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
-  memo.clear();
-
   UpdateRefOutputMap(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
   // add make_tuple to the output graph
@@ -178,7 +175,10 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
     debugger_->PreExecute(root_graph);
   }
   SetSummaryNodes(root_graph.get());
-  // alloc mem
+  // Alloc memory for child graph's inputs
+  AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
+  memo.clear();
+  // Alloc memory for root graph's inputs and node's outputs, workspace
   MemoryAlloc(root_graph.get());
   // generate and load task into device
   Load(root_graph);
