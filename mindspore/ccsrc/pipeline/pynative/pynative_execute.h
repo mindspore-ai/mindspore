@@ -59,7 +59,7 @@ void ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tupl
 void ClearPyNativeSession();
 
 struct GraphInfo {
-  std::unordered_map<std::string, AnfNodePtr> param_map;
+  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> param_map;
   std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> obj_node_map;
   AnfNodePtr output;
   std::vector<std::string> objects;
@@ -92,6 +92,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   AnfNodePtr GetObjNode(const py::object &obj);
+  AnfNodePtr GetParamNode(const py::object &obj);
   std::string GetCellId(const py::object &obj, const py::args &args);
   FuncGraphPtr curr_g() { return curr_g_; }
   void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
@@ -104,6 +105,17 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
     graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, index);
   }
+
+  void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node) {
+    graph_info_map_[g].param_map[obj] = std::make_pair(node, std::vector<int>{-1});
+  }
+  void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, int index) {
+    graph_info_map_[g].param_map[obj] = std::make_pair(node, std::vector<int>{index});
+  }
+  void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
+    graph_info_map_[g].param_map[obj] = std::make_pair(node, index);
+  }
+
   AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
                        abstract::AbstractBasePtrList *args_spec_list);
   void MakeCNode(const OpExecInfoPtr &op_exec_info, const py::object &out, const AnfNodePtr &cnode);
@@ -119,6 +131,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   FuncGraphPtr GradGraph(FuncGraphPtr g, const GradOperationPtr &grad_op, const std::vector<AnfNodePtr> &weights,
                          size_t arg_size);
   void SetTupleOutput(const py::object &obj, const AnfNodePtr &cnode, std::vector<int> idx);
+  void SetTupleParam(const py::object &obj, const AnfNodePtr &para_node, std::vector<int> idx);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
   py::tuple RunOpInner(const py::args &args);
   py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
