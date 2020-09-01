@@ -87,7 +87,7 @@ void ArgMinMaxTopknFp32(const float *input, float *output, const int *in_shape, 
 }
 
 void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxParameter *param) {
-  if (param->topk_ == 1 && !param->keep_dims_) {
+  if (param->topk_ == 1) {
     ArgMinMaxTopk1(input, output, in_shape, param);
     return;
   }
