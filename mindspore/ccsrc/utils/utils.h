@@ -192,6 +192,8 @@ constexpr auto kPaddingOpName = "Padding";
 constexpr auto kAvgPoolOpName = "AvgPool";
 constexpr auto kAvgPoolGradGpuOpName = "AvgPoolGradGpu";
 constexpr auto kTensorAddOpName = "TensorAdd";
+constexpr auto kFusedWeightScaleApplyMomentum = "FusedWeightScaleApplyMomentum";
+constexpr auto kFusedScaleApplyMomentum = "FusedScaleApplyMomentum";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
