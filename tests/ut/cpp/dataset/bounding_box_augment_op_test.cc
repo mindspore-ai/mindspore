@@ -24,7 +24,7 @@ using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
 const bool kSaveExpected = false;
-const char kOpName[] = "BoundingBoxAugmentOp";
+const char kOpName[] = "bounding_box_augment_op";
 
 class MindDataTestBoundingBoxAugmentOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
  protected:

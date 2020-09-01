@@ -24,7 +24,7 @@ using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
 const bool kSaveExpected = false;
-const char kOpName[] = "RandomVerticalFlipWithBBox_C";
+const char kOpName[] = "random_vertical_flip_with_bbox_c";
 
 class MindDataTestRandomVerticalFlipWithBBoxOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
  protected:
