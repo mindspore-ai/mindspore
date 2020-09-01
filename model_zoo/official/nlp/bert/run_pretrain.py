@@ -121,9 +121,10 @@ def run_pretrain():
 
     new_repeat_count = args_opt.epoch_size * ds.get_dataset_size() // args_opt.data_sink_steps
     if args_opt.train_steps > 0:
-        new_repeat_count = min(new_repeat_count, args_opt.train_steps // args_opt.data_sink_steps)
+        train_steps = args_opt.train_steps * args_opt.accumulation_steps
+        new_repeat_count = min(new_repeat_count, train_steps // args_opt.data_sink_steps)
     else:
-        args_opt.train_steps = args_opt.epoch_size * ds.get_dataset_size()
+        args_opt.train_steps = args_opt.epoch_size * ds.get_dataset_size() // args_opt.accumulation_steps
         logger.info("train steps: {}".format(args_opt.train_steps))
 
     if cfg.optimizer == 'Lamb':
