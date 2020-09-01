@@ -40,7 +40,7 @@ def test_nms_with_mask_check_order():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     nms_op = P.NMSWithMask(0.5)
     for _ in range(10):
-        count = 8000
+        count = 4000
         box = np.random.randint(1, 100, size=(count, 4))
         box[:, 2] = box[:, 0] + box[:, 2]
         box[:, 3] = box[:, 1] + box[:, 3]
