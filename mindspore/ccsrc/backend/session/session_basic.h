@@ -100,7 +100,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph);
 
-  CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   CNodePtr CreateNewCNode(CNodePtr cnode, KernelGraph *graph);
 
@@ -153,11 +153,11 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                                       const std::vector<int> &tensors_mask);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
-  std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, bool valid_input, KernelGraph *graph);
-  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
+  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
-  AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter);
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);

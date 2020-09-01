@@ -37,7 +37,7 @@ class CPUSession : public SessionBasic {
                            std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) override;
 
  protected:
-  ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) override;
+  ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) override;
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
 
  private:
