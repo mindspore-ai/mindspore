@@ -47,10 +47,16 @@ Status BuddySpace::Init() {
   size_t offset_1 = sizeof(rel_addr_t) * num_lvl_;
   size_t offset_2 = sizeof(int) * num_lvl_ + offset_1;
   size_t offset_3 = sizeof(char) * BitLeftShift(1, num_lvl_ - 3) + offset_2;
-  RETURN_IF_NOT_OK(DeMalloc(offset_3, &ptr_, true));
-  hint_ = reinterpret_cast<rel_addr_t *>(ptr_);
-  count_ = reinterpret_cast<int *>((reinterpret_cast<char *>(ptr_) + offset_1));
-  map_ = reinterpret_cast<char *>(ptr_) + offset_2;
+  try {
+    mem_ = std::make_unique<uint8_t[]>(offset_3);
+  } catch (const std::bad_alloc &e) {
+    return Status(StatusCode::kOutOfMemory);
+  }
+  (void)memset_s(mem_.get(), offset_3, 0, offset_3);
+  auto ptr = mem_.get();
+  hint_ = reinterpret_cast<rel_addr_t *>(ptr);
+  count_ = reinterpret_cast<int *>((reinterpret_cast<char *>(ptr) + offset_1));
+  map_ = reinterpret_cast<char *>(ptr) + offset_2;
   count_[num_lvl_ - 1] = 1;
   map_[0] = BitOr(MORE_BIT, num_lvl_ - 3);
   return Status::OK();
@@ -352,19 +358,9 @@ int BuddySpace::PercentFree() const {
 }
 
 BuddySpace::BuddySpace(int log_min, int num_lvl)
-    : hint_(nullptr),
-      count_(nullptr),
-      map_(nullptr),
-      log_min_(log_min),
-      num_lvl_(num_lvl),
-      min_(0),
-      max_(0),
-      ptr_(nullptr) {}
+    : hint_(nullptr), count_(nullptr), map_(nullptr), log_min_(log_min), num_lvl_(num_lvl), min_(0), max_(0) {}
 
 BuddySpace::~BuddySpace() {
-  if (ptr_ != nullptr) {
-    free(ptr_);
-  }
   hint_ = nullptr;
   count_ = nullptr;
   map_ = nullptr;

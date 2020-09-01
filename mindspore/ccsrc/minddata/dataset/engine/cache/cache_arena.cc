@@ -18,8 +18,7 @@
 namespace mindspore {
 namespace dataset {
 CachedSharedMemoryArena::CachedSharedMemoryArena(int32_t port, size_t val_in_GB)
-    : Arena::Arena(val_in_GB * 1024), port_(port), shmid_(-1) {}
-
+    : ptr_(nullptr), val_in_GB_(val_in_GB), port_(port), shmid_(-1) {}
 CachedSharedMemoryArena::~CachedSharedMemoryArena() {
 #if CACHE_LOCAL_CLIENT
   if (this->ptr_ != nullptr && this->ptr_ != reinterpret_cast<void *>(-1)) {
@@ -54,18 +53,18 @@ Status CachedSharedMemoryArena::CreateArena(std::unique_ptr<CachedSharedMemoryAr
     RETURN_STATUS_UNEXPECTED(errMsg);
   }
   auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
-  ba->shmid_ = shmget(shm_key, ba->size_in_bytes_, IPC_CREAT | IPC_EXCL | access_mode);
+  // Value is in GB. Convert into bytes.
+  int64_t sz = val_in_GB * 1073741824L;
+  ba->shmid_ = shmget(shm_key, sz, IPC_CREAT | IPC_EXCL | access_mode);
   if (ba->shmid_) {
     ba->ptr_ = shmat(ba->shmid_, nullptr, 0);
     if (ba->ptr_ == reinterpret_cast<void *>(-1)) {
       RETURN_STATUS_UNEXPECTED("Shared memory attach failed. Errno " + std::to_string(errno));
     }
+    ba->impl_ = std::make_unique<ArenaImpl>(ba->ptr_, sz);
   } else {
     RETURN_STATUS_UNEXPECTED("Shared memory creation failed. Errno " + std::to_string(errno));
   }
-  uint64_t num_blks = ba->size_in_bytes_ / ARENA_BLK_SZ;
-  MS_LOG(DEBUG) << "Size of memory pool is " << num_blks << ", number of blocks of size is " << ARENA_BLK_SZ << ".";
-  ba->tr_.Insert(0, num_blks);
 #endif
   return Status::OK();
 }

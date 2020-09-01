@@ -41,63 +41,111 @@ namespace dataset {
 ///
 /// When a block of memory is freed. It is joined with the blocks before and after (if they are available) to
 /// form a bigger block.
-class Arena : public MemoryPool {
+
+/// At the lowest level, we don't really care where the memory is coming from.
+/// This allows other class to make use of Arena method and override the origin of the
+/// memory, say from some unix shared memory instead.
+/// \note Implementation class is not thread safe. Caller needs to ensure proper serialization
+class ArenaImpl {
  public:
-  Arena(const Arena &) = delete;
+  /// Constructor
+  /// \param ptr The start of the memory address
+  /// \param sz Size of the memory block we manage
+  ArenaImpl(void *ptr, size_t sz);
+  ~ArenaImpl() { ptr_ = nullptr; }
 
-  Arena &operator=(const Arena &) = delete;
+  /// \brief Allocate a sub block
+  /// \param n Size requested
+  /// \param p pointer to where the result is stored
+  /// \return Status object.
+  Status Allocate(size_t n, void **p);
 
-  ~Arena() override {
-    if (ptr_ != nullptr) {
-      free(ptr_);
-      ptr_ = nullptr;
-    }
-  }
+  /// \brief Enlarge or shrink a sub block
+  /// \param old_sz Original size
+  /// \param new_sz New size
+  /// \return Status object
+  Status Reallocate(void **, size_t old_sz, size_t new_sz);
 
-  Status Allocate(size_t n, void **p) override;
+  /// \brief Free a sub block
+  /// \param Address of the block to be freed.
+  void Deallocate(void *);
 
-  Status Reallocate(void **, size_t old_sz, size_t new_sz) override;
+  /// \brief Calculate % free of the memory
+  /// \return Percent free
+  int PercentFree() const;
 
-  void Deallocate(void *) override;
+  /// \brief What is the maximum we can support in allocate.
+  /// \return Max value
+  uint64_t get_max_size() const { return (size_in_bytes_ - ARENA_WALL_OVERHEAD_SZ); }
 
-  uint64_t get_max_size() const override;
-
-  static uint64_t SizeToBlk(uint64_t sz) {
-    uint64_t req_blk = sz / ARENA_BLK_SZ;
-    if (sz % ARENA_BLK_SZ) {
-      ++req_blk;
-    }
-    return req_blk;
-  }
-
-  int PercentFree() const override;
-
+  /// \brief Get the start of the address. Read only
+  /// \return Start of the address block
   const void *get_base_addr() const { return ptr_; }
 
-  friend std::ostream &operator<<(std::ostream &os, const Arena &s);
+  static uint64_t SizeToBlk(uint64_t sz);
+  friend std::ostream &operator<<(std::ostream &os, const ArenaImpl &s);
 
+ private:
+  size_t size_in_bytes_;
+  Treap<uint64_t, uint64_t> tr_;
+  void *ptr_;
+
+  void *get_user_addr(void *base_addr) const { return reinterpret_cast<char *>(base_addr) + ARENA_WALL_OVERHEAD_SZ; }
+  void *get_base_addr(void *user_addr) const { return reinterpret_cast<char *>(user_addr) - ARENA_WALL_OVERHEAD_SZ; }
+  std::pair<std::pair<uint64_t, uint64_t>, bool> FindPrevBlk(uint64_t addr);
+  bool BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz);
+  Status FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz);
+};
+
+/// \brief This version of Arena allocates from private memory
+class Arena : public MemoryPool {
+ public:
+  // Disable copy and assignment constructor
+  Arena(const Arena &) = delete;
+  Arena &operator=(const Arena &) = delete;
+  ~Arena() override = default;
+
+  /// As a derived class of MemoryPool, we have to implement the following.
+  /// But we simply transfer the call to the implementation class
+  Status Allocate(size_t size, void **pVoid) override {
+    std::unique_lock<std::mutex> lock(mux_);
+    return impl_->Allocate(size, pVoid);
+  }
+  Status Reallocate(void **pVoid, size_t old_sz, size_t new_sz) override {
+    std::unique_lock<std::mutex> lock(mux_);
+    return impl_->Reallocate(pVoid, old_sz, new_sz);
+  }
+  void Deallocate(void *pVoid) override {
+    std::unique_lock<std::mutex> lock(mux_);
+    impl_->Deallocate(pVoid);
+  }
+  uint64_t get_max_size() const override { return impl_->get_max_size(); }
+  int PercentFree() const override {
+    std::unique_lock<std::mutex> lock(mux_);
+    return impl_->PercentFree();
+  }
+
+  /// \return Return the start of the memory block
+  const void *get_base_addr() const { return impl_->get_base_addr(); }
+
+  /// \brief Dump the memory allocation block.
+  friend std::ostream &operator<<(std::ostream &os, const Arena &s) {
+    os << *(s.impl_);
+    return os;
+  }
+
+  /// The only method to create an arena.
   static Status CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB = 4096);
 
  protected:
-  std::mutex mux_;
-  Treap<uint64_t, uint64_t> tr_;
-  void *ptr_;
+  mutable std::mutex mux_;
+  std::unique_ptr<ArenaImpl> impl_;
+  std::unique_ptr<uint8_t[]> mem_;
   size_t size_in_MB_;
-  size_t size_in_bytes_;
 
   explicit Arena(size_t val_in_MB = 4096);
 
-  std::pair<std::pair<uint64_t, uint64_t>, bool> FindPrevBlk(uint64_t addr);
-
   Status Init();
-
-  bool BlockEnlarge(uint64_t *addr, uint64_t old_sz, uint64_t new_sz);
-
-  Status FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz);
-
-  void *get_user_addr(void *base_addr) const { return reinterpret_cast<char *>(base_addr) + ARENA_WALL_OVERHEAD_SZ; }
-
-  void *get_base_addr(void *user_addr) const { return reinterpret_cast<char *>(user_addr) - ARENA_WALL_OVERHEAD_SZ; }
 };
 }  // namespace dataset
 }  // namespace mindspore

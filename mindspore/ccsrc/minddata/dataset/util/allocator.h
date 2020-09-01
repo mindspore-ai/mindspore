@@ -40,6 +40,7 @@ class Allocator {
   using reference = T &;
   using const_reference = const T &;
   using size_type = uint64_t;
+  using difference_type = std::ptrdiff_t;
 
   template <typename U>
   struct rebind {
@@ -86,8 +87,30 @@ class Allocator {
  private:
   std::shared_ptr<MemoryPool> pool_;
 };
-/// \brief It is a wrapper of unique_ptr with a custom allocator and acts like std::lock_guard such that the memory will
-/// be released when the object goes out of scope
+/// \brief It is a wrapper of unique_ptr with a custom Allocator class defined above
+template <typename T, typename... Args>
+Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, Allocator<T> alloc, size_t n, Args &&... args) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "size must be positive");
+  T *data = alloc.allocate(n);
+  if (!std::is_arithmetic<T>::value) {
+    for (auto i = 0; i < n; i++) {
+      std::allocator_traits<Allocator<T>>::construct(alloc, &(data[i]), std::forward<Args>(args)...);
+    }
+  }
+  auto deleter = [](T *p, Allocator<T> f_alloc, size_t f_n) {
+    if (!std::is_arithmetic<T>::value && std::is_destructible<T>::value) {
+      for (auto i = 0; i < f_n; ++i) {
+        std::allocator_traits<Allocator<T>>::destroy(f_alloc, &p[i]);
+      }
+    }
+    f_alloc.deallocate(p, f_n);
+  };
+  *out = std::unique_ptr<T[], std::function<void(T *)>>(data, std::bind(deleter, std::placeholders::_1, alloc, n));
+  return Status::OK();
+}
+
+/// \brief It is a wrapper of the above custom unique_ptr with some additional methods
 /// \tparam T The type of object to be allocated
 /// \tparam C Allocator. Default to std::allocator
 template <typename T, typename C = std::allocator<T>>
@@ -113,14 +136,7 @@ class MemGuard {
   /// \brief Explicitly deallocate the memory if allocated
   void deallocate() {
     if (ptr_) {
-      auto *p = ptr_.release();
-      if (!std::is_arithmetic<T>::value && std::is_destructible<T>::value) {
-        for (auto i = 0; i < n_; ++i) {
-          p[i].~T();
-        }
-      }
-      alloc_.deallocate(p, n_);
-      n_ = 0;
+      ptr_.reset();
     }
   }
   /// \brief Allocate memory (with emplace feature). Previous one will be released. If size is 0, no new memory is
@@ -129,24 +145,9 @@ class MemGuard {
   /// \tparam Args Extra arguments pass to the constructor of T
   template <typename... Args>
   Status allocate(size_t n, Args &&... args) noexcept {
-    try {
-      deallocate();
-      if (n > 0) {
-        T *data = alloc_.allocate(n);
-        if (!std::is_arithmetic<T>::value) {
-          for (auto i = 0; i < n; i++) {
-            std::allocator_traits<C>::construct(alloc_, &(data[i]), std::forward<Args>(args)...);
-          }
-        }
-        ptr_ = std::unique_ptr<T[]>(data);
-        n_ = n;
-      }
-    } catch (const std::bad_alloc &e) {
-      return Status(StatusCode::kOutOfMemory);
-    } catch (std::exception &e) {
-      RETURN_STATUS_UNEXPECTED(e.what());
-    }
-    return Status::OK();
+    deallocate();
+    n_ = n;
+    return MakeUnique(&ptr_, alloc_, n, std::forward<Args>(args)...);
   }
   ~MemGuard() noexcept { deallocate(); }
   /// \brief Getter function
@@ -170,7 +171,7 @@ class MemGuard {
  private:
   size_t n_;
   allocator alloc_;
-  std::unique_ptr<T[]> ptr_;
+  std::unique_ptr<T[], std::function<void(T *)>> ptr_;
 };
 }  // namespace dataset
 }  // namespace mindspore
