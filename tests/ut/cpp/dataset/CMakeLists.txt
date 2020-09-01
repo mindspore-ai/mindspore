@@ -121,6 +121,7 @@ SET(DE_UT_SRCS
         solarize_op_test.cc
         swap_red_blue_test.cc
         distributed_sampler_test.cc
+	data_helper_test.cc
         )
 
 if (ENABLE_PYTHON)
