@@ -27,7 +27,7 @@ class Distribution(Cell):
 
     Args:
         seed (int): random seed used in sampling.
-        dtype (mindspore.dtype): type of the distribution.
+        dtype (mindspore.dtype): the type of the event samples. Default: subclass dtype.
         name (str): Python str name prefixed to Ops created by this class. Default: subclass name.
         param (dict): parameters used to initialize the distribution.
 
