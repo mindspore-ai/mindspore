@@ -109,9 +109,13 @@ class NcclGpuKernel : public GpuKernel {
         auto broadcast_funcptr =
           reinterpret_cast<Broadcast>(dlsym(const_cast<void *>(collective_handle_), "Broadcast"));
         MS_EXCEPTION_IF_NULL(broadcast_funcptr);
-        CHECK_NCCL_RET_WITH_EXCEPT((*broadcast_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
-                                                        nccl_data_type_, root_, stream, group_name_),
-                                   "ncclBroadcast failed");
+        for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
+          input_addr = GetDeviceAddress<T>(inputs, i);
+          output_addr = GetDeviceAddress<T>(outputs, i);
+          CHECK_NCCL_RET_WITH_EXCEPT((*broadcast_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
+                                                          nccl_data_type_, root_, stream, group_name_),
+                                     "ncclBroadcast failed");
+        }
         break;
       }
       default: {

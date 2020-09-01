@@ -104,6 +104,9 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
     num_directions_ = 2;
   }
   const int gate_size = 4 * hidden_size_;
+  if (num_layers_ <= 0) {
+    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
+  }
   for (int i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
     weight_h_size_ += gate_size * hidden_size_;
@@ -112,9 +115,6 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   weight_h_size_ = weight_h_size_ * num_directions_;
   if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
     MS_LOG(EXCEPTION) << "error iteration shape!";
-  }
-  if (num_layers_ <= 0) {
-    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
   }
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
     MS_LOG(EXCEPTION) << "lstm only support 3-D input!";

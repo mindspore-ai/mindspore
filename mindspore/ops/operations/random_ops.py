@@ -439,7 +439,7 @@ class Multinomial(PrimitiveWithInfer):
     Args:
         seed (int): Seed data is used as entropy source for Random number engines generating pseudo-random numbers.
           Must be non-negative. Default: 0.
-        replacement(bool) - whether to draw with replacement or not.
+        replacement(bool): Whether to draw with replacement or not.
 
     Inputs:
         - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2 dims.
