@@ -63,6 +63,8 @@ bool CheckIsAllInputsParam(const AnfNodePtr &node);
 size_t GetOutputTensorNum(const AnfNodePtr &node);
 
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
+size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_

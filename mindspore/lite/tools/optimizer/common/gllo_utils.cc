@@ -319,7 +319,7 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
   if (utils::isa<PrimitiveCPtr>(value)) {
     auto primitive = value->cast<PrimitiveCPtr>();
     MS_ASSERT(primitive != nullptr);
-    return (schema::PrimitiveType)primitive->Type();
+    return (schema::PrimitiveType) primitive->Type();
   } else if (utils::isa<Primitive>(value)) {
     auto primitive = value->cast<PrimitivePtr>();
     MS_ASSERT(primitive != nullptr);
@@ -392,8 +392,8 @@ size_t GetOutputTensorNum(const AnfNodePtr &node) {
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   auto output_node_list = GetRealNodeUsedList(graph, node);
   if (output_node_list->size() != 1) {
-      MS_LOG(DEBUG) << "fusion node has multi output nodes";
-      return true;
+    MS_LOG(DEBUG) << "fusion node has multi output nodes";
+    return true;
   }
   return false;
 }
@@ -410,6 +410,51 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   }
   auto output_info_list = iter->second;
   std::copy(output_info_list.begin(), output_info_list.end(), std::back_inserter(*output_node_list));
+  return output_node_list;
+}
+size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
+  MS_ASSERT(tuple_get_item != nullptr);
+  if (tuple_get_item->size() != kTupleGetItemInputSize) {
+    MS_LOG(ERROR) << "The node tuple_get_item must have 2 inputs!";
+    return -1;
+  }
+  auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_ASSERT(output_index_value_node != nullptr);
+  auto value_node = output_index_value_node->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  return IntToSize(GetValue<int>(value_node->value()));
+}
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
+                                                                                        const AnfNodePtr &node,
+                                                                                        size_t output_index) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(node != nullptr);
+  auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
+  auto manager = graph->manager();
+  MS_ASSERT(manager != nullptr);
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    MS_LOG(ERROR) << "node has no output in manager";
+    return output_node_list;
+  }
+  auto output_info_list = iter->second;
+  for (const auto &output_info : output_info_list) {
+    size_t used_output_index;
+    if (GetCNodeType(output_info.first) == schema::PrimitiveType_TupleGetItem) {
+      used_output_index = GetTupleGetItemOutIndex(utils::cast<CNodePtr>(output_info.first));
+    } else if (GetCNodeType(node) == schema::PrimitiveType_TupleGetItem) {
+      used_output_index = output_index;
+    } else {
+      if (output_index != 0) {
+        MS_LOG(ERROR) << "node has no output in manager";
+        return output_node_list;
+      }
+      return output_node_list;
+    }
+    if (used_output_index == output_index) {
+      output_node_list->push_back(output_info);
+    }
+  }
   return output_node_list;
 }
 }  // namespace opt
