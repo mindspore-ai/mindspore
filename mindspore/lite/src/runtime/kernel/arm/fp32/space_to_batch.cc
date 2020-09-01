@@ -89,7 +89,7 @@ int SpaceToBatchCPUKernel::ReSize() {
   padded_in_shape_[2] = in_shape[2] + param->paddings_[2] + param->paddings_[3];
   auto num_elements_padded = EnumElement(padded_in_shape_.data(), in_shape.size());
   auto output_shape = out_tensors_[0]->shape();
-  auto pedding_h_size = output_shape[2] * output_shape[3] * sizeof(float);
+  auto pedding_h_size = padded_in_shape_[2] * output_shape[3] * sizeof(float);
   pedding_h_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(pedding_h_size));
   if (pedding_h_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc pedding h data fail!";
