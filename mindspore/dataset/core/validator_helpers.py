@@ -369,6 +369,6 @@ def check_gnn_list_or_ndarray(param, param_name):
 
 
 def check_tensor_op(param, param_name):
-    """check whether param is a tensor op or a callable python function"""
+    """check whether param is a tensor op or a callable Python function"""
     if not isinstance(param, cde.TensorOp) and not callable(param):
         raise TypeError("{0} is not a c_transform op (TensorOp) nor a callable pyfunc.".format(param_name))

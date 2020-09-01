@@ -174,7 +174,7 @@ def test_ten_crop_wrong_img_error_msg():
 
     with pytest.raises(RuntimeError) as info:
         data.create_tuple_iterator(num_epochs=1).get_next()
-    error_msg = "TypeError: img should be PIL Image or Numpy array. Got <class 'tuple'>"
+    error_msg = "TypeError: img should be PIL image or NumPy array. Got <class 'tuple'>"
 
     # error msg comes from ToTensor()
     assert error_msg in str(info.value)

@@ -610,7 +610,7 @@ def check_bounding_box_augment_cpp(method):
 
 
 def check_auto_contrast(method):
-    """Wrapper method to check the parameters of AutoContrast ops (python and cpp)."""
+    """Wrapper method to check the parameters of AutoContrast ops (Python and C++)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -631,7 +631,7 @@ def check_auto_contrast(method):
 
 
 def check_uniform_augment_py(method):
-    """Wrapper method to check the parameters of python UniformAugment op."""
+    """Wrapper method to check the parameters of Python UniformAugment op."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -656,7 +656,7 @@ def check_uniform_augment_py(method):
 
 
 def check_positive_degrees(method):
-    """A wrapper method to check degrees parameter in RandomSharpness and RandomColor ops (python and cpp)"""
+    """A wrapper method to check degrees parameter in RandomSharpness and RandomColor ops (Python and C++)"""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

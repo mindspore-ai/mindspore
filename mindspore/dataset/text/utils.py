@@ -213,36 +213,36 @@ class SentencePieceVocab(cde.SentencePieceVocab):
 
 def to_str(array, encoding='utf8'):
     """
-    Convert numpy array of `bytes` to array of `str` by decoding each element based on charset `encoding`.
+    Convert NumPy array of `bytes` to array of `str` by decoding each element based on charset `encoding`.
 
     Args:
         array (numpy.ndarray): Array of type `bytes` representing strings.
         encoding (str): Indicating the charset for decoding.
 
     Returns:
-        numpy.ndarray, numpy array of `str`.
+        numpy.ndarray, NumPy array of `str`.
     """
 
     if not isinstance(array, np.ndarray):
-        raise ValueError('input should be a numpy array.')
+        raise ValueError('input should be a NumPy array.')
 
     return np.char.decode(array, encoding)
 
 
 def to_bytes(array, encoding='utf8'):
     """
-    Convert numpy array of `str` to array of `bytes` by encoding each element based on charset `encoding`.
+    Convert NumPy array of `str` to array of `bytes` by encoding each element based on charset `encoding`.
 
     Args:
         array (numpy.ndarray): Array of type `str` representing strings.
         encoding (str): Indicating the charset for encoding.
 
     Returns:
-        numpy.ndarray, numpy array of `bytes`.
+        numpy.ndarray, NumPy array of `bytes`.
     """
 
     if not isinstance(array, np.ndarray):
-        raise ValueError('input should be a numpy array.')
+        raise ValueError('input should be a NumPy array.')
 
     return np.char.encode(array, encoding)
 

@@ -14,7 +14,7 @@
 # ==============================================================================
 
 """
-This module py_transforms is implemented basing on python. It provides common
+This module py_transforms is implemented basing on Python. It provides common
 operations including OneHotOp.
 """
 

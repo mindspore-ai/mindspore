@@ -414,7 +414,7 @@ def check_python_tokenizer(method):
         [tokenizer], _ = parse_user_args(method, *args, **kwargs)
 
         if not callable(tokenizer):
-            raise TypeError("tokenizer is not a callable python function")
+            raise TypeError("tokenizer is not a callable Python function")
 
         return method(self, *args, **kwargs)
 

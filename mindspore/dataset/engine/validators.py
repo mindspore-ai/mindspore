@@ -589,7 +589,7 @@ def check_filter(method):
     def new_method(self, *args, **kwargs):
         [predicate, input_columns, num_parallel_workers], _ = parse_user_args(method, *args, **kwargs)
         if not callable(predicate):
-            raise TypeError("Predicate should be a python function or a callable python object.")
+            raise TypeError("Predicate should be a Python function or a callable Python object.")
 
         check_num_parallel_workers(num_parallel_workers)
 

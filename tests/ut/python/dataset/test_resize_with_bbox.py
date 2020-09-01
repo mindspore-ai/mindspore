@@ -175,7 +175,7 @@ def test_resize_with_bbox_op_bad_c():
 
 def test_resize_with_bbox_op_params_outside_of_interpolation_dict():
     """
-    Test passing in a invalid key for interpolation
+    Test passing in an invalid key for interpolation
     """
     logger.info("test_resize_with_bbox_op_params_outside_of_interpolation_dict")
 

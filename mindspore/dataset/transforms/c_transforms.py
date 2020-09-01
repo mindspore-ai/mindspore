@@ -89,8 +89,8 @@ class Slice(cde.SliceOp):
             1.  :py:obj:`int`: Slice this index only. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices ion the list only. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object. Similar to `start:stop:step`.
-            4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in python indexing.
-            5.  :py:obj:`Ellipses`: Slice all dimensions between the two slices. Similar to `...` in python indexing.
+            4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
+            5.  :py:obj:`Ellipses`: Slice all dimensions between the two slices. Similar to `...` in Python indexing.
 
     Examples:
      >>> # Data before
@@ -206,8 +206,8 @@ class Concatenate(cde.ConcatenateOp):
 
     Args:
         axis (int, optional): concatenate the tensors along given axis (Default=0).
-        prepend (numpy.array, optional): numpy array to be prepended to the already concatenated tensors (Default=None).
-        append (numpy.array, optional): numpy array to be appended to the already concatenated tensors (Default=None).
+        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors (Default=None).
+        append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
     """
 
     @check_concat_type

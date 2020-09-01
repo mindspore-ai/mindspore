@@ -484,7 +484,7 @@ if platform.system().lower() != 'windows':
                 The original string will be split by matched elements.
             keep_delim_pattern(str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. And the default value is empty str(''),
-                in this situation, delimiters will not kept as a output token(default='').
+                in this situation, delimiters will not kept as an output token(default='').
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:

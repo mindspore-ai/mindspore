@@ -175,7 +175,7 @@ class CutMixBatch(cde.CutMixBatchOp):
 
 class CutOut(cde.CutOutOp):
     """
-    Randomly cut (mask) out a given number of square patches from the input Numpy image array.
+    Randomly cut (mask) out a given number of square patches from the input NumPy image array.
 
     Args:
         length (int): The side length of each square patch.
@@ -935,7 +935,7 @@ class UniformAugment(cde.UniformAugOp):
     Tensor operation to perform randomly selected augmentation.
 
     Args:
-        transforms: list of C++ operations (python OPs are not accepted).
+        transforms: list of C++ operations (Python OPs are not accepted).
         num_ops (int, optional): number of OPs to be selected and applied (default=2).
 
     Examples:

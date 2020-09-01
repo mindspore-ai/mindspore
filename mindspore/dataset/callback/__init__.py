@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""init file for python callback"""
+"""init file for Python callback"""
 from .ds_callback import DSCallback, WaitedDSCallback
 
 __all__ = ["DSCallback", "WaitedDSCallback"]

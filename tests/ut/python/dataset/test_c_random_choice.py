@@ -19,12 +19,15 @@ import mindspore.dataset.transforms.c_transforms as ops
 
 
 def test_random_choice():
+    """
+    Test RandomChoice op
+    """
     ds.config.set_seed(0)
 
     def test_config(arr, op_list):
         try:
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
-            data = data.map(input_columns=["col"], operations=ops.RandomChoice(op_list))
+            data = data.map(operations=ops.RandomChoice(op_list), input_columns=["col"])
             res = []
             for i in data.create_dict_iterator(num_epochs=1):
                 res.append(i["col"].tolist())
@@ -32,15 +35,16 @@ def test_random_choice():
         except (TypeError, ValueError) as e:
             return str(e)
 
-    # test whether a op would be randomly chosen. In order to prevent random failure, both results need to be checked
+    # Test whether an operation would be randomly chosen.
+    # In order to prevent random failure, both results need to be checked.
     res1 = test_config([[0, 1, 2]], [ops.PadEnd([4], 0), ops.Slice([0, 2])])
     assert res1 in [[[0, 1, 2, 0]], [[0, 2]]]
 
-    # test nested structure
+    # Test nested structure
     res2 = test_config([[0, 1, 2]], [ops.Compose([ops.Duplicate(), ops.Concatenate()]),
                                      ops.Compose([ops.Slice([0, 1]), ops.OneHot(2)])])
     assert res2 in [[[[1, 0], [0, 1]]], [[0, 1, 2, 0, 1, 2]]]
-    # test random_choice where there is only 1 op
+    # Test RandomChoice where there is only 1 operation
     assert test_config([[4, 3], [2, 1]], [ops.Slice([0])]) == [[4], [2]]
 
 
