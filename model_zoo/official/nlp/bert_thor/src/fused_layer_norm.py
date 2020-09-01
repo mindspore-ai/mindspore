@@ -101,6 +101,8 @@ class FusedLayerNorm(Cell):
 
         self.batch_norm = P.BatchNorm(is_training=True, epsilon=1e-5)
         self.use_batch_norm = use_batch_norm
+        self.mul = P.Mul()
+        self.add = P.TensorAdd()
 
     def construct(self, input_x):
         """construct of FusedLayerNorm"""
@@ -112,7 +114,8 @@ class FusedLayerNorm(Cell):
             input_x = F.reshape(input_x, norm_shape)
             output, _, _, _, _, _ = self.batch_norm(input_x, ones, zeros, None, None)
             output = F.reshape(output, shape_x)
-            y = output * self.gamma + self.beta
+            y = self.mul(output, self.gamma)
+            y = self.add(y, self.beta)
         else:
             y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)
         return y
