@@ -103,7 +103,10 @@ kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::tensor:
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasGrad);
   auto *kernel =
     new (std::nothrow) BiasGradCPUKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new BiasGradCPUKernel fail!";
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
   if (RET_OK != ret) {

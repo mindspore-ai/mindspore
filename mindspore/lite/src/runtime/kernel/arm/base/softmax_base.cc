@@ -66,7 +66,7 @@ kernel::LiteKernel *CpuSoftmaxInt8KernelCreator(const std::vector<lite::tensor::
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftMax);
-  SoftmaxInt8CPUKernel *kernel = new (std::nothrow) SoftmaxInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SoftmaxInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCPUKernel fail!";
     return nullptr;
@@ -91,7 +91,7 @@ kernel::LiteKernel *CpuSoftmaxFp32KernelCreator(const std::vector<lite::tensor::
     return nullptr;
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftMax);
-  SoftmaxCPUKernel *kernel = new (std::nothrow) SoftmaxCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SoftmaxCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCPUKernel fail!";
     return nullptr;

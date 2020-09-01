@@ -79,7 +79,11 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   }
   size_t data_size = inputs_.at(0)->ElementsNum();
   float *losses = new (std::nothrow) float[data_size];
-  MS_ASSERT(losses != nullptr);
+  if (losses == nullptr) {
+    MS_LOG(ERROR) << "losses is null";
+    return nullptr;
+  }
+
   std::fill(losses, losses + data_size, 0);
 
   MS_ASSERT(out != nullptr);

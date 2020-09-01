@@ -282,7 +282,11 @@ kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::t
     return nullptr;
   }
   auto *kernel = new (std::nothrow) ArithmeticGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ArithmeticGradCPUKernel fail!";
+    return nullptr;
+  }
+
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
