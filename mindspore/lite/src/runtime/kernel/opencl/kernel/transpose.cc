@@ -69,7 +69,7 @@ int TransposeOpenCLKernel::ReSize() { return RET_OK; }
 
 int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  im_dst_x = UP_DIV(out_tensors_[0]->Height() * out_tensors_[0]->Width(), C4NUM);
+  im_dst_x = out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Width(), C4NUM);
   im_dst_y = out_tensors_[0]->Channel();
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
@@ -96,10 +96,12 @@ int TransposeOpenCLKernel::Run() {
 
   cl_int2 HW = {h * w, hw4};
   cl_int2 C = {c, c4};
-  ocl_runtime->SetKernelArg(kernel_, 0, in_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 1, out_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, 2, HW);
-  ocl_runtime->SetKernelArg(kernel_, 3, C);
+  int arg_idx = 0;
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, HW);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, C);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, w);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }

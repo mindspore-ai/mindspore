@@ -65,7 +65,8 @@ int PoolingOpenCLKernel::Init() {
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
   if (out_mem_type_ == OpenCLMemType::BUF) {
-    kernel_name += "_BUF";
+    MS_LOG(ERROR) << "buffer output not support yet.";
+    return RET_ERROR;
   } else {
     kernel_name += "_IMG";
   }

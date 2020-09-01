@@ -117,8 +117,8 @@ TEST_F(TestTransposeOpenCL, TransposeFp32) {
 }
 
 TEST_F(TestTransposeOpenCL, TransposeFp16) {
-  int h = 4;
-  int w = 1;
+  int h = 2;
+  int w = 2;
   int c = 3;
   std::vector<int> shape = {h, w, c};
   std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};

@@ -119,11 +119,9 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
   } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    const int h = 1;
-    const int w = 1;
     int c = shapex[1];
-    im_dst_x = w * UP_DIV(c, C4NUM);
-    im_dst_y = h;
+    im_dst_x = UP_DIV(c, C4NUM);
+    im_dst_y = 1;
   } else {
     MS_LOG(ERROR) << "Unsupported format. " << out_tensors_[0]->GetFormat();
     return RET_ERROR;
