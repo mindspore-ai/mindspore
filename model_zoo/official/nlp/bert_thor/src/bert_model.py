@@ -231,16 +231,17 @@ class EmbeddingPostprocessor(nn.Cell):
             frequency=frequency)
         self.position_ids = Tensor(np.arange(seq).reshape(-1, seq).astype(np.int32))
         self.layernorm = nn.LayerNorm((embedding_size,))
+        self.add = P.TensorAdd()
 
     def construct(self, token_type_ids, word_embeddings):
         """construct of EmbeddingPostprocessor"""
         output = word_embeddings
         if self.use_token_type:
             token_type_embeddings, _ = self.token_type_embedding(token_type_ids)
-            output += token_type_embeddings
+            output = self.add(output, token_type_embeddings)
         if not self.use_relative_positions:
             position_embeddings, _ = self.full_position_embedding(self.position_ids)
-            output += position_embeddings
+            output = self.add(output, position_embeddings)
         output = self.layernorm(output)
         output = self.dropout(output)
         return output

@@ -201,7 +201,7 @@ step:  3000 Accuracy:  [0.71377236]
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       |1.5654222                                                   |
-| Speed                      | 269ms/step（8pcs）                     |
+| Speed                      | 275ms/step（8pcs）                     |
 | Total time                 | 14 mins                          |
 | Parameters (M)             | 330                                                       |
 | Checkpoint for Fine tuning | 4.5G(.ckpt file)                                         |
