@@ -83,7 +83,8 @@ void GeneratorOp::Dealloc() noexcept {
   PyGILState_STATE gstate;
   gstate = PyGILState_Ensure();
   // GC the generator object within GIL
-  (void)generator_.dec_ref();
+  if (generator_function_.ref_count() == 1) generator_function_.dec_ref();
+  if (generator_.ref_count() == 1) (void)generator_.dec_ref();
   // Release GIL
   PyGILState_Release(gstate);
 }

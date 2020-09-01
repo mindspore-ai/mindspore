@@ -38,7 +38,7 @@ from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
-from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp
+from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp, Iterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, check_device_send, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
@@ -1202,6 +1202,12 @@ class Dataset:
         self._num_classes = device_iter.num_classes()
         self._repeat_count = device_iter.get_repeat_count()
         device_iter.stop()
+
+    def get_col_names(self):
+        """
+        Get names of the columns in the dataset
+        """
+        return Iterator(self).get_col_names()
 
     def output_shapes(self):
         """

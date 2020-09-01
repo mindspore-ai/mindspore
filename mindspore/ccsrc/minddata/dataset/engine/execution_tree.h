@@ -211,6 +211,13 @@ class ExecutionTree {
   // @return Bool - true is ExecutionTree is finished
   bool isFinished() const { return tree_state_ == TreeState::kDeTStateFinished; }
 
+  // Return if the ExecutionTree is ready.
+  // @return Bool - true is ExecutionTree is ready
+  bool isPrepared() const {
+    return tree_state_ == TreeState::kDeTStateReady || tree_state_ == kDeTStateExecuting ||
+           tree_state_ == kDeTStateFinished;
+  }
+
   // Set the ExecutionTree to Finished state.
   void SetFinished() { tree_state_ = TreeState::kDeTStateFinished; }
 

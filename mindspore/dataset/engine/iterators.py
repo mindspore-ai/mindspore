@@ -93,7 +93,7 @@ class Iterator:
 
         root = self.__convert_node_postorder(self.dataset)
         self.depipeline.AssignRootNode(root)
-        self.depipeline.LaunchTreeExec(self.num_epochs)
+        self.depipeline.PrepareTree(self.num_epochs)
         self._index = 0
 
     def stop(self):
@@ -276,6 +276,9 @@ class Iterator:
     def num_classes(self):
         return self.depipeline.GetNumClasses()
 
+    def get_col_names(self):
+        return self.depipeline.GetColumnNames()
+
     def __deepcopy__(self, memo):
         return self
 
@@ -283,6 +286,10 @@ class SaveOp(Iterator):
     """
     The derived class of Iterator with dict type.
     """
+    def __init__(self, dataset, num_epochs=-1):
+        super().__init__(dataset, num_epochs)
+        self.depipeline.LaunchTreeExec()
+
     def get_next(self):
         pass
 
@@ -298,6 +305,10 @@ class DictIterator(Iterator):
     """
     The derived class of Iterator with dict type.
     """
+    def __init__(self, dataset, num_epochs=-1):
+        super().__init__(dataset, num_epochs)
+        self.depipeline.LaunchTreeExec()
+
     def check_node_type(self, node):
         pass
 
@@ -328,6 +339,7 @@ class TupleIterator(Iterator):
                 columns = [columns]
             dataset = dataset.project(columns)
         super().__init__(dataset, num_epochs)
+        self.depipeline.LaunchTreeExec()
 
     def __iter__(self):
         return self
