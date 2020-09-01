@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_IMAGE_FORMAT_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_IMAGE_FORMAT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_IMAGE_FORMAT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_IMAGE_FORMAT_H_
 
 #include "src/runtime/opencl/opencl_runtime.h"
 
@@ -59,5 +59,5 @@ cl_channel_type ToImageChannelType(TypeId data_type) {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_IMAGE_FORMAT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_IMAGE_FORMAT_H_
 

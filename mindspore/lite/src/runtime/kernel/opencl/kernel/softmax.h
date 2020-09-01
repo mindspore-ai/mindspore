@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_OPENCL_SOFTMAX_H_
-#define MINDSPORE_LITE_SRC_BACKEND_OPENCL_SOFTMAX_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SOFTMAX_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SOFTMAX_H_
 
 #include <vector>
 
@@ -57,4 +57,4 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_OPENCL_SOFTMAX_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SOFTMAX_H_
