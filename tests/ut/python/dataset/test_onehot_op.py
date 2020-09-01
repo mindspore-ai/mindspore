@@ -21,7 +21,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as data_trans
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 from mindspore import log as logger
-from util import diff_mse
+from util import dataset_equal_with_function
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -52,16 +52,7 @@ def test_one_hot():
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["label"], shuffle=False)
 
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        assert len(item1) == len(item2)
-        label1 = item1["label"]
-        label2 = one_hot(item2["label"][0], depth)
-        mse = diff_mse(label1, label2)
-        logger.info("DE one_hot: {}, Numpy one_hot: {}, diff: {}".format(label1, label2, mse))
-        assert mse == 0
-        num_iter += 1
-    assert num_iter == 3
+    assert dataset_equal_with_function(data1, data2, 0, one_hot, depth)
 
 def test_one_hot_post_aug():
     """
