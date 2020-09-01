@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 #include "google/protobuf/message.h"
-#include "mindspore/lite/schema/inner/model_generated.h"
+#include "schema/inner/model_generated.h"
 #include "tools/converter/parser/caffe/caffe.pb.h"
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
+#include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "include/errorcode.h"
 #include "utils/log_adapter.h"
 

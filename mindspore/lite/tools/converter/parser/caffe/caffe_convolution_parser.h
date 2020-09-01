@@ -18,9 +18,9 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONVOLUTION_PARSER_H_
 
 #include <vector>
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.h"
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_node_parser_registry.h"
-#include "mindspore/lite/tools/converter/parser/caffe/caffe_conv_base_parser.h"
+#include "tools/converter/parser/caffe/caffe_node_parser.h"
+#include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
+#include "tools/converter/parser/caffe/caffe_conv_base_parser.h"
 
 namespace mindspore {
 namespace lite {

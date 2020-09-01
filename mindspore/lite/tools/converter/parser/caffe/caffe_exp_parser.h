@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PRELU_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PRELU_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_EXP_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_EXP_PARSER_H
 
 #include <vector>
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
@@ -23,17 +23,16 @@
 
 namespace mindspore {
 namespace lite {
-class CaffePReluParser : public CaffeNodeParser {
+class CaffeExpParser : public CaffeNodeParser {
  public:
-    CaffePReluParser() : CaffeNodeParser("pRelu") {}
+  CaffeExpParser() : CaffeNodeParser("exp") {}
 
   STATUS Parse(const caffe::LayerParameter &proto,
-                 const caffe::LayerParameter &weight,
-                 schema::CNodeT *op,
-                 std::vector<schema::TensorT *> *weightVec) override;
+               const caffe::LayerParameter &weight,
+               schema::CNodeT *op,
+               std::vector<schema::TensorT *> *weightVec) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PRELU_PARSER_H_
-
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_EXP_PARSER_H

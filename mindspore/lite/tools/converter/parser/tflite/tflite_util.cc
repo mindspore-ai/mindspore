@@ -116,6 +116,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_REVERSE_SEQUENCE, "ReverseSequence"},
   {tflite::BuiltinOperator_UNIQUE, "Unique"},
   {tflite::BuiltinOperator_UNPACK, "Unstack"},
+  {tflite::BuiltinOperator_CUSTOM, "Custom"},
 };
 
 std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{

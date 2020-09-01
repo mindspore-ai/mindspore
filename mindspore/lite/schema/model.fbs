@@ -194,6 +194,7 @@ union PrimitiveType {
     MakeTuple,
     ToFormat,
     Proposal,
+    Custom,
 }
 
 enum QuantType: int {

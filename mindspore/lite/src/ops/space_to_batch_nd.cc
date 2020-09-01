@@ -53,7 +53,7 @@ std::vector<int> SpaceToBatchND::GetPaddings() const {
 int SpaceToBatchND::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
-  auto attr = primitive->value_as_SpaceToBatch();
+  auto attr = primitive->value_as_SpaceToBatchND();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "value_as_SpaceToBatch return nullptr";
     return RET_ERROR;
@@ -71,7 +71,7 @@ int SpaceToBatchND::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
     }
   }
   auto val_offset = schema::CreateSpaceToBatchDirect(*fbb, &blockShape, &paddings);
-  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SpaceToBatch, val_offset.o);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SpaceToBatchND, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }

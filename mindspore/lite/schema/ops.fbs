@@ -472,6 +472,9 @@ table Neg {
 }
 
 table Exp {
+    base : float;
+    scale : float;
+    shift : float;
 }
 
 table Cos {
@@ -895,4 +898,8 @@ table Proposal {
     pre_nms_topn : int;
     post_nms_topn : int;
     nms_thresh : float;
+}
+
+table Custom {
+    custom : [ubyte];
 }
