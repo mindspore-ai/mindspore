@@ -14,6 +14,7 @@
 # ============================================================================
 """train_imagenet."""
 import argparse
+import ast
 import os
 import random
 import numpy as np
@@ -23,7 +24,7 @@ from network import ShuffleNetV2
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import dataset as de
-from mindspore import ParallelMode
+from mindspore.context import ParallelMode
 from mindspore import Tensor
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.nn.optim.momentum import Momentum
@@ -42,10 +43,9 @@ de.config.set_seed(cfg.random_seed)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='image classification training')
-    parser.add_argument('--dataset_path', type=str, default='/home/data/imagenet_jpeg/train/', help='Dataset path')
+    parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
     parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
-    parser.add_argument('--is_distributed', action='store_true', default=False,
-                        help='distributed training')
+    parser.add_argument('--is_distributed', type=ast.literal_eval, default=False, help='distributed training')
     parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU'), help='run platform')
     parser.add_argument('--model_size', type=str, default='1.0x', help='ShuffleNetV2 model size parameter')
     args_opt = parser.parse_args()

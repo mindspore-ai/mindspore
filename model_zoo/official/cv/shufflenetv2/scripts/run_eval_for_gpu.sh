@@ -13,6 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-DEVICE_ID=$1
-EPOCH=$2
-CUDA_VISIBLE_DEVICES=$DEVICE_ID python ./eval.py --platform 'GPU' --dataset_path '/home/data/ImageNet_Original/val/' --epoch $EPOCH > eval.log 2>&1 &
+if [ $# != 2 ]
+then
+    echo "GPU: sh run_eval_for_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+exit 1
+fi
+
+# check dataset file
+if [ ! -d $1 ]
+then
+    echo "error: DATASET_PATH=$1 is not a directory"    
+exit 1
+fi
+
+# check checkpoint file
+if [ ! -f $2 ]
+then
+    echo "error: CHECKPOINT_PATH=$2 is not a file"    
+exit 1
+fi
+
+BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+export DEVICE_ID=0
+
+if [ -d "../eval" ];
+then
+    rm -rf ../eval
+fi
+mkdir ../eval
+cd ../eval || exit
+
+python ${BASEPATH}/../eval.py --dataset_path=$1 --checkpoint=$2 > ./eval.log 2>&1 &
