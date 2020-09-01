@@ -40,15 +40,17 @@ class DetectionPostProcess : public PrimitiveC {
   void SetNmsIouThreshold(float nms_iou_threshold);
   void SetNmsScoreThreshold(float nms_score_threshold);
   void SetMaxDetections(int64_t max_detections);
-  void SetDetectionsPreClass(int64_t detections_pre_class);
-  void SetMaxClassesPreDetection(int64_t max_classes_pre_detection);
+  void SetDetectionsPerClass(int64_t detections_per_class);
+  void SetMaxClassesPerDetection(int64_t max_classes_per_detection);
   void SetNumClasses(int64_t num_classes);
   void SetUseRegularNms(bool use_regular_nms);
+  void SetOutQuantized(bool out_quantized);
 #else
   DetectionPostProcess() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetInputSize() const;
   float GetHScale() const;
@@ -58,11 +60,13 @@ class DetectionPostProcess : public PrimitiveC {
   float GetNmsIouThreshold() const;
   float GetNmsScoreThreshold() const;
   int64_t GetMaxDetections() const;
-  int64_t GetDetectionsPreClass() const;
-  int64_t GetMaxClassesPreDetection() const;
+  int64_t GetDetectionsPerClass() const;
+  int64_t GetMaxClassesPerDetection() const;
   int64_t GetNumClasses() const;
   bool GetUseRegularNms() const;
+  bool GetOutQuantized() const;
 };
+
 }  // namespace lite
 }  // namespace mindspore
 

@@ -351,8 +351,8 @@ table DetectionPostProcess {
     NmsIouThreshold: float;
     NmsScoreThreshold: float;
     MaxDetections: long;
-    DetectionsPreClass: long;
-    MaxClassesPreDetection: long;
+    DetectionsPerClass: long;
+    MaxClassesPerDetection: long;
     NumClasses: long;
     UseRegularNms: bool;
     OutQuantized: bool;

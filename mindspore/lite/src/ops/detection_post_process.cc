@@ -34,11 +34,11 @@ float DetectionPostProcess::GetNmsScoreThreshold() const {
 int64_t DetectionPostProcess::GetMaxDetections() const {
   return this->primitive_->value.AsDetectionPostProcess()->MaxDetections;
 }
-int64_t DetectionPostProcess::GetDetectionsPreClass() const {
-  return this->primitive_->value.AsDetectionPostProcess()->DetectionsPreClass;
+int64_t DetectionPostProcess::GetDetectionsPerClass() const {
+  return this->primitive_->value.AsDetectionPostProcess()->DetectionsPerClass;
 }
-int64_t DetectionPostProcess::GetMaxClassesPreDetection() const {
-  return this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection;
+int64_t DetectionPostProcess::GetMaxClassesPerDetection() const {
+  return this->primitive_->value.AsDetectionPostProcess()->MaxClassesPerDetection;
 }
 int64_t DetectionPostProcess::GetNumClasses() const {
   return this->primitive_->value.AsDetectionPostProcess()->NumClasses;
@@ -46,7 +46,6 @@ int64_t DetectionPostProcess::GetNumClasses() const {
 bool DetectionPostProcess::GetUseRegularNms() const {
   return this->primitive_->value.AsDetectionPostProcess()->UseRegularNms;
 }
-
 void DetectionPostProcess::SetFormat(int format) {
   this->primitive_->value.AsDetectionPostProcess()->format = (schema::Format)format;
 }
@@ -72,19 +71,22 @@ void DetectionPostProcess::SetNmsScoreThreshold(float nms_score_threshold) {
   this->primitive_->value.AsDetectionPostProcess()->NmsScoreThreshold = nms_score_threshold;
 }
 void DetectionPostProcess::SetMaxDetections(int64_t max_detections) {
-  this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_detections;
+  this->primitive_->value.AsDetectionPostProcess()->MaxDetections = max_detections;
 }
-void DetectionPostProcess::SetDetectionsPreClass(int64_t detections_pre_class) {
-  this->primitive_->value.AsDetectionPostProcess()->DetectionsPreClass = detections_pre_class;
+void DetectionPostProcess::SetDetectionsPerClass(int64_t detections_per_class) {
+  this->primitive_->value.AsDetectionPostProcess()->DetectionsPerClass = detections_per_class;
 }
-void DetectionPostProcess::SetMaxClassesPreDetection(int64_t max_classes_pre_detection) {
-  this->primitive_->value.AsDetectionPostProcess()->MaxClassesPreDetection = max_classes_pre_detection;
+void DetectionPostProcess::SetMaxClassesPerDetection(int64_t max_classes_per_detection) {
+  this->primitive_->value.AsDetectionPostProcess()->MaxClassesPerDetection = max_classes_per_detection;
 }
 void DetectionPostProcess::SetNumClasses(int64_t num_classes) {
   this->primitive_->value.AsDetectionPostProcess()->NumClasses = num_classes;
 }
 void DetectionPostProcess::SetUseRegularNms(bool use_regular_nms) {
   this->primitive_->value.AsDetectionPostProcess()->UseRegularNms = use_regular_nms;
+}
+void DetectionPostProcess::SetOutQuantized(bool out_quantized) {
+  this->primitive_->value.AsDetectionPostProcess()->OutQuantized = out_quantized;
 }
 
 #else
@@ -98,8 +100,8 @@ int DetectionPostProcess::UnPackToFlatBuilder(const schema::Primitive *primitive
   }
   auto val_offset = schema::CreateDetectionPostProcess(
     *fbb, attr->format(), attr->inputSize(), attr->hScale(), attr->wScale(), attr->xScale(), attr->yScale(),
-    attr->NmsIouThreshold(), attr->NmsScoreThreshold(), attr->MaxDetections(), attr->DetectionsPreClass(),
-    attr->MaxClassesPreDetection(), attr->NumClasses(), attr->UseRegularNms());
+    attr->NmsIouThreshold(), attr->NmsScoreThreshold(), attr->MaxDetections(), attr->DetectionsPerClass(),
+    attr->MaxClassesPerDetection(), attr->NumClasses(), attr->UseRegularNms(), attr->OutQuantized());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_DetectionPostProcess, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -121,11 +123,11 @@ float DetectionPostProcess::GetNmsScoreThreshold() const {
 int64_t DetectionPostProcess::GetMaxDetections() const {
   return this->primitive_->value_as_DetectionPostProcess()->MaxDetections();
 }
-int64_t DetectionPostProcess::GetDetectionsPreClass() const {
-  return this->primitive_->value_as_DetectionPostProcess()->DetectionsPreClass();
+int64_t DetectionPostProcess::GetDetectionsPerClass() const {
+  return this->primitive_->value_as_DetectionPostProcess()->DetectionsPerClass();
 }
-int64_t DetectionPostProcess::GetMaxClassesPreDetection() const {
-  return this->primitive_->value_as_DetectionPostProcess()->MaxClassesPreDetection();
+int64_t DetectionPostProcess::GetMaxClassesPerDetection() const {
+  return this->primitive_->value_as_DetectionPostProcess()->MaxClassesPerDetection();
 }
 int64_t DetectionPostProcess::GetNumClasses() const {
   return this->primitive_->value_as_DetectionPostProcess()->NumClasses();
@@ -133,7 +135,67 @@ int64_t DetectionPostProcess::GetNumClasses() const {
 bool DetectionPostProcess::GetUseRegularNms() const {
   return this->primitive_->value_as_DetectionPostProcess()->UseRegularNms();
 }
+bool DetectionPostProcess::GetOutQuantized() const {
+  return this->primitive_->value_as_DetectionPostProcess()->OutQuantized();
+}
 
 #endif
+namespace {
+constexpr int kDetectionPostProcessOutputNum = 4;
+constexpr int kDetectionPostProcessInputNum = 3;
+}  // namespace
+int DetectionPostProcess::InferShape(std::vector<lite::tensor::Tensor *> inputs_,
+                                     std::vector<lite::tensor::Tensor *> outputs_) {
+  if (outputs_.size() != kDetectionPostProcessOutputNum || inputs_.size() != kDetectionPostProcessInputNum) {
+    MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs_.size() << ",input size: " << inputs_.size();
+    return RET_PARAM_INVALID;
+  }
+  auto boxes = inputs_.at(0);
+  MS_ASSERT(boxes != nullptr);
+  auto scores = inputs_.at(1);
+  MS_ASSERT(scores != nullptr);
+  auto anchors = inputs_.at(2);
+  MS_ASSERT(anchors != nullptr);
+
+  const auto input_box_shape = boxes->shape();
+  const auto input_scores_shape = scores->shape();
+  const auto input_anchors_shape = anchors->shape();
+  MS_ASSERT(input_scores_shape[2] >= GetNumClasses());
+  MS_ASSERT(input_scores_shape[2] - GetNumClasses() <= 1);
+  MS_ASSERT(input_box_shape[1] = input_scores_shape[1]);
+  MS_ASSERT(input_box_shape[1] = input_anchors_shape[0]);
+
+  auto detected_boxes = outputs_.at(0);
+  MS_ASSERT(detected_boxes != nullptr);
+  auto detected_classes = outputs_.at(1);
+  MS_ASSERT(detected_classes != nullptr);
+  auto detected_scores = outputs_.at(2);
+  MS_ASSERT(detected_scores != nullptr);
+  auto num_det = outputs_.at(3);
+  MS_ASSERT(num_det != nullptr);
+
+  detected_boxes->SetFormat(boxes->GetFormat());
+  detected_boxes->set_data_type(boxes->data_type());
+  detected_classes->SetFormat(boxes->GetFormat());
+  detected_classes->set_data_type(boxes->data_type());
+  detected_scores->SetFormat(boxes->GetFormat());
+  detected_scores->set_data_type(boxes->data_type());
+  num_det->SetFormat(boxes->GetFormat());
+  num_det->set_data_type(boxes->data_type());
+  if (!GetInferFlag()) {
+    return RET_OK;
+  }
+  const auto max_detections = GetMaxDetections();
+  const auto max_classes_per_detection = GetMaxClassesPerDetection();
+  const auto num_detected_boxes = static_cast<int>(max_detections * max_classes_per_detection);
+  const std::vector<int> box_shape{1, num_detected_boxes, 4};
+  const std::vector<int> class_shape{1, num_detected_boxes};
+  const std::vector<int> num_shape{1};
+  detected_boxes->set_shape(box_shape);
+  detected_classes->set_shape(class_shape);
+  detected_scores->set_shape(class_shape);
+  num_det->set_shape(num_shape);
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore
