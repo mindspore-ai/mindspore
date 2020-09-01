@@ -571,8 +571,10 @@ build_minddata_lite_deps()
 
 build_lite()
 {
-    echo "start build mindspore lite project"
-
+    VERSION_MAJOR=`grep "#define MS_VERSION_MAJOR" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_MINOR=`grep "#define MS_VERSION_MINOR" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_REVISION=`grep "#define MS_VERSION_REVISION" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    echo "============ Start building MindSpore Lite ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION} ============"
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
       build_opencl
@@ -605,7 +607,8 @@ build_lite()
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DBUILD_DEVICE=on -DPLATFORM_ARM64=on -DBUILD_CONVERTER=off -DENABLE_NEON=on -DENABLE_FP16="off"      \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-              -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp "${BASEPATH}/mindspore/lite"
+              -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
+              -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} "${BASEPATH}/mindspore/lite"
     elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
@@ -613,11 +616,14 @@ build_lite()
               -DANDROID_STL="c++_shared" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DBUILD_DEVICE=on -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN} -DBUILD_CONVERTER=off    \
               -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-              -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp "${BASEPATH}/mindspore/lite"
+              -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
+              -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} "${BASEPATH}/mindspore/lite"
     else
         cmake -DBUILD_DEVICE=on -DPLATFORM_ARM64=off -DBUILD_CONVERTER=${ENABLE_CONVERTER} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-        -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp "${BASEPATH}/mindspore/lite"
+        -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
+        -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
+        "${BASEPATH}/mindspore/lite"
     fi
     VERBOSE=2 make -j$THREAD_NUM && make install && make package
     COMPILE_RET=$?
