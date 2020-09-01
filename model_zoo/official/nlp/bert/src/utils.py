@@ -23,10 +23,60 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import log as logger
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.train.callback import Callback
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
+
+
+get_square_sum = C.MultitypeFuncGraph("get_square_sum")
+@get_square_sum.register("Tensor")
+def _get_square_sum(grad):
+    norm = P.ReduceSum(False)(F.square(grad), ())
+    norm = F.expand_dims(F.cast(norm, mstype.float32), 0)
+    return norm
+
+
+apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
+@apply_global_norm.register("Tensor", "Tensor", "Tensor")
+def _apply_global_norm(clip_norm, global_norm, grad):
+    grad = grad * clip_norm / global_norm
+    return grad
+
+
+class GlobalNorm(nn.Cell):
+    """
+    Calculate the global norm value of given tensors
+    """
+    def __init__(self):
+        super(GlobalNorm, self).__init__()
+        self.norm = nn.Norm()
+        self.hyper_map = C.HyperMap()
+
+    def construct(self, grads):
+        square_sum = self.hyper_map(get_square_sum, grads)
+        global_norms = F.sqrt(F.addn(square_sum) / F.scalar_to_array(len(square_sum)))
+        return global_norms
+
+
+class ClipByGlobalNorm(nn.Cell):
+    """
+    Clip grads by global norm
+    """
+    def __init__(self, clip_norm=1.0):
+        super(ClipByGlobalNorm, self).__init__()
+        self.global_norm = GlobalNorm()
+        self.clip_norm = Tensor([clip_norm], mstype.float32)
+        self.hyper_map = C.HyperMap()
+
+    def construct(self, grads):
+        global_norm = self.global_norm(grads)
+        cond = P.GreaterEqual()(global_norm, self.clip_norm)
+        global_norm = F.select(cond, global_norm, self.clip_norm)
+        grads = self.hyper_map(F.partial(apply_global_norm, self.clip_norm, global_norm), grads)
+        return grads
 
 
 class CrossEntropyCalculation(nn.Cell):
