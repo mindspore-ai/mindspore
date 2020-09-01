@@ -93,9 +93,6 @@ struct OpInfo {
   int op_kernel_count = 0;
   int op_count = 0;
   void *stream;
-
-  MemcpyInfo memcpy_info = {0};
-  KernelInfo kernel_info = {0};
 };
 
 struct BaseTime {
