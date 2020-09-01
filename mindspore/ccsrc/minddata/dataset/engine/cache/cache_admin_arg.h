@@ -29,11 +29,9 @@ namespace dataset {
 
 class CacheAdminArgHandler {
  public:
-  static constexpr int32_t kDefaultPort = 50052;
   static constexpr int32_t kDefaultNumWorkers = 32;
   static constexpr int32_t kDefaultSharedMemorySizeInGB = 4;
   static constexpr int32_t kDefaultLogLevel = 1;
-  static const char kDefaultHost[];
   static const char kServerBinary[];
   static const char kDefaultSpillDir[];
 

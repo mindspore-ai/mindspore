@@ -23,6 +23,35 @@
 
 namespace mindspore {
 namespace dataset {
+CacheClient::Builder::Builder()
+    : session_id_(0), cache_mem_sz_(0), spill_(false), hostname_(""), port_(0), num_workers_(0), prefetch_size_(0) {
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  hostname_ = cfg->cache_host();
+  port_ = cfg->cache_port();
+  num_workers_ = cfg->num_parallel_workers();
+  prefetch_size_ = 20;  // rows_per_buf is too small (1 by default).
+}
+
+Status CacheClient::Builder::Build(std::shared_ptr<CacheClient> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  RETURN_IF_NOT_OK(SanityCheck());
+  *out =
+    std::make_shared<CacheClient>(session_id_, cache_mem_sz_, spill_, hostname_, port_, num_workers_, prefetch_size_);
+  return Status::OK();
+}
+
+Status CacheClient::Builder::SanityCheck() {
+  CHECK_FAIL_RETURN_UNEXPECTED(session_id_ > 0, "session id must be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(cache_mem_sz_ >= 0, "cache memory size must not be negative. (0 implies unlimited");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_workers_ > 0, "rpc workers must be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(prefetch_size_ > 0, "prefetch size must be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(!hostname_.empty(), "hostname must not be empty");
+  CHECK_FAIL_RETURN_UNEXPECTED(port_ > 0, "port must be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(port_ <= 65535, "illegal port number");
+  CHECK_FAIL_RETURN_UNEXPECTED(hostname_ == "127.0.0.1",
+                               "now cache client has to be on the same host with cache server");
+  return Status::OK();
+}
 
 // Constructor
 CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool spill, std::string hostname,

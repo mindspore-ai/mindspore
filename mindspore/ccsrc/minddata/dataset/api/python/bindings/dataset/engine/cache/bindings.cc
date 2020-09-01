@@ -23,11 +23,13 @@ namespace dataset {
 PYBIND_REGISTER(CacheClient, 0, ([](const py::module *m) {
                   (void)py::class_<CacheClient, std::shared_ptr<CacheClient>>(*m, "CacheClient")
                     .def(
-                      py::init([](session_id_type id, uint64_t mem_sz, bool spill, int32_t port, int32_t prefetch_sz) {
+                      py::init([](session_id_type id, uint64_t mem_sz, bool spill, std::optional<std::string> hostname,
+                                  std::optional<int32_t> port, int32_t prefetch_sz) {
                         std::shared_ptr<CacheClient> cc;
                         CacheClient::Builder builder;
-                        builder.SetSessionId(id).SetCacheMemSz(mem_sz).SetSpill(spill).SetPort(port).SetPrefetchSize(
-                          prefetch_sz);
+                        builder.SetSessionId(id).SetCacheMemSz(mem_sz).SetSpill(spill).SetPrefetchSize(prefetch_sz);
+                        if (hostname) builder.SetHostname(hostname.value());
+                        if (port) builder.SetPort(port.value());
                         THROW_IF_ERROR(builder.Build(&cc));
                         return cc;
                       }))

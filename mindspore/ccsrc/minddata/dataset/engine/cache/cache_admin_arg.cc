@@ -25,21 +25,21 @@
 #include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/util/path.h"
+#include "minddata/dataset/core/constants.h"
 
 namespace mindspore {
 namespace dataset {
 
-const char CacheAdminArgHandler::kDefaultHost[] = "127.0.0.1";
 const char CacheAdminArgHandler::kServerBinary[] = "cache_server";
 const char CacheAdminArgHandler::kDefaultSpillDir[] = "/tmp";
 
 CacheAdminArgHandler::CacheAdminArgHandler()
-    : port_(kDefaultPort),
+    : port_(kCfgDefaultCachePort),
       session_id_(0),
       num_workers_(kDefaultNumWorkers),
       shm_mem_sz_(kDefaultSharedMemorySizeInGB),
       log_level_(kDefaultLogLevel),
-      hostname_(kDefaultHost),
+      hostname_(kCfgDefaultCacheHost),
       spill_dir_(kDefaultSpillDir),
       command_id_(CommandId::kCmdUnknown) {
   // Initialize the command mappings
@@ -376,6 +376,8 @@ Status CacheAdminArgHandler::StopServer() {
   RETURN_IF_NOT_OK(comm.ServiceStart());
   auto rq = std::make_shared<ShutdownRequest>();
   RETURN_IF_NOT_OK(comm.HandleRequest(rq));
+  // We will ignore the rc because if the shutdown is successful, the server will not reply back.
+  (void)rq->Wait();
   return Status::OK();
 }
 
