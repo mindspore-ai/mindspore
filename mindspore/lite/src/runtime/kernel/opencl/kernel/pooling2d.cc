@@ -60,7 +60,7 @@ int PoolingOpenCLKernel::Init() {
     return RET_INVALID_OP_NAME;
   }
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-
+  enable_fp16_ = ocl_runtime->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
@@ -96,11 +96,10 @@ int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
   size_t im_dst_x, im_dst_y;
   im_dst_x = out_tensors_[0]->Width() * CO4;
   im_dst_y = out_tensors_[0]->Height();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
   std::vector<size_t> vec{im_dst_x, im_dst_y, img_dtype};
   *img_size = vec;
@@ -161,5 +160,6 @@ kernel::LiteKernel *OpenCLPooling2dKernelCreator(const std::vector<lite::tensor:
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Pooling, OpenCLPooling2dKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Pooling, OpenCLPooling2dKernelCreator)
 }  // namespace kernel
 }  // namespace mindspore
