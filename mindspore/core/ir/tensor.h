@@ -36,7 +36,7 @@
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
 // brief mindspore::tensor namespace
-//
+enum TensorSyncStatus { kNoNeedSync, kNeedSyncHostToDevice, kNeedSyncDeviceToHost, kNeedSyncDeviceToHostImmediately };
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
 // Tensor data interface.
@@ -260,9 +260,6 @@ class Tensor : public MetaTensor {
   bool is_init() const { return init_flag_; }
   void set_init_flag(bool flag) { init_flag_ = flag; }
 
-  bool is_dirty() const { return dirty_; }
-  void set_dirty(const bool dirty) { dirty_ = dirty; }
-
   DeviceSyncPtr device_address() const { return device_sync_; }
   void set_device_address(const DeviceSyncPtr &device_sync) { device_sync_ = device_sync; }
   void set_padding_type(std::vector<Axis> padding_type) { padding_type_ = padding_type; }
@@ -293,17 +290,22 @@ class Tensor : public MetaTensor {
     event_ == nullptr;
   }
 
-  void set_need_sync(bool need_sync) { need_sync_ = need_sync; }
+  void set_sync_status(TensorSyncStatus sync_status) { sync_status_ = sync_status; }
 
-  bool need_sync() const { return need_sync_; }
+  TensorSyncStatus sync_status() const { return sync_status_; }
+
+  bool NeedSyncDeviceToHostImmediately() const { return sync_status_ == kNeedSyncDeviceToHostImmediately; }
+
+  bool NeedSyncDeviceToHost() const { return sync_status_ == kNeedSyncDeviceToHost; }
+
+  bool NeedSyncHostToDevice() const { return sync_status_ == kNeedSyncHostToDevice; }
 
  private:
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};
-  bool dirty_{true};
   std::string id_{""};
   std::shared_ptr<WaitEvent> event_{nullptr};
-  bool need_sync_{false};
+  TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   DeviceSyncPtr device_sync_{nullptr};
   std::vector<Axis> padding_type_;
 };

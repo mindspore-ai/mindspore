@@ -158,7 +158,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
         if (tensor_address == nullptr || tensor_address != device_address) {
           need_sync = true;
         }
-      } else if (tensor->is_dirty() || tensor_address == nullptr) {
+      } else if (tensor->NeedSyncHostToDevice() || tensor_address == nullptr) {
         need_sync = true;
       } else if (tensor_address != device_address) {
         if (tensor_address->DeviceType() == device_address->DeviceType()) {
@@ -177,7 +177,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
         }
       }
     }
-    tensor->set_dirty(false);
+    tensor->set_sync_status(kNoNeedSync);
   }
 }
 
@@ -332,7 +332,7 @@ void GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info
     for (auto &pre_output : pre_output_tensors) {
       tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
       tensor->set_device_address(pre_output->device_address());
-      tensor->set_dirty(false);
+      tensor->set_sync_status(kNoNeedSync);
       outputs->emplace_back(tensor);
     }
   } else {

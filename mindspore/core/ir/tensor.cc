@@ -422,10 +422,9 @@ Tensor::Tensor(const Tensor &tensor)
     : MetaTensor(tensor),
       init_flag_(tensor.init_flag_),
       data_(tensor.data_),
-      dirty_(tensor.dirty_),
       id_(tensor.id_),
       event_(tensor.event_),
-      need_sync_(tensor.need_sync_),
+      sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
       padding_type_(tensor.padding_type()) {}
 
@@ -433,10 +432,9 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
       init_flag_(tensor.init_flag_),
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
-      dirty_(tensor.dirty_),
       id_(tensor.id_),
       event_(tensor.event_),
-      need_sync_(tensor.need_sync_),
+      sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
       padding_type_(tensor.padding_type()) {}
 
@@ -483,12 +481,11 @@ bool Tensor::ValueEqual(const Tensor &tensor) const {
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     MetaTensor::operator=(tensor);
-    dirty_ = tensor.dirty_;
     device_sync_ = tensor.device_sync_;
     data_ = tensor.data_;
     id_ = tensor.id_;
     event_ = tensor.event_;
-    need_sync_ = tensor.need_sync_;
+    sync_status_ = tensor.sync_status_;
     padding_type_ = tensor.padding_type_;
   }
   return *this;

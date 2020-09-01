@@ -162,7 +162,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
   }
   if (bound_addresses_.find(address) != bound_addresses_.end()) {
     tensor->set_device_address(address);
-    tensor->set_need_sync(true);
+    tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
   } else {
     if (infer_type_id != device_type_id) {
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
@@ -170,15 +170,16 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = resource_manager_.MemMalloc(tensor_size);
       tensor->set_device_address(address);
-      tensor->set_need_sync(true);
+      tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
     } else {
       tensor->set_device_address(nullptr);
       address->ptr_ = tensor->data_c();
+      tensor->set_sync_status(kNoNeedSync);
     }
     address->ref_count_ = INIT_NODE_REF;
     (void)bound_addresses_.insert(address);
   }
-  tensor->set_dirty(false);
+
   return tensor;
 }
 
@@ -247,7 +248,7 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
         }
-        tensor->set_dirty(true);
+        tensor->set_sync_status(kNeedSyncHostToDevice);
       }
       address->ref_count_ = INIT_NODE_REF;
       tensor->set_device_address(address);
