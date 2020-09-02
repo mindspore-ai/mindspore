@@ -67,3 +67,7 @@ void DoStackInt32(const int32_t *const *inputs, size_t input_num, int *in_shape,
     in_offset += copy_num;
   }
 }
+
+void DoStackOneInput(const int8_t *input, int8_t *output, size_t data_size) {
+  memcpy(output, input, data_size);
+}
