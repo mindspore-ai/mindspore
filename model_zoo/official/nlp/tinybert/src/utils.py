@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.train.callback import Callback
-from mindspore.train.serialization import _exec_save_checkpoint
+from mindspore.train.serialization import save_checkpoint
 from mindspore.ops import operations as P
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
 from .assessment_method import Accuracy
@@ -53,9 +53,9 @@ class ModelSaveCkpt(Callback):
                                                                                    self.save_ckpt_step))
                 if os.path.exists(path):
                     os.remove(path)
-            _exec_save_checkpoint(self.network, os.path.join(self.output_dir,
-                                                             "tiny_bert_{}_{}.ckpt".format(int(saved_ckpt_num),
-                                                                                           self.save_ckpt_step)))
+            save_checkpoint(self.network, os.path.join(self.output_dir,
+                                                       "tiny_bert_{}_{}.ckpt".format(int(saved_ckpt_num),
+                                                                                     self.save_ckpt_step)))
 
 class LossCallBack(Callback):
     """
@@ -113,7 +113,7 @@ class EvalCallBack(Callback):
                 eval_model_ckpt_file = "eval_model.ckpt"
                 if os.path.exists(eval_model_ckpt_file):
                     os.remove(eval_model_ckpt_file)
-                _exec_save_checkpoint(self.network, eval_model_ckpt_file)
+                save_checkpoint(self.network, eval_model_ckpt_file)
 
 class BertLearningRate(LearningRateSchedule):
     """

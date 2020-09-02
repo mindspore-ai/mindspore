@@ -31,7 +31,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
-    _exec_save_checkpoint, export, _save_graph
+     export, _save_graph
 from ..ut_filter import non_graph_engine
 
 context.set_context(mode=context.GRAPH_MODE, print_file_path="print/print.pb")
@@ -95,8 +95,8 @@ def test_save_graph():
     os.remove(output_file)
 
 
-def test_save_checkpoint():
-    """ test_save_checkpoint """
+def test_save_checkpoint_for_list():
+    """ test save_checkpoint for list"""
     parameter_list = []
     one_param = {}
     param1 = {}
@@ -280,14 +280,15 @@ def test_load_param_into_net():
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 1
 
 
-def test_exec_save_checkpoint():
+def test_save_checkpoint_for_network():
+    """ test save_checkpoint for network"""
     net = Net()
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     opt = Momentum(net.trainable_params(), 0.0, 0.9, 0.0001, 1024)
 
     loss_net = WithLossCell(net, loss)
     train_network = TrainOneStepCell(loss_net, opt)
-    _exec_save_checkpoint(train_network, ckpt_file_name="./new_ckpt.ckpt")
+    save_checkpoint(train_network, ckpt_file_name="./new_ckpt.ckpt")
 
     load_checkpoint("new_ckpt.ckpt")
 

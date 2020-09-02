@@ -23,7 +23,7 @@ import mindspore.context as context
 from mindspore import log as logger
 from mindspore._checkparam import check_bool, check_int_non_negative
 from mindspore.train._utils import _make_directory
-from mindspore.train.serialization import _exec_save_checkpoint, _save_graph
+from mindspore.train.serialization import save_checkpoint, _save_graph
 from ._callback import Callback, set_cur_net
 
 
@@ -306,8 +306,8 @@ class ModelCheckpoint(Callback):
                 set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
 
-            _exec_save_checkpoint(cb_params.train_network, cur_file, self._config.integrated_save,
-                                  self._config.async_save)
+            save_checkpoint(cb_params.train_network, cur_file, self._config.integrated_save,
+                            self._config.async_save)
 
             self._latest_ckpt_file_name = cur_file
 
