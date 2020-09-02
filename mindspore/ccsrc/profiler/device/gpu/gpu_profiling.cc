@@ -240,38 +240,6 @@ void GPUProfiler::EventLog(const Event &event) {
                 << ",stream_id:" << event.stream_id << ",cb_id:" << event.cb_id;
 }
 
-void fillActivityInfo(OpInfo *opInfo, const Event &event) {
-  if (event.api_type != CUPTIApiType::kActivity) {
-    return;
-  }
-  switch (event.activity_type) {
-    case ActivityType::kKernel:
-      opInfo->kernel_info.registers_per_thread = event.kernel_info.registers_per_thread;
-      opInfo->kernel_info.static_shared_memory = event.kernel_info.static_shared_memory;
-      opInfo->kernel_info.dynamic_shared_memory = event.kernel_info.dynamic_shared_memory;
-      opInfo->kernel_info.block_x = event.kernel_info.block_x;
-      opInfo->kernel_info.block_y = event.kernel_info.block_y;
-      opInfo->kernel_info.block_z = event.kernel_info.block_z;
-      opInfo->kernel_info.grid_x = event.kernel_info.grid_x;
-      opInfo->kernel_info.grid_y = event.kernel_info.grid_y;
-      opInfo->kernel_info.grid_z = event.kernel_info.grid_z;
-      break;
-    case ActivityType::kMemcpyH2D:
-    case ActivityType::kMemcpyD2H:
-    case ActivityType::kMemcpyH2A:
-    case ActivityType::kMemcpyA2H:
-    case ActivityType::kMemcpyA2D:
-    case ActivityType::kMemcpyD2A:
-    case ActivityType::kMemcpyP2P:
-    case ActivityType::kMemcpyH2H:
-    case ActivityType::kMemset:
-    case ActivityType::kMemcpyUnknown:
-      opInfo->memcpy_info.bytes = event.memcpy_info.bytes;
-    default:
-      break;
-  }
-}
-
 void GPUProfiler::OpsParser() {
   MS_LOG(INFO) << "Count the number of events size:" << events_.size()
                << " callback api:" << cupti_callback_events_count_ << " activity:" << cupti_activity_events_count_;
@@ -311,7 +279,6 @@ void GPUProfiler::OpsParser() {
           iter->second.op_kernel_count += 1;
           // The time unit from ns to us
           iter->second.cupti_activity_time += (event.end_time_stamp - event.start_time_stamp) / kTimeUnit;
-          fillActivityInfo(&iter->second, event);
           break;
         }
         default:
@@ -322,9 +289,7 @@ void GPUProfiler::OpsParser() {
 
   MS_LOG(DEBUG) << "GPU_profiler, op_name, op_count , kernel_count, kernel_api_count,|"
                    ",cupti_activity_total_time, cupti_api_call_total_time, op_host_cost_total_time,|"
-                   ",cupti_activity_average_time,cupti_api_call_average_time, op_host_cost_average_time,|"
-                   ",mem_bytes,registers_per_thread,static_shared_memory,dynamic_shared_memory"
-                   ",block_x,block_y,block_z,grid_x,grid_y,grid_z"
+                   ",cupti_activity_average_time,cupti_api_call_average_time, op_host_cost_average_time"
                 << std::endl;
 
   std::vector<std::pair<std::string, OpInfo>> order_vec(op_info_map_.begin(), op_info_map_.end());
@@ -342,13 +307,7 @@ void GPUProfiler::OpsParser() {
                   << iter->second.op_host_cost_time << ","
                   << "|," << round(iter->second.cupti_activity_time / iter->second.op_count) << ","
                   << round(iter->second.cupti_api_call_time / iter->second.op_count) << ","
-                  << round(iter->second.op_host_cost_time / iter->second.op_count) << ","
-                  << "|," << iter->second.memcpy_info.bytes << "," << iter->second.kernel_info.registers_per_thread
-                  << "," << iter->second.kernel_info.static_shared_memory << ","
-                  << iter->second.kernel_info.dynamic_shared_memory << "," << iter->second.kernel_info.block_x << ","
-                  << iter->second.kernel_info.block_y << "," << iter->second.kernel_info.block_z << ","
-                  << iter->second.kernel_info.grid_x << "," << iter->second.kernel_info.grid_y << ","
-                  << iter->second.kernel_info.grid_z << std::endl;
+                  << round(iter->second.op_host_cost_time / iter->second.op_count) << std::endl;
   }
 }
 
@@ -379,6 +338,11 @@ void CUPTIAPI ActivityProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *b
 
 void GPUProfiler::Init(const std::string &profileDataPath = "") {
   MS_LOG(INFO) << "Initialize GPU Profiling";
+  if (subscriber_ != nullptr) {
+    StopCUPTI();
+    MS_LOG(EXCEPTION)
+      << "Repeated initialization, Please check whether you have created the Profiler object multiple times";
+  }
   CHECK_CUPTI_RET_WITH_EXCEPT(CuptiSubscribe(&subscriber_, (CUpti_CallbackFunc)CUPTICallBackFunc, this),
                               "CuptiSubscribe");
   CHECK_CUPTI_RET_WITH_EXCEPT(CuptiEnableDomain(1, subscriber_, CUPTI_CB_DOMAIN_DRIVER_API), "CuptiEnableDomain");
@@ -516,137 +480,137 @@ void CUPTIAPI ActivityProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *b
   GPUProfiler::GetInstance()->ProcessBuffer(ctx, streamId, buffer, size, validSize);
 }
 
-void HandleActivityMemcpyRecord(Event *profillingData, CUpti_Activity *record) {
+void HandleActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record) {
   CUpti_ActivityMemcpy *memcpy = reinterpret_cast<CUpti_ActivityMemcpy *>(record);
   switch (memcpy->copyKind) {
     case CUPTI_ACTIVITY_MEMCPY_KIND_HTOD:
-      profillingData->activity_type = ActivityType::kMemcpyH2D;
-      profillingData->kernel_name = "MemcpyH2D";
+      profilingData->activity_type = ActivityType::kMemcpyH2D;
+      profilingData->kernel_name = "MemcpyH2D";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_DTOH:
-      profillingData->activity_type = ActivityType::kMemcpyD2H;
-      profillingData->kernel_name = "MemcpyD2H";
+      profilingData->activity_type = ActivityType::kMemcpyD2H;
+      profilingData->kernel_name = "MemcpyD2H";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_HTOA:
-      profillingData->activity_type = ActivityType::kMemcpyH2A;
-      profillingData->kernel_name = "MemcpyH2A";
+      profilingData->activity_type = ActivityType::kMemcpyH2A;
+      profilingData->kernel_name = "MemcpyH2A";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_ATOH:
-      profillingData->activity_type = ActivityType::kMemcpyA2H;
-      profillingData->kernel_name = "MemcpyA2H";
+      profilingData->activity_type = ActivityType::kMemcpyA2H;
+      profilingData->kernel_name = "MemcpyA2H";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_ATOD:
-      profillingData->activity_type = ActivityType::kMemcpyA2D;
-      profillingData->kernel_name = "MemcpyA2D";
+      profilingData->activity_type = ActivityType::kMemcpyA2D;
+      profilingData->kernel_name = "MemcpyA2D";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_DTOA:
-      profillingData->activity_type = ActivityType::kMemcpyD2A;
-      profillingData->kernel_name = "MemcpyD2A";
+      profilingData->activity_type = ActivityType::kMemcpyD2A;
+      profilingData->kernel_name = "MemcpyD2A";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_DTOD:
-      profillingData->activity_type = ActivityType::kMemcpyD2D;
-      profillingData->kernel_name = "MemcpyD2D";
+      profilingData->activity_type = ActivityType::kMemcpyD2D;
+      profilingData->kernel_name = "MemcpyD2D";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_HTOH:
-      profillingData->activity_type = ActivityType::kMemcpyH2H;
-      profillingData->kernel_name = "MemcpyH2H";
+      profilingData->activity_type = ActivityType::kMemcpyH2H;
+      profilingData->kernel_name = "MemcpyH2H";
       break;
     case CUPTI_ACTIVITY_MEMCPY_KIND_PTOP:
-      profillingData->activity_type = ActivityType::kMemcpyP2P;
-      profillingData->kernel_name = "MemcpyP2P";
+      profilingData->activity_type = ActivityType::kMemcpyP2P;
+      profilingData->kernel_name = "MemcpyP2P";
       break;
     default:
-      profillingData->activity_type = ActivityType::kMemcpyUnknown;
-      profillingData->kernel_name = "MemcpyUnknown";
+      profilingData->activity_type = ActivityType::kMemcpyUnknown;
+      profilingData->kernel_name = "MemcpyUnknown";
       break;
   }
-  profillingData->kernel_type = "cuMemcpy";
-  profillingData->api_type = CUPTIApiType::kActivity;
-  profillingData->start_time_stamp = memcpy->start;
-  profillingData->end_time_stamp = memcpy->end;
-  profillingData->device_id = memcpy->deviceId;
-  profillingData->context_id = memcpy->contextId;
-  profillingData->stream_id = memcpy->streamId;
-  profillingData->correlation_id = memcpy->correlationId;
-  profillingData->memcpy_info.bytes = memcpy->bytes;
-  profillingData->memcpy_info.src_kind = memcpy->srcKind;
-  profillingData->memcpy_info.dst_kind = memcpy->dstKind;
+  profilingData->kernel_type = "cuMemcpy";
+  profilingData->api_type = CUPTIApiType::kActivity;
+  profilingData->start_time_stamp = memcpy->start;
+  profilingData->end_time_stamp = memcpy->end;
+  profilingData->device_id = memcpy->deviceId;
+  profilingData->context_id = memcpy->contextId;
+  profilingData->stream_id = memcpy->streamId;
+  profilingData->correlation_id = memcpy->correlationId;
+  profilingData->memcpy_info.bytes = memcpy->bytes;
+  profilingData->memcpy_info.src_kind = memcpy->srcKind;
+  profilingData->memcpy_info.dst_kind = memcpy->dstKind;
 }
 
-void HandleActivityMemcpy2Record(Event *profillingData, CUpti_Activity *record) {
+void HandleActivityMemcpy2Record(Event *profilingData, CUpti_Activity *record) {
   CUpti_ActivityMemcpy2 *memcpyP2P = reinterpret_cast<CUpti_ActivityMemcpy2 *>(record);
-  profillingData->activity_type = ActivityType::kMemcpyP2P;
-  profillingData->kernel_name = "MemcpyP2P";
-  profillingData->kernel_type = "cuMemcpy";
-  profillingData->api_type = CUPTIApiType::kActivity;
-  profillingData->start_time_stamp = memcpyP2P->start;
-  profillingData->end_time_stamp = memcpyP2P->end;
-  profillingData->device_id = memcpyP2P->deviceId;
-  profillingData->context_id = memcpyP2P->contextId;
-  profillingData->stream_id = memcpyP2P->streamId;
-  profillingData->correlation_id = memcpyP2P->correlationId;
-  profillingData->memcpy_info.bytes = memcpyP2P->bytes;
-  profillingData->memcpy_info.src_kind = memcpyP2P->srcKind;
-  profillingData->memcpy_info.dst_kind = memcpyP2P->dstKind;
+  profilingData->activity_type = ActivityType::kMemcpyP2P;
+  profilingData->kernel_name = "MemcpyP2P";
+  profilingData->kernel_type = "cuMemcpy";
+  profilingData->api_type = CUPTIApiType::kActivity;
+  profilingData->start_time_stamp = memcpyP2P->start;
+  profilingData->end_time_stamp = memcpyP2P->end;
+  profilingData->device_id = memcpyP2P->deviceId;
+  profilingData->context_id = memcpyP2P->contextId;
+  profilingData->stream_id = memcpyP2P->streamId;
+  profilingData->correlation_id = memcpyP2P->correlationId;
+  profilingData->memcpy_info.bytes = memcpyP2P->bytes;
+  profilingData->memcpy_info.src_kind = memcpyP2P->srcKind;
+  profilingData->memcpy_info.dst_kind = memcpyP2P->dstKind;
 }
 
-void HandleActivityMemsetRecord(Event *profillingData, CUpti_Activity *record) {
+void HandleActivityMemsetRecord(Event *profilingData, CUpti_Activity *record) {
   CUpti_ActivityMemset *memset = reinterpret_cast<CUpti_ActivityMemset *>(record);
-  profillingData->activity_type = ActivityType::kMemset;
-  profillingData->kernel_name = "MemorySet";
-  profillingData->api_type = CUPTIApiType::kActivity;
-  profillingData->start_time_stamp = memset->start;
-  profillingData->end_time_stamp = memset->end;
-  profillingData->device_id = memset->deviceId;
-  profillingData->context_id = memset->contextId;
-  profillingData->stream_id = memset->streamId;
-  profillingData->correlation_id = memset->correlationId;
-  profillingData->memcpy_info.bytes = memset->bytes;
+  profilingData->activity_type = ActivityType::kMemset;
+  profilingData->kernel_name = "MemorySet";
+  profilingData->api_type = CUPTIApiType::kActivity;
+  profilingData->start_time_stamp = memset->start;
+  profilingData->end_time_stamp = memset->end;
+  profilingData->device_id = memset->deviceId;
+  profilingData->context_id = memset->contextId;
+  profilingData->stream_id = memset->streamId;
+  profilingData->correlation_id = memset->correlationId;
+  profilingData->memcpy_info.bytes = memset->bytes;
 }
 
-void HandleActivityKernelRecord(Event *profillingData, CUpti_Activity *record) {
+void HandleActivityKernelRecord(Event *profilingData, CUpti_Activity *record) {
   CUpti_ActivityKernel4 *kernel = reinterpret_cast<CUpti_ActivityKernel4 *>(record);
-  profillingData->activity_type = ActivityType::kKernel;
-  profillingData->api_type = CUPTIApiType::kActivity;
-  profillingData->kernel_name = GetKernelFunc(kernel->name);
-  profillingData->kernel_type = "cuLaunchKernel";
-  profillingData->start_time_stamp = kernel->start;
-  profillingData->end_time_stamp = kernel->end;
-  profillingData->device_id = kernel->deviceId;
-  profillingData->context_id = kernel->contextId;
-  profillingData->stream_id = kernel->streamId;
-  profillingData->correlation_id = kernel->correlationId;
-  profillingData->kernel_info.registers_per_thread = kernel->registersPerThread;
-  profillingData->kernel_info.static_shared_memory = kernel->staticSharedMemory;
-  profillingData->kernel_info.dynamic_shared_memory = kernel->dynamicSharedMemory;
-  profillingData->kernel_info.block_x = kernel->blockX;
-  profillingData->kernel_info.block_y = kernel->blockY;
-  profillingData->kernel_info.block_z = kernel->blockZ;
-  profillingData->kernel_info.grid_x = kernel->gridX;
-  profillingData->kernel_info.grid_y = kernel->gridY;
-  profillingData->kernel_info.grid_z = kernel->gridZ;
+  profilingData->activity_type = ActivityType::kKernel;
+  profilingData->api_type = CUPTIApiType::kActivity;
+  profilingData->kernel_name = GetKernelFunc(kernel->name);
+  profilingData->kernel_type = "cuLaunchKernel";
+  profilingData->start_time_stamp = kernel->start;
+  profilingData->end_time_stamp = kernel->end;
+  profilingData->device_id = kernel->deviceId;
+  profilingData->context_id = kernel->contextId;
+  profilingData->stream_id = kernel->streamId;
+  profilingData->correlation_id = kernel->correlationId;
+  profilingData->kernel_info.registers_per_thread = kernel->registersPerThread;
+  profilingData->kernel_info.static_shared_memory = kernel->staticSharedMemory;
+  profilingData->kernel_info.dynamic_shared_memory = kernel->dynamicSharedMemory;
+  profilingData->kernel_info.block_x = kernel->blockX;
+  profilingData->kernel_info.block_y = kernel->blockY;
+  profilingData->kernel_info.block_z = kernel->blockZ;
+  profilingData->kernel_info.grid_x = kernel->gridX;
+  profilingData->kernel_info.grid_y = kernel->gridY;
+  profilingData->kernel_info.grid_z = kernel->gridZ;
 }
 
 void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
   PROFILER_ERROR_IF_NULLPTR(record);
-  Event profillingData;
-  profillingData.cb_id = 0;
+  Event profilingData;
+  profilingData.cb_id = 0;
   switch (record->kind) {
     case CUPTI_ACTIVITY_KIND_MEMCPY: {
-      HandleActivityMemcpyRecord(&profillingData, record);
+      HandleActivityMemcpyRecord(&profilingData, record);
       break;
     }
     case CUPTI_ACTIVITY_KIND_MEMCPY2: {
-      HandleActivityMemcpy2Record(&profillingData, record);
+      HandleActivityMemcpy2Record(&profilingData, record);
       break;
     }
     case CUPTI_ACTIVITY_KIND_MEMSET: {
-      HandleActivityMemsetRecord(&profillingData, record);
+      HandleActivityMemsetRecord(&profilingData, record);
       break;
     }
     case CUPTI_ACTIVITY_KIND_KERNEL:
     case CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL: {
-      HandleActivityKernelRecord(&profillingData, record);
+      HandleActivityKernelRecord(&profilingData, record);
       break;
     }
     default:
@@ -654,7 +618,7 @@ void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
       return;
   }
 
-  AddEvent(std::move(profillingData));
+  AddEvent(std::move(profilingData));
 }
 
 void CUPTIAPI GPUProfiler::AllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {
