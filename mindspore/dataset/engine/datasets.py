@@ -4456,8 +4456,8 @@ class VOCDataset(MappableDataset):
         task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
             (default="Segmentation").
         mode (str): Set the data list txt file to be readed (default="train").
-        class_indexing (dict, optional): A str-to-int mapping from label name to index
-            (default=None, the folder names will be sorted alphabetically and each
+        class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
+            "Detection" task (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
