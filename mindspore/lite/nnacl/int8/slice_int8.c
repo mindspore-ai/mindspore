@@ -66,7 +66,7 @@ int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *par
   return 0;
 }
 
-int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param) {
+int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param, int thread_id) {
   double input_scale = param->quant_arg_.in_args_.scale_;
   int input_zp = param->quant_arg_.in_args_.zp_;
   double output_scale = param->quant_arg_.out_args_.scale_;
@@ -81,7 +81,6 @@ int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param) {
   int out_stride1 = out_stride2 * out_dim2;
   int out_stride0 = out_stride1 * out_dim1;
   int count_per_thread = UP_DIV(out_dim1, param->op_parameter_.thread_num_);
-  int thread_id = param->thread_id_;
   int thread_stride = thread_id * count_per_thread;
   int unit_size = param->size_[3] * sizeof(int8_t);
   int in_stride2 = param->shape_[3];

@@ -30,7 +30,6 @@ typedef struct SliceParameter {
   int32_t size_[SLICE_SHAPE_MAX_SIZE];
   int32_t shape_[SLICE_SHAPE_MAX_SIZE];
   int32_t param_length_;
-  int32_t thread_id_;
 } SliceParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_SLICE_PARAMETER_H_
