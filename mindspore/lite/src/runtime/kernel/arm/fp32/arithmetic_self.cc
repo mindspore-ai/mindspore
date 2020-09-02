@@ -69,8 +69,58 @@ int ArithmeticSelfCPUKernel::DoArithmeticSelf(int task_id) {
   }
   return RET_OK;
 }
+int RestoreMulWeight(lite::tensor::Tensor *input_tensor) {
+  MS_ASSERT(input_tensor != nullptr);
+  if (input_tensor->data_type() != kNumberTypeUInt8) {
+    MS_LOG(ERROR) << "full connect input type error" << input_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (input_tensor->GetQuantParams().empty()) {
+    MS_LOG(ERROR) << "no quant param";
+    return RET_ERROR;
+  }
+  const auto* quant_data = static_cast<const uint8_t*>(input_tensor->Data());
+  auto* dequant_data = static_cast<float *>(malloc(input_tensor->DataSize() * sizeof(float)));
+  if (dequant_data == nullptr) {
+    MS_LOG(ERROR) << "malloc faile";
+    return RET_ERROR;
+  }
 
+  if (input_tensor->GetQuantParams().size() != kPerTensor) {
+    size_t channels = static_cast<size_t>(input_tensor->Batch());
+    if (input_tensor->GetQuantParams().size() != channels) {
+      MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
+      return RET_ERROR;
+    }
+    size_t per_channel_size = input_tensor->DataSize() / channels;
+    auto quant_param = input_tensor->GetQuantParams();
+    for (size_t i = 0; i < channels; i++) {
+      auto param = quant_param.at(i);
+      auto scale = param.scale;
+      auto zero_point = param.zeroPoint;
+      for (size_t j = 0; j < per_channel_size; j++) {
+        dequant_data[per_channel_size * i + j] = static_cast<float>(
+          (quant_data[per_channel_size * i + j] - zero_point) * scale);
+      }
+    }
+  } else {
+    auto quant_param = input_tensor->GetQuantParams();
+    auto param = quant_param.front();
+    auto scale = param.scale;
+    auto zero_point = param.zeroPoint;
+    for (int64_t j = 0; j < input_tensor->DataSize(); j++) {
+      dequant_data[j] = static_cast<float>((quant_data[j] - zero_point) * scale);
+    }
+  }
+  input_tensor->SetData(dequant_data);
+  return RET_OK;
+}
 int ArithmeticSelfCPUKernel::Run() {
+  void *restore_data = nullptr;
+  if (primitive_->GetQuantType() == schema::QuantType_WeightQuant) {
+    restore_data = in_tensors_[1]->Data();
+    RestoreMulWeight(in_tensors_[1]);
+  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
@@ -84,6 +134,10 @@ int ArithmeticSelfCPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
     return ret;
+  }
+  if (primitive_->GetQuantType() == schema::QuantType_WeightQuant) {
+    in_tensors_[1]->FreeData();
+    in_tensors_[1]->SetData(restore_data);
   }
   return RET_OK;
 }

@@ -169,13 +169,63 @@ int ScaleCPUKernel::Run() {
   }
   return RET_OK;
 }
+int RestoreScaleWeight(lite::tensor::Tensor *input_tensor) {
+  MS_ASSERT(input_tensor != nullptr);
+  if (input_tensor->data_type() != kNumberTypeUInt8) {
+    MS_LOG(ERROR) << "mat mul input type error" << input_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (input_tensor->GetQuantParams().empty()) {
+    MS_LOG(ERROR) << "no quant param";
+    return RET_ERROR;
+  }
+  const auto* quant_data = static_cast<const uint8_t*>(input_tensor->Data());
+  auto* dequant_data = static_cast<float *>(malloc(input_tensor->DataSize() * sizeof(float)));
+  if (dequant_data == nullptr) {
+    MS_LOG(ERROR) << "malloc faile";
+    return RET_ERROR;
+  }
 
+  if (input_tensor->GetQuantParams().size() != kPerTensor) {
+    size_t channels = static_cast<size_t>(input_tensor->Batch());
+    if (input_tensor->GetQuantParams().size() != channels) {
+      MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
+      return RET_ERROR;
+    }
+    size_t per_channel_size = input_tensor->DataSize() / channels;
+    auto quant_param = input_tensor->GetQuantParams();
+    for (size_t i = 0; i < channels; i++) {
+      auto param = quant_param.at(i);
+      auto scale = param.scale;
+      auto zero_point = param.zeroPoint;
+      for (size_t j = 0; j < per_channel_size; j++) {
+        dequant_data[per_channel_size * i + j] = static_cast<float>(
+          (quant_data[per_channel_size * i + j] - zero_point) * scale);
+      }
+    }
+  } else {
+    auto quant_param = input_tensor->GetQuantParams();
+    auto param = quant_param.front();
+    auto scale = param.scale;
+    auto zero_point = param.zeroPoint;
+    for (int64_t j = 0; j < input_tensor->DataSize(); j++) {
+      dequant_data[j] = static_cast<float>((quant_data[j] - zero_point) * scale);
+    }
+  }
+  input_tensor->SetData(dequant_data);
+  return RET_OK;
+}
 kernel::LiteKernel *CpuScaleFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                               const std::vector<lite::tensor::Tensor *> &outputs,
                                               OpParameter *opParameter, const lite::Context *ctx,
                                               const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Scale);
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->Data();
+  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    RestoreScaleWeight(inputs.at(kWeightIndex));
+  }
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "opParameter is nullptr";
     return nullptr;
@@ -192,6 +242,10 @@ kernel::LiteKernel *CpuScaleFp32KernelCreator(const std::vector<lite::tensor::Te
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;
+  }
+  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    weight_tensor->FreeData();
+    weight_tensor->SetData(restore_data);
   }
   return kernel;
 }

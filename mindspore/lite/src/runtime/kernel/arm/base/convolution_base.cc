@@ -333,6 +333,10 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
 }
 int ConvolutionBaseCPUKernel::RestoreFilter(lite::tensor::Tensor *input_tensor) {
   MS_ASSERT(input_tensor != nullptr);
+  if (input_tensor->data_type() != kNumberTypeUInt8) {
+    MS_LOG(ERROR) << "conv weight input type error" << input_tensor->data_type();
+    return RET_ERROR;
+  }
   if (input_tensor->GetQuantParams().empty()) {
     MS_LOG(ERROR) << "no quant param";
     return RET_ERROR;

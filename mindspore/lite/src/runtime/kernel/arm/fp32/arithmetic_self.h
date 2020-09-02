@@ -37,6 +37,7 @@ using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Sin;
 using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
+static constexpr int kPerTensor = 1;
 
 namespace mindspore::kernel {
 class ArithmeticSelfCPUKernel : public LiteKernel {
