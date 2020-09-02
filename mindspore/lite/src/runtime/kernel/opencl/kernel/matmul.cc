@@ -75,7 +75,7 @@ int MatMulOpenCLKernel::ReSize() { return RET_OK; }
 void MatMulOpenCLKernel::PadWeight() {
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
 
-  size_t dtype_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
+  size_t dtype_size = enable_fp16_ ? sizeof(int16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   memset(padWeight_, 0x00, sizeCI.s[1] * sizeCO.s[1] * C4NUM * C4NUM * dtype_size);

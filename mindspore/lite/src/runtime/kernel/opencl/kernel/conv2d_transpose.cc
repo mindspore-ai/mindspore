@@ -72,7 +72,7 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
   int div_ci = UP_DIV(ci, C4NUM);
   int div_co = UP_DIV(co, C4NUM);
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
-  auto data_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
+  auto data_size = enable_fp16_ ? sizeof(int16_t) : sizeof(float);
 
   // IHWO to OHWI4(I)4(O)(converter format is IHWO)
   // init padWeight_(buffer mem)

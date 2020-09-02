@@ -27,6 +27,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Reshape;
+using mindspore::schema::PrimitiveType_Squeeze;
 
 namespace mindspore::kernel {
 
@@ -142,4 +143,6 @@ kernel::LiteKernel *OpenCLReshapeKernelCreator(const std::vector<lite::tensor::T
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reshape, OpenCLReshapeKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reshape, OpenCLReshapeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Squeeze, OpenCLReshapeKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Squeeze, OpenCLReshapeKernelCreator)
 }  // namespace mindspore::kernel

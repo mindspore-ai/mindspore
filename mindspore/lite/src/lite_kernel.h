@@ -27,11 +27,6 @@
 #include "src/ir/tensor.h"
 #include "include/errorcode.h"
 
-#ifdef ENABLE_FP16
-using FLOAT_t = float16_t;
-#else
-using FLOAT_t = float;
-#endif
 
 // using mindspore::kernel::AddressPtr;
 namespace mindspore::kernel {

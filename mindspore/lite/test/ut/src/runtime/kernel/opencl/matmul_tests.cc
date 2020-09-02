@@ -36,7 +36,7 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   size_t dtype_size = sizeof(float);
   if (enable_fp16) {
     ocl_runtime->SetFp16Enable(true);
-    dtype_size = sizeof(float16_t);
+    dtype_size = sizeof(int16_t);
   }
   auto allocator = ocl_runtime->GetAllocator();
   int ci = shape[0];

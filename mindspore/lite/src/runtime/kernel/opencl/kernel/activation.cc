@@ -44,7 +44,7 @@ void ActivationOpenClKernel::InitBuffer() {
   alpha_buff_ = allocator->MapBuffer(alpha_buff_, CL_MAP_WRITE, nullptr, true);
   memset(alpha_buff_, 0x00, fp_size);
   if (enable_fp16_) {
-    auto fp16 = (float16_t)alpha_;
+    auto fp16 = (int16_t)alpha_;
     memcpy(alpha_buff_, &fp16, fp_size);
   } else {
     memcpy(alpha_buff_, &alpha_, fp_size);

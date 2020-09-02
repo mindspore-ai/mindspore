@@ -55,10 +55,20 @@ __kernel void transpose_NHWC4_BUF(__read_only image2d_t src_data, global FLT4 *d
   result[1] = (FLT4)(0.0f);
   result[2] = (FLT4)(0.0f);
   result[3] = (FLT4)(0.0f);
-  FLT4 x0 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X) % W * C.y + Y, (4 * X) / W));
-  FLT4 x1 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 1) % W * C.y + Y, (4 * X + 1) / W));
-  FLT4 x2 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 2) % W * C.y + Y, (4 * X + 2) / W));
-  FLT4 x3 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 3) % W * C.y + Y, (4 * X + 3) / W));
+  bool over_size = W * C.y > 65535;
+  FLT4 x0, x1, x2, x3;
+  if (over_size) {
+    x0 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X));
+    x1 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X + 1));
+    x2 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X + 2));
+    x3 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X + 3));
+  } else {
+    x0 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X) % W * C.y + Y, (4 * X) / W));
+    x1 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 1) % W * C.y + Y, (4 * X + 1) / W));
+    x2 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 2) % W * C.y + Y, (4 * X + 2) / W));
+    x3 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 3) % W * C.y + Y, (4 * X + 3) / W));
+  }
+
   result[0].x = x0.x;
   result[0].y = x1.x;
   result[0].z = x2.x;
