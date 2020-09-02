@@ -23,7 +23,6 @@ from mindspore import context
 from mindspore.common import MetaTensor
 from mindspore.common import dtype
 from mindspore.common.api import ms_function
-from mindspore.common.dtype import get_py_obj_dtype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
@@ -185,7 +184,7 @@ def test_input_signature():
 def test_scalar_cast():
     """ test_scalar_cast """
     input_x = 8.5
-    input_t = get_py_obj_dtype(ms.int64)
+    input_t = ms.int64
 
     @ms_function
     def fn_cast(x, t):
