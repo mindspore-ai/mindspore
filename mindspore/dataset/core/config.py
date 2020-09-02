@@ -33,8 +33,8 @@ def set_seed(seed):
     Set the seed to be used in any random generator. This is used to produce deterministic results.
 
     Note:
-        This set_seed function sets the seed in the python random library and numpy.random library
-        for deterministic python augmentations using randomness. This set_seed function should
+        This set_seed function sets the seed in the Python random library and numpy.random library
+        for deterministic Python augmentations using randomness. This set_seed function should
         be called with every iterator created to reset the random seed. In our pipeline this
         does not guarantee deterministic results with num_parallel_workers > 1.
 

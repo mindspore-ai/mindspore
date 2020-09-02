@@ -14,11 +14,11 @@
 # ==============================================================================
 
 """
-The module vision.py_transforms is implemented basing on python
-PIL. This module provides many kinds of image augmentations. It also provides
-transferring methods between PIL Image and numpy array. For users who prefer
-python PIL in image learning task, this module is a good tool to process image
-augmentations. Users could also self-define their own augmentations with python
+The module vision.py_transforms is implemented based on Python PIL.
+This module provides many kinds of image augmentations. It also provides
+transferring methods between PIL image and NumPy array. For users who prefer
+Python PIL in image learning task, this module is a good tool to process image
+augmentations. Users can also self-define their own augmentations with Python
 PIL.
 """
 import numbers
@@ -85,22 +85,22 @@ class ComposeOp:
         Call method.
 
         Returns:
-            lambda function, Lambda function that takes in an img to apply transformations on.
+            lambda function, Lambda function that takes in an image to apply transformations on.
         """
         return lambda img: util.compose(img, self.transforms)
 
 
 class ToTensor:
     """
-    Convert the input Numpy image array or PIL image of shape (H,W,C) to a Numpy ndarray of shape (C,H,W).
+    Convert the input NumPy image array or PIL image of shape (H,W,C) to a NumPy ndarray of shape (C,H,W).
 
     Note:
         The ranges of values in height and width dimension changes from [0, 255] to [0.0, 1.0]. Type cast to output_type
-        (default Numpy float 32).
+        (default NumPy float 32).
         The range of channel dimension remains the same.
 
     Args:
-        output_type (numpy datatype, optional): The datatype of the numpy output (default=np.float32).
+        output_type (Numpy datatype, optional): The datatype of the NumPy output (default=np.float32).
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -116,7 +116,7 @@ class ToTensor:
         Call method.
 
         Args:
-            img (PIL Image): PIL Image to be converted to numpy.ndarray.
+            img (PIL image): PIL image to be converted to numpy.ndarray.
 
         Returns:
             img (numpy.ndarray), Converted image.
@@ -126,10 +126,10 @@ class ToTensor:
 
 class ToType:
     """
-    Convert the input Numpy image array to desired numpy dtype.
+    Convert the input NumPy image array to desired NumPy dtype.
 
     Args:
-        output_type (numpy datatype): The datatype of the numpy output, e.g. numpy.float32.
+        output_type (Numpy datatype): The datatype of the NumPy output, e.g. numpy.float32.
 
     Examples:
         >>> import numpy as np
@@ -147,7 +147,7 @@ class ToType:
         Call method.
 
         Args:
-            numpy object : numpy object to be type swapped.
+            NumPy object : NumPy object to be type swapped.
 
         Returns:
             img (numpy.ndarray), Converted image.
@@ -157,7 +157,7 @@ class ToType:
 
 class HWC2CHW:
     """
-    Transpose a Numpy image array; shape (H, W, C) to shape (C, H, W).
+    Transpose a NumPy image array; shape (H, W, C) to shape (C, H, W).
     """
 
     def __call__(self, img):
@@ -175,10 +175,10 @@ class HWC2CHW:
 
 class ToPIL:
     """
-    Convert the input decoded Numpy image array of RGB mode to a PIL Image of RGB mode.
+    Convert the input decoded NumPy image array of RGB mode to a PIL image of RGB mode.
 
     Examples:
-        >>> # data is already decoded, but not in PIL Image format
+        >>> # data is already decoded, but not in PIL image format
         >>> py_transforms.ComposeOp([py_transforms.ToPIL(),
         >>>                          py_transforms.RandomHorizontalFlip(0.5),
         >>>                          py_transforms.ToTensor()])
@@ -189,17 +189,17 @@ class ToPIL:
         Call method.
 
         Args:
-            img (numpy.ndarray): Decoded image array, of RGB mode, to be converted to PIL Image.
+            img (numpy.ndarray): Decoded image array, of RGB mode, to be converted to PIL image.
 
         Returns:
-            img (PIL Image), Image converted to PIL Image of RGB mode.
+            img (PIL image), Image converted to PIL image of RGB mode.
         """
         return util.to_pil(img)
 
 
 class Decode:
     """
-    Decode the input image to PIL Image format in RGB mode.
+    Decode the input image to PIL image format in RGB mode.
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -215,14 +215,14 @@ class Decode:
             img (Bytes-like Objects):Image to be decoded.
 
         Returns:
-            img (PIL Image), Decoded image in RGB mode.
+            img (PIL image), Decoded image in RGB mode.
         """
         return util.decode(img)
 
 
 class Normalize:
     """
-    Normalize the input Numpy image array of shape (C, H, W) with the given mean and standard deviation.
+    Normalize the input NumPy image array of shape (C, H, W) with the given mean and standard deviation.
 
     The values of the array need to be in range (0.0, 1.0].
 
@@ -257,7 +257,7 @@ class Normalize:
 
 class RandomCrop:
     """
-    Crop the input PIL Image at a random location.
+    Crop the input PIL image at a random location.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -311,10 +311,10 @@ class RandomCrop:
         Call method.
 
         Args:
-            img (PIL Image): Image to be randomly cropped.
+            img (PIL image): Image to be randomly cropped.
 
         Returns:
-            PIL Image, Cropped image.
+            PIL image, Cropped image.
         """
         return util.random_crop(img, self.size, self.padding, self.pad_if_needed,
                                 self.fill_value, self.padding_mode)
@@ -342,10 +342,10 @@ class RandomHorizontalFlip:
         Call method.
 
         Args:
-            img (PIL Image): Image to be flipped horizontally.
+            img (PIL image): Image to be flipped horizontally.
 
         Returns:
-            img (PIL Image), Randomly flipped image.
+            img (PIL image), Randomly flipped image.
         """
         return util.random_horizontal_flip(img, self.prob)
 
@@ -372,17 +372,17 @@ class RandomVerticalFlip:
         Call method.
 
         Args:
-            img (PIL Image): Image to be flipped vertically.
+            img (PIL image): Image to be flipped vertically.
 
         Returns:
-            img (PIL Image), Randomly flipped image.
+            img (PIL image), Randomly flipped image.
         """
         return util.random_vertical_flip(img, self.prob)
 
 
 class Resize:
     """
-    Resize the input PIL Image to the given size.
+    Resize the input PIL image to the given size.
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
@@ -414,10 +414,10 @@ class Resize:
         Call method.
 
         Args:
-            img (PIL Image): Image to be resized.
+            img (PIL image): Image to be resized.
 
         Returns:
-            img (PIL Image), Resize image.
+            img (PIL image), Resize image.
         """
         return util.resize(img, self.size, self.interpolation)
 
@@ -465,10 +465,10 @@ class RandomResizedCrop:
         Call method.
 
         Args:
-            img (PIL Image): Image to be randomly cropped and resized.
+            img (PIL image): Image to be randomly cropped and resized.
 
         Returns:
-            img (PIL Image), Randomly cropped and resized image.
+            img (PIL image), Randomly cropped and resized image.
         """
         return util.random_resize_crop(img, self.size, self.scale, self.ratio,
                                        self.interpolation, self.max_attempts)
@@ -476,7 +476,7 @@ class RandomResizedCrop:
 
 class CenterCrop:
     """
-    Crop the central reigion of the input PIL Image to the given size.
+    Crop the central reigion of the input PIL image to the given size.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -498,10 +498,10 @@ class CenterCrop:
         Call method.
 
         Args:
-            img (PIL Image): Image to be center cropped.
+            img (PIL image): Image to be center cropped.
 
         Returns:
-            img (PIL Image), Cropped image.
+            img (PIL image), Cropped image.
         """
         return util.center_crop(img, self.size)
 
@@ -542,10 +542,10 @@ class RandomColorAdjust:
         Call method.
 
         Args:
-            img (PIL Image): Image to have its color adjusted randomly.
+            img (PIL image): Image to have its color adjusted randomly.
 
         Returns:
-            img (PIL Image), Image after random adjustment of its color.
+            img (PIL image), Image after random adjustment of its color.
         """
         return util.random_color_adjust(img, self.brightness, self.contrast, self.saturation, self.hue)
 
@@ -601,10 +601,10 @@ class RandomRotation:
         Call method.
 
         Args:
-            img (PIL Image): Image to be rotated.
+            img (PIL image): Image to be rotated.
 
         Returns:
-            img (PIL Image), Rotated image.
+            img (PIL image), Rotated image.
         """
         return util.random_rotation(img, self.degrees, self.resample, self.expand, self.center, self.fill_value)
 
@@ -632,10 +632,10 @@ class RandomOrder:
         Call method.
 
         Args:
-            img (PIL Image): Image to be applied transformations in a random order.
+            img (PIL image): Image to be applied transformations in a random order.
 
         Returns:
-            img (PIL Image), Transformed image.
+            img (PIL image), Transformed image.
         """
         return util.random_order(img, self.transforms)
 
@@ -665,10 +665,10 @@ class RandomApply:
         Call method.
 
         Args:
-            img (PIL Image): Image to be randomly applied a list transformations.
+            img (PIL image): Image to be randomly applied a list transformations.
 
         Returns:
-            img (PIL Image), Transformed image.
+            img (PIL image), Transformed image.
         """
         return util.random_apply(img, self.transforms, self.prob)
 
@@ -696,10 +696,10 @@ class RandomChoice:
         Call method.
 
         Args:
-            img (PIL Image): Image to be applied transformation.
+            img (PIL image): Image to be applied transformation.
 
         Returns:
-            img (PIL Image), Transformed image.
+            img (PIL image), Transformed image.
         """
         return util.random_choice(img, self.transforms)
 
@@ -729,7 +729,7 @@ class FiveCrop:
         Call method.
 
         Args:
-            img (PIL Image): PIL Image to be cropped.
+            img (PIL image): PIL image to be cropped.
 
         Returns:
             img_tuple (tuple), a tuple of 5 PIL images
@@ -768,7 +768,7 @@ class TenCrop:
         Call method.
 
         Args:
-            img (PIL Image): PIL Image to be cropped.
+            img (PIL image): PIL image to be cropped.
 
         Returns:
             img_tuple (tuple), a tuple of 10 PIL images
@@ -801,10 +801,10 @@ class Grayscale:
         Call method.
 
         Args:
-            img (PIL Image): PIL image to be converted to grayscale.
+            img (PIL image): PIL image to be converted to grayscale.
 
         Returns:
-            img (PIL Image), grayscaled image.
+            img (PIL image), grayscaled image.
         """
         return util.grayscale(img, num_output_channels=self.num_output_channels)
 
@@ -831,10 +831,10 @@ class RandomGrayscale:
         Call method.
 
         Args:
-            img (PIL Image): PIL image to be converted to grayscale randomly.
+            img (PIL image): PIL image to be converted to grayscale randomly.
 
         Returns:
-            img (PIL Image), Randomly grayscale image, same number of channels as input image.
+            img (PIL image), Randomly grayscale image, same number of channels as input image.
                 If input image has 1 channel, the output grayscale image is 1 channel.
                 If input image has 3 channels, the output image has 3 identical grayscale channels.
         """
@@ -895,17 +895,17 @@ class Pad:
         Call method.
 
         Args:
-            img (PIL Image): Image to be padded.
+            img (PIL image): Image to be padded.
 
         Returns:
-            img (PIL Image), Padded image.
+            img (PIL image), Padded image.
         """
         return util.pad(img, self.padding, self.fill_value, self.padding_mode)
 
 
 class RandomPerspective:
     """
-    Randomly apply perspective transformation to the input PIL Image with a given probability.
+    Randomly apply perspective transformation to the input PIL image with a given probability.
 
     Args:
         distortion_scale (float, optional): The scale of distortion, float between 0 and 1 (default=0.5).
@@ -936,10 +936,10 @@ class RandomPerspective:
         Call method.
 
         Args:
-            img (PIL Image): PIL Image to be applied perspective transformation randomly.
+            img (PIL image): PIL image to be applied perspective transformation randomly.
 
         Returns:
-            img (PIL Image), Image after being perspectively transformed randomly.
+            img (PIL image), Image after being perspectively transformed randomly.
         """
         if self.prob > random.random():
             start_points, end_points = util.get_perspective_params(img, self.distortion_scale)
@@ -951,7 +951,7 @@ class RandomErasing:
     """
     Erase the pixels, within a selected rectangle region, to the given value.
 
-    Randomly applied on the input Numpy image array with a given probability.
+    Randomly applied on the input NumPy image array with a given probability.
 
     Zhun Zhong et al. 'Random Erasing Data Augmentation' 2017 See https://arxiv.org/pdf/1708.04896.pdf
 
@@ -989,10 +989,10 @@ class RandomErasing:
         Call method.
 
         Args:
-            np_img (numpy.ndarray): Numpy image array of shape (C, H, W) to be randomly erased.
+            np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be randomly erased.
 
         Returns:
-            np_img (numpy.ndarray), Erased Numpy image array.
+            np_img (numpy.ndarray), Erased NumPy image array.
         """
         bounded = True
         if self.prob > random.random():
@@ -1004,7 +1004,7 @@ class RandomErasing:
 
 class Cutout:
     """
-    Randomly cut (mask) out a given number of square patches from the input Numpy image array.
+    Randomly cut (mask) out a given number of square patches from the input NumPy image array.
 
     Terrance DeVries and Graham W. Taylor 'Improved Regularization of Convolutional Neural Networks with Cutout' 2017
     See https://arxiv.org/pdf/1708.04552.pdf
@@ -1029,13 +1029,13 @@ class Cutout:
         Call method.
 
         Args:
-            np_img (numpy.ndarray): Numpy image array of shape (C, H, W) to be cut out.
+            np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be cut out.
 
         Returns:
-            np_img (numpy.ndarray), Numpy image array with square patches cut out.
+            np_img (numpy.ndarray), NumPy image array with square patches cut out.
         """
         if not isinstance(np_img, np.ndarray):
-            raise TypeError('img should be Numpy array. Got {}'.format(type(np_img)))
+            raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
         _, image_h, image_w = np_img.shape
         scale = (self.length * self.length) / (image_h * image_w)
         bounded = False
@@ -1048,7 +1048,7 @@ class Cutout:
 
 class LinearTransformation:
     """
-    Apply linear transformation to the input Numpy image array, given a square transformation matrix and
+    Apply linear transformation to the input NumPy image array, given a square transformation matrix and
     a mean_vector.
 
     The transformation first flattens the input array and subtract mean_vector from it, then computes the
@@ -1056,7 +1056,7 @@ class LinearTransformation:
 
     Args:
         transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), D = C x H x W.
-        mean_vector (numpy.ndarray): a numpy ndarray of shape (D,) where D = C x H x W.
+        mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -1075,7 +1075,7 @@ class LinearTransformation:
         Call method.
 
         Args:
-            np_img (numpy.ndarray): Numpy image array of shape (C, H, W) to be linear transformed.
+            np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be linear transformed.
 
         Returns:
             np_img (numpy.ndarray), Linear transformed image.
@@ -1164,10 +1164,10 @@ class RandomAffine:
         Call method.
 
         Args:
-            img (PIL Image): Image to be applied affine transformation.
+            img (PIL image): Image to be applied affine transformation.
 
         Returns:
-            img (PIL Image), Randomly affine transformed image.
+            img (PIL image), Randomly affine transformed image.
         """
 
         return util.random_affine(img,
@@ -1203,12 +1203,12 @@ class MixUp:
         Call method.
 
         Args:
-            image (numpy.ndarray): numpy Image to be applied mix up transformation.
-            label(numpy.ndarray): numpy label to be applied mix up transformation.
+            image (numpy.ndarray): NumPy image to be applied mix up transformation.
+            label(numpy.ndarray): NumPy label to be applied mix up transformation.
 
         Returns:
-            image (numpy.ndarray): numpy Image after being applied mix up transformation.
-            label(numpy.ndarray): numpy label after being applied mix up transformation.
+            image (numpy.ndarray): NumPy image after being applied mix up transformation.
+            label(numpy.ndarray): NumPy label after being applied mix up transformation.
         """
         if self.is_single:
             return util.mix_up_single(self.batch_size, image, label, self.alpha)
@@ -1217,7 +1217,7 @@ class MixUp:
 
 class RgbToHsv:
     """
-    Convert a Numpy RGB image or one batch Numpy RGB images to HSV images.
+    Convert a NumPy RGB image or one batch NumPy RGB images to HSV images.
 
     Args:
         is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
@@ -1232,18 +1232,18 @@ class RgbToHsv:
         Call method.
 
         Args:
-            rgb_imgs (numpy.ndarray): Numpy RGB images array of shape (H, W, C) or (N, H, W, C),
+            rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
                                       or (C, H, W) or (N, C, H, W) to be converted.
 
         Returns:
-            np_hsv_img (numpy.ndarray), Numpy HSV images with same shape of rgb_imgs.
+            np_hsv_img (numpy.ndarray), NumPy HSV images with same shape of rgb_imgs.
         """
         return util.rgb_to_hsvs(rgb_imgs, self.is_hwc)
 
 
 class HsvToRgb:
     """
-    Convert a Numpy HSV image or one batch Numpy HSV images to RGB images.
+    Convert a NumPy HSV image or one batch NumPy HSV images to RGB images.
 
     Args:
         is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
@@ -1258,11 +1258,11 @@ class HsvToRgb:
         Call method.
 
         Args:
-            hsv_imgs (numpy.ndarray): Numpy HSV images array of shape (H, W, C) or (N, H, W, C),
+            hsv_imgs (numpy.ndarray): NumPy HSV images array of shape (H, W, C) or (N, H, W, C),
                                       or (C, H, W) or (N, C, H, W) to be converted.
 
         Returns:
-            rgb_imgs (numpy.ndarray), Numpy RGB image with same shape of hsv_imgs.
+            rgb_imgs (numpy.ndarray), NumPy RGB image with same shape of hsv_imgs.
         """
         return util.hsv_to_rgbs(hsv_imgs, self.is_hwc)
 
@@ -1290,10 +1290,10 @@ class RandomColor:
         Call method.
 
         Args:
-            img (PIL Image): Image to be color adjusted.
+            img (PIL image): Image to be color adjusted.
 
         Returns:
-            img (PIL Image), Color adjusted image.
+            img (PIL image), Color adjusted image.
         """
 
         return util.random_color(img, self.degrees)
@@ -1323,10 +1323,10 @@ class RandomSharpness:
         Call method.
 
         Args:
-            img (PIL Image): Image to be sharpness adjusted.
+            img (PIL image): Image to be sharpness adjusted.
 
         Returns:
-            img (PIL Image), Color adjusted image.
+            img (PIL image), Color adjusted image.
         """
 
         return util.random_sharpness(img, self.degrees)
@@ -1357,10 +1357,10 @@ class AutoContrast:
         Call method.
 
         Args:
-            img (PIL Image): Image to be augmented with AutoContrast.
+            img (PIL image): Image to be augmented with AutoContrast.
 
         Returns:
-            img (PIL Image), Augmented image.
+            img (PIL image), Augmented image.
         """
 
         return util.auto_contrast(img, self.cutoff, self.ignore)
@@ -1382,10 +1382,10 @@ class Invert:
         Call method.
 
         Args:
-            img (PIL Image): Image to be color Inverted.
+            img (PIL image): Image to be color Inverted.
 
         Returns:
-            img (PIL Image), Color inverted image.
+            img (PIL image), Color inverted image.
         """
 
         return util.invert_color(img)
@@ -1407,10 +1407,10 @@ class Equalize:
         Call method.
 
         Args:
-            img (PIL Image): Image to be equalized.
+            img (PIL image): Image to be equalized.
 
         Returns:
-            img (PIL Image), Equalized image.
+            img (PIL image), Equalized image.
         """
 
         return util.equalize(img)
@@ -1447,9 +1447,9 @@ class UniformAugment:
         Call method.
 
         Args:
-            img (PIL Image): Image to be applied transformation.
+            img (PIL image): Image to be applied transformation.
 
         Returns:
-            img (PIL Image), Transformed image.
+            img (PIL image), Transformed image.
         """
         return util.uniform_augment(img, self.transforms.copy(), self.num_ops)

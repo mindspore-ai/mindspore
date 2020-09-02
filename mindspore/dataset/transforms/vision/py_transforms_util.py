@@ -25,7 +25,7 @@ from PIL import Image, ImageOps, ImageEnhance, __version__
 
 from .utils import Inter
 
-augment_error_message = 'img should be PIL Image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data.'
+augment_error_message = 'img should be PIL image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data.'
 
 
 def is_pil(img):
@@ -43,13 +43,13 @@ def is_pil(img):
 
 def is_numpy(img):
     """
-    Check if the input image is Numpy format.
+    Check if the input image is NumPy format.
 
     Args:
         img: Image to be checked.
 
     Returns:
-        Bool, True if input is Numpy image.
+        Bool, True if input is NumPy image.
     """
     return isinstance(img, np.ndarray)
 
@@ -59,19 +59,19 @@ def compose(img, transforms):
     Compose a list of transforms and apply on the image.
 
     Args:
-        img (numpy.ndarray): An image in Numpy ndarray.
+        img (numpy.ndarray): An image in NumPy ndarray.
         transforms (list): A list of transform Class objects to be composed.
 
     Returns:
-        img (numpy.ndarray), An augmented image in Numpy ndarray.
+        img (numpy.ndarray), An augmented image in NumPy ndarray.
     """
     if is_numpy(img):
         for transform in transforms:
             img = transform(img)
         if is_numpy(img):
             return img
-        raise TypeError('img should be Numpy ndarray. Got {}. Append ToTensor() to transforms'.format(type(img)))
-    raise TypeError('img should be Numpy ndarray. Got {}.'.format(type(img)))
+        raise TypeError('img should be NumPy ndarray. Got {}. Append ToTensor() to transforms'.format(type(img)))
+    raise TypeError('img should be NumPy ndarray. Got {}.'.format(type(img)))
 
 
 def normalize(img, mean, std):
@@ -87,7 +87,7 @@ def normalize(img, mean, std):
         img (numpy.ndarray), Normalized image.
     """
     if not is_numpy(img):
-        raise TypeError('img should be Numpy Image. Got {}'.format(type(img)))
+        raise TypeError('img should be NumPy image. Got {}'.format(type(img)))
 
     num_channels = img.shape[0]  # shape is (C, H, W)
 
@@ -109,13 +109,13 @@ def normalize(img, mean, std):
 
 def decode(img):
     """
-    Decode the input image to PIL Image format in RGB mode.
+    Decode the input image to PIL image format in RGB mode.
 
     Args:
         img: Image to be decoded.
 
     Returns:
-        img (PIL Image), Decoded image in RGB mode.
+        img (PIL image), Decoded image in RGB mode.
     """
 
     try:
@@ -140,22 +140,22 @@ def hwc_to_chw(img):
     """
     if is_numpy(img):
         return img.transpose(2, 0, 1).copy()
-    raise TypeError('img should be Numpy array. Got {}'.format(type(img)))
+    raise TypeError('img should be NumPy array. Got {}'.format(type(img)))
 
 
 def to_tensor(img, output_type):
     """
-    Change the input image (PIL Image or Numpy image array) to numpy format.
+    Change the input image (PIL image or NumPy image array) to NumPy format.
 
     Args:
-        img (Union[PIL Image, numpy.ndarray]): Image to be converted.
-        output_type: The datatype of the numpy output. e.g. np.float32
+        img (Union[PIL image, numpy.ndarray]): Image to be converted.
+        output_type: The datatype of the NumPy output. e.g. np.float32
 
     Returns:
         img (numpy.ndarray), Converted image.
     """
     if not (is_pil(img) or is_numpy(img)):
-        raise TypeError('img should be PIL Image or Numpy array. Got {}'.format(type(img)))
+        raise TypeError('img should be PIL image or NumPy array. Got {}'.format(type(img)))
 
     img = np.asarray(img)
     if img.ndim not in (2, 3):
@@ -178,7 +178,7 @@ def to_pil(img):
         img: Image to be converted.
 
     Returns:
-        img (PIL Image), Converted image.
+        img (PIL image), Converted image.
     """
     if not is_pil(img):
         return Image.fromarray(img)
@@ -190,10 +190,10 @@ def horizontal_flip(img):
     Flip the input image horizontally.
 
     Args:
-        img (PIL Image): Image to be flipped horizontally.
+        img (PIL image): Image to be flipped horizontally.
 
     Returns:
-        img (PIL Image), Horizontally flipped image.
+        img (PIL image), Horizontally flipped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -206,10 +206,10 @@ def vertical_flip(img):
     Flip the input image vertically.
 
     Args:
-        img (PIL Image): Image to be flipped vertically.
+        img (PIL image): Image to be flipped vertically.
 
     Returns:
-        img (PIL Image), Vertically flipped image.
+        img (PIL image), Vertically flipped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -222,12 +222,12 @@ def random_horizontal_flip(img, prob):
     Randomly flip the input image horizontally.
 
     Args:
-        img (PIL Image): Image to be flipped.
+        img (PIL image): Image to be flipped.
             If the given probability is above the random probability, then the image is flipped.
         prob (float): Probability of the image being flipped.
 
     Returns:
-        img (PIL Image), Converted image.
+        img (PIL image), Converted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -242,12 +242,12 @@ def random_vertical_flip(img, prob):
     Randomly flip the input image vertically.
 
     Args:
-        img (PIL Image): Image to be flipped.
+        img (PIL image): Image to be flipped.
             If the given probability is above the random probability, then the image is flipped.
         prob (float): Probability of the image being flipped.
 
     Returns:
-        img (PIL Image), Converted image.
+        img (PIL image), Converted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -259,10 +259,10 @@ def random_vertical_flip(img, prob):
 
 def crop(img, top, left, height, width):
     """
-    Crop the input PIL Image.
+    Crop the input PIL image.
 
     Args:
-        img (PIL Image): Image to be cropped. (0,0) denotes the top left corner of the image,
+        img (PIL image): Image to be cropped. (0,0) denotes the top left corner of the image,
             in the directions of (width, height).
         top (int): Vertical component of the top left corner of the crop box.
         left (int): Horizontal component of the top left corner of the crop box.
@@ -270,7 +270,7 @@ def crop(img, top, left, height, width):
         width (int): Width of the crop box.
 
     Returns:
-        img (PIL Image), Cropped image.
+        img (PIL image), Cropped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -280,10 +280,10 @@ def crop(img, top, left, height, width):
 
 def resize(img, size, interpolation=Inter.BILINEAR):
     """
-    Resize the input PIL Image to desired size.
+    Resize the input PIL image to desired size.
 
     Args:
-        img (PIL Image): Image to be resized.
+        img (PIL image): Image to be resized.
         size (Union[int, sequence]): The output size of the resized image.
             If size is an int, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
@@ -291,7 +291,7 @@ def resize(img, size, interpolation=Inter.BILINEAR):
         interpolation (interpolation mode): Image interpolation mode. Default is Inter.BILINEAR = 2.
 
     Returns:
-        img (PIL Image), Resized image.
+        img (PIL image), Resized image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -317,16 +317,16 @@ def resize(img, size, interpolation=Inter.BILINEAR):
 
 def center_crop(img, size):
     """
-    Crop the input PIL Image at the center to the given size.
+    Crop the input PIL image at the center to the given size.
 
     Args:
-        img (PIL Image): Image to be cropped.
+        img (PIL image): Image to be cropped.
         size (Union[int, tuple]): The size of the crop box.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Returns:
-        img (PIL Image), Cropped image.
+        img (PIL image), Cropped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -342,10 +342,10 @@ def center_crop(img, size):
 
 def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, max_attempts=10):
     """
-    Crop the input PIL Image to a random size and aspect ratio.
+    Crop the input PIL image to a random size and aspect ratio.
 
     Args:
-        img (PIL Image): Image to be randomly cropped and resized.
+        img (PIL image): Image to be randomly cropped and resized.
         size (Union[int, sequence]): The size of the output image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
@@ -356,7 +356,7 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
             If exceeded, fall back to use center_crop instead.
 
     Returns:
-        img (PIL Image), Randomly cropped and resized image.
+        img (PIL image), Randomly cropped and resized image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -412,10 +412,10 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
 
 def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
     """
-    Crop the input PIL Image at a random location.
+    Crop the input PIL image at a random location.
 
     Args:
-        img (PIL Image): Image to be randomly cropped.
+        img (PIL image): Image to be randomly cropped.
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
@@ -441,7 +441,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
             value of edge
 
     Returns:
-        PIL Image, Cropped image.
+        PIL image, Cropped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -483,12 +483,12 @@ def adjust_brightness(img, brightness_factor):
     Adjust brightness of an image.
 
     Args:
-        img (PIL Image): Image to be adjusted.
+        img (PIL image): Image to be adjusted.
         brightness_factor (float): A non negative number indicated the factor by which
             the brightness is adjusted. 0 gives a black image, 1 gives the original.
 
     Returns:
-        img (PIL Image), Brightness adjusted image.
+        img (PIL image), Brightness adjusted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -503,12 +503,12 @@ def adjust_contrast(img, contrast_factor):
     Adjust contrast of an image.
 
     Args:
-        img (PIL Image): PIL Image to be adjusted.
+        img (PIL image): PIL image to be adjusted.
         contrast_factor (float): A non negative number indicated the factor by which
             the contrast is adjusted. 0 gives a solid gray image, 1 gives the original.
 
     Returns:
-        img (PIL Image), Contrast adjusted image.
+        img (PIL image), Contrast adjusted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -523,13 +523,13 @@ def adjust_saturation(img, saturation_factor):
     Adjust saturation of an image.
 
     Args:
-        img (PIL Image): PIL Image to be adjusted.
+        img (PIL image): PIL image to be adjusted.
         saturation_factor (float):  A non negative number indicated the factor by which
             the saturation is adjusted. 0 will give a black and white image, 1 will
             give the original.
 
     Returns:
-        img (PIL Image), Saturation adjusted image.
+        img (PIL image), Saturation adjusted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -544,7 +544,7 @@ def adjust_hue(img, hue_factor):
     Adjust hue of an image. The Hue is changed by changing the HSV values after image is converted to HSV.
 
     Args:
-        img (PIL Image): PIL Image to be adjusted.
+        img (PIL image): PIL image to be adjusted.
         hue_factor (float):  Amount to shift the Hue channel. Value should be in
             [-0.5, 0.5]. 0.5 and -0.5 give complete reversal of hue channel. This
             is because Hue wraps around when rotated 360 degrees.
@@ -552,7 +552,7 @@ def adjust_hue(img, hue_factor):
             will give an image with complementary colors .
 
     Returns:
-        img (PIL Image), Hue adjusted image.
+        img (PIL image), Hue adjusted image.
     """
     image = img
     image_hue_factor = hue_factor
@@ -580,17 +580,17 @@ def adjust_hue(img, hue_factor):
 
 def to_type(img, output_type):
     """
-    Convert the Numpy image array to desired numpy dtype.
+    Convert the NumPy image array to desired NumPy dtype.
 
     Args:
-        img (numpy): Numpy image to cast to desired numpy dtype.
-        output_type (numpy datatype): Numpy dtype to cast to.
+        img (numpy): NumPy image to cast to desired NumPy dtype.
+        output_type (Numpy datatype): NumPy dtype to cast to.
 
     Returns:
         img (numpy.ndarray), Converted image.
     """
     if not is_numpy(img):
-        raise TypeError('img should be Numpy Image. Got {}'.format(type(img)))
+        raise TypeError('img should be NumPy image. Got {}'.format(type(img)))
 
     return img.astype(output_type)
 
@@ -600,7 +600,7 @@ def rotate(img, angle, resample, expand, center, fill_value):
     Rotate the input PIL image by angle.
 
     Args:
-        img (PIL Image): Image to be rotated.
+        img (PIL image): Image to be rotated.
         angle (int or float): Rotation angle in degrees, counter-clockwise.
         resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
@@ -615,7 +615,7 @@ def rotate(img, angle, resample, expand, center, fill_value):
             If it is an int, it is used for all RGB channels.
 
     Returns:
-        img (PIL Image), Rotated image.
+        img (PIL image), Rotated image.
 
     https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate
     """
@@ -633,7 +633,7 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
     Randomly adjust the brightness, contrast, saturation, and hue of an image.
 
     Args:
-        img (PIL Image): Image to have its color adjusted randomly.
+        img (PIL image): Image to have its color adjusted randomly.
         brightness (Union[float, tuple]): Brightness adjustment factor. Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
@@ -648,7 +648,7 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Returns:
-        img (PIL Image), Image after random adjustment of its color.
+        img (PIL image), Image after random adjustment of its color.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -695,7 +695,7 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
     Rotate the input PIL image by a random angle.
 
     Args:
-        img (PIL Image): Image to be rotated.
+        img (PIL image): Image to be rotated.
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
@@ -712,7 +712,7 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
             If it is an int, it is used for all RGB channels.
 
     Returns:
-        img (PIL Image), Rotated image.
+        img (PIL image), Rotated image.
 
     https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate
     """
@@ -788,7 +788,7 @@ def five_crop(img, size):
     Generate 5 cropped images (one central and four corners).
 
     Args:
-        img (PIL Image): PIL Image to be cropped.
+        img (PIL image): PIL image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
@@ -807,7 +807,7 @@ def five_crop(img, size):
     else:
         raise TypeError("Size should be a single number or a list/tuple (h, w) of length 2.")
 
-    # PIL Image.size returns in (width, height) order
+    # PIL image.size returns in (width, height) order
     img_width, img_height = img.size
     crop_height, crop_width = size
     if crop_height > img_height or crop_width > img_width:
@@ -828,7 +828,7 @@ def ten_crop(img, size, use_vertical_flip=False):
     The default is horizontal flipping, use_vertical_flip=False.
 
     Args:
-        img (PIL Image): PIL Image to be cropped.
+        img (PIL image): PIL image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
@@ -866,11 +866,11 @@ def grayscale(img, num_output_channels):
     Convert the input PIL image to grayscale image.
 
     Args:
-        img (PIL Image): PIL image to be converted to grayscale.
+        img (PIL image): PIL image to be converted to grayscale.
         num_output_channels (int): Number of channels of the output grayscale image (1 or 3).
 
     Returns:
-        img (PIL Image), grayscaled image.
+        img (PIL image), grayscaled image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -894,7 +894,7 @@ def pad(img, padding, fill_value, padding_mode):
     Pads the image according to padding parameters.
 
     Args:
-        img (PIL Image): Image to be padded.
+        img (PIL image): Image to be padded.
         padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
@@ -915,7 +915,7 @@ def pad(img, padding, fill_value, padding_mode):
             value of edge
 
     Returns:
-        img (PIL Image), Padded image.
+        img (PIL image), Padded image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -990,16 +990,16 @@ def get_perspective_params(img, distortion_scale):
 
 def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
     """
-    Apply perspective transformation to the input PIL Image.
+    Apply perspective transformation to the input PIL image.
 
     Args:
-        img (PIL Image): PIL Image to be applied perspective transformation.
+        img (PIL image): PIL image to be applied perspective transformation.
         start_points (list): List of [top_left, top_right, bottom_right, bottom_left] of the original image.
         end_points: List of [top_left, top_right, bottom_right, bottom_left] of the transformed image.
         interpolation (interpolation mode): Image interpolation mode, Default is Inter.BICUBIC = 3.
 
     Returns:
-        img (PIL Image), Image after being perspectively transformed.
+        img (PIL image), Image after being perspectively transformed.
     """
 
     def _input_to_coeffs(original_points, transformed_points):
@@ -1028,7 +1028,7 @@ def get_erase_params(np_img, scale, ratio, value, bounded, max_attempts):
     """Helper function to get parameters for RandomErasing/ Cutout.
     """
     if not is_numpy(np_img):
-        raise TypeError('img should be Numpy array. Got {}'.format(type(np_img)))
+        raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
 
     image_c, image_h, image_w = np_img.shape
     area = image_h * image_w
@@ -1076,10 +1076,10 @@ def get_erase_params(np_img, scale, ratio, value, bounded, max_attempts):
 
 def erase(np_img, i, j, height, width, erase_value, inplace=False):
     """
-    Erase the pixels, within a selected rectangle region, to the given value. Applied on the input Numpy image array.
+    Erase the pixels, within a selected rectangle region, to the given value. Applied on the input NumPy image array.
 
     Args:
-        np_img (numpy.ndarray): Numpy image array of shape (C, H, W) to be erased.
+        np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be erased.
         i (int): The height component of the top left corner (height, width).
         j (int): The width component of the top left corner (height, width).
         height (int): Height of the erased region.
@@ -1088,10 +1088,10 @@ def erase(np_img, i, j, height, width, erase_value, inplace=False):
         inplace (bool, optional): Apply this transform inplace. Default is False.
 
     Returns:
-        np_img (numpy.ndarray), Erased Numpy image array.
+        np_img (numpy.ndarray), Erased NumPy image array.
     """
     if not is_numpy(np_img):
-        raise TypeError('img should be Numpy array. Got {}'.format(type(np_img)))
+        raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
 
     if not inplace:
         np_img = np_img.copy()
@@ -1102,27 +1102,27 @@ def erase(np_img, i, j, height, width, erase_value, inplace=False):
 
 def linear_transform(np_img, transformation_matrix, mean_vector):
     """
-    Apply linear transformation to the input Numpy image array, given a square transformation matrix and a mean_vector.
+    Apply linear transformation to the input NumPy image array, given a square transformation matrix and a mean_vector.
 
     The transformation first flattens the input array and subtract mean_vector from it, then computes the
     dot product with the transformation matrix, and reshapes it back to its original shape.
 
     Args:
-        np_img (numpy.ndarray): Numpy image array of shape (C, H, W) to be linear transformed.
+        np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be linear transformed.
         transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), D = C x H x W.
-        mean_vector (numpy.ndarray): a numpy ndarray of shape (D,) where D = C x H x W.
+        mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
 
     Returns:
         np_img (numpy.ndarray), Linear transformed image.
     """
     if not is_numpy(np_img):
-        raise TypeError('img should be Numpy array. Got {}'.format(type(np_img)))
+        raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
     if transformation_matrix.shape[0] != transformation_matrix.shape[1]:
         raise ValueError("transformation_matrix should be a square matrix. "
                          "Got shape {} instead".format(transformation_matrix.shape))
     if np.prod(np_img.shape) != transformation_matrix.shape[0]:
         raise ValueError("transformation_matrix shape {0} not compatible with "
-                         "Numpy Image shape {1}.".format(transformation_matrix.shape, np_img.shape))
+                         "Numpy image shape {1}.".format(transformation_matrix.shape, np_img.shape))
     if mean_vector.shape[0] != transformation_matrix.shape[0]:
         raise ValueError("mean_vector length {0} should match either one dimension of the square "
                          "transformation_matrix {1}.".format(mean_vector.shape[0], transformation_matrix.shape))
@@ -1136,7 +1136,7 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
     Applies a random Affine transformation on the input PIL image.
 
     Args:
-        img (PIL Image): Image to be applied affine transformation.
+        img (PIL image): Image to be applied affine transformation.
         angle (Union[int, float]): Rotation angle in degrees, clockwise.
         translations (sequence): Translations in horizontal and vertical axis.
         scale (float): Scale parameter, a single number.
@@ -1147,7 +1147,7 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
             If None, no filling is performed.
 
     Returns:
-        img (PIL Image), Randomly affine transformed image.
+        img (PIL image), Randomly affine transformed image.
 
     """
     if not is_pil(img):
@@ -1253,13 +1253,13 @@ def mix_up_single(batch_size, img, label, alpha=0.2):
 
     Args:
         batch_size (int): the batch size of dataset.
-        img (numpy.ndarray): numpy Image to be applied mix up transformation.
-        label (numpy.ndarray): numpy label to be applied mix up transformation.
+        img (numpy.ndarray): NumPy image to be applied mix up transformation.
+        label (numpy.ndarray): NumPy label to be applied mix up transformation.
         alpha (float):  the mix up rate.
 
     Returns:
-        mix_img (numpy.ndarray): numpy Image after being applied mix up transformation.
-        mix_label (numpy.ndarray): numpy label after being applied mix up transformation.
+        mix_img (numpy.ndarray): NumPy image after being applied mix up transformation.
+        mix_label (numpy.ndarray): NumPy label after being applied mix up transformation.
     """
 
     def cir_shift(data):
@@ -1284,13 +1284,13 @@ def mix_up_muti(tmp, batch_size, img, label, alpha=0.2):
     Args:
         tmp (class object): mainly for saving the tmp parameter.
         batch_size (int): the batch size of dataset.
-        img (numpy.ndarray): numpy Image to be applied mix up transformation.
-        label (numpy.ndarray): numpy label to be applied mix up transformation.
+        img (numpy.ndarray): NumPy image to be applied mix up transformation.
+        label (numpy.ndarray): NumPy label to be applied mix up transformation.
         alpha (float):  refer to the mix up rate.
 
     Returns:
-        mix_img (numpy.ndarray): numpy Image after being applied mix up transformation.
-        mix_label (numpy.ndarray): numpy label after being applied mix up transformation.
+        mix_img (numpy.ndarray): NumPy image after being applied mix up transformation.
+        mix_label (numpy.ndarray): NumPy label after being applied mix up transformation.
     """
     lam = np.random.beta(alpha, alpha, batch_size)
     if tmp.is_first:
@@ -1313,11 +1313,11 @@ def rgb_to_hsv(np_rgb_img, is_hwc):
     Convert RGB img to HSV img.
 
     Args:
-        np_rgb_img (numpy.ndarray): Numpy RGB image array of shape (H, W, C) or (C, H, W) to be converted.
+        np_rgb_img (numpy.ndarray): NumPy RGB image array of shape (H, W, C) or (C, H, W) to be converted.
         is_hwc (Bool): If True, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
 
     Returns:
-        np_hsv_img (numpy.ndarray), Numpy HSV image with same type of np_rgb_img.
+        np_hsv_img (numpy.ndarray), NumPy HSV image with same type of np_rgb_img.
     """
     if is_hwc:
         r, g, b = np_rgb_img[:, :, 0], np_rgb_img[:, :, 1], np_rgb_img[:, :, 2]
@@ -1338,16 +1338,16 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
     Convert RGB imgs to HSV imgs.
 
     Args:
-        np_rgb_imgs (numpy.ndarray): Numpy RGB images array of shape (H, W, C) or (N, H, W, C),
+        np_rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
                                       or (C, H, W) or (N, C, H, W) to be converted.
         is_hwc (Bool): If True, the shape of np_rgb_imgs is (H, W, C) or (N, H, W, C);
                        If False, the shape of np_rgb_imgs is (C, H, W) or (N, C, H, W).
 
     Returns:
-        np_hsv_imgs (numpy.ndarray), Numpy HSV images with same type of np_rgb_imgs.
+        np_hsv_imgs (numpy.ndarray), NumPy HSV images with same type of np_rgb_imgs.
     """
     if not is_numpy(np_rgb_imgs):
-        raise TypeError('img should be Numpy Image. Got {}'.format(type(np_rgb_imgs)))
+        raise TypeError('img should be NumPy image. Got {}'.format(type(np_rgb_imgs)))
 
     shape_size = len(np_rgb_imgs.shape)
 
@@ -1380,11 +1380,11 @@ def hsv_to_rgb(np_hsv_img, is_hwc):
     Convert HSV img to RGB img.
 
     Args:
-        np_hsv_img (numpy.ndarray): Numpy HSV image array of shape (H, W, C) or (C, H, W) to be converted.
+        np_hsv_img (numpy.ndarray): NumPy HSV image array of shape (H, W, C) or (C, H, W) to be converted.
         is_hwc (Bool): If True, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
 
     Returns:
-        np_rgb_img (numpy.ndarray), Numpy HSV image with same shape of np_hsv_img.
+        np_rgb_img (numpy.ndarray), NumPy HSV image with same shape of np_hsv_img.
     """
     if is_hwc:
         h, s, v = np_hsv_img[:, :, 0], np_hsv_img[:, :, 1], np_hsv_img[:, :, 2]
@@ -1406,16 +1406,16 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
     Convert HSV imgs to RGB imgs.
 
     Args:
-        np_hsv_imgs (numpy.ndarray): Numpy HSV images array of shape (H, W, C) or (N, H, W, C),
+        np_hsv_imgs (numpy.ndarray): NumPy HSV images array of shape (H, W, C) or (N, H, W, C),
                                       or (C, H, W) or (N, C, H, W) to be converted.
         is_hwc (Bool): If True, the shape of np_hsv_imgs is (H, W, C) or (N, H, W, C);
                        If False, the shape of np_hsv_imgs is (C, H, W) or (N, C, H, W).
 
     Returns:
-        np_rgb_imgs (numpy.ndarray), Numpy RGB images with same type of np_hsv_imgs.
+        np_rgb_imgs (numpy.ndarray), NumPy RGB images with same type of np_hsv_imgs.
     """
     if not is_numpy(np_hsv_imgs):
-        raise TypeError('img should be Numpy Image. Got {}'.format(type(np_hsv_imgs)))
+        raise TypeError('img should be NumPy image. Got {}'.format(type(np_hsv_imgs)))
 
     shape_size = len(np_hsv_imgs.shape)
 
@@ -1448,16 +1448,16 @@ def random_color(img, degrees):
     Adjust the color of the input PIL image by a random degree.
 
     Args:
-        img (PIL Image): Image to be color adjusted.
+        img (PIL image): Image to be color adjusted.
         degrees (sequence): Range of random color adjustment degrees.
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Returns:
-        img (PIL Image), Color adjusted image.
+        img (PIL image), Color adjusted image.
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Color(img).enhance(v)
@@ -1468,16 +1468,16 @@ def random_sharpness(img, degrees):
     Adjust the sharpness of the input PIL image by a random degree.
 
     Args:
-        img (PIL Image): Image to be sharpness adjusted.
+        img (PIL image): Image to be sharpness adjusted.
         degrees (sequence): Range of random sharpness adjustment degrees.
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Returns:
-        img (PIL Image), Sharpness adjusted image.
+        img (PIL image), Sharpness adjusted image.
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Sharpness(img).enhance(v)
@@ -1488,17 +1488,17 @@ def auto_contrast(img, cutoff, ignore):
     Automatically maximize the contrast of the input PIL image.
 
     Args:
-        img (PIL Image): Image to be augmented with AutoContrast.
+        img (PIL image): Image to be augmented with AutoContrast.
         cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Returns:
-        img (PIL Image), Augmented image.
+        img (PIL image), Augmented image.
 
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
 
     return ImageOps.autocontrast(img, cutoff, ignore)
 
@@ -1508,15 +1508,15 @@ def invert_color(img):
     Invert colors of input PIL image.
 
     Args:
-        img (PIL Image): Image to be color inverted.
+        img (PIL image): Image to be color inverted.
 
     Returns:
-        img (PIL Image), Color inverted image.
+        img (PIL image), Color inverted image.
 
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
 
     return ImageOps.invert(img)
 
@@ -1526,15 +1526,15 @@ def equalize(img):
     Equalize the histogram of input PIL image.
 
     Args:
-        img (PIL Image): Image to be equalized
+        img (PIL image): Image to be equalized
 
     Returns:
-        img (PIL Image), Equalized image.
+        img (PIL image), Equalized image.
 
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
 
     return ImageOps.equalize(img)
 

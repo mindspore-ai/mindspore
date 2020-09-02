@@ -500,7 +500,7 @@ def test_random_crop_09():
         data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "should be PIL Image" in str(e)
+        assert "should be PIL image" in str(e)
 
 def test_random_crop_comp(plot=False):
     """

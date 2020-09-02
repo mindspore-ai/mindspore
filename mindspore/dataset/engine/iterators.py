@@ -38,7 +38,7 @@ def _cleanup():
 
 
 def alter_tree(node):
-    """Traversing the python Dataset tree/graph to perform some alteration to some specific nodes."""
+    """Traversing the Python dataset tree/graph to perform some alteration to some specific nodes."""
     if not node.children:
         return _alter_node(node)
 
@@ -98,9 +98,9 @@ class Iterator:
 
     def stop(self):
         """
-        Manually terminate python iterator instead of relying on out of scope destruction.
+        Manually terminate Python iterator instead of relying on out of scope destruction.
         """
-        logger.info("terminating python iterator. This will also terminate c++ pipeline.")
+        logger.info("terminating Python iterator. This will also terminate c++ pipeline.")
         if hasattr(self, 'depipeline') and self.depipeline:
             del self.depipeline
 
@@ -193,7 +193,7 @@ class Iterator:
 
         return op_type
 
-    # Convert python node into C node and add to C layer execution tree in postorder traversal.
+    # Convert Python node into C node and add to C layer execution tree in postorder traversal.
     def __convert_node_postorder(self, node):
         self.check_node_type(node)
         op_type = self.__get_dataset_type(node)

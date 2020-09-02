@@ -434,8 +434,8 @@ class Dataset:
                 same).
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the config will be used).
-            python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
-                option could be beneficial if the python operation is computational heavy (default=False).
+            python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
+                option could be beneficial if the Python operation is computational heavy (default=False).
             cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
                 The cache feature is under development and is not recommended.
             callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None).
@@ -565,7 +565,7 @@ class Dataset:
              If input_columns not provided or empty, all columns will be used.
 
         Args:
-            predicate(callable): python callable which returns a boolean value, if False then filter the element.
+            predicate(callable): Python callable which returns a boolean value, if False then filter the element.
             input_columns: (list[str], optional): List of names of the input columns, when
                 default=None, the predicate will be applied on all columns in the dataset.
             num_parallel_workers (int, optional): Number of workers to process the Dataset
@@ -1541,7 +1541,7 @@ class MappableDataset(SourceDataset):
 
 class DatasetOp(Dataset):
     """
-    Abstract class to represent a operations on dataset.
+    Abstract class to represent an operation on a dataset.
     """
 
     # No need for __init__ since it is the same as the super's init
@@ -1907,7 +1907,7 @@ _GLOBAL_PYFUNC_LIST = []
 
 # Pyfunc worker init function
 # Python multiprocessing library forbid sending lambda function through pipe.
-# This init function allow us to add all python function to a global collection and then fork afterwards.
+# This init function allow us to add all Python function to a global collection and then fork afterwards.
 def _pyfunc_worker_init(pyfunc_list):
     global _GLOBAL_PYFUNC_LIST
     _GLOBAL_PYFUNC_LIST = pyfunc_list
@@ -1925,11 +1925,11 @@ def _pyfunc_worker_exec(index, *args):
 # PythonCallable wrapper for multiprocess pyfunc
 class _PythonCallable:
     """
-    Internal python function wrapper for multiprocessing pyfunc.
+    Internal Python function wrapper for multiprocessing pyfunc.
     """
 
     def __init__(self, py_callable, idx, pool=None):
-        # Original python callable from user.
+        # Original Python callable from user.
         self.py_callable = py_callable
         # Process pool created for current iterator.
         self.pool = pool
@@ -1946,7 +1946,7 @@ class _PythonCallable:
                 self.pool.terminate()
                 self.pool.join()
                 raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
-        # Invoke original python callable in master process in case the pool is gone.
+        # Invoke original Python callable in master process in case the pool is gone.
         return self.py_callable(*args)
 
 
@@ -1969,8 +1969,8 @@ class MapDataset(DatasetOp):
             The argument is mandatory if len(input_columns) != len(output_columns).
         num_parallel_workers (int, optional): Number of workers to process the Dataset
             in parallel (default=None).
-        python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
-            option could be beneficial if the python operation is computational heavy (default=False).
+        python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
+            option could be beneficial if the Python operation is computational heavy (default=False).
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
             The cache feature is under development and is not recommended.
         callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None)
@@ -2065,7 +2065,7 @@ class MapDataset(DatasetOp):
             iter_specific_operations = []
             callable_list = []
 
-            # Pass #1, look for python callables and build list
+            # Pass #1, look for Python callables and build list
             for op in self.operations:
                 if callable(op):
                     callable_list.append(op)
@@ -2080,7 +2080,7 @@ class MapDataset(DatasetOp):
                 idx = 0
                 for op in self.operations:
                     if callable(op):
-                        # Wrap python callable into _PythonCallable
+                        # Wrap Python callable into _PythonCallable
                         iter_specific_operations.append(_PythonCallable(op, idx, self.process_pool))
                         idx += 1
                     else:
@@ -2099,7 +2099,7 @@ class FilterDataset(DatasetOp):
 
     Args:
         input_dataset: Input Dataset to be mapped.
-        predicate: python callable which returns a boolean value, if False then filter the element.
+        predicate: Python callable which returns a boolean value, if False then filter the element.
         input_columns: (list[str]): List of names of the input columns, when
         default=None, the predicate will be applied all columns in the dataset.
         num_parallel_workers (int, optional): Number of workers to process the Dataset
@@ -3079,7 +3079,7 @@ def _generator_fn(generator, num_samples):
 
 def _py_sampler_fn(sampler, num_samples, dataset):
     """
-    Generator function wrapper for mappable dataset with python sampler.
+    Generator function wrapper for mappable dataset with Python sampler.
     """
     if num_samples is not None:
         sampler_iter = iter(sampler)
@@ -3120,7 +3120,7 @@ def _cpp_sampler_fn_mp(sampler, dataset, num_worker, multi_process):
 
 def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker, multi_process):
     """
-    Multiprocessing generator function wrapper for mappable dataset with python sampler.
+    Multiprocessing generator function wrapper for mappable dataset with Python sampler.
     """
     indices = _fetch_py_sampler_indices(sampler, num_samples)
     sample_fn = SamplerFn(dataset, num_worker, multi_process)
@@ -3129,7 +3129,7 @@ def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker, multi_process):
 
 def _fetch_py_sampler_indices(sampler, num_samples):
     """
-    Indice fetcher for python sampler.
+    Indice fetcher for Python sampler.
     """
     if num_samples is not None:
         sampler_iter = iter(sampler)
@@ -3316,7 +3316,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
 
 class GeneratorDataset(MappableDataset):
     """
-    A source dataset that generates data from python by invoking python data source each epoch.
+    A source dataset that generates data from Python by invoking Python data source each epoch.
 
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
@@ -3349,10 +3349,11 @@ class GeneratorDataset(MappableDataset):
 
     Args:
         source (Union[Callable, Iterable, Random Accessible]):
-            A generator callable object, an iterable python object or a random accessible python object.
-            Callable source is required to return a tuple of numpy array as a row of the dataset on source().next().
-            Iterable source is required to return a tuple of numpy array as a row of the dataset on iter(source).next().
-            Random accessible source is required to return a tuple of numpy array as a row of the dataset on
+            A generator callable object, an iterable Python object or a random accessible Python object.
+            Callable source is required to return a tuple of NumPy arrays as a row of the dataset on source().next().
+            Iterable source is required to return a tuple of NumPy arrays as a row of the dataset on
+            iter(source).next().
+            Random accessible source is required to return a tuple of NumPy arrays as a row of the dataset on
             source[idx].
         column_names (list[str], optional): List of column names of the dataset (default=None). Users are required to
             provide either column_names or schema.
@@ -3371,8 +3372,8 @@ class GeneratorDataset(MappableDataset):
             When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
             when num_shards is also specified. Random accessible input is required.
-        python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
-            option could be beneficial if the python operation is computational heavy (default=True).
+        python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
+            option could be beneficial if the Python operation is computational heavy (default=True).
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -4474,7 +4475,7 @@ class VOCDataset(MappableDataset):
             argument should be specified only when num_shards is also specified.
 
     Raises:
-        RuntimeError: If xml of Annotations is a invalid format.
+        RuntimeError: If xml of Annotations is an invalid format.
         RuntimeError: If xml of Annotations loss attribution of "object".
         RuntimeError: If xml of Annotations loss attribution of "bndbox".
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -5322,7 +5323,7 @@ class TextFileDataset(SourceDataset):
 
 class _NumpySlicesDataset:
     """
-    Mainly for dealing with several kinds of format of python data, and return one row each time.
+    Mainly for dealing with several kinds of format of Python data, and return one row each time.
     """
 
     def __init__(self, data, column_list=None):
@@ -5388,7 +5389,7 @@ class _NumpySlicesDataset:
 
 class NumpySlicesDataset(GeneratorDataset):
     """
-    Create a dataset with given data slices, mainly for loading python data into dataset.
+    Create a dataset with given data slices, mainly for loading Python data into dataset.
 
     This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
     below shows what input args are allowed and their expected behavior.
@@ -5421,7 +5422,7 @@ class NumpySlicesDataset(GeneratorDataset):
 
     Args:
         data (Union[list, tuple, dict]) Input of Given data, supported data type includes list, tuple, dict and other
-            numpy format. Input data will be sliced in first dimension and generate many rows, large data is not
+            NumPy format. Input data will be sliced in first dimension and generate many rows, large data is not
             recommend to load in this way as data is loading into memory.
         column_names (list[str], optional): List of column names of the dataset (default=None). If column_names not
             provided, when data is dict, column_names will be its key, otherwise it will be like column_1, column_2 ...
@@ -5444,7 +5445,7 @@ class NumpySlicesDataset(GeneratorDataset):
         >>> # 2) Input data can be a dict, and column_names will be its key
         >>> data = {"a": [1, 2], "b": [3, 4]}
         >>> dataset2 = ds.NumpySlicesDataset(data)
-        >>> # 3) Input data can be a tuple of lists (or numpy arrays), each tuple element refers to data in each column
+        >>> # 3) Input data can be a tuple of lists (or NumPy arrays), each tuple element refers to data in each column
         >>> data = ([1, 2], [3, 4], [5, 6])
         >>> dataset3 = ds.NumpySlicesDataset(data, column_names=["column_1", "column_2", "column_3"])
         >>> # 4) Load data from csv file

@@ -48,7 +48,7 @@ def serialize(dataset, json_filepath=None):
         >>> data = data.batch(batch_size=10, drop_remainder=True)
         >>>
         >>> ds.engine.serialize(data, json_filepath="mnist_dataset_pipeline.json")  # serialize it to json file
-        >>> serialized_data = ds.engine.serialize(data)  # serialize it to python dict
+        >>> serialized_data = ds.engine.serialize(data)  # serialize it to Python dict
     """
     serialized_pipeline = traverse(dataset)
     if json_filepath:
@@ -62,7 +62,7 @@ def deserialize(input_dict=None, json_filepath=None):
     Construct a de pipeline from a json file produced by de.serialize().
 
     Args:
-        input_dict (dict): a python dictionary containing a serialized dataset graph
+        input_dict (dict): a Python dictionary containing a serialized dataset graph
         json_filepath (str): a path to the json file.
 
     Returns:
@@ -83,7 +83,7 @@ def deserialize(input_dict=None, json_filepath=None):
         >>> # Use case 1: to/from json file
         >>> ds.engine.serialize(data, json_filepath="mnist_dataset_pipeline.json")
         >>> data = ds.engine.deserialize(json_filepath="mnist_dataset_pipeline.json")
-        >>> # Use case 2: to/from python dictionary
+        >>> # Use case 2: to/from Python dictionary
         >>> serialized_data = ds.engine.serialize(data)
         >>> data = ds.engine.deserialize(input_dict=serialized_data)
 
@@ -110,12 +110,12 @@ def expand_path(node_repr, key, val):
 
 
 def serialize_operations(node_repr, key, val):
-    """Serialize tensor op (python object) to dictionary."""
+    """Serialize tensor op (Python object) to dictionary."""
     if isinstance(val, list):
         node_repr[key] = []
         for op in val:
             node_repr[key].append(op.__dict__)
-            # Extracting module and name information from a python object
+            # Extracting module and name information from a Python object
             # Example: tensor_op_module is 'minddata.transforms.c_transforms' and tensor_op_name is 'Decode'
             node_repr[key][-1]['tensor_op_name'] = type(op).__name__
             node_repr[key][-1]['tensor_op_module'] = type(op).__module__
@@ -137,7 +137,7 @@ def serialize_sampler(node_repr, val):
 
 def traverse(node):
     """Pre-order traverse the pipeline and capture the information as we go."""
-    # Node representation (node_repr) is a python dictionary that capture and store the
+    # Node representation (node_repr) is a Python dictionary that capture and store the
     # dataset pipeline information before dumping it to JSON or other format.
     node_repr = dict()
     node_repr['op_type'] = type(node).__name__
@@ -222,12 +222,12 @@ def compare(pipeline1, pipeline2):
 
 
 def construct_pipeline(node):
-    """Construct the python Dataset objects by following the dictionary deserialized from json file."""
+    """Construct the Python Dataset objects by following the dictionary deserialized from json file."""
     op_type = node.get('op_type')
     if not op_type:
         raise ValueError("op_type field in the json file can't be None.")
 
-    # Instantiate python Dataset object based on the current dictionary element
+    # Instantiate Python Dataset object based on the current dictionary element
     dataset = create_node(node)
     # Initially it is not connected to any other object.
     dataset.children = []
@@ -240,12 +240,12 @@ def construct_pipeline(node):
 
 
 def create_node(node):
-    """Parse the key, value in the node dictionary and instantiate the python Dataset object"""
+    """Parse the key, value in the node dictionary and instantiate the Python Dataset object"""
     logger.info('creating node: %s', node['op_type'])
     dataset_op = node['op_type']
     op_module = node['op_module']
 
-    # Get the python class to be instantiated.
+    # Get the Python class to be instantiated.
     # Example:
     #  "op_type": "MapDataset",
     #  "op_module": "mindspore.dataset.datasets",
