@@ -1565,24 +1565,33 @@ Status CostGraph::InitSelectedStrategy() {
       auto next_iter = std::find_if(out_edges.begin(), out_edges.end(), [&](std::shared_ptr<Edge> edge) {
         return edge->next_operator()->name() == reshape_info->next_operator_name();
       });
-      if (pre_iter != in_edges.end()) {
+      bool reshape_is_first_op = reshape_info->pre_operator_name() == reshape_info->name();
+      if (reshape_is_first_op) {
+        reshape_info->InitSelectedStrategy(reshape_info->selected_strategy());
+      }
+      if (pre_iter != in_edges.end() || reshape_is_first_op) {
         MS_LOG(DEBUG) << "Set reshape input layout by " << reshape_info->pre_operator_name();
         int32_t pre_index = reshape_info->pre_operator_index();
         TensorInfo pre_info;
-        if (ops_[i]->name() == (*pre_iter)->prev_operator()->name()) {
-          pre_info = (*pre_iter)->prev_operator()->inputs_tensor_info()[pre_index];
+        std::shared_ptr<OperatorInfo> pre_op_info;
+        if (reshape_is_first_op) {
+          pre_op_info = reshape_info;
+          pre_info = pre_op_info->inputs_tensor_info()[pre_index];
         } else {
-          pre_info = (*pre_iter)->prev_operator()->outputs_tensor_info()[pre_index];
+          pre_op_info = (*pre_iter)->prev_operator();
+          pre_info = pre_op_info->outputs_tensor_info()[pre_index];
         }
         reshape_info->SetInputLayout(pre_info.tensor_layout());
-        Dimensions stra = pre_info.InferStrategy();
-        if (stra.empty()) {
-          MS_LOG(EXCEPTION) << "Infer strategy by tensor_info failed";
+        if (pre_iter != in_edges.end()) {
+          Dimensions stra = pre_info.InferStrategy();
+          if (stra.empty()) {
+            MS_LOG(EXCEPTION) << "Infer strategy by tensor_info failed";
+          }
+          Strategys stra_inputs = {stra};
+          StrategyPtr reshape_stra =
+            std::make_shared<Strategy>((*pre_iter)->prev_operator()->strategy()->GetInputStage(), stra_inputs);
+          reshape_info->set_strategy(reshape_stra);
         }
-        Strategys stra_inputs = {stra};
-        StrategyPtr reshape_stra =
-          std::make_shared<Strategy>((*pre_iter)->prev_operator()->strategy()->GetInputStage(), stra_inputs);
-        reshape_info->set_strategy(reshape_stra);
       }
       if (next_iter != out_edges.end()) {
         MS_LOG(DEBUG) << "Set reshape output layout by " << reshape_info->next_operator_name();
