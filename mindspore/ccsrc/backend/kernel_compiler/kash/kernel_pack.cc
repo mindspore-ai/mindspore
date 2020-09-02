@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <unistd.h>
 #include <fstream>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
@@ -203,13 +204,26 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &pr
   }
   std::ifstream kernel_json(json_f);
   if (!kernel_json.is_open()) {
-    MS_LOG(DEBUG) << "read json file error, please check kernelmeta.";
+    MS_LOG(INFO) << "Open json file: " << json_f << " error, please check kernel_meta.";
     return false;
   }
   nlohmann::json js;
-  kernel_json >> js;
+  try {
+    kernel_json >> js;
+    kernel_json.close();
+  } catch (std::exception &e) {
+    MS_LOG(WARNING) << "Parse json file error: " << json_f << ", sleep 500ms and retry again.";
+    kernel_json.close();
+    usleep(500000);
+    std::ifstream retry_tmp(json_f);
+    if (!retry_tmp.is_open()) {
+      MS_LOG(INFO) << "Open json file: " << json_f << " error, please check kernel_meta.";
+      return false;
+    }
+    retry_tmp >> js;
+    retry_tmp.close();
+  }
   ParseKernelJson(js);
-  kernel_json.close();
 
   std::string bin_f = json_f.substr(0, json_f.length() - 5) + kernel_json_info_.bin_file_suffix;
   if (kernel_json_info_.bin_file_suffix == ".so") {
