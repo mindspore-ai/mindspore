@@ -19,7 +19,11 @@
 
 namespace mindspore::kernel {
 Matrix *TransformMatrixGenerator(int m, int k) {
-  auto matrix = new Matrix;
+  auto matrix = new (std::nothrow) Matrix;
+  if (matrix == nullptr) {
+    MS_LOG(ERROR) << "matrix is nullptr.";
+    return nullptr;
+  }
   auto data = malloc(m * k * sizeof(float));
   if (data == nullptr) {
     MS_LOG(ERROR) << "Malloc matrix data failed.";

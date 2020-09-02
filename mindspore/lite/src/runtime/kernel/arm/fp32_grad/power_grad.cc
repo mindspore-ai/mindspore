@@ -55,6 +55,11 @@ kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::tensor
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_PowerGrad);
   auto *kernel = new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new PowerGradCPUKernel fail!";
+    return nullptr;
+  }
+
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "

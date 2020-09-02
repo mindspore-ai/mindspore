@@ -37,7 +37,10 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
                           const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                           const mindspore::lite::PrimitiveC *primitive)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    matmul_param_ = new MatMulParameter();
+    matmul_param_ = new (std::nothrow) MatMulParameter();
+    if (matmul_param_ == nullptr) {
+      MS_LOG(ERROR) << "new MatMulParameter fail!";
+    }
   }
   ~Convolution1x1CPUKernel();
   int Init() override;

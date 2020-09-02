@@ -29,6 +29,11 @@ namespace mindspore::kernel {
 DeConvInt8CPUKernel::~DeConvInt8CPUKernel() {
   FreeTmpBuffer();
   ConvolutionBaseCPUKernel::FreeQuantParam();
+
+  if (matmul_param_ != nullptr) {
+    delete matmul_param_;
+    matmul_param_ = nullptr;
+  }
 }
 
 void DeConvInt8CPUKernel::FreeTmpBuffer() {

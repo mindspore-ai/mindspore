@@ -33,7 +33,11 @@ namespace mindspore::kernel {
 int BNGradInputCPUKernel::Init() {
   auto bn_param = reinterpret_cast<bnParameter *>(opParameter);
   workspace_size = 5 * bn_param->channels;
-  workspace = new float[workspace_size];
+  workspace = new  (std::nothrow) float[workspace_size];
+  if (workspace == nullptr) {
+    MS_LOG(ERROR) << "new workspace fail!";
+    return RET_ERROR;
+  }
 
   if (2 != this->inputs_.size()) {
     MS_LOG(ERROR) << "Conv2d Grad should has 2 inputs";

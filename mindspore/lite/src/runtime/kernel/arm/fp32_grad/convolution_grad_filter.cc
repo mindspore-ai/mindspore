@@ -61,7 +61,11 @@ int ConvolutionGradFilterCPUKernel::Init() {
   int ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
                 conv_param->input_channel_ / conv_param->group_;
 
-  workspace = new float[ws_size];
+  workspace = new (std::nothrow) float[ws_size];
+  if (workspace == nullptr) {
+    MS_LOG(ERROR) << "new workspace fail!";
+    return RET_ERROR;
+  }
 
   int output_w = 0;
   int output_h = 0;

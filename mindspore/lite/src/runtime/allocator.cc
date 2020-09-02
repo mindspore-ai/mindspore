@@ -19,7 +19,9 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore::lite {
-std::shared_ptr<Allocator> Allocator::Create() { return std::shared_ptr<Allocator>(new DefaultAllocator()); }
+std::shared_ptr<Allocator> Allocator::Create() {
+  return std::shared_ptr<Allocator>(new (std::nothrow) DefaultAllocator());
+}
 
 DefaultAllocator::DefaultAllocator() {}
 

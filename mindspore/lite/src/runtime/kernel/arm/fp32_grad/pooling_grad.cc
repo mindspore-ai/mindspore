@@ -181,7 +181,11 @@ kernel::LiteKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::tens
   MS_ASSERT(desc.type == schema::PrimitiveType_PoolingGrad);
 
   auto *kernel = new (std::nothrow) PoolingGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new PoolingGradCPUKernel fail!";
+    return nullptr;
+  }
+
   auto ret = kernel->Init();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
