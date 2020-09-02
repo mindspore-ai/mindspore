@@ -186,8 +186,8 @@ class Bernoulli(Distribution):
             H(B) = -probs0 * \log(probs0) - probs1 * \log(probs1)
         """
         probs1 = self._check_param(probs1)
-        probs0 = 1 - probs1
-        return -1 * (probs0 * self.log(probs0)) - (probs1 * self.log(probs1))
+        probs0 = 1.0 - probs1
+        return -(probs0 * self.log(probs0)) - (probs1 * self.log(probs1))
 
     def _cross_entropy(self, dist, probs1_b, probs1=None):
         """
