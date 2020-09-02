@@ -11,6 +11,7 @@ add_library(quantizer_mid OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/general_bitpacking.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/post_training_quantizer.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/quant_cast.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/weight_quantizer.cc
     )
 
 if(ENABLE_ASAN)

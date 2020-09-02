@@ -103,8 +103,9 @@ int ModelImpl::BuildOps() {
     auto cNode = meta_graph_->nodes()->GetAs<schema::CNode>(i);
     auto name = cNode->name()->str();
     auto srcPrim = cNode->primitive();
-
-    this->ops_[name] = PrimitiveC::UnPackFromSchemaPrimitive(const_cast<schema::Primitive *>(srcPrim));
+    auto prim = PrimitiveC::UnPackFromSchemaPrimitive(const_cast<schema::Primitive *>(srcPrim));
+    prim->SetQuantType(cNode->quantType());
+    this->ops_[name] = prim;
   }
   return 0;
 }

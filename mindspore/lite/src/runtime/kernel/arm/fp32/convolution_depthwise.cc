@@ -131,6 +131,13 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
+
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->Data();
+  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    ConvolutionBaseCPUKernel::RestoreFilter(inputs.at(kWeightIndex));
+  }
+
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel;
   if (conv_param->input_channel_ < 32) {
@@ -149,6 +156,12 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::tensor::T
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     return nullptr;
   }
+
+  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    weight_tensor->FreeData();
+    weight_tensor->SetData(restore_data);
+  }
+
   return kernel;
 }
 

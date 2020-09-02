@@ -530,7 +530,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<P
     return RET_ERROR;
   }
   auto status =
-    QuantFilter(paramValue, primitive_c, QuantType_PostTraining, quant_max, quant_min, bit_num, perchanel, depthwise);
+    QuantFilter<int8_t>(paramValue, primitive_c, QuantType_PostTraining, quant_max,
+      quant_min, bit_num, perchanel, depthwise);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;

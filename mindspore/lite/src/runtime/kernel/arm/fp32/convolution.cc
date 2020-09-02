@@ -239,6 +239,12 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
     CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
   }
 
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->Data();
+  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    ConvolutionBaseCPUKernel::RestoreFilter(inputs.at(kWeightIndex));
+  }
+
   kernel::LiteKernel *kernel;
   if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
@@ -263,6 +269,12 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::tensor::Ten
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
+
+  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+    weight_tensor->FreeData();
+    weight_tensor->SetData(restore_data);
+  }
+
   return kernel;
 }
 
