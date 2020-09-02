@@ -64,7 +64,7 @@ def test_mnist_content_check():
     num_iter = 0
     # in this example, each dictionary has keys "image" and "label"
     image_list, label_list = [], []
-    for i, data in enumerate(data1.create_dict_iterator()):
+    for i, data in enumerate(data1.create_dict_iterator(num_epochs=1)):
         image_list.append(data["image"])
         label_list.append("label {}".format(data["label"]))
         np.testing.assert_array_equal(data["image"], images[i])
@@ -82,14 +82,14 @@ def test_mnist_basic():
     # case 1: test loading whole dataset
     data1 = ds.MnistDataset(DATA_DIR)
     num_iter1 = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter1 += 1
     assert num_iter1 == 10000
 
     # case 2: test num_samples
     data2 = ds.MnistDataset(DATA_DIR, num_samples=500)
     num_iter2 = 0
-    for _ in data2.create_dict_iterator():
+    for _ in data2.create_dict_iterator(num_epochs=1):
         num_iter2 += 1
     assert num_iter2 == 500
 
@@ -97,7 +97,7 @@ def test_mnist_basic():
     data3 = ds.MnistDataset(DATA_DIR, num_samples=200)
     data3 = data3.repeat(5)
     num_iter3 = 0
-    for _ in data3.create_dict_iterator():
+    for _ in data3.create_dict_iterator(num_epochs=1):
         num_iter3 += 1
     assert num_iter3 == 1000
 
@@ -109,7 +109,7 @@ def test_mnist_basic():
     assert data4.get_dataset_size() == 15
     assert data4.get_batch_size() == 7
     num_iter4 = 0
-    for _ in data4.create_dict_iterator():
+    for _ in data4.create_dict_iterator(num_epochs=1):
         num_iter4 += 1
     assert num_iter4 == 15
 
@@ -121,7 +121,7 @@ def test_mnist_basic():
     assert data5.get_dataset_size() == 14
     assert data5.get_batch_size() == 7
     num_iter5 = 0
-    for _ in data5.create_dict_iterator():
+    for _ in data5.create_dict_iterator(num_epochs=1):
         num_iter5 += 1
     assert num_iter5 == 14
 
@@ -137,7 +137,7 @@ def test_mnist_pk_sampler():
     data = ds.MnistDataset(DATA_DIR, sampler=sampler)
     num_iter = 0
     label_list = []
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         label_list.append(item["label"])
         num_iter += 1
     np.testing.assert_array_equal(golden, label_list)
@@ -155,7 +155,7 @@ def test_mnist_sequential_sampler():
     data2 = ds.MnistDataset(DATA_DIR, shuffle=False, num_samples=num_samples)
     label_list1, label_list2 = [], []
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         label_list1.append(item1["label"])
         label_list2.append(item2["label"])
         num_iter += 1
@@ -214,7 +214,7 @@ def test_mnist_visualize(plot=False):
     data1 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
     num_iter = 0
     image_list, label_list = [], []
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         image = item["image"]
         label = item["label"]
         image_list.append(image)

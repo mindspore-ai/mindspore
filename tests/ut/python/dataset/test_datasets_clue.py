@@ -26,7 +26,7 @@ def test_clue():
     data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=False)
     data = data.repeat(2)
     data = data.skip(3)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'sentence1': d['sentence1'].item().decode("utf8"),
@@ -43,7 +43,7 @@ def test_clue_num_shards():
 
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', num_shards=3, shard_id=1)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'sentence1': d['sentence1'].item().decode("utf8"),
@@ -60,7 +60,7 @@ def test_clue_num_samples():
 
     data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', num_samples=2)
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 2
 
@@ -87,7 +87,7 @@ def test_clue_afqmc():
     # train
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'sentence1': d['sentence1'].item().decode("utf8"),
@@ -98,7 +98,7 @@ def test_clue_afqmc():
     # test
     buffer = []
     data = ds.CLUEDataset(TEST_FILE, task='AFQMC', usage='test', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'sentence1': d['sentence1'].item().decode("utf8"),
@@ -109,7 +109,7 @@ def test_clue_afqmc():
     # evaluation
     buffer = []
     data = ds.CLUEDataset(EVAL_FILE, task='AFQMC', usage='eval', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'sentence1': d['sentence1'].item().decode("utf8"),
@@ -129,7 +129,7 @@ def test_clue_cmnli():
     # train
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='CMNLI', usage='train', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'sentence1': d['sentence1'].item().decode("utf8"),
@@ -140,7 +140,7 @@ def test_clue_cmnli():
     # test
     buffer = []
     data = ds.CLUEDataset(TEST_FILE, task='CMNLI', usage='test', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'sentence1': d['sentence1'],
@@ -151,7 +151,7 @@ def test_clue_cmnli():
     # eval
     buffer = []
     data = ds.CLUEDataset(EVAL_FILE, task='CMNLI', usage='eval', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'],
             'sentence1': d['sentence1'],
@@ -171,7 +171,7 @@ def test_clue_csl():
     # train
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='CSL', usage='train', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'abst': d['abst'].item().decode("utf8"),
@@ -183,7 +183,7 @@ def test_clue_csl():
     # test
     buffer = []
     data = ds.CLUEDataset(TEST_FILE, task='CSL', usage='test', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'abst': d['abst'].item().decode("utf8"),
@@ -194,7 +194,7 @@ def test_clue_csl():
     # eval
     buffer = []
     data = ds.CLUEDataset(EVAL_FILE, task='CSL', usage='eval', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'abst': d['abst'].item().decode("utf8"),
@@ -215,7 +215,7 @@ def test_clue_iflytek():
     # train
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='IFLYTEK', usage='train', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'label_des': d['label_des'].item().decode("utf8"),
@@ -226,7 +226,7 @@ def test_clue_iflytek():
     # test
     buffer = []
     data = ds.CLUEDataset(TEST_FILE, task='IFLYTEK', usage='test', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'sentence': d['sentence'].item().decode("utf8")
@@ -236,7 +236,7 @@ def test_clue_iflytek():
     # eval
     buffer = []
     data = ds.CLUEDataset(EVAL_FILE, task='IFLYTEK', usage='eval', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'label_des': d['label_des'].item().decode("utf8"),
@@ -256,7 +256,7 @@ def test_clue_tnews():
     # train
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='TNEWS', usage='train', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'label_desc': d['label_desc'].item().decode("utf8"),
@@ -269,7 +269,7 @@ def test_clue_tnews():
     # test
     buffer = []
     data = ds.CLUEDataset(TEST_FILE, task='TNEWS', usage='test', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'id': d['id'],
             'sentence': d['sentence'].item().decode("utf8"),
@@ -281,7 +281,7 @@ def test_clue_tnews():
     # eval
     buffer = []
     data = ds.CLUEDataset(EVAL_FILE, task='TNEWS', usage='eval', shuffle=False)
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'label': d['label'].item().decode("utf8"),
             'label_desc': d['label_desc'].item().decode("utf8"),
@@ -303,7 +303,7 @@ def test_clue_wsc():
     # train
     buffer = []
     data = ds.CLUEDataset(TRAIN_FILE, task='WSC', usage='train')
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'span1_index': d['span1_index'],
             'span2_index': d['span2_index'],
@@ -318,7 +318,7 @@ def test_clue_wsc():
     # test
     buffer = []
     data = ds.CLUEDataset(TEST_FILE, task='WSC', usage='test')
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'span1_index': d['span1_index'],
             'span2_index': d['span2_index'],
@@ -332,7 +332,7 @@ def test_clue_wsc():
     # eval
     buffer = []
     data = ds.CLUEDataset(EVAL_FILE, task='WSC', usage='eval')
-    for d in data.create_dict_iterator():
+    for d in data.create_dict_iterator(num_epochs=1):
         buffer.append({
             'span1_index': d['span1_index'],
             'span2_index': d['span2_index'],

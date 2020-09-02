@@ -50,7 +50,7 @@ def test_random_rotation_op_c(plot=False):
     data2 = data2.map(input_columns=["image"], operations=decode_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         if num_iter > 0:
             break
         rotation_de = item1["image"]
@@ -86,7 +86,7 @@ def test_random_rotation_op_py(plot=False):
     data2 = data2.map(input_columns=["image"], operations=transform2())
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         if num_iter > 0:
             break
         rotation_de = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
@@ -116,7 +116,7 @@ def test_random_rotation_expand():
     data1 = data1.map(input_columns=["image"], operations=random_rotation_op)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         rotation = item["image"]
         logger.info("shape after rotate: {}".format(rotation.shape))
         num_iter += 1
@@ -192,7 +192,7 @@ def test_rotation_diff(plot=False):
 
     num_iter = 0
     image_list_c, image_list_py = [], []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)

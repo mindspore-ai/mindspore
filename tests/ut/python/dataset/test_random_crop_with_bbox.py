@@ -53,7 +53,7 @@ def test_random_crop_with_bbox_op_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -83,7 +83,7 @@ def test_random_crop_with_bbox_op_coco_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataCoco1.create_dict_iterator(), dataCoco2.create_dict_iterator()):
+    for unAug, Aug in zip(dataCoco1.create_dict_iterator(num_epochs=1), dataCoco2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -118,7 +118,7 @@ def test_random_crop_with_bbox_op2_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -152,7 +152,7 @@ def test_random_crop_with_bbox_op3_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -190,7 +190,7 @@ def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -217,7 +217,7 @@ def test_random_crop_with_bbox_op_invalid_c():
                                 columns_order=["image", "bbox"],
                                 operations=[test_op])  # Add column for "bbox"
 
-        for _ in dataVoc2.create_dict_iterator():
+        for _ in dataVoc2.create_dict_iterator(num_epochs=1):
             break
     except TypeError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
@@ -257,7 +257,7 @@ def test_random_crop_with_bbox_op_bad_padding():
                                 columns_order=["image", "bbox"],
                                 operations=[test_op])
 
-        for _ in dataVoc2.create_dict_iterator():
+        for _ in dataVoc2.create_dict_iterator(num_epochs=1):
             break
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
@@ -271,7 +271,7 @@ def test_random_crop_with_bbox_op_bad_padding():
                                 columns_order=["image", "bbox"],
                                 operations=[test_op])
 
-        for _ in dataVoc2.create_dict_iterator():
+        for _ in dataVoc2.create_dict_iterator(num_epochs=1):
             break
     except RuntimeError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))

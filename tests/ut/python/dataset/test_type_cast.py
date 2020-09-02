@@ -55,7 +55,7 @@ def test_type_cast():
     data2 = data2.map(input_columns=["image"], operations=transform())
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
@@ -95,7 +95,7 @@ def test_type_cast_string():
     data2 = data2.map(input_columns=["image"], operations=transform())
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)

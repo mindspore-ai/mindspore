@@ -53,7 +53,7 @@ def test_to_type_op():
     transform2 = py_vision.ComposeOp(transforms2)
     data2 = data2.map(input_columns=["image"], operations=transform2())
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = item1["image"]
         image2 = item2["image"]
 

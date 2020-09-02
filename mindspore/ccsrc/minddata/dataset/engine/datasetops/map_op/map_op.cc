@@ -308,6 +308,7 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_tabl
   std::vector<TensorRow> result_table;
   // Executing the list of jobs.
   for (size_t i = 0; i < job_list.size(); i++) {
+    RETURN_IF_INTERRUPTED();
     // Execute MapWorkerJob.
     RETURN_IF_NOT_OK(job_list[i]->Run(job_input_table, &result_table));
     // Assign the processed data as an input for the next job processing, except for the last TensorOp in the list.

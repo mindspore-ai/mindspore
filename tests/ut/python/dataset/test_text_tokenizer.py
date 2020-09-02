@@ -45,7 +45,7 @@ def test_unicode_char_tokenizer_default():
     tokenizer = text.UnicodeCharTokenizer()
     dataset = dataset.map(operations=tokenizer)
     tokens = []
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['text']).tolist()
         tokens.append(token)
     logger.info("The out tokens is : {}".format(tokens))
@@ -67,7 +67,7 @@ def test_unicode_char_tokenizer_with_offsets():
     expected_offsets_limit = [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
                               [3, 6, 9, 12, 15, 18], [3, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17], [1, 2]]
     count = 0
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['token']).tolist()
         tokens.append(token)
         np.testing.assert_array_equal(i['offsets_start'], expected_offsets_start[count])
@@ -89,7 +89,7 @@ def test_whitespace_tokenizer_default():
     tokenizer = text.WhitespaceTokenizer()
     dataset = dataset.map(operations=tokenizer)
     tokens = []
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['text']).tolist()
         tokens.append(token)
     logger.info("The out tokens is : {}".format(tokens))
@@ -112,7 +112,7 @@ def test_whitespace_tokenizer_with_offsets():
     expected_offsets_start = [[0, 8, 11], [0], [0], [0]]
     expected_offsets_limit = [[7, 10, 19], [18], [17], [0]]
     count = 0
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['token']).tolist()
         tokens.append(token)
         np.testing.assert_array_equal(i['offsets_start'], expected_offsets_start[count])
@@ -136,7 +136,7 @@ def test_unicode_script_tokenizer_default():
     dataset = dataset.map(operations=tokenizer)
 
     tokens = []
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['text']).tolist()
         tokens.append(token)
     logger.info("The out tokens is : {}".format(tokens))
@@ -155,7 +155,7 @@ def test_unicode_script_tokenizer_default2():
     tokenizer = text.UnicodeScriptTokenizer(keep_whitespace=True)
     dataset = dataset.map(operations=tokenizer)
     tokens = []
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['text']).tolist()
         tokens.append(token)
     logger.info("The out tokens is :", tokens)
@@ -178,7 +178,7 @@ def test_unicode_script_tokenizer_with_offsets():
     expected_offsets_start = [[0, 8, 11, 18], [0, 15], [0, 9, 16], [0]]
     expected_offsets_limit = [[7, 10, 18, 19], [15, 18], [9, 16, 17], [0]]
     count = 0
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['token']).tolist()
         tokens.append(token)
         np.testing.assert_array_equal(i['offsets_start'], expected_offsets_start[count])
@@ -204,7 +204,7 @@ def test_unicode_script_tokenizer_with_offsets2():
     expected_offsets_start = [[0, 7, 8, 10, 11, 18], [0, 15], [0, 9, 16], [0]]
     expected_offsets_limit = [[7, 8, 10, 11, 18, 19], [15, 18], [9, 16, 17], [2]]
     count = 0
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['token']).tolist()
         tokens.append(token)
         np.testing.assert_array_equal(i['offsets_start'], expected_offsets_start[count])
@@ -224,7 +224,7 @@ def test_case_fold():
     dataset = dataset.map(operations=op)
 
     lower_strs = []
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['text']).tolist()
         lower_strs.append(token)
     assert lower_strs == expect_strs
@@ -241,7 +241,7 @@ def test_normalize_utf8():
         dataset = dataset.map(operations=normalize)
         out_bytes = []
         out_texts = []
-        for i in dataset.create_dict_iterator():
+        for i in dataset.create_dict_iterator(num_epochs=1):
             out_bytes.append(i['text'])
             out_texts.append(text.to_str(i['text']).tolist())
         logger.info("The out bytes is : ", out_bytes)
@@ -282,7 +282,7 @@ def test_regex_replace():
         replace_op = text.RegexReplace(pattern, replace)
         dataset = dataset.map(operations=replace_op)
         out_text = []
-        for i in dataset.create_dict_iterator():
+        for i in dataset.create_dict_iterator(num_epochs=1):
             token = text.to_str(i['text']).tolist()
             out_text.append(token)
         logger.info("Out:", out_text)
@@ -310,7 +310,7 @@ def test_regex_tokenizer_default():
         dataset = dataset.map(operations=tokenizer_op)
         out_text = []
         count = 0
-        for i in dataset.create_dict_iterator():
+        for i in dataset.create_dict_iterator(num_epochs=1):
             token = text.to_str(i['text']).tolist()
             np.testing.assert_array_equal(token, expect_str[count])
             count += 1
@@ -343,7 +343,7 @@ def test_regex_tokenizer_with_offsets():
                               columns_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer_op)
         out_text = []
         count = 0
-        for i in dataset.create_dict_iterator():
+        for i in dataset.create_dict_iterator(num_epochs=1):
             token = text.to_str(i['token']).tolist()
             np.testing.assert_array_equal(token, expect_str[count])
             np.testing.assert_array_equal(i['offsets_start'], expected_offsets_start[count])

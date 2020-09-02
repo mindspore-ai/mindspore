@@ -27,7 +27,7 @@ def test_compose():
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
             data = data.map(input_columns=["col"], operations=ops.Compose(op_list))
             res = []
-            for i in data.create_dict_iterator():
+            for i in data.create_dict_iterator(num_epochs=1):
                 res.append(i["col"].tolist())
             return res
         except (TypeError, ValueError) as e:

@@ -57,7 +57,7 @@ def test_random_order_op(plot=False):
 
     image_order = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image2 = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_order.append(image1)

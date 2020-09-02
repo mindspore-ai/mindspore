@@ -48,7 +48,7 @@ def test_cache_nomap_basic1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for data in ds1.create_dict_iterator():
+    for data in ds1.create_dict_iterator(num_epochs=1):
         logger.info("printing the label: {}".format(data["label"]))
         num_iter += 1
 
@@ -80,7 +80,7 @@ def test_cache_nomap_basic2():
     ds1 = ds1.repeat(2)
 
     num_iter = 0
-    for data in ds1.create_dict_iterator():
+    for data in ds1.create_dict_iterator(num_epochs=1):
         logger.info("printing the label: {}".format(data["label"]))
         num_iter += 1
 
@@ -112,7 +112,7 @@ def test_cache_nomap_basic3():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -164,7 +164,7 @@ def test_cache_nomap_basic4():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -201,7 +201,7 @@ def test_cache_nomap_basic5():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -241,7 +241,7 @@ def test_cache_nomap_basic6():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -277,7 +277,7 @@ def test_cache_nomap_basic7():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -309,13 +309,13 @@ def test_cache_nomap_allowed_share1():
     ds2 = ds2.shuffle(buffer_size=2)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 12
     logger.info("Number of data in ds1: {} ".format(num_iter))
 
     num_iter = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 3
     logger.info("test_cache_nomap_allowed_share1 Ended.\n")
@@ -351,13 +351,13 @@ def test_cache_nomap_allowed_share2():
     ds2 = ds2.shuffle(buffer_size=2)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 12
 
     num_iter = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 3
     logger.info("test_cache_nomap_allowed_share2 Ended.\n")
@@ -387,13 +387,13 @@ def test_cache_nomap_allowed_share3():
     ds2 = ds2.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 12
 
     num_iter = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 12
     logger.info("test_cache_nomap_allowed_share3 Ended.\n")
@@ -424,13 +424,13 @@ def test_cache_nomap_allowed_share4():
     ds2 = ds2.map(input_columns=["image"], operations=decode_op, cache=some_cache, num_parallel_workers=2)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 3
 
     num_iter = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds2: {} ".format(num_iter))
     assert num_iter == 3
@@ -464,7 +464,7 @@ def test_cache_nomap_disallowed_share1():
     ds2 = ds2.map(input_columns=["image"], operations=rescale_op, cache=some_cache)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 3

@@ -75,7 +75,7 @@ def test_cifar10_content_check():
     images, labels = load_cifar(DATA_DIR_10)
     num_iter = 0
     # in this example, each dictionary has keys "image" and "label"
-    for i, d in enumerate(data1.create_dict_iterator()):
+    for i, d in enumerate(data1.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(d["image"], images[i])
         np.testing.assert_array_equal(d["label"], labels[i])
         num_iter += 1
@@ -91,21 +91,21 @@ def test_cifar10_basic():
     # case 0: test loading the whole dataset
     data0 = ds.Cifar10Dataset(DATA_DIR_10)
     num_iter0 = 0
-    for _ in data0.create_dict_iterator():
+    for _ in data0.create_dict_iterator(num_epochs=1):
         num_iter0 += 1
     assert num_iter0 == 10000
 
     # case 1: test num_samples
     data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=100)
     num_iter1 = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter1 += 1
     assert num_iter1 == 100
 
     # case 2: test num_parallel_workers
     data2 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=50, num_parallel_workers=1)
     num_iter2 = 0
-    for _ in data2.create_dict_iterator():
+    for _ in data2.create_dict_iterator(num_epochs=1):
         num_iter2 += 1
     assert num_iter2 == 50
 
@@ -113,7 +113,7 @@ def test_cifar10_basic():
     data3 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=100)
     data3 = data3.repeat(3)
     num_iter3 = 0
-    for _ in data3.create_dict_iterator():
+    for _ in data3.create_dict_iterator(num_epochs=1):
         num_iter3 += 1
     assert num_iter3 == 300
 
@@ -125,7 +125,7 @@ def test_cifar10_basic():
     assert data4.get_dataset_size() == 15
     assert data4.get_batch_size() == 7
     num_iter4 = 0
-    for _ in data4.create_dict_iterator():
+    for _ in data4.create_dict_iterator(num_epochs=1):
         num_iter4 += 1
     assert num_iter4 == 15
 
@@ -137,7 +137,7 @@ def test_cifar10_basic():
     assert data5.get_dataset_size() == 14
     assert data5.get_batch_size() == 7
     num_iter5 = 0
-    for _ in data5.create_dict_iterator():
+    for _ in data5.create_dict_iterator(num_epochs=1):
         num_iter5 += 1
     assert num_iter5 == 14
 
@@ -153,7 +153,7 @@ def test_cifar10_pk_sampler():
     data = ds.Cifar10Dataset(DATA_DIR_10, sampler=sampler)
     num_iter = 0
     label_list = []
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         label_list.append(item["label"])
         num_iter += 1
     np.testing.assert_array_equal(golden, label_list)
@@ -170,7 +170,7 @@ def test_cifar10_sequential_sampler():
     data1 = ds.Cifar10Dataset(DATA_DIR_10, sampler=sampler)
     data2 = ds.Cifar10Dataset(DATA_DIR_10, shuffle=False, num_samples=num_samples)
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         np.testing.assert_equal(item1["label"], item2["label"])
         num_iter += 1
     assert num_iter == num_samples
@@ -225,7 +225,7 @@ def test_cifar10_visualize(plot=False):
     data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
     num_iter = 0
     image_list, label_list = [], []
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         image = item["image"]
         label = item["label"]
         image_list.append(image)
@@ -251,7 +251,7 @@ def test_cifar100_content_check():
     images, labels = load_cifar(DATA_DIR_100, kind="cifar100")
     num_iter = 0
     # in this example, each dictionary has keys "image", "coarse_label" and "fine_image"
-    for i, d in enumerate(data1.create_dict_iterator()):
+    for i, d in enumerate(data1.create_dict_iterator(num_epochs=1)):
         np.testing.assert_array_equal(d["image"], images[i])
         np.testing.assert_array_equal(d["coarse_label"], labels[i][0])
         np.testing.assert_array_equal(d["fine_label"], labels[i][1])
@@ -268,21 +268,21 @@ def test_cifar100_basic():
     # case 1: test num_samples
     data1 = ds.Cifar100Dataset(DATA_DIR_100, num_samples=100)
     num_iter1 = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter1 += 1
     assert num_iter1 == 100
 
     # case 2: test repeat
     data1 = data1.repeat(2)
     num_iter2 = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter2 += 1
     assert num_iter2 == 200
 
     # case 3: test num_parallel_workers
     data2 = ds.Cifar100Dataset(DATA_DIR_100, num_samples=100, num_parallel_workers=1)
     num_iter3 = 0
-    for _ in data2.create_dict_iterator():
+    for _ in data2.create_dict_iterator(num_epochs=1):
         num_iter3 += 1
     assert num_iter3 == 100
 
@@ -294,7 +294,7 @@ def test_cifar100_basic():
     assert data3.get_dataset_size() == 34
     assert data3.get_batch_size() == 3
     num_iter4 = 0
-    for _ in data3.create_dict_iterator():
+    for _ in data3.create_dict_iterator(num_epochs=1):
         num_iter4 += 1
     assert num_iter4 == 34
 
@@ -304,7 +304,7 @@ def test_cifar100_basic():
     assert data4.get_dataset_size() == 33
     assert data4.get_batch_size() == 3
     num_iter5 = 0
-    for _ in data4.create_dict_iterator():
+    for _ in data4.create_dict_iterator(num_epochs=1):
         num_iter5 += 1
     assert num_iter5 == 33
 
@@ -319,7 +319,7 @@ def test_cifar100_pk_sampler():
     data = ds.Cifar100Dataset(DATA_DIR_100, sampler=sampler)
     num_iter = 0
     label_list = []
-    for item in data.create_dict_iterator():
+    for item in data.create_dict_iterator(num_epochs=1):
         label_list.append(item["coarse_label"])
         num_iter += 1
     np.testing.assert_array_equal(golden, label_list)
@@ -375,7 +375,7 @@ def test_cifar100_visualize(plot=False):
     data1 = ds.Cifar100Dataset(DATA_DIR_100, num_samples=10, shuffle=False)
     num_iter = 0
     image_list, label_list = [], []
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         image = item["image"]
         coarse_label = item["coarse_label"]
         fine_label = item["fine_label"]

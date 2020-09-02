@@ -27,7 +27,7 @@ def test_from_vocab_to_str_UNIGRAM():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -39,7 +39,7 @@ def test_from_vocab_to_str_BPE():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁I', '▁saw', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'c', 'ope', '.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -52,7 +52,7 @@ def test_from_vocab_to_str_CHAR():
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁', 'I', '▁', 's', 'a', 'w', '▁', 'a', '▁', 'g', 'i', 'r', 'l', '▁', 'w', 'i', 't', 'h',\
               '▁', 'a', '▁', 't', 'e', 'l', 'e', 's', 'c', 'o', 'p', 'e', '.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -64,7 +64,7 @@ def test_from_vocab_to_str_WORD():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁I', '▁saw', '▁a', '▁girl', '▁with', '▁a', '▁telescope.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -76,7 +76,7 @@ def test_from_vocab_to_int():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = [6, 329, 183, 8, 945, 23, 8, 3783, 4382, 4641, 1405, 4]
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -89,7 +89,7 @@ def test_from_file_to_str():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -102,7 +102,7 @@ def test_from_file_to_int():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = [6, 329, 183, 8, 945, 23, 8, 3783, 4382, 4641, 1405, 4]
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -115,7 +115,7 @@ def test_build_from_dataset():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     dataset = dataset.map(operations=tokenizer)
     expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -134,7 +134,7 @@ def zip_test(dataset):
     dataset_1 = dataset_1.apply(apply_func)
     dataset_zip = ds.zip((dataset_1, dataset_2))
     expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
-    for i in dataset_zip.create_dict_iterator():
+    for i in dataset_zip.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]
@@ -144,7 +144,7 @@ def concat_test(dataset):
     dataset_1 = copy.deepcopy(dataset)
     dataset = dataset.concat(dataset_1)
     expect = ['▁I', '▁sa', 'w', '▁a', '▁girl', '▁with', '▁a', '▁te', 'les', 'co', 'pe', '.']
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for key, value in enumerate(ret):
             assert value == expect[key]

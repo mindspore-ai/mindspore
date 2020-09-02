@@ -25,7 +25,7 @@ def test_imagefolder_shardings(print_res=False):
                                         shuffle=shuffle, class_indexing=class_index, decode=True)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["label"].item())
         if print_res:
             logger.info("labels of dataset: {}".format(res))
@@ -59,7 +59,7 @@ def test_tfrecord_shardings1(print_res=False):
                                    shuffle=ds.Shuffle.FILES, num_parallel_workers=1)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["scalars"][0])
         if print_res:
             logger.info("scalars of dataset: {}".format(res))
@@ -97,7 +97,7 @@ def test_tfrecord_shardings4(print_res=False):
                                    shuffle=ds.Shuffle.FILES, num_parallel_workers=4)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["scalars"][0])
         if print_res:
             logger.info("scalars of dataset: {}".format(res))
@@ -141,7 +141,7 @@ def test_manifest_shardings(print_res=False):
                                    shuffle=shuffle, decode=True)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["label"].item())
         if print_res:
             logger.info("labels of dataset: {}".format(res))
@@ -166,7 +166,7 @@ def test_voc_shardings(print_res=False):
         data1 = ds.VOCDataset(voc_dir, decode=True, sampler=sampler)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["image"].shape[0])
         if print_res:
             logger.info("labels of dataset: {}".format(res))
@@ -194,7 +194,7 @@ def test_cifar10_shardings(print_res=False):
                                   shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["label"].item())
         if print_res:
             logger.info("labels of dataset: {}".format(res))
@@ -214,7 +214,7 @@ def test_cifar100_shardings(print_res=False):
                                    shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["coarse_label"].item())
         if print_res:
             logger.info("labels of dataset: {}".format(res))
@@ -233,7 +233,7 @@ def test_mnist_shardings(print_res=False):
                                 shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             res.append(item["label"].item())
         if print_res:
             logger.info("labels of dataset: {}".format(res))

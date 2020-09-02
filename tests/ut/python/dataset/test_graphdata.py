@@ -186,7 +186,7 @@ def test_graphdata_generatordataset():
     dataset = ds.GeneratorDataset(source=GNNGraphDataset(g, batch_num), column_names=out_column_names,
                                   sampler=RandomBatchedSampler(edge_num, batch_num), num_parallel_workers=4)
     dataset = dataset.repeat(2)
-    itr = dataset.create_dict_iterator()
+    itr = dataset.create_dict_iterator(num_epochs=1)
     i = 0
     for data in itr:
         assert data['neighbors'].shape == (2, 7)

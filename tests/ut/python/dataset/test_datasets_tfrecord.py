@@ -39,7 +39,7 @@ def test_tfrecord_shape():
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaRank0.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     ds1 = ds1.batch(2)
-    for data in ds1.create_dict_iterator():
+    for data in ds1.create_dict_iterator(num_epochs=1):
         logger.info(data)
     output_shape = ds1.output_shapes()
     assert len(output_shape[-1]) == 1
@@ -51,7 +51,7 @@ def test_tfrecord_read_all_dataset():
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     assert ds1.get_dataset_size() == 12
     count = 0
-    for _ in ds1.create_tuple_iterator():
+    for _ in ds1.create_tuple_iterator(num_epochs=1):
         count += 1
     assert count == 12
 
@@ -62,7 +62,7 @@ def test_tfrecord_num_samples():
     ds1 = ds.TFRecordDataset(FILES, schema_file, num_samples=8)
     assert ds1.get_dataset_size() == 8
     count = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 8
 
@@ -73,7 +73,7 @@ def test_tfrecord_num_samples2():
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     assert ds1.get_dataset_size() == 7
     count = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 7
 
@@ -139,7 +139,7 @@ def test_tfrecord_multi_files():
     data1 = ds.TFRecordDataset(DATA_FILES2, SCHEMA_FILE2, shuffle=False)
     data1 = data1.repeat(1)
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     assert num_iter == 12
@@ -187,7 +187,7 @@ def test_tfrecord_shard():
                                    shuffle=ds.Shuffle.FILES)
         data1 = data1.repeat(num_repeats)
         res = list()
-        for item in data1.create_dict_iterator():
+        for item in data1.create_dict_iterator(num_epochs=1):
             res.append(item["scalars"][0])
         return res
 
@@ -215,7 +215,7 @@ def test_tfrecord_shard_equal_rows():
         ds1 = ds.TFRecordDataset(tf_files, num_shards=num_shards, shard_id=shard_id, shard_equal_rows=True)
         ds1 = ds1.repeat(num_repeats)
         res = list()
-        for data in ds1.create_dict_iterator():
+        for data in ds1.create_dict_iterator(num_epochs=1):
             res.append(data["scalars"][0])
         return res
 
@@ -238,7 +238,7 @@ def test_tfrecord_shard_equal_rows():
 def test_tfrecord_no_schema_columns_list():
     logger.info("test_tfrecord_no_schema_columns_list")
     data = ds.TFRecordDataset(FILES, shuffle=False, columns_list=["col_sint16"])
-    row = data.create_dict_iterator().__next__()
+    row = data.create_dict_iterator(num_epochs=1).__next__()
     assert row["col_sint16"] == [-32768]
 
     with pytest.raises(KeyError) as info:
@@ -258,7 +258,7 @@ def test_tfrecord_schema_columns_list():
     schema.add_column('col_sint32', de_type=mstype.int64, shape=[1])
     schema.add_column('col_sint64', de_type=mstype.int64, shape=[1])
     data = ds.TFRecordDataset(FILES, schema=schema, shuffle=False, columns_list=["col_sint16"])
-    row = data.create_dict_iterator().__next__()
+    row = data.create_dict_iterator(num_epochs=1).__next__()
     assert row["col_sint16"] == [-32768]
 
     with pytest.raises(KeyError) as info:
@@ -275,7 +275,7 @@ def test_tfrecord_invalid_files():
     data = ds.TFRecordDataset(files, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
 
     with pytest.raises(RuntimeError) as info:
-        _ = data.create_dict_iterator().get_next()
+        _ = data.create_dict_iterator(num_epochs=1).get_next()
     assert "cannot be opened" in str(info.value)
     assert "not valid tfrecord files" in str(info.value)
     assert valid_file not in str(info.value)

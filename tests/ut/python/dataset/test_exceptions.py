@@ -50,7 +50,7 @@ def test_exception_02():
     # Confirm 1 sample in dataset
     assert sum([1 for _ in data]) == 1
     num_iters = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         num_iters += 1
     assert num_iters == 1
 

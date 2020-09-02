@@ -42,7 +42,7 @@ def get_rescaled(image_id):
     decode_op = vision.Decode()
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         image = item["image"]
         if num_iter == image_id:
             return rescale_np(image)
@@ -68,7 +68,7 @@ def test_rescale_op(plot=False):
     data2 = data1.map(input_columns=["image"], operations=rescale_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_original = item1["image"]
         image_de_rescaled = item2["image"]
         image_np_rescaled = get_rescaled(num_iter)

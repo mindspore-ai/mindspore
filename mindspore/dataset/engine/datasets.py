@@ -1181,7 +1181,7 @@ class Dataset:
 
     def __iter__(self):
         """Create an Iterator over the dataset."""
-        return self.create_tuple_iterator()
+        return self.create_tuple_iterator(num_epochs=1)
 
     @property
     def input_indexs(self):
@@ -1598,7 +1598,7 @@ class BucketBatchByLengthDataset(DatasetOp):
         """
         if self.dataset_size is None:
             num_rows = 0
-            for _ in self.create_dict_iterator():
+            for _ in self.create_dict_iterator(num_epochs=1):
                 num_rows += 1
             self.dataset_size = num_rows
         return self.dataset_size
@@ -2130,7 +2130,7 @@ class FilterDataset(DatasetOp):
         """
         if self.dataset_size is None:
             num_rows = 0
-            for _ in self.create_dict_iterator():
+            for _ in self.create_dict_iterator(num_epochs=1):
                 num_rows += 1
             self.dataset_size = num_rows
         return self.dataset_size
@@ -2367,7 +2367,7 @@ class ConcatDataset(DatasetOp):
         """
         if self.dataset_size is None:
             num_rows = 0
-            for _ in self.create_dict_iterator():
+            for _ in self.create_dict_iterator(num_epochs=1):
                 num_rows += 1
             self.dataset_size = num_rows
         return self.dataset_size
@@ -3463,7 +3463,7 @@ class GeneratorDataset(MappableDataset):
                     self.dataset_size = rows_from_sampler
             else:
                 num_rows = 0
-                for _ in self.create_dict_iterator():
+                for _ in self.create_dict_iterator(num_epochs=1):
                     num_rows += 1
                 self.dataset_size = num_rows
         return self.dataset_size

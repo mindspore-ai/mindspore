@@ -58,7 +58,7 @@ def test_random_vertical_op(plot=False):
     data2 = data2.map(input_columns=["image"], operations=decode_op)
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
 
         # with the seed value, we can only guarantee the first number generated
         if num_iter > 0:
@@ -193,7 +193,7 @@ def test_random_vertical_comp(plot=False):
 
     images_list_c = []
     images_list_py = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_c = item1["image"]
         image_py = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         images_list_c.append(image_c)

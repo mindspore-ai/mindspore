@@ -134,7 +134,7 @@ def test_generator_dict_0():
 
     i = 0
     # create the iterator inside the loop declaration
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -152,7 +152,7 @@ def test_generator_dict_1():
         i = 0
         # BAD. Do not create iterator every time inside.
         # Create iterator outside the epoch for loop.
-        for item in data1.create_dict_iterator():  # each data is a dictionary
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
             golden = np.array([i])
             np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
@@ -318,7 +318,7 @@ def test_generator_tuple_0():
 
     i = 0
     # create the iterator inside the loop declaration
-    for item in data1.create_tuple_iterator():  # each data is a dictionary
+    for item in data1.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
         golden = np.array([i])
         np.testing.assert_array_equal(item[0], golden)
         i = i + 1
@@ -336,7 +336,7 @@ def test_generator_tuple_1():
         i = 0
         # BAD. Do not create iterator every time inside.
         # Create iterator outside the epoch for loop.
-        for item in data1.create_tuple_iterator():  # each data is a dictionary
+        for item in data1.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
             golden = np.array([i])
             np.testing.assert_array_equal(item[0], golden)
             i = i + 1

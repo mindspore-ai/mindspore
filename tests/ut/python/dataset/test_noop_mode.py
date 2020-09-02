@@ -24,7 +24,7 @@ def test_noop_pserver():
     os.environ['MS_ROLE'] = 'MS_PSERVER'
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True, shuffle=False)
     num = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1
     assert num == 0
     del os.environ['MS_ROLE']
@@ -34,7 +34,7 @@ def test_noop_sched():
     os.environ['MS_ROLE'] = 'MS_SCHED'
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True, shuffle=False)
     num = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1
     assert num == 0
     del os.environ['MS_ROLE']

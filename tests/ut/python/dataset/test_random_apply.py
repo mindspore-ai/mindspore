@@ -57,7 +57,7 @@ def test_random_apply_op(plot=False):
 
     image_apply = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image2 = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_apply.append(image1)
@@ -118,7 +118,7 @@ def test_random_apply_exception_random_crop_badinput():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(input_columns=["image"], operations=transform())
     try:
-        _ = data.create_dict_iterator().get_next()
+        _ = data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size" in str(e)

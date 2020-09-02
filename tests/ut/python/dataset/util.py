@@ -88,7 +88,7 @@ def save_and_check_dict(data, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_dict_iterator():  # each data is a dictionary
+    for item in data.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         for data_key in list(item.keys()):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -119,7 +119,7 @@ def save_and_check_md5(data, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_dict_iterator():  # each data is a dictionary
+    for item in data.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         for data_key in list(item.keys()):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -146,7 +146,7 @@ def save_and_check_tuple(data, parameters, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_tuple_iterator():  # each data is a dictionary
+    for item in data.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
         for data_key, _ in enumerate(item):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -393,7 +393,7 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
                         output_columns=["image", "bbox"],
                         columns_order=["image", "bbox"],
                         operations=[test_op])  # Add column for "bbox"
-        for _, _ in enumerate(data.create_dict_iterator()):
+        for _, _ in enumerate(data.create_dict_iterator(num_epochs=1)):
             break
     except RuntimeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))

@@ -581,6 +581,7 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
     if (!load_jagged_connector_) {
       break;
     }
+    RETURN_IF_INTERRUPTED();
 
     // read length
     int64_t record_length = 0;

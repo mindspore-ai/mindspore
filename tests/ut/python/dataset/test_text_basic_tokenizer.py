@@ -82,7 +82,7 @@ def check_basic_tokenizer_default(first, last, expected_tokens, expected_offsets
 
     dataset = dataset.map(operations=basic_tokenizer)
     count = 0
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['text'])
         logger.info("Out:", token)
         logger.info("Exp:", expected_tokens[count])
@@ -108,7 +108,7 @@ def check_basic_tokenizer_with_offsets(first, last, expected_tokens, expected_of
     dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
                           columns_order=['token', 'offsets_start', 'offsets_limit'], operations=basic_tokenizer)
     count = 0
-    for i in dataset.create_dict_iterator():
+    for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['token'])
         logger.info("Out:", token)
         logger.info("Exp:", expected_tokens[count])

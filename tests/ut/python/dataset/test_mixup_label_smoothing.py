@@ -45,7 +45,7 @@ def test_one_hot_op():
     golden_label = np.ones(num_classes) * epsilon_para / num_classes
     golden_label[1] = 1 - epsilon_para / num_classes
 
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         label = data["label"]
         logger.info("label is {}".format(label))
         logger.info("golden_label is {}".format(golden_label))
@@ -84,7 +84,7 @@ def test_mix_up_single():
                   ]
     ds1 = ds1.map(input_columns=["image", "label"], operations=transforms)
 
-    for data1, data2 in zip(ds1.create_dict_iterator(), ds2.create_dict_iterator()):
+    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):
         image1 = data1["image"]
         label = data1["label"]
         logger.info("label is {}".format(label))
@@ -134,7 +134,7 @@ def test_mix_up_multi():
     ds1 = ds1.map(input_columns=["image", "label"], operations=transforms)
     num_iter = 0
     batch1_image1 = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(), ds2.create_dict_iterator()):
+    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):
         image1 = data1["image"]
         label1 = data1["label"]
         logger.info("label: {}".format(label1))

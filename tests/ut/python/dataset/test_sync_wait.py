@@ -48,7 +48,7 @@ def test_simple_sync_wait():
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
     dataset = dataset.batch(batch_size)
     count = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         assert data["input"][0] == count
         count += batch_size
         data = {"loss": count}
@@ -72,7 +72,7 @@ def test_simple_shuffle_sync():
     dataset = dataset.batch(batch_size)
 
     count = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         count += 1
         data = {"loss": count}
         dataset.sync_update(condition_name="policy", data=data)
@@ -98,7 +98,7 @@ def test_two_sync():
     dataset = dataset.batch(batch_size)
 
     count = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         count += 1
         data = {"loss": count}
         dataset.sync_update(condition_name="every batch", data=data)
@@ -122,7 +122,7 @@ def test_sync_epoch():
     for _ in range(3):
         aug.update({"loss": 0})
         count = 0
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["input"][0] == count
             count += batch_size
             data = {"loss": count}
@@ -149,7 +149,7 @@ def test_multiple_iterators():
     dataset2 = dataset2.map(input_columns=["input"], operations=[aug.preprocess])
     dataset2 = dataset2.batch(batch_size, drop_remainder=True)
 
-    for item1, item2 in zip(dataset.create_dict_iterator(), dataset2.create_dict_iterator()):
+    for item1, item2 in zip(dataset.create_dict_iterator(num_epochs=1), dataset2.create_dict_iterator(num_epochs=1)):
         assert item1["input"][0] == item2["input"][0]
         data1 = {"loss": item1["input"][0]}
         data2 = {"loss": item2["input"][0]}
@@ -222,7 +222,7 @@ def test_sync_exception_04():
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
     count = 0
     with pytest.raises(RuntimeError) as e:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             count += 1
             data = {"loss": count}
             dataset.sync_update(condition_name="every batch", num_batch=-1, data=data)
@@ -242,7 +242,7 @@ def test_sync_exception_05():
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
     with pytest.raises(RuntimeError) as e:
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             dataset.disable_sync()
             count += 1
             data = {"loss": count}

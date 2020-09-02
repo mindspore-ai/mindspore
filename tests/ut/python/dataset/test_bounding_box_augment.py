@@ -59,7 +59,7 @@ def test_bounding_box_augment_with_rotation_op(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -98,7 +98,7 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -136,7 +136,7 @@ def test_bounding_box_augment_valid_ratio_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -170,7 +170,7 @@ def test_bounding_box_augment_op_coco_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataCoco1.create_dict_iterator(), dataCoco2.create_dict_iterator()):
+    for unAug, Aug in zip(dataCoco1.create_dict_iterator(num_epochs=1), dataCoco2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 
@@ -214,7 +214,7 @@ def test_bounding_box_augment_valid_edge_c(plot_vis=False):
 
     unaugSamp, augSamp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(), dataVoc2.create_dict_iterator()):
+    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1), dataVoc2.create_dict_iterator(num_epochs=1)):
         unaugSamp.append(unAug)
         augSamp.append(Aug)
 

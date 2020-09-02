@@ -118,7 +118,7 @@ def test_random_color_c(degrees=(0.1, 1.9), plot=False, run_golden=True):
     image_random_color_op = []
     image = []
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         actual = item1["image"]
         expected = item2["image"]
         image.append(actual)
@@ -193,7 +193,7 @@ def test_compare_random_color_op(degrees=None, plot=False):
     image_random_color_op = []
     image = []
 
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         actual = item1["image"]
         expected = item2["image"]
         image_random_color_op.append(actual)

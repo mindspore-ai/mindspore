@@ -53,7 +53,7 @@ def test_five_crop_op(plot=False):
     data2 = data2.map(input_columns=["image"], operations=transform_2())
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
         image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_2 = item2["image"]

@@ -44,7 +44,7 @@ def test_random_resize_op(plot=False):
     image_original = []
     image_resized = []
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_1 = item1["image"]
         image_2 = item2["image"]
         image_original.append(image_1)

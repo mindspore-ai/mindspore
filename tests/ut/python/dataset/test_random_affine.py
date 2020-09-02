@@ -58,7 +58,7 @@ def test_random_affine_op(plot=False):
 
     image_affine = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image2 = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_affine.append(image1)
@@ -91,7 +91,7 @@ def test_random_affine_op_c(plot=False):
 
     image_affine = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_affine.append(image1)
@@ -193,7 +193,7 @@ def test_random_affine_py_exception_non_pil_images():
                                          py_vision.RandomAffine(degrees=(15, 15))])
         dataset = dataset.map(input_columns=["image"], operations=transform(), num_parallel_workers=3,
                               python_multiprocessing=True)
-        for _ in dataset.create_dict_iterator():
+        for _ in dataset.create_dict_iterator(num_epochs=1):
             break
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))

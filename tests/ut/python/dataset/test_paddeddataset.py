@@ -52,7 +52,7 @@ def test_TFRecord_Padded():
         testsampler = ds.DistributedSampler(num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
         concat_ds.use_sampler(testsampler)
         shard_list = []
-        for item in concat_ds.create_dict_iterator():
+        for item in concat_ds.create_dict_iterator(num_epochs=1):
             shard_list.append(len(item['image']))
         verify_list.append(shard_list)
     assert verify_list == result_list
@@ -74,7 +74,7 @@ def test_GeneratorDataSet_Padded():
         distributed_sampler = ds.DistributedSampler(num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
         data3.use_sampler(distributed_sampler)
         tem_list = []
-        for ele in data3.create_dict_iterator():
+        for ele in data3.create_dict_iterator(num_epochs=1):
             tem_list.append(ele['col1'][0])
         verify_list.append(tem_list)
 
@@ -98,7 +98,7 @@ def test_Reapeat_afterPadded():
     ds3.use_sampler(testsampler)
     repeat_num = 2
     ds3 = ds3.repeat(repeat_num)
-    for item in ds3.create_dict_iterator():
+    for item in ds3.create_dict_iterator(num_epochs=1):
         verify_list.append(len(item['image']))
 
     assert verify_list == result_list * repeat_num
@@ -140,7 +140,7 @@ def test_Unevenly_distributed():
         tem_list = []
         testsampler = ds.DistributedSampler(num_shards=numShard, shard_id=i, shuffle=False, num_samples=None)
         ds3.use_sampler(testsampler)
-        for item in ds3.create_dict_iterator():
+        for item in ds3.create_dict_iterator(num_epochs=1):
             tem_list.append(len(item['image']))
         verify_list.append(tem_list)
     assert verify_list == result_list
@@ -164,7 +164,7 @@ def test_three_datasets_connected():
         distributed_sampler = ds.DistributedSampler(num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
         data4.use_sampler(distributed_sampler)
         tem_list = []
-        for ele in data4.create_dict_iterator():
+        for ele in data4.create_dict_iterator(num_epochs=1):
             tem_list.append(ele['col1'][0])
         verify_list.append(tem_list)
 
@@ -220,7 +220,7 @@ def test_imagefolder_padded():
     assert sum([1 for _ in data3]) == 10
     verify_list = []
 
-    for ele in data3.create_dict_iterator():
+    for ele in data3.create_dict_iterator(num_epochs=1):
         verify_list.append(len(ele['image']))
     assert verify_list[8] == 1
     assert verify_list[9] == 6
@@ -246,7 +246,7 @@ def test_imagefolder_padded_with_decode():
         data3.use_sampler(testsampler)
         data3 = data3.map(input_columns="image", operations=V_C.Decode())
         shard_sample_count = 0
-        for ele in data3.create_dict_iterator():
+        for ele in data3.create_dict_iterator(num_epochs=1):
             print("label: {}".format(ele['label']))
             count += 1
             shard_sample_count += 1
@@ -275,7 +275,7 @@ def test_imagefolder_padded_with_decode_and_get_dataset_size():
         shard_dataset_size = data3.get_dataset_size()
         data3 = data3.map(input_columns="image", operations=V_C.Decode())
         shard_sample_count = 0
-        for ele in data3.create_dict_iterator():
+        for ele in data3.create_dict_iterator(num_epochs=1):
             print("label: {}".format(ele['label']))
             count += 1
             shard_sample_count += 1
@@ -298,7 +298,7 @@ def test_more_shard_padded():
         tem_list = []
         testsampler = ds.DistributedSampler(num_shards=numShard, shard_id=i, shuffle=False, num_samples=None)
         data3.use_sampler(testsampler)
-        for item in data3.create_dict_iterator():
+        for item in data3.create_dict_iterator(num_epochs=1):
             tem_list.append(item['col1'])
         vertifyList.append(tem_list)
 
@@ -324,7 +324,7 @@ def test_more_shard_padded():
         tem_list = []
         testsampler = ds.DistributedSampler(num_shards=numShard, shard_id=i, shuffle=False, num_samples=None)
         ds3.use_sampler(testsampler)
-        for item in ds3.create_dict_iterator():
+        for item in ds3.create_dict_iterator(num_epochs=1):
             tem_list.append(len(item['image']))
         vertifyList1.append(tem_list)
 
@@ -408,7 +408,7 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
         testsampler = ds.DistributedSampler(num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
         ds2.use_sampler(testsampler)
         tem_list = []
-        for ele in ds2.create_dict_iterator():
+        for ele in ds2.create_dict_iterator(num_epochs=1):
             tem_list.append(int(ele['file_name'].tostring().decode().lstrip('image_').rstrip('.jpg')))
         result_list.append(tem_list)
     assert result_list == verify_list
@@ -421,7 +421,7 @@ def test_clue_padded_and_skip_with_0_samples():
 
     data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train')
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 3
 
@@ -437,20 +437,20 @@ def test_clue_padded_and_skip_with_0_samples():
     dataset.use_sampler(testsampler)
     assert dataset.get_dataset_size() == 2
     count = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 2
 
     dataset = dataset.skip(count=2)    # dataset2 has none samples
     count = 0
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 0
 
     with pytest.raises(ValueError, match="There is no samples in the "):
         dataset = dataset.concat(data_copy1)
         count = 0
-        for data in dataset.create_dict_iterator():
+        for data in dataset.create_dict_iterator(num_epochs=1):
             count += 1
         assert count == 2
 

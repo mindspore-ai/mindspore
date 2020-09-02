@@ -130,7 +130,7 @@ def test_bucket_batch_multi_bucket_no_padding():
                        [[1], [5], [9]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -161,7 +161,7 @@ def test_bucket_batch_multi_bucket_with_padding():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -182,7 +182,7 @@ def test_bucket_batch_single_bucket_no_padding():
                        [[5], [6], [7], [8], [9]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -212,7 +212,7 @@ def test_bucket_batch_single_bucket_with_padding():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -243,7 +243,7 @@ def test_bucket_batch_pad_to_bucket_boundary():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -279,7 +279,7 @@ def test_bucket_batch_default_pad():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -310,7 +310,7 @@ def test_bucket_batch_drop_remainder():
                        [[19], [22], [25]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -340,7 +340,7 @@ def test_bucket_batch_default_length_function():
                         [0, 1, 2, 3, 4, 5, 6, 7, 8]]]
 
     output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         output.append(data["col1"].tolist())
 
     assert output == expected_output
@@ -375,7 +375,7 @@ def test_bucket_batch_multi_column():
 
     same_shape_output = []
     variable_shape_output = []
-    for data in dataset.create_dict_iterator():
+    for data in dataset.create_dict_iterator(num_epochs=1):
         same_shape_output.append(data["same_shape"].tolist())
         variable_shape_output.append(data["variable_shape"].tolist())
 
@@ -396,7 +396,7 @@ def test_bucket_batch_get_dataset_size():
     data_size = dataset.get_dataset_size()
 
     num_rows = 0
-    for _ in dataset.create_dict_iterator():
+    for _ in dataset.create_dict_iterator(num_epochs=1):
         num_rows += 1
 
     assert data_size == num_rows

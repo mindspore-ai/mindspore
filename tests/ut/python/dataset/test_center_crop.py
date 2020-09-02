@@ -48,7 +48,7 @@ def test_center_crop_op(height=375, width=375, plot=False):
 
     image_cropped = []
     image = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image_cropped.append(item1["image"].copy())
         image.append(item2["image"].copy())
     if plot:
@@ -98,7 +98,7 @@ def test_center_crop_comp(height=375, width=375, plot=False):
 
     image_c_cropped = []
     image_py_cropped = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         # Note: The images aren't exactly the same due to rounding error
@@ -131,7 +131,7 @@ def test_crop_grayscale(height=375, width=375):
     crop_gray = vision.CenterCrop([height, width])
     data1 = data1.map(input_columns=["image"], operations=crop_gray)
 
-    for item1 in data1.create_dict_iterator():
+    for item1 in data1.create_dict_iterator(num_epochs=1):
         c_image = item1["image"]
 
         # Check that the image is grayscale

@@ -29,7 +29,7 @@ def test_cv_minddataset_reader_two_png_tutorial():
     data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         assert len(item) == 5
         logger.info("-------------- cv reader basic is {} -----------------".format(num_iter))
         logger.info("-------------- item[id] is {} ------------------------".format(item["id"]))
@@ -50,7 +50,7 @@ def test_cv_minddataset_reader_two_png_tutorial_just_image2():
     data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
-    for item in data_set.create_dict_iterator():
+    for item in data_set.create_dict_iterator(num_epochs=1):
         assert len(item) == 2
         logger.info("-------------- cv reader basic is {} -----------------".format(num_iter))
         logger.info("-------------- item[img_data] is {} ------------------".format(item["img_data"]))

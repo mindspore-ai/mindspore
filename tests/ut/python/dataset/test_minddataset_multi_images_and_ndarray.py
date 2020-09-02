@@ -57,7 +57,7 @@ def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for item in data_set.create_dict_iterator(num_epochs=1):
             assert len(item) == 7
             logger.info("item: {}".format(item))
             assert item["image_0"].dtype == np.uint8

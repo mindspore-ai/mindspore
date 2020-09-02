@@ -25,7 +25,7 @@ DATA_ALL_FILE = "../data/dataset/testTextFileDataset/*"
 def test_textline_dataset_one_file():
     data = ds.TextFileDataset(DATA_FILE)
     count = 0
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         logger.info("{}".format(i["text"]))
         count += 1
     assert count == 3
@@ -34,7 +34,7 @@ def test_textline_dataset_one_file():
 def test_textline_dataset_all_file():
     data = ds.TextFileDataset(DATA_ALL_FILE)
     count = 0
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         logger.info("{}".format(i["text"]))
         count += 1
     assert count == 5
@@ -43,7 +43,7 @@ def test_textline_dataset_all_file():
 def test_textline_dataset_num_samples_zero():
     data = ds.TextFileDataset(DATA_FILE, num_samples=0)
     count = 0
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         logger.info("{}".format(i["text"]))
         count += 1
     assert count == 3
@@ -56,7 +56,7 @@ def test_textline_dataset_shuffle_false4():
     count = 0
     line = ["This is a text file.", "Another file.",
             "Be happy every day.", "End of file.", "Good luck to everyone."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
@@ -73,7 +73,7 @@ def test_textline_dataset_shuffle_false1():
     count = 0
     line = ["This is a text file.", "Be happy every day.", "Good luck to everyone.",
             "Another file.", "End of file."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
@@ -90,7 +90,7 @@ def test_textline_dataset_shuffle_files4():
     count = 0
     line = ["This is a text file.", "Another file.",
             "Be happy every day.", "End of file.", "Good luck to everyone."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
@@ -107,7 +107,7 @@ def test_textline_dataset_shuffle_files1():
     count = 0
     line = ["This is a text file.", "Be happy every day.", "Good luck to everyone.",
             "Another file.", "End of file."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
@@ -124,7 +124,7 @@ def test_textline_dataset_shuffle_global4():
     count = 0
     line = ["Another file.", "Good luck to everyone.", "End of file.",
             "This is a text file.", "Be happy every day."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
@@ -141,7 +141,7 @@ def test_textline_dataset_shuffle_global1():
     count = 0
     line = ["Another file.", "Good luck to everyone.", "This is a text file.",
             "End of file.", "Be happy every day."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1
@@ -154,7 +154,7 @@ def test_textline_dataset_shuffle_global1():
 def test_textline_dataset_num_samples():
     data = ds.TextFileDataset(DATA_FILE, num_samples=2)
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 2
 
@@ -162,7 +162,7 @@ def test_textline_dataset_num_samples():
 def test_textline_dataset_distribution():
     data = ds.TextFileDataset(DATA_ALL_FILE, num_shards=2, shard_id=1)
     count = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         count += 1
     assert count == 3
 
@@ -174,7 +174,7 @@ def test_textline_dataset_repeat():
     line = ["This is a text file.", "Be happy every day.", "Good luck to everyone.",
             "This is a text file.", "Be happy every day.", "Good luck to everyone.",
             "This is a text file.", "Be happy every day.", "Good luck to everyone."]
-    for i in data.create_dict_iterator():
+    for i in data.create_dict_iterator(num_epochs=1):
         strs = i["text"].item().decode("utf8")
         assert strs == line[count]
         count += 1

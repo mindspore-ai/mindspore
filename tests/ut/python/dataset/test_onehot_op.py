@@ -90,7 +90,7 @@ def test_one_hot_post_aug():
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for item in data1.create_dict_iterator(num_epochs=1):
         logger.info("image is: {}".format(item["image"]))
         logger.info("label is: {}".format(item["label"]))
         num_iter += 1

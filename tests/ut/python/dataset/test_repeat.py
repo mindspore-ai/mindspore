@@ -84,7 +84,7 @@ def test_tf_repeat_03():
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     num_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of tf data in data1: {}".format(num_iter))
     assert num_iter == 2
@@ -267,7 +267,7 @@ def test_repeat_count1():
     dataset_size = data1.get_dataset_size()
     logger.info("dataset repeat then batch's size is {}".format(dataset_size))
     num1_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num1_iter += 1
 
     assert data1_size == 3
@@ -289,7 +289,7 @@ def test_repeat_count2():
     dataset_size = data1.get_dataset_size()
     logger.info("dataset batch then repeat's size is {}".format(dataset_size))
     num1_iter = 0
-    for _ in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator(num_epochs=1):
         num1_iter += 1
 
     assert data1_size == 3
