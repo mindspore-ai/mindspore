@@ -114,8 +114,8 @@ class KernelGraph : public FuncGraph {
   // calculate the leaf graph order of root graph
   std::vector<std::shared_ptr<KernelGraph>> GetLeafGraphOrder();
   // the child graph of current graph
-  const std::vector<std::shared_ptr<KernelGraph>> &child_graph_order() const { return child_graph_order_; }
-  void set_child_graph_order(const std::vector<std::shared_ptr<KernelGraph>> &order) { child_graph_order_ = order; }
+  const std::vector<std::weak_ptr<KernelGraph>> &child_graph_order() const { return child_graph_order_; }
+  void set_child_graph_order(const std::vector<std::weak_ptr<KernelGraph>> &order) { child_graph_order_ = order; }
   // checkout whether current graph is leaf graph
   bool IsLeafGraph() const;
 
@@ -126,9 +126,9 @@ class KernelGraph : public FuncGraph {
   // get input_tensors pointer of control parameter
   std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors() const { return input_ctrl_tensors_; }
   // get parent kernel graph
-  std::shared_ptr<KernelGraph> parent_graph() const { return parent_graph_; }
+  std::weak_ptr<KernelGraph> parent_graph() const { return parent_graph_; }
   // set parent kernel graph
-  void set_parent_graph(const std::shared_ptr<KernelGraph> &parent_graph) { parent_graph_ = parent_graph; }
+  void set_parent_graph(const std::weak_ptr<KernelGraph> &parent_graph) { parent_graph_ = parent_graph; }
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
   std::vector<CNodePtr> FindNodeByPrimitive(const std::vector<PrimitivePtr> &primitive_list) const;
@@ -227,13 +227,13 @@ class KernelGraph : public FuncGraph {
   std::vector<bool> valid_inputs_;
 
   // child graph execute order in root graph
-  std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
+  std::vector<std::weak_ptr<KernelGraph>> child_graph_order_;
 
   // input_tensors of control parameter
   std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors_;
 
   // parameter graph
-  std::shared_ptr<KernelGraph> parent_graph_;
+  std::weak_ptr<KernelGraph> parent_graph_;
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
