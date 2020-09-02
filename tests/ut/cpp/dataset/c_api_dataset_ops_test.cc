@@ -270,7 +270,7 @@ TEST_F(MindDataTestPipeline, TestConcatFail1) {
   ds2 = ds2->Rename({"image", "label"}, {"col1", "col2"});
   EXPECT_NE(ds, nullptr);
 
-  // Create a Project operation on the ds
+  // Create a Concat operation on the ds
   // Name of datasets to concat doesn't not match
   ds = ds->Concat({ds2});
   EXPECT_NE(ds, nullptr);
@@ -295,7 +295,7 @@ TEST_F(MindDataTestPipeline, TestConcatFail2) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
-  // Create a Project operation on the ds
+  // Create a Concat operation on the ds
   // Input dataset to concat is empty
   ds = ds->Concat({});
   EXPECT_EQ(ds, nullptr);
@@ -497,6 +497,30 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestProjectDuplicateColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectDuplicateColumn.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
+  EXPECT_NE(random_vertical_flip_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_vertical_flip_op}, {}, {}, {"image", "label"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Project operation on ds
+  std::vector<std::string> column_project = {"image", "image"};
+
+  // Expect failure: duplicate project column name
+  ds = ds->Project(column_project);
+  EXPECT_EQ(ds, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestMapDuplicateColumn) {
