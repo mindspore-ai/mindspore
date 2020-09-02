@@ -65,13 +65,13 @@ int ToFormatOpenCLKernel::Init() {
 int ToFormatOpenCLKernel::InitNHWCShape() {
   std::vector<int> shapex = out_tensors_[0]->shape();
   size_t n, h, w, c;
-  if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4 || out_tensors_[0]->GetFormat() == schema::Format_NHWC) {
+  if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4 || out_tensors_[0]->GetFormat() == schema::Format_NHWC4 ||
+      out_tensors_[0]->GetFormat() == schema::Format_NHWC) {
     n = shapex[0];
     h = shapex[1];
     w = shapex[2];
     c = shapex[3];
-  } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4 ||
-             out_tensors_[0]->GetFormat() == schema::Format_NCHW) {
+  } else if (out_tensors_[0]->GetFormat() == schema::Format_NCHW) {
     n = shapex[0];
     h = shapex[2];
     w = shapex[3];
@@ -105,21 +105,20 @@ int ToFormatOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &gl
 
 int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  std::vector<int> shapex = out_tensors_[0]->shape();
   if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4) {
-    int c = shapex[1] * shapex[2];
-    int h = shapex[0];
-    int w = shapex[3];
-    im_dst_y = h * UP_DIV(c, C4NUM);
+    int c = nhwc_shape_[3];
+    int h = nhwc_shape_[1];
+    int w = nhwc_shape_[2];
+    im_dst_y = nhwc_shape_[0] * h * UP_DIV(c, C4NUM);
     im_dst_x = w;
   } else if (out_tensors_[0]->GetFormat() == schema::Format_NHWC4) {
-    int h = shapex[0] * shapex[1];
-    int w = shapex[2];
-    int c = shapex[3];
+    int h = nhwc_shape_[0] * nhwc_shape_[1];
+    int w = nhwc_shape_[2];
+    int c = nhwc_shape_[3];
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
   } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    int c = shapex[1];
+    int c = nhwc_shape_[1];
     im_dst_x = UP_DIV(c, C4NUM);
     im_dst_y = 1;
   } else {

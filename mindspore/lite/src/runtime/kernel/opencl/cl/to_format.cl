@@ -27,6 +27,33 @@ __kernel void to_format_NHWC_to_NHWC4_IMG(__global FLT4 *src_data, __write_only 
   }
   WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), data);
 }
+__kernel void to_format_NHWC_to_NC4HW4_IMG(__global FLT4 *src_data, __write_only image2d_t dst_data, int4 size,
+                                           int4 shape) {
+  int X = get_global_id(0);
+  int Y = get_global_id(1);
+  int Z = get_global_id(2);
+  if (X >= size.x || Y >= size.y || Z >= size.z) {
+    return;
+  }
+  int offset = (X * shape.z + Y) * shape.w + Z * 4;
+  __global FLT *src_addr = (__global FLT *)src_data;
+  src_addr += offset;
+  FLT4 data = (FLT4)(0.f);
+  if ((Z + 1) * 4 <= shape.w) {
+    data = ((__global FLT4 *)src_addr)[0];
+  } else {
+    if ((shape.w - Z * 4) >= 1) {
+      data.x = src_addr[0];
+    }
+    if ((shape.w - Z * 4) >= 2) {
+      data.y = src_addr[1];
+    }
+    if ((shape.w - Z * 4) >= 3) {
+      data.z = src_addr[2];
+    }
+  }
+  WRITE_IMAGE(dst_data, (int2)(Y, Z * size.x + X), data);
+}
 __kernel void to_format_NHWC4_to_NHWC4_IMG(__global FLT4 *src_data, __write_only image2d_t dst_data, int4 size,
                                            int4 shape) {
   int X = get_global_id(0);
@@ -67,6 +94,32 @@ __kernel void to_format_NHWC4_to_NHWC_BUF(__read_only image2d_t src_data, __glob
     return;
   }
   FLT4 data = READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X));
+  int offset = (X * shape.z + Y) * shape.w + Z * 4;
+  __global FLT *dst_addr = (__global FLT *)dst_data;
+  dst_addr += offset;
+  if ((Z + 1) * 4 <= shape.w) {
+    ((__global FLT4 *)dst_addr)[0] = data;
+  } else {
+    if (shape.w - Z * 4 >= 1) {
+      dst_addr[0] = data.x;
+    }
+    if (shape.w - Z * 4 >= 2) {
+      dst_addr[1] = data.y;
+    }
+    if (shape.w - Z * 4 >= 3) {
+      dst_addr[2] = data.z;
+    }
+  }
+}
+__kernel void to_format_NC4HW4_to_NHWC_BUF(__read_only image2d_t src_data, __global FLT4 *dst_data, int4 size,
+                                          int4 shape) {
+  int X = get_global_id(0);
+  int Y = get_global_id(1);
+  int Z = get_global_id(2);
+  if (X >= size.x || Y >= size.y || Z >= size.z) {
+    return;
+  }
+  FLT4 data = READ_IMAGE(src_data, smp_zero, (int2)(Y, Z * size.x + X));
   int offset = (X * shape.z + Y) * shape.w + Z * 4;
   __global FLT *dst_addr = (__global FLT *)dst_data;
   dst_addr += offset;
