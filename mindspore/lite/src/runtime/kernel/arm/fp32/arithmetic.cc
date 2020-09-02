@@ -94,6 +94,22 @@ int ArithmeticCPUKernel::ReSize() {
             break;
         }
         break;
+        case PrimitiveType_Div:
+        switch (arithmeticParameter_->activation_type_) {
+          case schema::ActivationType_RELU:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptDivRelu;
+            break;
+          case schema::ActivationType_RELU6:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptDivRelu6;
+            break;
+          default:
+            arithmeticParameter_->broadcasting_ = false;
+            arithmetic_opt_run_ = ElementOptDiv;
+            break;
+        }
+        break;
       default:
         break;
     }

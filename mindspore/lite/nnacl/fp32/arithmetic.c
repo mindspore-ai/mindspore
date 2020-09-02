@@ -470,6 +470,65 @@ int ElementOptAddRelu6(float *input0, float *input1, float *output, int element_
   return NNACL_OK;
 }
 
+int ElementOptDiv(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < element_size; ++index) {
+      if (input1[index] == 0) {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
+      output[index] = input0[0] / input1[index];
+    }
+  } else {
+    if (input1[0] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    for (int index = 0; index < element_size; ++index) {
+      output[index] = input0[index] / input1[0];
+    }
+  }
+  return NNACL_OK;
+}
+
+int ElementOptDivRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < element_size; ++index) {
+      if (input1[index] == 0) {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
+      output[index] = input0[0] / input1[index];
+      output[index] = output[index] > 0 ? output[index] : 0;
+    }
+  } else {
+    if (input1[0] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    for (int index = 0; index < element_size; ++index) {
+      output[index] = input0[index] / input1[0];
+      output[index] = output[index] > 0 ? output[index] : 0;
+    }
+  }
+  return NNACL_OK;
+}
+
+int ElementOptDivRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < element_size; ++index) {
+      if (input1[index] == 0) {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
+      output[index] = MSMIN(MSMAX(input0[0] / input1[index], 0), 6);
+    }
+  } else {
+    if (input1[0] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    for (int index = 0; index < element_size; ++index) {
+      output[index] = MSMIN(MSMAX(input0[index] / input1[0], 0), 6);
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementMul(float *input0, float *input1, float *output, int element_size) {
   int block_mod = element_size % C4NUM;
   int block_c4 = element_size - block_mod;

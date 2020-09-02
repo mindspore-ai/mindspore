@@ -158,6 +158,21 @@ TEST_F(TestArithmeticTestFp32, DivTest) {
   delete div_param;
 }
 
+TEST_F(TestArithmeticTestFp32, DivTest2) {
+  std::vector<float> in0 = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+  std::vector<float> in1 = {5,  10, 2,  8,  2,  3,  7,  80, 45, 20};
+  std::vector<float> correct_out = {2, 2, 15, 5, 25, 20, 10, 1, 2, 5};
+  constexpr int kOutSize = 10;
+  float out[kOutSize];
+  ElementDiv(in0.data(), in1.data(), out, kOutSize);
+  std::cout << "out: ";
+  for (int i = 0; i < kOutSize; ++i) {
+    std::cout << out[i] << " ";
+  }
+  std::cout << "\n";
+  CompareOutputData(out, correct_out.data(), kOutSize, 0.00001);
+}
+
 TEST_F(TestArithmeticTestFp32, FloorDivTest) {
   auto fdiv_param = new ArithmeticParameter();
   fdiv_param->ndim_ = 4;
