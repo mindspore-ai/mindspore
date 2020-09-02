@@ -20,13 +20,11 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import amp
 from mindspore import nn
-from mindspore.train import Model
-from mindspore.context import ParallelMode
-from mindspore.common import dtype as mstype
-from ....dataset_mock import MindData
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication.management import init
-from tests.ut.python.model.resnet import resnet50
+from mindspore.context import ParallelMode
+from mindspore.train import Model
+from ....dataset_mock import MindData
+
 
 def setup_module(module):
     _ = module
@@ -143,6 +141,7 @@ def test_compile_model_train_O2():
     with pytest.raises(ValueError):
         # not actual run, the metrics step will fail, check if compile ok.
         model.eval(dataset)
+
 
 def test_compile_model_train_O2_parallel():
     dataset_types = (np.float32, np.float32)

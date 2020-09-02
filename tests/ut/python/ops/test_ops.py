@@ -35,7 +35,6 @@ from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 from ....ops_common import convert
 
-
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
@@ -266,6 +265,7 @@ class ScatterNdSub(nn.Cell):
         out = self.scatter_nd_sub(self.ref, indices, updates)
         return out
 
+
 class ScatterNdAdd(nn.Cell):
     """ScatterNdAdd net definition"""
 
@@ -311,7 +311,7 @@ class ScatterDiv(nn.Cell):
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
         super(ScatterDiv, self).__init__()
         self.scatter_div = P.ScatterDiv(use_locking)
-        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)*10), name="ref")
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype) * 10), name="ref")
 
     def construct(self, indices, updates):
         out = self.scatter_div(self.ref, indices, updates)
@@ -633,7 +633,7 @@ class CTCGreedyDecoderNet(nn.Cell):
         self.assert_op = P.Assert(300)
 
     def construct(self, inputs, sequence_length):
-        out = self.ctc_greedy_decoder(inputs,sequence_length)
+        out = self.ctc_greedy_decoder(inputs, sequence_length)
         self.assert_op(True, (out[0], out[1], out[2], out[3]))
         return out[2]
 
@@ -711,12 +711,13 @@ class BasicLSTMCellNet(nn.Cell):
     def construct(self, x, h, c, w, b):
         return self.lstm(x, h, c, w, b)
 
+
 class EditDistance(nn.Cell):
     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
         super(EditDistance, self).__init__()
         self.edit_distance = P.EditDistance(normalize)
         self.hypothesis_shape = hypothesis_shape
-        self.truth_shape =truth_shape
+        self.truth_shape = truth_shape
 
     def construct(self, hypothesis_indices, hypothesis_values, truth_indices, truth_values):
         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,

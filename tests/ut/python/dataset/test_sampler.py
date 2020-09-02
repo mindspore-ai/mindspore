@@ -216,6 +216,7 @@ def test_sampler_chain():
     assert test_config(5, 3) == [3]
     assert test_config(5, 4) == [4]
 
+
 def test_add_sampler_invalid_input():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     _ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
@@ -231,7 +232,7 @@ def test_add_sampler_invalid_input():
 
     sampler = ds.SequentialSampler()
     with pytest.raises(ValueError) as info:
-        data2 = ds.ManifestDataset(manifest_file, sampler=sampler, num_samples=20)        
+        data2 = ds.ManifestDataset(manifest_file, sampler=sampler, num_samples=20)
     assert "Conflicting arguments during sampler assignments" in str(info.value)
 
 

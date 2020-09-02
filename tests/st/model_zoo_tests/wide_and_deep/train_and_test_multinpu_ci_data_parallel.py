@@ -14,7 +14,6 @@
 # ============================================================================
 """train_multinpu."""
 
-
 import os
 import sys
 import numpy as np
@@ -35,7 +34,6 @@ context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirr
 init()
 
 
-
 def get_WideDeep_net(config):
     WideDeep_net = WideDeepModel(config)
     loss_net = NetWithLossClass(WideDeep_net, config)
@@ -48,6 +46,7 @@ class ModelBuilder():
     """
     ModelBuilder
     """
+
     def __init__(self):
         pass
 
@@ -101,13 +100,12 @@ def test_train_eval():
     print("=====" * 5 + "model.eval() initialized: {}".format(out))
     model.train(epochs, ds_train,
                 callbacks=[TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb])
-    expect_out0 = [0.792634,0.799862,0.803324]
-    expect_out6 = [0.796580,0.803908,0.807262]
+    expect_out0 = [0.792634, 0.799862, 0.803324]
+    expect_out6 = [0.796580, 0.803908, 0.807262]
     if get_rank() == 0:
         assert np.allclose(eval_callback.eval_values, expect_out0)
     if get_rank() == 6:
         assert np.allclose(eval_callback.eval_values, expect_out6)
-
 
 
 if __name__ == "__main__":

@@ -14,9 +14,11 @@
 # ============================================================================
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 
+
 # sum = input1 + input2 + const_bias
 class CusAdd3(PrimitiveWithInfer):
     """Custom add3 definition"""
+
     @prim_attr_register
     def __init__(self, const_bias=0.0):
         self.init_prim_io_names(inputs=['input1', 'input2'], outputs=['sum3'])

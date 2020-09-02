@@ -54,6 +54,7 @@ def test_slice_grad():
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
+
 class SliceGrad2(nn.Cell):
     def __init__(self):
         super(SliceGrad2, self).__init__()
@@ -61,6 +62,7 @@ class SliceGrad2(nn.Cell):
 
     def construct(self, dy, x):
         return self.slicegrad(dy, x, (0, 1, 0), (2, 2, 2))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -71,9 +73,10 @@ def test_slice_grad2():
     grad = SliceGrad2()
     output = grad(dy, x)
     print("output:\n", output)
-    expect = [[[0., 0.], [2., 3.], [4.,  5.]],
+    expect = [[[0., 0.], [2., 3.], [4., 5.]],
               [[0., 0.], [8., 9.], [10., 11.]]]
     assert (output.asnumpy() == expect).all()
+
 
 if __name__ == '__main__':
     test_slice_grad()
