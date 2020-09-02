@@ -58,7 +58,7 @@ int Stack::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 
 namespace {
 constexpr int kStackOutputNum = 1;
-constexpr int kStackMinInputNum = 2;
+constexpr int kStackMinInputNum = 1;
 }  // namespace
 int Stack::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);

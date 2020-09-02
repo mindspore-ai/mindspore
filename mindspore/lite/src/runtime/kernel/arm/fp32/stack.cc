@@ -48,6 +48,12 @@ int StackCPUKernel::Run() {
     return ret;
   }
   size_t inputs_num = in_tensors_.size();
+  auto input0 = in_tensors_[0];
+  if (inputs_num == 1) {
+    auto *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->Data());
+    DoStackOneInput(reinterpret_cast<const int8_t *>(input0->Data()), output_data, input0->Size());
+    return RET_OK;
+  }
   auto input0_shape = in_tensors_[0]->shape();
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat) {
     auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
