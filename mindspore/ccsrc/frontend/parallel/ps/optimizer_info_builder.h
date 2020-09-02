@@ -38,7 +38,8 @@ class OptimizerInfoBuilder {
                        size_t worker_num);
 
   virtual OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
-                                     const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num) = 0;
+                                     const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num,
+                                     const std::shared_ptr<PServerKernel> &pserver_kernel) = 0;
 
   virtual void BuildWorkspaces(OptimizerInfo *info, const std::vector<size_t> &ws_sizes, size_t worker_num);
   virtual void BuildOutputs(OptimizerInfo *info, size_t worker_num) {}
@@ -47,19 +48,22 @@ class OptimizerInfoBuilder {
 class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
-                             const InputsShapePtr &inputs_shape, size_t worker_num) override;
+                             const InputsShapePtr &inputs_shape, size_t worker_num,
+                             const std::shared_ptr<PServerKernel> &pserver_kernel) override;
 };
 
 class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
-                             const InputsShapePtr &inputs_shpae, size_t worker_num) override;
+                             const InputsShapePtr &inputs_shpae, size_t worker_num,
+                             const std::shared_ptr<PServerKernel> &pserver_kernel) override;
 };
 
 class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
-                             const InputsShapePtr &inputs_shpae, size_t worker_num) override;
+                             const InputsShapePtr &inputs_shpae, size_t worker_num,
+                             const std::shared_ptr<PServerKernel> &pserver_kernel) override;
 };
 }  // namespace ps
 }  // namespace parallel

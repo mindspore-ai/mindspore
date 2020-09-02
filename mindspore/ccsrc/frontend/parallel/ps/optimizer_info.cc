@@ -100,16 +100,11 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   for (size_t i = 0; i < indices_index; i++) {
     indice_offset += lengths[i];
   }
-  float *incr_indice_data = values.data() + indice_offset;
+  int *incr_indice_data = reinterpret_cast<int *>(values.data()) + indice_offset;
   size_t incr_indice_size = lengths[indices_index];
   size_t incr_indice_data_size = incr_indice_size * sizeof(int);
-  std::vector<int> converted_indices(incr_indice_size);
-  for (size_t i = 0; i < incr_indice_size; i++) {
-    converted_indices[i] = static_cast<int>(incr_indice_data[i]);
-  }
-
-  auto ret2 = memcpy_s(accum_indices_data + indices_offset_, incr_indice_data_size, converted_indices.data(),
-                       incr_indice_data_size);
+  auto ret2 =
+    memcpy_s(accum_indices_data + indices_offset_, incr_indice_data_size, incr_indice_data, incr_indice_data_size);
   if (ret2 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";
   }

@@ -28,7 +28,7 @@ using mindspore::kernel::SparseApplyFtrlCPUKernel;
 class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerKernel {
  public:
   SparseApplyFtrlPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
-      : PServerKernel(rank_id, pserver_num, worker_num) {}
+      : PServerKernel(rank_id, pserver_num, worker_num), init_accum_(0.1) {}
   ~SparseApplyFtrlPSKernel() override = default;
 
   void InitKernel(const CNodePtr &cnode,
@@ -41,9 +41,11 @@ class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerK
   const std::vector<size_t> &input_sizes() const override;
   const std::vector<size_t> &output_sizes() const override;
   const std::vector<size_t> &workspace_sizes() const override;
+  const float init_accum() const { return init_accum_; }
 
  protected:
   void ReInit(const std::vector<AddressPtr> &) override;
+  float init_accum_;
 };
 }  // namespace ps
 }  // namespace kernel

@@ -162,6 +162,7 @@ class FTRL(Optimizer):
         self.sparse_opt = P.FusedSparseFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
         self._ps_pull = P.Pull()
         self._ps_push = P.Push("Ftrl", [0, 1, 2])
+        self._ps_push.add_prim_attr("init_accum", initial_accum)
         self._ps_push.add_prim_attr("lr", learning_rate)
         self._ps_push.add_prim_attr("l1", l1)
         self._ps_push.add_prim_attr("l2", l2)

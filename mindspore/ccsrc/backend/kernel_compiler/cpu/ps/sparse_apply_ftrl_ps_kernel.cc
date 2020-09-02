@@ -48,6 +48,10 @@ void SparseApplyFtrlPSKernel::InitKernel(
   if (grad_shape[0] != indices_size_) {
     MS_LOG(EXCEPTION) << "The first dimension of grad shape must be equal to indices";
   }
+  init_accum_ = AnfAlgo::GetNodeAttr<float>(cnode, "init_accum");
+  if (init_accum_ < 0) {
+    MS_LOG(EXCEPTION) << "init_accum should be a non-negative scalar";
+  }
   lr_ = AnfAlgo::GetNodeAttr<float>(cnode, "lr");
   if (lr_ <= 0) {
     MS_LOG(EXCEPTION) << "lr should be a positive scalar";

@@ -18,14 +18,16 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
 
 namespace mindspore {
 namespace parallel {
 namespace ps {
+using mindspore::kernel::ps::SparseApplyFtrlPSKernel;
 OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> &pserver_kernel,
                                            const WeightPtr &weight, const Keys &keys, const Values &values,
                                            const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num) {
-  OptimizerInfo *optim_info = BuildInputs(weight, keys, values, lens, inputs_shape, worker_num);
+  OptimizerInfo *optim_info = BuildInputs(weight, keys, values, lens, inputs_shape, worker_num, pserver_kernel);
   std::vector<size_t> ws_sizes = pserver_kernel->workspace_sizes();
   BuildWorkspaces(optim_info, ws_sizes, worker_num);
   BuildOutputs(optim_info, worker_num);
@@ -45,7 +47,7 @@ void OptimizerInfoBuilder::BuildWorkspaces(OptimizerInfo *info, const std::vecto
 
 OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                                      const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                     size_t worker_num) {
+                                                     size_t worker_num, const std::shared_ptr<PServerKernel> &) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   weight_addr->addr = weight->data();
   weight_addr->size = weight->size() * sizeof(float);
@@ -74,7 +76,7 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
 
 OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                                        const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                       size_t worker_num) {
+                                                       size_t worker_num, const std::shared_ptr<PServerKernel> &) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   weight_addr->addr = weight->data();
   weight_addr->size = weight->size() * sizeof(float);
@@ -140,13 +142,9 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
     std::accumulate((*indices_shape).begin(), (*indices_shape).end(), sizeof(int), std::multiplies<size_t>());
   AddressPtr indices = std::make_shared<kernel::Address>();
   indices->addr = new int[total_indice_size * worker_num];
-  std::vector<int> converted_indices(lens[7]);
   size_t indices_data_size = lens[7] * sizeof(int);
-  float *indices_data = reinterpret_cast<float *>(epsilon->addr) + lens[5] + lens[6];
-  for (int i = 0; i < lens[7]; i++) {
-    converted_indices[i] = static_cast<int>(indices_data[i]);
-  }
-  ret = memcpy_s(indices->addr, indices_data_size, converted_indices.data(), indices_data_size);
+  int *indices_data = reinterpret_cast<int *>(epsilon->addr) + lens[5] + lens[6];
+  ret = memcpy_s(indices->addr, indices_data_size, indices_data, indices_data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
@@ -158,7 +156,8 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
 
 OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                                        const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                       size_t worker_num) {
+                                                       size_t worker_num,
+                                                       const std::shared_ptr<PServerKernel> &pserver_kernel) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   weight_addr->addr = weight->data();
   weight_addr->size = weight->size() * sizeof(float);
@@ -167,7 +166,7 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   accum->size = weight->size() * sizeof(float);
   for (size_t i = 0; i < weight->size(); i++) {
     float *tmp = reinterpret_cast<float *>(accum->addr);
-    tmp[i] = 1.0;
+    tmp[i] = std::dynamic_pointer_cast<SparseApplyFtrlPSKernel>(pserver_kernel)->init_accum();
   }
   AddressPtr linear = std::make_shared<kernel::Address>();
   linear->addr = new float[weight->size()];
@@ -192,13 +191,9 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
     std::accumulate((*indices_shape).begin(), (*indices_shape).end(), 1, std::multiplies<size_t>());
   AddressPtr indices = std::make_shared<kernel::Address>();
   indices->addr = new int[total_indice_size * worker_num];
-  std::vector<int> converted_indices(lens[1]);
   size_t indices_data_size = lens[1] * sizeof(int);
-  float *indices_data = reinterpret_cast<float *>(values.data()) + lens[0];
-  for (int i = 0; i < lens[1]; i++) {
-    converted_indices[i] = static_cast<int>(indices_data[i]);
-  }
-  ret = memcpy_s(indices->addr, indices_data_size, converted_indices.data(), indices_data_size);
+  int *indices_data = reinterpret_cast<int *>(values.data()) + lens[0];
+  ret = memcpy_s(indices->addr, indices_data_size, indices_data, indices_data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
