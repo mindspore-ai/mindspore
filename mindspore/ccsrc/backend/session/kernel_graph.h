@@ -24,6 +24,7 @@
 #include <queue>
 #include <map>
 #include <set>
+#include <stack>
 #include <unordered_set>
 #include "ir/func_graph.h"
 #include "ir/anf.h"
@@ -90,8 +91,6 @@ class KernelGraph : public FuncGraph {
   void AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair);
   // get map
   std::map<AnfWithOutIndex, AnfWithOutIndex> GetRefMap() const { return ref_out_in_map_; }
-  // checkout whether loop exist in graph
-  void CheckLoop();
   // check whether graph is executable
   bool executable() const { return executable_; }
   // set executable of graph
@@ -199,6 +198,10 @@ class KernelGraph : public FuncGraph {
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);
   AnfNodePtr CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx);
   std::vector<CNodePtr> SortStartLabelAndEndGoto();
+  // checkout whether loop exist in graph
+  void CheckLoop();
+  uint32_t GetLoopNum(std::map<AnfNodePtr, size_t> none_zero_nodes);
+  void GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num);
 
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<AnfNodePtr> child_graph_result_;
@@ -243,6 +246,10 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
+
+  std::set<AnfNodePtr> visited_nodes_;
+  std::map<AnfNodePtr, AnfNodePtr> edge_to_;
+  std::stack<AnfNodePtr> loop_nodes_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
