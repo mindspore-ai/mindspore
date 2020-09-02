@@ -45,10 +45,8 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   int Open(std::initializer_list<std::string> arg_list, bool append_fds = false);
   void Close();
   void SetTimeOutSeconds(unsigned int secs) { time_out_secs_ = secs; }
-  void SetTimeOutCallback(const std::function<void()> &cb) {
-    has_time_out_callback_ = true;
-    time_out_callback_ = cb;
-  }
+  void SetTimeOutCallback(const std::shared_ptr<std::function<void()>> cb) { time_out_callback_ = cb; }
+  void SetFinalizeCallback(const std::shared_ptr<std::function<void()>> cb) { finalize_callback_ = cb; }
 
   // Write the 'buf' to remote stdin
   void Write(const std::string &buf, bool flush = true);
@@ -64,12 +62,18 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
  private:
   void SetTimeOut() { signal_handler_->SetAlarm(time_out_secs_); }
   void CancelTimeOut() { signal_handler_->CancelAlarm(); }
-  void TimeOut() {
-    if (has_time_out_callback_) {
-      time_out_callback_();
+  void NotifyTimeOut() {
+    if (time_out_callback_ != nullptr) {
+      (*time_out_callback_)();
     }
     Close();
     DP_EXCEPTION << "Time out when read from pipe";
+  }
+
+  void NotifyFinalize() {
+    if (finalize_callback_ != nullptr) {
+      (*finalize_callback_)();
+    }
   }
 
   // Subprocess id in parent process,
@@ -115,8 +119,8 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   };
 
   unsigned int time_out_secs_ = kTimeOutSeconds;
-  bool has_time_out_callback_ = false;
-  std::function<void()> time_out_callback_;
+  std::shared_ptr<std::function<void()>> time_out_callback_;
+  std::shared_ptr<std::function<void()>> finalize_callback_;
   std::shared_ptr<SignalHandler> signal_handler_;
 };
 }  // namespace mindspore

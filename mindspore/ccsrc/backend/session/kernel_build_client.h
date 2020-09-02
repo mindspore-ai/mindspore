@@ -59,7 +59,8 @@ class KernelBuildClient {
       // Exception's thrown if open failed
       if (dp_->Open({GetEnv(), GetScript()}, true) != -1) {
         dp_->SetTimeOutSeconds(kTimeOutSeconds);
-        dp_->SetTimeOutCallback([this]() { SendRequest(kFinish); });
+        dp_->SetTimeOutCallback(std::make_shared<std::function<void()>>([this]() { SendRequest(kFinish); }));
+        dp_->SetFinalizeCallback(std::make_shared<std::function<void()>>([this]() { Close(); }));
         init_ = true;
       }
     }
