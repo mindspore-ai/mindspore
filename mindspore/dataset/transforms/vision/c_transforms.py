@@ -13,32 +13,33 @@
 # limitations under the License.
 # ==============================================================================
 """
-The module vision.c_transforms is inheritted from _c_dataengine
-which is implemented basing on opencv in C++. It's a high performance module to
-process image augmentations. Users can apply suitable augmentations on image data
+The module vision.c_transforms is inherited from _c_dataengine
+and is implemented based on OpenCV in C++. It's a high performance module to
+process images. Users can apply suitable augmentations on image data
 to improve their training models.
 
 .. Note::
-    Constructor's arguments for every class in this module must be saved into the
+    A constructor's arguments for every class in this module must be saved into the
     class attributes (self.xxx) to support save() and load().
 
-Examples:
+    Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.transforms.vision.c_transforms as vision
+        >>> import mindspore.dataset.transforms.vision.c_transforms as c_vision
+        >>> from mindspore.dataset.transforms.vision.utils import Border, ImageBatchFormat, Inter
         >>> dataset_dir = "path/to/imagefolder_directory"
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> dataset = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8)
+        >>> data1 = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8)
         >>> # create a list of transformations to be applied to the image data
-        >>> transforms_list = [vision.Decode(),
-        >>>                    vision.Resize((256, 256)),
-        >>>                    vision.RandomRotation((0, 15)),
-        >>>                    vision.Normalize((100,  115.0, 121.0), (71.0, 68.0, 70.0)),
-        >>>                    vision.HWC2CHW()]
+        >>> transforms_list = [c_vision.Decode(),
+        >>>                    c_vision.Resize((256, 256)),
+        >>>                    c_vision.RandomRotation((0, 15)),
+        >>>                    c_vision.Normalize((100,  115.0, 121.0), (71.0, 68.0, 70.0)),
+        >>>                    c_vision.HWC2CHW()]
         >>> onehot_op = c_transforms.OneHot(num_classes)
-        >>> # apply the transform to the dataset through dataset.map()
-        >>> dataset = dataset.map(input_columns="image", operations=transforms_list)
-        >>> dataset = dataset.map(input_columns="label", operations=onehot_op)
+        >>> # apply the transformation to the dataset through data1.map()
+        >>> data1 = data1.map(operations=transforms_list, input_columns="image")
+        >>> data1 = data1.map(operations=onehot_op, input_columns="label")
 """
 import numbers
 import mindspore._c_dataengine as cde
@@ -79,11 +80,15 @@ def parse_padding(padding):
 
 class AutoContrast(cde.AutoContrastOp):
     """
-    Apply auto contrast on input image.
+    Apply automatic contrast on input image.
 
     Args:
         cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_auto_contrast
@@ -97,8 +102,8 @@ class AutoContrast(cde.AutoContrastOp):
 
 class RandomSharpness(cde.RandomSharpnessOp):
     """
-    Adjust the sharpness of the input image by a fixed or random degree. degree of 0.0 gives a blurred image,
-    a degree of 1.0 gives the original image, and a degree of 2.0 gives a sharpened image.
+    Adjust the sharpness of the input image by a fixed or random degree. Degree of 0.0 gives a blurred image,
+    degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
 
     Args:
         degrees (tuple, optional): Range of random sharpness adjustment degrees. It should be in (min, max) format.
@@ -110,7 +115,8 @@ class RandomSharpness(cde.RandomSharpnessOp):
         ValueError: If degrees is in (max, min) format instead of (min, max).
 
     Examples:
-         >>>c_transform.RandomSharpness(degrees=(0.2,1.9))
+        >>> transforms_list = [vision.Decode(), c_vision.RandomSharpness(degrees=(0.2, 1.9))]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_positive_degrees
@@ -122,14 +128,20 @@ class RandomSharpness(cde.RandomSharpnessOp):
 class Equalize(cde.EqualizeOp):
     """
     Apply histogram equalization on input image.
-    does not have input arguments.
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.Equalize()]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
 
 class Invert(cde.InvertOp):
     """
     Apply invert on input image in RGB mode.
-    does not have input arguments.
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.Invert()]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
 
@@ -139,6 +151,10 @@ class Decode(cde.DecodeOp):
 
     Args:
         rgb (bool, optional): Mode of decoding input image (default=True).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomHorizontalFlip()]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     def __init__(self, rgb=True):
@@ -158,11 +174,11 @@ class CutMixBatch(cde.CutMixBatchOp):
         prob (float, optional): The probability by which CutMix is applied to each image (default = 1.0).
 
     Examples:
-        >>> one_hot_op = data.OneHot(num_classes=10)
-        >>> data = data.map(input_columns=["label"], operations=one_hot_op)
-        >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
-        >>> data = data.batch(5)
-        >>> data = data.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+        >>> onehot_op = c_transforms.OneHot(num_classes=10)
+        >>> data1 = data1.map(operations=onehot_op, input_columns=["label"])
+        >>> cutmix_batch_op = c_vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
+        >>> data1 = data1.batch(5)
+        >>> data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
     """
 
     @check_cut_mix_batch_c
@@ -180,6 +196,10 @@ class CutOut(cde.CutOutOp):
     Args:
         length (int): The side length of each square patch.
         num_patches (int, optional): Number of patches to be cut out of an image (default=1).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.CutOut(80, num_patches=10)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_cutout
@@ -193,19 +213,19 @@ class CutOut(cde.CutOutOp):
 class MixUpBatch(cde.MixUpBatchOp):
     """
     Apply MixUp transformation on input batch of images and labels. Each image is multiplied by a random weight (lambda)
-    and then added to a randomly selected image from the batch multiplied by (1 - lambda). Same formula is also applied
-    to the one-hot labels.
+    and then added to a randomly selected image from the batch multiplied by (1 - lambda). The same formula is also
+    applied to the one-hot labels.
     Note that you need to make labels into one-hot format and batch before calling this function.
 
     Args:
-        alpha (float, optional): hyperparameter of beta distribution (default = 1.0).
+        alpha (float, optional): Hyperparameter of beta distribution (default = 1.0).
 
     Examples:
-        >>> one_hot_op = data.OneHot(num_classes=10)
-        >>> data = data.map(input_columns=["label"], operations=one_hot_op)
-        >>> mixup_batch_op = vision.MixUpBatch()
-        >>> data = data.batch(5)
-        >>> data = data.map(input_columns=["image", "label"], operations=mixup_batch_op)
+        >>> onehot_op = c_transforms.OneHot(num_classes=10)
+        >>> data1 = data1.map(operations=onehot_op, input_columns=["label"])
+        >>> mixup_batch_op = c_vision.MixUpBatch(alpha=0.9)
+        >>> data1 = data1.batch(5)
+        >>> data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
     """
 
     @check_mix_up_batch_c
@@ -220,7 +240,15 @@ class Normalize(cde.NormalizeOp):
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
+            The mean values must be in range (0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
+            The standard deviation values must be in range (0.0, 255.0].
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> normalize_op = c_vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0])
+        >>> transforms_list = [decode_op, normalize_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_normalize_c
@@ -244,8 +272,8 @@ class RandomAffine(cde.RandomAffineOp):
             (tx_min*width, tx_max*width) and (ty_min*height, ty_max*height), respectively.
             If a tuple or list of size 2, then a translate parallel to the x axis in the range of
             (translate[0], translate[1]) is applied.
-            If a tuple of list of size 4, then a translate parallel to x axis in the range of
-            (translate[0], translate[1]) and a translate parallel to y axis in the range of
+            If a tuple of list of size 4, then a translate parallel to the x axis in the range of
+            (translate[0], translate[1]) and a translate parallel to the y axis in the range of
             (translate[2], translate[3]) are applied.
             If None, no translation is applied.
         scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
@@ -283,7 +311,11 @@ class RandomAffine(cde.RandomAffineOp):
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
-        >>> c_transform.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0), scale=(0.9, 1.1))
+        >>> decode_op = c_vision.Decode()
+        >>> random_affine_op = c_vision.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0), scale=(0.9, 1.1),
+        >>>     resample=Inter.NEAREST)
+        >>> transforms_list = [decode_op, random_affine_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_affine
@@ -330,23 +362,24 @@ class RandomCrop(cde.RandomCropOp):
     """
     Crop the input image at a random location.
 
+
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, pad image firstly with padding values.
-            If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
+            If a single number is provided, pad all borders with this value.
+            If a tuple or list of 2 values are provided, pad the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
-            it pads the left, top, right and bottom respectively.
+            pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
         fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
             the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
+        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). It can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
             - Border.CONSTANT, means it fills the border with constant values.
@@ -358,6 +391,12 @@ class RandomCrop(cde.RandomCropOp):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> random_crop_op = c_vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=Border.EDGE)
+        >>> transforms_list = [decode_op, random_crop_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_crop
@@ -387,20 +426,20 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
-            If padding is not None, pad image firstly with padding values.
-            If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
+            If padding is not None, first pad image with padding values.
+            If a single number is provided, pad all borders with this value.
+            If a tuple or list of 2 values are provided, pad the (left and top)
             with the first value and (right and bottom) with the second value.
-            If 4 values are provided as a list or tuple,it pads the left, top, right and bottom respectively.
+            If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
         fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
             the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
+        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). It can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
             - Border.CONSTANT, means it fills the border with constant values.
@@ -412,6 +451,12 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> random_crop_with_bbox_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+        >>> transforms_list = [decode_op, random_crop_with_bbox_op]
+        >>> data3 = data3.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_crop
@@ -442,6 +487,10 @@ class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomHorizontalFlip(0.75)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_prob
@@ -456,6 +505,10 @@ class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomHorizontalFlipWithBBox(0.70)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_prob
@@ -470,10 +523,14 @@ class RandomPosterize(cde.RandomPosterizeOp):
 
     Args:
         bits (sequence or int, optional): Range of random posterize to compress image.
-            bits values should always be in range of [1,8], and include at
-            least one integer values in the given range. It should be in
+            Bits values must be in range of [1,8], and include at
+            least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
             magnitude operation (default=[4,8]).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomPosterize((6,8))]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_posterize
@@ -490,6 +547,10 @@ class RandomVerticalFlip(cde.RandomVerticalFlipOp):
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomVerticalFlip(0.25)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_prob
@@ -504,6 +565,10 @@ class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomVerticalFlipWithBBox(0.20)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_prob
@@ -521,6 +586,15 @@ class BoundingBoxAugment(cde.BoundingBoxAugmentOp):
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
             Range: [0,1] (default=0.3).
+
+    Examples:
+        >>> # set bounding box operation with ratio of 1 to apply rotation on all bounding boxes
+        >>> bbox_aug_op = c_vision.BoundingBoxAugment(c_vision.RandomRotation(90), 1)
+        >>> # map to apply ops
+        >>> data3 = data3.map(operations=[bbox_aug_op],
+        >>>                   input_columns=["image", "bbox"],
+        >>>                   output_columns=["image", "bbox"],
+        >>>                   columns_order=["image", "bbox"])
     """
 
     @check_bounding_box_augment_cpp
@@ -536,7 +610,7 @@ class Resize(cde.ResizeOp):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.LINEAR).
@@ -547,6 +621,12 @@ class Resize(cde.ResizeOp):
             - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
 
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> resize_op = c_vision.Resize([100, 75], Inter.BICUBIC)
+        >>> transforms_list = [decode_op, resize_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_resize_interpolation
@@ -565,7 +645,7 @@ class ResizeWithBBox(cde.ResizeWithBBoxOp):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.LINEAR).
@@ -576,6 +656,12 @@ class ResizeWithBBox(cde.ResizeWithBBoxOp):
             - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
 
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> bbox_op = c_vision.ResizeWithBBox(50, Inter.NEAREST)
+        >>> transforms_list = [decode_op, bbox_op]
+        >>> data3 = data3.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_resize_interpolation
@@ -594,11 +680,11 @@ class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
 
     Args:
         size (Union[int, sequence]): The size of the output image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range [min, max) of respective size of the original
+        scale (tuple, optional): Range (min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range [min, max) of aspect ratio to be cropped
+        ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -610,7 +696,13 @@ class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
-            crop_area (default=10). If exceeded, fall back to use center_crop instead.
+            crop area (default=10). If exceeded, fall back to use center crop instead.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> bbox_op = c_vision.RandomResizedCropWithBBox(size=50, interpolation=Inter.NEAREST)
+        >>> transforms_list = [decode_op, bbox_op]
+        >>> data3 = data3.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_resize_crop
@@ -633,7 +725,7 @@ class RandomResizedCrop(cde.RandomCropAndResizeOp):
 
     Args:
         size (Union[int, sequence]): The size of the output image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range [min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
@@ -650,6 +742,13 @@ class RandomResizedCrop(cde.RandomCropAndResizeOp):
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop_area (default=10). If exceeded, fall back to use center_crop instead.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> resize_crop_op = c_vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5),
+        >>>     interpolation=Inter.BILINEAR)
+        >>> transforms_list = [decode_op, resize_crop_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_resize_crop
@@ -672,8 +771,16 @@ class CenterCrop(cde.CenterCropOp):
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
+
+    Examples:
+        >>> # crop image to a square
+        >>> transforms_list1 = [vision.Decode(), c_vision.CenterCrop(50)]
+        >>> data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+        >>> # crop image to portrait style
+        >>> transforms_list2 = [vision.Decode(), c_vision.CenterCrop((60, 40))]
+        >>> data2 = data2.map(operations=transforms_list2, input_columns=["image"])
     """
 
     @check_crop
@@ -693,6 +800,10 @@ class RandomColor(cde.RandomColorOp):
          degrees (sequence, optional): Range of random color adjustment degrees.
             It should be in (min, max) format. If min=max, then it is a
             single fixed magnitude operation (default=(0.1,1.9)).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomColor((0.5, 2.0))]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_positive_degrees
@@ -717,6 +828,12 @@ class RandomColorAdjust(cde.RandomColorAdjustOp):
         hue (Union[float, tuple], optional): Hue adjustment factor (default=(0, 0)).
             If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> transform_op = c_vision.RandomColorAdjust(brightness=(0.5, 1), contrast=(0.4, 1), saturation=(0.3, 1))
+        >>> transforms_list = [decode_op, transform_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_color_adjust
@@ -770,6 +887,10 @@ class RandomRotation(cde.RandomRotationOp):
             (default=0).
             If it is a 3-tuple, it is used for R, G, B channels respectively.
             If it is an int, it is used for all RGB channels.
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomRotation(degrees=5.0, expand=True)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_rotation
@@ -796,6 +917,10 @@ class Rescale(cde.RescaleOp):
     Args:
         rescale (float): Rescale factor.
         shift (float): Shift factor.
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.Rescale(1.0 / 255.0, -1.0)]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_rescale
@@ -811,9 +936,17 @@ class RandomResize(cde.RandomResizeOp):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
+
+    Examples:
+        >>> # randomly resize image, keeping aspect ratio
+        >>> transforms_list1 = [vision.Decode(), c_vision.RandomResize(50)]
+        >>> data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+        >>> # randomly resize image to landscape style
+        >>> transforms_list2 = [vision.Decode(), c_vision.RandomResize((40, 60))]
+        >>> data2 = data2.map(operations=transforms_list2, input_columns=["image"])
     """
 
     @check_resize
@@ -831,9 +964,17 @@ class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
+
+    Examples:
+        >>> # randomly resize image with bounding boxes, keeping aspect ratio
+        >>> transforms_list1 = [vision.Decode(), c_vision.RandomResizeWithBBox(60)]
+        >>> data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+        >>> # randomly resize image with bounding boxes to portrait style
+        >>> transforms_list2 = [vision.Decode(), c_vision.RandomResizeWithBBox((80, 60))]
+        >>> data2 = data2.map(operations=transforms_list2, input_columns=["image"])
     """
 
     @check_resize
@@ -847,6 +988,11 @@ class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
 class HWC2CHW(cde.ChannelSwapOp):
     """
     Transpose the input image; shape (H, W, C) to shape (C, H, W).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomHorizontalFlip(0.75), c_vision.RandomCrop(),
+        >>>     c_vision.HWC2CHW()]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
 
@@ -856,7 +1002,7 @@ class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
 
     Args:
         size (Union[int, sequence]): The size of the output image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
@@ -873,6 +1019,12 @@ class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead.
+
+    Examples:
+        >>> resize_crop_decode_op = c_vision.RandomCropDecodeResize(size=(50, 75), scale=(0.25, 0.5),
+        >>>     interpolation=Inter.NEAREST, max_attempts=5)
+        >>> transforms_list = [resize_crop_decode_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_resize_crop
@@ -915,6 +1067,10 @@ class Pad(cde.PadOp):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.Pad([100, 100, 100, 100])]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_pad
@@ -935,19 +1091,20 @@ class UniformAugment(cde.UniformAugOp):
     Tensor operation to perform randomly selected augmentation.
 
     Args:
-        transforms: list of C++ operations (Python OPs are not accepted).
-        num_ops (int, optional): number of OPs to be selected and applied (default=2).
+        transforms: List of C++ operations (Python operations are not accepted).
+        num_ops (int, optional): Number of operations to be selected and applied (default=2).
 
     Examples:
-        >>> transforms_list = [c_transforms.RandomHorizontalFlip(),
-        >>>                    c_transforms.RandomVerticalFlip(),
-        >>>                    c_transforms.RandomColorAdjust(),
-        >>>                    c_transforms.RandomRotation(degrees=45)]
-        >>> uni_aug = c_transforms.UniformAugment(transforms=transforms_list, num_ops=2)
-        >>> transforms_all = [c_transforms.Decode(), c_transforms.Resize(size=[224, 224]),
-        >>>                   uni_aug, F.ToTensor()]
-        >>> ds_ua = ds.map(input_columns="image",
-        >>>                operations=transforms_all, num_parallel_workers=1)
+        >>> import mindspore.dataset.transforms.vision.py_transforms as py_vision
+        >>> transforms_list = [c_vision.RandomHorizontalFlip(),
+        >>>                    c_vision.RandomVerticalFlip(),
+        >>>                    c_vision.RandomColorAdjust(),
+        >>>                    c_vision.RandomRotation(degrees=45)]
+        >>> uni_aug_op = c_vision.UniformAugment(transforms=transforms_list, num_ops=2)
+        >>> transforms_all = [c_vision.Decode(), c_vision.Resize(size=[224, 224]),
+        >>>                   uni_aug_op, py_vision.ToTensor()]
+        >>> data_aug = data1.map(operations=transforms_all, input_columns="image",
+        >>>                      num_parallel_workers=1)
     """
 
     @check_uniform_augment_cpp
@@ -961,16 +1118,16 @@ class RandomSelectSubpolicy(cde.RandomSelectSubpolicyOp):
     """
     Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
     (op, prob), where op is a TensorOp operation and prob is the probability that this op will be applied. Once
-    a sub-policy is selected, each op within the subpolicy with be applied in sequence according to its probability
+    a sub-policy is selected, each op within the subpolicy with be applied in sequence according to its probability.
 
     Args:
         policy (list(list(tuple(TensorOp,float))): List of sub-policies to choose from.
 
     Examples:
-        >>> policy = [[(c_vision.RandomRotation((45, 45)), 0.5), (c_transforms.RandomVerticalFlip(), 1),
-        >>>            (c_transforms.RandomColorAdjust(), 0.8)],
-        >>>           [(c_vision.RandomRotation((90, 90)), 1), (c_transforms.RandomColorAdjust(), 0.2)]]
-        >>> ds_policy = ds.map(input_columns=["image"], operations=visions.RandomSelectSubpolicy(policy))
+        >>> policy = [[(c_vision.RandomRotation((45, 45)), 0.5), (c_vision.RandomVerticalFlip(), 1),
+        >>>            (c_vision.RandomColorAdjust(), 0.8)],
+        >>>           [(c_vision.RandomRotation((90, 90)), 1), (c_vision.RandomColorAdjust(), 0.2)]]
+        >>> data_policy = data1.map(operations=visions.RandomSelectSubpolicy(policy), input_columns=["image"])
     """
 
     @check_random_select_subpolicy_op
@@ -980,21 +1137,30 @@ class RandomSelectSubpolicy(cde.RandomSelectSubpolicyOp):
 
 class SoftDvppDecodeResizeJpeg(cde.SoftDvppDecodeResizeJpegOp):
     """
-    Tensor operation to decode and resize jpeg image using the simulation algorithm of ascend series chip DVPP module.
+    Tensor operation to decode and resize JPEG image using the simulation algorithm of
+    Ascend series chip DVPP module.
 
     It is recommended to use this algorithm in the following scenarios:
-    When training, the DVPP of the ascend chip is not used,
-    and the DVPP of the ascend chip is used during inference,
-    and the accuracy of inference is lower than the accuracy of training.
-    And the input image size should be in range [32*32, 8192*8192].
-    The zoom-out and zoom-in multiples of the image length and width should in range [1/32, 16].
+    When training, the DVPP of the Ascend chip is not used,
+    and the DVPP of the Ascend chip is used during inference,
+    and the accuracy of inference is lower than the accuracy of training;
+    and the input image size should be in range [32*32, 8192*8192].
+    The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
     Only images with an even resolution can be output. The output of odd resolution is not supported.
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
+
+    Examples:
+        >>> # decode and resize image, keeping aspect ratio
+        >>> transforms_list1 = [vision.Decode(), c_vision.SoftDvppDecodeResizeJpeg(70)]
+        >>> data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+        >>> # decode and resize to portrait style
+        >>> transforms_list2 = [vision.Decode(), c_vision.SoftDvppDecodeResizeJpeg((80, 60))]
+        >>> data2 = data2.map(operations=transforms_list2, input_columns=["image"])
     """
 
     @check_resize
@@ -1007,17 +1173,17 @@ class SoftDvppDecodeResizeJpeg(cde.SoftDvppDecodeResizeJpegOp):
 
 class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegOp):
     """
-    Tensor operation to decode, random crop and resize jpeg image using the simulation algorithm of
-    ascend series chip DVPP module.
+    Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
+    Ascend series chip DVPP module.
 
     The usage scenario is consistent with SoftDvppDecodeReiszeJpeg.
-    And the input image size should be in range [32*32, 8192*8192].
-    The zoom-out and zoom-in multiples of the image length and width should in range [1/32, 16].
+    The input image size should be in range [32*32, 8192*8192].
+    The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
     Only images with an even resolution can be output. The output of odd resolution is not supported.
 
     Args:
         size (Union[int, sequence]): The size of the output image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
@@ -1025,6 +1191,14 @@ class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegO
             cropped (default=(3. / 4., 4. / 3.)).
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead.
+
+    Examples:
+        >>> # decode, randomly crop and resize image, keeping aspect ratio
+        >>> transforms_list1 = [vision.Decode(), c_vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
+        >>> data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+        >>> # decode, randomly crop and resize to landscape style
+        >>> transforms_list2 = [vision.Decode(), c_vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
+        >>> data2 = data2.map(operations=transforms_list2, input_columns=["image"])
     """
 
     @check_soft_dvpp_decode_random_crop_resize_jpeg
@@ -1044,8 +1218,12 @@ class RandomSolarize(cde.RandomSolarizeOp):
 
     Args:
         threshold (tuple, optional): Range of random solarize threshold. Threshold values should always be
-            in range of [0, 255], and include at least one integer value in the given range and
+            in the range (0, 255), include at least one integer value in the given range and
             be in (min, max) format. If min=max, then it is a single fixed magnitude operation (default=(0, 255)).
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), c_vision.RandomSolarize(threshold=(10,100))]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
 
     @check_random_solarize

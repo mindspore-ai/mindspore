@@ -227,8 +227,10 @@ class Normalize:
     The values of the array need to be in range (0.0, 1.0].
 
     Args:
-        mean (sequence): List or tuple of mean values for each channel, w.r.t channel order.
+        mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
+            The mean values must be in range (0.0, 1.0].
         std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
+            The standard deviation values must be in range (0.0, 1.0].
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -261,21 +263,21 @@ class RandomCrop:
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
-            If padding is not None, pad image firstly with padding values.
-            If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
+            If padding is not None, first pad image with padding values.
+            If a single number is provided, pad all borders with this value.
+            If a tuple or list of 2 values are provided, pad the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
-            it pads the left, top, right and bottom respectively.
+            pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
         fill_value (int or tuple, optional): filling value (default=0).
             The pixel intensity of the borders if the padding_mode is Border.CONSTANT.
             If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-        padding_mode (str, optional): The method of padding (default=Border.CONSTANT). Can be any of
+        padding_mode (str, optional): The method of padding (default=Border.CONSTANT). It can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
             - Border.CONSTANT, means it fills the border with constant values.
@@ -386,7 +388,7 @@ class Resize:
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
@@ -428,7 +430,7 @@ class RandomResizedCrop:
 
     Args:
         size (Union[int, sequence]): The size of the output image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple, optional): Range (min, max) of respective size of the original size
             to be cropped (default=(0.08, 1.0)).
@@ -443,7 +445,7 @@ class RandomResizedCrop:
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
-            crop_area (default=10). If exceeded, fall back to use center_crop instead.
+            crop area (default=10). If exceeded, fall back to use center crop instead.
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -480,7 +482,7 @@ class CenterCrop:
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
@@ -710,7 +712,7 @@ class FiveCrop:
 
     Args:
         size (int or sequence): The output size of the crop.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
@@ -744,7 +746,7 @@ class TenCrop:
 
     Args:
         size (Union[int, sequence]): The output size of the crop.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         use_vertical_flip (bool, optional): Flip the image vertically instead of horizontally
             if set to True (default=False).
