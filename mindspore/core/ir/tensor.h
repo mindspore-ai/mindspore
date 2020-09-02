@@ -79,10 +79,10 @@ using TensorDataPtr = std::shared_ptr<TensorData>;
 
 struct WaitEvent {
   bool need_wait_{false};
-  std::mutex mutex_;
-  std::condition_variable cond_var_;
+  mutable std::mutex mutex_;
+  mutable std::condition_variable cond_var_;
 
-  void Wait() {
+  void Wait() const {
     std::unique_lock<std::mutex> lock(mutex_);
     if (!need_wait_) {
       return;
@@ -285,7 +285,7 @@ class Tensor : public MetaTensor {
     return false;
   }
 
-  void Wait() {
+  void Wait() const {
     if (event_ != nullptr) {
       event_->Wait();
     }
@@ -307,7 +307,7 @@ class Tensor : public MetaTensor {
   TensorDataPtr data_{nullptr};
   std::string id_{""};
   std::shared_ptr<WaitEvent> event_{nullptr};
-  TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
+  mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   DeviceSyncPtr device_sync_{nullptr};
   std::vector<Axis> padding_type_;
 };
