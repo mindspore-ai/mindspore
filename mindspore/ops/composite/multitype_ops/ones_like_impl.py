@@ -29,6 +29,12 @@ using ".register" decorator.
 """
 
 
+@ones_like_leaf.register("TypeType")
+def _ones_like_type_type(x):
+    """Returns x because x is a type. This is usually used in backprop progress."""
+    return x
+
+
 @ones_like_leaf.register("Number")
 def _ones_like_scalar(x):
     """Returns 1 which has the same dtype as x where x is a scalar."""
