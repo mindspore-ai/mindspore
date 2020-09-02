@@ -35,6 +35,7 @@
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
 #include "backend/optimizer/gpu/insert_format_transform_op.h"
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
+#include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/ms_utils.h"
 #include "common/trans.h"
@@ -91,6 +92,7 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
+  pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   optimizer->AddPassManager(pm);
