@@ -64,6 +64,7 @@ int ReduceBaseCPUKernel::CheckParameters() {
     MS_LOG(ERROR) << "Reduce op invalid num of reduce axes " << num_axes_ << " larger than input rank " << input_rank;
     return RET_ERROR;
   }
+
   for (auto i = 0; i < num_axes_; i++) {
     if (axes_[i] < -static_cast<int>(input_rank) || axes_[i] >= static_cast<int>(input_rank)) {
       MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in ["
@@ -72,6 +73,14 @@ int ReduceBaseCPUKernel::CheckParameters() {
     }
     if (axes_[i] < 0) {
       axes_[i] += static_cast<int>(input_rank);
+    }
+  }
+
+  if (reduce_to_end_) {
+    // actual num of axes to reduce
+    num_axes_ = static_cast<int>(input_rank) - axes_[0];
+    for (auto i = 1; i < num_axes_; ++i) {
+      axes_[i] = axes_[0] + i;
     }
   }
 
@@ -93,6 +102,7 @@ int ReduceBaseCPUKernel::Init() {
   num_axes_ = reduce_param->num_axes_;
   mode_ = reduce_param->mode_;
   memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
+  reduce_to_end_ = reduce_param->reduce_to_end_;
 
   auto ret = CheckInputsOutputs();
   if (ret != RET_OK) {
@@ -102,9 +112,7 @@ int ReduceBaseCPUKernel::Init() {
   return RET_OK;
 }
 
-int ReduceBaseCPUKernel::ReSize() {
-  return CheckParameters();
-}
+int ReduceBaseCPUKernel::ReSize() { return CheckParameters(); }
 
 kernel::LiteKernel *CpuReduceFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                const std::vector<lite::tensor::Tensor *> &outputs,
