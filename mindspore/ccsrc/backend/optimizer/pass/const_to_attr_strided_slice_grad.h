@@ -24,7 +24,7 @@ namespace opt {
 class ConstToAttrStridedSliceGradPass : public PatternProcessPass {
  public:
   explicit ConstToAttrStridedSliceGradPass(bool multigraph = true)
-      : PatternProcessPass("const_to_attr_strided_slice_grad_", multigraph) {}
+      : PatternProcessPass("const_to_attr_strided_slice_grad", multigraph) {}
   ~ConstToAttrStridedSliceGradPass() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

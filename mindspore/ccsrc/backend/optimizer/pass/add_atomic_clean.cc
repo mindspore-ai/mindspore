@@ -27,7 +27,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-
 static std::vector<size_t> g_output_idx;
 
 bool HasAtomic(const AnfNodePtr &input) {

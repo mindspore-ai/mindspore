@@ -121,7 +121,9 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
   if (!NeedFusion(graph, node, &batchnorm)) {
     return nullptr;
   }
-  return CreateBNInfer(graph, batchnorm, node);
+  auto bn_infer = CreateBNInfer(graph, batchnorm, node);
+  TransferDepend(batchnorm, graph, bn_infer);
+  return bn_infer;
 }
 }  // namespace opt
 }  // namespace mindspore

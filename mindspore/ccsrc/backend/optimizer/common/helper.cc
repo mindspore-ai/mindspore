@@ -872,5 +872,26 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
   return new_value_node;
 }
 
+void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node) {
+  MS_EXCEPTION_IF_NULL(old_node);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  // find BatchNorm's output which is a Depend or ControlDepend
+  for (const auto &node_index : manager->node_users()[old_node]) {
+    AnfNodePtr output = node_index.first;
+    size_t index = IntToSize(node_index.second);
+    MS_EXCEPTION_IF_NULL(output);
+    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimControlDepend)) {
+      auto control_depend = output->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(control_depend);
+      control_depend->set_input(index, new_node);
+    } else if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend)) {
+      auto depend = output->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(depend);
+      depend->set_input(index, new_node);
+    }
+  }
+}
 }  // namespace opt
 }  // namespace mindspore
