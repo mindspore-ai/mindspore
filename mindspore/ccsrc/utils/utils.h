@@ -269,6 +269,7 @@ constexpr auto kAttrPadDimSize = "pad_dim_size";
 constexpr auto kAttrNumSegments = "num_segments";
 constexpr auto kAttrBegin = "begin";
 constexpr auto kAttrSize = "size";
+constexpr auto kAttrIsDynamicShape = "is_dynamic_shape";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

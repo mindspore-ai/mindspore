@@ -569,9 +569,9 @@ class Unique(Primitive):
         containing indices of elements in the input coressponding to the output tensor.
 
     Examples:
-        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.float32)
+        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
         >>> out = P.Unique()(x)
-        (Tensor([1, 2, 5], mindspore.int32), Tensor([0, 1, 2, 1], mindspore.float32))
+        (Tensor([1, 2, 5], mindspore.int32), Tensor([0, 1, 2, 1], mindspore.int32))
     """
     @prim_attr_register
     def __init__(self):
