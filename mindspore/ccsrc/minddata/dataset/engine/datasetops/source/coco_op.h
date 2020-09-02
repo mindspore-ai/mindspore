@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_COCO_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_COC0_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_COCO_OP_H_
 
 #include <map>
 #include <memory>
@@ -279,38 +279,39 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   // @param nlohmann::json image_tree - image tree of json
   // @param std::vector<std::string> *image_vec - image id list of json
   // @return Status - The error code return
-  Status ImageColumnLoad(nlohmann::json image_tree, std::vector<std::string> *image_vec);
+  Status ImageColumnLoad(const nlohmann::json &image_tree, std::vector<std::string> *image_vec);
 
   // @param nlohmann::json categories_tree - categories tree of json
   // return Status - The error code return
-  Status CategoriesColumnLoad(nlohmann::json categories_tree);
+  Status CategoriesColumnLoad(const nlohmann::json &categories_tree);
 
   // @param nlohmann::json categories_tree - categories tree of json
   // @param const std::string &image_file - current image name in annotation
   // @param const int32_t &id - current unique id of annotation
   // @return Status - The error code return
-  Status DetectionColumnLoad(nlohmann::json annotation_tree, const std::string &image_file, const int32_t &id);
+  Status DetectionColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
   // @param nlohmann::json categories_tree - categories tree of json
   // @param const std::string &image_file - current image name in annotation
   // @param const int32_t &id - current unique id of annotation
   // @return Status - The error code return
-  Status StuffColumnLoad(nlohmann::json annotation_tree, const std::string &image_file, const int32_t &id);
+  Status StuffColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
   // @param nlohmann::json categories_tree - categories tree of json
   // @param const std::string &image_file - current image name in annotation
   // @param const int32_t &id - current unique id of annotation
   // @return Status - The error code return
-  Status KeypointColumnLoad(nlohmann::json annotation_tree, const std::string &image_file, const int32_t &id);
+  Status KeypointColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
   // @param nlohmann::json categories_tree - categories tree of json
   // @param const std::string &image_file - current image name in annotation
   // @param const int32_t &image_id - current unique id of annotation
   // @return Status - The error code return
-  Status PanopticColumnLoad(nlohmann::json annotation_tree, const std::string &image_file, const int32_t &image_id);
+  Status PanopticColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file,
+                            const int32_t &image_id);
 
   template <typename T>
-  Status SearchNodeInJson(nlohmann::json input_tree, std::string node_name, T *output_node);
+  Status SearchNodeInJson(const nlohmann::json &input_tree, std::string node_name, T *output_node);
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
@@ -337,4 +338,4 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_Coco_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_COCO_OP_H_
