@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 void PadSliceParameterTo4D(SliceParameter *param);
-void DoSlice(const float *input, float *output, SliceParameter *param);
+void DoSlice(const float *input, float *output, SliceParameter *param, int thread_id);
 void DoSliceNoParallel(const float *input, float *output, SliceParameter *param);
 #ifdef __cplusplus
 }

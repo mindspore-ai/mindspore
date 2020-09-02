@@ -78,7 +78,7 @@ int SliceCPUKernel::SliceParallelRun(int thread_id) {
   const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->Data());
   float *output_data = reinterpret_cast<float *>(out_tensors_[0]->Data());
   SliceParameter *param = reinterpret_cast<SliceParameter *>(op_parameter_);
-  DoSlice(input_data, output_data, param);
+  DoSlice(input_data, output_data, param, thread_id);
   return RET_OK;
 }
 
