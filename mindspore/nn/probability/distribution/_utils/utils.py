@@ -110,6 +110,8 @@ def check_scalar_from_param(params):
     Notes: String parameters are excluded.
     """
     for value in params.values():
+        if value is None:
+            continue
         if isinstance(value, (msp.bijector.Bijector, msp.distribution.Distribution)):
             return params['distribution'].is_scalar_batch
         if isinstance(value, Parameter):
@@ -358,23 +360,29 @@ class CheckTensor(PrimitiveWithInfer):
             return x
         raise TypeError(f"For {name}, input type should be a Tensor or Parameter.")
 
-def common_dtype(arg_a, name_a, arg_b, name_b, hint_type):
+def set_param_type(args, hint_type):
     """
-    check if arg_a and arg_b have the same dtype.
+    Find the common type among arguments.
+
+    Args:
+        args (dict): dictionary of arguments, {'name':value}.
+        hint_type (mindspore.dtype): hint type to return.
+
+    Raises:
+        TypeError: if tensors in args are not the same dtype.
     """
-    if hasattr(arg_a, 'dtype') and hasattr(arg_b, 'dtype'):
-        if isinstance(arg_a, np.ndarray):
-            a_dtype = mstype.pytype_to_dtype(arg_a.dtype)
-        else:
-            a_dtype = arg_a.dtype
-        if isinstance(arg_b, np.ndarray):
-            b_dtype = mstype.pytype_to_dtype(arg_b.dtype)
-        else:
-            b_dtype = arg_b.dtype
-        if a_dtype != b_dtype:
-            raise TypeError(f"{name_a} and {name_b} should have the same dtype.")
-        int_type = mstype.int_type + mstype.uint_type
-        if a_dtype in int_type or a_dtype == mstype.float64:
-            return mstype.float32
-        return a_dtype
-    return hint_type
+    common_dtype = None
+    for name, arg in args.items():
+        if hasattr(arg, 'dtype'):
+            if isinstance(arg, np.ndarray):
+                cur_dtype = mstype.pytype_to_dtype(arg.dtype)
+            else:
+                cur_dtype = arg.dtype
+            if common_dtype is None:
+                common_dtype = cur_dtype
+            elif cur_dtype != common_dtype:
+                raise TypeError(f"{name} should have the same dtype as other arguments.")
+    int_type = mstype.int_type + mstype.uint_type
+    if common_dtype in int_type or common_dtype == mstype.float64:
+        return mstype.float32
+    return hint_type if common_dtype is None else common_dtype

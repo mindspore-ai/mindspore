@@ -19,7 +19,7 @@ from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import cast_to_tensor, check_prob, check_type, check_distribution_name,\
-    raise_none_error
+                          set_param_type
 from ._utils.custom_ops import exp_generic, log_generic
 
 
@@ -123,12 +123,15 @@ class Geometric(Distribution):
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         check_type(dtype, valid_dtype, type(self).__name__)
         super(Geometric, self).__init__(seed, dtype, name, param)
-        self.parameter_type = mstype.float32
+        self.parameter_type = set_param_type({'probs1': probs}, mstype.float32)
         if probs is not None:
             self._probs = cast_to_tensor(probs, self.parameter_type)
             check_prob(self._probs)
         else:
             self._probs = probs
+
+        self.default_parameters = [self.probs]
+        self.parameter_names = ['probs1']
 
         self.minval = np.finfo(np.float).tiny
 
@@ -164,24 +167,12 @@ class Geometric(Distribution):
         """
         return self._probs
 
-    def _check_param(self, probs1):
-        """
-        Check availablity of distribution specific args probs1.
-        """
-        if probs1 is not None:
-            if self.context_mode == 0:
-                self.checktensor(probs1, 'probs1')
-            else:
-                probs1 = self.checktensor(probs1, 'probs1')
-            return self.cast(probs1, self.parameter_type)
-        return self.probs if self.probs is not None else raise_none_error('probs1')
-
     def _mean(self, probs1=None):
         r"""
         .. math::
             MEAN(Geo) = \fratc{1 - probs1}{probs1}
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         return (1. - probs1) / probs1
 
     def _mode(self, probs1=None):
@@ -189,7 +180,7 @@ class Geometric(Distribution):
         .. math::
             MODE(Geo) = 0
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         return self.fill(self.dtypeop(probs1), self.shape(probs1), 0.)
 
     def _var(self, probs1=None):
@@ -197,7 +188,7 @@ class Geometric(Distribution):
         .. math::
             VAR(Geo) = \frac{1 - probs1}{probs1 ^ {2}}
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         return (1.0 - probs1) / self.sq(probs1)
 
     def _entropy(self, probs1=None):
@@ -205,7 +196,7 @@ class Geometric(Distribution):
         .. math::
             H(Geo) = \frac{-1 * probs0 \log_2 (1-probs0)\ - prob1 * \log_2 (1-probs1)\ }{probs1}
         """
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         return (-probs0 * self.log(probs0) - probs1 * self.log(probs1)) / probs1
 
@@ -236,7 +227,7 @@ class Geometric(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, mstype.float32)
         value = self.floor(value)
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         pmf = self.exp(self.log(1.0 - probs1) * value + self.log(probs1))
         zeros = self.fill(self.dtypeop(probs1), self.shape(pmf), 0.0)
         comp = self.less(value, zeros)
@@ -258,7 +249,7 @@ class Geometric(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, mstype.float32)
         value = self.floor(value)
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         probs0 = 1.0 - probs1
         cdf = 1.0 - self.pow(probs0, value + 1.0)
         zeros = self.fill(self.dtypeop(probs1), self.shape(cdf), 0.0)
@@ -280,7 +271,7 @@ class Geometric(Distribution):
         check_distribution_name(dist, 'Geometric')
         probs1_b = self._check_value(probs1_b, 'probs1_b')
         probs1_b = self.cast(probs1_b, self.parameter_type)
-        probs1_a = self._check_param(probs1)
+        probs1_a = self._check_param_type(probs1)
         probs0_a = 1.0 - probs1_a
         probs0_b = 1.0 - probs1_b
         return self.log(probs1_a / probs1_b) + (probs0_a / probs1_a) * self.log(probs0_a / probs0_b)
@@ -297,7 +288,7 @@ class Geometric(Distribution):
             Tensor, shape is shape + batch_shape.
         """
         shape = self.checktuple(shape, 'shape')
-        probs1 = self._check_param(probs1)
+        probs1 = self._check_param_type(probs1)
         origin_shape = shape + self.shape(probs1)
         if origin_shape == ():
             sample_shape = (1,)
