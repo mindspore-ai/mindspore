@@ -20,34 +20,14 @@ from .. import functional as F
 from ..primitive import constexpr
 from .multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
-
-# set graph-level RNG seed
-_GRAPH_SEED = 0
-
-@constexpr
-def set_seed(seed):
-    """
-    Set the graph-level seed.
-    Graph-level seed is used as a global variable, that can be used in different ops in case op-level seed is not set.
-    If op-level seed is 0, use graph-level seed; if op-level seed is also 0, the system would generate a
-    random seed.
-
-    Args:
-        seed(Int): the graph-level seed value that to be set. Must be non-negative.
-
-    Examples:
-        >>> C.set_seed(10)
-    """
-    const_utils.check_non_negative("seed", seed, "set_seed")
-    global _GRAPH_SEED
-    _GRAPH_SEED = seed
+from ...common import get_seed as get_global_seed
 
 @constexpr
 def get_seed():
     """
     Get the graph-level seed.
     Graph-level seed is used as a global variable, that can be used in different ops in case op-level seed is not set.
-    If op-level seed is 0, use graph-level seed; if op-level seed is also 0, the system would generate a
+    If op-level seed is 0, use graph-level seed; if graph-level seed is also 0, the system would generate a
     random seed.
 
     Returns:
@@ -56,7 +36,10 @@ def get_seed():
     Examples:
         >>> C.get_seed()
     """
-    return _GRAPH_SEED
+    global_seed = get_global_seed()
+    if global_seed is None:
+        return 0
+    return global_seed
 
 def normal(shape, mean, stddev, seed=0):
     """

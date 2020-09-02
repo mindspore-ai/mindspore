@@ -62,7 +62,7 @@ class TransformedDistribution(Distribution):
                  bijector,
                  distribution,
                  dtype,
-                 seed=0,
+                 seed=None,
                  name="transformed_distribution"):
         """
         Constructor of transformed_distribution class.

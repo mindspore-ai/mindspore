@@ -27,7 +27,7 @@ class Categorical(Distribution):
     Args:
         probs (Tensor, list, numpy.ndarray, Parameter, float): event probabilities.
         logits (Tensor, list, numpy.ndarray, Parameter, float): event log-odds.
-        seed (int): seed to use in sampling. Default: 0.
+        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
         dtype (mstype.int32): type of the distribution. Default: mstype.int32.
         name (str): name of the distribution. Default: Categorical.
 
@@ -67,7 +67,7 @@ class Categorical(Distribution):
     def __init__(self,
                  probs=None,
                  logits=None,
-                 seed=0,
+                 seed=None,
                  dtype=mstype.int32,
                  name="Categorical"):
         param = dict(locals())
@@ -83,7 +83,7 @@ class Categorical(Distribution):
         self.reshape = P.Reshape()
         self.div = P.RealDiv()
         self.size = P.Size()
-        self.mutinomial = P.Multinomial(seed=seed)
+        self.mutinomial = P.Multinomial(seed=self.seed)
         self.cast = P.Cast()
         self.expandim = P.ExpandDims()
         self.gather = P.GatherNd()

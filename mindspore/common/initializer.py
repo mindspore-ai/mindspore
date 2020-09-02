@@ -23,6 +23,7 @@ from mindspore import log as logger
 
 from . import dtype as mstype
 from .tensor import Tensor
+from .seed import get_seed
 from .._c_expression import random_normal
 
 _INITIALIZER_ALIAS = dict()
@@ -71,7 +72,7 @@ class Initializer:
 
         Args:
             slice_index (int): Slice index of a parameter's slices.
-                Used when initialize a slice of a parameter, it guarantee that
+                Used when initialize a slice of the parameter, it guarantee that
                 devices use the same slice can generate the same tensor.
             shape (list[int]): Shape of the slice, used when initialize a slice of the parameter.
         """
@@ -86,10 +87,16 @@ class Initializer:
             logger.error(msg)
             raise ValueError(msg)
 
-        if slice_index is not None:
+        global_seed = get_seed()
+        need_set_seed = ((slice_index is not None) and (global_seed is None))
+        seed_saved = np.random.get_state()[1][0]
+        if need_set_seed:
             np.random.seed(slice_index)
         self.__call__(arr)
+        if need_set_seed:
+            np.random.seed(seed_saved)
         return Tensor(arr, dtype=self.dtype)
+
 
 def _register(*aliases):
     """Return the alias register."""

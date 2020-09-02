@@ -18,12 +18,14 @@ from .api import ms_function
 from .dtype import *
 from .parameter import Parameter, ParameterTuple
 from .tensor import MetaTensor, Tensor, RowTensor, SparseTensor
+from .seed import set_seed, get_seed
 
 __all__ = [
     "MetaTensor", "Tensor", "RowTensor", "SparseTensor",  # tensor
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
-    "dtype"
+    "dtype",
+    "set_seed", "get_seed"  # random seed
     ]
 
 __all__.extend(dtype.__all__)

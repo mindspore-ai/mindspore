@@ -28,7 +28,7 @@ class Exponential(Distribution):
 
     Args:
         rate (float, list, numpy.ndarray, Tensor, Parameter): inverse scale.
-        seed (int): seed to use in sampling. Default: 0.
+        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): name of the distribution. Default: Exponential.
 
@@ -92,7 +92,7 @@ class Exponential(Distribution):
 
     def __init__(self,
                  rate=None,
-                 seed=0,
+                 seed=None,
                  dtype=mstype.float32,
                  name="Exponential"):
         """
