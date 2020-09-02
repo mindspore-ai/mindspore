@@ -30,7 +30,6 @@ IF NOT EXIST "%BUILD_PATH%/mindspore" (
 cd %CD%/mindspore
 
 IF "%1%" == "lite" (
-    call :gene_gtest
     call :run_cmake
     IF errorlevel 1 (
         echo "cmake fail one time."
@@ -89,39 +88,34 @@ goto run_eof
     -G "CodeBlocks - MinGW Makefiles" "%BASEPATH%/mindspore/lite"
 GOTO:EOF
 
-:gene_gtest
-    cd %BASEPATH%/third_party
-    IF EXIST googletest rd /s /q googletest
-    git submodule update --init --recursive googletest
-    cd %BUILD_PATH%/mindspore
-GOTO:EOF
-
 :gene_protobuf
-    SET PROTOC="%BASEPATH%/build/mindspore/_deps/protobuf-src/_build/protoc"
+    IF NOT DEFINED MSLIBS_CACHE_PATH (
+        cd %BASEPATH%/build/mindspore/_deps/protobuf-src/_build
+    ) ELSE (
+        cd %MSLIBS_CACHE_PATH%/protobuf_*/bin
+    )
 
-    SET PROTO_SRC_DIR="%BASEPATH%/mindspore/lite/tools/converter/parser/caffe"
-    cd %PROTO_SRC_DIR%
-    %PROTOC% *.proto --proto_path=%PROTO_SRC_DIR% --cpp_out=%PROTO_SRC_DIR%
+    SET PROTO_SRC_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/caffe
+    protoc "%PROTO_SRC_DIR%/*.proto" --proto_path="%PROTO_SRC_DIR%" --cpp_out="%PROTO_SRC_DIR%"
 
-    SET PROTO_SRC_DIR="%BASEPATH%/mindspore/lite/tools/converter/parser/onnx"
-    cd %PROTO_SRC_DIR%
-    %PROTOC% *.proto --proto_path=%PROTO_SRC_DIR% --cpp_out=%PROTO_SRC_DIR%
+    SET PROTO_SRC_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/onnx
+    protoc "%PROTO_SRC_DIR%/*.proto" --proto_path="%PROTO_SRC_DIR%" --cpp_out="%PROTO_SRC_DIR%"
     cd %BUILD_PATH%/mindspore
 GOTO:EOF
 
 :gene_flatbuffer
-    SET FLATC="%BASEPATH%/build/mindspore/_deps/flatbuffers-src/_build/flatc"
-    SET FLAT_DIR=%BASEPATH%/mindspore/lite/schema
-    cd %FLAT_DIR%
-    IF EXIST inner rd /s /q inner
-    md inner
+    IF NOT DEFINED MSLIBS_CACHE_PATH (
+        cd %BASEPATH%/build/mindspore/_deps/flatbuffers-src/_build
+    ) ELSE (
+        cd %MSLIBS_CACHE_PATH%/flatbuffers_*/bin
+    )
 
-    %FLATC% -c -b *.fbs
-    %FLATC% -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "%FLAT_DIR%/inner" *.fbs
+    SET FLAT_DIR=%BASEPATH%/mindspore/lite/schema
+    flatc -c -b -o "%FLAT_DIR%" "%FLAT_DIR%/*.fbs"
+    flatc -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "%FLAT_DIR%/inner" "%FLAT_DIR%/*.fbs"
 
     SET FLAT_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/tflite
-    cd %FLAT_DIR%
-    %FLATC% -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "%FLAT_DIR%" *.fbs
+    flatc -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "%FLAT_DIR%" "%FLAT_DIR%/*.fbs"
     cd %BUILD_PATH%/mindspore
 GOTO:EOF
 
