@@ -40,7 +40,7 @@ void UpdateOutputTensors(VectorRef *outputs,
       }
       if (tensor->NeedSyncDeviceToHostImmediately()) {
         tensor->data_sync();
-        tensor->set_sync_status(kNoNeedSync);
+        tensor->set_device_address(nullptr);
       }
     }
   }
@@ -112,7 +112,9 @@ Executor::Executor(const std::string &device_name, uint32_t device_id) {
 
 void Executor::CheckException() {
   if (exception_ptr_ != nullptr) {
-    std::rethrow_exception(exception_ptr_);
+    auto exception_ptr = exception_ptr_;
+    exception_ptr_ = nullptr;
+    std::rethrow_exception(exception_ptr);
   }
 }
 
