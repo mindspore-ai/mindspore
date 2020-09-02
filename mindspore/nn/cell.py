@@ -16,6 +16,7 @@
 import inspect
 import time
 import gc
+import os
 from collections import OrderedDict
 import numpy
 from mindspore import log as logger
@@ -73,8 +74,11 @@ class Cell:
         self._parameter_layout_dict = {}
         self._create_time = int(time.time() * 1e9)
         init_backend()
+
         # call gc to release GE session resources used by non-used cell objects
-        gc.collect()
+        if os.getenv('GC_COLLECT_IN_CELL') == '1':
+            gc.collect()
+
         self._construct_inputs_num = 0
         self._construct_inputs_names = []
         self._auto_parallel_mode = False
