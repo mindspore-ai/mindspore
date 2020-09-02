@@ -474,6 +474,10 @@ bool SchemaObj::init() {
     try {
       std::ifstream in(schema_file_);
       in >> js;
+      if (js.find("columns") == js.end()) {
+        MS_LOG(ERROR) << "\"columns\" node is required in the schema json file.";
+        return false;
+      }
     } catch (const std::exception &err) {
       MS_LOG(ERROR) << "Schema file failed to load";
       return false;
@@ -1399,10 +1403,11 @@ std::vector<std::shared_ptr<DatasetOp>> RandomDataset::Build() {
   rand_gen_.seed(GetSeed());  // seed the random generator
   // If total rows was not given, then randomly pick a number
   std::shared_ptr<SchemaObj> schema_obj;
-  if (!schema_path_.empty()) schema_obj = std::make_shared<SchemaObj>(schema_path_);
-
-  if (schema_obj != nullptr && total_rows_ == 0) {
-    total_rows_ = schema_obj->get_num_rows();
+  if (!schema_path_.empty()) {
+    schema_obj = Schema(schema_path_);
+    if (schema_obj == nullptr) {
+      return {};
+    }
   }
 
   std::string schema_json_string, schema_file_path;
