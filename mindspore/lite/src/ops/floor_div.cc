@@ -24,7 +24,7 @@ int FloorDiv::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
   auto val_offset = schema::CreateFloor(*fbb);
-  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Floor, val_offset.o);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_FloorDiv, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }
