@@ -58,7 +58,7 @@ class OpenCLKernel : public LiteKernel {
   OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
   schema::Format in_ori_format_{schema::Format_NHWC};
   schema::Format out_ori_format_{schema::Format_NHWC4};
-  schema::Format op_format_{schema::Format_NC4HW4};
+  schema::Format op_format_{schema::Format_NHWC4};
 };
 }  // namespace mindspore::kernel
 

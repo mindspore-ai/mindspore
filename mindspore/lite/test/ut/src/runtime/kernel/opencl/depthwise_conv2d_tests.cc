@@ -66,12 +66,12 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   std::vector<int> shape_bias = {conv_param->output_channel_};
   std::vector<int> shape_out;
   std::vector<int> shape_in;
-  if (format == schema::Format_NHWC || format == schema::Format_NHWC4) {
+  if (format == schema::Format_NHWC || format == schema::Format_NHWC4 || format == schema::Format_NC4HW4) {
     shape_in = std::vector<int>(
       {conv_param->input_batch_, conv_param->input_h_, conv_param->input_w_, conv_param->input_channel_});
     shape_out = std::vector<int>(
       {conv_param->output_batch_, conv_param->output_h_, conv_param->output_w_, conv_param->output_channel_});
-  } else if (format == schema::Format_NCHW || format == schema::Format_NC4HW4) {
+  } else if (format == schema::Format_NCHW) {
     shape_in = std::vector<int>(
       {conv_param->input_batch_, conv_param->input_channel_, conv_param->input_h_, conv_param->input_w_});
     shape_out = std::vector<int>(
@@ -98,6 +98,7 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     delete[] packed_input;
     return;
   }
+  pKernel->SetFormatType(format);
   pKernel->Init();
 
   std::vector<kernel::LiteKernel *> kernels{pKernel.get()};
