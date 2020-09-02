@@ -50,6 +50,7 @@ class OpenCLKernel : public LiteKernel {
   }
   OpenCLMemType GetMemType() { return out_mem_type_; }
   void SetMemType(OpenCLMemType mem_type) { out_mem_type_ = mem_type; }
+  void SetFormatType(schema::Format format_type) { op_format_ = format_type; }
   schema::Format GetInOriFormat() { return in_ori_format_; }
   schema::Format GetOutOriFormat() { return out_ori_format_; }
 
@@ -57,6 +58,7 @@ class OpenCLKernel : public LiteKernel {
   OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
   schema::Format in_ori_format_{schema::Format_NHWC};
   schema::Format out_ori_format_{schema::Format_NHWC4};
+  schema::Format op_format_{schema::Format_NC4HW4};
 };
 }  // namespace mindspore::kernel
 
