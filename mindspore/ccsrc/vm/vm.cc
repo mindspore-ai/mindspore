@@ -472,7 +472,7 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
 
 void FinalVM::SyncData(const py::object &arg) {
   if (py::isinstance<py::tuple>(arg)) {
-    py::tuple arg_list = py::cast<py::tuple>(arg);
+    auto arg_list = py::cast<py::tuple>(arg);
     for (size_t i = 0; i < arg_list.size(); i++) {
       SyncData(arg_list[i]);
     }

@@ -93,7 +93,7 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args)
     for (size_t i = 0; i < grads.size(); i++) {
       if (py::isinstance<tensor::Tensor>(py_args[i])) {
         if (!py::isinstance<tensor::Tensor>(grads[i])) {
-          MS_EXCEPTION(ValueError) << "For user define net bprop, the gradient of the " << i
+          MS_EXCEPTION(ValueError) << "When user defines the net bprop,, the gradient of the " << i
                                    << "th arg should be Tensor, but got "
                                    << py::cast<std::string>(grads[i].attr("__class__").attr("__name__"))
                                    << ", and the value is " << py::cast<py::str>(grads[i]) << ".";

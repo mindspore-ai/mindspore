@@ -2464,12 +2464,7 @@ raise_set = [
     ('StridedSlice_1', {
         'block': (P.StridedSlice(), {'exception': ValueError}),
         'desc_const': [(1, 2, 3), (3, 4, 5), (1, 1)],
-        'desc_inputs': [[4, 5, 6, 7]]}),
-    ('StridedSlice_2', {
-        'block': (P.StridedSlice(), {'exception': ValueError}),
-        'desc_const': [(1, 2, 3), (3, 4, 5), (1, 1, 0)],
-        'desc_inputs': [[4, 5, 6, 7]]}),
-
+        'desc_inputs': [[4, 5, 6, 7]]})
 ]
 
 
