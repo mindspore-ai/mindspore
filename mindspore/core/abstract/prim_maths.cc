@@ -37,5 +37,14 @@ AbstractBasePtr InferImplMinOrMaxGrad(const AnalysisEnginePtr &, const Primitive
 
   return std::make_shared<AbstractTuple>(AbstractBasePtrList({dx, dy}));
 }
+
+AbstractBasePtr InferImplSqrt(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  // Inputs: three tensors.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto inp = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  return inp->Clone()->Broaden();
+}
 }  // namespace abstract
 }  // namespace mindspore

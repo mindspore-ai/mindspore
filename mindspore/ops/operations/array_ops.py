@@ -27,7 +27,7 @@ import numpy as np
 
 from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register, _run_op
+from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._c_expression import signature_dtype as sig_dtype
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_rw as sig_rw
@@ -142,6 +142,11 @@ class ExpandDims(PrimitiveWithInfer):
         out = {'shape': x_shape,
                'dtype': x['dtype'],
                'value': value}
+        if 'min_shape' in x and 'max_shape' in x:
+            out['min_shape'] = x['min_shape']
+            out['min_shape'].insert(axis_v, 1)
+            out['max_shape'] = x['max_shape']
+            out['max_shape'].insert(axis_v, 1)
         return out
 
 
@@ -277,6 +282,9 @@ class Cast(PrimitiveWithInfer):
         out = {'shape': x['shape'],
                'dtype': mstype.tensor_type(t['value']),
                'value': value}
+        if 'min_shape' in x and 'max_shape' in x:
+            out['min_shape'] = x['min_shape']
+            out['max_shape'] = x['max_shape']
         return out
 
 
@@ -445,6 +453,27 @@ class Shape(PrimitiveWithInfer):
         return out
 
 
+class DynamicShape(Primitive):
+    """
+    Returns the shape of input tensor.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor[int], 1-dim Tensor of type int32
+
+    Examples:
+        >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
+        >>> shape = P.DynamicShape()
+        >>> output = shape(input_tensor)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Shape"""
+
+
 class Squeeze(PrimitiveWithInfer):
     """
     Returns a tensor with the same type but dimensions of 1 being removed based on axis.
@@ -578,7 +607,7 @@ class Unique(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class GatherV2(PrimitiveWithInfer):
+class GatherV2(PrimitiveWithCheck):
     """
     Returns a slice of input tensor based on the specified indices and axis.
 
@@ -605,7 +634,7 @@ class GatherV2(PrimitiveWithInfer):
         """init index_select"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
-    def __infer__(self, params, indices, axis):
+    def __check__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
         validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
         validator.check_subclass("axis", axis['dtype'], mstype.int_, self.name)
@@ -613,13 +642,6 @@ class GatherV2(PrimitiveWithInfer):
         params_shp = params['shape']
         rank = len(params_shp)
         validator.check_int_range("axis", axis_v, -rank, rank, Rel.INC_LEFT, self.name)
-        if axis_v < 0:
-            axis_v += rank
-        out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
-        out = {'shape': out_shape,
-               'dtype': params['dtype'],
-               'value': None}
-        return out
 
 
 class SparseGatherV2(GatherV2):

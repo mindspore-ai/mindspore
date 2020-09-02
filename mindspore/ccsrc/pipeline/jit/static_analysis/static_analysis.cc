@@ -308,20 +308,18 @@ void AnalysisEngine::Clear() {
 namespace {
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
   // Custom Primitive with python infer_shape, infer_type
-  EvaluatorPtr evaluator = nullptr;
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->isa<prim::DoSignaturePrimitive>()) {
-    evaluator = std::make_shared<DoSignatureEvaluator>(prim);
-    return evaluator;
+    return std::make_shared<DoSignatureEvaluator>(prim);
   }
   if (prim->isa<prim::UnpackGraphPrimitive>()) {
-    evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
-    return evaluator;
+    return std::make_shared<UnpackGraphEvaluator>(prim);
   }
   if (prim->Hash() == prim::kPrimMixedPrecisionCast->Hash() && prim->name() == prim::kPrimMixedPrecisionCast->name()) {
-    evaluator = std::make_shared<MixedPrecisionCastEvaluator>(prim);
-    return evaluator;
+    return std::make_shared<MixedPrecisionCastEvaluator>(prim);
   }
+
+  EvaluatorPtr evaluator = nullptr;
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {

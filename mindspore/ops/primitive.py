@@ -200,6 +200,84 @@ class Primitive(Primitive_):
         return self._update_parameter
 
 
+class PrimitiveWithCheck(Primitive):
+    """
+    PrimitiveWithCheck is the base class of primitives in python defines functions for checking operator input arguments
+    but used the infer method registed in c++ source codes.
+
+    There are three methods can be overide to define the check logic of the primitive: __check__(), check_shape(),
+    check_dtype(). If __check__() is defined in primitive, the __check__() has highest priority to be called.
+    If __check__() is not defined, infer_shape() and infer_dtype() can be defined to describe the check logic of
+    the shape and type.
+
+    Args:
+        name (str): Name of the current Primitive.
+
+    Examples:
+        >>> # init a Primitive class with check
+        >>> class Flatten(PrimitiveWithCheck):
+        >>>     @prim_attr_register
+        >>>     def __init__(self):
+        >>>         pass
+        >>>     def check_shape(self, input_x):
+        >>>         validator.check_integer('input_x rank', len(input_x), 1, Rel.GE, self.name)
+        >>>
+        >>>     def check_dtype(self, input_x):
+        >>>         validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
+        >>>
+        >>> # init a Primitive obj
+        >>> add = Flatten()
+    """
+
+    def __init__(self, name):
+        Primitive.__init__(self, name)
+        self.set_prim_type(prim_type.py_infer_check)
+
+    def _clone(self):
+        """
+        Deeply clones the primitive object.
+
+        Calls the __init__() method with the same arguments. This method is called in parser if the
+        flag self.__setattr_flag__ is True.
+        """
+        cloned_prim = Primitive._clone(self)
+        return cloned_prim
+
+    def check_shape(self, *args):
+        """
+        Check shapes of input args.
+
+        Note:
+            The shape of scalar is an empty tuple.
+
+        Args:
+            args (tuple(int)): shapes of input tensors.
+
+        Return:
+            None.
+        """
+        return None
+
+    def check_dtype(self, *args):
+        """
+        Check data types of input args.
+
+        Args:
+            args (:class:`mindspore.dtype`): data type of inputs.
+
+        Return:
+            None.
+        """
+        return None
+
+    def __check__(self, *args):
+        """Check shape, type, and value at the same time by using dictionary as arguments."""
+        tracks = ['dtype', 'shape']
+        for track in tracks:
+            fn = getattr(self, 'check_' + track)
+            fn(*(x[track] for x in args))
+
+
 class PrimitiveWithInfer(Primitive):
     """
     PrimitiveWithInfer is the base class of primitives in python defines functions for tracking inference in python.
@@ -306,6 +384,18 @@ class PrimitiveWithInfer(Primitive):
         if not is_graph_mode:
             return out
 
+        # output does not contain dynamic shape, no need to calculate min/max shape
+        def has_dynamic_shape(shp):
+            if isinstance(shp, int):
+                return shp < 0
+            if isinstance(shp, (list, tuple)):
+                return any(has_dynamic_shape(e) for e in shp)
+            return False
+
+        if not has_dynamic_shape(out['shape']):
+            return out
+
+        # calculate min/max shape for output
         def get_specified_shape(elems, attr):
             has_specified_shape = False
             ret_vals = []
@@ -345,6 +435,8 @@ def prim_attr_register(fn):
     def deco(self, *args, **kwargs):
         if isinstance(self, PrimitiveWithInfer):
             PrimitiveWithInfer.__init__(self, self.__class__.__name__)
+        elif isinstance(self, PrimitiveWithCheck):
+            PrimitiveWithCheck.__init__(self, self.__class__.__name__)
         else:
             Primitive.__init__(self, self.__class__.__name__)
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)

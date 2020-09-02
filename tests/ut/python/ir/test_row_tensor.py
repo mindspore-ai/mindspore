@@ -27,7 +27,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore import Tensor, RowTensor, context
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -105,10 +105,31 @@ def _generate_inverse_index(x_shape, axis):
     perm = index[1:1 + axis] + (0,) + index[1 + axis:]
     return perm
 
-class MySparseGatherV2(P.GatherV2):
+# pylint: disable=W0231
+class MySparseGatherV2(PrimitiveWithInfer):
     """
     For test
     """
+    @prim_attr_register
+    def __init__(self):
+        """init index_select"""
+        self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
+
+    def __infer__(self, params, indices, axis):
+        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_subclass("axis", axis['dtype'], mstype.int_, self.name)
+        axis_v = axis['value']
+        params_shp = params['shape']
+        rank = len(params_shp)
+        validator.check_int_range("axis", axis_v, -rank, rank, Rel.INC_LEFT, self.name)
+        if axis_v < 0:
+            axis_v += rank
+        out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
+        out = {'shape': out_shape,
+               'dtype': params['dtype'],
+               'value': None}
+        return out
 
 @bprop_getters.register(MySparseGatherV2)
 def get_bprop_sparse_gather_v2(self):

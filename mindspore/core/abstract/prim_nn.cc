@@ -445,5 +445,25 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
   return std::make_shared<AbstractTensor>(std::make_shared<AbstractScalar>(kAnyValue, kUInt8),
                                           std::make_shared<Shape>(std::vector<int64_t>{shape_y}));
 }
+
+AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 5);
+  AbstractBasePtrList elements;
+  for (size_t i = 0; i < 3; ++i) {
+    elements.push_back(args_spec_list[i]->Clone()->Broaden());
+  }
+  return std::make_shared<AbstractTuple>(elements);
+}
+
+AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 7);
+  AbstractBasePtrList elements;
+  for (size_t i = 0; i < 2; ++i) {
+    elements.push_back(args_spec_list[i]->Clone()->Broaden());
+  }
+  return std::make_shared<AbstractTuple>(elements);
+}
 }  // namespace abstract
 }  // namespace mindspore

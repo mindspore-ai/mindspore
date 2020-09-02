@@ -35,7 +35,8 @@ enum PrimType {
   kPrimTypeBuiltIn,        // Built-in primitive operator
   kPrimTypePyInferShape,   // Primitive operator defined by custom
   kPrimTypePyInferTensor,  // Primitive operator defined by custom
-  kPrimTypeUserCustom
+  kPrimTypeUserCustom,
+  kPrimTypePyInferCheck  // Primitive operator with input args checking method
 };
 
 class Primitive : public Named {

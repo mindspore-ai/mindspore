@@ -23,6 +23,16 @@ extern const char GRAPH_FLAG_HAS_EFFECT[];
 extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
 extern const char GRAPH_FLAG_RANDOM_EFFECT[];
 extern const char GRAPH_FLAG_SIDE_EFFECT[];
+
+extern const char PY_PRIM_METHOD_INFER[];
+extern const char PY_PRIM_METHOD_CHECK[];
+extern const char PY_PRIM_METHOD_INFER_VALUE[];
+
+extern const char ATTR_VALUE[];
+extern const char ATTR_DTYPE[];
+extern const char ATTR_SHAPE[];
+extern const char ATTR_MIN_SHAPE[];
+extern const char ATTR_MAX_SHAPE[];
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_FLAGS_H
