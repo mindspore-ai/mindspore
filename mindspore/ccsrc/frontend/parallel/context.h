@@ -58,8 +58,8 @@ class ParallelContext {
   void set_full_batch(bool full_batch);
   bool full_batch() const { return full_batch_; }
 
-  void set_cast_before_mirror(bool cast_before_mirror);
-  bool cast_before_mirror() const { return cast_before_mirror_; }
+  void set_gradient_fp32_sync(bool gradient_fp32_sync);
+  bool gradient_fp32_sync() const { return gradient_fp32_sync_; }
 
   void set_loss_repeated_mean(bool loss_repeated_mean);
   bool loss_repeated_mean() const { return loss_repeated_mean_; }
@@ -69,9 +69,6 @@ class ParallelContext {
 
   void set_global_rank(int32_t global_rank);
   int32_t global_rank() const { return global_rank_; }
-
-  void set_communication_backend(const std::string &communication_backend);
-  std::string communication_backend() const { return communication_backend_; }
 
   bool set_parallel_mode(const std::string &parallel_mode);
   std::string parallel_mode() const { return parallel_mode_; }
@@ -112,11 +109,10 @@ class ParallelContext {
   static std::shared_ptr<ParallelContext> inst_context_;
   bool mirror_mean_;
   bool full_batch_;
-  bool cast_before_mirror_;
+  bool gradient_fp32_sync_;
   bool loss_repeated_mean_;
   int32_t device_num_;
   int32_t global_rank_;
-  std::string communication_backend_;
   std::string parallel_mode_;
   std::string strategy_search_mode_;
   bool parameter_broadcast_;

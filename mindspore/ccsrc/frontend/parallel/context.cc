@@ -42,15 +42,12 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
   return inst_context_;
 }
 
-ParallelContext::ParallelContext() {
-  communication_backend_ = HCCL_BACKEND;
-  Reset();
-}
+ParallelContext::ParallelContext() { Reset(); }
 
 void ParallelContext::Reset() {
   mirror_mean_ = false;
   full_batch_ = false;
-  cast_before_mirror_ = true;
+  gradient_fp32_sync_ = true;
   loss_repeated_mean_ = true;
   device_num_ = 1;
   global_rank_ = 0;
@@ -81,13 +78,9 @@ void ParallelContext::set_mirror_mean(bool mirror_mean) { mirror_mean_ = mirror_
 
 void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
 
-void ParallelContext::set_cast_before_mirror(bool cast_before_mirror) { cast_before_mirror_ = cast_before_mirror; }
+void ParallelContext::set_gradient_fp32_sync(bool gradient_fp32_sync) { gradient_fp32_sync_ = gradient_fp32_sync; }
 
 void ParallelContext::set_loss_repeated_mean(bool loss_repeated_mean) { loss_repeated_mean_ = loss_repeated_mean; }
-
-void ParallelContext::set_communication_backend(const std::string &communication_backend) {
-  communication_backend_ = communication_backend;
-}
 
 bool ParallelContext::set_parallel_mode(const std::string &parallel_mode) {
   auto iter = std::find(PARALLEL_MODE_LIST.begin(), PARALLEL_MODE_LIST.end(), parallel_mode);

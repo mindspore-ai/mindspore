@@ -830,7 +830,7 @@ def test_matmul_cast():
     compile_net(net, x, y, b)
 
 
-def test_cast_before_mirror():
+def test_gradient_fp32_sync():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()
@@ -843,7 +843,7 @@ def test_cast_before_mirror():
             out = self.matmul(out, b)
             return out
 
-    context.set_auto_parallel_context(device_num=8, global_rank=0, cast_before_mirror=True)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradient_fp32_sync=True)
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -854,7 +854,7 @@ def test_cast_before_mirror():
     compile_net(net, x, y, b)
 
 
-def test_cast_before_mirror1():
+def test_gradient_fp32_sync1():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()
@@ -867,7 +867,7 @@ def test_cast_before_mirror1():
             out = self.matmul(out, b)
             return out
 
-    context.set_auto_parallel_context(device_num=8, global_rank=0, cast_before_mirror=True)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradient_fp32_sync=True)
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -878,7 +878,7 @@ def test_cast_before_mirror1():
     compile_net(net, x, y, b)
 
 
-def test_cast_before_mirror2():
+def test_gradient_fp32_sync2():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()
@@ -891,7 +891,7 @@ def test_cast_before_mirror2():
             out = self.matmul(out, b)
             return out
 
-    context.set_auto_parallel_context(device_num=8, global_rank=0, cast_before_mirror=False)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradient_fp32_sync=False)
     strategy1 = ((2, 2), (2, 2))
     net = GradWrap(NetWithLoss(Net(strategy1)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -902,7 +902,7 @@ def test_cast_before_mirror2():
     compile_net(net, x, y, b)
 
 
-def test_cast_before_mirror3():
+def test_gradient_fp32_sync3():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()

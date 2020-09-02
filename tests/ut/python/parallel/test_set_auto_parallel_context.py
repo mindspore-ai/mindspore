@@ -20,24 +20,20 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
 def test_set_auto_parallel_context():
-    context.set_auto_parallel_context(device_num=4, global_rank=3, mirror_mean=True, cast_before_mirror=False,
+    context.set_auto_parallel_context(device_num=4, global_rank=3, mirror_mean=True, gradient_fp32_sync=False,
                                       parallel_mode="auto_parallel", parameter_broadcast=False)
     device_num = context.get_auto_parallel_context("device_num")
     global_rank = context.get_auto_parallel_context("global_rank")
     mirror_mean = context.get_auto_parallel_context("mirror_mean")
-    cast_before_mirror = context.get_auto_parallel_context("cast_before_mirror")
+    gradient_fp32_sync = context.get_auto_parallel_context("gradient_fp32_sync")
     parallel_mode = context.get_auto_parallel_context("parallel_mode")
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
     assert device_num == 4
     assert global_rank == 3
     assert mirror_mean
-    assert not cast_before_mirror
+    assert not gradient_fp32_sync
     assert parallel_mode == "auto_parallel"
     assert not parameter_broadcast
-
-    auto_parallel_context().set_communication_backend("hccl")
-    backend = auto_parallel_context().get_communication_backend()
-    assert backend == "hccl"
 
     auto_parallel_context().set_device_num(4)
     device_num = auto_parallel_context().get_device_num()
@@ -53,9 +49,9 @@ def test_set_auto_parallel_context():
     mirror_mean = auto_parallel_context().get_mirror_mean()
     assert mirror_mean
 
-    auto_parallel_context().set_cast_before_mirror(False)
-    cast_before_mirror = auto_parallel_context().get_cast_before_mirror()
-    assert not cast_before_mirror
+    auto_parallel_context().set_gradient_fp32_sync(False)
+    gradient_fp32_sync = auto_parallel_context().get_gradient_fp32_sync()
+    assert not gradient_fp32_sync
 
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
     assert parameter_broadcast_is_set
@@ -91,7 +87,7 @@ def test_reset_auto_parallel_context():
     device_num = context.get_auto_parallel_context("device_num")
     global_rank = context.get_auto_parallel_context("global_rank")
     mirror_mean = context.get_auto_parallel_context("mirror_mean")
-    cast_before_mirror = context.get_auto_parallel_context("cast_before_mirror")
+    gradient_fp32_sync = context.get_auto_parallel_context("gradient_fp32_sync")
     parallel_mode = context.get_auto_parallel_context("parallel_mode")
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
     device_num_is_set = auto_parallel_context().get_device_num_is_set()
@@ -99,7 +95,7 @@ def test_reset_auto_parallel_context():
     assert device_num == 1
     assert global_rank == 0
     assert not mirror_mean
-    assert cast_before_mirror
+    assert gradient_fp32_sync
     assert parallel_mode == "stand_alone"
     assert not parameter_broadcast
     assert not device_num_is_set
