@@ -245,3 +245,50 @@ def test_reshape_auto_5():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x, y)
+
+def test_reshape_auto_6():
+    class NetWithLoss6(nn.Cell):
+        def __init__(self, network):
+            super(NetWithLoss6, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x, y):
+            predict = self.network(x, y)
+            return self.loss(predict)
+
+    class GradWrap6(nn.Cell):
+        def __init__(self, network):
+            super(GradWrap6, self).__init__()
+            self.network = network
+
+        def construct(self, x, y):
+            return grad_all(self.network)(x, y)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = P.ReLU()
+            self.mul = P.Mul()
+            self.reshape = P.Reshape()
+            self.reduce_mean = P.ReduceMean()
+            self.wide_w = Parameter(Tensor(np.ones([4, 1024, 1]), dtype=ms.float32), name="weight")
+
+        def construct(self, x, y):
+            out1 = x + self.wide_w
+            w = self.reshape(self.wide_w, (4, 1024))
+            out1 = self.reduce_mean(out1, 1)
+            out1 = out1 - w
+            out2 = self.mul(y, w)
+            out = out1 + out2
+            return out
+
+    size = 8
+    context.set_auto_parallel_context(device_num=size, global_rank=0)
+    x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
+
+    net = GradWrap6(NetWithLoss6(Net()))
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
+    _executor.compile(net, x, y)
