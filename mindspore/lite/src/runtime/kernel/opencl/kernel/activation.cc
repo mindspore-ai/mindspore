@@ -77,20 +77,10 @@ int ActivationOpenClKernel::Init() {
   std::set<std::string> build_options;
   ocl_runtime->LoadSource(Program_Kernel[type_][0], source);
   ocl_runtime->BuildKernel(kernel_, Program_Kernel[type_][0], Program_Kernel[type_][1], build_options);
-
-  std::map<int, schema::Format> format{{4, schema::Format_NHWC4}, {2, schema::Format_NC4}};
-  if (format.count(out_size_) == 0) {
-    MS_LOG(ERROR) << "Not found output tensor format";
-    return RET_ERROR;
-  }
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(format[in_size_]);
-  out_tensors_[0]->SetFormat(format[out_size_]);
-  if (in_size_ == 2) {
-    in_ori_format_ = schema::Format_NC4;
-    out_ori_format_ = schema::Format_NC4;
-  }
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << op_parameter_->name_ << " init Done!";
   return RET_OK;
 }
@@ -121,9 +111,13 @@ cl_int4 ActivationOpenClKernel::GetImg2dShape() {
   for (int i = 0; i < in_size_; ++i) {
     img2d_shape.s[i + 4 - in_size_] = in_tensors_[0]->shape()[i];
   }
-  if (in_size_ == 2) {
+  if (op_format_ == schema::Format_NC4) {
     img2d_shape.s[1] = img2d_shape.s[2];
     img2d_shape.s[2] = UP_DIV(img2d_shape.s[3], C4NUM);
+    img2d_shape.s[3] = C4NUM;
+  }
+  if (op_format_ == schema::Format_NC4HW4) {
+    img2d_shape.s[1] = UP_DIV(img2d_shape.s[3], C4NUM) * img2d_shape.s[1];  // UP(c / 4) * H
     img2d_shape.s[3] = C4NUM;
   }
   return img2d_shape;

@@ -54,6 +54,9 @@ void BiasAddOpenCLKernel::InitBuffer() {
 int BiasAddOpenCLKernel::Init() {
   in_size_ = in_tensors_[0]->shape().size();
   out_size_ = out_tensors_[0]->shape().size();
+  for (int i = 0; i < in_size_; ++i) {
+    input_shape_.s[i + 4 - in_size_] = in_tensors_[0]->shape()[i];
+  }
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
@@ -77,33 +80,26 @@ int BiasAddOpenCLKernel::Init() {
 
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  std::map<int, schema::Format> format{{4, schema::Format_NHWC4}, {2, schema::Format_NC4}};
-  if (format.count(out_size_) == 0) {
-    MS_LOG(ERROR) << "Not found output tensor format";
-    return RET_ERROR;
-  }
-  in_tensors_[0]->SetFormat(format[in_size_]);
-  out_tensors_[0]->SetFormat(format[out_size_]);
-  if (in_size_ == 2) {
-    in_ori_format_ = format[in_size_];
-    out_ori_format_ = format[out_size_];
-  }
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << program_name << " Init Done!";
   return RET_OK;
 }
 
 int BiasAddOpenCLKernel::Run() {
-  cl_int4 input_shape = GetImg2dShape();
+  cl_int4 global_size = GetGlobalshape();
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   int arg_idx = 0;
+  std::map<schema::Format, int> data_type{
+    {schema::Format_NC4, 1}, {schema::Format_NHWC4, 2}, {schema::Format_NC4HW4, 3}};
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_size_);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
   std::vector<size_t> local = {1, 1};
-  std::vector<size_t> global = {static_cast<size_t>(input_shape.s[1]), static_cast<size_t>(input_shape.s[2])};
+  std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
   auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
@@ -112,29 +108,29 @@ int BiasAddOpenCLKernel::Run() {
   return RET_OK;
 }
 
-cl_int4 BiasAddOpenCLKernel::GetImg2dShape() {
-  cl_int4 img2d_shape = {0, 0, 0, 0};
-  for (int i = 0; i < in_size_; ++i) {
-    img2d_shape.s[i + 4 - in_size_] = in_tensors_[0]->shape()[i];
+cl_int4 BiasAddOpenCLKernel::GetGlobalshape() {
+  cl_int4 global_shape = input_shape_;
+  if (op_format_ == schema::Format_NC4) {
+    global_shape.s[1] = global_shape.s[2];
+    global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM);
   }
-  if (in_size_ == 2) {
-    img2d_shape.s[1] = img2d_shape.s[2];
-    img2d_shape.s[2] = UP_DIV(img2d_shape.s[3], C4NUM);
-    img2d_shape.s[3] = C4NUM;
+  if (op_format_ == schema::Format_NC4HW4) {
+    global_shape.s[1] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[1];  // c / 4 * H
   }
-  return img2d_shape;
+  if (op_format_ == schema::Format_NHWC4) {
+    global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[2];
+  }
+  return global_shape;
 }
 
 int BiasAddOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  cl_int4 img_shape = GetImg2dShape();
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
+  cl_int4 img_shape = GetGlobalshape();
   size_t img_dtype = CL_FLOAT;
-#endif
-
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
   img_size->clear();
-  img_size->push_back(img_shape.s[2] * UP_DIV(img_shape.s[3], C4NUM));
+  img_size->push_back(img_shape.s[2]);
   img_size->push_back(img_shape.s[1]);
   img_size->push_back(img_dtype);
   return RET_OK;

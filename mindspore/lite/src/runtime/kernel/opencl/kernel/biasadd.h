@@ -38,7 +38,7 @@ class BiasAddOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
   void InitBuffer();
-  cl_int4 GetImg2dShape();
+  cl_int4 GetGlobalshape();
 
  private:
   cl::Kernel kernel_;
@@ -46,6 +46,7 @@ class BiasAddOpenCLKernel : public OpenCLKernel {
   int in_size_;
   int out_size_;
   size_t fp_size;
+  cl_int4 input_shape_;
   bool enable_fp16_{false};
 };
 

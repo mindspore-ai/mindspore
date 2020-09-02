@@ -18,6 +18,7 @@
 
 #include <set>
 #include <vector>
+#include <map>
 
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -62,6 +63,9 @@ int PReluOpenCLKernel::Init() {
       << C_Weight << " and your input channel size is " << C;
     return RET_ERROR;
   }
+  for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
+    input_shape_.s[i] = in_tensors_[0]->shape()[i];
+  }
   std::set<std::string> build_options;
   std::string source = prelu_source;
   std::string program_name = "PRelu";
@@ -73,31 +77,26 @@ int PReluOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  in_tensors_[0]->SetFormat(op_format_);
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << program_name << " init Done!";
   return RET_OK;
 }
 
 int PReluOpenCLKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
-  int N = in_tensors_[0]->shape()[0];
-  int H = in_tensors_[0]->shape()[1];
-  int W = in_tensors_[0]->shape()[2];
-  int C = in_tensors_[0]->shape()[3];
-  cl_int4 input_shape = {N, H, W, C};
-
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  std::map<schema::Format, int> data_type{{schema::Format_NHWC4, 1}, {schema::Format_NC4HW4, 2}};
   int arg_idx = 0;
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->Data());
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->Data());
-  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape_);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, PReluWeight_);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, data_type[op_format_]);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, reinterpret_cast<int>(in_tensors_[1]->shape()[0]));
-
   std::vector<size_t> local = {1, 1};
-  std::vector<size_t> global = {static_cast<size_t>(H), static_cast<size_t>(W)};
+  std::vector<size_t> global = {static_cast<size_t>(global_shape_.s[1]), static_cast<size_t>(global_shape_.s[2])};
   auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
@@ -107,19 +106,22 @@ int PReluOpenCLKernel::Run() {
 }
 
 int PReluOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  int H = in_tensors_[0]->shape()[1];
-  int W = in_tensors_[0]->shape()[2];
-  int C = in_tensors_[0]->shape()[3];
-
-#ifdef ENABLE_FP16
-  size_t img_dtype = CL_HALF_FLOAT;
-#else
   size_t img_dtype = CL_FLOAT;
-#endif
-
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
+  global_shape_ = input_shape_;
+  if (op_format_ == schema::Format_NC4HW4) {
+    global_shape_.s[1] = UP_DIV(input_shape_.s[3], C4NUM) * input_shape_.s[1];
+  } else if (op_format_ == schema::Format_NHWC4) {
+    global_shape_.s[2] = UP_DIV(input_shape_.s[3], C4NUM) * input_shape_.s[2];
+  } else {
+    MS_LOG(ERROR) << "op_format_:" << op_format_ << " is do not support!";
+    return RET_ERROR;
+  }
   img_size->clear();
-  img_size->push_back(W * UP_DIV(C, C4NUM));
-  img_size->push_back(H);
+  img_size->push_back(global_shape_.s[2]);
+  img_size->push_back(global_shape_.s[1]);
   img_size->push_back(img_dtype);
   return RET_OK;
 }
@@ -128,7 +130,7 @@ kernel::LiteKernel *OpenCLPReluKernelCreator(const std::vector<lite::tensor::Ten
                                              const std::vector<lite::tensor::Tensor *> &outputs,
                                              OpParameter *opParameter, const lite::Context *ctx,
                                              const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
-  if (inputs.size() == 0) {
+  if (inputs.empty()) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
     return nullptr;
   }

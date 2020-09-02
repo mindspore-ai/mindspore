@@ -41,6 +41,8 @@ class PReluOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   void *PReluWeight_;
+  cl_int4 input_shape_;
+  cl_int4 global_shape_;
   size_t fp_size;
   bool enable_fp16_{false};
 };

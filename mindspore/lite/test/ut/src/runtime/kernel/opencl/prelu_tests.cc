@@ -85,14 +85,15 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   std::vector<int> input_shape = {1, 4, 3, 9};
   auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  schema::Format format = schema::Format_NHWC;
+  schema::Format op_format = schema::Format_NC4HW4;
   auto tensor_type = schema::NodeType_ValueNode;
-  auto input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  auto input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input_tensor error!";
     return;
   }
-  auto output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC, tensor_type);
+  auto output_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(ERROR) << "new output_tensor error";
     delete input_tensor;
@@ -140,6 +141,7 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
     delete param;
     return;
   }
+  prelu_kernel->SetFormatType(op_format);
   auto ret = prelu_kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init prelu kernel error";
