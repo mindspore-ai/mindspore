@@ -50,6 +50,14 @@ int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset
     split_which = i % num_split;
     split_times = i / num_split;
     int split_size = split_sizes[split_which];
+    // support split size is -1 in the end.
+    if (split_size == -1) {
+      int split_dim_i = input_shape[split_dim];
+      for (int j = 0; j < num_split - 1; ++j) {
+        split_dim_i -= split_sizes[j];
+      }
+      split_size = split_dim_i;
+    }
     float *dst = out_data[split_which] + split_times * in_stride * split_size;
     (void)memcpy(dst, src, split_size * in_stride_bytes);
     src += split_size * in_stride;
