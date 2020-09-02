@@ -33,10 +33,18 @@ namespace mindspore::kernel {
 int ConvolutionOpenCLKernel::Init() {
   static int init_count = 0;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  use_fp16_ = ocl_runtime->GetFp16Enable();
   auto allocator = ocl_runtime->GetAllocator();
   std::set<std::string> build_options;
   init_count++;
+  use_fp16_ = ocl_runtime->GetFp16Enable();
+
+  if (op_format_ != schema::Format_NHWC4 && op_format_ != schema::Format_NC4HW4) {
+    MS_LOG(ERROR) << "op_format_ " << op_format_ << " not support!";
+  }
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
 
   CI = in_tensors_[0]->Channel();
   IH = in_tensors_[0]->Height();
@@ -70,7 +78,8 @@ int ConvolutionOpenCLKernel::Init() {
     ocl_runtime->BuildKernel(kernel_36to4x4, program_name, "Winograd36To4x4", build_options);
   } else {
     std::string program_name = "convolution" + std::to_string(init_count);
-    ocl_runtime->LoadSource(program_name, CodeGenConvolution());
+    std::string source = op_format_ == schema::Format_NHWC4 ? CodeGenConvolutionNHWC4() : CodeGenConvolutionNC4HW4();
+    ocl_runtime->LoadSource(program_name, source);
     ocl_runtime->BuildKernel(kernel_conv, program_name, "Convolution", build_options);
   }
 
@@ -91,10 +100,7 @@ int ConvolutionOpenCLKernel::Init() {
   }
 
   this->InitBuffer();
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+
   MS_LOG(DEBUG) << "Convolution Init Done!";
   return RET_OK;
 }
@@ -282,6 +288,12 @@ int ConvolutionOpenCLKernel::Run() {
     ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, out_tensors_[0]->Data(), lite::opencl::MemType::IMG);
     ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
     ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    if (op_format_ == schema::Format_NC4HW4) {
+      cl_int4 input_shape = {1, IH, IW, CI_SLICES};
+      cl_int4 output_shape = {1, OH, OW, CO_SLICES};
+      ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, input_shape);
+      ocl_runtime->SetKernelArg(kernel_conv, arg_cn++, output_shape);
+    }
   }
 
   if (use_winograd_) {
@@ -297,7 +309,7 @@ int ConvolutionOpenCLKernel::Run() {
   return RET_OK;
 }
 
-std::string ConvolutionOpenCLKernel::CodeGenConvolution() {
+std::string ConvolutionOpenCLKernel::CodeGenConvolutionNHWC4() {
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
   const size_t CI_ALIGN = CI_SLICES * C4NUM;
   const size_t CO_ALIGN = CO_SLICES * C4NUM;
@@ -344,8 +356,8 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolution() {
     "{\n";
 
   code +=
-    "    int oh = get_global_id(0);  // [0, OH)\n"
-    "    int ow = get_global_id(1);  // [0, OW)\n"
+    "    int ow = get_global_id(0);  // [0, OW)\n"
+    "    int oh = get_global_id(1);  // [0, OH)\n"
     "    int co_slice = get_global_id(2); // [0, UP_DIV(CO, CO_TILE) )\n"
     "\n"
     "    if (oh >= OH || ow >= OW || co_slice >= CO_SLICES)\n"
@@ -396,66 +408,237 @@ std::string ConvolutionOpenCLKernel::CodeGenConvolution() {
   return code;
 }
 
+std::string ConvolutionOpenCLKernel::CodeGenConvolutionNC4HW4() {
+  auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  const size_t KH = param->kernel_h_;
+  const size_t KW = param->kernel_w_;
+  const size_t strideH = param->stride_h_;
+  const size_t strideW = param->stride_w_;
+  const size_t padTop = param->pad_u_;
+  const size_t padBottom = param->pad_d_;
+  const size_t padLeft = param->pad_l_;
+
+  std::string code;
+
+  if (use_fp16_) {
+    code += "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
+  }
+
+  code +=
+    "__constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;\n"
+    "\n"
+    "__kernel void Convolution(__read_only image2d_t input,\n"
+    "                          __write_only image2d_t output,\n"
+    "                          __global FLT4 *weight,\n"
+    "                          __global FLT4 *bias,\n"
+    "                          const int4 input_shape,\n"
+    "                          const int4 output_shape)\n"
+    "{\n"
+    "    int ow = get_global_id(0) * 2;\n"
+    "    int oh = get_global_id(1);\n"
+    "    int co_slice = get_global_id(2);\n"
+    "\n"
+    "    int CI_SLICES = input_shape.w;\n"
+    "    int CO_SLICES = output_shape.w;\n\n";
+
+  code += "    #define IH " + std::to_string(IH) + "\n";
+  code += "    #define IW " + std::to_string(IW) + "\n";
+  code += "    #define OH " + std::to_string(OH) + "\n";
+  code += "    #define OW " + std::to_string(OW) + "\n";
+  code += "    #define KH " + std::to_string(KH) + "\n";
+  code += "    #define KW " + std::to_string(KW) + "\n";
+  code += "    #define strideH " + std::to_string(strideH) + "\n";
+  code += "    #define strideW " + std::to_string(strideW) + "\n";
+  code += "    #define padTop " + std::to_string(padTop) + "\n";
+  code += "    #define padLeft " + std::to_string(padLeft) + "\n\n";
+
+  code +=
+    "    if (oh >= OH || ow >= OW || co_slice >= CO_SLICES)\n"
+    "        return;\n\n";
+
+  bool check_ow = (OW % 2) == 1;
+  if (check_ow) {
+    code +=
+      "    int last_is_double = 1;\n"
+      "    if (ow + 1 >= OW)\n"
+      "        last_is_double = 0;\n\n";
+  }
+
+  code +=
+    "    FLT4 out0 = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);\n"
+    "    FLT4 out1 = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);\n"
+    "    __global FLT4 *w = weight + co_slice * KH * KW * CI_SLICES * 4;\n"
+    "\n"
+    "    for (int kh = 0; kh < KH; ++kh)\n"
+    "    {\n"
+    "        int ih = kh + oh * strideH - padTop;\n"
+    "        for (int kw = 0; kw < KW; ++kw)\n"
+    "        {\n";
+
+  if (padTop || padBottom) {
+    code +=
+      "if (ih >= 0 && ih < IH)\n"
+      "{\n";
+  }
+
+  code += "            int iw0 = kw + (ow + 0) * strideW - padLeft;\n";
+  if (check_ow) {
+    code +=
+      "            if (last_is_double)\n"
+      "            {\n";
+  }
+
+  code +=
+    "                int iw1 = kw + (ow + 1) * strideW - padLeft;\n"
+    "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
+    "                {\n"
+    "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, ci_slice * IH + ih));\n"
+    "                    out0 += w[0] * in0.x;\n"
+    "                    out0 += w[1] * in0.y;\n"
+    "                    out0 += w[2] * in0.z;\n"
+    "                    out0 += w[3] * in0.w;\n"
+    "                    FLT4 in1 = READ_IMAGE(input, smp_zero, (int2)(iw1, ci_slice * IH + ih));\n"
+    "                    out1 += w[0] * in1.x;\n"
+    "                    out1 += w[1] * in1.y;\n"
+    "                    out1 += w[2] * in1.z;\n"
+    "                    out1 += w[3] * in1.w;\n"
+    "                    w += 4;\n"
+    "                }\n";
+  if (check_ow) {
+    code +=
+      "            }\n"
+      "            else\n"
+      "            {\n"
+      "                for (int ci_slice = 0; ci_slice < CI_SLICES; ci_slice++)\n"
+      "                {\n"
+      "                    FLT4 in0 = READ_IMAGE(input, smp_zero, (int2)(iw0, ci_slice * IH + ih));\n"
+      "                    out0 += w[0] * in0.x;\n"
+      "                    out0 += w[1] * in0.y;\n"
+      "                    out0 += w[2] * in0.z;\n"
+      "                    out0 += w[3] * in0.w;\n"
+      "                    w += 4;\n"
+      "                }\n"
+      "            }\n";
+  }
+  if (padTop || padBottom) {
+    code +=
+      "}\n"
+      "else\n"
+      "{\n"
+      "    w += CI_SLICES * 4;\n"
+      "}\n";
+  }
+  code +=
+    "        }\n"
+    "    }\n\n";
+
+  code += "    out0 = out0 + bias[co_slice];\n";
+  if (param->act_type_ == ActType_Relu) {
+    code += "    out0 = max(out0, (FLT4)(0.0f));\n";
+  } else if (param->act_type_ == ActType_Relu6) {
+    code += "    out0 = clamp(out0, (FLT4)(0.0f), (FLT4)(6.0f));\n";
+  }
+  code += "    WRITE_IMAGE(output, (int2)(ow + 0, co_slice * OH + oh), out0);\n";
+
+  if (check_ow) {
+    code +=
+      "    if (last_is_double)"
+      "    {\n";
+  }
+  code += "    out1 = out1 + bias[co_slice];\n";
+  if (param->act_type_ == ActType_Relu) {
+    code += "    out1 = max(out1, (FLT4)(0.0f));\n";
+  } else if (param->act_type_ == ActType_Relu6) {
+    code += "    out1 = clamp(out1, (FLT4)(0.0f), (FLT4)(6.0f));\n";
+  }
+  code += "    WRITE_IMAGE(output, (int2)(ow + 1, co_slice * OH + oh), out1);\n";
+  if (check_ow) {
+    code += "}\n";
+  }
+  code += "}\n";
+
+  return code;
+}
+
 std::string ConvolutionOpenCLKernel::CodeGenWinograd4x4To36() {
-  return "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
-         "#define UP_DIV(x, y) (((x) + (y) - (1)) / (y))\n"
-         "#define PAD 1\n"
-         "\n"
-         "__constant sampler_t\n"
-         "smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
-         "\n"
-         "constant FLT Bt[36] = {\n"
-         "        1.0000000000f, 0.0000000000f, -2.5000004768f, -0.0000001192f, 1.0000001192f, 0.0000000000f,\n"
-         "        0.0000000000f, 0.9428091049f, 1.3333333731f, -0.4714044929f, -0.6666667461f, 0.0000000000f,\n"
-         "        0.0000000000f, -0.9428089857f, 1.3333334923f, 0.4714045525f, -0.6666667461f, 0.0000000000f,\n"
-         "        0.0000000000f, -0.1178511307f, -0.0833333358f, 0.2357022613f, 0.1666666865f, 0.0000000000f,\n"
-         "        0.0000000000f, 0.1178511307f, -0.0833333507f, -0.2357022911f, 0.1666666865f, 0.0000000000f,\n"
-         "        0.0000000000f, 0.9999998808f, -0.0000000596f, -2.5000000000f, 0.0000000000f, 1.0000000000f,\n"
-         "};\n"
-         "\n"
-         "__kernel void Winograd4x4To36(__read_only image2d_t input,\n"
-         "                              __write_only image2d_t output,\n"
-         "                              int4 input_shape,     // N H W CI_SLICES\n"
-         "                              int4 output_shape)    // N 36 H/4*W/4 CI_SLICES\n"
-         "{\n"
-         "    int tile_xy = get_global_id(0);\n"
-         "    int row = get_global_id(1);\n"
-         "    int slice = get_global_id(2);\n"
-         "\n"
-         "    int TILE_XY = output_shape.z;\n"
-         "    int SLICES = input_shape.w;\n"
-         "    if (tile_xy >= TILE_XY || row >= 6 || slice >= SLICES)\n"
-         "    {\n"
-         "        return;\n"
-         "    }\n"
-         "\n"
-         "    int IH = input_shape.y, IW = input_shape.z;\n"
-         "    int TILE_X = IW / 4;\n"
-         "    int tile_x = tile_xy % TILE_X;\n"
-         "    int tile_y = tile_xy / TILE_X;\n"
-         "\n"
-         "    constant FLT *Bt_row = Bt + row * 6;\n"
-         "    FLT4 BtD_row[6] = {0};\n"
-         "    for (int y = 0; y < 6; y++)\n"
-         "    {\n"
-         "        int y_idx = tile_y * 4 - PAD + y;\n"
-         "        for (int x = 0; x < 6; x++)\n"
-         "        {\n"
-         "            int x_idx = (tile_x * 4 - PAD + x) * SLICES + slice;\n"
-         "            BtD_row[x] += Bt_row[y] * READ_IMAGE(input, smp_none, (int2)(x_idx, y_idx));\n"
-         "        }\n"
-         "    }\n"
-         "\n"
-         "    for (int y = 0; y < 6; y++)\n"
-         "    {\n"
-         "        FLT4 acc = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);\n"
-         "        for (int x = 0; x < 6; x++)\n"
-         "        {\n"
-         "            acc += BtD_row[x] * Bt[y * 6 + x];\n"
-         "        }\n"
-         "        WRITE_IMAGE(output, (int2)(tile_xy, slice * 36 + (row * 6 + y)), acc); // CH W  H=36\n"
-         "    }\n"
-         "}";
+  std::string code;
+  code +=
+    "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
+    "#define UP_DIV(x, y) (((x) + (y) - (1)) / (y))\n"
+    "#define PAD 1\n"
+    "\n"
+    "__constant sampler_t\n"
+    "smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
+    "\n"
+    "constant FLT Bt[36] = {\n"
+    "        1.0000000000f, 0.0000000000f, -2.5000004768f, -0.0000001192f, 1.0000001192f, 0.0000000000f,\n"
+    "        0.0000000000f, 0.9428091049f, 1.3333333731f, -0.4714044929f, -0.6666667461f, 0.0000000000f,\n"
+    "        0.0000000000f, -0.9428089857f, 1.3333334923f, 0.4714045525f, -0.6666667461f, 0.0000000000f,\n"
+    "        0.0000000000f, -0.1178511307f, -0.0833333358f, 0.2357022613f, 0.1666666865f, 0.0000000000f,\n"
+    "        0.0000000000f, 0.1178511307f, -0.0833333507f, -0.2357022911f, 0.1666666865f, 0.0000000000f,\n"
+    "        0.0000000000f, 0.9999998808f, -0.0000000596f, -2.5000000000f, 0.0000000000f, 1.0000000000f,\n"
+    "};\n"
+    "\n"
+    "__kernel void Winograd4x4To36(__read_only image2d_t input,\n"
+    "                              __write_only image2d_t output,\n"
+    "                              int4 input_shape,     // N H W CI_SLICES\n"
+    "                              int4 output_shape)    // N 36 H/4*W/4 CI_SLICES\n"
+    "{\n"
+    "    int tile_xy = get_global_id(0);\n"
+    "    int row = get_global_id(1);\n"
+    "    int slice = get_global_id(2);\n"
+    "\n"
+    "    int TILE_XY = output_shape.z;\n"
+    "    int SLICES = input_shape.w;\n"
+    "    if (tile_xy >= TILE_XY || row >= 6 || slice >= SLICES)\n"
+    "    {\n"
+    "        return;\n"
+    "    }\n"
+    "\n"
+    "    int IH = input_shape.y, IW = input_shape.z;\n"
+    "    int TILE_X = IW / 4;\n"
+    "    int tile_x = tile_xy % TILE_X;\n"
+    "    int tile_y = tile_xy / TILE_X;\n"
+    "\n"
+    "    constant FLT *Bt_row = Bt + row * 6;\n"
+    "    FLT4 BtD_row[6] = {0};\n"
+    "    for (int y = 0; y < 6; y++)\n"
+    "    {\n"
+    "        int y_idx = tile_y * 4 - PAD + y;\n";
+
+  if (op_format_ == schema::Format_NHWC4) {
+    code +=
+      "        for (int x = 0; x < 6; x++)\n"
+      "        {\n"
+      "             int x_idx = (tile_x * 4 - PAD + x) * SLICES + slice;\n";
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    code +=
+      "        if(y_idx < 0 || y_idx >= IH)\n"
+      "        {\n"
+      "            continue;\n"
+      "        }\n"
+      "        y_idx += slice * IH;\n"
+      "        for (int x = 0; x < 6; x++)\n"
+      "        {\n"
+      "            int x_idx = tile_x * 4 - PAD + x;\n";
+  }
+
+  code +=
+    "            BtD_row[x] += Bt_row[y] * READ_IMAGE(input, smp_none, (int2)(x_idx, y_idx));\n"
+    "        }\n"
+    "    }\n"
+    "\n"
+    "    for (int y = 0; y < 6; y++)\n"
+    "    {\n"
+    "        FLT4 acc = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);\n"
+    "        for (int x = 0; x < 6; x++)\n"
+    "        {\n"
+    "            acc += BtD_row[x] * Bt[y * 6 + x];\n"
+    "        }\n"
+    "        WRITE_IMAGE(output, (int2)(tile_xy, slice * 36 + (row * 6 + y)), acc); // CH W  H=36\n"
+    "    }\n"
+    "}";
+  return code;
 }
 
 std::string ConvolutionOpenCLKernel::CodeGenWinogradConvolution() {
@@ -602,8 +785,15 @@ std::string ConvolutionOpenCLKernel::CodeGenWinograd36To4x4() {
   code +=
     "        int TILE_X = OW / 4;\n"
     "        int tile_x = tile_xy % TILE_X * 4;\n"
-    "        int tile_y = tile_xy / TILE_X * 4;\n"
-    "        WRITE_IMAGE(output, (int2)((tile_x + x) * SLICES + slice, tile_y + row), acc); // height=H width=WC\n"
+    "        int tile_y = tile_xy / TILE_X * 4;\n";
+
+  if (op_format_ == schema::Format_NHWC4) {
+    code += "        WRITE_IMAGE(output, (int2)((tile_x + x) * SLICES + slice, tile_y + row), acc);\n";
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    code += "        WRITE_IMAGE(output, (int2)(tile_x + x, slice * OH + tile_y + row), acc);\n";
+  }
+
+  code +=
     "    }\n"
     "}";
   return code;
@@ -632,18 +822,29 @@ int ConvolutionOpenCLKernel::SetGlobalLocalConv(std::vector<size_t> *global, std
     local_h = global_h / 2;
   }
 
-  if (OW * CO_SLICES > 65536) {
-    local_w = 4;
+  if (op_format_ == schema::Format_NHWC4) {
+    if (OW * CO_SLICES > 65536) {
+      local_w = 4;
+    }
   }
 
   global->clear();
-  global->push_back(UP_DIV(OH, local_h) * local_h);
   global->push_back(UP_DIV(OW, local_w) * local_w);
+  global->push_back(UP_DIV(OH, local_h) * local_h);
   global->push_back(UP_DIV(CO_SLICES, local_c) * local_c);
   local->clear();
-  local->push_back(local_h);
   local->push_back(local_w);
+  local->push_back(local_h);
   local->push_back(local_c);
+
+  if (op_format_ == schema::Format_NC4HW4) {
+    // calculate 2 FLT4 along width per work-item
+    global->at(0) = UP_DIV(global->at(0), 2);
+    if (local->at(0) > global->at(0)) {
+      local->at(0) = global->at(0);
+    }
+  }
+
   return RET_OK;
 }
 

@@ -64,7 +64,9 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   cl::Kernel kernel_conv;
   cl::Kernel kernel_36to4x4;
 
-  std::string CodeGenConvolution();
+  std::string CodeGenConvolutionNHWC4();
+  std::string CodeGenConvolutionNC4HW4();
+
   std::string CodeGenWinograd4x4To36();
   std::string CodeGenWinogradConvolution();
   std::string CodeGenWinograd36To4x4();
