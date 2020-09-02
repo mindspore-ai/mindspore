@@ -122,6 +122,7 @@ constexpr auto kLayerNormBetaGammaBackpropOpName = "LayerNormBetaGammaBackprop";
 constexpr auto kLambNextMVOpName = "LambNextMV";
 constexpr auto kConfusionTransposeDOpName = "ConfusionTransposeD";
 constexpr auto kAdamApplyOneWithDecayOpName = "AdamApplyOneWithDecay";
+constexpr auto kAdamApplyOneWithDecayAssignOpName = "AdamApplyOneWithDecayAssign";
 constexpr auto kBatchNormGradOpName = "BatchNormGrad";
 constexpr auto kBNInferOpName = "BNInfer";
 constexpr auto kAdamApplyOneOpName = "AdamApplyOne";
