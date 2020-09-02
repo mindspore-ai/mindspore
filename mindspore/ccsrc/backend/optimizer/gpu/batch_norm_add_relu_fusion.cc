@@ -23,6 +23,7 @@
 #include "ir/primitive.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
+#include "runtime/device/gpu/kernel_info_setter.h"
 
 namespace mindspore {
 namespace opt {
@@ -46,7 +47,7 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   auto batch_norm_ex = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
   MS_EXCEPTION_IF_NULL(batch_norm_ex);
 
-  if (AnfAlgo::GetOutputInferDataType(batch_norm_ex, 0) != kNumberTypeFloat16) {
+  if (AnfAlgo::GetInputFormat(batch_norm_ex, 0) != kOpFormat_NHWC) {
     return nullptr;
   }
 
@@ -83,6 +84,7 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->Replace(batch_norm_ex, fused_batch_norm_with_add_relu);
+  device::gpu::SetKernelInfo(fused_batch_norm_with_add_relu);
   return tuple_get_item;
 }
 }  // namespace opt

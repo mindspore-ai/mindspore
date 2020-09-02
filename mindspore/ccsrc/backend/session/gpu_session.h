@@ -67,8 +67,6 @@ class GPUSession : public SessionBasic {
 
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
-  bool IsSupportFormatTransform(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-
 #ifdef ENABLE_DEBUGGER
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
@@ -82,9 +80,6 @@ class GPUSession : public SessionBasic {
 
   void PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 #endif
-
-  static constexpr size_t kConv2dCount = 96;
-  static constexpr size_t kFusedBatchNormCount = 94;
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;
 MS_REG_SESSION(kGPUDevice, GPUSession);

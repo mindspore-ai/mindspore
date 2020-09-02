@@ -47,7 +47,7 @@ bool CudaEnvChecker::CheckNvccInPath() {
   };
 
   auto cuda_paths = GetCudaRealPaths();
-  find_nvcc_ = any_of(cuda_paths.begin(), cuda_paths.end(), checker);
+  find_nvcc_ = std::any_of(cuda_paths.begin(), cuda_paths.end(), checker);
   already_check_nvcc_ = true;
   return find_nvcc_;
 }
