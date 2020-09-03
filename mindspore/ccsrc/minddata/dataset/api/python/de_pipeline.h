@@ -92,8 +92,14 @@ class DEPipeline {
   // Function to assign the node as root.
   Status AssignRootNode(const DsOpPtr &dataset_op);
 
+  // Function to get the column names in the last node in the tree in order
+  Status GetColumnNames(py::list *output);
+
+  // Function to prepare the tree for execution
+  Status PrepareTree(const int32_t num_epochs);
+
   // Function to launch the tree execution.
-  Status LaunchTreeExec(int32_t num_epochs);
+  Status LaunchTreeExec();
 
   // Get a row of data as dictionary of column name to the value.
   Status GetNextAsMap(py::dict *output);

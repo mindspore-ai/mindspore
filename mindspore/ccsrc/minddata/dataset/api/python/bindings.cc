@@ -44,7 +44,14 @@ PYBIND_REGISTER(
            [](DEPipeline &de, const DsOpPtr &dataset_op) { THROW_IF_ERROR(de.AssignRootNode(dataset_op)); })
       .def("SetBatchParameters",
            [](DEPipeline &de, const py::dict &args) { THROW_IF_ERROR(de.SetBatchParameters(args)); })
-      .def("LaunchTreeExec", [](DEPipeline &de, int32_t num_epochs) { THROW_IF_ERROR(de.LaunchTreeExec(num_epochs)); })
+      .def("PrepareTree", [](DEPipeline &de, int32_t num_epochs) { THROW_IF_ERROR(de.PrepareTree(num_epochs)); })
+      .def("LaunchTreeExec", [](DEPipeline &de) { THROW_IF_ERROR(de.LaunchTreeExec()); })
+      .def("GetColumnNames",
+           [](DEPipeline &de) {
+             py::list out;
+             THROW_IF_ERROR(de.GetColumnNames(&out));
+             return out;
+           })
       .def("GetNextAsMap",
            [](DEPipeline &de) {
              py::dict out;

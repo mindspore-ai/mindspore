@@ -172,9 +172,11 @@ Status DEPipeline::AddChildToParentNode(const DsOpPtr &child_op, const DsOpPtr &
 // Function to assign the node as root.
 Status DEPipeline::AssignRootNode(const DsOpPtr &dataset_op) { return (tree_->AssignRoot(dataset_op)); }
 
+// Function to prepare the tree
+Status DEPipeline::PrepareTree(const int32_t num_epochs) { return tree_->Prepare(num_epochs); }
+
 // Function to launch the tree execution.
-Status DEPipeline::LaunchTreeExec(const int32_t num_epochs) {
-  RETURN_IF_NOT_OK(tree_->Prepare(num_epochs));
+Status DEPipeline::LaunchTreeExec() {
   RETURN_IF_NOT_OK(tree_->Launch());
   iterator_ = std::make_unique<DatasetIterator>(tree_);
   if (iterator_ == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create an Iterator.");
@@ -187,6 +189,25 @@ void DEPipeline::PrintTree() {
     ss << *itr;
     MS_LOG(DEBUG) << "Operator ID is " << itr->id() << ". Details: " << ss.str().c_str() << ".";
   }
+}
+
+Status DEPipeline::GetColumnNames(py::list *output) {
+  if (!tree_->isPrepared()) {
+    RETURN_STATUS_UNEXPECTED("GetColumnNames: Make sure to call prepare before calling GetColumnNames.");
+  }
+  std::unordered_map<std::string, int32_t> column_name_id_map = tree_->root()->column_name_id_map();
+  if (column_name_id_map.empty())
+    RETURN_STATUS_UNEXPECTED("GetColumnNames: Column names was empty. Make sure Prepare is called.");
+  std::vector<std::pair<std::string, int32_t>> column_name_id_vector(column_name_id_map.begin(),
+                                                                     column_name_id_map.end());
+  std::sort(column_name_id_vector.begin(), column_name_id_vector.end(),
+            [](const std::pair<std::string, int32_t> &a, const std::pair<std::string, int32_t> &b) {
+              return a.second < b.second;
+            });
+  for (auto item : column_name_id_vector) {
+    (*output).append(item.first);
+  }
+  return Status::OK();
 }
 
 Status DEPipeline::GetNextAsMap(py::dict *output) {
