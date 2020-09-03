@@ -195,7 +195,7 @@ void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
   } else if (WIFCONTINUED(status)) {
     DP_INFO << "Child continued, pid: " << pid;
   } else {
-    DP_ERROR << "Wrong child status: " << status << ", pid: " << pid;
+    DP_INFO << "Wrong child status: " << status << ", pid: " << pid;
   }
 }
 }  // namespace mindspore
