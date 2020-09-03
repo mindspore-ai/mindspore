@@ -50,6 +50,8 @@ class Bijector(Cell):
         self._parameters = {}
         # parsing parameters
         for k in param.keys():
+            if k == 'param':
+                continue
             if not(k == 'self' or k.startswith('_')):
                 self._parameters[k] = param[k]
         self._is_constant_jacobian = is_constant_jacobian
