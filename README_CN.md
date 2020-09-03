@@ -24,10 +24,7 @@
 MindSpore是一种适用于端边云场景的新型开源深度学习训练/推理框架。
 MindSpore提供了友好的设计和高效的执行，旨在提升数据科学家和算法工程师的开发体验，并为Ascend AI处理器提供原生支持，以及软硬件协同优化。
 
-
 同时，MindSpore作为全球AI开源社区，致力于进一步开发和丰富AI软硬件应用生态。
-
-
 
 <img src="docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
 
@@ -70,6 +67,7 @@ MindSpore提供跨多个后端的构建选项：
 |               | EulerOS-aarch64 | ✔️   |
 | GPU CUDA 10.1 | Ubuntu-x86      | ✔️   |
 | CPU           | Ubuntu-x86      | ✔️   |
+|               | Ubuntu-aarch64  | ✔️   |
 |               | Windows-x86     | ✔️   |
 
 使用`pip`命令安装，以`CPU`和`Ubuntu-x86`build版本为例：
@@ -178,7 +176,7 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
     from mindspore import Tensor
     from mindspore.ops import functional as F
 
-    context.set_context(device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
     x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
     y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
@@ -225,7 +223,6 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 ## 贡献
 
 欢迎参与贡献。更多详情，请参阅我们的[贡献者Wiki](CONTRIBUTING.md)。
-
 
 ## 版本说明
 

@@ -70,6 +70,7 @@ MindSpore offers build options across multiple backends:
 |  | EulerOS-aarch64 | ✔️ |
 | GPU CUDA 10.1 | Ubuntu-x86 | ✔️ |
 | CPU | Ubuntu-x86 | ✔️ |
+|  | Ubuntu-aarch64 | ✔️ |
 |  | Windows-x86 | ✔️ |
 
 For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an example:
@@ -179,7 +180,7 @@ currently the containerized build options are supported as follows:
     from mindspore import Tensor
     from mindspore.ops import functional as F
 
-    context.set_context(device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
     x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
     y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
