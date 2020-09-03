@@ -16,6 +16,7 @@
 
 #include "src/ops/primitive_c.h"
 #include <memory>
+#include <map>
 #include "src/ops/space_to_batch.h"
 #include "src/ops/space_to_batch_nd.h"
 #include "src/ops/conv2d.h"
@@ -121,10 +122,99 @@
 #include "src/ops/l2_norm.h"
 #include "src/ops/sparse_to_dense.h"
 #include "src/ops/detection_post_process.h"
-
+#ifdef PRIMITIVE_WRITEABLE
+#include "tools/converter/quantizer/quantize_util.h"
+#endif
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
+void PrimitiveC::CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax) {
+  const float qmin = 0;
+  const float qmax = 255;
+  *mMin = static_cast<float>((qmin - mean) / stdDev);
+  *mMax = static_cast<float>((qmax - mean) / stdDev);
+}
+
+void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
+                                     std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
+                                     std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam) {
+  auto narrow_range = prim.GetAttr("narrow_range");
+  bool narrowRangeQuantParam = GetValue<bool>(narrow_range);
+  auto num_bits = prim.GetAttr("num_bits");
+  int32_t numbitsRangeQuantParam = GetValue<int32_t>(num_bits);
+
+  std::vector<schema::QuantParamT> quants;
+  schema::QuantParamT quantParam;
+  auto mean = prim.GetAttr("mean");
+  auto std_dev = prim.GetAttr("std_dev");
+  if (mean != nullptr && std_dev != nullptr) {
+    auto meanQuantOaram = GetValue<double>(mean);
+    double stddevQuantOaram = GetValue<double>(std_dev);
+    float mMin = 0.0;
+    float mMax = 0.0;
+    CalQuantParam(meanQuantOaram, stddevQuantOaram, &mMin, &mMax);
+    quantParam.min = mMin;
+    quantParam.max = mMax;
+  } else {
+    auto inputMin = prim.GetAttr("input_minq");
+    auto inputMax = prim.GetAttr("input_maxq");
+    auto inputMinPtr = inputMin->cast<lite::tensor::TensorPtr>();
+    auto inputMaxPtr = inputMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(inputMinPtr->Data());
+    float *maxBuf = static_cast<float *>(inputMaxPtr->Data());
+    quantParam.min = *minBuf;
+    quantParam.max = *maxBuf;
+  }
+  quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                               numbitsRangeQuantParam);
+  quants.emplace_back(quantParam);
+  vecInputQuantParam->emplace_back(quants);
+
+  quants.clear();
+  auto filterMin = prim.GetAttr("filter_minq");
+  auto filterMax = prim.GetAttr("filter_maxq");
+  if (filterMin != nullptr && filterMax != nullptr) {
+    auto filterMinPtr = filterMin->cast<lite::tensor::TensorPtr>();
+    auto filterMaxPtr = filterMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(filterMinPtr->Data());
+    float *maxBuf = static_cast<float *>(filterMaxPtr->Data());
+    quantParam.min = FLT_MAX;
+    quantParam.max = FLT_MIN;
+    for (int i = 0; i < filterMinPtr->DataSize(); ++i) {
+      quantParam.min = (*(minBuf) < quantParam.min) ? (*minBuf) : quantParam.min;
+      quantParam.max = (*(maxBuf) > quantParam.max) ? (*maxBuf) : quantParam.max;
+      minBuf++;
+      maxBuf++;
+    }
+    quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, true, numbitsRangeQuantParam);
+    quants.emplace_back(quantParam);
+    vecInputQuantParam->emplace_back(quants);
+  }
+
+  quants.clear();
+  quantParam.min = 0.0;
+  quantParam.max = 0.0;
+  quantParam.zeroPoint = 0;
+  quantParam.scale = vecInputQuantParam->at(0).at(0).scale * vecInputQuantParam->at(1).at(0).scale;
+  quants.emplace_back(quantParam);
+  vecInputQuantParam->emplace_back(quants);
+
+  quants.clear();
+  auto outputMin = prim.GetAttr("output_minq");
+  auto outputMax = prim.GetAttr("output_maxq");
+  if (outputMin != nullptr && outputMax != nullptr) {
+    auto outputMinPtr = outputMin->cast<lite::tensor::TensorPtr>();
+    auto outputMaxPtr = outputMax->cast<lite::tensor::TensorPtr>();
+    float *minBuf = static_cast<float *>(outputMinPtr->Data());
+    float *maxBuf = static_cast<float *>(outputMaxPtr->Data());
+    quantParam.min = *minBuf;
+    quantParam.max = *maxBuf;
+    quant::CalQuantizationParams(&quantParam, quantParam.min, quantParam.max, narrowRangeQuantParam,
+                                 numbitsRangeQuantParam);
+    quants.emplace_back(quantParam);
+    vecOutputQuantParam->emplace_back(quants);
+  }
+}
 schema::PrimitiveT *PrimitiveC::GetPrimitiveT() const { return this->primitive_; }
 
 void PrimitiveC::ClearPrimitiveT() { this->primitive_ = nullptr; }
@@ -152,7 +242,7 @@ void PrimitiveC::AddOutputQuantParam(std::vector<schema::QuantParamT> quant_para
 }
 std::vector<std::vector<schema::QuantParamT>> PrimitiveC::GetOutputQuantParams() const { return output_quant_param_; }
 
-void PrimitiveC::SetQuantType(schema::QuantType quant_type) { this->quant_type_ = quant_type; }
+void PrimitiveC::SetQuantType(const schema::QuantType &quant_type) { this->quant_type_ = quant_type; }
 
 schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_; }
 
@@ -205,12 +295,14 @@ std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
 }
 
 template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
-std::shared_ptr<PrimitiveC> NewPrimitiveC(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+std::shared_ptr<PrimitiveC> NewPrimitiveC(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
+                                          const schema::QuantType &quantType) {
   auto primc = std::make_shared<T>();
   if (primc == nullptr) {
     MS_LOG(ERROR) << "make_shared PrimitiveC failed";
     return nullptr;
   }
+  primc->SetQuantType(quantType);
   auto ret = primc->UnPackAttr(prim, inputs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnPackAttr failed";
@@ -220,46 +312,47 @@ std::shared_ptr<PrimitiveC> NewPrimitiveC(const Primitive &prim, const std::vect
 }
 
 std::shared_ptr<PrimitiveC> PrimitiveC::UnPackFromPrimitive(const Primitive &prim,
-                                                            const std::vector<AnfNodePtr> &inputs) {
+                                                            const std::vector<AnfNodePtr> &inputs,
+                                                            const schema::QuantType &quantType) {
   const auto &op_type = prim.name();
   if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid") {
-    return NewPrimitiveC<Activation>(prim, inputs);
+    return NewPrimitiveC<Activation>(prim, inputs, quantType);
   } else if (op_type == "BatchNorm") {
-    return NewPrimitiveC<BatchNorm>(prim, inputs);
+    return NewPrimitiveC<BatchNorm>(prim, inputs, quantType);
   } else if (op_type == "BiasAdd") {
-    return NewPrimitiveC<BiasAdd>(prim, inputs);
+    return NewPrimitiveC<BiasAdd>(prim, inputs, quantType);
   } else if (op_type == "Concat") {
-    return NewPrimitiveC<Concat>(prim, inputs);
+    return NewPrimitiveC<Concat>(prim, inputs, quantType);
   } else if (op_type == "Conv2D") {
-    return NewPrimitiveC<Conv2D>(prim, inputs);
+    return NewPrimitiveC<Conv2D>(prim, inputs, quantType);
   } else if (op_type == "DepthwiseConv2dNative" || op_type == "DepthwiseConv2D") {
-    return NewPrimitiveC<DepthwiseConv2D>(prim, inputs);
+    return NewPrimitiveC<DepthwiseConv2D>(prim, inputs, quantType);
   } else if (op_type == "Dequant") {
-    return NewPrimitiveC<Dequant>(prim, inputs);
+    return NewPrimitiveC<Dequant>(prim, inputs, quantType);
   } else if (op_type == "Flatten") {
-    return NewPrimitiveC<Flatten>(prim, inputs);
+    return NewPrimitiveC<Flatten>(prim, inputs, quantType);
   } else if (op_type == "make_tuple") {
-    return NewPrimitiveC<MakeTuple>(prim, inputs);
+    return NewPrimitiveC<MakeTuple>(prim, inputs, quantType);
   } else if (op_type == "MatMul") {
-    return NewPrimitiveC<MatMul>(prim, inputs);
+    return NewPrimitiveC<MatMul>(prim, inputs, quantType);
   } else if (op_type == "Mul") {
-    return NewPrimitiveC<Mul>(prim, inputs);
+    return NewPrimitiveC<Mul>(prim, inputs, quantType);
   } else if (op_type == "MaxPool") {
-    return NewPrimitiveC<Pooling>(prim, inputs);
+    return NewPrimitiveC<Pooling>(prim, inputs, quantType);
   } else if (op_type == "Quant") {
-    return NewPrimitiveC<Quant>(prim, inputs);
+    return NewPrimitiveC<Quant>(prim, inputs, quantType);
   } else if (op_type == "ReduceMean") {
-    return NewPrimitiveC<Reduce>(prim, inputs);
+    return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "Reshape") {
-    return NewPrimitiveC<Reshape>(prim, inputs);
+    return NewPrimitiveC<Reshape>(prim, inputs, quantType);
   } else if (op_type == "TensorAdd") {
-    return NewPrimitiveC<Add>(prim, inputs);
+    return NewPrimitiveC<Add>(prim, inputs, quantType);
   } else if (op_type == "Transpose") {
-    return NewPrimitiveC<Transpose>(prim, inputs);
+    return NewPrimitiveC<Transpose>(prim, inputs, quantType);
   } else if (op_type == "tuple_getitem") {
-    return NewPrimitiveC<TupleGetItem>(prim, inputs);
+    return NewPrimitiveC<TupleGetItem>(prim, inputs, quantType);
   } else if (op_type == "Softmax") {
-    return NewPrimitiveC<SoftMax>(prim, inputs);
+    return NewPrimitiveC<SoftMax>(prim, inputs, quantType);
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromPrimitive : " << op_type;
     return nullptr;

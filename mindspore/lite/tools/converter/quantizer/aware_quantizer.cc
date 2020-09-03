@@ -36,15 +36,13 @@ using std::vector;
 
 namespace mindspore::lite::quant {
 const std::array<schema::PrimitiveType, 7> AwareQuantizer::propagatedOps = {
-    {schema::PrimitiveType_Concat, schema::PrimitiveType_Resize,
-     schema::PrimitiveType_Reshape, schema::PrimitiveType_Squeeze,
-     schema::PrimitiveType_RealDiv, schema::PrimitiveType_Activation,
-     schema::PrimitiveType_DetectionPostProcess}};
+  {schema::PrimitiveType_Concat, schema::PrimitiveType_Resize, schema::PrimitiveType_Reshape,
+   schema::PrimitiveType_Squeeze, schema::PrimitiveType_RealDiv, schema::PrimitiveType_Activation,
+   schema::PrimitiveType_DetectionPostProcess}};
 
 STATUS InputArray::InitQuantParam() {
   this->quantParam = std::make_unique<schema::QuantParamT>();
-  auto status = CalQuantizationParams(quantParam.get(), mMin, mMax,
-                                      narrowRange, numBits);
+  auto status = CalQuantizationParams(quantParam.get(), mMin, mMax, narrowRange, numBits);
   if (status != RET_OK) {
     return status;
   }
@@ -58,8 +56,7 @@ STATUS InputArray::SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensor
   if (!tensor->quantParams.empty()) {
     auto param = GetTensorQuantParam(tensor);
     if (param != nullptr && param->inited) {
-      MS_LOG(DEBUG) << "tensor " << inputTensorIdx
-                    << " already has quantParam";
+      MS_LOG(DEBUG) << "tensor " << inputTensorIdx << " already has quantParam";
       return RET_OK;
     }
     tensor->quantParams.clear();
@@ -74,9 +71,7 @@ STATUS InputArray::SetInputArrayQP(schema::MetaGraphT *graph, size_t inputTensor
   return RET_OK;
 }
 
-AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph,
-                               const string &inputInferType,
-                               const string &stdValues,
+AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph, const string &inputInferType, const string &stdValues,
                                const string &meanValues)
     : FbQuantizer(graph) {
   MS_ASSERT(graph != nullptr);
@@ -94,12 +89,9 @@ AwareQuantizer::AwareQuantizer(schema::MetaGraphT *graph,
   mInputArray->InitQuantParam();
 }
 
-STATUS AwareQuantizer::RemoveFakeQuant() {
-  return RET_OK;
-}
+STATUS AwareQuantizer::RemoveFakeQuant() { return RET_OK; }
 
-STATUS AwareQuantizer::GenerateDefaultQuantParam(
-    const schema::MetaGraphT *subGraph) {
+STATUS AwareQuantizer::GenerateDefaultQuantParam(const schema::MetaGraphT *subGraph) {
   MS_ASSERT(subGraph != nullptr);
   for (const auto &tensor : subGraph->allTensors) {
     if (!tensor->quantParams.empty()) {
@@ -111,8 +103,7 @@ STATUS AwareQuantizer::GenerateDefaultQuantParam(
   return RET_OK;
 }
 
-STATUS AwareQuantizer::SetAttrToConvolution(const schema::MetaGraphT *subGraph,
-                                            schema::CNodeT *node) {
+STATUS AwareQuantizer::SetAttrToConvolution(const schema::MetaGraphT *subGraph, schema::CNodeT *node) {
   //  MS_ASSERT(subGraph != nullptr);
   //  MS_ASSERT(node != nullptr);
   //  auto inputIndexes = node->inputIndex;
@@ -193,19 +184,15 @@ STATUS AwareQuantizer::GenerateQuantParam() {
         GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
       MS_ASSERT(false);
     }
-    auto *quantParamCalcer =
-        quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
+    auto *quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
     if (quantParamCalcer == nullptr) {
-      MS_LOG(ERROR) << "Can not find QuantParamCalcer for "
-                    << node->name.c_str()
-                    << ", type: " << GetCNodeTTypeName(*node).c_str()
-                    << " set node to QuantNone and skip";
+      MS_LOG(ERROR) << "Can not find QuantParamCalcer for " << node->name.c_str()
+                    << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
       node->quantType = static_cast<schema::QuantType>(QuantType_QUANT_NONE);
     } else {
       status = quantParamCalcer->Calc(graph, *node);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "quantParamCalcer failed: " << status
-                      << " node: " << node->name.c_str();
+        MS_LOG(ERROR) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
       } else {
         node->quantType = schema::QuantType_AwareTraining;
@@ -227,11 +214,11 @@ STATUS AwareQuantizer::DoQuantize() {
     STATUS status;
     if (GetCNodeTType(*node) == schema::PrimitiveType_Conv2D ||
         GetCNodeTType(*node) == schema::PrimitiveType_DepthwiseConv2D ||
-        GetCNodeTType(*node) == schema::PrimitiveType_FullConnection) {
+        GetCNodeTType(*node) == schema::PrimitiveType_FullConnection ||
+        GetCNodeTType(*node) == schema::PrimitiveType_MatMul) {
       auto inputIndexes = node->inputIndex;
       if (inputIndexes.size() < 2) {
-        MS_LOG(ERROR) << node->name.c_str()
-                      << " node input has invalid inputs tensor count";
+        MS_LOG(ERROR) << node->name.c_str() << " node input has invalid inputs tensor count";
         return RET_ERROR;
       }
       // quant weight
@@ -248,8 +235,7 @@ STATUS AwareQuantizer::DoQuantize() {
           return RET_ERROR;
         }
       }
-    } else if (GetCNodeTType(*node) ==
-               schema::PrimitiveType_DetectionPostProcess) {
+    } else if (GetCNodeTType(*node) == schema::PrimitiveType_DetectionPostProcess) {
       status = QuantDetectionPostProcessConstTensor(graph, node.get());
       if (status != RET_OK) {
         MS_LOG(ERROR) << "QuantDetectionPostProcessConstTensor failed!";
@@ -275,8 +261,7 @@ STATUS AwareQuantizer::DoQuantize() {
   return RET_OK;
 }
 
-STATUS AwareQuantizer::QuantAddConstTensor(const schema::MetaGraphT *graph,
-                                           schema::CNodeT *node) {
+STATUS AwareQuantizer::QuantAddConstTensor(const schema::MetaGraphT *graph, schema::CNodeT *node) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(node != nullptr);
   for (size_t i = 0; i < node->inputIndex.size(); i++) {
@@ -295,8 +280,7 @@ STATUS AwareQuantizer::QuantAddConstTensor(const schema::MetaGraphT *graph,
           void *inData = inTensor->data.data();
           auto *castedInData = static_cast<float *>(inData);
           for (size_t j = 0; j < constTensorShapeSize; j++) {
-            qDatas[j] =
-                QuantizeData<uint8_t>(castedInData[j], quantParam.get());
+            qDatas[j] = QuantizeData<uint8_t>(castedInData[j], quantParam.get());
           }
           inTensor->data = std::move(qDatas);
           inTensor->dataType = kNumberTypeUInt8;
@@ -312,17 +296,14 @@ STATUS AwareQuantizer::QuantAddConstTensor(const schema::MetaGraphT *graph,
   return RET_OK;
 }
 
-STATUS AwareQuantizer::QuantDetectionPostProcessConstTensor(
-    const schema::MetaGraphT *subGraph, schema::CNodeT *node) {
+STATUS AwareQuantizer::QuantDetectionPostProcessConstTensor(const schema::MetaGraphT *subGraph, schema::CNodeT *node) {
   MS_ASSERT(subGraph != nullptr);
   MS_ASSERT(node != nullptr);
   auto &constTensor = subGraph->allTensors.at(node->inputIndex[2]);
   MS_ASSERT(constTensor != nullptr);
-  const auto *constData =
-      reinterpret_cast<const float *>(constTensor->data.data());
+  const auto *constData = reinterpret_cast<const float *>(constTensor->data.data());
 
-  if (constTensor->refCount == 999 &&
-      constTensor->dataType == TypeId::kNumberTypeFloat) {
+  if (constTensor->nodeType == schema::NodeType_ValueNode && constTensor->dataType == TypeId::kNumberTypeFloat) {
     size_t constTensorShapeSize = GetShapeSize(*constTensor);
     std::unique_ptr<QuantParamT> quantParam = GetTensorQuantParam(constTensor);
     if (quantParam == nullptr) {
@@ -340,8 +321,7 @@ STATUS AwareQuantizer::QuantDetectionPostProcessConstTensor(
   return RET_OK;
 }
 
-STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
-                                     mindspore::schema::CNodeT *node) {
+STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph, mindspore::schema::CNodeT *node) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(node != nullptr);
   auto inputIndexes = node->inputIndex;
@@ -351,15 +331,10 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
   MS_ASSERT(graph->allTensors.size() > inputIndexes.at(2));
   auto &biasTensor = graph->allTensors.at(inputIndexes.at(2));
   MS_ASSERT(biasTensor != nullptr);
-  if (biasTensor->dataType != TypeId::kNumberTypeFloat) {
-    //    MS_LOGD("conv %s's bias data is not float", node->name.c_str());
-    return RET_OK;
-  }
-
   if (biasTensor->dataType == TypeId::kNumberTypeInt32) {
     return RET_OK;
   }
-  if (biasTensor->dataType != TypeId::kNumberTypeFloat) {
+  if (biasTensor->dataType != TypeId::kNumberTypeFloat && biasTensor->dataType != TypeId::kNumberTypeFloat32) {
     //    MS_LOGE("conv %s's bias data is not float", node->name.c_str());
     return RET_ERROR;
   }
@@ -400,8 +375,8 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
   biasTensor->dataType = TypeId::kNumberTypeInt32;
   biasTensor->data.clear();
   biasTensor->data.resize(bShapeSize * sizeof(int32_t));
-  auto ret = memcpy_s(biasTensor->data.data(), bShapeSize * sizeof(int32_t),
-                      qDatas.get(), bShapeSize * sizeof(int32_t));
+  auto ret =
+    memcpy_s(biasTensor->data.data(), bShapeSize * sizeof(int32_t), qDatas.get(), bShapeSize * sizeof(int32_t));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed: " << ret;
     return RET_ERROR;
@@ -409,12 +384,10 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
   return RET_OK;
 }
 
-STATUS AwareQuantizer::QuantConvWeight(const schema::MetaGraphT *subGraph,
-                                       schema::CNodeT *node) {
+STATUS AwareQuantizer::QuantConvWeight(const schema::MetaGraphT *subGraph, schema::CNodeT *node) {
   MS_ASSERT(subGraph != nullptr);
   MS_ASSERT(node != nullptr);
-  MS_ASSERT(node->quantParam.size() ==
-            node->inputIndex.size() + node->outputIndex.size());
+  MS_ASSERT(node->quantParam.size() == node->inputIndex.size() + node->outputIndex.size());
   auto inputIndexes = node->inputIndex;
   MS_ASSERT(inputIndexes.size() >= 2);
   MS_ASSERT(subGraph->allTensors.size() > inputIndexes.at(1));
@@ -422,11 +395,9 @@ STATUS AwareQuantizer::QuantConvWeight(const schema::MetaGraphT *subGraph,
   if (weightTensor->dataType == TypeId::kNumberTypeInt8) {
     return RET_OK;
   }
-  if (weightTensor->dataType != TypeId::kNumberTypeFloat32 &&
-      weightTensor->dataType != TypeId::kNumberTypeFloat &&
+  if (weightTensor->dataType != TypeId::kNumberTypeFloat32 && weightTensor->dataType != TypeId::kNumberTypeFloat &&
       weightTensor->dataType != TypeId::kNumberTypeUInt8) {
-    MS_LOG(ERROR) << "conv " << node->name.c_str()
-                  << "'s weight data is not float or uint8";
+    MS_LOG(ERROR) << "conv " << node->name.c_str() << "'s weight data is not float or uint8";
     return RET_ERROR;
   }
   size_t wShapeSize = GetShapeSize(*(weightTensor.get()));
@@ -434,8 +405,8 @@ STATUS AwareQuantizer::QuantConvWeight(const schema::MetaGraphT *subGraph,
   MS_ASSERT(node->quantParam.at(1)->param.front() != nullptr);
   vector<int8_t> qDatas(wShapeSize);
   auto weightQauntParam = GetTensorQuantParam(weightTensor);
-  if (weightTensor->dataType ==
-      TypeId::kNumberTypeFloat) {  // normal awareing quant
+  if (weightTensor->dataType == TypeId::kNumberTypeFloat ||
+      weightTensor->dataType == TypeId::kNumberTypeFloat32) {  // normal awareing quant
     auto *weightData = static_cast<float *>(oriWeightData);
     for (size_t j = 0; j < wShapeSize; j++) {
       qDatas[j] = QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
@@ -463,8 +434,7 @@ STATUS AwareQuantizer::DetermineNodeQuantType() {
       MS_ASSERT(graph->allTensors.size() > inTensorIdx);
       auto &inTensor = graph->allTensors.at(inTensorIdx);
       MS_ASSERT(inTensor != nullptr);
-      if (inTensor->quantParams.empty() ||
-          inTensor->quantParams.front() == nullptr ||
+      if (inTensor->quantParams.empty() || inTensor->quantParams.front() == nullptr ||
           !inTensor->quantParams.front()->inited) {
         canQuant = false;
         break;
@@ -476,8 +446,7 @@ STATUS AwareQuantizer::DetermineNodeQuantType() {
         MS_ASSERT(graph->allTensors.size() > outTensorIdx);
         auto &outTensor = graph->allTensors.at(outTensorIdx);
         MS_ASSERT(outTensor != nullptr);
-        if (outTensor->quantParams.empty() ||
-            outTensor->quantParams.front() == nullptr ||
+        if (outTensor->quantParams.empty() || outTensor->quantParams.front() == nullptr ||
             !outTensor->quantParams.front()->inited) {
           canQuant = false;
           break;

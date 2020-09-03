@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 #include <cmath>
 #include <string>
 #include <algorithm>
 #include <memory>
 #include <vector>
 #include "src/ops/primitive_c.h"
-#include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 #include "mindspore/lite/tools/converter/quantizer/general_bitpacking.h"
 #include "src/common/utils.h"
 #include "abstract/abstract_value.h"
@@ -32,7 +33,7 @@ namespace mindspore {
 namespace lite {
 namespace quant {
 const std::array<std::string, 4> QuantStrategy::mConvTypes = {
-    {"Conv2D", "DeConv2D", "DepthwiseConv2D", "DeDepthwiseConv2D"}};
+  {"Conv2D", "DeConv2D", "DepthwiseConv2D", "DeDepthwiseConv2D"}};
 const std::array<std::string, 4> QuantStrategy::mMulTypes = {{"Mul", "MatMul", "BatchMatMul", "FullConnection"}};
 
 QuantStrategy::QuantStrategy(size_t weightSize, size_t convWeightQuantChannelThreshold)
@@ -99,10 +100,9 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
     schema::PrimitiveType_Nchw2Nhwc, schema::PrimitiveType_Nhwc2Nchw,
     schema::PrimitiveType_Conv2D,    schema::PrimitiveType_DepthwiseConv2D,
     schema::PrimitiveType_Add,       schema::PrimitiveType_Pooling,
-    schema::PrimitiveType_Concat,    /*schema::PrimitiveType_SoftMax,*/
+    schema::PrimitiveType_Concat, /*schema::PrimitiveType_SoftMax,*/
     schema::PrimitiveType_Reshape,   schema::PrimitiveType_FullConnection,
-    schema::PrimitiveType_MatMul,
-    schema::PrimitiveType_Activation};
+    schema::PrimitiveType_MatMul,    schema::PrimitiveType_Activation};
   return IsContain(uint8OpList, type);
 }
 
@@ -164,8 +164,8 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   return true;
 }
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange,
-                             int quant_max, int quant_min, int num_bits) {
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
+                             int quant_min, int num_bits) {
   MS_ASSERT(quantParam != nullptr);
   if (mMin > 0.0f) {
     MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
@@ -216,8 +216,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   return RET_OK;
 }
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax,
-                             bool narrowRange, int numBits) {
+STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int numBits) {
   MS_ASSERT(quantParam != nullptr);
   if (mMin > 0.0f) {
     MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
@@ -246,8 +245,8 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
     return RET_OK;
   }
 
-  int quantMin = narrowRange ? 1 : 0 - 128;
-  int quantMax = (1 << (unsigned int) numBits) - 1 - 128;
+  const int8_t quantMin = std::numeric_limits<int8_t>::min() + (narrowRange ? 1 : 0);
+  const int8_t quantMax = std::numeric_limits<int8_t>::max();
   auto quantMinFloat = static_cast<double>(quantMin);
   auto quantMaxFloat = static_cast<double>(quantMax);
   double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
@@ -263,6 +262,9 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
     zeroPoint = quantMax;
   } else {
     zeroPoint = static_cast<int32_t>(std::round(zpDouble));
+  }
+  if (std::abs(mMin) == std::abs(mMax)) {
+    zeroPoint = 0;
   }
   // The zero point should always be in the range of quantized value,
   // [qmin, qmax].

@@ -473,7 +473,7 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
     }
     inputs.push_back(anfnode_build_map_[input_name]);
   }
-  auto primitivec_ptr = PrimitiveC::UnPackFromPrimitive(*prim, inputs);
+  auto primitivec_ptr = PrimitiveC::UnPackFromPrimitive(*prim, inputs, quantType);
   if (primitivec_ptr == nullptr) {
     MS_LOG(ERROR) << "Create PrimitiveC return nullptr, " << prim->name();
     return nullptr;

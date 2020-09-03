@@ -57,9 +57,6 @@ class Conv2D : public PrimitiveC {
   void PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
                                  const std::vector<AnfNodePtr> &inputs);
   void PopulaterConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
-  void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,
-                           std::vector<std::vector<schema::QuantParamT>> *vecOutputQuantParam);
-  void CalQuantParam(const double &mean, const double &stdDev, float *mMin, float *mMax);
 #else
 
  public:

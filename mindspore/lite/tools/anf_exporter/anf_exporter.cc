@@ -71,8 +71,8 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto input_quant_params = primitive->GetInputQuantParams();
     auto node_type = (schema::PrimitiveType)primitive->Type();
     if (input_quant_params.empty()) {
-      MS_LOG(ERROR) << "node: " << dst_node->name << " input quant params is empty";
-      return RET_ERROR;
+      MS_LOG(WARNING) << "node: " << dst_node->name << " input quant params is empty";
+      return RET_OK;
     }
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
