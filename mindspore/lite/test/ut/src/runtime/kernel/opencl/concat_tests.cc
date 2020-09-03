@@ -168,10 +168,10 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
 
   // get the input from .bin
   size_t input1_size, input2_size, input3_size, output_size;
-  std::string input1Ppath = "./test_data/concat_input1.bin";
-  std::string input2Ppath = "./test_data/concat_input2.bin";
-  std::string input3Ppath = "./test_data/concat_input3.bin";
-  std::string correctOutputPath = "./test_data/concat_output.bin";
+  std::string input1Ppath = "./test_data/concatfp32_input1.bin";
+  std::string input2Ppath = "./test_data/concatfp32_input2.bin";
+  std::string input3Ppath = "./test_data/concatfp32_input3.bin";
+  std::string correctOutputPath = "./test_data/concatfp32_output.bin";
   auto input_data1 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto input_data2 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
   auto input_data3 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input3Ppath.c_str(), &input3_size));
@@ -180,8 +180,8 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
   MS_LOG(INFO) << " init tensors ";
   constexpr int INPUT_NUM = 3;
   std::array<std::vector<int>, INPUT_NUM> input_shapes = {
-    std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}};
-  std::vector<int> output_shape = {1, 48, 256, 80};
+    std::vector<int>{1, 2, 4, 8}, std::vector<int>{1, 2, 4, 8}, std::vector<int>{1, 2, 4, 8}};
+  std::vector<int> output_shape = {3, 2, 4, 8};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
   std::vector<lite::tensor::Tensor *> inputs;
@@ -217,7 +217,7 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
     }
     return;
   }
-  param->axis_ = 1;
+  param->axis_ = 0;
   auto *concat_kernel =
     new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (concat_kernel == nullptr) {

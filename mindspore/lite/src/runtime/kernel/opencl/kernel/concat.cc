@@ -35,8 +35,8 @@ int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
     im_dst_x = out_tensors_[0]->Width() * CO4;
     im_dst_y = out_tensors_[0]->Height() * out_tensors_[0]->Batch();
   } else {
-    im_dst_y = out_tensors_[0]->Height() * CO4;
-    im_dst_x = out_tensors_[0]->Width() * out_tensors_[0]->Batch();
+    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
+    im_dst_x = out_tensors_[0]->Width();
   }
   size_t img_dtype = CL_FLOAT;
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
@@ -61,30 +61,37 @@ int ConcatOpenCLKernel::Init() {
     MS_LOG(ERROR) << " only support axis >= 0 and axis <= 3 ";
     return RET_ERROR;
   }
-
-  if (in_tensors_.size() == 2) {
-    std::set<std::string> build_options;
-    std::string source = concat_source;
-    std::string program_name = "Concat";
-    std::string kernel_name = "Concat";
-    auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-    ocl_runtime->LoadSource(program_name, source);
-    ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  }
-
-  if (in_tensors_.size() == 3) {
-    std::set<std::string> build_options;
-    std::string source = concat_source;
-    std::string program_name = "Concat3input";
-    std::string kernel_name = "Concat3input";
-    auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-    ocl_runtime->LoadSource(program_name, source);
-    ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  auto in_format = op_format_;
+  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
+    MS_LOG(ERROR) << "input format(" << in_format << ") "
+                  << "format not support!";
+        return RET_ERROR;
   }
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  in_tensors_[0]->SetFormat(op_format_);
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(op_format_);
+
+  std::string kernel_name = "Concat";
+  if (in_tensors_.size() == 2) {
+    kernel_name += "2input";
+  } else if (in_tensors_.size() == 3) {
+    kernel_name += "3input";
+  } else {
+    MS_LOG(ERROR) << " input must be 2 or 3";
+    return RET_ERROR;
+  }
+  if (in_format == schema::Format_NC4HW4) {
+    kernel_name += "_NC4HW4";
+  } else if (in_format == schema::Format_NHWC4) {
+    kernel_name += "_NHWC4";
+  }
+  std::set<std::string> build_options;
+  std::string source = concat_source;
+  std::string program_name = "Concat";
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  ocl_runtime->LoadSource(program_name, source);
+  ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
   return RET_OK;
 }
