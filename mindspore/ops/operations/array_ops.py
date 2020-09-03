@@ -3013,11 +3013,11 @@ class DepthToSpace(PrimitiveWithInfer):
 
     This is the reverse operation of SpaceToDepth.
 
+    The depth of output tensor is :math:`input\_depth / (block\_size * block\_size)`.
+
     The output tensor's `height` dimension is :math:`height * block\_size`.
 
     The output tensor's `weight` dimension is :math:`weight * block\_size`.
-
-    The depth of output tensor is :math:`input\_depth / (block\_size * block\_size)`.
 
     The input tensor's depth must be divisible by `block_size * block_size`.
     The data format is "NCHW".
@@ -3029,7 +3029,7 @@ class DepthToSpace(PrimitiveWithInfer):
         - **x** (Tensor) - The target tensor. It must be a 4-D tensor.
 
     Outputs:
-        Tensor, the same type as `x`.
+        Tensor, has the same shape and dtype as the 'x'.
 
     Examples:
         >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)

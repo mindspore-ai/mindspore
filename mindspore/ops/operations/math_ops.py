@@ -741,6 +741,7 @@ class CumSum(PrimitiveWithInfer):
     Inputs:
         - **input** (Tensor) - The input tensor to accumulate.
         - **axis**  (int) - The axis to accumulate the tensor's value. Only constant value is allowed.
+          Must be in the range [-rank(input), rank(input)).
 
     Outputs:
         Tensor, the shape of the output tensor is consistent with the input tensor's.
@@ -1764,6 +1765,7 @@ class Div(_MathBinaryOp):
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
         >>> div = P.Div()
         >>> div(input_x, input_y)
+        [-1.3, 2.5, 2.0]
     """
 
     def infer_value(self, x, y):

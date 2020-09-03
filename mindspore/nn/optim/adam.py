@@ -220,7 +220,7 @@ class Adam(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
         >>>                 {'params': no_conv_params, 'lr': 0.01},
         >>>                 {'order_params': net.trainable_params()}]
-        >>> optm = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> optim = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01.
         >>> # The no_conv_params's parameters will use learning rate of 0.01 and defaule weight decay of 0.0.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
