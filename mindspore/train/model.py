@@ -344,7 +344,7 @@ class Model:
             callbacks (list): List of callback objects which should be executed while training. Default: None.
             dataset_sink_mode (bool): Determine whether the data should be passed through the dataset channel.
                                       Default: True.
-                                      Configure pynative mode, the training process will be performed with
+                                      Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink. Default: -1.
         """
