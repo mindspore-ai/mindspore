@@ -84,14 +84,19 @@ message WatchCondition {
     nan = 0;
     inf = 1;
     overflow = 2;
-    ge = 3;  // greater than and equal to
-    gt = 4;  // greater than
-    le = 5;  // less than and equal to
-    lt = 6;  // less than
-    between = 7;  // between
+    max_gt = 3;
+    max_lt = 4;
+    min_gt = 5;
+    min_lt = 6;
+    max_min_gt = 7;
+    max_min_lt = 8;
+    mean_gt = 9;
+    mean_lt = 10;
+    sd_gt = 11;
+    sd_lt = 12;
   }
   Condition condition = 1;
-  repeated float value = 2;  // for between condition, there will be two values
+  float value = 2;  // for between condition, there will be two values
   repeated bool include = 3;  // for between condition, define the value is included or not
 }
 

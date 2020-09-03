@@ -484,7 +484,7 @@ void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCon
                  [](WatchNode node) -> std::tuple<std::string, bool> {
                    return make_tuple(node.node_name(), node.node_type() == "scope");
                  });
-  debug_services_->AddWatchpoint(id, condition.condition(), check_node_list);
+  debug_services_->AddWatchpoint(id, condition.condition(), condition.value(), check_node_list);
 }
 
 void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->RemoveWatchpoint(id); }
