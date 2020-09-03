@@ -742,7 +742,7 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
 class BNTrainingUpdate(PrimitiveWithInfer):
     """
-    primitive operator of bn_training_update's register and info descriptor
+    The primitive operator of the register and info descriptor in bn_training_update.
     """
     @prim_attr_register
     def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
@@ -1513,9 +1513,9 @@ class BiasAdd(PrimitiveWithInfer):
     except for the channel axis.
 
     Inputs:
-        - **input_x** (Tensor) - Input value. The input shape can be 2-4 dimensions.
-        - **bias** (Tensor) - Bias value, with shape :math:`(C)`.
-          The shape of `bias` must be the same as `input_x` in second dimension.
+        - **input_x** (Tensor) - The input tensor. The shape can be 2-4 dimensions.
+        - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`.
+          The shape of `bias` must be the same as `input_x` in the second dimension.
 
     Outputs:
         Tensor, with the same shape and type as `input_x`.
@@ -1606,7 +1606,7 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type should be float16 or float32.
-        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`. Has the same data type with `logits`.
+        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N, C)`, has the same data type with `logits`.
 
     Outputs:
         Tuple of 2 Tensor, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
@@ -1820,7 +1820,7 @@ class L2Loss(PrimitiveWithInfer):
         - **input_x** (Tensor) - A input Tensor. Data type should be float16 or float32.
 
     Outputs:
-        Tensor. Has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
+        Tensor, has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
 
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
@@ -2027,7 +2027,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         ..  math::
             w = w - m_{t}
 
-        where, :math:`w` represents `var`, which will be updated.
+        where :math:`w` represents `var`, which will be updated.
         :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
         :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
         :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
@@ -2121,7 +2121,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         ..  math::
             w = w - m_{t}
 
-        where, :math:`w` represents `var`, which will be updated.
+        where :math:`w` represents `var`, which will be updated.
         :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
         :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
         :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
@@ -2989,7 +2989,7 @@ class Adam(PrimitiveWithInfer):
     `epsilon`.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect updating variable tensors.
+        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
             If true, updates of the var, m, and v tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
@@ -2998,16 +2998,16 @@ class Adam(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Tensor) - Weights to be updated.
-        - **m** (Tensor) - The 1st moment vector in the updating formula. Has the same type as `var`.
+        - **m** (Tensor) - The 1st moment vector in the updating formula, has the same type as `var`.
         - **v** (Tensor) - the 2nd moment vector in the updating formula.
-          Mean square gradients, has the same type as `var`.
+          Mean square gradients with the same type as `var`.
         - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
         - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
         - **lr** (float) - :math:`l` in the updating formula.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **gradient** (Tensor) - Gradients. Has the same type as `var`.
+        - **gradient** (Tensor) - Gradients, has the same type as `var`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -3088,7 +3088,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect updating variable tensors.
+        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
             If true, updates of the var, m, and v tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
@@ -3097,10 +3097,10 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Parameters to be updated. With float32 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`. With
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var`. With
                               float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-          has the same type as `var`. With float32 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
+          with the same type as `var`. With float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
@@ -3227,7 +3227,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect updating variable tensors.
+        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
             If true, updates of the var, m, and v tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
@@ -3236,10 +3236,10 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Parameters to be updated. With float32 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same type as `var`. With
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var`. With
                               float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-          has the same type as `var`. With float32 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
+          with the same type as `var`. With float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
@@ -3356,8 +3356,8 @@ class FusedSparseFtrl(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float32.
-        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The shape
           of `indices` must be the same as `grad` in first dimension. The type must be int32.
@@ -3450,11 +3450,12 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+            Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
-        - **accum** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
+        - **accum** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
         - **lr** (Tensor) - The learning rate value. The data type must be float32.
         - **l1** (Tensor) - l1 regularization strength. The data type must be float32.
         - **l2** (Tensor) - l2 regularization strength. The data type must be float32.
@@ -3611,9 +3612,9 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
 
         .. math::
             \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{'none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+            L, & \text{if reduction} = \text{`none';}\\
+            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
             \end{cases}
 
     Args:
@@ -3627,8 +3628,8 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
           And it should have same shape and data type as `input_x`. Default: None.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
-        Otherwise it is a scalar.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
+        Otherwise, the output is a scalar.
 
     Examples:
         >>> import mindspore
@@ -3688,11 +3689,11 @@ class ApplyAdaMax(PrimitiveWithInfer):
             var = var - \frac{l}{1 - \beta_1^t} * \frac{m_{t}}{v_{t} + \epsilon}
         \end{array}
 
-    :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
     is the last momentent of :math:`m_{t}`, :math:`v` represents the 2nd moment vector, :math:`v_{t-1}`
     is the last momentent of :math:`v_{t}`, :math:`l` represents scaling factor `lr`,
     :math:`g` represents `grad`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`beta_1^t` represent `beta1_power`, :math:`var` represents Variable to be updated,
+    :math:`beta_1^t` represents `beta1_power`, :math:`var` represents the variable to be updated,
     :math:`\epsilon` represents `epsilon`.
 
     Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
@@ -3703,10 +3704,10 @@ class ApplyAdaMax(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula. Has the same shape and type as `var`.
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same shape and type as `var`.
           With float32 or float16 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients,
-          has the same shape and type as `var`. With float32 or float16 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
+          with the same shape and type as `var`. With float32 or float16 data type.
         - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` in the updating formula, should be scalar.
           With float32 or float16 data type.
         - **lr** (Union[Number, Tensor]) - Learning rate, :math:`l` in the updating formula, should be scalar.
@@ -3717,7 +3718,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
           should be scalar. With float32 or float16 data type.
         - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, should be scalar.
           With float32 or float16 data type.
-        - **grad** (Tensor) - A tensor for gradient. Has the same shape and type as `var`.
+        - **grad** (Tensor) - A tensor for gradient, has the same shape and type as `var`.
           With float32 or float16 data type.
 
     Outputs:
@@ -3831,13 +3832,13 @@ class ApplyAdadelta(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
-        - **accum** (Parameter) - Accum to be updated, has the same shape and type as `var`.
+        - **accum** (Parameter) - Accumulation to be updated, has the same shape and type as `var`.
           With float32 or float16 data type.
         - **accum_update** (Parameter) - Accum_update to be updated, has the same shape and type as `var`.
           With float32 or float16 data type.
-        - **lr** (Union[Number, Tensor]) - Learning rate, must be scalar. With float32 or float16 data type.
-        - **rho** (Union[Number, Tensor]) - Decay rate, must be scalar. With float32 or float16 data type.
-        - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be scalar.
+        - **lr** (Union[Number, Tensor]) - Learning rate, should be scalar. With float32 or float16 data type.
+        - **rho** (Union[Number, Tensor]) - Decay rate, should be scalar. With float32 or float16 data type.
+        - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, should be scalar.
           With float32 or float16 data type.
         - **grad** (Tensor) - Gradients, has the same shape and type as `var`. With float32 or float16 data type.
 
@@ -3937,7 +3938,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
-        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype should be the same as `var`.
           With float32 or float16 data type.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. With float32 or float16 data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and dtype should be the same as `var`.
@@ -4019,7 +4020,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
-        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype should be the same as `var`.
           With float16 or float32 data type.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be a float number or
           a scalar tensor with float16 or float32 data type.
@@ -4099,11 +4100,12 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Args:
         lr (float): Learning rate.
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
-        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+            Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype should be the same as `var`.
         - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension.
           Has the same data type as `var`.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
@@ -4184,12 +4186,13 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
     Args:
         lr (float): Learning rate.
         epsilon (float): A small value added for numerical stability.
-        use_locking (bool): If `True`, updating of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If `True`, the var and accumulation tensors will be protected from being updated.
+            Default: False.
         update_slots (bool): If `True`, the computation logic will be different to `False`. Default: True.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - Accum to be updated. The shape and dtype should be the same as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype should be the same as `var`.
         - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except first dimension.
           Has the same data type as `var`.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
@@ -4271,18 +4274,19 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+            Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type should be float16 or float32.
-        - **accum** (Parameter) - Accum to be updated. Must has the same shape and dtype as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. Must has the same shape and dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be scalar. The data type should be
           float16 or float32.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, should be scalar. The data type should be
           float16 or float32.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, should be scalar. The data type should be
           float16 or float32.
-        - **grad** (Tensor) - Gradient. Must has the same shape and dtype as `var`.
+        - **grad** (Tensor) - Gradient with the same shape and dtype as `var`.
 
     Outputs:
         Tuple of 2 Tensor, the updated parameters.
@@ -4373,11 +4377,12 @@ class SparseApplyProximalAdagrad(PrimitiveWithInfer):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): If true, updates of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+            Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
+        - **accum** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value. Tshould be a float number or
           a scalar tensor with float16 or float32 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength. should be a float number or
@@ -4460,7 +4465,7 @@ class ApplyAddSign(PrimitiveWithInfer):
             var = var - lr_{t} * \text{update}
         \end{array}
 
-    :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
     is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
@@ -4471,7 +4476,7 @@ class ApplyAddSign(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
-        - **m** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
+        - **m** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar.
           With float32 or float16 data type.
         - **alpha** (Union[Number, Tensor]) - Should be a scalar. With float32 or float16 data type.
@@ -4567,7 +4572,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
             var = var - lr_{t} * \text{update}
         \end{array}
 
-    :math:`t` represents updating step while, :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
     is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
 
     All of inputs comply with the implicit type conversion rules to make the data types consistent.
@@ -4580,7 +4585,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
           If data type of `var` is float16, all inputs must have the same data type as `var`.
-        - **m** (Parameter) - Variable tensor to be updated. Has the same dtype as `var`.
+        - **m** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar.
           With float32 or float16 data type.
         - **logbase** (Union[Number, Tensor]) - Should be a scalar. With float32 or float16 data type.
@@ -4681,10 +4686,10 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
         - **alpha** (Union[Number, Tensor]) - Scaling factor, should be a scalar. With float32 or float16 data type.
-        - **delta** (Tensor) - A tensor for the change. Has the same type as `var`.
+        - **delta** (Tensor) - A tensor for the change, has the same type as `var`.
 
     Outputs:
-        Tensor, representing the updated var.
+        Tensor, represents the updated `var`.
 
     Examples:
         >>> import numpy as np
@@ -4752,10 +4757,10 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
           With float32 or float16 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, should be scalar.
           With float32 or float16 data type.
-        - **delta** (Tensor) - A tensor for the change. Has the same type as `var`.
+        - **delta** (Tensor) - A tensor for the change, has the same type as `var`.
 
     Outputs:
-        Tensor, representing the updated var.
+        Tensor, represents the updated `var`.
 
     Examples:
         >>> import numpy as np
@@ -4834,7 +4839,7 @@ class LARSUpdate(PrimitiveWithInfer):
         - **learning_rate** (Union[Number, Tensor]) - Learning rate. It should be a scalar tensor or number.
 
     Outputs:
-        Tensor, representing the new gradient.
+        Tensor, represents the new gradient.
 
     Examples:
         >>> from mindspore import Tensor
@@ -4901,8 +4906,8 @@ class ApplyFtrl(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type should be float16 or float32.
-        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
         - **grad** (Tensor) - Gradient. The data type should be float16 or float32.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: 0.001.
           It should be a float number or a scalar tensor with float16 or float32 data type.
@@ -4915,7 +4920,7 @@ class ApplyFtrl(PrimitiveWithInfer):
           Default: -0.5. It should be a float number or a scalar tensor with float16 or float32 data type.
 
     Outputs:
-        Tensor, representing the updated var.
+        Tensor, represents the updated `var`.
 
     Examples:
         >>> import mindspore
@@ -4997,8 +5002,8 @@ class SparseApplyFtrl(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
@@ -5086,12 +5091,13 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         l2_shrinkage (float): L2 shrinkage regularization.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool): If `True`, updating of the var and accum tensors will be protected. Default: False.
+        use_locking (bool): If `True`, the var and accumulation tensors will be protected from being updated.
+            Default: False.
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - The accum to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - The linear to be updated, must be same type and shape as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
+        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in first dimension. The type must be int32.
@@ -5301,14 +5307,14 @@ class DropoutGrad(PrimitiveWithInfer):
 
 class CTCLoss(PrimitiveWithInfer):
     """
-    Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
+    Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 
     Args:
-        preprocess_collapse_repeated (bool): If true, repeated labels are collapsed prior to the CTC calculation.
+        preprocess_collapse_repeated (bool): If true, repeated labels will be collapsed prior to the CTC calculation.
                                              Default: False.
         ctc_merge_repeated (bool): If false, during CTC calculation, repeated non-blank labels will not be merged
-                                   and are interpreted as individual labels. This is a simplfied version of CTC.
-                                   Default: True.
+                                   and these labels will be interpreted as individual ones. This is a simplfied
+                                   version of CTC. Default: True.
         ignore_longer_outputs_than_inputs (bool): If True, sequences with longer outputs than inputs will be ignored.
                                                   Default: False.
 
@@ -5319,15 +5325,15 @@ class CTCLoss(PrimitiveWithInfer):
           Data type must be float32 or float64.
         - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
           stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
-        - **labels_values** (Tensor) - A `1-D` input tensor. The values associated with the given batch and time. The
-          type must be int32. `labels_values[i]` must in the range of `[0, num_classes)`.
+        - **labels_values** (Tensor) - A `1-D` input tensor. The values are associated with the given batch and time.
+          The type must be int32. `labels_values[i]` must in the range of `[0, num_classes)`.
         - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
-          The type must be int32. Each value in the tensor should not greater than `max_time`.
+          The type must be int32. Each value in the tensor should not be greater than `max_time`.
 
     Outputs:
-        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. Has the same
-          type with `inputs`.
-        - **gradient** (Tensor) - The gradient of `loss`. Has the same type and shape with `inputs`.
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. The tensor has
+        the same type with `inputs`.
+        - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
 
     Examples:
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
@@ -5396,7 +5402,7 @@ class CTCGreedyDecoder(PrimitiveWithInfer):
         - **decoded_shape** (Tensor) - The value of tensor is :math:`[batch_size, max_decoded_legth]`.
           Data type is int64.
         - **log_probability** (Tensor) - A tensor with shape of :math:`(batch_size, 1)`,
-          containing sequence log-probability. Has the same type as `inputs`.
+          containing sequence log-probability, has the same type as `inputs`.
 
     Examples:
         >>>    class CTCGreedyDecoderNet(nn.Cell):
@@ -5441,7 +5447,7 @@ class CTCGreedyDecoder(PrimitiveWithInfer):
 
 class BasicLSTMCell(PrimitiveWithInfer):
     r"""
-    Performs the long short term memory(LSTM) on the input.
+    Applies the long short-term memory (LSTM) to the input.
 
     .. math::
         \begin{array}{ll} \\
@@ -5464,10 +5470,10 @@ class BasicLSTMCell(PrimitiveWithInfer):
     Args:
         keep_prob (float): If not 1.0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 1.0. The range of dropout is [0.0, 1.0].
-        forget_bias (float): Add forget bias to forget gate biases in order to decrease former scale. Default to 1.0.
-        state_is_tuple (bool): If true, state is tensor tuple, containing h and c; If false, one tensor,
-          need split first. Default to True.
-        activation (str): Activation. Default to "tanh". Only "tanh" is currently supported.
+        forget_bias (float): Add forget bias to forget gate biases in order to decrease former scale. Default: 1.0.
+        state_is_tuple (bool): If true, the state is a tuple of 2 tensors, containing h and c; If false, the state is
+        a tensor and it needs to be split first. Default: True.
+        activation (str): Activation. Default: "tanh". Only "tanh" is currently supported.
 
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape (`batch_size`, `input_size`).
@@ -5494,7 +5500,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         - **ot** (Tensor) - Forward :math:`o_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
           Has the same type with input `c`.
         - **tanhct** (Tensor) - Forward :math:`tanh c_t` cache at moment `t`.
-          Tensor of shape (`batch_size`, `hidden_size`). Has the same type with input `c`.
+          Tensor of shape (`batch_size`, `hidden_size`), has the same type with input `c`.
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 32).astype(np.float16))
@@ -5634,7 +5640,7 @@ class LRN(PrimitiveWithInfer):
 
 class CTCLossV2(PrimitiveWithInfer):
     r"""
-    Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
+    Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
     Note:
         - Cudnn Uses label value of for the `blank`
 
@@ -5653,9 +5659,9 @@ class CTCLossV2(PrimitiveWithInfer):
           The type must be int32. Each value in the tensor should not greater than `max_time`.
 
     Outputs:
-        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. Has the same
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`, has the same
           type with `inputs`.
-        - **gradient** (Tensor) - The gradient of `loss`. Has the same type and shape with `inputs`.
+        - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
 
     Examples:
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)

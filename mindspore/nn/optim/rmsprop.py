@@ -80,7 +80,7 @@ class RMSProp(Optimizer):
         ..  math::
             w = w - m_{t}
 
-        where, :math:`w` represents `params`, which will be updated.
+        where :math:`w` represents `params`, which will be updated.
         :math:`g_{t}` is mean gradients, :math:`g_{t-1}` is the last moment of :math:`g_{t}`.
         :math:`s_{t}` is the mean square gradients, :math:`s_{t-1}` is the last moment of :math:`s_{t}`,
         :math:`m_{t}` is moment, the delta of `w`, :math:`m_{t-1}` is the last moment of :math:`m_{t}`.
