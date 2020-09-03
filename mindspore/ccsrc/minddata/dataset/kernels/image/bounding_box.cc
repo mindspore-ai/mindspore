@@ -120,7 +120,6 @@ Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count
   // Also PAss X/Y Min/Max of image cropped region - normally obtained from 'GetCropBox' functions
   std::vector<dsize_t> correct_ind;
   std::vector<bbox_float> copyVals;
-  bool retFlag = false;  // true unless overlap found
   dsize_t bboxDim = (*bbox_list)->shape()[1];
   for (dsize_t i = 0; i < *bbox_count; i++) {
     std::shared_ptr<BoundingBox> bbox;
