@@ -45,7 +45,7 @@ using abstract::AnfNodeConfigPtr;
 
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   if (abs == nullptr) {
-    return "Null Abstract";
+    return "NullAbstract";
   }
   auto shape = abs->BuildShape()->cast<abstract::ShapePtr>();
   TypePtr type = abs->BuildType();
@@ -132,7 +132,8 @@ class AnalyzedFuncGraphExporter : public AnfExporter {
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetFordwardConfigPtr(const AnfNodeConfigPtr &cfg);
-  AnalysisContextPtr ProcessFuncGraphCall(const CNodePtr &node);
+  std::vector<AnalysisContextPtr> ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
+  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node, const std::vector<AnalysisContextPtr> &ctxs);
 
   // key: context, val: whether the context has already been printed
   std::unordered_map<AnalysisContextPtr, bool> context_map_;
@@ -170,21 +171,7 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
   if (ret == nullptr) {
     return "Undefined";
   }
-  auto abs = ret->abstract();
-  if (abs == nullptr) {
-    return "Undefined";
-  }
-  auto dtype = abs->BuildType();
-  auto shape = abs->BuildShape();
-  std::ostringstream oss;
-  if (dtype != nullptr && abs->isa<abstract::AbstractTensor>() && shape != nullptr) {
-    oss << dtype->DumpText() << shape->DumpText();
-  } else if (dtype != nullptr) {
-    oss << dtype->DumpText();
-  } else {
-    oss << "Undefined";
-  }
-  return oss.str();
+  return GetAbstractStr(ret->abstract());
 }
 
 AbstractBasePtr AnalyzedFuncGraphExporter::GetNodeAbstract(const AnfNodePtr &node) {
@@ -210,44 +197,115 @@ AnfNodeConfigPtr AnalyzedFuncGraphExporter::GetFordwardConfigPtr(const AnfNodeCo
   return cur_cfg;
 }
 
-AnalysisContextPtr AnalyzedFuncGraphExporter::ProcessFuncGraphCall(const CNodePtr &node) {
+std::vector<AnalysisContextPtr> AnalyzedFuncGraphExporter::ProcessFuncGraphCall(const CNodePtr &node,
+                                                                                std::string *const op_comment) {
+  std::vector<AnalysisContextPtr> ret_contexts;
   if (node == nullptr) {
-    return nullptr;
+    return ret_contexts;
   }
   auto cfg = engine_->MakeConfig(node, cur_ctx_);
   cfg = GetFordwardConfigPtr(cfg);
   auto cnode = dyn_cast<CNode>(cfg->node());
   if (cnode == nullptr) {
     MS_LOG(DEBUG) << "CNode is nullptr";
-    return nullptr;
+    return ret_contexts;
   }
+
+  ret_contexts.resize(cnode->size());
+
   const auto &inputs = cnode->inputs();
-  auto op_abs = GetNodeAbstract(inputs[0]);
-  if (op_abs == nullptr) {
-    MS_LOG(DEBUG) << "Abstract of inputs[0] of cnode " << cnode->ToString() << "  is nullptr";
-    return nullptr;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto op_abs = GetNodeAbstract(inputs[i]);
+    if (op_abs == nullptr) {
+      MS_LOG(DEBUG) << "Abstract of inputs[" << i << "] of cnode " << cnode->ToString() << "  is nullptr";
+      continue;
+    }
+
+    if (!op_abs->isa<abstract::FuncGraphAbstractClosure>() && !op_abs->isa<abstract::MetaFuncGraphAbstractClosure>()) {
+      MS_LOG(DEBUG) << "Inputs[" << i << "] of cnode " << cnode->ToString() << " is of type " << op_abs->type_name()
+                    << ", not function, ignore it";
+      // Get prototype of VirtualEvaluator for printing
+      if (i == 0 && op_abs->isa<abstract::VirtualAbstractClosure>()) {
+        auto func = dyn_cast<abstract::VirtualAbstractClosure>(op_abs);
+        std::ostringstream oss;
+        oss << "(";
+        bool first_flag = false;
+        for (const auto &arg : func->args_spec_list()) {
+          if (!first_flag) {
+            first_flag = true;
+          } else {
+            oss << ", ";
+          }
+          oss << GetAbstractStr(arg);
+        }
+        oss << ") -> " << GetAbstractStr(func->output()) << " ";
+        *op_comment = oss.str();
+      }
+      continue;
+    }
+
+    auto evaluator = engine_->GetEvaluatorFor(dyn_cast<abstract::AbstractFunction>(op_abs));
+    if (!evaluator->isa<abstract::BaseFuncGraphEvaluator>()) {
+      MS_LOG(DEBUG) << "Evaluator for inputs[" << i << "] of cnode " << cnode->ToString() << " is of type "
+                    << evaluator->type_name() << ", not BaseFuncGraphEvaluator, ignore it.";
+      continue;
+    }
+
+    auto base_fg_evaluator = dyn_cast<abstract::BaseFuncGraphEvaluator>(evaluator);
+    auto ctx = base_fg_evaluator->graph_context();
+    if (ctx != nullptr && context_map_.insert({ctx, false}).second) {
+      MS_LOG(DEBUG) << "Add new context, ctx.addr = " << ctx.get() << "ctx = " << ctx->ToString();
+      context_vec_.push_back(ctx);
+    }
+    ret_contexts[i] = ctx;
+  }
+  return ret_contexts;
+}
+
+void AnalyzedFuncGraphExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &node,
+                                                       const std::vector<AnalysisContextPtr> &ctxs) {
+  if (node == nullptr) {
+    return;
   }
 
-  if (!op_abs->isa<abstract::FuncGraphAbstractClosure>() && !op_abs->isa<abstract::MetaFuncGraphAbstractClosure>()) {
-    MS_LOG(DEBUG) << "Inputs[0] of cnode " << cnode->ToString() << " is of type " << op_abs->type_name()
-                  << ", not function, ignore it";
-    return nullptr;
+  // output type of each input argument
+  auto &inputs = node->inputs();
+  if (inputs.size() > 1) {
+    ofs << "    #(";
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (i != 1) {
+        ofs << ", ";
+      }
+      AnfNodePtr arg = inputs[i];
+      ofs << GetNodeType(arg);
+    }
+    ofs << ")";
   }
-
-  auto evaluator = engine_->GetEvaluatorFor(dyn_cast<abstract::AbstractFunction>(op_abs));
-  if (!evaluator->isa<abstract::BaseFuncGraphEvaluator>()) {
-    MS_LOG(DEBUG) << "Evaluator for inputs[0] of cnode " << cnode->ToString() << " is of type "
-                  << evaluator->type_name() << ", not BaseFuncGraphEvaluator, ignore it.";
-    return nullptr;
+  // output other comment, map the graph name to original representation(containing unicode character)
+  std::ostringstream comment;
+  comment << "    #";
+  bool has_comment = false;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    AnfNodePtr arg = inputs[i];
+    if (!IsValueNode<FuncGraph>(arg)) {
+      continue;
+    }
+    if (!has_comment) {
+      has_comment = true;
+    } else {
+      comment << ",";
+    }
+    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
+    std::string func_graph_id = fg->debug_info()->get_id();
+    comment << " fg_" << func_graph_id << "=" << fg->ToString() << "." << func_graph_id;
+    if (ctxs.size() > i && ctxs[i] != nullptr) {
+      comment << "(@ctx.addr=" << ctxs[i].get() << ")";
+    }
   }
-
-  auto base_fg_evaluator = dyn_cast<abstract::BaseFuncGraphEvaluator>(evaluator);
-  auto ctx = base_fg_evaluator->graph_context();
-  if (ctx != nullptr && context_map_.insert({ctx, false}).second) {
-    MS_LOG(DEBUG) << "Add new context, ctx.addr = " << ctx.get() << "ctx = " << ctx->ToString();
-    context_vec_.push_back(ctx);
+  if (has_comment) {
+    ofs << comment.str();
   }
-  return ctx;
+  ofs << " #scope: " << node->scope()->name();
 }
 
 void AnalyzedFuncGraphExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
@@ -278,10 +336,15 @@ void AnalyzedFuncGraphExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &
   ofs << ")";
 
   // process function graph call
-  auto ctx = ProcessFuncGraphCall(cnode);
+  std::string op_comment;
+  auto contexts = ProcessFuncGraphCall(cnode, &op_comment);
+  AnalysisContextPtr ctx = contexts.empty() ? nullptr : contexts[0];
 
+  if (!op_comment.empty()) {
+    ofs << "    #" << GetAnfNodeText(func_graph, inputs[0], *apply_map) << ".prototype = " << op_comment;
+  }
   // output comment
-  OutputStatementComment(ofs, cnode);
+  OutputStatementComment(ofs, cnode, contexts);
   if (ctx != nullptr) {
     ofs << " @ctx.addr=" << ctx.get();
   }
@@ -432,10 +495,10 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   }
 
   OutputAnalyzedGraphWithType();
-  oss << "\nThe function call stack:\n";
+  oss << "\nThe function call stack (See file 'analyze_fail.dat' for details):\n";
 
   int index = 0;
-  std::string last_py_func = "";
+  std::string last_location_info = "";
   for (size_t i = 0; i < stack.size(); ++i) {
     auto node_cfg = stack[i];
 
@@ -446,13 +509,13 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     }
 
     auto debug_info = cnode->debug_info();
-    auto this_py_func = debug_info->get_python_func_belonged();
-    if (i > 0 && (this_py_func == last_py_func)) {
-      MS_LOG(DEBUG) << "Python function of elements[" << i << "] is same as previous.";
+    auto this_location_info = trace::GetDebugInfo(debug_info, std::string(""));
+    if (this_location_info.empty() || this_location_info == last_location_info) {
       continue;
     }
-    last_py_func = this_py_func;
-    oss << "# " << index++ << " " << trace::GetDebugInfo(debug_info, std::string(""));
+
+    last_location_info = this_location_info;
+    oss << "# " << index++ << " " << this_location_info;
   }
 
   stack.clear();
@@ -463,6 +526,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
 static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
 // trace the cnode infer debug info
 static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
+
 void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node) {
   if (eval == nullptr) {
     MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
