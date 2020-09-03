@@ -56,10 +56,6 @@ STATUS TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
     MS_LOG(ERROR) << "tensor is null";
     return RET_NULL_PTR;
   }
-  const auto tensor_shape = tensor->shape;
-  if (axis < 0) {
-    axis += tensor_shape.size();
-  }
   attr->axis = axis;
 
   op->primitive->value.type = schema::PrimitiveType_OneHot;
