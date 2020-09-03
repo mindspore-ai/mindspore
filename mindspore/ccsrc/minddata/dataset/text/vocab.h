@@ -107,6 +107,9 @@ class Vocab {
   // @param std::string & word - word to be added will skip if word already exists
   void append_word(const std::string &word);
 
+  // return a read-only vocab
+  const std::unordered_map<WordType, WordIdType> vocab() { return word2id_; }
+
   // destructor
   ~Vocab() = default;
 

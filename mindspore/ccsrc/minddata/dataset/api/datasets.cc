@@ -324,7 +324,7 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
   // Finish building vocab by triggering GetNextRow
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
-  if (vocab == nullptr) {
+  if (vocab->vocab().empty()) {
     MS_LOG(ERROR) << "Fail to build vocab.";
     return nullptr;
   }

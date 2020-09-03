@@ -252,3 +252,17 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail2) {
                                                 std::numeric_limits<int64_t>::max(), {"<pad>", "<unk>"}, true);
   EXPECT_EQ(vocab, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetFail3.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create vocab from dataset
+  // Expected failure: column name does not exist in ds
+  std::shared_ptr<Vocab> vocab = ds->BuildVocab({"ColumnNotExist"});
+  EXPECT_EQ(vocab, nullptr);
+}
