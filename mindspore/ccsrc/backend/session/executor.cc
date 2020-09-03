@@ -141,17 +141,20 @@ void Executor::WorkerLoop() {
     } catch (const std::exception &e) {
       exception_ptr_ = std::current_exception();
     }
-    if (task->type_ == kCompileNodes) {
+
+    auto task_type = task->type_;
+    task = nullptr;
+    if (task_type == kCompileNodes) {
       compile_cond_var_.notify_all();
-    } else if (task->type_ == kCompileGraph) {
+    } else if (task_type == kCompileGraph) {
       compile_cond_var_.notify_all();
-    } else if (task->type_ == kBuildGraph) {
+    } else if (task_type == kBuildGraph) {
       build_cond_var_.notify_all();
-    } else if (task->type_ == kRunGraph) {
+    } else if (task_type == kRunGraph) {
       run_cond_var_.notify_all();
-    } else if (task->type_ == kBuildOp) {
+    } else if (task_type == kBuildOp) {
       build_op_cond_var_.notify_all();
-    } else if (task->type_ == kRunOp) {
+    } else if (task_type == kRunOp) {
       run_op_cond_var_.notify_all();
     }
   }
