@@ -90,9 +90,9 @@ GOTO:EOF
 
 :gene_protobuf
     IF NOT DEFINED MSLIBS_CACHE_PATH (
-        cd %BASEPATH%/build/mindspore/_deps/protobuf-src/_build
+        cd /d %BASEPATH%/build/mindspore/_deps/protobuf-src/_build
     ) ELSE (
-        cd %MSLIBS_CACHE_PATH%/protobuf_*/bin
+        cd /d %MSLIBS_CACHE_PATH%/protobuf_*/bin
     )
 
     SET PROTO_SRC_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/caffe
@@ -100,14 +100,14 @@ GOTO:EOF
 
     SET PROTO_SRC_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/onnx
     protoc "%PROTO_SRC_DIR%/*.proto" --proto_path="%PROTO_SRC_DIR%" --cpp_out="%PROTO_SRC_DIR%"
-    cd %BUILD_PATH%/mindspore
+    cd /d %BUILD_PATH%/mindspore
 GOTO:EOF
 
 :gene_flatbuffer
     IF NOT DEFINED MSLIBS_CACHE_PATH (
-        cd %BASEPATH%/build/mindspore/_deps/flatbuffers-src/_build
+        cd /d %BASEPATH%/build/mindspore/_deps/flatbuffers-src/_build
     ) ELSE (
-        cd %MSLIBS_CACHE_PATH%/flatbuffers_*/bin
+        cd /d %MSLIBS_CACHE_PATH%/flatbuffers_*/bin
     )
 
     SET FLAT_DIR=%BASEPATH%/mindspore/lite/schema
@@ -116,7 +116,7 @@ GOTO:EOF
 
     SET FLAT_DIR=%BASEPATH%/mindspore/lite/tools/converter/parser/tflite
     flatc -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "%FLAT_DIR%" "%FLAT_DIR%/*.fbs"
-    cd %BUILD_PATH%/mindspore
+    cd /d %BUILD_PATH%/mindspore
 GOTO:EOF
 
 :run_fail
