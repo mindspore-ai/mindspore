@@ -125,7 +125,7 @@ def test_grad_sens_parameter_type():
     y_layout = [[8, 8], [-1, 0], [32, 8], [0], [1]]
     b_layout = [[8, 8], [0, -1], [8, 64], [0], [1]]
     sens_layout = [[8, 8], [1, -1], [16, 64], [0], [1]]
-    expect_dict = {'x': x_layout, 'y': y_layout, 'b': b_layout, 'sens': sens_layout}
+    expect_dict = {'args0': x_layout, 'args1': y_layout, 'args2': b_layout, 'args3': sens_layout}
     assert net.parameter_layout_dict == expect_dict
 
 

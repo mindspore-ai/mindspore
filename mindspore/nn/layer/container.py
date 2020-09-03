@@ -14,7 +14,7 @@
 # ============================================================================
 """container"""
 from collections import OrderedDict
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod
 from ..cell import Cell
 
 __all__ = ['SequentialCell', 'CellList']
@@ -34,7 +34,7 @@ def _valid_cell(cell):
     raise TypeError('Cell {} is not subclass of Cell'.format(cell))
 
 
-class _CellListBase(metaclass=ABCMeta):
+class _CellListBase():
     """
     An interface for base the cell as list.
 

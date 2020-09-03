@@ -140,6 +140,67 @@ void Parser::CleanParserResource() {
   ScopeManager::GetInstance().ClearScope();
 }
 
+AnfNodePtr AppendParameterObj(const FuncGraphPtr &func_graph, const py::object &obj) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto value = py::cast<tensor::MetaTensorPtr>(obj);
+  // parameter object should not be none
+  if (value == nullptr || !value->is_parameter()) {
+    MS_LOG(EXCEPTION) << "Parameter error: because obj is not Parameter object.";
+  }
+
+  // get the parameter name from parameter object
+  auto param_name = value->param_info()->name();
+
+  auto top_graph = func_graph;
+  // if the parameter node has been created , return it
+  AnfNodePtr para_node = nullptr;
+  for (auto param : top_graph->parameters()) {
+    auto param_node = dyn_cast<Parameter>(param);
+    if (param_node != nullptr && param_node->name() == param_name) {
+      para_node = param;
+      break;
+    }
+  }
+  if (para_node == nullptr) {
+    auto node = top_graph->AddWeightParameter(param_name);
+
+    node->set_default_param(value);
+    // set_abstract for parameter
+    auto abs = value->ToAbstract();
+    // boarden value
+    abs = abs->Broaden();
+    node->set_abstract(abs);
+    para_node = node;
+  }
+  return para_node;
+}
+
+void UpdataParam(const FuncGraphPtr &top_graph, const py::object &cell) {
+  auto params = py::list(cell.attr("get_parameters")()).cast<std::vector<py::object>>();
+  for (size_t i = 0; i < params.size(); i++) {
+    (void)AppendParameterObj(top_graph, params[i]);
+  }
+}
+
+void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseAst> &ast) {
+  // check whether the functions refered by this function and itself are missing 'return' statement
+  auto mng = Manage(fn, false);
+  for (auto func_graph : mng->func_graphs()) {
+    if (func_graph->get_return() != nullptr) {
+      continue;
+    }
+    py::object node = ast->GetAstNode();
+    py::list ret = ast->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+    py::str desc =
+      python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(), ret[0], ret[1]);
+    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
+  }
+  // clear manager info after checking missing return
+  for (auto fg : mng->func_graphs()) {
+    fg->ClearAllManagerInfo();
+  }
+}
+
 FuncGraphPtr Parser::ParseFuncGraph() {
   // get ast FunctionDef node
   py::object node = ast_->GetAstNode();
@@ -152,22 +213,7 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   RemoveUnnecessaryPhis();
 
   MS_EXCEPTION_IF_NULL(pFnBlock);
-
-  // check whether the functions refered by this function and itself are missing 'return' statement
-  auto mng = Manage(pFnBlock->func_graph(), false);
-  for (auto func_graph : mng->func_graphs()) {
-    if (func_graph->get_return() != nullptr) {
-      continue;
-    }
-    py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    py::str desc =
-      python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(), ret[0], ret[1]);
-    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
-  }
-  // clear manager info after checking missing return
-  for (auto fg : mng->func_graphs()) {
-    fg->ClearAllManagerInfo();
-  }
+  CheckFuncReturn(pFnBlock->func_graph(), ast_);
 
   return pFnBlock->func_graph();
 }
@@ -591,19 +637,24 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   return GenerateAnfNodeForCall(block, call_function_anf_node, packed_arguments, group_arguments, need_unpack);
 }
 
+CNodePtr MakeUnpackCall(const FuncGraphPtr &func_graph, const AnfNodePtr &call_function_anf_node,
+                        const std::vector<AnfNodePtr> &packed_arguments) {
+  std::vector<AnfNodePtr> unpack_call_nodes;
+  auto unpack_call_op = NewValueNode(std::make_shared<prim::UnpackCall>(NAMED_METAGRAPH_UNPACKCALL));
+  unpack_call_nodes.push_back(unpack_call_op);
+  unpack_call_nodes.push_back(call_function_anf_node);
+  (void)std::transform(packed_arguments.begin(), packed_arguments.end(), std::back_inserter(unpack_call_nodes),
+                       [](AnfNodePtr node) -> AnfNodePtr { return node; });
+  CNodePtr unpack_call = func_graph->NewCNode(unpack_call_nodes);
+  return unpack_call;
+}
+
 AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const AnfNodePtr &call_function_anf_node,
                                           const std::vector<AnfNodePtr> &packed_arguments,
                                           const std::vector<AnfNodePtr> &group_arguments, bool need_unpack) const {
   // if there is keyword arguments or starred, using an unpack_call op to unpack the argument
   if (need_unpack) {
-    std::vector<AnfNodePtr> unpack_call_nodes;
-    auto unpack_call_op = NewValueNode(std::make_shared<prim::UnpackCall>(NAMED_METAGRAPH_UNPACKCALL));
-    unpack_call_nodes.push_back(unpack_call_op);
-    unpack_call_nodes.push_back(call_function_anf_node);
-    (void)std::transform(packed_arguments.begin(), packed_arguments.end(), std::back_inserter(unpack_call_nodes),
-                         [](AnfNodePtr node) -> AnfNodePtr { return node; });
-    CNodePtr unpack_call = block->func_graph()->NewCNode(unpack_call_nodes);
-    return unpack_call;
+    return MakeUnpackCall(block->func_graph(), call_function_anf_node, packed_arguments);
   }
   // else there is no keyword arguments and starred, parsed as normal arguments without unpack
   std::vector<AnfNodePtr> func_call_nodes;
@@ -1739,5 +1790,41 @@ bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph) {
   return true;
 }
 
+FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
+  auto func_graph = std::make_shared<FuncGraph>();
+  func_graph->debug_info()->set_name("top");
+
+  // def top(*arg, *kwargs):
+  auto param_vargs = func_graph->add_parameter();
+  auto args_name = "args";
+  param_vargs->set_name(args_name);
+  param_vargs->debug_info()->set_name(args_name);
+
+  auto param_vkwargs = func_graph->add_parameter();
+  args_name = "kwargs";
+  param_vkwargs->set_name(args_name);
+  param_vkwargs->debug_info()->set_name(args_name);
+
+  func_graph->set_has_vararg(true);
+  func_graph->set_has_kwarg(true);
+  func_graph->set_kwonlyargs_count(0);
+
+  // cell_obj
+  parse::UpdateFuncGraphFlags(cell, func_graph);
+  // top graph's construct flag
+  if (py::hasattr(cell, "construct")) {
+    parse::UpdateFuncGraphFlags(cell.attr("construct"), func_graph);
+  }
+
+  UpdataParam(func_graph, cell);
+
+  // ret = cell_obj(*arg, *kwargs)
+  auto call_fn = MakeUnpackCall(func_graph, NewValueNode(cell_ptr), {param_vargs, param_vkwargs});
+
+  // return ret
+  func_graph->set_output(call_fn);
+  MS_LOG(DEBUG) << "add Flag for " << std::string(py::str(cell));
+  return func_graph;
+}
 }  // namespace parse
 }  // namespace mindspore

@@ -27,6 +27,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
+#include "ir/cell.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 
@@ -223,7 +224,8 @@ bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
   return true;
 }
 
-bool ConvertCellObjToFuncGraph(py::object obj, ValuePtr *const data) {
+bool ConvertCellObjToFuncGraph(const CellPtr &cell, ValuePtr *const data) {
+  auto obj = py::cast(cell);
   FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Parse resolve function error.";
@@ -271,10 +273,6 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
   if (obj_type == RESOLVE_TYPE_CLASS_INSTANCE) {
     // Create the namespace for common class instance
     // When the obj is Cell, default parse the 'construct'
-    if (data_converter::IsCellInstance(obj)) {
-      return ConvertCellObjToFuncGraph(obj, data);
-    }
-
     py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
     py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
     *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
@@ -404,6 +402,8 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     ret = ConvertTuple(obj, &converted, use_signature);
   } else if (py::hasattr(obj, PYTHON_CELL_AS_LIST)) {
     ret = ConvertCellList(obj, &converted, use_signature);
+  } else if (py::isinstance<Cell>(obj)) {
+    return ConvertCellObjToFuncGraph(obj.cast<CellPtr>(), data);
   } else if (py::isinstance<py::list>(obj)) {
     ret = ConvertList(obj, &converted, use_signature);
   } else if (py::isinstance<py::module>(obj)) {

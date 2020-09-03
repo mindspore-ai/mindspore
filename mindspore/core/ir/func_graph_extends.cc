@@ -98,10 +98,11 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
       MS_LOG(EXCEPTION) << "Function:" << this->ToString() << ", variable_args_count " << variable_args_count
                         << " were given.";
     }
+    auto varg_name = specialized_graph->GetVariableArgName();
     // for python variable argument input , there is no upper limit
     for (int i = 0; i < variable_args_count; ++i) {
       ParameterPtr p = std::make_shared<Parameter>(specialized_graph);
-      std::string param_name = specialized_graph->GetVariableArgName() + std::to_string(i);
+      std::string param_name = varg_name + std::to_string(i);
       p->set_name(param_name);
       MS_EXCEPTION_IF_NULL(p->debug_info());
       p->debug_info()->set_name(param_name);

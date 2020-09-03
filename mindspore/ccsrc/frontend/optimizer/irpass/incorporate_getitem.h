@@ -316,7 +316,6 @@ class IncorporateGetitemFromParam : public AnfVisitor {
           }
         }
 
-        // (void)mng->Replace(new_fg_parameters[param_i], new_param);
         new_parameters.push_back(new_param);
         curr_input_idx++;
       }
