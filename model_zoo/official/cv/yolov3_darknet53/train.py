@@ -304,14 +304,14 @@ def train():
         input_shape = images.shape[2:4]
         args.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
 
-        images = Tensor(images)
+        images = Tensor.from_numpy(images)
 
-        batch_y_true_0 = Tensor(data['bbox1'])
-        batch_y_true_1 = Tensor(data['bbox2'])
-        batch_y_true_2 = Tensor(data['bbox3'])
-        batch_gt_box0 = Tensor(data['gt_box1'])
-        batch_gt_box1 = Tensor(data['gt_box2'])
-        batch_gt_box2 = Tensor(data['gt_box3'])
+        batch_y_true_0 = Tensor.from_numpy(data['bbox1'])
+        batch_y_true_1 = Tensor.from_numpy(data['bbox2'])
+        batch_y_true_2 = Tensor.from_numpy(data['bbox3'])
+        batch_gt_box0 = Tensor.from_numpy(data['gt_box1'])
+        batch_gt_box1 = Tensor.from_numpy(data['gt_box2'])
+        batch_gt_box2 = Tensor.from_numpy(data['gt_box3'])
 
         input_shape = Tensor(tuple(input_shape[::-1]), ms.float32)
         loss = network(images, batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1,

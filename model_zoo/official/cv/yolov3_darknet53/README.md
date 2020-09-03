@@ -302,38 +302,38 @@ The above python command will run in the background. You can view the results th
 
 ### Evaluation Performance 
 
-| Parameters                 | YOLO                                                        |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | YOLOv3                                                      |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
-| uploaded Date              | 06/31/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.5.0-alpha                                                 |
-| Dataset                    | COCO2014                                                    |
-| Training Parameters        | epoch=320, batch_size=32, lr=0.001, momentum=0.9            |
-| Optimizer                  | Momentum                                                    |
-| Loss Function              | Sigmoid Cross Entropy with logits                           |
-| outputs                    | boxes and label                                             |
-| Loss                       | 34                                                          |
-| Speed                      | 1pc: 350 ms/step;                                           |
-| Total time                 | 8pc: 25 hours                                               |
-| Parameters (M)             | 62.1                                                        |
-| Checkpoint for Fine tuning | 474M (.ckpt file)                                           |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 |
+| Parameters                 | YOLO                                                        |YOLO                                                        |
+| -------------------------- | ----------------------------------------------------------- |----------------------------------------------------------- |
+| Model Version              | YOLOv3                                                      |YOLOv3                                                      |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G             |
+| uploaded Date              | 06/31/2020 (month/day/year)                                 | 09/02/2020 (month/day/year)                                 |
+| MindSpore Version          | 0.5.0-alpha                                                 | 0.7.0                                                 |
+| Dataset                    | COCO2014                                                    | COCO2014                                                    |
+| Training Parameters        | epoch=320, batch_size=32, lr=0.001, momentum=0.9            | epoch=320, batch_size=32, lr=0.001, momentum=0.9            |
+| Optimizer                  | Momentum                                                    | Momentum                                                    |
+| Loss Function              | Sigmoid Cross Entropy with logits                           | Sigmoid Cross Entropy with logits                           |
+| outputs                    | boxes and label                                             | boxes and label                                             |
+| Loss                       | 34                                                          | 34                                                          |
+| Speed                      | 1pc: 350 ms/step;                                           | 1pc: 600 ms/step;                                           |
+| Total time                 | 8pc: 25 hours                                               | 8pc: 18 hours(shape=416)                                               |
+| Parameters (M)             | 62.1                                                        | 62.1                                                        |
+| Checkpoint for Fine tuning | 474M (.ckpt file)                                           | 474M (.ckpt file)                                           |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 |
 
 
 ### Inference Performance
 
-| Parameters          | YOLO                        |
-| ------------------- | --------------------------- |
-| Model Version       | YOLOv3                      |
-| Resource            | Ascend 910                  |
-| Uploaded Date       | 06/31/2020 (month/day/year) |
-| MindSpore Version   | 0.5.0-alpha                 |
-| Dataset             | COCO2014, 40,504  images    |
-| batch_size          | 1                           |
-| outputs             | mAP                         |
-| Accuracy            | 8pcs: 31.1%                 |
-| Model for inference | 474M (.ckpt file)           |
+| Parameters          | YOLO                        |YOLO                          |
+| ------------------- | --------------------------- |------------------------------|
+| Model Version       | YOLOv3                      | YOLOv3                       |
+| Resource            | Ascend 910                  | NV SMX2 V100-16G             |
+| Uploaded Date       | 06/31/2020 (month/day/year) | 08/20/2020 (month/day/year)  |
+| MindSpore Version   | 0.5.0-alpha                 | 0.7.0                        |
+| Dataset             | COCO2014, 40,504  images    | COCO2014, 40,504  images     |
+| batch_size          | 1                           | 1                            |
+| outputs             | mAP                         | mAP                          | 
+| Accuracy            | 8pcs: 31.1%                 | 8pcs: 29.7%~30.3% (shape=416)|
+| Model for inference | 474M (.ckpt file)           | 474M (.ckpt file)            |
 
 
 # [Description of Random Situation](#contents)
