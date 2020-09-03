@@ -544,6 +544,7 @@ OpParameter *PopulateReduceParameter(const mindspore::lite::PrimitiveC *primitiv
   reduce_param->op_parameter_.type_ = primitive->Type();
   auto reduce = reinterpret_cast<mindspore::lite::Reduce *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   reduce_param->keep_dims_ = reduce->GetKeepDims();
+  reduce_param->reduce_to_end_ = reduce->GetReduceToEnd();
   auto axisVector = reduce->GetAxes();
   if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
     MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
@@ -715,7 +716,7 @@ OpParameter *PopulateEltwiseParameter(const mindspore::lite::PrimitiveC *primiti
 
 OpParameter *PopulateArithmeticSelf(const mindspore::lite::PrimitiveC *primitive) {
   ArithmeticSelfParameter *arithmetic_self_param =
-      reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
+    reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
   if (arithmetic_self_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticSelfParameter failed.";
     return nullptr;
@@ -792,7 +793,7 @@ OpParameter *PopulateLocalResponseNormParameter(const mindspore::lite::Primitive
   auto local_response_norm_attr = reinterpret_cast<mindspore::lite::LocalResponseNormalization *>(
     const_cast<mindspore::lite::PrimitiveC *>(primitive));
   LocalResponseNormParameter *lrn_param =
-      reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
+    reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
   if (lrn_param == nullptr) {
     MS_LOG(ERROR) << "malloc LocalResponseNormParameter failed.";
     return nullptr;
@@ -1019,7 +1020,7 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
 
 OpParameter *PopulateSparseToDenseParameter(const mindspore::lite::PrimitiveC *primitive) {
   SparseToDenseParameter *sparse_to_dense_param =
-          reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+    reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
   if (sparse_to_dense_param == nullptr) {
     MS_LOG(ERROR) << "malloc SparseToDenseParameter failed.";
     return nullptr;
@@ -1031,7 +1032,7 @@ OpParameter *PopulateSparseToDenseParameter(const mindspore::lite::PrimitiveC *p
 
 OpParameter *PopulateBroadcastToParameter(const mindspore::lite::PrimitiveC *primitive) {
   BroadcastToParameter *broadcast_param =
-      reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
+    reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
   if (broadcast_param == nullptr) {
     MS_LOG(ERROR) << "malloc BroadcastToParameter failed.";
     return nullptr;
@@ -1073,7 +1074,7 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
   auto attr =
     reinterpret_cast<mindspore::lite::ConstantOfShape *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   ConstantOfShapeParameter *param =
-      reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
+    reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
     return nullptr;
@@ -1151,7 +1152,7 @@ OpParameter *PopulateUnstackParameter(const mindspore::lite::PrimitiveC *primiti
 
 OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC *primitive) {
   ReverseSequenceParameter *reverse_sequence_param =
-      reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
+    reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
   if (reverse_sequence_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReverseSequenceParameter failed.";
     return nullptr;
@@ -1178,7 +1179,7 @@ OpParameter *PopulateUniqueParameter(const mindspore::lite::PrimitiveC *primitiv
 
 OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *primitive) {
   DepthToSpaceParameter *depth_space_param =
-      reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
+    reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
   if (depth_space_param == nullptr) {
     MS_LOG(ERROR) << "malloc DepthToSpaceParameter failed.";
     return nullptr;
@@ -1192,7 +1193,7 @@ OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *pr
 
 OpParameter *PopulateSpaceToDepthParameter(const mindspore::lite::PrimitiveC *primitive) {
   SpaceToDepthParameter *space_depth_param =
-      reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
+    reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
   if (space_depth_param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
     return nullptr;
@@ -1212,7 +1213,7 @@ OpParameter *PopulateSpaceToDepthParameter(const mindspore::lite::PrimitiveC *pr
 
 OpParameter *PopulateSpaceToBatchParameter(const mindspore::lite::PrimitiveC *primitive) {
   SpaceToBatchParameter *space_batch_param =
-      reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
+    reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
   if (space_batch_param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
@@ -1260,7 +1261,7 @@ OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitiv
 
 OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *primitive) {
   BatchToSpaceParameter *batch_space_param =
-      reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
+    reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
   if (batch_space_param == nullptr) {
     MS_LOG(ERROR) << "malloc BatchToSpaceParameter failed.";
     return nullptr;
@@ -1345,7 +1346,7 @@ OpParameter *PopulateFlattenParameter(const mindspore::lite::PrimitiveC *primiti
 
 OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *primitive) {
   QuantDTypeCastParameter *parameter =
-      reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
+    reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
     return nullptr;
@@ -1361,7 +1362,7 @@ OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *
 
 OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
   StridedSliceParameter *strided_slice_param =
-      reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
+    reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
   if (strided_slice_param == nullptr) {
     MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
     return nullptr;
@@ -1418,9 +1419,9 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   }
   prior_box_param->max_sizes_size = prior_box_attr->GetMaxSizes().size();
   memcpy(prior_box_param->max_sizes, prior_box_attr->GetMaxSizes().data(),
-               prior_box_attr->GetMaxSizes().size() * sizeof(int32_t));
+         prior_box_attr->GetMaxSizes().size() * sizeof(int32_t));
   memcpy(prior_box_param->min_sizes, prior_box_attr->GetMinSizes().data(),
-               prior_box_attr->GetMinSizes().size() * sizeof(int32_t));
+         prior_box_attr->GetMinSizes().size() * sizeof(int32_t));
 
   if (prior_box_attr->GetAspectRatios().size() > PRIOR_BOX_MAX_NUM) {
     MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
@@ -1430,7 +1431,7 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   }
   prior_box_param->aspect_ratios_size = prior_box_attr->GetAspectRatios().size();
   memcpy(prior_box_param->aspect_ratios, prior_box_attr->GetAspectRatios().data(),
-               prior_box_attr->GetAspectRatios().size() * sizeof(float));
+         prior_box_attr->GetAspectRatios().size() * sizeof(float));
   if (prior_box_attr->GetVariances().size() != PRIOR_BOX_VAR_NUM) {
     MS_LOG(ERROR) << "PriorBox variances size should be " << PRIOR_BOX_VAR_NUM << ", got "
                   << prior_box_attr->GetVariances().size();
@@ -1468,7 +1469,7 @@ OpParameter *PopulateLstmParameter(const mindspore::lite::PrimitiveC *primitive)
 
 OpParameter *PopulateEmbeddingLookupParameter(const mindspore::lite::PrimitiveC *primitive) {
   EmbeddingLookupParameter *embedding_lookup_parameter =
-      reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
+    reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
   if (embedding_lookup_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc EmbeddingLookupParameter failed.";
     return nullptr;

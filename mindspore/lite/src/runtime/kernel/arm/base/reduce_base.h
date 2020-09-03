@@ -42,6 +42,7 @@ class ReduceBaseCPUKernel : public LiteKernel {
   int axes_[REDUCE_MAX_AXES_NUM];
   int num_axes_;
   int mode_;
+  bool reduce_to_end_;
 
  protected:
   int outer_size_;

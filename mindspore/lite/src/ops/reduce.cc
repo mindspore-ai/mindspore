@@ -23,10 +23,12 @@ namespace lite {
 std::vector<int> Reduce::GetAxes() const { return this->primitive_->value.AsReduce()->axes; }
 int Reduce::GetKeepDims() const { return this->primitive_->value.AsReduce()->keepDims; }
 int Reduce::GetMode() const { return this->primitive_->value.AsReduce()->mode; }
+bool Reduce::GetReduceToEnd() const { return this->primitive_->value.AsReduce()->reduceToEnd; }
 
 void Reduce::SetAxes(const std::vector<int> &axes) { this->primitive_->value.AsReduce()->axes = axes; }
 void Reduce::SetKeepDims(int keep_dims) { this->primitive_->value.AsReduce()->keepDims = keep_dims; }
 void Reduce::SetMode(int mode) { this->primitive_->value.AsReduce()->mode = (schema::ReduceMode)mode; }
+void Reduce::SetReduceToEnd(bool reduce_to_end) { this->primitive_->value.AsReduce()->reduceToEnd = reduce_to_end; }
 
 int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -86,6 +88,7 @@ std::vector<int> Reduce::GetAxes() const {
 }
 int Reduce::GetKeepDims() const { return this->primitive_->value_as_Reduce()->keepDims(); }
 int Reduce::GetMode() const { return this->primitive_->value_as_Reduce()->mode(); }
+bool Reduce::GetReduceToEnd() const { return this->primitive_->value_as_Reduce()->reduceToEnd(); }
 int Reduce::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -134,6 +137,23 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   std::vector<int> out_shape;
   const auto &axes = GetAxes();
   auto num_axes = axes.size();
+  int rank = static_cast<int>(in_shape.size());
+  std::vector<int> actual_axes(axes.begin(), axes.end());
+
+  if (GetReduceToEnd()) {
+    if (num_axes != 1) {
+      MS_LOG(ERROR) << "Reduce when reduce_to_end, num of axis should be 1, got " << num_axes;
+      return RET_ERROR;
+    }
+
+    int begin_axis;
+    begin_axis = axes[0] < 0 ? axes[0] + rank : axes[0];
+    for (auto i = begin_axis + 1; i < rank; ++i) {
+      actual_axes.emplace_back(i);
+    }
+    num_axes = rank - begin_axis;
+    keep_dims = false;
+  }
   // reduce on all axes
   if (num_axes == 0) {
     if (keep_dims) {
@@ -149,7 +169,7 @@ int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
     for (size_t idx = 0; idx < num_axes; ++idx) {
-      if (static_cast<size_t>(axes[idx]) == i || static_cast<size_t>(axes[idx] + in_shape.size()) == i) {
+      if (static_cast<size_t>(actual_axes[idx]) == i || static_cast<size_t>(actual_axes[idx] + in_shape.size()) == i) {
         reduce_axis = true;
         break;
       }
