@@ -26,7 +26,7 @@ context.set_context(device_target="Ascend")
 def test_check_dropout_3():
     Tensor(np.ones([20, 16, 50]).astype(np.int32))
     with pytest.raises(ValueError):
-        nn.Dropout(3, 0, 1)
+        nn.Dropout(3)
 
 
 class Net_dropout(nn.Cell):
