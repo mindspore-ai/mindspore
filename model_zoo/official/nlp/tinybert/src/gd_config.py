@@ -55,8 +55,7 @@ bert_teacher_net_cfg = BertConfig(
     input_mask_from_dataset=True,
     token_type_ids_from_dataset=True,
     dtype=mstype.float32,
-    compute_type=mstype.float16,
-    enable_fused_layernorm=False
+    compute_type=mstype.float16
 )
 bert_student_net_cfg = BertConfig(
     batch_size=32,
@@ -76,6 +75,5 @@ bert_student_net_cfg = BertConfig(
     input_mask_from_dataset=True,
     token_type_ids_from_dataset=True,
     dtype=mstype.float32,
-    compute_type=mstype.float16,
-    enable_fused_layernorm=False
+    compute_type=mstype.float16
 )

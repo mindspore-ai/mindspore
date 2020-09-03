@@ -82,8 +82,7 @@ def get_config(version='base', batch_size=1):
             input_mask_from_dataset=True,
             token_type_ids_from_dataset=True,
             dtype=mstype.float32,
-            compute_type=mstype.float16,
-            enable_fused_layernorm=False)
+            compute_type=mstype.float16)
     else:
         bert_config = BertConfig(batch_size=batch_size)
     return bert_config
