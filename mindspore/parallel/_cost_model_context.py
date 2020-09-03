@@ -589,7 +589,7 @@ def reset_cost_model_context():
     """Reset cost model context attributes."""
     cost_model_context().reset_cost_model()
 
-def set_multi_subgraphs(multi_subgraph=True):
+def _set_multi_subgraphs(multi_subgraph=True):
     """
     Set the flag of ANF graph containing multiple subgraphs.
 
@@ -598,7 +598,7 @@ def set_multi_subgraphs(multi_subgraph=True):
     """
     cost_model_context().set_multi_subgraphs(multi_subgraph)
 
-def get_multi_subgraphs():
+def _get_multi_subgraphs():
     """
         Get the flag of ANF graph containing multiple subgraphs.
     """

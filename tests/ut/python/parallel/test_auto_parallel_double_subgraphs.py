@@ -17,13 +17,13 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, ParameterTuple
-from mindspore import context
+from mindspore import context, Model
 from mindspore.common.api import _executor
 from mindspore.nn.optim import Adam, FTRL
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.parallel import set_multi_subgraphs
+from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
 
@@ -103,7 +103,7 @@ class TrainStepWarp(nn.Cell):
 
 
 def test_double_subgraphs():
-    set_multi_subgraphs()
+    _set_multi_subgraphs()
     context.set_context(save_graphs=True)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
@@ -119,4 +119,51 @@ def test_double_subgraphs():
                            'Default/network-NetWithLoss/net-Net/Mul-op2': [[8, 1, 1, 1], [8, 1, 1, 1]],
                            'Default/network-NetWithLoss/net-Net/Mul-op3': [[8, 1, 1, 1], [8, 1, 1, 1]],
                            'Default/network-NetWithLoss/ReduceSum-op4': [[8, 1, 1, 1]]}
+    assert strategies == expected_strategies
+
+class DatasetLenet():
+    def __init__(self, predict, label, length=3):
+        self.predict = predict
+        self.label = label
+        self.index = 0
+        self.length = length
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index >= self.length:
+            raise StopIteration
+        self.index += 1
+        return self.predict
+
+    def reset(self):
+        self.index = 0
+
+    def get_dataset_size(self):
+        return 32
+
+    def get_repeat_count(self):
+        return 1
+
+    def create_tuple_iterator(self):
+        return self
+
+def test_double_subgraphs_train():
+    context.set_context(save_graphs=True)
+    context.set_auto_parallel_context(device_num=1, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net = TrainStepWarp(NetWithLoss(Net()))
+
+    batch_ids = np.ones([8, 8, 8, 8]).astype(np.int32)
+    ds_train = DatasetLenet(Tensor(batch_ids), None)
+    model = Model(net)
+    model.train(1, ds_train, dataset_sink_mode=False)
+    strategies = _executor._get_strategy(net)
+    expected_strategies = {'Default/network-NetWithLoss/ReduceMean-op3': [[1, 1, 1, 1]],
+                           'Default/network-NetWithLoss/net-Net/ReLU-op4': [[1, 1, 1, 1]],
+                           'Default/network-NetWithLoss/net-Net/Mul-op5': [[1, 1, 1, 1], [1, 1, 1, 1]],
+                           'Default/network-NetWithLoss/net-Net/Mul-op6': [[1, 1, 1, 1], [1, 1, 1, 1]],
+                           'Default/network-NetWithLoss/net-Net/Cast-op1': [[1, 1, 1, 1]],
+                           'Default/network-NetWithLoss/ReduceSum-op7': [[1, 1, 1, 1]]}
     assert strategies == expected_strategies

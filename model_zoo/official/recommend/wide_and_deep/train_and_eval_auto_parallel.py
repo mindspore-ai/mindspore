@@ -22,7 +22,6 @@ from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
-from mindspore.parallel import set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
@@ -145,7 +144,6 @@ if __name__ == "__main__":
                         device_target=wide_deep_config.device_target, save_graphs=True)
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
-    set_multi_subgraphs()
     init()
     if wide_deep_config.host_device_mix == 1:
         context.set_auto_parallel_context(
