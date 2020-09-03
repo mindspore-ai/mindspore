@@ -736,10 +736,9 @@ void AscendStreamAssign::InsertEventCommonDependHcom(const NotNull<KernelGraphPt
   vector<CNodePtr> cnodes = cnode_ptr_list;
   uint32_t cur_event_id = resource_manager.ApplyNewEvent();
   auto it = cnodes.begin();
-  while (it != cnodes.end() && (it + 1) != cnodes.end()) {
+  while (it != cnodes.end()) {
     MS_EXCEPTION_IF_NULL(*it);
-    MS_EXCEPTION_IF_NULL(*(it + 1));
-    if (IsHcom(*it) && !IsHcom(*(it + 1))) {
+    if (IsHcom(*it)) {
       CNodePtr send_cnode_ptr = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId(*it));
       it = cnodes.insert(it + 1, send_cnode_ptr);
 
