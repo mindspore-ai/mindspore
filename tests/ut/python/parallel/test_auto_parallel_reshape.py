@@ -292,3 +292,25 @@ def test_reshape_auto_6():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x, y)
+
+def test_reshape_auto_7():
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.reshape = P.Reshape()
+            self.mul = P.Mul().set_strategy(((1, 2, 4), (2, 4)))
+            self.mul_weight = Parameter(Tensor(np.ones([128, 96]), dtype=ms.float32), name="weight")
+
+        def construct(self, x):
+            weight = self.reshape(self.mul_weight, (1, 128, 96))
+            out = self.mul(weight, self.mul_weight)
+            return out
+
+    size = 8
+    context.set_auto_parallel_context(device_num=size, global_rank=0)
+    x = Tensor(np.ones([128, 28]), dtype=ms.float32)
+
+    net = GradWrap(NetWithLoss(Net()))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net.set_auto_parallel()
+    _executor.compile(net, x)
