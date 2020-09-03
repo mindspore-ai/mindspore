@@ -77,20 +77,18 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
   MS_LOG(INFO) << "BiasAdd Begin test:";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto data_type = kNumberTypeFloat16;
+  auto data_type = kNumberTypeFloat16;  // need modify
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
-  std::vector<int> input_shape = {1, 9};
-  std::vector<int> output_shape = {1, 9};
-
+  std::vector<int> input_shape = {1, 9};   // need modify
+  std::vector<int> output_shape = {1, 9};  // need modify
   auto tensor_type = schema::NodeType_ValueNode;
-  schema::Format type;
+  schema::Format type = schema::Format_NC;        // need modify
+  schema::Format op_format = schema::Format_NC4;  // need modify
   int weight_shape = 0;
   if (input_shape.size() == 4) {
     weight_shape = input_shape[3];
-    type = schema::Format_NHWC;
   } else {
     weight_shape = input_shape[1];
-    type = schema::Format_NC;
   }
   auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, type, tensor_type);
   if (input_tensor == nullptr) {
@@ -144,7 +142,7 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
     delete param;
     return;
   }
-
+  biasadd_kernel->SetFormatType(op_format);
   auto ret = biasadd_kernel->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "biasadd kernel init error.";

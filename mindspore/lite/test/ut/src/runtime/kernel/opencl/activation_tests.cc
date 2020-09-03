@@ -51,7 +51,7 @@ void CompareRes(lite::tensor::Tensor *output_tensor, const std::string &standard
   auto *output_data = reinterpret_cast<T *>(output_tensor->Data());
   size_t output_size = output_tensor->Size();
   auto expect_data = reinterpret_cast<T *>(mindspore::lite::ReadFile(standard_answer_file.c_str(), &output_size));
-  constexpr float atol = 0.0002;
+  constexpr float atol = 0.001;
   for (int i = 0; i < output_tensor->ElementsNum(); ++i) {
     if (std::fabs(output_data[i] - expect_data[i]) > atol) {
       printf("error at idx[%d] expect=%f output=%f\n", i, expect_data[i], output_data[i]);
@@ -88,10 +88,8 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  schema::Format format = schema::Format_NHWC;
-  if (input_shape.size() == 2) {
-    format = schema::Format_NC;
-  }
+  schema::Format format = schema::Format_NC;
+  schema::Format op_format = schema::Format_NC4;
   auto tensor_type = schema::NodeType_ValueNode;
   auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
@@ -124,6 +122,7 @@ TEST_F(TestActivationOpenCL, ReluFp_dim4) {
   param->type_ = ActivationType_RELU;
   auto *kernel =
     new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  kernel->SetFormatType(op_format);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Kernel:Relu create fail.";
     delete param;
@@ -194,17 +193,15 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
   std::string out_file = "/data/local/tmp/relu6.bin";
   MS_LOG(INFO) << "Relu6 Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
-  auto data_type = kNumberTypeFloat32;
+  auto data_type = kNumberTypeFloat16;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
   ocl_runtime->Init();
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  schema::Format format = schema::Format_NHWC;
-  if (input_shape.size() == 2) {
-    format = schema::Format_NC;
-  }
+  schema::Format format = schema::Format_NC;
+  schema::Format op_format = schema::Format_NC4;
   auto tensor_type = schema::NodeType_ValueNode;
   auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
@@ -246,6 +243,7 @@ TEST_F(TestActivationOpenCL, Relu6Fp_dim4) {
     delete output_tensor;
     return;
   }
+  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;
@@ -311,16 +309,14 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
   MS_LOG(INFO) << "Sigmoid Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto data_type = kNumberTypeFloat16;
+  auto data_type = kNumberTypeFloat32;
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
 
   MS_LOG(INFO) << "Init tensors.";
   std::vector<int> input_shape = {1, 9};
-  schema::Format format = schema::Format_NHWC;
-  if (input_shape.size() == 2) {
-    format = schema::Format_NC;
-  }
+  schema::Format format = schema::Format_NC;
+  schema::Format op_format = schema::Format_NC4;
   auto tensor_type = schema::NodeType_ValueNode;
   auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
@@ -362,6 +358,7 @@ TEST_F(TestActivationOpenCL, SigmoidFp_dim4) {
     delete output_tensor;
     return;
   }
+  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;
@@ -427,17 +424,15 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   MS_LOG(INFO) << "Leaky relu Begin test!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-  auto data_type = kNumberTypeFloat32;
+  auto data_type = kNumberTypeFloat16;  // need modify
   ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
   bool enable_fp16 = ocl_runtime->GetFp16Enable();
 
   MS_LOG(INFO) << "Init tensors.";
-  std::vector<int> input_shape = {1, 9};
+  std::vector<int> input_shape = {1, 9};  // need modify
   auto tensor_type = schema::NodeType_ValueNode;
-  schema::Format format = schema::Format_NHWC;
-  if (input_shape.size() == 2) {
-    format = schema::Format_NC;
-  }
+  schema::Format format = schema::Format_NC;      // need modify
+  schema::Format op_format = schema::Format_NC4;  // need modify
   auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";
@@ -479,6 +474,7 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
     delete output_tensor;
     return;
   }
+  kernel->SetFormatType(op_format);
   auto ret = kernel->Init();
   if (ret != RET_OK) {
     delete param;
