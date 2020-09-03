@@ -131,6 +131,13 @@ def is_same_type(inst, type_):
     return inst == type_
 
 
+@constexpr
+def check_valid_type(data_type, value_type, name):
+    if not data_type in value_type:
+        raise TypeError(
+            f"For {name}, valid type include {value_type}, {data_type} is invalid")
+
+
 def slice_expand(input_slices, shape):
     """
     Converts slice to indices.
