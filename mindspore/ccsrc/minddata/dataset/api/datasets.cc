@@ -1200,7 +1200,7 @@ bool CSVDataset::ValidateParams() {
     return false;
   }
 
-  if (num_samples_ < -1) {
+  if (num_samples_ < 0) {
     MS_LOG(ERROR) << "CSVDataset: Invalid number of samples: " << num_samples_;
     return false;
   }

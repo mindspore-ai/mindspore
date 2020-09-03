@@ -191,7 +191,7 @@ std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::str
 /// \param[in] column_names List of column names of the dataset (default={}). If this is not provided, infers the
 ///    column_names from the first row of CSV file.
 /// \param[in] num_samples The number of samples to be included in the dataset.
-///    (Default = -1 means all samples.)
+///    (Default = 0 means all samples.)
 /// \param[in] shuffle The mode for shuffling data every epoch. (Default=ShuffleMode::kGlobal)
 ///    Can be any of:
 ///    ShuffleMode::kFalse - No shuffling is performed.
@@ -203,7 +203,7 @@ std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::str
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, char field_delim = ',',
                                 const std::vector<std::shared_ptr<CsvBase>> &column_defaults = {},
-                                const std::vector<std::string> &column_names = {}, int64_t num_samples = -1,
+                                const std::vector<std::string> &column_names = {}, int64_t num_samples = 0,
                                 ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
                                 int32_t shard_id = 0);
 
