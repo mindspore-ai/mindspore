@@ -49,7 +49,15 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
   auto scope = std::make_shared<Scope>(gradients_scope + ScopeManager::GetInstance().GetCurrentScope()->name() +
                                        grad_op_child_scope_prefix + prim->name());
   ScopeGuard scope_guard(scope);
-  py::function fn = prim->is_base() ? GetBpropFunction(prim->name()) : prim->cast<PrimitivePyPtr>()->GetBpropFunction();
+  py::function fn;
+  if (prim->is_base()) {
+    fn = GetBpropFunction(prim->name());
+  } else {
+    fn = prim->cast<PrimitivePyPtr>()->GetBpropFunction();
+    if (py::isinstance<py::none>(fn)) {
+      fn = GetBpropFunction(prim->name());
+    }
+  }
   if (!fn || py::isinstance<py::none>(fn)) {
     MS_LOG(DEBUG) << "Fail to find bprop function for " << prim->name() << ".";
     return nullptr;

@@ -39,7 +39,8 @@ class PythonPass {
   ~PythonPass() = default;
   bool Run(const FuncGraphPtr &func_graph, const MatchResultPtr &res);
   std::string name() const { return name_; }
-  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const MatchResultPtr &res);
+  AnfNodePtr Run(const FuncGraphPtr &func_graph, const FuncGraphPtr &top_graph, const AnfNodePtr &node,
+                 const MatchResultPtr &res);
   PatternPtr src_pattern() { return src_pattern_; }
   PatternPtr dst_pattern() { return dst_pattern_; }
 

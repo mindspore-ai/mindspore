@@ -43,15 +43,19 @@ PyPassManagerPtr PyPassManager::GetInstance() {
 }
 
 PyPassManager::PyPassManager() {
-  phase_to_group_[Phase::RESOLVE] = std::make_shared<PassGroup>();
-  phase_to_group_[Phase::OPT] = std::make_shared<PassGroup>();
+  phase_to_group_[Phase::PREAD] = std::make_shared<PassGroup>("Pre_AD_PassGroup");
+  phase_to_group_[Phase::OPT] = std::make_shared<PassGroup>("After_OPT_PassGroup");
   res_ = std::make_shared<MatchResult>();
 }
 
 void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-                            bool run_only_once) {
-  // NOTE: remove phase option to avoid unnecessary confusion.
-  auto cur_pg = GetPassGroup(Phase::OPT);
+                            bool requires_grad, bool run_only_once) {
+  PassGroupPtr cur_pg;
+  if (requires_grad) {
+    cur_pg = GetPassGroup(Phase::PREAD);
+  } else {
+    cur_pg = GetPassGroup(Phase::OPT);
+  }
   MS_EXCEPTION_IF_NULL(cur_pg);
   cur_pg->SetRunOnlyOnce(run_only_once);
   MS_EXCEPTION_IF_NULL(pattern);
@@ -62,11 +66,13 @@ void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &patt
 }
 
 void PyPassManager::Unregiste(const std::string &pass_name) {
-  // NOTE: remove phase option to avoid unnecessary confusion.
-  auto cur_pm = GetPassGroup(Phase::OPT);
-  MS_EXCEPTION_IF_NULL(cur_pm);
-  if (!cur_pm->DeletePass(pass_name)) {
-    MS_LOG(WARNING) << "No such pass : " + pass_name + "\n";
+  auto opt_pm = GetPassGroup(Phase::OPT);
+  if (!opt_pm->DeletePass(pass_name)) {
+    MS_LOG(WARNING) << "Opt has no such pass : " + pass_name + "\n";
+  }
+  auto pre_ad_pm = GetPassGroup(Phase::PREAD);
+  if (!pre_ad_pm->DeletePass(pass_name)) {
+    MS_LOG(WARNING) << "Pre_AD has no such pass : " + pass_name + "\n";
   }
 }
 
@@ -92,7 +98,7 @@ void PyPassManager::ClearRes() {
 
 REGISTER_PYBIND_DEFINE(
   PyPassManager_, ([](const py::module *m) {
-    (void)py::enum_<Phase>(*m, "phase", py::arithmetic()).value("resolve", Phase::RESOLVE).value("opt", Phase::OPT);
+    (void)py::enum_<Phase>(*m, "phase", py::arithmetic()).value("pre_ad", Phase::PREAD).value("opt", Phase::OPT);
     (void)py::class_<PyPassManager, std::shared_ptr<PyPassManager>>(*m, "PyPassManager_")
       .def(py::init([]() { return PyPassManager::GetInstance(); }))
       .def("registe", &PyPassManager::Registe, "Registe python pass")

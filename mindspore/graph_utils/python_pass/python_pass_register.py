@@ -23,22 +23,26 @@ __all__ = [
     "unregiste_pass",
     "gen_new_parameter",
     "cancel_new_parameter",
-    "set_renorm",
-    "set_reopt"
+    "_set_renorm",
+    "_set_reopt"
 ]
 class PyPassManager(PyPassManager_):
     r"""
     Used to registe and unregiste python passes which can be used to alter graphs.
 
     Args:
+        requires_grad(bool): Do automatic-differentiation after modified graph if true. Default: True
         run_only_once (bool): Specify whether or not to run pass only once. Default: False.
 
     Raises:
         TypeError: If argument has invalid type.
     """
-    def __init__(self, run_only_once=False):
+    def __init__(self, requires_grad=True, run_only_once=False):
+        if not isinstance(requires_grad, bool):
+            raise TypeError(f"Expect bool, got : ({type(requires_grad)}){requires_grad}")
         if not isinstance(run_only_once, bool):
             raise TypeError(f"Expect bool, got : ({type(run_only_once)}){run_only_once}")
+        self.requires_grad = requires_grad
         self.run_only_once_ = run_only_once
         PyPassManager_.__init__(self)
 
@@ -51,7 +55,7 @@ class PyPassManager(PyPassManager_):
             raise TypeError(f"Expect pattern of Pattern type, got : ({type(pattern)}){pattern}")
         if not isinstance(target, Pattern):
             raise TypeError(f"Expect target of Pattern type, got : ({type(target)}){target}")
-        super().registe(pass_name, pattern, target, self.run_only_once_)
+        super().registe(pass_name, pattern, target, self.requires_grad, self.run_only_once_)
 
     def unregiste(self, py_pass):
         if isinstance(py_pass, str):
@@ -81,11 +85,12 @@ class PyPassManager(PyPassManager_):
             raise TypeError(f"Expect do_reopt to be a bool, got {do_reopt}")
         super().set_reopt(do_reopt)
 
-def registe_pass(run_only_once=False):
+def registe_pass(requires_grad=True, run_only_once=False):
     """
     Registe python pass to specified pipeline phase which would be used in compilation.
 
     Args:
+        requires_grad(bool): Do automatic-differentiation after modified graph if true. Default: True
         run_only_once(bool): Run this pass only once if set true. Otherwise run the pass until converge. Default: False.
 
     Returns:
@@ -99,7 +104,7 @@ def registe_pass(run_only_once=False):
         >>>     target = IsPrimTypeOf("ReLU6")
         >>>     return pattern, target
     """
-    return PyPassManager(run_only_once)
+    return PyPassManager(requires_grad, run_only_once)
 
 def unregiste_pass(py_pass):
     """
@@ -157,7 +162,7 @@ def cancel_new_parameter(pattern):
     ppm = PyPassManager()
     ppm.unregiste(pattern.para_name)
 
-def set_renorm(should_renorm):
+def _set_renorm(should_renorm):
     """
     Set whether or not to do renormalization after modified graph in python pass(es).
 
@@ -171,7 +176,7 @@ def set_renorm(should_renorm):
     ppm = PyPassManager()
     ppm.set_renorm(should_renorm)
 
-def set_reopt(do_reopt):
+def _set_reopt(do_reopt):
     """
     Set whether or not to do optimization after modified graph in python pass(es).
 

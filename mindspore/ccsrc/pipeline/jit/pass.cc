@@ -165,6 +165,12 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   return map_a;
 }
 
+OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
+  auto opt_a = GetOptPassesA(irpass);
+  OptPassGroupMap a1_a2({opt_a[0], opt_a[1]});
+  return a1_a2;
+}
+
 OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig c_1 = opt::OptPassConfig({
     // Safe inlining,
@@ -270,6 +276,7 @@ static std::unordered_map<std::string, std::shared_ptr<Optimizer>> g_pass_opts =
 void InitOpt(const ResourcePtr &res) {
   if (g_pass_opts.size() == 0) {
     opt::irpass::OptimizeIRPassLib irpass;
+    g_pass_opts["a1a2"] = Optimizer::MakeOptimizer("a1a2", res, GetA1A2(irpass));
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
     g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
     g_pass_opts["opt_after_cconv"] =
@@ -318,6 +325,7 @@ bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
   return true;
 }
 
+bool OptPassA1A2(const ResourcePtr &res) { return OptPassGroup(res, "a1a2"); }
 bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
 bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
 bool OptPassAfterCconvGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_cconv"); }
@@ -440,5 +448,7 @@ std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"cconv", CconvPass},
                                          {"transform_top", TransformTopGraphPass},
                                          {"transform_graph", OptPassTransformGraphGroup}};
+
+std::vector<PassItem> kInlinePasses = {{"simplify_data_structures", SimplifyDataStructuresPass}, {"a1a2", OptPassA1A2}};
 }  // namespace pipeline
 }  // namespace mindspore
