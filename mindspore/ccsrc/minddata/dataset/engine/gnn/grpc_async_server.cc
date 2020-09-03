@@ -51,7 +51,7 @@ Status GrpcAsyncServer::Run() {
 }
 
 Status GrpcAsyncServer::HandleRequest() {
-  bool success;
+  bool success = false;
   void *tag;
   // We loop through the grpc queue. Each connection if successful
   // will come back with our own tag which is an instance of CallData
