@@ -203,6 +203,9 @@ bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &suppor
 
 // Create a new value node of func graph,not kernel graph
 ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
+
+// Transfer depend or control_depend to the new node
+void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

@@ -98,7 +98,7 @@ void CheckInputs(const std::vector<AnfNodePtr> &fusion_inputs) {
   }
 }
 
-bool CheckSegments(size_t segments, size_t communication_op_node_size, std::vector<size_t> *segment_index) {
+bool CheckSegments(size_t segments, size_t communication_op_node_size, const std::vector<size_t> *segment_index) {
   MS_EXCEPTION_IF_NULL(segment_index);
   if (segments >= communication_op_node_size) {
     MS_LOG(INFO) << "fusion not changed: segment_num=" << segments

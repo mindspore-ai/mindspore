@@ -79,7 +79,6 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
                                               : AnfAlgo::GetOutputInferShape(input_node, insert_index);
   bool need_padding = is_insert_input ? trans::IsNeedPadding(dst_format, input_node_out_shape.size())
                                       : trans::IsNeedPadding(input_format, input_node_out_shape.size());
-
   if (!need_padding) {
     // don't need padding insert transdata only
     trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::KPrimTransData->name());
