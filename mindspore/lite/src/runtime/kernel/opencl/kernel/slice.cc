@@ -35,7 +35,7 @@ int SliceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
     im_dst_x = out_tensors_[0]->Width() * CO4;
     im_dst_y = out_tensors_[0]->Height();
   } else {
-    im_dst_y = out_tensors_[0]->Height() * CO4;
+    im_dst_y = out_tensors_[0]->Batch() * out_tensors_[0]->Height() * CO4;
     im_dst_x = out_tensors_[0]->Width();
   }
   size_t img_dtype = CL_FLOAT;
@@ -50,18 +50,28 @@ int SliceOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   return RET_OK;
 }
 int SliceOpenCLKernel::Init() {
+  std::string kernel_name = "slice";
+  auto in_format = op_format_;
+  if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
+    MS_LOG(ERROR) << "input format(" << in_format << ") "
+                  << "format not support!";
+    return RET_ERROR;
+  }
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(op_format_);
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  out_tensors_[0]->SetFormat(op_format_);
+  if (in_format == schema::Format_NC4HW4) {
+    kernel_name += "_NC4HW4";
+  } else if (in_format == schema::Format_NHWC4) {
+    kernel_name += "_NHWC4";
+  }
   std::set<std::string> build_options;
   std::string source = slice_source;
   std::string program_name = "slice";
-  std::string kernel_name = "slice";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
-
   return RET_OK;
 }
 

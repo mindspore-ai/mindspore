@@ -49,7 +49,7 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
   MS_LOG(INFO) << " Read tensors from .bin ";
   std::vector<int> input_shape = {1, 19, 19, 96};
   std::vector<int> output_shape = {1, 10, 10, 13};
-  std::vector<int> begin = {0, 2, 3, 4};
+  std::vector<int> begin = {0, 2, 3, 3};
   std::vector<int> size = {1, 10, 10, 13};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
@@ -68,7 +68,7 @@ TEST_F(TestSliceOpenCLfp32, Slicefp32input_dim4) {
     return;
   }
   auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
+    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
     delete tensor_data;
     MS_LOG(INFO) << " init tensor failed ";
