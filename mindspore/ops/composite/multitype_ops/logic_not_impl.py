@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 
 # logical_not is a metagraph object which will generate function according to input type
 # using ".register" decorator
-logical_not = base.MultitypeFuncGraph("logical_not")
+logical_not = base.MultitypeFuncGraph("logical_not", True)
 
 
 @logical_not.register("Number")

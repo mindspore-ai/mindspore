@@ -19,7 +19,7 @@ from .. import base
 from ... import functional as F
 
 
-getitem = base.MultitypeFuncGraph('getitem')
+getitem = base.MultitypeFuncGraph('getitem', True)
 """
 getitem is a metafuncgraph object which will get item from an object according to input type
 using ".register" decorator.

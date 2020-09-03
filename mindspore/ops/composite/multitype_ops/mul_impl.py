@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-mul = base.MultitypeFuncGraph("mul")
+mul = base.MultitypeFuncGraph("mul", True)
 """
 `mul` is a metafuncgraph object which will multiply two objects according to input type
 using ".register" decorator.

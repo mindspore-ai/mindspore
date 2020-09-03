@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 
 # greater is a metafuncgraph object which will determine if two objects are greater according to input type
 # using ".register" decorator
-greater = base.MultitypeFuncGraph("greater")
+greater = base.MultitypeFuncGraph("greater", True)
 
 
 @greater.register("Number", "Number")

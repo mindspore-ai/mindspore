@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 
 # less is a metafuncgraph object which will determine if two objects are less according to input type
 # using ".register" decorator
-less = base.MultitypeFuncGraph("less")
+less = base.MultitypeFuncGraph("less", True)
 
 
 @less.register("Number", "Number")

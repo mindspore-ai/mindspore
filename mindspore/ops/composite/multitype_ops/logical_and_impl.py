@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 
 # logical_and is a metagraph object which will generate function according to input type
 # using ".register" decorator
-logical_and = base.MultitypeFuncGraph("logical_and")
+logical_and = base.MultitypeFuncGraph("logical_and", True)
 
 
 @logical_and.register("Number", "Number")

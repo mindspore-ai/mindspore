@@ -19,7 +19,7 @@ from ...composite import base
 from ... import functional as F
 
 
-not_equal = base.MultitypeFuncGraph("not_equal")
+not_equal = base.MultitypeFuncGraph("not_equal", True)
 """
 not_equal is a metafuncgraph object which will determine if two objects are not_equal according to input type
 using ".register" decorator

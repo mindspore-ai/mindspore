@@ -305,9 +305,6 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic[ATTR_SHAPE] = shape;
     dic[ATTR_DTYPE] = arg_slice->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg_slice->BuildValue());
-  } else if (abs_base->isa<AbstractRef>()) {
-    auto value = abs_base->cast<AbstractRefPtr>()->ref();
-    dic = ConvertAbstractToPython(value);
   } else if (abs_base->isa<AbstractEllipsis>()) {
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = py::ellipsis();

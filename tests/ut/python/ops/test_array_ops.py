@@ -16,9 +16,7 @@
 import functools
 import numpy as np
 import pytest
-from mindspore._c_expression import signature_dtype as sig_dtype
-from mindspore._c_expression import signature_kind as sig_kind
-from mindspore._c_expression import signature_rw as sig_rw
+from mindspore.ops.signature import sig_rw, sig_dtype, make_sig
 
 import mindspore as ms
 from mindspore import Tensor
@@ -126,9 +124,9 @@ class CustomOP(PrimitiveWithInfer):
 
 class CustomOP2(PrimitiveWithInfer):
     __mindspore_signature__ = (
-        ('p1', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('p2', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
-        ('p3', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD, sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T),
+        make_sig('p1', sig_rw.RW_WRITE, dtype=sig_dtype.T),
+        make_sig('p2', dtype=sig_dtype.T),
+        make_sig('p3', dtype=sig_dtype.T),
     )
 
     @prim_attr_register

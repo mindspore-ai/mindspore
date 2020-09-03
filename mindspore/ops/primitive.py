@@ -14,17 +14,13 @@
 # ============================================================================
 
 """primitive"""
-
 import inspect
 import copy
 from mindspore.common.api import _wrap_func
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore import context
 from .._c_expression import Primitive_, real_run_op, prim_type
-from .._c_expression import signature_rw as sig_rw
-from .._c_expression import signature_kind as sig_kind
-from .._c_expression import signature_dtype as sig_dtype
-
+from . import signature as sig
 
 class Primitive(Primitive_):
     """
@@ -54,24 +50,21 @@ class Primitive(Primitive_):
         self._update_parameter = False
         Primitive_.__init__(self, name, self)
         if hasattr(self.__class__, '__mindspore_signature__'):
-            sig = self._fill_signature(self.__class__.__mindspore_signature__)
-            self.set_signatures(sig)
+            out = self._fill_signature(self.__class__.__mindspore_signature__)
+            self.set_signatures(out)
 
     def _fill_signature(self, signatures):
         """fills signature."""
         signatures_new = []
         for signature in signatures:
-            if isinstance(signature, sig_dtype):
-                signatures_new.append(("argument", sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD,
-                                       sig_kind.KIND_EMPTY_DEFAULT_VALUE, signature))
+            if isinstance(signature, sig.Signature):
+                signatures_new.append(signature)
+            elif isinstance(signature, sig.sig_dtype):
+                signatures_new.append(sig.make_sig(dtype=signature))
             else:
                 if len(signature) < 3:
                     raise ValueError(f"[Internal Error]Signature for one parameter len must > 3, but {signature}")
-                if len(signature) == 3:
-                    signature += (sig_kind.KIND_EMPTY_DEFAULT_VALUE, sig_dtype.T_EMPTY_DEFAULT_VALUE)
-                if len(signature) == 4:
-                    signature += (sig_dtype.T_EMPTY_DEFAULT_VALUE,)
-                signatures_new.append(signature)
+                signatures_new.append(sig.make_sig(*signature))
         return tuple(signatures_new)
 
     def _clone(self):
