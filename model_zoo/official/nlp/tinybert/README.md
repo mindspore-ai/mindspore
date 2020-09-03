@@ -113,7 +113,6 @@ For example, the dataset is cn-wiki-128, the schema file for general distill pha
     ├─__init__.py
     ├─assessment_method.py               # assessment method for evaluation
     ├─dataset.py                         # data processing
-    ├─fused_layer_norm.py                # Layernormal is optimized for Ascend
     ├─gd_config.py                       # parameter configuration for general distill phase
     ├─td_config.py                       # parameter configuration for task distill phase
     ├─tinybert_for_gd_td.py              # backbone code of network
@@ -229,7 +228,6 @@ Parameters for bert network:
     token_type_ids_from_dataset     use the token type ids loaded from dataset or not: True | False, default is True
     dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float16
-    enable_fused_layernorm          use batchnorm instead of layernorm to improve performance, default is False
 ```
 ## [Training Process](#contents)
 ### Training

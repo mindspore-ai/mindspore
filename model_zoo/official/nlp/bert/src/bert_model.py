@@ -25,7 +25,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
-from .fused_layer_norm import FusedLayerNorm
 
 
 class BertConfig:
@@ -78,8 +77,7 @@ class BertConfig:
                  input_mask_from_dataset=True,
                  token_type_ids_from_dataset=True,
                  dtype=mstype.float32,
-                 compute_type=mstype.float32,
-                 enable_fused_layernorm=False):
+                 compute_type=mstype.float32):
         self.batch_size = batch_size
         self.seq_length = seq_length
         self.vocab_size = vocab_size
@@ -98,7 +96,6 @@ class BertConfig:
         self.use_relative_positions = use_relative_positions
         self.dtype = dtype
         self.compute_type = compute_type
-        self.enable_fused_layernorm = enable_fused_layernorm
 
 
 class EmbeddingLookup(nn.Cell):
@@ -245,19 +242,14 @@ class BertOutput(nn.Cell):
                  out_channels,
                  initializer_range=0.02,
                  dropout_prob=0.1,
-                 compute_type=mstype.float32,
-                 enable_fused_layernorm=False):
+                 compute_type=mstype.float32):
         super(BertOutput, self).__init__()
         self.dense = nn.Dense(in_channels, out_channels,
                               weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
         self.dropout = nn.Dropout(1 - dropout_prob)
         self.dropout_prob = dropout_prob
         self.add = P.TensorAdd()
-        if compute_type == mstype.float16:
-            self.layernorm = FusedLayerNorm((out_channels,),
-                                            use_batch_norm=enable_fused_layernorm).to_float(compute_type)
-        else:
-            self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
+        self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
         self.cast = P.Cast()
 
     def construct(self, hidden_status, input_tensor):
@@ -615,8 +607,7 @@ class BertSelfAttention(nn.Cell):
                  initializer_range=0.02,
                  hidden_dropout_prob=0.1,
                  use_relative_positions=False,
-                 compute_type=mstype.float32,
-                 enable_fused_layernorm=False):
+                 compute_type=mstype.float32):
         super(BertSelfAttention, self).__init__()
         if hidden_size % num_attention_heads != 0:
             raise ValueError("The hidden size (%d) is not a multiple of the number "
@@ -644,8 +635,7 @@ class BertSelfAttention(nn.Cell):
                                  out_channels=hidden_size,
                                  initializer_range=initializer_range,
                                  dropout_prob=hidden_dropout_prob,
-                                 compute_type=compute_type,
-                                 enable_fused_layernorm=enable_fused_layernorm)
+                                 compute_type=compute_type)
         self.reshape = P.Reshape()
         self.shape = (-1, hidden_size)
 
@@ -687,8 +677,7 @@ class BertEncoderCell(nn.Cell):
                  hidden_dropout_prob=0.1,
                  use_relative_positions=False,
                  hidden_act="gelu",
-                 compute_type=mstype.float32,
-                 enable_fused_layernorm=False):
+                 compute_type=mstype.float32):
         super(BertEncoderCell, self).__init__()
         self.attention = BertSelfAttention(
             batch_size=batch_size,
@@ -700,8 +689,7 @@ class BertEncoderCell(nn.Cell):
             initializer_range=initializer_range,
             hidden_dropout_prob=hidden_dropout_prob,
             use_relative_positions=use_relative_positions,
-            compute_type=compute_type,
-            enable_fused_layernorm=enable_fused_layernorm)
+            compute_type=compute_type)
         self.intermediate = nn.Dense(in_channels=hidden_size,
                                      out_channels=intermediate_size,
                                      activation=hidden_act,
@@ -710,8 +698,7 @@ class BertEncoderCell(nn.Cell):
                                  out_channels=hidden_size,
                                  initializer_range=initializer_range,
                                  dropout_prob=hidden_dropout_prob,
-                                 compute_type=compute_type,
-                                 enable_fused_layernorm=enable_fused_layernorm)
+                                 compute_type=compute_type)
 
     def construct(self, hidden_states, attention_mask):
         # self-attention
@@ -758,8 +745,7 @@ class BertTransformer(nn.Cell):
                  use_relative_positions=False,
                  hidden_act="gelu",
                  compute_type=mstype.float32,
-                 return_all_encoders=False,
-                 enable_fused_layernorm=False):
+                 return_all_encoders=False):
         super(BertTransformer, self).__init__()
         self.return_all_encoders = return_all_encoders
 
@@ -776,8 +762,7 @@ class BertTransformer(nn.Cell):
                                     hidden_dropout_prob=hidden_dropout_prob,
                                     use_relative_positions=use_relative_positions,
                                     hidden_act=hidden_act,
-                                    compute_type=compute_type,
-                                    enable_fused_layernorm=enable_fused_layernorm)
+                                    compute_type=compute_type)
             layers.append(layer)
 
         self.layers = nn.CellList(layers)
@@ -904,8 +889,7 @@ class BertModel(nn.Cell):
             use_relative_positions=config.use_relative_positions,
             hidden_act=config.hidden_act,
             compute_type=config.compute_type,
-            return_all_encoders=True,
-            enable_fused_layernorm=config.enable_fused_layernorm)
+            return_all_encoders=True)
 
         self.cast = P.Cast()
         self.dtype = config.dtype
