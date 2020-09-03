@@ -21,6 +21,7 @@
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/pooling2d.h"
+#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
 namespace mindspore {
 
@@ -51,97 +52,107 @@ void InitAvgPoolingParam(PoolingParameter *param) {
   param->pool_mode_ = PoolMode_AvgPool;
 }
 
-TEST_F(TestAvgPoolingOpenCL, AvgPoolFp32) {
-  MS_LOG(INFO) << "start TEST_F TestPoolingOpenCL";
+void RunTestCaseAvgPooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
-
-  MS_LOG(INFO) << "create PoolingParameter";
-  auto param = new (std::nothrow) PoolingParameter();
+  size_t dtype_size = sizeof(float);
+  if (enable_fp16) {
+    ocl_runtime->SetFp16Enable(true);
+    dtype_size = sizeof(float16_t);
+  }
+  auto allocator = ocl_runtime->GetAllocator();
+  int n = shape[0];
+  int h = shape[1];
+  int w = shape[2];
+  int c = shape[3];
+  int oh = shape[4];
+  int ow = shape[5];
+  auto param_ptr = std::make_unique<PoolingParameter>();
+  auto param = param_ptr.get();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param create error.";
+    return;
+  }
   InitAvgPoolingParam(param);
-
-  MS_LOG(INFO) << "create Tensors";
-  std::vector<int> shape_in = {
-    param->input_batch_,
-    param->input_h_,
-    param->input_w_,
-    param->input_channel_,
-  };
-  std::vector<int> shape_out = {
-    param->output_batch_,
-    param->output_h_,
-    param->output_w_,
-    param->output_channel_,
-  };
-  auto data_type = kNumberTypeFloat32;
-  auto tensorType = schema::NodeType_ValueNode;
-  lite::tensor::Tensor *tensor_in =
-    new (std::nothrow) lite::tensor::Tensor(data_type, shape_in, schema::Format_NHWC, tensorType);
-  lite::tensor::Tensor *tensor_out =
-    new (std::nothrow) lite::tensor::Tensor(data_type, shape_out, schema::Format_NHWC, tensorType);
-  if (tensor_in == nullptr) {
-    MS_LOG(ERROR) << "tensor_in null";
+  std::vector<int> input_shape = {n, h, w, c};
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape, schema::Format_NHWC);
+  auto tensor_x = tensor_x_ptr.get();
+  if (tensor_x == nullptr) {
+    MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
+  std::vector<int> out_shape = {n, oh, ow, c};
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape, schema::Format_NHWC);
+  auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
-    MS_LOG(ERROR) << "tensor_out null";
+    MS_LOG(ERROR) << "tensor_out create error.";
     return;
   }
-  std::vector<lite::tensor::Tensor *> inputs{tensor_in};
+  std::vector<lite::tensor::Tensor *> inputs{tensor_x};
   std::vector<lite::tensor::Tensor *> outputs{tensor_out};
-
-  MS_LOG(INFO) << "create OpenCL Kernel";
-  auto *pooling_kernel =
-    new (std::nothrow) kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  if (pooling_kernel == nullptr) {
-    MS_LOG(ERROR) << "pooling_kernel null";
+  auto arith_kernel_ptr =
+    std::make_unique<kernel::PoolingOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto arith_kernel = arith_kernel_ptr.get();
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "arith_kernel create error.";
     return;
   }
-  pooling_kernel->Init();
-  std::vector<kernel::LiteKernel *> kernels{pooling_kernel};
+  arith_kernel->Init();
 
-  MS_LOG(INFO) << "create SubGraphOpenCLKernel";
-  auto *pGraph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  inputs[0]->MallocData(allocator);
+
+  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
+  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
+  auto pGraph = pGraph_ptr.get();
   if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph null";
+    MS_LOG(ERROR) << "pGraph create error.";
     return;
   }
   pGraph->Init();
-
-  MS_LOG(INFO) << "initialize data";
-  std::vector<lite::tensor::Tensor *> tensor_map = {tensor_in};
-  for (auto &tensor_file : tensor_map) {
-    auto tensor = tensor_file;
-    size_t size = tensor->Size();
-    const float data[16] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f,
-                            0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f};
-    memcpy(tensor->Data(), data, size);
-  }
-
-  MS_LOG(INFO) << "pGraph->Run()";
+  memcpy(inputs[0]->Data(), input_data, inputs[0]->ElementsNum() * dtype_size);
   pGraph->Run();
 
-  MS_LOG(INFO) << "==================output data=================";
-  float *output_data = reinterpret_cast<float *>(tensor_out->Data());
-  printf("output:");
-  for (int i = 0; i < 4; i++) {
-    printf("%.3f ", output_data[i]);
+  if (enable_fp16) {
+    CompareOutput(outputs[0]->Data(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3), 2e-2);
+  } else {
+    CompareOutput(outputs[0]->Data(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
   }
-  printf("\n");
-  float expect[4] = {2.0f, 3.0f, 4.0f, 5.0f};
+  inputs[0]->SetData(nullptr);
+  outputs[0]->SetData(nullptr);
 
-  for (int i = 0; i < tensor_out->ElementsNum(); ++i)
-    if (std::fabs(output_data[i] - expect[i]) > 1e-5) {
-      printf("idx[%d] except=%.3f output=%.3f, ", i, expect[i], output_data[i]);
-    }
-  printf("test all close OK!\n");
-  lite::CompareOutputData(output_data, expect, 4);
-  delete tensor_in;
-  delete tensor_out;
-  delete pooling_kernel;
-  delete pGraph;
-  delete param;
+  MS_LOG(INFO) << "Test AvgPool2d passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
+TEST_F(TestAvgPoolingOpenCL, AvgPoolingFp32) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 1;
+  int ow = 1;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                   8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float> output_data = {6.0f, 7.0f, 8.0f, 9.0f};
+
+  RunTestCaseAvgPooling(shape, input_data.data(), output_data.data(), false);
+}
+
+TEST_F(TestAvgPoolingOpenCL, AvgPoolingFp16) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 1;
+  int ow = 1;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                       8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float16_t> output_data = {6.0f, 7.0f, 8.0f, 9.0f};
+
+  RunTestCaseAvgPooling(shape, input_data.data(), output_data.data(), true);
+}
 }  // namespace mindspore

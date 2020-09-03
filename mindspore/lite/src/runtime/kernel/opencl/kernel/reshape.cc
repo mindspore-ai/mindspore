@@ -32,14 +32,10 @@ namespace mindspore::kernel {
 
 int ReshapeOpenCLKernel::Init() {
   std::string kernel_name = "reshape";
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
-  in_ori_format_ = in_tensors_[0]->GetFormat();
-  out_ori_format_ = out_tensors_[0]->GetFormat();
-  if (in_ori_format_ != schema::Format_NHWC4 && in_ori_format_ != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "Reshape input format:" << in_ori_format_ << " not support yet.";
-    return RET_ERROR;
-  }
+
   if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
     MS_LOG(ERROR) << "Reshape input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
                   << out_tensors_[0]->shape().back();
@@ -54,12 +50,10 @@ int ReshapeOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  if (out_tensors_[0]->shape().size() == 2) {
-    out_ori_format_ = schema::Format_NC;
-    out_tensors_[0]->SetFormat(schema::Format_NC4);
-  }
+  in_ori_format_ = in_tensors_[0]->GetFormat();
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -69,17 +63,27 @@ int ReshapeOpenCLKernel::ReSize() { return RET_OK; }
 int ReshapeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
   std::vector<int> shapex = out_tensors_[0]->shape();
-  int h, w, c;
+  int n, h, w, c;
   if (shapex.size() == 2) {
+    n = shapex[0];
     h = w = 1;
     c = shapex[1];
   } else {
+    n = shapex[0];
     h = shapex[1];
     w = shapex[2];
     c = shapex[3];
   }
-  im_dst_x = w * UP_DIV(c, C4NUM);
-  im_dst_y = h;
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = w * UP_DIV(c, C4NUM);
+    im_dst_y = n * h;
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = w;
+    im_dst_y = n * UP_DIV(c, C4NUM) * h;
+  } else {
+    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
+    return RET_ERROR;
+  }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;

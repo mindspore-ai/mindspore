@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <iostream>
 #include <memory>
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
+#include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/pooling2d.h"
@@ -26,98 +27,132 @@ namespace mindspore {
 
 class TestMaxPoolingOpenCL : public mindspore::CommonTest {};
 
-void InitParameter(PoolingParameter *param) {
+void InitMaxPoolingParam(PoolingParameter *param) {
+  param->input_batch_ = 1;
+  param->input_h_ = 2;
+  param->input_w_ = 2;
+  param->input_channel_ = 4;
+
+  param->output_batch_ = 1;
+  param->output_h_ = 1;
+  param->output_w_ = 1;
+  param->output_channel_ = 4;
+
   param->window_h_ = 2;
   param->window_w_ = 2;
+
   param->stride_h_ = 2;
   param->stride_w_ = 2;
+
   param->pad_u_ = 0;
   param->pad_d_ = 0;
   param->pad_l_ = 0;
   param->pad_r_ = 0;
+
   param->pool_mode_ = PoolMode_MaxPool;
 }
 
-TEST_F(TestMaxPoolingOpenCL, MaxPool_1_32_512_96) {
-  MS_LOG(INFO) << "ocl runtime";
+void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   ocl_runtime->Init();
+  size_t dtype_size = sizeof(float);
+  if (enable_fp16) {
+    ocl_runtime->SetFp16Enable(true);
+    dtype_size = sizeof(float16_t);
+  }
   auto allocator = ocl_runtime->GetAllocator();
-
-  MS_LOG(INFO) << "PoolingParameter";
-  auto param = new (std::nothrow) PoolingParameter;
-  InitParameter(param);
-
-  // define tensor
-  MS_LOG(INFO) << "define tensor1";
-  std::vector<int> input_shape = {1, 16, 256, 192};
-  std::vector<int> output_shape = {1, 8, 128, 192};
-  auto data_type = kNumberTypeFloat32;
-  auto tensorType = schema::NodeType_ValueNode;
-  MS_LOG(INFO) << "define tensor2";
-  auto input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, schema::Format_NHWC4, tensorType);
-  auto output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensorType);
-  if (input_tensor == nullptr) {
-    MS_LOG(ERROR) << "input_tensor null";
+  int n = shape[0];
+  int h = shape[1];
+  int w = shape[2];
+  int c = shape[3];
+  int oh = shape[4];
+  int ow = shape[5];
+  auto param_ptr = std::make_unique<PoolingParameter>();
+  auto param = param_ptr.get();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param create error.";
     return;
   }
-  if (output_tensor == nullptr) {
-    MS_LOG(ERROR) << "output_tensor null";
+  InitMaxPoolingParam(param);
+  std::vector<int> input_shape = {n, h, w, c};
+  auto tensor_x_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape, schema::Format_NHWC);
+  auto tensor_x = tensor_x_ptr.get();
+  if (tensor_x == nullptr) {
+    MS_LOG(ERROR) << "tensor_x create error.";
     return;
   }
-  MS_LOG(INFO) << "define input";
-  std::vector<lite::tensor::Tensor *> inputs{input_tensor};
-  std::vector<lite::tensor::Tensor *> outputs{output_tensor};
-
-  // run
-  MS_LOG(INFO) << "pooling_kernel";
-  auto *pooling_kernel =
-    new (std::nothrow) kernel::PoolingOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  if (pooling_kernel == nullptr) {
-    MS_LOG(ERROR) << "pooling_kernel null";
+  std::vector<int> out_shape = {n, oh, ow, c};
+  auto tensor_out_ptr = std::make_unique<lite::tensor::Tensor>(
+    TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape, schema::Format_NHWC);
+  auto tensor_out = tensor_out_ptr.get();
+  if (tensor_out == nullptr) {
+    MS_LOG(ERROR) << "tensor_out create error.";
     return;
   }
-  MS_LOG(INFO) << "pooling_kernel init";
-  pooling_kernel->Init();
+  std::vector<lite::tensor::Tensor *> inputs{tensor_x};
+  std::vector<lite::tensor::Tensor *> outputs{tensor_out};
+  auto arith_kernel_ptr =
+    std::make_unique<kernel::PoolingOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto arith_kernel = arith_kernel_ptr.get();
+  if (arith_kernel == nullptr) {
+    MS_LOG(ERROR) << "arith_kernel create error.";
+    return;
+  }
+  arith_kernel->Init();
 
-  std::vector<kernel::LiteKernel *> kernels{pooling_kernel};
   inputs[0]->MallocData(allocator);
-  auto *pGraph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+
+  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
+  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
+  auto pGraph = pGraph_ptr.get();
   if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph null";
+    MS_LOG(ERROR) << "pGraph create error.";
     return;
   }
-  MS_LOG(INFO) << "pGraph init";
   pGraph->Init();
-
-  // load data
-  MS_LOG(INFO) << "load data1";
-  std::string input_file = "maxpool_in.bin";
-  std::string expect_file = "maxpool_out.bin";
-  MS_LOG(INFO) << "load data2";
-  LoadTestData(input_tensor->Data(), input_tensor->Size(), input_file);
-  auto *input_data = reinterpret_cast<float *>(input_tensor->Data());
-  printf("input[0:10]:");
-  for (int i = 0; i < 10; i++) {
-    printf("[%d]:%.3f ", i, input_data[i]);
-  }
-  printf("\n");
-
+  memcpy(inputs[0]->Data(), input_data, inputs[0]->ElementsNum() * dtype_size);
   pGraph->Run();
 
-  MS_LOG(INFO) << "compare result";
-  std::cout << "compare result" << std::endl;
-  CompareOutput(output_tensor, expect_file, static_cast<float>(1e-5));
-  for (auto tensor : inputs) {
-    delete tensor;
+  if (enable_fp16) {
+    CompareOutput(outputs[0]->Data(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3), 2e-2);
+  } else {
+    CompareOutput(outputs[0]->Data(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
   }
-  for (auto tensor : outputs) {
-    delete tensor;
-  }
-  delete pooling_kernel;
-  delete pGraph;
+  inputs[0]->SetData(nullptr);
+  outputs[0]->SetData(nullptr);
+
+  MS_LOG(INFO) << "Test MaxPool2d passed";
   lite::opencl::OpenCLRuntime::DeleteInstance();
 }
 
+TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp32) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 1;
+  int ow = 1;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                   8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float> output_data = {12.0f, 13.0f, 14.0f, 15.0f};
+
+  RunTestCaseMaxPooling(shape, input_data.data(), output_data.data(), false);
+}
+
+TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp16) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 1;
+  int ow = 1;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                       8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float16_t> output_data = {12.0f, 13.0f, 14.0f, 15.0f};
+
+  RunTestCaseMaxPooling(shape, input_data.data(), output_data.data(), true);
+}
 }  // namespace mindspore

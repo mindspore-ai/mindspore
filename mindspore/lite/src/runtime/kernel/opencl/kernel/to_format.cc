@@ -65,6 +65,14 @@ int ToFormatOpenCLKernel::Init() {
 int ToFormatOpenCLKernel::InitNHWCShape() {
   std::vector<int> shapex = out_tensors_[0]->shape();
   size_t n, h, w, c;
+  if (shapex.size() == 2) {
+    n = shapex[0];
+    h = 1;
+    w = 1;
+    c = shapex[1];
+    nhwc_shape_ = {n, h, w, c};
+    return RET_OK;
+  }
   if (out_tensors_[0]->GetFormat() == schema::Format_NC4HW4 || out_tensors_[0]->GetFormat() == schema::Format_NHWC4 ||
       out_tensors_[0]->GetFormat() == schema::Format_NHWC) {
     n = shapex[0];
@@ -118,7 +126,7 @@ int ToFormatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size
     im_dst_x = w * UP_DIV(c, C4NUM);
     im_dst_y = h;
   } else if (out_tensors_[0]->GetFormat() == schema::Format_NC4) {
-    int c = nhwc_shape_[1];
+    int c = nhwc_shape_[3];
     im_dst_x = UP_DIV(c, C4NUM);
     im_dst_y = 1;
   } else {

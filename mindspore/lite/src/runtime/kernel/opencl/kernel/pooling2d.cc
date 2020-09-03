@@ -64,6 +64,7 @@ int PoolingOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   if (out_mem_type_ == OpenCLMemType::BUF) {
     MS_LOG(ERROR) << "buffer output not support yet.";
     return RET_ERROR;
@@ -75,27 +76,38 @@ int PoolingOpenCLKernel::Init() {
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
   return RET_OK;
 }
 
 std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
-  const size_t global_x = out_tensors_[0]->Height();
-  const size_t global_y = out_tensors_[0]->Width();
-  const size_t global_z = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  const size_t global_x = out_tensors_[0]->shape()[1];
+  const size_t global_y = out_tensors_[0]->shape()[2];
+  const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
   std::vector<size_t> global = {global_x, global_y, global_z};
   return global;
 }
 
 int PoolingOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t im_dst_x, im_dst_y;
-  im_dst_x = out_tensors_[0]->Width() * CO4;
-  im_dst_y = out_tensors_[0]->Height();
+  int n = out_tensors_[0]->shape()[0];
+  int h = out_tensors_[0]->shape()[1];
+  int w = out_tensors_[0]->shape()[2];
+  int c = out_tensors_[0]->shape()[3];
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = w * UP_DIV(c, C4NUM);
+    im_dst_y = n * h;
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = w;
+    im_dst_y = n * UP_DIV(c, C4NUM) * h;
+  } else {
+    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
+    return RET_ERROR;
+  }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
@@ -114,9 +126,10 @@ int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
 
-  int slices = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  cl_int4 input_shape = {in_tensors_[0]->Height(), in_tensors_[0]->Width(), in_tensors_[0]->Channel(), slices};
-  cl_int4 output_shape = {out_tensors_[0]->Height(), out_tensors_[0]->Width(), out_tensors_[0]->Channel(), slices};
+  int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
+  cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
+  cl_int4 output_shape = {out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2], out_tensors_[0]->shape()[3],
+                          slices};
   cl_int2 stride = {parameter_->stride_h_, parameter_->stride_w_};
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
