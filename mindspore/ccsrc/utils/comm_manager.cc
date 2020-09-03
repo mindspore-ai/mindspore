@@ -40,7 +40,7 @@ CommManager &CommManager::GetInstance() noexcept {
 #define HCCL_RUN_CHECK(op_name, group, op)                      \
   do {                                                          \
     auto hccl_result = (op);                                    \
-    if (hccl_result != tagHcclResult::HCCL_SUCCESS) {           \
+    if (hccl_result != 0) {                                     \
       MS_LOG(ERROR) << op_name << " failed: #" << group << "#"; \
       return false;                                             \
     }                                                           \

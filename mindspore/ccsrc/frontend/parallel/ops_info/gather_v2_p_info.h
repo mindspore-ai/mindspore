@@ -32,12 +32,13 @@ namespace parallel {
 class GatherV2PInfo : public OperatorInfo {
  public:
   GatherV2PInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
+                const PrimitiveAttrs &attrs, const std::string &replace_op_name = GATHERV2)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2PCost>()),
         axis_(0),
         bias_(0),
         index_offset_(0),
-        slice_size_(0) {}
+        slice_size_(0),
+        replace_op_name_(replace_op_name) {}
   ~GatherV2PInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
@@ -69,10 +70,10 @@ class GatherV2PInfo : public OperatorInfo {
 
   int32_t axis_;
   std::string target_ = DEVICE;
-  std::string replace_op_name_ = GATHERV2;
   int64_t bias_;
   int64_t index_offset_;
   int64_t slice_size_;
+  std::string replace_op_name_ = GATHERV2;
   Shape out_dev_matrix_shape_;
   Group group_;
   bool manual_split_ = false;
@@ -83,12 +84,9 @@ class GatherV2PInfo : public OperatorInfo {
 class SparseGatherV2Info : public GatherV2PInfo {
  public:
   SparseGatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                     const PrimitiveAttrs &attrs)
-      : GatherV2PInfo(name, inputs_shape, outputs_shape, attrs) {}
+                     const PrimitiveAttrs &attrs, const std::string &replace_op_name = SPARSE_GATHERV2)
+      : GatherV2PInfo(name, inputs_shape, outputs_shape, attrs, replace_op_name) {}
   ~SparseGatherV2Info() override = default;
-
- private:
-  std::string replace_op_name_ = SPARSE_GATHERV2;
 };
 
 class EmbeddingLookupInfo : public GatherV2PInfo {

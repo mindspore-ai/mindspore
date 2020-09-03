@@ -197,6 +197,7 @@ constexpr char ARGMAXWITHVALUE[] = "ArgMaxWithValue";
 constexpr char ARGMINWITHVALUE[] = "ArgMinWithValue";
 constexpr char CONV2D[] = "Conv2D";
 constexpr char FUSE_BATCH_NORM[] = "FusedBatchNorm";
+constexpr char FUSE_BATCH_NORM_EX[] = "FusedBatchNormEx";
 constexpr char BATCH_NORM[] = "BatchNorm";
 constexpr char LAYER_NORM[] = "LayerNorm";
 constexpr char POOLING[] = "Pooling";
