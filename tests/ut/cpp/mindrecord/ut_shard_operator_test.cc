@@ -73,7 +73,7 @@ TEST_F(TestShardOperator, TestShardSampleBasic) {
     MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i <= kSampleCount);
 }
 
@@ -99,7 +99,7 @@ TEST_F(TestShardOperator, TestShardSampleWrongNumber) {
     MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i <= 5);
 }
 
@@ -125,7 +125,7 @@ TEST_F(TestShardOperator, TestShardSampleRatio) {
     MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i <= 10);
 }
 
@@ -151,7 +151,7 @@ TEST_F(TestShardOperator, TestShardSamplePartition) {
     MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i <= 10);
 }
 
@@ -176,7 +176,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerBasic) {
               << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i == 20);
 }  // namespace mindrecord
 
@@ -202,7 +202,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
               << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i == 6);
 }
 
@@ -238,7 +238,7 @@ TEST_F(TestShardOperator, TestShardCategory) {
     category_no++;
     category_no %= static_cast<int>(categories.size());
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardOperator, TestShardShuffle) {
@@ -262,7 +262,7 @@ TEST_F(TestShardOperator, TestShardShuffle) {
                  << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardOperator, TestShardSampleShuffle) {
@@ -287,7 +287,7 @@ TEST_F(TestShardOperator, TestShardSampleShuffle) {
                  << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_LE(i, 35);
 }
 
@@ -314,7 +314,7 @@ TEST_F(TestShardOperator, TestShardShuffleSample) {
                  << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_TRUE(i <= kSampleSize);
 }
 
@@ -341,7 +341,7 @@ TEST_F(TestShardOperator, TestShardSampleShuffleSample) {
                  << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
     i++;
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_LE(i, 35);
 }
 
@@ -373,8 +373,8 @@ TEST_F(TestShardOperator, TestShardShuffleCompare) {
     auto y = compare_dataset.GetNext();
     if ((std::get<1>(x[0]))["file_name"] != (std::get<1>(y[0]))["file_name"]) different = true;
   }
-  dataset.Finish();
-  compare_dataset.Finish();
+  dataset.Close();
+  compare_dataset.Close();
   ASSERT_TRUE(different);
 }
 
@@ -409,7 +409,7 @@ TEST_F(TestShardOperator, TestShardCategoryShuffle1) {
     category_no++;
     category_no %= static_cast<int>(categories.size());
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardOperator, TestShardCategoryShuffle2) {
@@ -442,7 +442,7 @@ TEST_F(TestShardOperator, TestShardCategoryShuffle2) {
     category_no++;
     category_no %= static_cast<int>(categories.size());
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardOperator, TestShardCategorySample) {
@@ -477,7 +477,7 @@ TEST_F(TestShardOperator, TestShardCategorySample) {
     category_no++;
     category_no %= static_cast<int>(categories.size());
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_EQ(category_no, 0);
   ASSERT_TRUE(i <= kSampleSize);
 }
@@ -515,7 +515,7 @@ TEST_F(TestShardOperator, TestShardCategorySampleShuffle) {
     category_no++;
     category_no %= static_cast<int>(categories.size());
   }
-  dataset.Finish();
+  dataset.Close();
   ASSERT_EQ(category_no, 0);
   ASSERT_TRUE(i <= kSampleSize);
 }

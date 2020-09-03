@@ -67,7 +67,7 @@ TEST_F(TestShardReader, TestShardReaderGeneral) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardReader, TestShardReaderSample) {
@@ -90,7 +90,7 @@ TEST_F(TestShardReader, TestShardReaderSample) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
   dataset.Close();
 }
 
@@ -110,7 +110,7 @@ TEST_F(TestShardReader, TestShardReaderEasy) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardReader, TestShardReaderColumnNotInIndex) {
@@ -131,7 +131,7 @@ TEST_F(TestShardReader, TestShardReaderColumnNotInIndex) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardReader, TestShardReaderColumnNotInSchema) {
@@ -161,7 +161,7 @@ TEST_F(TestShardReader, TestShardVersion) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
 }
 
 TEST_F(TestShardReader, TestShardReaderDir) {
@@ -192,7 +192,7 @@ TEST_F(TestShardReader, TestShardReaderConsumer) {
       }
     }
   }
-  dataset.Finish();
+  dataset.Close();
 }
 }  // namespace mindrecord
 }  // namespace mindspore

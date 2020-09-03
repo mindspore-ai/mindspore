@@ -17,8 +17,7 @@ This module is to read data from mindrecord.
 """
 import mindspore._c_mindrecord as ms
 from mindspore import log as logger
-from .common.exceptions import MRMOpenError, MRMLaunchError, MRMFinishError
-
+from .common.exceptions import MRMOpenError, MRMLaunchError
 __all__ = ['ShardReader']
 
 class ShardReader:
@@ -101,22 +100,6 @@ class ShardReader:
             pointer object refer to header.
         """
         return self._reader.get_header()
-
-    def finish(self):
-        """
-        stop the worker threads.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
-        Raises:
-            MRMFinishError: If failed to finish worker threads.
-        """
-        ret = self._reader.finish()
-        if ret != ms.MSRStatus.SUCCESS:
-            logger.error("Failed to finish worker threads.")
-            raise MRMFinishError
-        return ret
 
     def close(self):
         """close MindRecord File."""

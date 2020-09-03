@@ -83,15 +83,6 @@ class FileReader:
                 yield populate_data(raw, blob, self._columns, self._header.blob_fields, self._header.schema)
             iterator = self._reader.get_next()
 
-    def finish(self):
-        """
-        Stop reader worker.
-
-        Raises:
-            MRMFinishError: If failed to finish worker threads.
-        """
-        return self._reader.finish()
-
     def close(self):
         """Stop reader worker and close File."""
         return self._reader.close()
