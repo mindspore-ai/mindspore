@@ -34,7 +34,6 @@ class ReverseSequence : public PrimitiveC {
   explicit ReverseSequence(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetSeqAxis(int seq_axis);
   void SetBatchAxis(int batch_axis);
-  void SetSeqLengths(const std::vector<int> &seq_lengths);
 #else
   ReverseSequence() = default;
 
@@ -43,7 +42,6 @@ class ReverseSequence : public PrimitiveC {
   int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetSeqAxis() const;
   int GetBatchAxis() const;
-  std::vector<int> GetSeqLengths() const;
 };
 }  // namespace lite
 }  // namespace mindspore

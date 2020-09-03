@@ -47,20 +47,6 @@ STATUS TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
 
   attr->validateIndices = false;
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->outputShape)) {
-    MS_LOG(ERROR) << "get sparseToDense -> outputShape failed";
-    return RET_ERROR;
-  }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_tensors, tflite_model_buffer, attr->sparseValue)) {
-    MS_LOG(ERROR) << "get sparseToDense -> sparseValue failed";
-    return RET_ERROR;
-  }
-  if (GetTfliteData(tflite_op->inputs[3], tflite_tensors, tflite_model_buffer, attr->defaultValue)) {
-    MS_LOG(ERROR) << "get sparseToDense -> defaultValue failed";
-    return RET_ERROR;
-  }
-
   op->primitive->value.type = schema::PrimitiveType_SparseToDense;
   op->primitive->value.value = attr.release();
 

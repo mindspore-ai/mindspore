@@ -1031,6 +1031,8 @@ OpParameter *PopulateSparseToDenseParameter(const mindspore::lite::PrimitiveC *p
   }
   memset(sparse_to_dense_param, 0, sizeof(SparseToDenseParameter));
   sparse_to_dense_param->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::SparseToDense *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  sparse_to_dense_param->validate_indices_ = param->GetValidateIndices();
   return reinterpret_cast<OpParameter *>(sparse_to_dense_param);
 }
 

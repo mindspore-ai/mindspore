@@ -168,7 +168,6 @@ bool OpenCLWrapper::LoadLibraryFromPath(const std::string &library_path) {
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage);
 #endif
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
-  // LOAD_OPENCL_FUNCTION_PTR(clGetKernelSubGroupInfoKHR);
   LOAD_OPENCL_FUNCTION_PTR(clCreateCommandQueueWithProperties);
   LOAD_OPENCL_FUNCTION_PTR(clGetExtensionFunctionAddress);
   LOAD_OPENCL_FUNCTION_PTR(clSVMAlloc);
@@ -614,17 +613,6 @@ cl_mem clCreateImage(cl_context context, cl_mem_flags flags, const cl_image_form
 #endif
 
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
-#if 0
-// clGetKernelSubGroupInfoKHR wrapper, use OpenCLWrapper function.
-cl_int clGetKernelSubGroupInfoKHR(cl_kernel kernel, cl_device_id device, cl_kernel_sub_group_info param_name,
-                                  size_t input_value_size, const void *input_value, size_t param_value_size,
-                                  void *param_value, size_t *param_value_size_ret) {
-  auto func = mindspore::lite::opencl::OpenCLWrapper::GetInstance()->clGetKernelSubGroupInfoKHR;
-  MS_ASSERT(func != nullptr);
-  return func(kernel, device, param_name, input_value_size, input_value, param_value_size, param_value,
-              param_value_size_ret);
-}
-#endif
 
 // clCreateCommandQueueWithProperties wrapper, use OpenCLWrapper function.
 cl_command_queue clCreateCommandQueueWithProperties(cl_context context, cl_device_id device,

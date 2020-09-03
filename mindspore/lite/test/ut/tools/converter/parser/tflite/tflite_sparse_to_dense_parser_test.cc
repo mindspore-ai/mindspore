@@ -37,12 +37,6 @@ TEST_F(TestTfliteParserSparseToDense, OpType) {
 TEST_F(TestTfliteParserSparseToDense, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSparseToDense(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsSparseToDense();
-  std::vector<int> outputShape = {5, 5};
-  ASSERT_EQ(val->outputShape, outputShape);
-  std::vector<int> sparseValue = {1};
-  ASSERT_EQ(val->sparseValue, sparseValue);
-  std::vector<int> defaultValue = {0};
-  ASSERT_EQ(val->defaultValue, defaultValue);
   ASSERT_EQ(val->validateIndices, false);
 }
 }  // namespace mindspore

@@ -250,11 +250,6 @@ int ConvolutionBaseCPUKernel::SetOutputTensorQuantParam() {
   } else {
     MS_LOG(ERROR) << "Not Support Per Channel for input now.";
     return RET_ERROR;
-    //    auto output_quant_arg = output_tensor->GetQuantParams();
-    //    for (int i = 0; i < out_arg_num; ++i) {
-    //      conv_quant_arg_->output_quant_args_[i].zp_ = output_quant_arg[i].zeroPoint;
-    //      conv_quant_arg_->output_quant_args_[i].scale_ = output_quant_arg[i].scale;
-    //    }
   }
   return RET_OK;
 }

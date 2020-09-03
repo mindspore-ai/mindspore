@@ -88,7 +88,6 @@ static atomic_bool thread_pool_is_created[MAX_THREAD_POOL_NUM] = {ATOMIC_VAR_INI
 ThreadPool *GetInstance(int thread_pool_id) {
   if (thread_pool_id < 0 || thread_pool_id >= MAX_THREAD_POOL_NUM) {
     LOG_ERROR("invaid context id: %d", thread_pool_id);
-    // DestroyThreadPool(thread_pool_id);
     return NULL;
   }
   return &thread_pool_list[thread_pool_id];
@@ -434,7 +433,6 @@ bool PushTaskToQueue(int thread_pool_id, int thread_id, Task *task) {
   thread->task_list[tail_index] = task;
   atomic_store_explicit(&thread->tail, next, memory_order_release);
   atomic_fetch_add_explicit(&thread->task_size, 1, memory_order_relaxed);
-  // atomic_store_explicit(&thread->task_size, thread->task_size + 1, memory_order_relaxed);
   sem_post(&thread->sem);
   return true;
 }
@@ -552,7 +550,6 @@ void ThreadRun(Thread *thread) {
         }
         task->func(task->content, thread_id);
         atomic_fetch_sub_explicit(&thread->task_size, 1, memory_order_relaxed);
-        // atomic_store_explicit(&thread->task_size, thread->task_size - 1, memory_order_relaxed);
         spin_count = 0;
         sem_trywait(&thread->sem);
       } else {

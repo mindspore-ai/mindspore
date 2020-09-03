@@ -125,45 +125,5 @@ void CompareOutput(float *output_data, std::string file_path) {
   printf("output num : %zu\n", output_num);
   CompareOutputData(output_data, ground_truth, output_num);
 }
-
-// std::string GetAndroidPackageName() {
-//  static std::string packageName;
-//
-//  if (!packageName.empty()) {
-//    return packageName;
-//  }
-//
-//  char cmdline[MAX_FILENAME_LEN] = {0};
-//  int fd = open("/proc/self/cmdline", O_RDONLY);
-//
-//  if (fd >= 0) {
-//    char ch;
-//    int i = 0;
-//    while (read(fd, &ch, sizeof(ch)) > 0 && !isspace(ch)) {
-//      if (':' == ch) {
-//        break;
-//      }
-//
-//      if (('/' == ch) || ('\\' == ch)) {
-//        (void)memset(cmdline, 0, sizeof(cmdline));
-//        i = 0;
-//      } else {
-//        cmdline[i] = ch;
-//        i++;
-//      }
-//    }
-//    close(fd);
-//  }
-//  packageName = std::string(cmdline);
-//  return packageName;
-//}
-
-// std::string GetAndroidPackagePath() {
-//  std::string packageName = GetAndroidPackageName();
-//  if (packageName.empty()) {
-//    return "./";
-//  }
-//  return "/data/data/" + packageName + '/';
-//}
 }  // namespace lite
 }  // namespace mindspore

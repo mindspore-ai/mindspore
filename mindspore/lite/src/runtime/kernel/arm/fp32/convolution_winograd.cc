@@ -115,13 +115,8 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 
   int oc4 = UP_DIV(out_channel, C4NUM);
   int oc_block, oc_block_num;
-  // #ifdef ENABLE_ARM32
-  //   oc_block = C4NUM;
-  //   oc_block_num = UP_DIV(output_channel, C4NUM);
-  // #else
   oc_block = C8NUM;
   oc_block_num = UP_DIV(out_channel, C8NUM);
-  // #endif
 
   // init weight
   auto ret = MallocFilterMatrix(oc_block, oc_block_num);

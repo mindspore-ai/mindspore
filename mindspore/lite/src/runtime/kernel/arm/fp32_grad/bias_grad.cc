@@ -77,7 +77,6 @@ int BiasGradCPUKernel::Run() {
   }
   auto in = reinterpret_cast<float *>(inputs_.at(0)->Data());
   auto out = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  // size_t data_size = inputs_.at(0)->ElementsNum();
 
   size_t nhw_size = 1;
   size_t channels = bias_param->in_shape0_[bias_param->ndim_ - 1];  // C in NHWC

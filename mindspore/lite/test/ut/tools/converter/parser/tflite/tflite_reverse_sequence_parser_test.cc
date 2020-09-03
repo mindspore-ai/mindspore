@@ -39,7 +39,5 @@ TEST_F(TestTfliteParserReverseSequence, AttrValue) {
   auto val = meta_graph->nodes.front()->primitive->value.AsReverseSequence();
   ASSERT_EQ(val->seqAxis, 1);
   ASSERT_EQ(val->seqAxis, 1);
-  std::vector<int> seq_length = {7, 2, 3, 5};
-  ASSERT_EQ(val->seqLengths, seq_length);
 }
 }  // namespace mindspore

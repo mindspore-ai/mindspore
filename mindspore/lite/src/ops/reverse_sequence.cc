@@ -21,26 +21,16 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int ReverseSequence::GetSeqAxis() const { return this->primitive_->value.AsReverseSequence()->seqAxis; }
 int ReverseSequence::GetBatchAxis() const { return this->primitive_->value.AsReverseSequence()->batchAxis; }
-std::vector<int> ReverseSequence::GetSeqLengths() const {
-  return this->primitive_->value.AsReverseSequence()->seqLengths;
-}
 
 void ReverseSequence::SetSeqAxis(int seq_axis) { this->primitive_->value.AsReverseSequence()->seqAxis = seq_axis; }
 void ReverseSequence::SetBatchAxis(int batch_axis) {
   this->primitive_->value.AsReverseSequence()->batchAxis = batch_axis;
-}
-void ReverseSequence::SetSeqLengths(const std::vector<int> &seq_lengths) {
-  this->primitive_->value.AsReverseSequence()->seqLengths = seq_lengths;
 }
 
 #else
 
 int ReverseSequence::GetSeqAxis() const { return this->primitive_->value_as_ReverseSequence()->seqAxis(); }
 int ReverseSequence::GetBatchAxis() const { return this->primitive_->value_as_ReverseSequence()->batchAxis(); }
-std::vector<int> ReverseSequence::GetSeqLengths() const {
-  auto fb_vector = this->primitive_->value_as_ReverseSequence()->seqLengths();
-  return std::vector<int>(fb_vector->begin(), fb_vector->end());
-}
 int ReverseSequence::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -50,13 +40,7 @@ int ReverseSequence::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
     MS_LOG(ERROR) << "value_as_ReverseSequence return nullptr";
     return RET_ERROR;
   }
-  std::vector<int32_t> seqLengths;
-  if (attr->seqLengths() != nullptr) {
-    for (int i = 0; i < static_cast<int>(attr->seqLengths()->size()); i++) {
-      seqLengths.push_back(attr->seqLengths()->data()[i]);
-    }
-  }
-  auto val_offset = schema::CreateReverseSequenceDirect(*fbb, attr->seqAxis(), attr->batchAxis(), &seqLengths);
+  auto val_offset = schema::CreateReverseSequence(*fbb, attr->seqAxis(), attr->batchAxis());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_ReverseSequence, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

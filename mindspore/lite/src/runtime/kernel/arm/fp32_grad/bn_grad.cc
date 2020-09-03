@@ -48,7 +48,6 @@ int BNGradInputCPUKernel::Init() {
     return RET_ERROR;
   }
   auto *input_tensor = inputs_.at(0);
-  // auto *weight_tensor = inputs_.at(1);
   auto *out_tensor = outputs_.at(0);
   auto in_shape = input_tensor->shape();
   out_tensor->set_shape(in_shape);
@@ -59,12 +58,10 @@ int BNGradInputCPUKernel::Init() {
 int BNGradInputCPUKernel::ReSize() { return RET_OK; }
 
 int BNGradInputCPUKernel::Run() {
-  // std::cout << "run succ" << std::endl;
   auto *input_x = inputs_.at(0);
   auto *input_yt = inputs_.at(1);
   auto *input_scale = inputs_.at(2);
   auto *output_grad = outputs_.at(0);
-  // Tensor *bias = input[5];
   auto bn_param = reinterpret_cast<bnParameter *>(opParameter);
   int batch = bn_param->batch;
   int channels = bn_param->channels;
@@ -100,8 +97,6 @@ kernel::LiteKernel *CpuBNGradInputFp32KernelCreator(const std::vector<lite::tens
                                                     const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_BNGradInput);
-  //  parameter->name = opDef.name()->str().data();
-  //  parameter->type = opDef.attr_type();
   auto *kernel = new (std::nothrow) BNGradInputCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BNGradInputCPUKernel fail!";

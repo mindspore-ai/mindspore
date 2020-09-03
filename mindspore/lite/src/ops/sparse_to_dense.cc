@@ -19,44 +19,14 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> SparseToDense::GetOutputShape() const {
-  return this->primitive_->value.AsSparseToDense()->outputShape;
-}
-std::vector<int> SparseToDense::GetSparseValue() const {
-  return this->primitive_->value.AsSparseToDense()->sparseValue;
-}
-std::vector<int> SparseToDense::GetDefaultValue() const {
-  return this->primitive_->value.AsSparseToDense()->defaultValue;
-}
 bool SparseToDense::GetValidateIndices() const { return this->primitive_->value.AsSparseToDense()->validateIndices; }
 
-void SparseToDense::SetOutputShape(const std::vector<int> &output_shape) {
-  this->primitive_->value.AsSparseToDense()->outputShape = output_shape;
-}
-void SparseToDense::SetSparseValue(const std::vector<int> &sparse_value) {
-  this->primitive_->value.AsSparseToDense()->sparseValue = sparse_value;
-}
-void SparseToDense::SetDefaultValue(const std::vector<int> &default_value) {
-  this->primitive_->value.AsSparseToDense()->defaultValue = default_value;
-}
 void SparseToDense::SetValidateIndices(bool validate_indices) {
   this->primitive_->value.AsSparseToDense()->validateIndices = validate_indices;
 }
 
 #else
 
-std::vector<int> SparseToDense::GetOutputShape() const {
-  auto fb_vector = this->primitive_->value_as_SparseToDense()->outputShape();
-  return std::vector<int>(fb_vector->begin(), fb_vector->end());
-}
-std::vector<int> SparseToDense::GetSparseValue() const {
-  auto fb_vector = this->primitive_->value_as_SparseToDense()->sparseValue();
-  return std::vector<int>(fb_vector->begin(), fb_vector->end());
-}
-std::vector<int> SparseToDense::GetDefaultValue() const {
-  auto fb_vector = this->primitive_->value_as_SparseToDense()->defaultValue();
-  return std::vector<int>(fb_vector->begin(), fb_vector->end());
-}
 bool SparseToDense::GetValidateIndices() const { return this->primitive_->value_as_SparseToDense()->validateIndices(); }
 int SparseToDense::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -66,25 +36,7 @@ int SparseToDense::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
     MS_LOG(ERROR) << "value_as_SparseToDense return nullptr";
     return RET_ERROR;
   }
-  std::vector<int32_t> outputShape;
-  if (attr->outputShape() != nullptr) {
-    for (int i = 0; i < static_cast<int>(attr->outputShape()->size()); i++) {
-      outputShape.push_back(attr->outputShape()->data()[i]);
-    }
-  }
-  std::vector<int32_t> sparseValue;
-  if (attr->sparseValue() != nullptr) {
-    for (int i = 0; i < static_cast<int>(attr->sparseValue()->size()); i++) {
-      sparseValue.push_back(attr->sparseValue()->data()[i]);
-    }
-  }
-  std::vector<int32_t> defaultValue;
-  if (attr->defaultValue() != nullptr) {
-    for (int i = 0; i < static_cast<int>(attr->defaultValue()->size()); i++) {
-      defaultValue.push_back(attr->defaultValue()->data()[i]);
-    }
-  }
-  auto val_offset = schema::CreateSparseToDenseDirect(*fbb, &outputShape, &sparseValue, &defaultValue);
+  auto val_offset = schema::CreateSparseToDense(*fbb, attr->validateIndices());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SparseToDense, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

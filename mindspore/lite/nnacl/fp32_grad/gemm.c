@@ -77,7 +77,6 @@ static void gemm_tt(int M, int N, int K, float alpha, float *mat_a, int lda, flo
 
 void gemm(int transpose_a, int transpose_b, int M, int N, int K, float alpha, float *mat_a, int lda, float *mat_b,
           int ldb, float beta, float *mat_c, int ldc) {
-  // printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
   if (beta >= 0.f && beta <= 0.f) {
     for (int i = 0; i < M; ++i) {
       for (int j = 0; j < N; ++j) {

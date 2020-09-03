@@ -20,6 +20,7 @@
 
 typedef struct SparseToDenseParameter {
   OpParameter op_parameter_;
+  bool validate_indices_;
   int thread_num_;
   int count_;
 } SparseToDenseParameter;

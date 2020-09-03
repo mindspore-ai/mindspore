@@ -230,10 +230,6 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::tensor::Ten
   conv_param->input_w_ = inputs.front()->Width();
   conv_param->output_h_ = outputs.front()->Height();
   conv_param->output_w_ = outputs.front()->Width();
-  // bool prefer_flag = false;
-  //  if (conv_param->output_h_ * conv_param->output_w_ > 64) {
-  //    prefer_flag = true;
-  //  }
 
   kernel::LiteKernel *kernel = nullptr;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {

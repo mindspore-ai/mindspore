@@ -31,7 +31,6 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEn
 
   MS_LOGD("Start Loading model");
   auto model = mindspore::lite::Model::Import(model_buffer, buffer_len);
-  //    env->DeleteLocalRef(*(jobject *)model_buffer);
   if (model == nullptr) {
     MS_LOGE("Import model failed");
     return reinterpret_cast<jlong>(nullptr);
