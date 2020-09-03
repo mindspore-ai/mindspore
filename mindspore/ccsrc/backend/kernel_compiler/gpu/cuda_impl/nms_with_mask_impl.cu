@@ -89,7 +89,7 @@ __inline__ __device__ bool IOUDecision(T *output, int box_A_ix, int box_B_ix, in
   T height = max(y_2 - y_1, T(0));
   T combined_area = area[box_A_ix] + area[box_B_ix];
   // return decision to keep or remove box
-  return !(((width * height) / (combined_area - (width * height))) >= IOU_value);
+  return !(((width * height) / (combined_area - (width * height))) > IOU_value);
 }
 
 // calculate areas for boxes -> sorted by output boxes
