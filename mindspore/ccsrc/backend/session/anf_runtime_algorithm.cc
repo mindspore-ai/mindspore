@@ -1220,6 +1220,5 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
   }
   return true;
 }
-
 }  // namespace session
 }  // namespace mindspore

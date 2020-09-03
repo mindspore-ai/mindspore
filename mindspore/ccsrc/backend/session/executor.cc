@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace session {
 namespace {
-void UpdateOutputTensors(VectorRef *outputs,
+void UpdateOutputTensors(const VectorRef *outputs,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto item : *outputs) {

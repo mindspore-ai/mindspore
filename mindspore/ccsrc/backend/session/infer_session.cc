@@ -35,7 +35,6 @@ using std::vector;
 namespace py = pybind11;
 namespace mindspore {
 namespace inference {
-
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::string &device, uint32_t device_id) {
   try {
     auto session = std::make_shared<MSInferSession>();
@@ -271,36 +270,18 @@ void MSInferSession::RegAllOp() {
   MsContext::GetInstance()->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   Py_Initialize();
   auto c_expression = PyImport_ImportModule("mindspore._c_expression");
-  if (c_expression == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to import mindspore._c_expression  module.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(c_expression);
   PyObject *c_expression_dict = PyModule_GetDict(c_expression);
-  if (c_expression_dict == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to get dict from mindspore._c_expression  module.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(c_expression_dict);
 
   PyObject *op_info_loader_class = PyDict_GetItemString(c_expression_dict, "OpInfoLoaderPy");
-  if (op_info_loader_class == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to get op_info_loader_class from mindspore._c_expression.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(op_info_loader_class);
   PyObject *op_info_loader = PyInstanceMethod_New(op_info_loader_class);
-  if (op_info_loader == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to create op_info_loader instance.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(op_info_loader);
   PyObject *op_info_loader_ins = PyObject_CallObject(op_info_loader, nullptr);
-  if (op_info_loader_ins == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to call op_info_loader instance.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(op_info_loader_ins);
   auto all_ops_info_vector_addr_ul = PyObject_CallMethod(op_info_loader_ins, "get_all_ops_info", nullptr);
-  if (all_ops_info_vector_addr_ul == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to call get_all_ops_addr.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(all_ops_info_vector_addr_ul);
   auto all_ops_info_vector_addr = PyLong_AsVoidPtr(all_ops_info_vector_addr_ul);
   auto all_ops_info = static_cast<std::vector<kernel::OpInfo *> *>(all_ops_info_vector_addr);
   for (auto op_info : *all_ops_info) {
