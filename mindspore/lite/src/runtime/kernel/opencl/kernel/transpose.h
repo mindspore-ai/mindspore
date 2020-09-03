@@ -38,7 +38,6 @@ class TransposeOpenCLKernel : public OpenCLKernel {
 
  private:
   cl::Kernel kernel_;
-  bool is_image_out_{false};
   bool enable_fp16_{false};
 };
 }  // namespace mindspore::kernel

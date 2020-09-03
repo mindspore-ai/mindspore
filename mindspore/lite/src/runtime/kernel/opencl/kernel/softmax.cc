@@ -86,6 +86,7 @@ int SoftmaxOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size)
 int SoftmaxOpenCLKernel::Init() {
   std::string kernel_name = "SoftMax";
   std::string program_name = "SoftMax";
+
   std::string source = softmax_source;
   runtime_ = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = runtime_->GetFp16Enable();
@@ -102,6 +103,7 @@ int SoftmaxOpenCLKernel::Init() {
     MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported shape size: " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
@@ -124,21 +126,9 @@ int SoftmaxOpenCLKernel::Init() {
 #endif
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  if (in_tensors_[0]->shape().size() == 2) {
-    in_tensors_[0]->SetFormat(schema::Format_NC4);
-  } else {
-    in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  }
-
-  if (is_image_out_) {
-    if (out_tensors_[0]->shape().size() == 2) {
-      out_ori_format_ = schema::Format_NC;
-      out_tensors_[0]->SetFormat(schema::Format_NC4);
-    } else {
-      out_ori_format_ = schema::Format_NHWC;
-      out_tensors_[0]->SetFormat(schema::Format_NHWC4);
-    }
-  } else {
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
+  if (!is_image_out_) {
     out_tensors_[0]->SetFormat(out_ori_format_);
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

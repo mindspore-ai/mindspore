@@ -40,7 +40,7 @@ int Conv2dTransposeOpenCLKernel::Init() {
     MS_LOG(ERROR) << "only support pad =0.";
     return RET_ERROR;
   }
-  std::string kernel_name = "conv2d_transpose2x2";
+  std::string kernel_name = "conv2d_transpose2x2_" + std::string(EnumNameFormat(op_format_));
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
@@ -54,9 +54,9 @@ int Conv2dTransposeOpenCLKernel::Init() {
 #endif
   PadWeight();
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  in_tensors_[0]->SetFormat(op_format_);
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  out_tensors_[0]->SetFormat(schema::Format_NHWC4);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -142,8 +142,20 @@ void Conv2dTransposeOpenCLKernel::PadWeight() {
 
 int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  im_dst_x = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  im_dst_y = out_tensors_[0]->Height();
+  int n = out_tensors_[0]->shape()[0];
+  int h = out_tensors_[0]->shape()[1];
+  int w = out_tensors_[0]->shape()[2];
+  int c = out_tensors_[0]->shape()[3];
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = w * UP_DIV(c, C4NUM);
+    im_dst_y = n * h;
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = w;
+    im_dst_y = n * UP_DIV(c, C4NUM) * h;
+  } else {
+    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
+    return RET_ERROR;
+  }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
@@ -156,23 +168,17 @@ int Conv2dTransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *i
 
 int Conv2dTransposeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  std::vector<int> shapex = in_tensors_[0]->shape();
-  int n = shapex[0];
-  if (n > 1) {
-    MS_LOG(ERROR) << " n > 1 not supported!";
-    return RET_ERROR;
-  }
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  int ci = in_tensors_[0]->Channel();
-  int co = out_tensors_[0]->Channel();
+  int ci = in_tensors_[0]->shape()[3];
+  int co = out_tensors_[0]->shape()[3];
   int co4 = UP_DIV(co, C4NUM);
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
   int pad = param->pad_u_;
-  int oh = out_tensors_[0]->Height();
-  int ow = out_tensors_[0]->Width();
-  int h = in_tensors_[0]->Height();
-  int w = in_tensors_[0]->Width();
+  int oh = out_tensors_[0]->shape()[1];
+  int ow = out_tensors_[0]->shape()[2];
+  int h = in_tensors_[0]->shape()[1];
+  int w = in_tensors_[0]->shape()[2];
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {16, 1, 16};

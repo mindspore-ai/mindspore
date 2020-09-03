@@ -94,8 +94,8 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
 }
 
 TEST_F(TestTransposeOpenCL, TransposeFp32) {
-  int h = 64;
-  int w = 1;
+  int h = 1;
+  int w = 64;
   int c = 7360;
   std::vector<int> shape = {h, w, c};
   size_t input_size;

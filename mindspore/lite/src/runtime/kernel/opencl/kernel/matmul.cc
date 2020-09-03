@@ -34,6 +34,7 @@ namespace mindspore::kernel {
 
 int MatMulOpenCLKernel::Init() {
   std::string kernel_name = "MatMul";
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
 #ifdef PROGRAM_WITH_IL
@@ -46,6 +47,10 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
   int ci, co;
+  if (in_tensors_[1]->shape().size() != 2) {
+    MS_LOG(ERROR) << "matmul do not support input shape size=" << in_tensors_[1]->shape().size();
+    return RET_ERROR;
+  }
   if (in_tensors_[1]->shape().size() == 2) {
     ci = in_tensors_[1]->shape()[1];
     co = in_tensors_[1]->shape()[0];
@@ -59,13 +64,8 @@ int MatMulOpenCLKernel::Init() {
   PadWeight();
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
-  if (out_tensors_[0]->shape().size() == 2) {
-    out_tensors_[0]->SetFormat(schema::Format_NC4);
-    in_tensors_[0]->SetFormat(schema::Format_NC4);
-  } else {
-    in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-    out_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  }
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -142,8 +142,16 @@ void MatMulOpenCLKernel::PadWeight() {
 
 int MatMulOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  im_dst_x = sizeCO.s[1];
-  im_dst_y = 1;
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = sizeCO.s[1];
+    im_dst_y = 1;
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = 1;
+    im_dst_y = sizeCO.s[1];
+  } else {
+    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
+    return RET_ERROR;
+  }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;

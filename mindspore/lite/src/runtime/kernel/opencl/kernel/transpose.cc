@@ -36,7 +36,9 @@ int TransposeOpenCLKernel::Init() {
   std::string kernel_name = "transpose";
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
-  if (!is_image_out_) {
+  out_mem_type_ = OpenCLMemType::BUF;
+  kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  if (out_mem_type_ == OpenCLMemType::BUF) {
     kernel_name += "_BUF";
   } else {
     kernel_name += "_IMG";
@@ -50,17 +52,19 @@ int TransposeOpenCLKernel::Init() {
   ocl_runtime->LoadSource(program_name, source);
   ocl_runtime->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  if ((in_tensors_[0]->Height() * in_tensors_[0]->Width()) % 4 != 0) {
+  if ((in_tensors_[0]->shape()[1] * in_tensors_[0]->shape()[2]) % 4 != 0) {
     MS_LOG(ERROR) << "input H * W % 4 != 0 not support!";
     return RET_ERROR;
   }
   in_ori_format_ = in_tensors_[0]->GetFormat();
-  in_tensors_[0]->SetFormat(schema::Format_NHWC4);
-  out_ori_format_ = schema::Format_NCHW;
-  out_tensors_[0]->SetFormat(schema::Format_NCHW);
-  if (!is_image_out_) {
-    out_mem_type_ = OpenCLMemType::BUF;
+  out_ori_format_ = out_tensors_[0]->GetFormat();
+  in_tensors_[0]->SetFormat(op_format_);
+  out_tensors_[0]->SetFormat(op_format_);
+  if (out_mem_type_ == OpenCLMemType::BUF) {
+    out_ori_format_ = schema::Format_NCHW;
+    out_tensors_[0]->SetFormat(schema::Format_NCHW);
   }
+
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -69,8 +73,20 @@ int TransposeOpenCLKernel::ReSize() { return RET_OK; }
 
 int TransposeOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   size_t im_dst_x, im_dst_y;
-  im_dst_x = out_tensors_[0]->Height() * UP_DIV(out_tensors_[0]->Width(), C4NUM);
-  im_dst_y = out_tensors_[0]->Channel();
+  int n = out_tensors_[0]->shape()[0];
+  int h = out_tensors_[0]->shape()[1];
+  int w = out_tensors_[0]->shape()[2];
+  int c = out_tensors_[0]->shape()[3];
+  if (op_format_ == schema::Format_NHWC4) {
+    im_dst_x = w * UP_DIV(c, C4NUM);
+    im_dst_y = n * h;
+  } else if (op_format_ == schema::Format_NC4HW4) {
+    im_dst_x = w;
+    im_dst_y = n * UP_DIV(c, C4NUM) * h;
+  } else {
+    MS_LOG(ERROR) << "not support op format:" << EnumNameFormat(op_format_);
+    return RET_ERROR;
+  }
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
@@ -102,6 +118,7 @@ int TransposeOpenCLKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, HW);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, C);
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, w);
+  ocl_runtime->SetKernelArg(kernel_, arg_idx++, h);
   ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
