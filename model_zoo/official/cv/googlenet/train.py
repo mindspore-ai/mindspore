@@ -18,7 +18,6 @@ python train.py
 """
 import argparse
 import os
-import random
 
 import numpy as np
 
@@ -31,13 +30,13 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common import set_seed
 
 from src.config import cifar_cfg as cfg
 from src.dataset import create_dataset
 from src.googlenet import GoogleNet
 
-random.seed(1)
-np.random.seed(1)
+set_seed(1)
 
 def lr_steps(global_step, lr_max=None, total_epochs=None, steps_per_epoch=None):
     """Set learning rate."""

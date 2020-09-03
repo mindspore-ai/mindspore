@@ -15,8 +15,6 @@
 """train_imagenet."""
 import argparse
 import os
-import random
-import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -27,9 +25,9 @@ from mindspore.nn.optim.rmsprop import RMSProp
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore import dataset as de
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common.initializer import XavierUniform, initializer
+from mindspore.common import set_seed
 
 from src.config import config_gpu, config_ascend
 from src.dataset import create_dataset
@@ -37,9 +35,7 @@ from src.inception_v3 import InceptionV3
 from src.lr_generator import get_lr
 from src.loss import CrossEntropy
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 
 if __name__ == '__main__':
@@ -94,7 +90,6 @@ if __name__ == '__main__':
     if args_opt.platform == "Ascend":
         for param in net.trainable_params():
             if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
-                np.random.seed(seed=1)
                 param.set_parameter_data(initializer(XavierUniform(), param.data.shape, param.data.dtype))
     group_params = [{'params': decayed_params, 'weight_decay': cfg.weight_decay},
                     {'params': no_decayed_params},

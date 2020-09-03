@@ -27,16 +27,17 @@ from mindspore.common import dtype as mstype
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import _exec_save_checkpoint
+from mindspore.common import set_seed
 
 from src.dataset import create_dataset, extract_features
 from src.lr_generator import get_lr
 from src.config import set_config
 
 from src.args import train_parse_args
-from src.utils import set_random_seed, context_device_init, switch_precision, config_ckpoint
+from src.utils import context_device_init, switch_precision, config_ckpoint
 from src.models import CrossEntropyWithLabelSmooth, define_net
 
-set_random_seed(1)
+set_seed(1)
 
 if __name__ == '__main__':
     args_opt = train_parse_args()

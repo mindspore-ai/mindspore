@@ -15,11 +15,9 @@
 """Warpctc evaluation"""
 import os
 import math as m
-import random
 import argparse
-import numpy as np
 from mindspore import context
-from mindspore import dataset as de
+from mindspore.common import set_seed
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
@@ -29,9 +27,7 @@ from src.dataset import create_dataset
 from src.warpctc import StackedRNN, StackedRNNForGPU
 from src.metric import WarpCTCAccuracy
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description="Warpctc training")
 parser.add_argument("--dataset_path", type=str, default=None, help="Dataset, default is None.")

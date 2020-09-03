@@ -25,12 +25,14 @@ from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMoni
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common import set_seed
 from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2
 from src.config import config
 from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
 from src.lr_schedule import get_lr
 from src.init_params import init_net_param, filter_checkpoint_parameter
 
+set_seed(1)
 
 def main():
     parser = argparse.ArgumentParser(description="SSD training")

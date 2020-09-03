@@ -14,11 +14,9 @@
 # ============================================================================
 """train resnet."""
 import os
-import random
 import argparse
-import numpy as np
 from mindspore import context
-from mindspore import dataset as de
+from mindspore.common import set_seed
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -33,9 +31,7 @@ parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 args_opt = parser.parse_args()
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 if args_opt.net == "resnet50":
     from src.resnet import resnet50 as resnet

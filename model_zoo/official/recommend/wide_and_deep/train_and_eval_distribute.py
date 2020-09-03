@@ -17,11 +17,11 @@
 
 import os
 import sys
-import numpy as np
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
+from mindspore.common import set_seed
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
@@ -69,7 +69,7 @@ def train_and_eval(config):
     """
     test_train_eval
     """
-    np.random.seed(1000)
+    set_seed(1000)
     data_path = config.data_path
     batch_size = config.batch_size
     epochs = config.epochs

@@ -16,7 +16,6 @@
 
 import time
 import argparse
-import random
 import numpy as np
 
 from mindspore import context
@@ -33,7 +32,7 @@ from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine as de
+from mindspore.common import set_seed
 from mindspore.communication.management import init, get_group_size, get_rank
 
 from src.dataset import create_dataset
@@ -41,9 +40,7 @@ from src.lr_generator import get_lr
 from src.config import config_gpu
 from src.mobilenetV3 import mobilenet_v3_large
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')

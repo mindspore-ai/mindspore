@@ -13,16 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-import random
-import numpy as np
-
 from mindspore import context
 from mindspore import nn
 from mindspore.common import dtype as mstype
 from mindspore.train.model import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.communication.management import get_rank, init
-from mindspore.dataset import engine as de
 
 from src.models import Monitor
 
@@ -84,10 +80,3 @@ def config_ckpoint(config, lr, step_size):
             ckpt_cb = ModelCheckpoint(prefix="mobilenetV2", directory=ckpt_save_dir, config=config_ck)
             cb += [ckpt_cb]
     return cb
-
-
-
-def set_random_seed(seed=1):
-    random.seed(seed)
-    np.random.seed(seed)
-    de.config.set_seed(seed)

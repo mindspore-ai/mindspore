@@ -21,9 +21,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 
 
-np.random.seed(5)
-
-
 def calculate_gain(nonlinearity, param=None):
     r"""Return the recommended gain value for the given nonlinearity function.
     The values are as follows:

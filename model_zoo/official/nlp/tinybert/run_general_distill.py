@@ -18,7 +18,6 @@
 import os
 import argparse
 import datetime
-import numpy
 import mindspore.communication.management as D
 import mindspore.common.dtype as mstype
 from mindspore import context
@@ -28,6 +27,7 @@ from mindspore.context import ParallelMode
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore import log as logger
+from mindspore.common import set_seed
 from src.dataset import create_tinybert_dataset, DataType
 from src.utils import LossCallBack, ModelSaveCkpt, BertLearningRate
 from src.gd_config import common_cfg, bert_teacher_net_cfg, bert_student_net_cfg
@@ -154,5 +154,5 @@ def run_general_distill():
                 sink_size=args_opt.data_sink_steps)
 
 if __name__ == '__main__':
-    numpy.random.seed(0)
+    set_seed(0)
     run_general_distill()

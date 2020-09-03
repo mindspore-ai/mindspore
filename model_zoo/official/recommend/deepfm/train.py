@@ -16,15 +16,13 @@
 import os
 import sys
 import argparse
-import random
-import numpy as np
 
 from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
-import mindspore.dataset.engine as de
+from mindspore.common import set_seed
 
 from src.deepfm import ModelBuilder, AUCMetric
 from src.config import DataConfig, ModelConfig, TrainConfig
@@ -46,9 +44,7 @@ args_opt, _ = parser.parse_known_args()
 args_opt.do_eval = args_opt.do_eval == 'True'
 rank_size = int(os.environ.get("RANK_SIZE", 1))
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 if __name__ == '__main__':
     data_config = DataConfig()

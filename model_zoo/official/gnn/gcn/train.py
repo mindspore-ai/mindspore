@@ -26,6 +26,7 @@ from matplotlib import pyplot as plt
 from matplotlib import animation
 from sklearn import manifold
 from mindspore import context
+from mindspore.common import set_seed
 
 from src.gcn import GCN
 from src.metrics import LossAccuracyWrapper, TrainNetWrapper
@@ -55,7 +56,7 @@ def train():
     parser.add_argument('--save_TSNE', type=ast.literal_eval, default=False, help='Whether to save t-SNE graph')
     args_opt = parser.parse_args()
 
-    np.random.seed(args_opt.seed)
+    set_seed(args_opt.seed)
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend", save_graphs=False)
     config = ConfigGCN()

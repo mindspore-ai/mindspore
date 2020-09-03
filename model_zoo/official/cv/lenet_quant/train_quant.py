@@ -28,10 +28,13 @@ from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.quant import quant
 from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
+from mindspore.common import set_seed
 from src.dataset import create_dataset
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion
 from src.loss_monitor import LossMonitor
+
+set_seed(1)
 
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",

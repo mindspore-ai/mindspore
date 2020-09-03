@@ -19,7 +19,6 @@ python run_pretrain.py
 
 import os
 import argparse
-import numpy
 import mindspore.communication.management as D
 import mindspore.common.dtype as mstype
 from mindspore import context
@@ -30,6 +29,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMoni
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
 from mindspore import log as logger
+from mindspore.common import set_seed
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
                 BertTrainAccumulateStepsWithLossScaleCell
 from src.dataset import create_bert_dataset
@@ -196,5 +196,5 @@ def run_pretrain():
 
 
 if __name__ == '__main__':
-    numpy.random.seed(0)
+    set_seed(0)
     run_pretrain()

@@ -16,8 +16,6 @@
 
 import os
 import argparse
-import random
-import numpy as np
 
 from mindspore import context
 from mindspore import Tensor
@@ -30,7 +28,7 @@ from mindspore.train.serialization import load_checkpoint
 from mindspore.communication.management import init, get_group_size, get_rank
 from mindspore.train.quant import quant
 from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
-import mindspore.dataset.engine as de
+from mindspore.common import set_seed
 
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
@@ -38,9 +36,7 @@ from src.utils import Monitor, CrossEntropyWithLabelSmooth
 from src.config import config_ascend_quant, config_gpu_quant
 from src.mobilenetV2 import mobilenetV2
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')

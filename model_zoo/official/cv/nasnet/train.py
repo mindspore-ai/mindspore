@@ -15,8 +15,6 @@
 """train imagenet."""
 import argparse
 import os
-import random
-import numpy as np
 
 from mindspore import Tensor
 from mindspore import context
@@ -26,7 +24,7 @@ from mindspore.nn.optim.rmsprop import RMSProp
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore import dataset as de
+from mindspore.common import set_seed
 
 from src.config import nasnet_a_mobile_config_gpu as cfg
 from src.dataset import create_dataset
@@ -34,9 +32,7 @@ from src.nasnet_a_mobile import NASNetAMobileWithLoss, NASNetAMobileTrainOneStep
 from src.lr_generator import get_lr
 
 
-random.seed(cfg.random_seed)
-np.random.seed(cfg.random_seed)
-de.config.set_seed(cfg.random_seed)
+set_seed(cfg.random_seed)
 
 
 if __name__ == '__main__':

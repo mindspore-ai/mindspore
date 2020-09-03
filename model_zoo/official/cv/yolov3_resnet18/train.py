@@ -34,11 +34,13 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common.initializer import initializer
+from mindspore.common import set_seed
 
 from src.yolov3 import yolov3_resnet18, YoloWithLossCell, TrainingWrapper
 from src.dataset import create_yolo_dataset, data_to_mindrecord_byte_image
 from src.config import ConfigYOLOV3ResNet18
 
+set_seed(1)
 
 def get_lr(learning_rate, start_step, global_step, decay_step, decay_rate, steps=False):
     """Set learning rate."""
@@ -54,7 +56,7 @@ def get_lr(learning_rate, start_step, global_step, decay_step, decay_rate, steps
 
 
 def init_net_param(network, init_value='ones'):
-    """Init:wq the parameters in network."""
+    """Init the parameters in network."""
     params = network.trainable_params()
     for p in params:
         if isinstance(p.data, Tensor) and 'beta' not in p.name and 'gamma' not in p.name and 'bias' not in p.name:

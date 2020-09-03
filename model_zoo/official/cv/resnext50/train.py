@@ -28,6 +28,7 @@ from mindspore.train.callback import CheckpointConfig, Callback
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
+from mindspore.common import set_seed
 
 from src.dataset import classification_dataset
 from src.crossentropy import CrossEntropy
@@ -38,6 +39,7 @@ from src.utils.optimizers__init__ import get_param_groups
 from src.image_classification import get_network
 from src.config import config
 
+set_seed(1)
 
 class BuildTrainNetwork(nn.Cell):
     """build training network"""

@@ -21,10 +21,13 @@ from mindspore import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.callback import Callback, CheckpointConfig, ModelCheckpoint, TimeMonitor
+from mindspore.common import set_seed
 from src.md_dataset import create_dataset
 from src.losses import OhemLoss
 from src.deeplabv3 import deeplabv3_resnet50
 from src.config import config
+
+set_seed(1)
 
 parser = argparse.ArgumentParser(description="Deeplabv3 training")
 parser.add_argument("--distribute", type=str, default="false", help="Run distribute, default is false.")

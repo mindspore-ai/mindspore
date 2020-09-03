@@ -14,13 +14,10 @@
 # ============================================================================
 """train resnet."""
 import os
-import random
 import argparse
 import ast
-import numpy as np
 from mindspore import context
 from mindspore import Tensor
-from mindspore import dataset as de
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
@@ -30,6 +27,7 @@ from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.common import set_seed
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
@@ -47,9 +45,7 @@ parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained ch
 parser.add_argument('--parameter_server', type=ast.literal_eval, default=False, help='Run parameter server train')
 args_opt = parser.parse_args()
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 if args_opt.net == "resnet50":
     from src.resnet import resnet50 as resnet

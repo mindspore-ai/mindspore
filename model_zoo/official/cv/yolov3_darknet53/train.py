@@ -30,6 +30,7 @@ import mindspore as ms
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore import amp
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.common import set_seed
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
@@ -41,6 +42,7 @@ from src.initializer import default_recurisive_init
 from src.config import ConfigYOLOV3DarkNet53
 from src.util import keep_loss_fp32
 
+set_seed(1)
 
 class BuildTrainNetwork(nn.Cell):
     def __init__(self, network, criterion):

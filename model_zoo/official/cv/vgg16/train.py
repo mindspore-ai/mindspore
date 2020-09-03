@@ -19,9 +19,6 @@ python train.py --data_path=$DATA_HOME --device_id=$DEVICE_ID
 import argparse
 import datetime
 import os
-import random
-
-import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -33,6 +30,7 @@ from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_param_into_net, load_checkpoint
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.common import set_seed
 from src.dataset import vgg_create_dataset
 from src.dataset import classification_dataset
 
@@ -45,8 +43,7 @@ from src.utils.util import get_param_groups
 from src.vgg import vgg16
 
 
-random.seed(1)
-np.random.seed(1)
+set_seed(1)
 
 
 def parse_args(cloud_args=None):
