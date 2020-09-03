@@ -24,6 +24,9 @@ EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+cd $BASE_PATH/ || exit
+
 ulimit -u unlimited
 export DEVICE_ID=$1
 export RANK_SIZE=1
@@ -51,6 +54,7 @@ python run_pretrain.py  \
 --load_checkpoint_path="" \
 --save_checkpoint_path='./' \
 --save_checkpoint_steps=5000 \
+--train_steps=-1 \
 --save_checkpoint_num=20 \
 --data_dir=$DATA_DIR \
 --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &

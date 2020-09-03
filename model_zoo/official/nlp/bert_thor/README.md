@@ -128,12 +128,12 @@ Parameters for both training and inference can be set in config.py.
 ```
   sh run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
 ```
-We need three parameters for this scripts.
+We need five parameters for this scripts.
 - `DEVICE_NUM`: the device number for distributed train.
 - `EPOCH_SIZE`: Epoch size used in the model
 - `DATA_DIR`：Data path, it is better to use absolute path.
 - `SCHEMA_DIR `：Schema path, it is better to use absolute path
-- `RANK_TABLE_FILE`: the path of rank_table.json
+- `RANK_TABLE_FILE`: rank table file with JSON format
 
 Training result will be stored in the current path, whose folder name begins with the file name that the user defines.  Under this, you can find checkpoint file together with result like the followings in log.
 ```
