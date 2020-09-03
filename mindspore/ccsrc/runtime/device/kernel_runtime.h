@@ -124,6 +124,10 @@ class KernelRuntime {
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr dump_conf_ptr_;
 #endif
+
+#ifdef ENABLE_DEBUGGER
+  Debugger *debugger_;
+#endif
   void *stream_ = nullptr;
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
 };

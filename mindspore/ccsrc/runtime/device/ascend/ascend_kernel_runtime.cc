@@ -170,6 +170,12 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
 
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
+#ifdef ENABLE_DEBUGGER
+  if (debugger_ && debugger_->debugger_enabled()) {
+    debugger_->SetTrainingDone(true);
+    debugger_->SendMetadata();
+  }
+#endif
   if (!initialized_) {
     return;
   }
@@ -354,15 +360,15 @@ void LoadOutput(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   const auto &apply_kernels = graph->execution_order();
   // for kernels, execution order starts from 1
   int exec_order = 1;
-  auto debugger_ = mindspore::Debugger::GetInstance();
-  DebugServices *debug_services = debugger_->debug_services();
+  auto debugger_i = mindspore::Debugger::GetInstance();
+  DebugServices *debug_services = debugger_i->debug_services();
   auto watchpoint_table = debug_services->GetWatchpointTable();
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
     auto node_name = AnfAlgo::GetCNodeName(node);
     std::string kernel_name = node->fullname_with_scope();
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
-    if (debugger_->partial_memory()) {
+    if (debugger_i->partial_memory()) {
       if (!debug_services->IsWatchPoint(kernel_name, watchpoint_table)) {
         continue;
       }
@@ -431,6 +437,7 @@ void LoadParameters(mindspore::session::KernelGraph *graph, Debugger *debugger) 
 bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DEBUGGER
+  debugger_ = debugger;
   MS_LOG(INFO) << "Start load step";
   uint32_t cur_iter = 0;
   MS_LOG(INFO) << "Cur iter is " << cur_iter;
