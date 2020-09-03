@@ -571,11 +571,7 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   int indice_offset = grad_offset + lengths[grad_index];
   data_size = lengths[indice_index] * sizeof(T);
   T *indice_data = reduced_data->data() + indice_offset;
-  std::vector<T> convert(lengths[indice_index]);
-  for (int i = 0; i < lengths[indice_index]; i++) {
-    convert[i] = static_cast<T>(indices[i]);
-  }
-  ret = memcpy_s(indice_data, data_size, convert.data(), data_size);
+  ret = memcpy_s(indice_data, data_size, indices, data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
