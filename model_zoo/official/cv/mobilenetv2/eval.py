@@ -15,62 +15,43 @@
 """
 eval.
 """
-import os
-import argparse
-from mindspore import context
 from mindspore import nn
 from mindspore.train.model import Model
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
+
 from src.dataset import create_dataset
-from src.config import config_ascend, config_gpu
-from src.mobilenetV2 import mobilenet_v2
-
-
-parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--device_target', type=str, default=None, help='run device_target')
-args_opt = parser.parse_args()
-
+from src.config import set_config
+from src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
+from src.args import eval_parse_args
+from src.models import load_ckpt
+from src.utils import switch_precision, set_context
 
 if __name__ == '__main__':
-    config = None
-    net = None
-    if args_opt.device_target == "Ascend":
-        config = config_ascend
-        device_id = int(os.getenv('DEVICE_ID', '0'))
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-                            device_id=device_id, save_graphs=False)
-        net = mobilenet_v2(num_classes=config.num_classes, device_target="Ascend")
-    elif args_opt.device_target == "GPU":
-        config = config_gpu
-        context.set_context(mode=context.GRAPH_MODE,
-                            device_target="GPU", save_graphs=False)
-        net = mobilenet_v2(num_classes=config.num_classes, device_target="GPU")
+    args_opt = eval_parse_args()
+    config = set_config(args_opt)
+
+    backbone_net = MobileNetV2Backbone(platform=args_opt.platform)
+    head_net = MobileNetV2Head(input_channel=backbone_net.out_channels, num_classes=config.num_classes)
+    net = mobilenet_v2(feature_net, head_net)
+
+    #load the trained checkpoint file to the net for evaluation
+    if args_opt.head_ckpt:
+        load_ckpt(backbone_net, args_opt.pretrain_ckpt)
+        load_ckpt(head_net, args_opt.head_ckpt)
     else:
-        raise ValueError("Unsupported device_target.")
+        load_ckpt(net, args_opt.pretrain_ckpt)
 
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    set_context(config)
+    switch_precision(net, mstype.float16, config)
 
-    if args_opt.device_target == "Ascend":
-        net.to_float(mstype.float16)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
-
-    dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                             do_train=False,
-                             config=config,
-                             device_target=args_opt.device_target,
-                             batch_size=config.batch_size)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, config=config)
     step_size = dataset.get_dataset_size()
-
-    if args_opt.checkpoint_path:
-        param_dict = load_checkpoint(args_opt.checkpoint_path)
-        load_param_into_net(net, param_dict)
     net.set_train(False)
 
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     model = Model(net, loss_fn=loss, metrics={'acc'})
+
     res = model.eval(dataset)
-    print("result:", res, "ckpt=", args_opt.checkpoint_path)
+    print(f"result:{res}\npretrain_ckpt={args_opt.pretrain_ckpt}")
+    if args_opt.head_ckpt:
+        print(f"head_ckpt={args_opt.head_ckpt}")

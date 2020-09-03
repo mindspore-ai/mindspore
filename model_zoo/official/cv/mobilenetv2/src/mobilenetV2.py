@@ -20,7 +20,7 @@ from mindspore.ops.operations import TensorAdd
 from mindspore import Parameter, Tensor
 from mindspore.common.initializer import initializer
 
-__all__ = ['mobilenet_v2']
+__all__ = ['MobileNetV2', 'MobileNetV2Backbone', 'MobileNetV2Head', 'mobilenet_v2']
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -119,17 +119,19 @@ class ConvBNReLU(nn.Cell):
         >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
 
-    def __init__(self, device_target, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+    def __init__(self, platform, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
         if groups == 1:
             conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding)
         else:
-            if device_target == "Ascend":
+            if platform in ("CPU", "GPU"):
+                conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, group=in_planes, pad_mode='pad', \
+                    padding=padding)
+            elif platform == "Ascend":
                 conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='pad', pad=padding)
-            elif device_target == "GPU":
-                conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride,
-                                 group=in_planes, pad_mode='pad', padding=padding)
+            else:
+                raise ValueError("Unsupported Device, only support CPU, GPU and Ascend.")
 
         layers = [conv, nn.BatchNorm2d(out_planes), nn.ReLU6()]
         self.features = nn.SequentialCell(layers)
@@ -156,7 +158,7 @@ class InvertedResidual(nn.Cell):
         >>> ResidualBlock(3, 256, 1, 1)
     """
 
-    def __init__(self, device_target, inp, oup, stride, expand_ratio):
+    def __init__(self, platform, inp, oup, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
@@ -165,10 +167,10 @@ class InvertedResidual(nn.Cell):
 
         layers = []
         if expand_ratio != 1:
-            layers.append(ConvBNReLU(device_target, inp, hidden_dim, kernel_size=1))
+            layers.append(ConvBNReLU(platform, inp, hidden_dim, kernel_size=1))
         layers.extend([
             # dw
-            ConvBNReLU(device_target, hidden_dim, hidden_dim,
+            ConvBNReLU(platform, hidden_dim, hidden_dim,
                        stride=stride, groups=hidden_dim),
             # pw-linear
             nn.Conv2d(hidden_dim, oup, kernel_size=1,
@@ -186,8 +188,7 @@ class InvertedResidual(nn.Cell):
             return self.add(identity, x)
         return x
 
-
-class MobileNetV2(nn.Cell):
+class MobileNetV2Backbone(nn.Cell):
     """
     MobileNetV2 architecture.
 
@@ -204,12 +205,10 @@ class MobileNetV2(nn.Cell):
         >>> MobileNetV2(num_classes=1000)
     """
 
-    def __init__(self, device_target, num_classes=1000, width_mult=1.,
-                 has_dropout=False, inverted_residual_setting=None, round_nearest=8):
-        super(MobileNetV2, self).__init__()
+    def __init__(self, platform, width_mult=1., inverted_residual_setting=None, round_nearest=8,
+                 input_channel=32, last_channel=1280):
+        super(MobileNetV2Backbone, self).__init__()
         block = InvertedResidual
-        input_channel = 32
-        last_channel = 1280
         # setting of inverted residual blocks
         self.cfgs = inverted_residual_setting
         if inverted_residual_setting is None:
@@ -227,28 +226,22 @@ class MobileNetV2(nn.Cell):
         # building first layer
         input_channel = _make_divisible(input_channel * width_mult, round_nearest)
         self.out_channels = _make_divisible(last_channel * max(1.0, width_mult), round_nearest)
-        features = [ConvBNReLU(device_target, 3, input_channel, stride=2)]
+        features = [ConvBNReLU(platform, 3, input_channel, stride=2)]
         # building inverted residual blocks
         for t, c, n, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, round_nearest)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(device_target, input_channel, output_channel, stride, expand_ratio=t))
+                features.append(block(platform, input_channel, output_channel, stride, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(device_target, input_channel, self.out_channels, kernel_size=1))
+        features.append(ConvBNReLU(platform, input_channel, self.out_channels, kernel_size=1))
         # make it nn.CellList
         self.features = nn.SequentialCell(features)
-        # mobilenet head
-        head = ([GlobalAvgPooling(), nn.Dense(self.out_channels, num_classes, has_bias=True)] if not has_dropout else
-                [GlobalAvgPooling(), nn.Dropout(0.2), nn.Dense(self.out_channels, num_classes, has_bias=True)])
-        self.head = nn.SequentialCell(head)
-
         self._initialize_weights()
 
     def construct(self, x):
         x = self.features(x)
-        x = self.head(x)
         return x
 
     def _initialize_weights(self):
@@ -277,16 +270,115 @@ class MobileNetV2(nn.Cell):
                     Tensor(np.ones(m.gamma.data.shape, dtype="float32")))
                 m.beta.set_parameter_data(
                     Tensor(np.zeros(m.beta.data.shape, dtype="float32")))
-            elif isinstance(m, nn.Dense):
+
+    @property
+    def get_features(self):
+        return self.features
+
+class MobileNetV2Head(nn.Cell):
+    """
+    MobileNetV2 architecture.
+
+    Args:
+        class_num (Cell): number of classes.
+        has_dropout (bool): Is dropout used. Default is false
+    Returns:
+        Tensor, output tensor.
+
+    Examples:
+        >>> MobileNetV2(num_classes=1000)
+    """
+
+    def __init__(self, input_channel=1280, num_classes=1000, has_dropout=False):
+        super(MobileNetV2Head, self).__init__()
+        # mobilenet head
+        head = ([GlobalAvgPooling(), nn.Dense(input_channel, num_classes, has_bias=True)] if not has_dropout else
+                [GlobalAvgPooling(), nn.Dropout(0.2), nn.Dense(input_channel, num_classes, has_bias=True)])
+        self.head = nn.SequentialCell(head)
+        self._initialize_weights()
+
+    def construct(self, x):
+        x = self.head(x)
+        return x
+
+    def _initialize_weights(self):
+        """
+        Initialize weights.
+
+        Args:
+
+        Returns:
+            None.
+
+        Examples:
+            >>> _initialize_weights()
+        """
+        self.init_parameters_data()
+        for _, m in self.cells_and_names():
+            if isinstance(m, nn.Dense):
                 m.weight.set_parameter_data(Tensor(np.random.normal(
                     0, 0.01, m.weight.data.shape).astype("float32")))
                 if m.bias is not None:
                     m.bias.set_parameter_data(
                         Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
+    @property
+    def get_head(self):
+        return self.head
 
+class MobileNetV2(nn.Cell):
+    """
+    MobileNetV2 architecture.
 
-def mobilenet_v2(**kwargs):
+    Args:
+        backbone(nn.Cell):
+        head(nn.Cell):
+    Returns:
+        Tensor, output tensor.
+
+    Examples:
+        >>> MobileNetV2(backbone, head)
     """
-    Constructs a MobileNet V2 model
+
+    def __init__(self, platform, num_classes=1000, width_mult=1., has_dropout=False, inverted_residual_setting=None, \
+        round_nearest=8, input_channel=32, last_channel=1280):
+        super(MobileNetV2, self).__init__()
+        self.backbone = MobileNetV2Backbone(platform=platform, width_mult=width_mult, \
+            inverted_residual_setting=inverted_residual_setting, \
+            round_nearest=round_nearest, input_channel=input_channel, last_channel=last_channel).get_features
+        self.head = MobileNetV2Head(input_channel=self.backbone.out_channel, num_classes=num_classes, \
+            has_dropout=has_dropout).get_head
+
+    def construct(self, x):
+        x = self.backbone(x)
+        x = self.head(x)
+        return x
+
+class MobileNetV2Combine(nn.Cell):
     """
-    return MobileNetV2(**kwargs)
+    MobileNetV2 architecture.
+
+    Args:
+        class_num (Cell): number of classes.
+        width_mult (int): Channels multiplier for round to 8/16 and others. Default is 1.
+        has_dropout (bool): Is dropout used. Default is false
+        inverted_residual_setting (list): Inverted residual settings. Default is None
+        round_nearest (list): Channel round to . Default is 8
+    Returns:
+        Tensor, output tensor.
+
+    Examples:
+        >>> MobileNetV2(num_classes=1000)
+    """
+
+    def __init__(self, backbone, head):
+        super(MobileNetV2Combine, self).__init__()
+        self.backbone = backbone
+        self.head = head
+
+    def construct(self, x):
+        x = self.backbone(x)
+        x = self.head(x)
+        return x
+
+def mobilenet_v2(backbone, head):
+    return MobileNetV2Combine(backbone, head)

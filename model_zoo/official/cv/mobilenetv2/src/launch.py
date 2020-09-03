@@ -17,44 +17,11 @@ import os
 import sys
 import subprocess
 import shutil
-from argparse import ArgumentParser
-
-def parse_args():
-    """
-    parse args .
-
-    Args:
-
-    Returns:
-        args.
-
-    Examples:
-        >>> parse_args()
-    """
-    parser = ArgumentParser(description="mindspore distributed training launch "
-                                        "helper utilty that will spawn up "
-                                        "multiple distributed processes")
-    parser.add_argument("--nproc_per_node", type=int, default=1,
-                        help="The number of processes to launch on each node, "
-                             "for D training, this is recommended to be set "
-                             "to the number of D in your system so that "
-                             "each process can be bound to a single D.")
-    parser.add_argument("--visible_devices", type=str, default="0,1,2,3,4,5,6,7",
-                        help="will use the visible devices sequentially")
-    parser.add_argument("--training_script", type=str,
-                        help="The full path to the single D training "
-                             "program/script to be launched in parallel, "
-                             "followed by all the arguments for the "
-                             "training script")
-    # rest from the training program
-    args, unknown = parser.parse_known_args()
-    args.training_script_args = unknown
-    return args
-
+from args import launch_parse_args
 
 def main():
     print("start", __file__)
-    args = parse_args()
+    args = launch_parse_args()
     print(args)
     visible_devices = args.visible_devices.split(',')
     assert os.path.isfile(args.training_script)
@@ -79,8 +46,8 @@ def main():
         os.mkdir(device_dir)
         os.chdir(device_dir)
         cmd = [sys.executable, '-u']
-        cmd.append(args.training_script)
-        cmd.extend(args.training_script_args)
+        cmd.append(args.train_script)
+        cmd.extend(args.train_script_args)
         log_file = open('{dir}/log{id}.log'.format(dir=device_dir, id=rank_id), 'w')
         process = subprocess.Popen(cmd, stdout=log_file, stderr=log_file, env=env)
         processes.append(process)
