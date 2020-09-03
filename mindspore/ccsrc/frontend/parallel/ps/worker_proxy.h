@@ -473,17 +473,17 @@ void WorkerProxy<T>::SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, c
     size_t indices_size = indice_ids.size();
     if (indices_size > 0) {
       int slice_segment_size = indices_size * segment_size;
-      T *src_grad_data = new T[slice_segment_size];
-      int *src_indice_data = new int[indices_size];
-      PrepareSparseGradient(begin, end, distinct_ids, indice_to_grads, indice_data, segment_size, src_grad_data,
-                            src_indice_data);
+      std::vector<T> src_grad_data(slice_segment_size);
+      std::vector<int> src_indice_data(indices_size);
+      PrepareSparseGradient(begin, end, distinct_ids, indice_to_grads, indice_data, segment_size, src_grad_data.data(),
+                            src_indice_data.data());
 
       // Reduce the sparse gradient and indice
-      T *new_grad = new T[slice_segment_size];
-      int *new_indices = new int[indices_size];
-      mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad, new_indices, indices_size});
-      Util::ReduceSparseGradient(src_grad_data, src_indice_data, indices_size, segment_size, first_dim_size,
-                                 outer_dim_size, &unique_sparse_grad);
+      std::vector<T> new_grad(slice_segment_size);
+      std::vector<int> new_indices(indices_size);
+      mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size});
+      Util::ReduceSparseGradient(src_grad_data.data(), src_indice_data.data(), indices_size, segment_size,
+                                 first_dim_size, outer_dim_size, &unique_sparse_grad);
 
       // Update the length of reduce sparse gradient and indice
       ::ps::SArray<int> reduced_lens;
@@ -502,11 +502,6 @@ void WorkerProxy<T>::SparseSlicer(int timestamp, const ::ps::KVPairs<T> &send, c
 
       kvs.lens = reduced_lens;
       kvs.vals = reduced_data;
-
-      delete[] src_grad_data;
-      delete[] src_indice_data;
-      delete[] new_grad;
-      delete[] new_indices;
     }
 
     if (indices_size <= 0) {
@@ -576,15 +571,14 @@ void WorkerProxy<T>::BuildSparseValue(const ::ps::SArray<int> &lengths, const si
   int indice_offset = grad_offset + lengths[grad_index];
   data_size = lengths[indice_index] * sizeof(T);
   T *indice_data = reduced_data->data() + indice_offset;
-  T *convert = new T[lengths[indice_index]];
+  std::vector<T> convert(lengths[indice_index]);
   for (int i = 0; i < lengths[indice_index]; i++) {
     convert[i] = static_cast<T>(indices[i]);
   }
-  ret = memcpy_s(indice_data, data_size, convert, data_size);
+  ret = memcpy_s(indice_data, data_size, convert.data(), data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
   }
-  delete[] convert;
 }
 
 template <typename T>
