@@ -33,7 +33,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
   // Create a CSVDataset, with single CSV file
   std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, -1, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -85,7 +85,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
   std::string file1 = datasets_root_path_ + "/testCSV/1.csv";
   std::string file2 = datasets_root_path_ + "/testCSV/append.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({file1, file2}, ',', {}, column_names, -1, ShuffleMode::kGlobal);
+  std::shared_ptr<Dataset> ds = CSV({file1, file2}, ',', {}, column_names, 0, ShuffleMode::kGlobal);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -179,7 +179,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
   // Create a CSVDataset, with single CSV file
   std::string file = datasets_root_path_ + "/testCSV/1.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({file}, ',', {}, column_names, -1, ShuffleMode::kFalse, 2, 0);
+  std::shared_ptr<Dataset> ds = CSV({file}, ',', {}, column_names, 0, ShuffleMode::kFalse, 2, 0);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -228,7 +228,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetType) {
     std::make_shared<CsvRecord<std::string>>(CsvType::STRING, ""),
   };
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({file}, ',', colum_type, column_names, -1, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds = CSV({file}, ',', colum_type, column_names, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -343,15 +343,15 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetException) {
   EXPECT_EQ(ds1, nullptr);
 
   // Test invalid num_samples < -1
-  std::shared_ptr<Dataset> ds2 = CSV({file}, ',', {}, column_names, -2);
+  std::shared_ptr<Dataset> ds2 = CSV({file}, ',', {}, column_names, -1);
   EXPECT_EQ(ds2, nullptr);
 
   // Test invalid num_shards < 1
-  std::shared_ptr<Dataset> ds3 = CSV({file}, ',', {}, column_names, -1, ShuffleMode::kFalse, 0);
+  std::shared_ptr<Dataset> ds3 = CSV({file}, ',', {}, column_names, 0, ShuffleMode::kFalse, 0);
   EXPECT_EQ(ds3, nullptr);
 
   // Test invalid shard_id >= num_shards
-  std::shared_ptr<Dataset> ds4 = CSV({file}, ',', {}, column_names, -1, ShuffleMode::kFalse, 2, 2);
+  std::shared_ptr<Dataset> ds4 = CSV({file}, ',', {}, column_names, 0, ShuffleMode::kFalse, 2, 2);
   EXPECT_EQ(ds4, nullptr);
 
   // Test invalid field_delim
@@ -373,7 +373,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
   std::string file1 = datasets_root_path_ + "/testCSV/1.csv";
   std::string file2 = datasets_root_path_ + "/testCSV/append.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({file1, file2}, ',', {}, column_names, -1, ShuffleMode::kFiles);
+  std::shared_ptr<Dataset> ds = CSV({file1, file2}, ',', {}, column_names, 0, ShuffleMode::kFiles);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -432,7 +432,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
   std::string file1 = datasets_root_path_ + "/testCSV/1.csv";
   std::string file2 = datasets_root_path_ + "/testCSV/append.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({file2, file1}, ',', {}, column_names, -1, ShuffleMode::kFiles);
+  std::shared_ptr<Dataset> ds = CSV({file2, file1}, ',', {}, column_names, 0, ShuffleMode::kFiles);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -492,7 +492,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
   // Create a CSVFile Dataset, with single CSV file
   std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
   std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, -1, ShuffleMode::kGlobal);
+  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kGlobal);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -540,7 +540,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDuplicateColumnName) {
   // Create a CSVDataset, with single CSV file
   std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
   std::vector<std::string> column_names = {"col1", "col1", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, -1, ShuffleMode::kFalse);
+  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
   // Expect failure: duplicate column names
   EXPECT_EQ(ds, nullptr);
 }
