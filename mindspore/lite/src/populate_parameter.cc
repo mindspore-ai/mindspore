@@ -112,6 +112,7 @@
 #include "src/ops/ceil.h"
 #include "src/ops/round.h"
 #include "src/ops/sparse_to_dense.h"
+#include "src/ops/l2_norm.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/arg_min_max.h"
 #include "nnacl/fp32/cast.h"
@@ -169,6 +170,7 @@
 #include "nnacl/fp32/elu.h"
 #include "nnacl/leaky_relu_parameter.h"
 #include "nnacl/sparse_to_dense.h"
+#include "nnacl/l2_norm_parameter.h"
 
 namespace mindspore::kernel {
 
@@ -1513,6 +1515,33 @@ OpParameter *PopulateEluParameter(const mindspore::lite::PrimitiveC *primitive) 
   return reinterpret_cast<OpParameter *>(elu_parameter);
 }
 
+OpParameter *PopulateL2NormParameter(
+    const mindspore::lite::PrimitiveC *primitive) {
+  L2NormParameter *l2_norm_parameter =
+      reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
+  if (l2_norm_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc L2NormParameter failed.";
+    return nullptr;
+  }
+  memset(l2_norm_parameter, 0, sizeof(L2NormParameter));
+  l2_norm_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::L2Norm *>(
+      const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto axis_vec = param->GetAxis();
+  l2_norm_parameter->axis_num_ = axis_vec.size();
+  l2_norm_parameter->axis_ =
+      reinterpret_cast<int *>(malloc(axis_vec.size() * sizeof(int)));
+  for (size_t i = 0; i < axis_vec.size(); i++) {
+    l2_norm_parameter->axis_[i] = axis_vec[i];
+  }
+  if (param->GetEpsilon() < 1e-12) {
+    l2_norm_parameter->epsilon_ = 1e-12;
+  } else {
+    l2_norm_parameter->epsilon_ = param->GetEpsilon();
+  }
+  return reinterpret_cast<OpParameter *>(l2_norm_parameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SparseToDense] = PopulateSparseToDenseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
@@ -1610,6 +1639,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Lstm] = PopulateLstmParameter;
   populate_parameter_funcs_[schema::PrimitiveType_EmbeddingLookup] = PopulateEmbeddingLookupParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Elu] = PopulateEluParameter;
+  populate_parameter_funcs_[schema::PrimitiveType_L2Norm] = PopulateL2NormParameter;
 }
 
 PopulateParameterRegistry *PopulateParameterRegistry::GetInstance() {
