@@ -33,7 +33,7 @@ class InplaceAssign(PrimitiveWithInfer):
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
-        - **value** (Tensor) - The value to assign.
+        - **value** (Tensor) - The value to be assigned.
         - **depend** (Tensor) - The dependent tensor to keep this op connected in graph.
 
     Outputs:
@@ -274,7 +274,7 @@ class EqualCount(GraphKernel):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have same shape and data type.
+    The two input tensors should have the same shape and data type.
 
     Inputs:
         x (Tensor): the first input tensor.
@@ -1139,9 +1139,9 @@ class LambNextMV(GraphKernel):
     Outputs:
         Tuple of 2 Tensor.
 
-        - **add3** (Tensor) - The shape is the same as the shape after broadcasting, and the data type is
+        - **add3** (Tensor) - the shape is the same as the one after broadcasting, and the data type is
                               the one with high precision or high digits among the inputs.
-        - **realdiv4** (Tensor) - The shape is the same as the shape after broadcasting, and the data type is
+        - **realdiv4** (Tensor) - the shape is the same as the one after broadcasting, and the data type is
                                   the one with high precision or high digits among the inputs.
 
     Examples:

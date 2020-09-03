@@ -47,17 +47,17 @@ class AllReduce(PrimitiveWithInfer):
 
     Note:
         The operation of AllReduce does not support "prod" currently.
-        Tensor must have same shape and format in all processes participating in the collective.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
-                  like sum, max, min. Default: ReduceOp.SUM.
+                  like sum, max, and min. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "hccl_world_group".
 
     Raises:
-        TypeError: If any of op and group is not a string
-                   or fusion is not a integer or the input's dtype is bool.
-        ValueError: If op is "prod"
+        TypeError: If any of operation and group is not a string,
+                   or fusion is not an integer, or the input's dtype is bool.
+        ValueError: If the operation is "prod".
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -113,7 +113,7 @@ class AllGather(PrimitiveWithInfer):
     Gathers tensors from the specified communication group.
 
     Note:
-        Tensor must have the same shape and format in all processes participating in the collective.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         group (str): The communication group to work on. Default: "hccl_world_group".
@@ -177,7 +177,7 @@ class _HostAllGather(PrimitiveWithInfer):
     Gathers tensors from the specified communication group on host.
 
     Note:
-        Tensor must have the same shape and format in all processes participating in the collective.
+        The tensors must have the same shape and format in all processes of the collection.
         _HostAllGather is a host-side operator, it depends on OpenMPI and must use build option -M on
         to enable it. Using mpirun command to run it:
         mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_all_gather.py
@@ -227,8 +227,8 @@ class ReduceScatter(PrimitiveWithInfer):
      Reduces and scatters tensors from the specified communication group.
 
     Note:
-        The back propagation of the op is not surported yet. Stay tuned for more.
-        Tensor must have the same shape and format in all processes participating in the collective.
+        The back propagation of the op is not supported yet. Stay tuned for more.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -236,7 +236,7 @@ class ReduceScatter(PrimitiveWithInfer):
         group (str): The communication group to work on. Default: "hccl_world_group".
 
     Raises:
-        TypeError: If any of op and group is not a string
+        TypeError: If any of operation and group is not a string.
         ValueError: If the first dimension of input can not be divided by rank size.
 
     Examples:
@@ -288,7 +288,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
     Reduces and scatters tensors from the specified communication group on host.
 
     Note:
-        Tensor must have the same shape and format in all processes participating in the collective.
+        The tensors must have the same shape and format in all processes of the collection.
         _HostReduceScatter is a host-side operator, it depends on OpenMPI and must use build option
         -M on to enable it. Using mpirun command to run it:
         mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_reduce_scatter.py
@@ -337,7 +337,7 @@ class Broadcast(PrimitiveWithInfer):
     Broadcasts the tensor to the whole group.
 
     Note:
-        Tensor must have the same shape and format in all processes participating in the collective.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         root_rank (int): Source rank. Required in all processes except the one
@@ -402,7 +402,7 @@ class _AlltoAll(PrimitiveWithInfer):
     - The gather phase: Each process concatenates the received blocks along the concat_dimension.
 
     Note:
-        Tensor must have the same shape and format in all processes participating in the collective.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.

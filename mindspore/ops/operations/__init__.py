@@ -16,7 +16,7 @@
 """
 Primitive operator classes.
 
-A collection of operators to build nerual networks or computing functions.
+A collection of operators to build neural networks or to compute functions.
 """
 
 from .image_ops import (CropAndResize)

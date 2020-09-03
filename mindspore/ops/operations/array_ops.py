@@ -222,11 +222,11 @@ class Cast(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The tensor to be casted.
+          The tensor to be cast.
         - **type** (dtype.Number) - The valid data type of the output tensor. Only constant value is allowed.
 
     Outputs:
-        Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`, same as `input_x`.
+        Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -983,7 +983,7 @@ class TupleToArray(PrimitiveWithInfer):
         - **input_x** (tuple) - A tuple of numbers. These numbers have the same type. Only constant value is allowed.
 
     Outputs:
-        Tensor, if the input tuple contain `N` numbers, then the output tensor shape is (N,).
+        Tensor, if the input tuple contain `N` numbers, then the shape of the output tensor is (N,).
 
     Examples:
         >>> type = P.TupleToArray()((1,2,3))
@@ -1148,11 +1148,11 @@ class Argmax(PrimitiveWithInfer):
     """
     Returns the indices of the max value of a tensor across the axis.
 
-    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the output tensor shape is
+    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Args:
-        axis (int): Axis on which Argmax operation applies. Default: -1.
+        axis (int): Axis where the Argmax operation applies to. Default: -1.
         output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
             Default: `mindspore.dtype.int32`.
 
@@ -1195,11 +1195,11 @@ class Argmin(PrimitiveWithInfer):
     """
     Returns the indices of the min value of a tensor across the axis.
 
-    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the output tensor shape is
+    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Args:
-        axis (int): Axis on which Argmin operation applies. Default: -1.
+        axis (int): Axis where the Argmin operation applies to. Default: -1.
         output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
             Default: `mindspore.dtype.int32`.
 
@@ -1241,16 +1241,17 @@ class Argmin(PrimitiveWithInfer):
 
 class ArgMaxWithValue(PrimitiveWithInfer):
     """
-    Calculates maximum value with corresponding index.
+    Calculates the maximum value with the corresponding index.
 
-    Calculates maximum value along with given axis for the input tensor. Returns the maximum values and indices.
+    Calculates the maximum value along with the given axis for the input tensor. It returns the maximum values and
+    indices.
 
     Note:
         In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
 
     Args:
         axis (int): The dimension to reduce. Default: 0.
-        keep_dims (bool): Whether to reduce dimension, if true the output will keep same dimension with the input,
+        keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
                           the output will reduce dimension if false. Default: False.
 
     Inputs:
@@ -1258,11 +1259,12 @@ class ArgMaxWithValue(PrimitiveWithInfer):
           :math:`(x_1, x_2, ..., x_N)`.
 
     Outputs:
-        tuple(Tensor), tuple of 2 tensors, corresponding index and maximum value of input tensor.
-        - index (Tensor) - The index for maximum value of input tensor. If `keep_dims` is true, the output tensors shape
-        is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Else, the shape is
+        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
+        tensor.
+        - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
+        output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
-        - output_x (Tensor) - The maximum value of input tensor, the shape same as index.
+        - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
@@ -1291,16 +1293,17 @@ class ArgMaxWithValue(PrimitiveWithInfer):
 
 class ArgMinWithValue(PrimitiveWithInfer):
     """
-    Calculates minimum value with corresponding index, return indices and values.
+    Calculates the minimum value with corresponding index, return indices and values.
 
-    Calculates minimum value along with given axis for the input tensor. Returns the minimum values and indices.
+    Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
+    indices.
 
     Note:
         In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
 
     Args:
         axis (int): The dimension to reduce. Default: 0.
-        keep_dims (bool): Whether to reduce dimension, if true the output will keep same dimension as the input,
+        keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
                           the output will reduce dimension if false. Default: False.
 
     Inputs:
@@ -1308,9 +1311,12 @@ class ArgMinWithValue(PrimitiveWithInfer):
           :math:`(x_1, x_2, ..., x_N)`.
 
     Outputs:
-        Tensor, corresponding index and minimum value of input tensor. If `keep_dims` is true, the output tensors shape
-        is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Else, the shape is
+        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
+        tensor.
+        - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
+        output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+        - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5))
@@ -1587,9 +1593,9 @@ class Concat(PrimitiveWithInfer):
 
     Note:
         The input data is a tuple of tensors. These tensors have the same rank `R`. Set the given axis as `m`, and
-        :math:`0 \le m < N`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i` has
-        the shape :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
-        :math:`i`-th tensor. Then, the output tensor shape is
+        :math:`0 \le m < N`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i`, it has
+        the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
+        :math:`i`-th tensor. Then, the shape of the output tensor is
 
         .. math::
             (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
@@ -1598,7 +1604,7 @@ class Concat(PrimitiveWithInfer):
         axis (int): The specified axis. Default: 0.
 
     Inputs:
-        - **input_x** (tuple, list) - Tuple or list of input tensors.
+        - **input_x** (tuple, list) - A tuple or a list of input tensors.
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
@@ -1710,7 +1716,7 @@ class Pack(PrimitiveWithInfer):
     Packs the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
 
     Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
-    If :math:`0 \le axis`, the output tensor shape is :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
+    If :math:`0 \le axis`, the shape of the output tensor is :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
         axis (int): Dimension along which to pack. Default: 0.
@@ -2383,7 +2389,7 @@ class ScatterNd(PrimitiveWithInfer):
     Inputs:
         - **indices** (Tensor) - The index of scattering in the new tensor. With int32 data type.
         - **update** (Tensor) - The source Tensor to be scattered.
-        - **shape** (tuple[int]) - Define the shape of the output tensor. Has the same type as indices.
+        - **shape** (tuple[int]) - Define the shape of the output tensor, has the same type as indices.
 
     Outputs:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
@@ -3074,7 +3080,7 @@ class SpaceToBatch(PrimitiveWithInfer):
     of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_size (int): The block size of dividing block with value >= 2.
+        block_size (int): The block size of division, has the value not less than 2.
         paddings (list): The padding value for H and W dimension, containing 2 sub list, each containing 2 int value.
             All values must be >= 0. paddings[i] specifies the paddings for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible
@@ -3085,7 +3091,7 @@ class SpaceToBatch(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
-        :math:`block\_size` and :math:`padddings`. The output tensor shape will be :math:`(n', c', h', w')`, where
+        :math:`block\_size` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`, where
 
             :math:`n' = n*(block\_size*block\_size)`
 
@@ -3143,11 +3149,12 @@ class BatchToSpace(PrimitiveWithInfer):
     dimension and block_size with given amount to crop from dimension, respectively.
 
     Args:
-        block_size (int): The block size of dividing block with value >= 2.
-        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub list,
-            each containing 2 int value.
-            All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
+        block_size (int): The block size of division, has the value not less than 2.
+        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub lists.
+            Each list contains 2 integers.
+            All values must be not less than 0. crops[i] specifies the crop values for the spatial dimension i, which
+            corresponds to the input dimension i+2. It is required that
+            input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 should be divisible by
@@ -3229,7 +3236,8 @@ class SpaceToBatchND(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
-        :math:`block\_shape` and :math:`padddings`. The output tensor shape will be :math:`(n', c', h', w')`, where
+        :math:`block\_shape` and :math:`padddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
+        where
 
             :math:`n' = n*(block\_shape[0]*block\_shape[1])`
 
@@ -3295,11 +3303,11 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
 class BatchToSpaceND(PrimitiveWithInfer):
     r"""
-    Divide batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+    Divide batch dimension with blocks and interleave these blocks back into spatial dimensions.
 
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
-    dimension and block_shape with given amount to crop from dimension, respectively.
+    dimension and block_shape with given amount to crop from dimension, respectively.B
 
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.

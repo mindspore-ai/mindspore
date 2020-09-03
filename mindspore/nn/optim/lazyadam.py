@@ -141,7 +141,7 @@ class LazyAdam(Optimizer):
                        Default: 0.999.
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
                      1e-8.
-        use_locking (bool): Whether to enable a lock to protect updating variable tensors.
+        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
             If true, updates of the var, m, and v tensors will be protected by a lock.
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.

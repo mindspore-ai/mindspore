@@ -32,7 +32,7 @@ class Assign(Primitive):
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
-        - **value** (Tensor) - The value to assign.
+        - **value** (Tensor) - The value to be assigned.
 
     Outputs:
         Tensor, has the same type as original `variable`.
@@ -75,7 +75,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 
     Args:
         means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): Stds for encoding bounding boxes calculation. Default: (1.0, 1.0, 1.0, 1.0).
+        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
 
     Inputs:
         - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be (n, 4).
@@ -131,8 +131,8 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
 
     Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be (n, 4).
-        - **deltas** (Tensor) - Delta of boxes. Which has the same shape with anchor_box.
+        - **anchor_box** (Tensor) - Anchor boxes. The shape of `anchor_box` must be (n, 4).
+        - **deltas** (Tensor) - Delta of boxes. Which has the same shape with `anchor_box`.
 
     Outputs:
         Tensor, decoded boxes.
@@ -181,11 +181,11 @@ class CheckValid(PrimitiveWithInfer):
     """
     Check bounding box.
 
-    Check whether the bounding box cross data and data border.
+    Check whether the bounding box cross data and data border are valid.
 
     Inputs:
         - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). Data type should be float16 or float32.
-        - **img_metas** (Tensor) - Raw image size information, format (height, width, ratio).
+        - **img_metas** (Tensor) - Raw image size information with the format of (height, width, ratio).
           Data type should be float16 or float32.
 
     Outputs:
@@ -370,17 +370,17 @@ class Depend(Primitive):
 
 class CheckBprop(PrimitiveWithInfer):
     """
-    Checks whether data type and shape of corresponding element from tuple x and y are the same.
+    Checks whether the data type and the shape of corresponding elements from tuples x and y are the same.
 
     Raises:
-        TypeError: If not the same.
+        TypeError: If tuples x and y are not the same.
 
     Inputs:
-        - **input_x** (tuple[Tensor]) - The input_x contains the outputs of bprop to be checked.
-        - **input_y** (tuple[Tensor]) - The input_y contains the inputs of bprop to check against.
+        - **input_x** (tuple[Tensor]) - The `input_x` contains the outputs of bprop to be checked.
+        - **input_y** (tuple[Tensor]) - The `input_y` contains the inputs of bprop to check against.
 
     Outputs:
-        (tuple[Tensor]), the input_x,
+        (tuple[Tensor]), the `input_x`,
         if data type and shape of corresponding elements from `input_x` and `input_y` are the same.
 
     Examples:
