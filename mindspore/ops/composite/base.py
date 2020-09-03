@@ -21,7 +21,7 @@ from types import FunctionType
 
 from mindspore import context
 from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
-                             TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
+    TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_exec, _wrap_func
 from .. import functional as F
@@ -475,6 +475,7 @@ class _ListAppend(ListAppend_):
     Args:
         name (str): The name of the metafuncgraph object.
     """
+
     def __init__(self, name):
         ListAppend_.__init__(self, name)
 
