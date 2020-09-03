@@ -1,4 +1,43 @@
 # Contents
+# ResNet-50_quant Example
+
+## Description
+
+This is an example of training ResNet-50_quant with ImageNet2012 dataset in MindSpore.
+
+## Requirements
+
+- Install [MindSpore](https://www.mindspore.cn/install/en).
+
+- Download the dataset ImageNet2012 
+
+> Unzip the ImageNet2012 dataset to any path you want and the folder structure should include train and eval dataset as follows:
+> ```
+> .  
+> ├── ilsvrc                  # train dataset
+> └── ilsvrc_eval             # infer dataset: images should be classified into 1000 directories firstly, just like train images
+> ```
+
+
+## Example structure
+
+```shell
+resnet50_quant/
+  ├── eval.py
+  ├── models
+  │   └── resnet_quant.py
+  ├── Readme.md
+  ├── scripts
+  │   ├── run_infer.sh
+  │   └── run_train.sh
+  ├── src
+  │   ├── config.py
+  │   ├── crossentropy.py
+  │   ├── dataset.py
+  │   ├── launch.py
+  │   └── lr_generator.py
+  └── train.py
+```
 
 - [resnet50 Description](#resnet50-description)
 - [Model Architecture](#model-architecture)
@@ -88,21 +127,17 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ### Usage
 
-
-You can start training using python or shell scripts. The usage of shell scripts as follows:
-
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH][CKPT_PATH]
+- Ascend: sh run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
 ### Launch
 
 ```
-# training example
-  shell:
-      Ascend: sh run_train.sh Ascend 8 10.222.223.224 0,1,2,3,4,5,6,7 ~/resnet/train/ Resnet50-90_5004.ckpt
+  # training example
+  Ascend: bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ 
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train/train.log` like followings.
+Training result will be stored in the example path. Checkpoints will be stored at `./train/device$i/` by default, and training log  will be redirected to `./train/device$i/train.log` like followings. 
 
 ```
 epoch: 1 step: 5004, loss is 4.8995576
