@@ -47,6 +47,7 @@ class Scheduler {
   void ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels);
 
   kernel::LiteKernel *CreateSubKernel(const std::vector<kernel::LiteKernel *> &kernels, kernel::KERNEL_ARCH arch);
+  TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<tensor::Tensor *> &in_tensors);
   void SetKernelTensorDataType(kernel::LiteKernel *kernel);
 
  protected:
