@@ -80,6 +80,6 @@ def test_roi_align():
     roi_align = P.ROIAlign(pooled_height, pooled_width, spatial_scale, sample_num)
     output = roi_align(x, rois)
     print(output)
-    expect = [[[[4.625, 0.],
+    expect = [[[[8.2222, 0.],
                 [0., 0.]]]]
     np.testing.assert_almost_equal(output.asnumpy(), expect, decimal=4)
