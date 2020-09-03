@@ -390,7 +390,8 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
 
   // Filter out the Num workers field when generating the check sum
   ss_str = std::regex_replace(ss_str, std::regex("Num workers.*\n"), "");
-  ss_str = std::regex_replace(ss_str, std::regex("\\[workers.*\\]"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("\\[workers.*?\\]"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("Connector queue size.*\n"), "");
 
   // Filter out tcp/ip information
   ss_str = std::regex_replace(ss_str, std::regex("Hostname.*\n"), "");
@@ -408,6 +409,15 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   // Filter out the Device id field to allow cache sharing for a distributed run of the same pipeline
   ss_str = std::regex_replace(ss_str, std::regex("Device id.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex("device_id.*\n"), "");
+
+  // Filter out the operator id field
+  ss_str = std::regex_replace(ss_str, std::regex("Parent.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("Child.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex(R"(\(\s*\d+?\))"), "");
+
+  // Filter out the total repeats and number repeats per epoch field
+  ss_str = std::regex_replace(ss_str, std::regex("Total repeats.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex("Number repeats per epoch.*\n"), "");
 
   // The Cache crc and Server cache id field is different when creating new cache_client and re-using the same
   // cache_client later. So we filter out these two fields to allow cache sharing.
