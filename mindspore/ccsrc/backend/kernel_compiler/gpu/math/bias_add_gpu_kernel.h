@@ -96,11 +96,13 @@ class BiasAddGpuKernel : public GpuKernel {
       b_dims[i] = (i == pos) ? SizeToInt(x_shape[i]) : 1;
     }
 
+    auto input_device_format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto cudnn_cal_format = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensorNdDescriptorEx(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(cudnn_dims), x_dims.get()),
+      cudnnSetTensorNdDescriptorEx(x_desc_, cudnn_cal_format, cudnn_data_type_, SizeToInt(cudnn_dims), x_dims.get()),
       "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensorNdDescriptorEx(b_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(cudnn_dims), b_dims.get()),
+      cudnnSetTensorNdDescriptorEx(b_desc_, cudnn_cal_format, cudnn_data_type_, SizeToInt(cudnn_dims), b_dims.get()),
       "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetOpTensorDescriptor(op_desc_, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN),

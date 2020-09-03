@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
@@ -38,21 +39,22 @@ std::vector<int> TransposeAxis(const std::string &src_format, const std::string 
 }
 
 // Transpose can be replaceed by nop reshape in some situations.
-// 1. out_shape [x, 1, 1, y] with transpose perm {0, 2, 3, 1}
-// 2. out_shape [x, y, 1, 1] with transpose perm {0, 3, 1, 2}
+// 1. out_shape [x, 1, 1, y]
+// 2. out_shape [x, y, 1, 1]
+// 3. out_shape [x, 1, y, 1]
 bool IsFakeTranspose(const std::vector<size_t> &out_shape, const std::vector<int> &transpose_perm) {
   if (out_shape.size() != 4) {
     MS_LOG(EXCEPTION) << "Invalid data shape, 4-D data was needed, but get " << out_shape.size() << "-D.";
   }
   std::vector<int> perm1 = {0, 2, 3, 1};
   std::vector<int> perm2 = {0, 3, 1, 2};
-  if (transpose_perm == perm1) {
-    return (out_shape[1] == 1 && out_shape[2] == 1);
-  } else if (transpose_perm == perm2) {
-    return (out_shape[2] == 1 && out_shape[3] == 1);
-  } else {
-    return false;
+  auto num = std::count(out_shape.begin(), out_shape.end(), 1);
+  if ((transpose_perm == perm1) || (transpose_perm == perm2)) {
+    if (num >= 2) {
+      return true;
+    }
   }
+  return false;
 }
 
 void SetTransposeOpBuildInfo(const std::string &input_format, const std::string &output_format,
@@ -73,6 +75,8 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
 // Insert transpose op between node and used_node whose position is used_node_index.
 CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &used_node,
                            int used_node_index, const std::vector<int> &transpose_perm) {
+  MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
+                << ", index: " << used_node_index;
   MS_EXCEPTION_IF_NULL(graph);
   // 0.Judge whether it is a fake transpose
   auto transed_shape = AnfAlgo::GetInputDeviceShape(used_node, used_node_index);
@@ -95,15 +99,10 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   if (!is_fake) {
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
   }
-  // 4.Set the input of used_node.
-  MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
-                << ", index: " << used_node_index;
-  AnfAlgo::SetNodeInput(utils::cast<CNodePtr>(used_node), transpose_op, used_node_index);
-  // 5. Update the manager info of transpose op.
+  // 4. Set the new edge of transpose op.
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  manager->Clear();
-  manager->AddFuncGraph(graph);
+  manager->SetEdge(used_node, used_node_index + 1, transpose_op);
   return transpose_op;
 }
 }  // namespace
