@@ -213,13 +213,9 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         of entry is a valid one.
 
     Args:
-        is_grad (bool): Specifies whether calculate grad only. Default: True.
         sparse (bool): Specifies whether labels use sparse format or not. Default: False.
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             If "none", do not perform reduction. Default: "none".
-        smooth_factor (float): Label smoothing factor. It is a optional input which should be in range [0, 1].
-            Default: 0.
-        num_classes (int): The number of classes in the task. It is a optional input Default: 2.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape (N, C).
@@ -238,29 +234,22 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         >>> loss(logits, labels)
     """
     def __init__(self,
-                 is_grad=True,
                  sparse=False,
-                 reduction='none',
-                 smooth_factor=0,
-                 num_classes=2):
+                 reduction='none'):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
-        self.is_grad = is_grad
         self.sparse = sparse
-        validator.check_number_range(
-            "smooth_factor", smooth_factor, 0, 1, Rel.INC_BOTH, self.cls_name)
-        self.smooth_factor = smooth_factor
-        self.num_classes = num_classes
+        self.reduction = reduction
         self.softmax_cross_entropy = _selected_ops.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
-        self.on_value = Tensor(1.0 - self.smooth_factor, mstype.float32)
-        self.off_value = Tensor(1.0 * self.smooth_factor / (self.num_classes - 1), mstype.float32)
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0., mstype.float32)
         self.is_cpugpu = context.get_context('device_target') in ["CPU", "GPU"]
 
         if self.is_cpugpu:
-            self.sparse_softmax_cross_entropy = P.SparseSoftmaxCrossEntropyWithLogits(is_grad=self.is_grad)
+            self.sparse_softmax_cross_entropy = P.SparseSoftmaxCrossEntropyWithLogits()
 
     def construct(self, logits, labels):
-        if self.is_cpugpu and self.sparse:
+        if self.is_cpugpu and self.sparse and self.reduction == 'mean':
             x = self.sparse_softmax_cross_entropy(logits, labels)
             return x
 

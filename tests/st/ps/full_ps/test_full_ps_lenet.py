@@ -123,7 +123,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 if __name__ == "__main__":
     network = LeNet5(10)
     network.set_param_ps()
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 

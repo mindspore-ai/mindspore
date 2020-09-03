@@ -33,6 +33,7 @@ from mindspore.communication.management import init, get_rank, get_group_size
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
+from src.CrossEntropySmooth import CrossEntropySmooth
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet50 or resnet101')
@@ -147,8 +148,8 @@ if __name__ == '__main__':
         if args_opt.dataset == "imagenet2012":
             if not config.use_label_smooth:
                 config.label_smooth_factor = 0.0
-            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean",
-                                                 smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+            loss = CrossEntropySmooth(sparse=True, reduction="mean",
+                                      smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
         else:
             loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -159,11 +160,10 @@ if __name__ == '__main__':
         if args_opt.dataset == "imagenet2012":
             if not config.use_label_smooth:
                 config.label_smooth_factor = 0.0
-            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
-                                                 smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+            loss = CrossEntropySmooth(sparse=True, reduction="mean",
+                                      smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
         else:
-            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
-                                                 num_classes=config.class_num)
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
 
         if args_opt.net == "resnet101" or args_opt.net == "resnet50":
             opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay,

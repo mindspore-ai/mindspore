@@ -136,7 +136,7 @@ def test_train_lenet():
     learning_rate = multisteplr(epoch, 30)
 
     optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
@@ -192,7 +192,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 def test_train_and_eval_lenet():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     network = LeNet5(10)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 

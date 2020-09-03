@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # convert fusion network to quantization aware network
     network = quant.convert_quant_network(network, bn_fold=True, per_channel=[True, False], symmetric=[True, False])
     # define network loss
-    loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
     # define dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path,

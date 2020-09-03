@@ -124,7 +124,7 @@ def validate_model(net, dataset):
 if __name__ == "__main__":
     network = LeNet5()
 
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     optimizer = nn.AdamWeightDecay(params=network.trainable_params(), learning_rate=0.0001)
 
     net_with_loss = WithLossCell(network, criterion)

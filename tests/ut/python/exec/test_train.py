@@ -31,7 +31,7 @@ def lr_gen(fn, epoch_size):
 
 def me_train_tensor(net, input_np, label_np, epoch_size=2):
     """me_train_tensor"""
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr_gen(lambda i: 0.1, epoch_size), 0.9,
                    0.01, 1024)
     Model(net, loss, opt)

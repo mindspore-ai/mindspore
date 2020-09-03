@@ -102,7 +102,7 @@ if __name__ == '__main__':
     lr = lr_steps(0, lr_max=cfg.lr_init, total_epochs=cfg.epoch_size, steps_per_epoch=batch_num)
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), cfg.momentum,
                    weight_decay=cfg.weight_decay)
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
     if device_target == "Ascend":
         model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},

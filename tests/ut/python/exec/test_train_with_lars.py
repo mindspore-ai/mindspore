@@ -78,7 +78,7 @@ def lr_gen(fn, epoch_size):
 
 def me_train_tensor(net, input_np, label_np, epoch_size=2):
     """me_train_tensor"""
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     # reorder the net parameters , leave the parameters that need to be passed into lars to the end part
 
     opt = Momentum(get_net_trainable_reordered_params(net)[2], lr_gen(lambda i: 0.1, epoch_size), 0.9, 0.01, 1024)

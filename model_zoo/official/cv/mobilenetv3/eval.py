@@ -41,8 +41,7 @@ if __name__ == '__main__':
     else:
         raise ValueError("Unsupported device_target.")
 
-    loss = nn.SoftmaxCrossEntropyWithLogits(
-        is_grad=False, sparse=True, reduction='mean')
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net = mobilenet_v3_large(num_classes=config.num_classes)
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path,

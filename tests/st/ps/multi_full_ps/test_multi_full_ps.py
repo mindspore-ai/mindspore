@@ -94,9 +94,7 @@ if __name__ == "__main__":
     np.random.seed(0)
     network = LeNet5(10)
     network.set_param_ps()
-    criterion = nn.SoftmaxCrossEntropyWithLogits(
-        is_grad=False, sparse=True, reduction="mean"
-    )
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
     if device_target == "GPU":
         context.set_auto_parallel_context(parallel_mode="data_parallel", mirror_mean=True, device_num=get_group_size())

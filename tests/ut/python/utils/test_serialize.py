@@ -283,7 +283,7 @@ def test_load_param_into_net():
 def test_save_checkpoint_for_network():
     """ test save_checkpoint for network"""
     net = Net()
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True)
     opt = Momentum(net.trainable_params(), 0.0, 0.9, 0.0001, 1024)
 
     loss_net = WithLossCell(net, loss)

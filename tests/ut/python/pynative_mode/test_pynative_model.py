@@ -129,7 +129,7 @@ def test_lenet_grad():
     verification_step = 0
 
     net = LeNet5()
-    loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False)
+    loss = nn.SoftmaxCrossEntropyWithLogits()
     momen_opti = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = GradWrap(NetWithLossClass(net))
     train_net.set_train()

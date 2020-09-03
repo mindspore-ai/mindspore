@@ -82,7 +82,7 @@ def all_to_all_common():
     dataset = Dataset(predict, label, 2)
     net = all_to_all_net()
 
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
 

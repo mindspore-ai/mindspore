@@ -115,7 +115,7 @@ class UncertaintyEvaluation:
             self.epi_uncer_model = EpistemicUncertaintyModel(self.epi_model)
             if self.epi_uncer_model.drop_count == 0:
                 if self.task_type == 'classification':
-                    net_loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+                    net_loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
                     net_opt = Adam(self.epi_uncer_model.trainable_params())
                     model = Model(self.epi_uncer_model, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
                 else:
@@ -314,7 +314,7 @@ class AleatoricLoss(Cell):
             self.exp = P.Exp()
             self.normal = C.normal
             self.to_tensor = P.ScalarToArray()
-            self.entropy = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+            self.entropy = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         else:
             self.mean = P.ReduceMean()
             self.exp = P.Exp()

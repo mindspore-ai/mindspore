@@ -50,7 +50,7 @@ if __name__ == "__main__":
                               cfg.batch_size)
 
     network = LeNet5(cfg.num_classes)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
