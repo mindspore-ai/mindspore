@@ -1310,6 +1310,15 @@ ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::str
     : dataset_file_(dataset_file), usage_(usage), decode_(decode), class_index_(class_indexing), sampler_(sampler) {}
 
 bool ManifestDataset::ValidateParams() {
+  std::vector<char> forbidden_symbols = {':', '*', '?', '"', '<', '>', '|', '`', '&', '\'', ';'};
+  for (char c : dataset_file_) {
+    auto p = std::find(forbidden_symbols.begin(), forbidden_symbols.end(), c);
+    if (p != forbidden_symbols.end()) {
+      MS_LOG(ERROR) << "filename should not contains :*?\"<>|`&;\'";
+      return false;
+    }
+  }
+
   Path manifest_file(dataset_file_);
   if (!manifest_file.Exists()) {
     MS_LOG(ERROR) << "dataset file: [" << dataset_file_ << "] is invalid or not exist";

@@ -203,6 +203,10 @@ TEST_F(MindDataTestPipeline, TestManifestError) {
   // Create a Manifest Dataset with invalid usage
   std::shared_ptr<Dataset> ds1 = Manifest(file_path, "invalid_usage");
   EXPECT_EQ(ds1, nullptr);
+
+  // Create a Manifest Dataset with invalid string
+  std::shared_ptr<Dataset> ds2 = Manifest(":*?\"<>|`&;'", "train");
+  EXPECT_EQ(ds2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestManifestWithNullSampler) {
