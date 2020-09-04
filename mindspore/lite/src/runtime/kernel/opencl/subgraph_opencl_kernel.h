@@ -46,6 +46,7 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   int UnInit();
 
  protected:
+  int UpdateTensorDataType();
   int MallocTensorWithReuse();
   int GenToFormatOp(const std::vector<lite::tensor::Tensor *> &in_tensors,
                     const std::vector<std::vector<kernel::LiteKernel *>> in_kernels,
