@@ -570,8 +570,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
   }
   std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
-  auto prim = GetValueNode<PrimitivePtr>(node->input(0));
-  if (prim->name() == EMBEDDING_LOOKUP) {
+  if (replace_op.first == EMBEDDING_LOOKUP) {
     replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
   }
   if (!params.empty()) {
