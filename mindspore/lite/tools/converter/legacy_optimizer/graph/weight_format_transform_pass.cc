@@ -71,7 +71,6 @@ STATUS WeightFormatTransformPass::QuantDataFormatTrans(MetaGraphT *graph) {
       }
       status = TransFilterFormat(weightTensor.get(), curDstFormat);
       if (status == RET_OK) {
-        //        node->primitive->value.AsConv2D()->format = schema::Format_NHWC;
         weightTensor->format = curDstFormat;
       } else {
         MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(weightTensor->format) << "To"

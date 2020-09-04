@@ -103,30 +103,8 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     FormatTransNodeType beforeNodeType, afterNodeType;
     if (fmkType == converter::FmkType_TFLITE) {  // inference by nhwc
-      //      if (quantType == QuantType_AwareTraining) {                                   // AwareTraining op use
-      //      nhwc
-      //        if (IsContain(GetUint8NhwcOpList(), GetCNodeTType(**iter))) {                    // uint8NhwcOp only
-      //        support nhwc
-      //          continue;
-      //        }
-      //        if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
-      //          continue;
-      //        }
-      //      } else {
-      //        if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
       continue;
-      //        }
-      //      }
-      //      beforeNodeType = kNCHW2NHWC;
-      //      afterNodeType = kNHWC2NCHW;
     } else if (fmkType == converter::FmkType_CAFFE) {  // inference by nchw
-      //      if (quantType == QuantType_AwareTraining) {                  // AwareTraining op use nhwc
-      //        if (!IsContain(GetUint8NhwcOpList(), GetCNodeTType(**iter))) {  // uint8NhwcOp only support nhwc
-      //          continue;
-      //        }
-      //      } else {
-      //        continue;
-      //      }
       if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
         continue;
       }

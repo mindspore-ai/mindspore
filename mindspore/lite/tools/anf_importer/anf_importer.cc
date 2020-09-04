@@ -15,6 +15,8 @@
  */
 
 #include <utility>
+#include <memory>
+#include <vector>
 #include "tools/anf_importer/anf_importer.h"
 #include "schema/model_generated.h"
 #include "ir/dtype.h"

@@ -22,7 +22,6 @@
 #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "utils/log_adapter.h"
 #include "securec/include/securec.h"
-// #include "utils/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
@@ -202,9 +201,8 @@ STATUS MatMulBiasAddFusionPass::AddFullConnectionBiasTensor(const std::shared_pt
     return RET_ERROR;
   }
   if (!biasDims.empty() && biasDims.size() != BIASADD_WEIGHT_SHAPE_SIZE) {
-    MS_LOG(ERROR)
-      << "BiasAdd bias tensor should has one dimension, current number of dimension %zu. or bias tensor is a scaler";
-    //   biasDims.size());
+    MS_LOG(ERROR) << "BiasAdd bias tensor should has one dimension, current number of dimension " << biasDims.size()
+                  << ". or bias tensor is a scaler";
     return RET_ERROR;
   }
   // add biasTensor to matmul

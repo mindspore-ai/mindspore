@@ -22,7 +22,6 @@
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "utils/log_adapter.h"
 #include "securec/include/securec.h"
-// #include "utils/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
@@ -47,7 +46,7 @@ STATUS MulAddFusionPass::DefinePattern() {
   baOp->types = {schema::PrimitiveType_Add};
   baOp->left = mulOp;
 
-  std::unique_ptr<FusionPattern> fusionPattern(new(std::nothrow) FusionPattern("MulAddFusion"));
+  std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern("MulAddFusion"));
   if (fusionPattern == nullptr) {
     MS_LOG(ERROR) << "new fusionPattern failed";
     return RET_ERROR;
@@ -101,15 +100,15 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
   // convert mul and add to scale
   auto status = AddNewScaleNode(graph, mulNode, addNode.get(), addNodeInputIndex.at(ADD_OP_BIAS_INDEX));
   if (RET_OK != status) {
-    MS_LOG(ERROR) << "AddFullConnectionBiasTensor failed, %d";  // status);
+    MS_LOG(ERROR) << "AddFullConnectionBiasTensor failed, " << status;
     return status;
   }
 
   return RET_OK;
 }
 
-STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode,
-                                         CNodeT* addNode, uint32_t addBiasIndex) {
+STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_ptr<CNodeT> &mulNode, CNodeT *addNode,
+                                         uint32_t addBiasIndex) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(mulNode != nullptr);
   MS_ASSERT(addNode != nullptr);
@@ -129,7 +128,6 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
     // repace addnode as activation
     std::unique_ptr<ActivationT> activationParam(new ActivationT());
     activationParam->type = addNode->primitive->value.AsAdd()->activationType;
-    // activationParam->alpha = 0.0;
     addNode->primitive->value.type = schema::PrimitiveType_Activation;
     addNode->primitive->value.value = activationParam.release();
     addNode->inputIndex.pop_back();
@@ -138,8 +136,7 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   // delete addnode
   auto status = IsolateOneWayNode(graph, addNode);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "IsolateOneWayNode failed, subGraph: %zu, node: %zu, error: %d";
-    // baPath->subGraphIdx, baPath->nodeIdx, status);
+    MS_LOG(ERROR) << "IsolateOneWayNode failed";
     return status;
   }
   return RET_OK;

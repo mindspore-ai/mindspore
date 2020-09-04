@@ -41,18 +41,18 @@ FusionPattern &FusionPattern::AddPatternOp(const std::string &id,
 
 FusionPattern &FusionPattern::AddPatternOp(const std::string &id, const std::vector<schema::PrimitiveType> &types) {
   if (id.empty()) {
-    // MS_LOG(ERROR) << "Id cannot be empty");
+    MS_LOG(ERROR) << "Id cannot be empty";
     hasError = true;
   }
 
   if (GetPatternOp(id) != nullptr) {
-    // MS_LOG(ERROR) << "Id repeated. (id:%s)", id.c_str());
+    MS_LOG(ERROR) << "Id repeated. id: " << id;
     hasError = true;
   }
 
   std::shared_ptr<PatternOp> op(new PatternOp());
   if (op == nullptr) {
-    // MS_LOG(ERROR) << "new an object failed");
+    MS_LOG(ERROR) << "new an object failed";
     hasError = true;
   } else {
     op->id = id;
@@ -78,12 +78,12 @@ FusionPattern &FusionPattern::RemovePatternOp(const std::string &id) {
 
 bool FusionPattern::Check() {
   if (hasError) {
-    // MS_LOG(ERROR) << "Has Error in previous Func");
+    MS_LOG(ERROR) << "Has Error in previous Func";
     return false;
   }
 
   if (GetPatternOp(this->outputOpId) == nullptr) {
-    // MS_LOG(ERROR) << "Can not find the output of the pattern");
+    MS_LOG(ERROR) << "Can not find the output of the pattern";
     return false;
   }
 
@@ -132,7 +132,7 @@ FusionPattern &FusionPattern::Finish() {
   std::vector<std::string> inputNodeIds;
   for (auto patternOp : ops) {
     if (IsContain(ids, patternOp->id)) {
-      // MS_LOG(ERROR) << "Duplicate id find: %s", patternOp->id.c_str());
+      MS_LOG(ERROR) << "Duplicate id find: " << patternOp->id;
       hasError = true;
       return *this;
     }
@@ -155,12 +155,12 @@ FusionPattern &FusionPattern::Finish() {
     }
   }
   if (ids.size() > 1) {
-    // MS_LOG(ERROR) << "Multi-output node find, only support pattern with one output");
+    MS_LOG(ERROR) << "Multi-output node find, only support pattern with one output";
     hasError = true;
     return *this;
   }
   if (ids.empty()) {
-    // MS_LOG(ERROR) << "No output node find, only support pattern with one output");
+    MS_LOG(ERROR) << "No output node find, only support pattern with one output";
     hasError = true;
     return *this;
   }

@@ -133,7 +133,7 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
     return RET_ERROR;
   }
   if (outputTensorIdxes.size() != 1) {
-    MS_LOG(ERROR) << "FakeQuantNode " << node->name.c_str() \
+    MS_LOG(ERROR) << "FakeQuantNode " << node->name.c_str()
                   << "should has 1 output, in fact: " << outputTensorIdxes.size();
     return RET_ERROR;
   }
@@ -376,7 +376,7 @@ NodeIter InsertNode(schema::MetaGraphT *graphT, NodeIter existNodeIter, InsertPl
   } else if (place == kAfter) {
     return InsertNodeAfter(graphT, existNodeIter, inoutIndexIdx, std::move(toAddNode), errorCode, opDefCopyer);
   } else {
-    // MS_LOG(ERROR)("Invalid InsertPlace : %d", place);
+    MS_LOG(ERROR) << "Invalid InsertPlace : " << place;
     return graphT->nodes.end();
   }
 }

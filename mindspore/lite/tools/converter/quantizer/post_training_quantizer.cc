@@ -513,7 +513,6 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
 
 STATUS PostTrainingQuantizer::DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchanel,
                                             bool depthwise) {
-  // const vector<int> dims = filter->dims;
   // perlayer
   if (!weight->isa<Parameter>()) {
     MS_LOG(ERROR) << "not a parameter";

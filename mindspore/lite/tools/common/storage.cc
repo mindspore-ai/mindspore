@@ -47,19 +47,18 @@ schema::MetaGraphT *Storage::Load(const std::string &inputPath) {
   size_t size;
   auto buf = ReadFile(inputPath.c_str(), &size);
   if (buf == nullptr) {
-    // MS_LOG(ERROR)("the file buffer is nullptr");
+    MS_LOG(ERROR) << "the file buffer is nullptr";
     return nullptr;
   }
 
   flatbuffers::Verifier verify((const uint8_t *)buf, size);
-  // if (false == VerifyGraphDefBuffer(verify)) {
-  //   //MS_LOG(ERROR)("the buffer is invalid and fail to create graph");
-  //   return nullptr;
-  // }
+  if (false == schema::VerifyMetaGraphBuffer(verify)) {
+    MS_LOG(ERROR) << "the buffer is invalid and fail to create meta graph";
+    return nullptr;
+  }
 
   auto graphDefT = schema::UnPackMetaGraph(buf);
   return graphDefT.release();
 }
 }  // namespace lite
 }  // namespace mindspore
-

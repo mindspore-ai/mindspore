@@ -557,7 +557,6 @@ OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
 OnnxNodeRegistrar g_onnxMulParser("Mul", new OnnxMulParser());
 OnnxNodeRegistrar g_onnxDivParser("Div", new OnnxDivParser());
-// OnnxNodeRegistrar g_onnxMeanParser("Mean", new OnnxMeanParser());  // onnx's Mean is different from mslite's
 OnnxNodeRegistrar g_onnxPowParser("Power", new OnnxPowParser());
 OnnxNodeRegistrar g_onnxEqualParser("Equal", new OnnxEqualParser());
 OnnxNodeRegistrar g_onnxLessParser("Less", new OnnxLessParser());

@@ -86,8 +86,6 @@ class PostTrainingQuantizer : public Quantizer {
 
   STATUS QuantNode();
 
-  //    STATUS reformatConvWeight(GraphDefT *graph);
-
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
 
