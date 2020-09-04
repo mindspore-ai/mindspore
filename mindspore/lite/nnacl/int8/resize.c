@@ -101,8 +101,14 @@ int ResizeBilinearInt8WithFloatWeight(const int8_t *input_data, int8_t *output_d
   int32_t new_height = output_shape[1];
   int32_t new_width = output_shape[2];
   float height_scale, width_scale;
-  ComputeScaleFloat(in_h, new_height, align_corners, &height_scale);
-  ComputeScaleFloat(in_w, new_width, align_corners, &width_scale);
+  int ret = ComputeScaleFloat(in_h, new_height, align_corners, &height_scale);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  ret = ComputeScaleFloat(in_w, new_width, align_corners, &width_scale);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
 
   int n, h, w, c;
   for (n = 0; n < in_n; n++) {
@@ -189,11 +195,15 @@ void ComputeInterpolationArgs(const int32_t pos, const int32_t scale, const int3
   *scaled_high_weight = *scaled_pos - (1 << 10) * (*low);
 }
 
-void ComputeScaleFloat(const int32_t in_value, const int32_t out_value, const bool align_corners, float *scale) {
+int ComputeScaleFloat(const int32_t in_value, const int32_t out_value, const bool align_corners, float *scale) {
+  if (out_value == 0) {
+    return NNACL_ERRCODE_DIVISOR_ZERO;
+  }
   *scale = (float)in_value / out_value;
   if (align_corners && out_value > 1) {
     *scale = (float)(in_value - 1) / (out_value - 1);
   }
+  return NNACL_OK;
 }
 
 void ComputeInterpolationArgsFloatWeight(const int32_t pos, const float scale, const int32_t size, float *actual_pos,

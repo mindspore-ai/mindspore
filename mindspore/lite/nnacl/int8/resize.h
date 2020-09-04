@@ -40,7 +40,7 @@ void ComputeScale(const int32_t in_value, const int32_t out_value, const bool al
 void ComputeInterpolationArgs(const int32_t pos, const int32_t scale, const int32_t size, int32_t *scaled_pos,
                               int32_t *low, int32_t *scaled_low_weight, int32_t *high, int32_t *scaled_high_weight);
 
-void ComputeScaleFloat(const int32_t in_value, const int32_t out_value, const bool align_corners, float *scale);
+int ComputeScaleFloat(const int32_t in_value, const int32_t out_value, const bool align_corners, float *scale);
 
 void ComputeInterpolationArgsFloatWeight(const int32_t pos, const float scale, const int32_t size, float *actual_pos,
                                          int32_t *low, float *low_weight, int32_t *high, float *high_weight);

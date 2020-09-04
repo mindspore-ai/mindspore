@@ -15,17 +15,21 @@
  */
 
 #include "nnacl/int8/leaky_relu_int8.h"
+#include "nnacl/errorcode.h"
 
-void DoLeakReluInt8(int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_prelu_parm, int task_id) {
+int DoLeakReluInt8(int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_prelu_parm, int task_id) {
   if (quant_prelu_parm == NULL) {
-    return;
+    return NNACL_NULL_PTR;
   }
   float output_scale = quant_prelu_parm->quant_arg.out_args_.scale_;
   int output_zp = quant_prelu_parm->quant_arg.out_args_.zp_;
   const float output_inverse_scale = 1.f / output_scale;
   int output_dim = quant_prelu_parm->input_dim_;
 
-  QuantArg *input_quant = NULL;
+  QuantArg *input_quant = malloc(sizeof(QuantArg)*output_dim);
+  if (input_quant == NULL) {
+    return NNACL_NULL_PTR;
+  }
   for (int i = 0; i < output_dim; i++) {
     input_quant[i].scale_ = quant_prelu_parm->quant_arg.in_args_.scale_;
     input_quant[i].zp_ = quant_prelu_parm->quant_arg.in_args_.zp_;
@@ -56,4 +60,6 @@ void DoLeakReluInt8(int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant
       }
     }
   }
+  free(input_quant);
+  return NNACL_OK;
 }
