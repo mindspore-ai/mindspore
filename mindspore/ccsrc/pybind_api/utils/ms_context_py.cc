@@ -80,7 +80,6 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("enable_gpu_summary", MsCtxParam::MS_CTX_ENABLE_GPU_SUMMARY)
                            .value("enable_graph_kernel", MsCtxParam::MS_CTX_ENABLE_GRAPH_KERNEL)
                            .value("enable_hccl", MsCtxParam::MS_CTX_ENABLE_HCCL)
-                           .value("enable_loop_sink", MsCtxParam::MS_CTX_ENABLE_LOOP_SINK)
                            .value("enable_mem_reuse", MsCtxParam::MS_CTX_ENABLE_MEM_REUSE)
                            .value("enable_pynative_hook", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_HOOK)
                            .value("enable_pynative_infer", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_INFER)
