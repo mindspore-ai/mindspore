@@ -173,6 +173,7 @@
 #include "nnacl/sparse_to_dense.h"
 #include "nnacl/l2_norm_parameter.h"
 #include "nnacl/detection_post_process_parameter.h"
+#include "nnacl/fp32/exp.h"
 
 namespace mindspore::kernel {
 
@@ -1517,8 +1518,7 @@ OpParameter *PopulateEluParameter(const mindspore::lite::PrimitiveC *primitive) 
   return reinterpret_cast<OpParameter *>(elu_parameter);
 }
 
-OpParameter *PopulateL2NormParameter(
-    const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateL2NormParameter(const mindspore::lite::PrimitiveC *primitive) {
   L2NormParameter *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
   if (l2_norm_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc L2NormParameter failed.";
@@ -1566,6 +1566,26 @@ OpParameter *PopulateDetectionPostProcessParameter(const mindspore::lite::Primit
   return reinterpret_cast<OpParameter *>(detection_post_process_parameter);
 }
 
+OpParameter *PopulateExpParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ExpParameter *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
+  if (exp_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc ExpParameter failed.";
+    return nullptr;
+  }
+  memset(exp_parameter, 0, sizeof(ExpParameter));
+  exp_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::Exp *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  exp_parameter->base_ = param->GetBase();
+  exp_parameter->scale_ = param->GetScale();
+  exp_parameter->shift_ = param->GetShift();
+  if (exp_parameter->base_ != -1 && exp_parameter->base_ <= 0) {
+    MS_LOG(ERROR) << "Exp base must be strictly positive, got " << exp_parameter->base_;
+    free(exp_parameter);
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(exp_parameter);
+}
+
 PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_SparseToDense] = PopulateSparseToDenseParameter;
   populate_parameter_funcs_[schema::PrimitiveType_SoftMax] = PopulateSoftmaxParameter;
@@ -1608,7 +1628,7 @@ PopulateParameterRegistry::PopulateParameterRegistry() {
   populate_parameter_funcs_[schema::PrimitiveType_Abs] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Cos] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Sin] = PopulateArithmeticSelf;
-  populate_parameter_funcs_[schema::PrimitiveType_Exp] = PopulateArithmeticSelf;
+  populate_parameter_funcs_[schema::PrimitiveType_Exp] = PopulateExpParameter;
   populate_parameter_funcs_[schema::PrimitiveType_Log] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Square] = PopulateArithmeticSelf;
   populate_parameter_funcs_[schema::PrimitiveType_Sqrt] = PopulateArithmeticSelf;

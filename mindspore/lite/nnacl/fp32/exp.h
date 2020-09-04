@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-#include "src/ops/floor_div.h"
+#ifndef MINDSPORE_LITE_NNACL_FP32_EXP_H_
+#define MINDSPORE_LITE_NNACL_FP32_EXP_H_
 
-namespace mindspore {
-namespace lite {
-#ifndef PRIMITIVE_WRITEABLE
+#include "nnacl/op_base.h"
 
-int FloorDiv::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
-  MS_ASSERT(nullptr != primitive);
-  MS_ASSERT(nullptr != fbb);
-  auto val_offset = schema::CreateFloorDiv(*fbb);
-  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_FloorDiv, val_offset.o);
-  fbb->Finish(prim_offset);
-  return RET_OK;
-}
+typedef struct ExpParameter {
+  OpParameter op_parameter_;
+  int thread_num_;
+  float base_;
+  float scale_;
+  float shift_;
+  float in_scale_;
+  float out_scale_;
+  int element_num_;
+} ExpParameter;
 
+#ifdef __cplusplus
+extern "C" {
 #endif
-}  // namespace lite
-}  // namespace mindspore
+int Exp(float *input_data, float *output_data, ExpParameter *parameter, int task_id);
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_FP32_EXP_H_

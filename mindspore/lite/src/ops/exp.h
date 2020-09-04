@@ -21,21 +21,27 @@
 #include <set>
 #include <cmath>
 #include "ir/dtype/type_id.h"
-#include "src/ops/arithmetic_self.h"
+#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class Exp : public ArithmeticSelf {
+class Exp : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Exp, ArithmeticSelf);
+  MS_DECLARE_PARENT(Exp, PrimitiveC);
   Exp() = default;
-  explicit Exp(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  explicit Exp(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  void SetBase(float base);
+  void SetShift(float shift);
+  void SetScale(float scale);
 #else
   Exp() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
+  float GetBase() const;
+  float GetShift() const;
+  float GetScale() const;
 };
 }  // namespace lite
 }  // namespace mindspore
