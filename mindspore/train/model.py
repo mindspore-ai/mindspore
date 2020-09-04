@@ -32,6 +32,7 @@ from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..context import ParallelMode
 from ..parallel._utils import _need_to_full, _to_full_tensor
+from ..parallel._cost_model_context import _set_multi_subgraphs
 from ..common import dtype as mstype
 from .dataset_helper import DatasetHelper
 from . import amp
@@ -166,6 +167,9 @@ class Model:
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             network.set_auto_parallel()
+            if self._optimizer is None:
+                # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
+                _set_multi_subgraphs()
         return network
 
     def _build_eval_network(self, metrics, eval_network, eval_indexes):
@@ -190,6 +194,9 @@ class Model:
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             if self._optimizer:
                 self._eval_network = _VirtualDatasetCell(self._eval_network)
+            if self._optimizer is None:
+                # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
+                _set_multi_subgraphs()
             self._eval_network.set_auto_parallel()
 
     def _build_predict_network(self):
@@ -197,6 +204,7 @@ class Model:
         self._predict_network = self._network
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             self._predict_network = _VirtualDatasetCell(self._network)
+            _set_multi_subgraphs()
             self._predict_network.set_auto_parallel()
 
     def _clear_metrics(self):
