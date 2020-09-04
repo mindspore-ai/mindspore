@@ -148,7 +148,6 @@ class MSELoss(nn.Cell):
 def test_loss_scale_fp16_lr_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     lr = Tensor(np.ones([1], np.float32) * 0.1)
     net = NetFP16(16, 16)
     net.set_train()
@@ -157,9 +156,11 @@ def test_loss_scale_fp16_lr_overflow():
     optimizer = Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
 
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
-    output_1 = train_network(inputs, label, scaling_sens)
-    output_2 = train_network(inputs, label, scaling_sens)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), np.finfo(np.float32).max),
+                                                                     dtype=mstype.float32))
+    output_1 = train_network(inputs, label)
+    output_2 = train_network(inputs, label)
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
@@ -188,16 +189,17 @@ def test_loss_scale_fp16_model_train_overflow():
 def test_loss_scale_fp16_opt_rmsprop_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full(1, np.finfo(np.float32).max), dtype=mstype.float32)
     net = NetFP16(16, 16)
     net.set_train()
 
     loss = MSELoss()
     optimizer = RMSProp(net.trainable_params(), learning_rate=0.1)
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
-    output_1 = train_network(inputs, label, scaling_sens)
-    output_2 = train_network(inputs, label, scaling_sens)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full(1, np.finfo(np.float32).max),
+                                                                     dtype=mstype.float32))
+    output_1 = train_network(inputs, label)
+    output_2 = train_network(inputs, label)
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
@@ -208,7 +210,6 @@ def test_loss_scale_fp16_opt_rmsprop_overflow():
 def test_loss_scale_fp16_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     net = NetFP16(16, 16)
     net.set_train()
 
@@ -216,8 +217,10 @@ def test_loss_scale_fp16_overflow():
     optimizer = Lamb(net.trainable_params(), learning_rate=0.01)
     net_with_loss = WithLossCell(net, loss)
     net_with_loss.set_grad()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
-    output_1 = train_network(inputs, label, scaling_sens)
-    output_2 = train_network(inputs, label, scaling_sens)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), np.finfo(np.float32).max),
+                                                                     dtype=mstype.float32))
+    output_1 = train_network(inputs, label)
+    output_2 = train_network(inputs, label)
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True

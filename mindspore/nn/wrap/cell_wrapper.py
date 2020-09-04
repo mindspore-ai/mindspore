@@ -88,7 +88,7 @@ class WithGradCell(Cell):
         Run in PyNative mode.
 
     Args:
-        network (Cell): The target network to wrap.
+        network (Cell): The target network to wrap. The network only supports single output.
         loss_fn (Cell): Primitive loss function used to compute gradients. Default: None.
         sens (Union[None, Tensor, Scalar, Tuple ...]): The sensitive for backpropagation, the type and shape
             should be same as the `network` output. If None, we will fill one to a same type shape of
@@ -143,7 +143,7 @@ class TrainOneStepCell(Cell):
     parallel modes are available for training.
 
     Args:
-        network (Cell): The training network.
+        network (Cell): The training network. The network only supports single output.
         optimizer (Cell): Optimizer for updating the weights.
         sens (Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 

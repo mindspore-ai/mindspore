@@ -34,7 +34,6 @@ from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..context import ParallelMode
 from ..parallel._utils import _need_to_full, _to_full_tensor
 from ..parallel._cost_model_context import _set_multi_subgraphs
-from ..common import dtype as mstype
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
 
@@ -488,11 +487,6 @@ class Model:
                     raise ValueError("when loss_fn is not None, train_dataset should"
                                      "return two elements, but got {}".format(len_element))
                 cb_params.cur_step_num += 1
-
-                overflow = False
-                if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
-                    scaling_sens = self._get_scaling_sens()
-                    next_element = tuple(next_element) + (Tensor(scaling_sens, mstype.float32),)
 
                 cb_params.train_dataset_element = next_element
                 list_callback.step_begin(run_context)

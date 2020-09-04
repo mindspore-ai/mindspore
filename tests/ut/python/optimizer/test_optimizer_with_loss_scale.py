@@ -100,70 +100,71 @@ class MSELoss(nn.Cell):
 def test_momentum_compile():
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
     label = Tensor(np.zeros([15, 1]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), 1.0), dtype=mstype.float32)
     net = Net(1, 1)
 
     loss = MSELoss()
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
 
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), 1.0), dtype=mstype.float32))
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
 def test_compile_fp16_not_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), 1.0), dtype=mstype.float32)
     net = NetFP16(16, 16)
 
     loss = MSELoss()
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
 
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), 1.0), dtype=mstype.float32))
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
 def test_compile_fp16_lr_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     lr = Tensor(np.ones([1], np.float32) * 0.1)
     net = NetFP16(16, 16)
     loss = MSELoss()
     optimizer = Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
 
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), np.finfo(np.float32).max),
+                                                                     dtype=mstype.float32))
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
 def test_compile_fp16_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     net = NetFP16(16, 16)
 
     loss = MSELoss()
     optimizer = Lamb(net.trainable_params(), learning_rate=0.01)
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), np.finfo(np.float32).max),
+                                                                     dtype=mstype.float32))
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
 def test_compile_fp16_lr_overflow_with_lossscale_update():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     lr = Tensor(np.ones([1], np.float32) * 0.1)
     net = NetFP16(16, 16)
     loss = MSELoss()
@@ -172,9 +173,9 @@ def test_compile_fp16_lr_overflow_with_lossscale_update():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = DynamicLossScaleManager()
     manager = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
@@ -209,7 +210,6 @@ def test_compile_f16_model_train_fixed():
 def test_compile_fp16_lr_overflow_fixed_feed():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     lr = Tensor(np.ones([1], np.float32) * 0.1)
     net = NetFP16(16, 16)
     loss = MSELoss()
@@ -218,16 +218,15 @@ def test_compile_fp16_lr_overflow_fixed_feed():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = FixedLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=update_cell)
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
 def test_compile_fp16_lr_overflow_dynamic_feed():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
     lr = Tensor(np.ones([1], np.float32) * 0.1)
     net = NetFP16(16, 16)
     loss = MSELoss()
@@ -236,9 +235,9 @@ def test_compile_fp16_lr_overflow_dynamic_feed():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = DynamicLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=update_cell)
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
 
 
@@ -253,7 +252,7 @@ def test_compile_fp16_lr_overflow_fixed_graph():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = FixedLossScaleManager(drop_overflow_update=True)
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=update_cell)
     train_network.set_train()
     output = train_network(inputs, label)
     print("the result is ", output)
@@ -270,7 +269,7 @@ def test_compile_fp16_lr_overflow_dynamic_graph():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = DynamicLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=update_cell)
     train_network.set_train()
     output = train_network(inputs, label)
     print("the result is ", output)
@@ -279,7 +278,6 @@ def test_compile_fp16_lr_overflow_dynamic_graph():
 def adam_compile(loss_scale=1.0):
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
     label = Tensor(np.zeros([15, 1]).astype(np.float32))
-    scaling_sens = Tensor(np.full((1), 1.0), dtype=mstype.float32)
     net = Net(1, 1)
 
     loss = MSELoss()
@@ -287,13 +285,16 @@ def adam_compile(loss_scale=1.0):
                      use_nesterov=False, weight_decay=0.0, loss_scale=loss_scale)
 
     net_with_loss = WithLossCell(net, loss)
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer,
+                                                  scale_sense=Tensor(np.full((1), 1.0), dtype=mstype.float32))
     train_network.set_train()
-    output = train_network(inputs, label, scaling_sens)
+    output = train_network(inputs, label)
     print("the result is ", output)
+
 
 def test_adam_compile():
     adam_compile()
+
 
 def test_adam_loss_scale_compile():
     """ test setting loss_scale to 1e-40 """

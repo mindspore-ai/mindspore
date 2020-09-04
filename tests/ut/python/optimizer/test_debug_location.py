@@ -177,7 +177,7 @@ def test_compile_grad_error():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = DynamicLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=update_cell)
     train_network.set_train()
     with pytest.raises(TypeError) as e:
         train_network(inputs, label)

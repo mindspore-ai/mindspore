@@ -49,6 +49,7 @@ grad_overflow = P.FloatStatus()
 def _tensor_grad_overflow(grad):
     return grad_overflow(grad)
 
+
 class DynamicLossScaleUpdateCell(Cell):
     r"""
     Dynamic Loss scale update cell.
@@ -168,27 +169,26 @@ class TrainOneStepWithLossScaleCell(Cell):
 
     This is a training step with loss scaling. It takes a network, an optimizer and possibly a scale update
     Cell as args. The loss scale value can be updated in both host side or device side. The
-    TrainOneStepWithLossScaleCell will be compiled to be graph which takes `data`, `label`, `sens` as input
-    data. The `sens` is acting as loss scaling value. If you want to update it on host side, the value should
-    be provided. If `sens` is not given, the loss scale update logic should be provied by `scale_update_cell`.
-    If `scale_update_cell` is not None and `sens` is provided, the `scale_update_cell` will be ignored.
+    TrainOneStepWithLossScaleCell will be compiled to be graph which takes `*inputs` as input data.
+    The Tensor type of `scale_sense` is acting as loss scaling value. If you want to update it on host side,
+    the value should be provided. If  the Tensor type of `scale_sense` is not given, the loss scale update logic
+    should be provied by Cell type of `scale_sense`. If  Cell type of `scale_sense` is not None and Tensor type
+    of `scale_sense` is provided, the Cell type of `scale_sense` will be ignored.
 
     Args:
-        network (Cell): The training network.
+        network (Cell): The training network. The network only supports single output.
         optimizer (Cell): Optimizer for updating the weights.
-        scale_update_cell(Cell): The loss scaling update logic cell. Default: None.
+        scale_sense (Union[Tensor, Cell]): If this value is Cell type, the loss scaling update logic cell.If this value
+                                          is Tensor type, Tensor with shape :math:`()`. Default: None.
 
     Inputs:
-        - **inputs** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
-        - **label** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
-        - **scaling_sens** (Tensor) - Tensor of shape :math:`()`.
+        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tuple of 3 Tensor, the loss, overflow flag and current loss scaling value.
 
         - **loss** (Tensor) -  Tensor with shape :math:`()`.
         - **overflow** (Tensor) -  Tensor with shape :math:`()`, type is bool.
-        - **loss_scale** (Tensor) -  Tensor with shape :math:`()`.
 
     Examples:
         >>> net_with_loss = Net()
@@ -203,7 +203,7 @@ class TrainOneStepWithLossScaleCell(Cell):
         >>> output = train_network(inputs, label, scaling_sens)
     """
 
-    def __init__(self, network, optimizer, scale_update_cell=None):
+    def __init__(self, network, optimizer, scale_sense=None):
         super(TrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
@@ -236,29 +236,29 @@ class TrainOneStepWithLossScaleCell(Cell):
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
 
-        self.loss_scale = None
-        self.loss_scaling_manager = scale_update_cell
-        if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+        self.scale_sense = None
+        self.loss_scaling_manager = None
+        if isinstance(scale_sense, Cell):
+            self.loss_scaling_manager = scale_sense
+            self.scale_sense = Parameter(Tensor(scale_sense.get_loss_scale(), dtype=mstype.float32),
+                                         name="scale_sense")
+        if isinstance(scale_sense, Tensor):
+            self.scale_sense = Parameter(scale_sense, name='scale_sense')
 
     @C.add_flags(has_effect=True)
-    def construct(self, data, label, sens=None):
+    def construct(self, *inputs):
         weights = self.weights
-        loss = self.network(data, label)
+        loss = self.network(*inputs)
         init = False
         if not self.gpu_target:
             # init overflow buffer
             init = self.alloc_status()
             # clear overflow buffer
             self.clear_status(init)
-        if sens is None:
-            scaling_sens = self.loss_scale
-        else:
-            scaling_sens = sens
 
+        scaling_sens = self.scale_sense
         scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
-        grads = self.grad(self.network, weights)(data, label, scaling_sens_filled)
+        grads = self.grad(self.network, weights)(*inputs, scaling_sens_filled)
         grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
@@ -279,8 +279,8 @@ class TrainOneStepWithLossScaleCell(Cell):
         else:
             cond = self.less_equal(self.base, flag_sum)
         overflow = cond
-        if sens is None:
-            overflow = self.loss_scaling_manager(self.loss_scale, cond)
+        if self.loss_scaling_manager is not None:
+            overflow = self.loss_scaling_manager(self.scale_sense, cond)
         # if there is no overflow, do optimize
         if overflow:
             opt = False
@@ -288,3 +288,9 @@ class TrainOneStepWithLossScaleCell(Cell):
             opt = self.optimizer(grads)
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, opt)
+
+    def set_sense_scale(self, sens):
+        """If the user has set the sens in the training process and wants to reassign the value, he can call
+        this function again to make modification, and sens needs to be of type Tensor."""
+        if self.scale_sense and isinstance(sens, Tensor):
+            self.self.scale_sense.set_data(sens)
