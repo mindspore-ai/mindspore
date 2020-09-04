@@ -26,9 +26,10 @@
 #include "minddata/dataset/include/text.h"
 
 using namespace mindspore::dataset::api;
+using mindspore::dataset::DataType;
 using mindspore::dataset::ShuffleMode;
-using mindspore::dataset::Tensor;
 using mindspore::dataset::Status;
+using mindspore::dataset::Tensor;
 using mindspore::dataset::Vocab;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
@@ -50,7 +51,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>");
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", DataType("int32"));
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -94,7 +95,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
 
   // Create lookup op for ds
   // Expected failure: "<unk>" is not a word of vocab
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>");
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", DataType("int32"));
   EXPECT_EQ(lookup, nullptr);
 }
 
@@ -105,7 +106,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
 
   // Create lookup op
   // Expected failure: vocab is null
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "");
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
   EXPECT_EQ(lookup, nullptr);
 }
 
@@ -126,7 +127,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpWithEmptyUnknownToken) {
 
   // Create Lookup operation on ds
   // Expected failure: "" is not a word of vocab
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "");
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
   EXPECT_EQ(lookup, nullptr);
 }
 
@@ -148,7 +149,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   EXPECT_EQ(home_index, 4);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>");
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", DataType("int32"));
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -212,12 +213,15 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
 
   uint64_t i = 0;
   std::vector<int32_t> expected = {2, 3, 1, 4, 5, 0};
+  std::vector<int64_t> not_expected = {2, 3, 1, 4, 5, 0};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind->shape() << " " << *ind;
-    std::shared_ptr<Tensor> expected_item;
+    std::shared_ptr<Tensor> expected_item, not_expected_item;
     Tensor::CreateScalar(expected[i], &expected_item);
+    Tensor::CreateScalar(not_expected[i], &not_expected_item);
     EXPECT_EQ(*ind, *expected_item);
+    EXPECT_NE(*ind, *not_expected_item);
     iter->GetNextRow(&row);
     i++;
   }
@@ -233,8 +237,8 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail1) {
 
   // Create vocab from dataset
   // Expected failure: top_k can not be negative
-  std::shared_ptr<Vocab> vocab = ds->BuildVocab({"text"}, {0, std::numeric_limits<int64_t>::max()},
-                                                -2, {"<pad>", "<unk>"}, true);
+  std::shared_ptr<Vocab> vocab =
+    ds->BuildVocab({"text"}, {0, std::numeric_limits<int64_t>::max()}, -2, {"<pad>", "<unk>"}, true);
   EXPECT_EQ(vocab, nullptr);
 }
 
@@ -247,9 +251,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create vocab from dataset
-  // Expected failure: requency_range [a,b] should be 0 <= a <= b
-  std::shared_ptr<Vocab> vocab = ds->BuildVocab({"text"}, {4, 1},
-                                                std::numeric_limits<int64_t>::max(), {"<pad>", "<unk>"}, true);
+  // Expected failure: frequency_range [a,b] should be 0 <= a <= b
+  std::shared_ptr<Vocab> vocab =
+    ds->BuildVocab({"text"}, {4, 1}, std::numeric_limits<int64_t>::max(), {"<pad>", "<unk>"}, true);
   EXPECT_EQ(vocab, nullptr);
 }
 
@@ -265,4 +269,53 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail3) {
   // Expected failure: column name does not exist in ds
   std::shared_ptr<Vocab> vocab = ds->BuildVocab({"ColumnNotExist"});
   EXPECT_EQ(vocab, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetInt64.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create vocab from dataset
+  std::shared_ptr<Vocab> vocab = ds->BuildVocab();
+  EXPECT_NE(vocab, nullptr);
+
+  // Check if vocab has words or not
+  int32_t home_index = vocab->Lookup("home");
+  EXPECT_EQ(home_index, 2);
+
+  // Create Lookup operation on ds
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "home", DataType("int64"));
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  std::vector<int64_t> expected = {2, 3, 1, 4, 5, 0};
+  std::vector<int8_t> not_expected = {2, 3, 1, 4, 5, 0};
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind->shape() << " " << *ind;
+    std::shared_ptr<Tensor> expected_item, not_expected_item;
+    Tensor::CreateScalar(expected[i], &expected_item);
+    Tensor::CreateScalar(not_expected[i], &not_expected_item);
+    EXPECT_EQ(*ind, *expected_item);
+    EXPECT_NE(*ind, *not_expected_item);
+    iter->GetNextRow(&row);
+    i++;
+  }
 }
