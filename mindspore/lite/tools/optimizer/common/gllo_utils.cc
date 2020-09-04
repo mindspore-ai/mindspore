@@ -48,11 +48,11 @@ bool IsRealKernel(const AnfNodePtr &node) {
   }
   auto input = cnode->inputs()[0];
   bool is_virtual_node = IsPrimitive(input, prim::kPrimImageSummary) || IsPrimitive(input, prim::kPrimScalarSummary) ||
-      IsPrimitive(input, prim::kPrimTensorSummary) ||
-      IsPrimitive(input, prim::kPrimHistogramSummary) || IsPrimitive(input, prim::kPrimMakeTuple) ||
-      IsPrimitive(input, prim::kPrimStateSetItem) || IsPrimitive(input, prim::kPrimDepend) ||
-      IsPrimitive(input, prim::kPrimTupleGetItem) || IsPrimitive(input, prim::kPrimControlDepend) ||
-      IsPrimitive(input, prim::kPrimReturn) || IsPrimitive(input, prim::kPrimPartial);
+                         IsPrimitive(input, prim::kPrimTensorSummary) ||
+                         IsPrimitive(input, prim::kPrimHistogramSummary) || IsPrimitive(input, prim::kPrimMakeTuple) ||
+                         IsPrimitive(input, prim::kPrimStateSetItem) || IsPrimitive(input, prim::kPrimDepend) ||
+                         IsPrimitive(input, prim::kPrimTupleGetItem) || IsPrimitive(input, prim::kPrimControlDepend) ||
+                         IsPrimitive(input, prim::kPrimReturn) || IsPrimitive(input, prim::kPrimPartial);
   return !is_virtual_node;
 }
 
@@ -159,8 +159,8 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
       }
 
       if (utils::isa<lite::PrimitiveC>(a_value_ptr) && utils::isa<lite::PrimitiveC>(b_value_ptr)) {
-        auto a_obj = (lite::PrimitiveC *) (a_value_ptr.get());
-        auto b_obj = (lite::PrimitiveC *) (b_value_ptr.get());
+        auto a_obj = (lite::PrimitiveC *)(a_value_ptr.get());
+        auto b_obj = (lite::PrimitiveC *)(b_value_ptr.get());
         return (*a_obj) == (*b_obj);
       } else {
         return (*a_value_ptr) == (*b_value_ptr);
@@ -319,7 +319,7 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
   if (utils::isa<PrimitiveCPtr>(value)) {
     auto primitive = value->cast<PrimitiveCPtr>();
     MS_ASSERT(primitive != nullptr);
-    return (schema::PrimitiveType) primitive->Type();
+    return (schema::PrimitiveType)primitive->Type();
   } else if (utils::isa<Primitive>(value)) {
     auto primitive = value->cast<PrimitivePtr>();
     MS_ASSERT(primitive != nullptr);

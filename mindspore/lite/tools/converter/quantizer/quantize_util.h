@@ -190,8 +190,7 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
           quant_datas[index] = quant_data;
         }
       }
-      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(),
-                          elem_count * sizeof(T));
+      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;
@@ -238,15 +237,13 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
           quant_datas[index] = quant_data;
         }
       }
-      auto ret =
-          memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
+      auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(int8_t));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return RET_ERROR;
       }
       weight->set_tensor_size(elem_count * sizeof(T));
     }
-
   } else {
     // per layer
     float min = FLT_MAX;

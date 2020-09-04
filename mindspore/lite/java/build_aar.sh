@@ -5,9 +5,9 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 TOP_PATH="${BASE_PATH}/../../.."
 
 get_version() {
-    VERSION_MAJOR=`grep "#define MS_VERSION_MAJOR" ../../include/version.h | tr -dc "[0-9]"`
-    VERSION_MINOR=`grep "#define MS_VERSION_MINOR" ../../include/version.h | tr -dc "[0-9]"`
-    VERSION_REVISION=`grep "#define MS_VERSION_REVISION" ../../include/version.h | tr -dc "[0-9]"`
+    VERSION_MAJOR=`grep "#define MS_VERSION_MAJOR" ../include/version.h | tr -dc "[0-9]"`
+    VERSION_MINOR=`grep "#define MS_VERSION_MINOR" ../include/version.h | tr -dc "[0-9]"`
+    VERSION_REVISION=`grep "#define MS_VERSION_REVISION" ../include/version.h | tr -dc "[0-9]"`
     VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
 

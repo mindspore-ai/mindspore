@@ -27,7 +27,6 @@ using std::vector;
 namespace mindspore {
 namespace lite {
 namespace quant {
-
 WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const string &weightSize,
                                  const std::string &convWeightChannelThreshold, const std::string &bitNum)
     : Quantizer(graph) {

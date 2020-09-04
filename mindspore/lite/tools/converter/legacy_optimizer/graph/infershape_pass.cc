@@ -21,8 +21,8 @@
 #include "src/ir/tensor.h"
 #include "src/ops/primitive_c.h"
 
-using mindspore::lite::tensor::Tensor;
 using mindspore::lite::PrimitiveC;
+using mindspore::lite::tensor::Tensor;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -33,7 +33,7 @@ std::vector<tensor::Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);
     auto tensor_shape = tensorT->dims;
     auto lite_tensor =
-        new(std::nothrow) tensor::Tensor(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
+      std::make_unique<tensor::Tensor>(TypeId(tensorT->dataType), tensor_shape, tensorT->format, tensorT->nodeType);
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
       return std::vector<tensor::Tensor *>();
@@ -43,27 +43,23 @@ std::vector<tensor::Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const
       auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
       // when tensorT as param input
       if (lite_tensor_size == 0) {
-        delete lite_tensor;
         return std::vector<tensor::Tensor *>();
       }
-      auto tensor_data = new(std::nothrow) char[lite_tensor_size / sizeof(char)];
+      auto tensor_data = std::unique_ptr<char[]>(new (std::nothrow) char[lite_tensor_size / sizeof(char)]);
       if (tensor_data == nullptr) {
         MS_LOG(ERROR) << "tensor_data is nullptr";
-        delete lite_tensor;
         return std::vector<tensor::Tensor *>();
       }
-      auto ret = memcpy_s(tensor_data, lite_tensor_size, tensorT->data.data(), lite_tensor_size);
+      auto ret = memcpy_s(tensor_data.get(), lite_tensor_size, tensorT->data.data(), lite_tensor_size);
       if (ret != EOK) {
-        delete lite_tensor;
-        delete[] tensor_data;
         MS_LOG(ERROR) << "memcpy error: " << ret;
         return std::vector<tensor::Tensor *>();
       }
-      lite_tensor->SetData(tensor_data);
-      lite_tensors.emplace_back(lite_tensor);
+      lite_tensor->SetData(tensor_data.release());
+      lite_tensors.emplace_back(lite_tensor.release());
       continue;
     }
-    lite_tensors.emplace_back(lite_tensor);
+    lite_tensors.emplace_back(lite_tensor.release());
   }
   return lite_tensors;
 }
@@ -95,17 +91,16 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
     auto ret = primitiveC->InferShape(input_tensors, output_tensors);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name
-                   << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type)
-                   << "flag set to false.";
+                   << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type) << "flag set to false.";
     } else if (ret != RET_OK) {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
-                    << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type);
+                      << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type);
       return RET_INFER_ERR;
     }
     // copy output shape to tensorT
     for (size_t i = 0; i < output_tensors.size(); i++) {
       auto output_dims = output_tensors[i]->shape();
-      auto &output_tensor =  graph->allTensors.at(node->outputIndex[i]);
+      auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
       output_tensor->dims.swap(output_dims);
       output_tensor->format = output_tensors[i]->GetFormat();
       output_tensor->dataType = output_tensors[i]->data_type();
