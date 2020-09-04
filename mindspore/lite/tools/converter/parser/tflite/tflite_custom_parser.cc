@@ -57,11 +57,11 @@ STATUS TfliteCustomParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflit
   attr->NmsScoreThreshold = attr_map["nms_score_threshold"].AsFloat();
   attr->MaxDetections = attr_map["max_detections"].AsInt32();
   if (attr_map["detections_per_class"].IsNull()) {
-    attr->DetectionsPreClass = 100;
+    attr->DetectionsPerClass = 100;
   } else {
-    attr->DetectionsPreClass = attr_map["detections_per_class"].AsInt32();
+    attr->DetectionsPerClass = attr_map["detections_per_class"].AsInt32();
   }
-  attr->MaxClassesPreDetection = attr_map["max_classes_per_detection"].AsInt32();
+  attr->MaxClassesPerDetection = attr_map["max_classes_per_detection"].AsInt32();
   attr->NumClasses = attr_map["num_classes"].AsInt32();
   if (attr_map["use_regular_nms"].IsNull()) {
     attr->UseRegularNms = false;
