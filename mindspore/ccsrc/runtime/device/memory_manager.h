@@ -39,6 +39,7 @@ class MemoryManager {
     total_dynamic_size_ = 0;
     dynamic_mem_offset_ = 0;
   }
+  virtual void ClearGlobalIdleMem() {}
 
   void MallocReusedDynamicMem(const session::KernelGraph *graph);
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,

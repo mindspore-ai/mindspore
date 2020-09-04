@@ -155,6 +155,8 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
   }
 }
 
+void AscendKernelRuntime::ClearGlobalIdleMem() { mem_manager_->ClearGlobalIdleMem(); }
+
 bool AscendKernelRuntime::NeedDestroyHccl() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

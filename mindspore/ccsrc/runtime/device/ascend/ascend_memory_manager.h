@@ -28,6 +28,7 @@ class AscendMemoryManager : public MemoryManager {
   void MallocDeviceMemory() override;
   void FreeDeviceMemory() override;
   void ResetDynamicMemory() override;
+  void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size) override;
 
  protected:

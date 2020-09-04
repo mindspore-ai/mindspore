@@ -77,6 +77,8 @@ void AscendMemoryManager::ResetDynamicMemory() {
   AscendMemoryPool::GetInstance().set_graph_dynamic_mem_offset(dynamic_mem_offset_);
 }
 
+void AscendMemoryManager::ClearGlobalIdleMem() { AscendMemoryPool::GetInstance().ResetIdleMemBuf(); }
+
 void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
   auto align_size = GetCommonAlignSize(size);
   return AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
