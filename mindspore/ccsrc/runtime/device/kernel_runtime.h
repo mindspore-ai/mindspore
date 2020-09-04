@@ -58,11 +58,9 @@ class KernelRuntime {
   void RunOpClearMemory(const session::KernelGraph *graph);
   bool DumpDataEnabled();
   bool DumpDataEnabledIteration();
-  virtual bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr);
   virtual bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr);
-  virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
-  virtual bool RunTask(const session::KernelGraph *graph);
-  virtual bool GenTask(const session::KernelGraph *graph);
+  virtual bool Load(session::KernelGraph *graph);
+  virtual bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) = 0;
   bool LaunchKernel(const session::KernelGraph *graph);
   bool LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, const AddressPtrList &kernel_inputs,
                                      const AddressPtrList &kernel_outputs,
@@ -80,7 +78,6 @@ class KernelRuntime {
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr GetDumpConf();
 #endif
-  virtual bool LoadTask(const session::KernelGraph *graph);
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
