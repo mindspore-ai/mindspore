@@ -302,6 +302,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
       auto inst = pynative::PynativeExecutor::GetInstance();
       inst->SaveOpForwardValue(input_value.second, input_value.first);
       auto input_value_node = NewValueNode(input_value.first);
+      input_value_node->set_has_new_value(true);
       manager->Replace(paras[i], input_value_node);
     }
   }
