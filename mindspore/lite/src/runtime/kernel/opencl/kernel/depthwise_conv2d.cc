@@ -49,6 +49,7 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   if (in_format != schema::Format_NHWC4 && in_format != schema::Format_NC4HW4) {
     MS_LOG(ERROR) << "input format(" << in_format << ") "
                   << "format not support!";
+    return RET_ERROR;
   }
   in_tensors_[0]->SetFormat(in_format);
   out_tensors_[0]->SetFormat(in_format);
@@ -103,6 +104,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
       PackNCHWToNC4HW4<float, int16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
+      return RET_ERROR;
     }
   } else {
     packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
@@ -112,6 +114,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
       PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
     } else {
       MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
+        return RET_ERROR;
     }
   }
 
