@@ -28,7 +28,7 @@
       * change IndexedSlices to RowTensor([!4031](https://gitee.com/mindspore/mindspore/pulls/4031))
       * Must set or change parallel mode before any Initializer created([!4801](https://gitee.com/mindspore/mindspore/pulls/4801))
 * Executor and performance optimization
-    * Minspore graph compilation process performance improved by 20%.
+    * MindSpore graph compilation process performance improved by 20%.
     * Decoupling C++ and Python modules to achieve separate compilation of core modules.
 * Data processing, augmentation, and save format
     * Support automatic data augmentation
