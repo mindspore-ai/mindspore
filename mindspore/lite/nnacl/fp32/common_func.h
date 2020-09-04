@@ -31,9 +31,9 @@ void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bi
                         size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, bool is_relu, bool is_relu6);
-float ShortToFloat32(uint16_t srcValue);
+float ShortToFloat32(uint16_t src_value);
 
-uint16_t Float32ToShort(float srcValue);
+uint16_t Float32ToShort(float src_value);
 
 #ifdef ENABLE_ARM
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
