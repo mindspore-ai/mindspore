@@ -284,17 +284,13 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
   return false;
 }
 
-bool ConvertIntegerWithType(const int &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
-  if (dtype == nullptr) {
-    *data = std::make_shared<Int32Imm>(obj);
-    return true;
-  }
-
+template <typename T>
+bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
   auto int_dypte = dyn_cast<Int>(dtype);
   if (int_dypte != nullptr) {
     switch (int_dypte->nbits()) {
       case 8:
-        *data = std::make_shared<Int8Imm>(static_cast<int8_t>(obj));
+        *data = std::make_shared<Int8Imm>(obj);
         break;
       case 16:
         *data = std::make_shared<Int16Imm>(obj);
@@ -312,7 +308,7 @@ bool ConvertIntegerWithType(const int &obj, ValuePtr *const data, TypePtr dtype 
   }
 
   auto uint_dypte = dyn_cast<UInt>(dtype);
-  if (int_dypte != nullptr) {
+  if (uint_dypte != nullptr) {
     switch (uint_dypte->nbits()) {
       case 8:
         *data = std::make_shared<UInt8Imm>(obj);
@@ -350,28 +346,22 @@ bool ConvertIntegerWithType(const int &obj, ValuePtr *const data, TypePtr dtype 
   return false;
 }
 
+bool ConvertIntegerWithType(const int &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
+  if (dtype == nullptr) {
+    *data = std::make_shared<Int32Imm>(obj);
+    return true;
+  }
+
+  return ConvertNumberWithType<int>(obj, data, dtype);
+}
+
 bool ConvertFloatWithType(const float &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
   if (dtype == nullptr) {
     *data = std::make_shared<FP32Imm>(obj);
     return true;
   }
 
-  auto float_dypte = dyn_cast<Float>(dtype);
-  if (float_dypte == nullptr) {
-    return false;
-  }
-
-  switch (float_dypte->nbits()) {
-    case 32:
-      *data = std::make_shared<FP32Imm>(obj);
-      break;
-    case 64:
-      *data = std::make_shared<FP64Imm>(obj);
-      break;
-    default:
-      *data = std::make_shared<FP32Imm>(obj);
-  }
-  return true;
+  return ConvertNumberWithType<float>(obj, data, dtype);
 }
 }  // namespace
 
