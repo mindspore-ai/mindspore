@@ -28,9 +28,9 @@ bool CudaEnvChecker::CheckNvccInPath() {
     return find_nvcc_;
   }
 
-  auto checker = [](const std::string &cuda_path) {
+  auto checker = [](const std::string &path) {
     bool find_nvcc = false;
-    DIR *dir = opendir(cuda_path.c_str());
+    DIR *dir = opendir(path.c_str());
     if (dir == nullptr) {
       return find_nvcc;
     }
@@ -46,23 +46,23 @@ bool CudaEnvChecker::CheckNvccInPath() {
     return find_nvcc;
   };
 
-  auto cuda_paths = GetCudaRealPaths();
-  find_nvcc_ = std::any_of(cuda_paths.begin(), cuda_paths.end(), checker);
+  std::set<std::string> paths;
+  GetRealPaths(&paths);
+  find_nvcc_ = std::any_of(paths.begin(), paths.end(), checker);
   already_check_nvcc_ = true;
   return find_nvcc_;
 }
 
-std::vector<std::string> CudaEnvChecker::GetCudaRealPaths() const {
-  std::vector<std::string> res;
+void CudaEnvChecker::GetRealPaths(std::set<std::string> *paths) const {
   auto env_paths_ptr = std::getenv(kPathEnv);
   if (env_paths_ptr == nullptr) {
-    MS_LOG(ERROR) << "Please export env: PATH";
-    return res;
+    MS_LOG(ERROR) << "Please export environment variable PATH";
+    return;
   }
   std::string env_paths = env_paths_ptr;
   if (env_paths.empty()) {
-    MS_LOG(ERROR) << "env PATH is empty";
-    return res;
+    MS_LOG(ERROR) << "Empty environment variable PATH";
+    return;
   }
 
   std::string cur_path;
@@ -71,52 +71,14 @@ std::vector<std::string> CudaEnvChecker::GetCudaRealPaths() const {
       cur_path += ch;
       continue;
     }
-    auto real_path_pair = IsCudaRealPath(cur_path);
-    if (real_path_pair.second) {
-      res.push_back(real_path_pair.first);
+    if (!cur_path.empty()) {
+      (void)paths->insert(cur_path);
     }
     cur_path.clear();
   }
   if (!cur_path.empty()) {
-    auto last_real_path_pair = IsCudaRealPath(cur_path);
-    if (last_real_path_pair.second) {
-      res.push_back(last_real_path_pair.first);
-    }
+    (void)paths->insert(cur_path);
   }
-  return res;
-}
-
-std::pair<std::string, bool> CudaEnvChecker::IsCudaRealPath(const std::string &path) const {
-  std::string real_path = path;
-  bool valid_path = false;
-
-  // 8: string length of kCudaSoftLinkPath
-  if (real_path.size() < 8) {
-    return {"", false};
-  }
-
-  // remove redundance space in path
-  auto front_space_pos = real_path.find_first_not_of(' ');
-  if (front_space_pos != 0) {
-    real_path.erase(0, front_space_pos);
-  }
-  auto back_space_pos = real_path.find_last_not_of(' ');
-  if (back_space_pos != real_path.size() - 1) {
-    real_path.erase(back_space_pos + 1);
-  }
-
-  auto cuda_softlink_path_pos = real_path.rfind(kCudaSoftLinkPath);
-  auto cuda_real_path_pos = real_path.rfind(kCudaRealPath);
-  auto start = (cuda_softlink_path_pos == std::string::npos || cuda_real_path_pos == std::string::npos)
-                 ? std::min(cuda_softlink_path_pos, cuda_real_path_pos)
-                 : std::max(cuda_softlink_path_pos, cuda_real_path_pos);
-  if (start == std::string::npos) {
-    return {"", false};
-  }
-
-  auto end = real_path.find('n', start);
-  valid_path = (end == real_path.size() - 1) ? true : ((end == real_path.size() - 2) && (real_path.back() == '/'));
-  return {real_path.substr(0, end + 1), valid_path};
 }
 }  // namespace gpu
 }  // namespace device
