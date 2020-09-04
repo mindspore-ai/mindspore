@@ -34,7 +34,8 @@ class Uniform(Distribution):
 
     Note:
         low should be stricly less than high.
-        Dist_spec_args are high and low.
+        dist_spec_args are high and low.
+        dtype should be float type because Uniform distributions are continuous.
 
     Examples:
         >>> # To initialize a Uniform distribution of mean 3.0 and standard deviation 4.0
@@ -58,32 +59,54 @@ class Uniform(Distribution):
         >>>     # All the following calls in construct are valid
         >>>     def construct(self, value, low_b, high_b, low_a, high_a):
         >>>
+        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
+        >>>         # 'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival', have the form:
+        >>>         # Args:
+        >>>         #     value (Tensor): value to be evaluated.
+        >>>         #     low (Tensor): lower bound of distribution. Default: self.low.
+        >>>         #     high (Tensor): higher bound of distribution. Default: self.high.
+        >>>
+        >>>         # Example of prob.
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.u1.prob(value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.u1.prob(value, low_b, high_b)
-        >>>
         >>>         # High and low must be passed in during function calls
         >>>         ans = self.u2.prob(value, low_a, high_a)
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same usage as 'mean'
-        >>>         # Will return 0.5
-        >>>         ans = self.u1.mean()
-        >>>         # Will return (low_b + high_b) / 2
-        >>>         ans = self.u1.mean(low_b, high_b)
         >>>
+        >>>         # Functions 'sd', 'var', 'entropy' have the same args.
+        >>>         # Args:
+        >>>         #     low (Tensor): lower bound of distribution. Default: self.low.
+        >>>         #     high (Tensor): higher bound of distribution. Default: self.high.
+        >>>
+        >>>         # Example of mean. sd, var have similar usage.
+        >>>         ans = self.u1.mean() # return 0.5
+        >>>         ans = self.u1.mean(low_b, high_b) # return (low_b + high_b) / 2
         >>>         # High and low must be passed in during function calls
         >>>         ans = self.u2.mean(low_a, high_a)
         >>>
-        >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
+        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are similar:
+        >>>         # Args:
+        >>>         #     dist (str): type of the distributions. Should be "Uniform" in this case.
+        >>>         #     low_b (Tensor): lower bound of distribution b.
+        >>>         #     high_b (Tensor): upper bound of distribution b.
+        >>>         #     low_a (Tensor): lower bound of distribution a. Default: self.low.
+        >>>         #     high_a (Tensor): upper bound of distribution a. Default: self.high.
+        >>>
+        >>>         # Example of kl_loss (cross_entropy is similar):
         >>>         ans = self.u1.kl_loss('Uniform', low_b, high_b)
         >>>         ans = self.u1.kl_loss('Uniform', low_b, high_b, low_a, high_a)
-        >>>
-        >>>         # Additional high and low must be passed
+        >>>         # Additional high and low must be passed in
         >>>         ans = self.u2.kl_loss('Uniform', low_b, high_b, low_a, high_a)
         >>>
-        >>>         # Sample
+        >>>
+        >>>         # sample
+        >>>         # Args:
+        >>>         #     shape (tuple): shape of the sample. Default: ()
+        >>>         #     low (Tensor): lower bound of distribution. Default: self.low.
+        >>>         #     high (Tensor): higher bound of distribution. Default: self.high.
         >>>         ans = self.u1.sample()
         >>>         ans = self.u1.sample((2,3))
         >>>         ans = self.u1.sample((2,3), low_b, high_b)

@@ -35,7 +35,8 @@ class Normal(Distribution):
 
     Note:
         Standard deviation should be greater than zero.
-        Dist_spec_args are mean and sd.
+        dist_spec_args are mean and sd.
+        dtype should be float type because Normal distributions are continuous.
 
     Examples:
         >>> # To initialize a Normal distribution of mean 3.0 and standard deviation 4.0
@@ -59,32 +60,54 @@ class Normal(Distribution):
         >>>     # The following calls are valid in construct
         >>>     def construct(self, value, mean_b, sd_b, mean_a, sd_a):
         >>>
+        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
+        >>>         # 'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival', have the form:
+        >>>         # Args:
+        >>>         #     value (Tensor): value to be evaluated.
+        >>>         #     mean (Tensor): mean of distribution. Default: self._mean_value.
+        >>>         #     sd (Tensor): standard deviation of distribution. Default: self._sd_value.
+        >>>
+        >>>         # Example of prob.
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.n1.prob(value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.n1.prob(value, mean_b, sd_b)
-        >>>
         >>>         # mean and sd must be passed in during function calls
         >>>         ans = self.n2.prob(value, mean_a, sd_a)
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same usage as 'mean'
-        >>>         # will return [0.0]
-        >>>         ans = self.n1.mean()
-        >>>         # will return mean_b
-        >>>         ans = self.n1.mean(mean_b, sd_b)
         >>>
-        >>>         # mean and sd must be passed during function calls
+        >>>         # Functions 'sd', 'var', 'entropy' have the same args.
+        >>>         # Args:
+        >>>         #     mean (Tensor): mean of distribution. Default: self._mean_value.
+        >>>         #     sd (Tensor): standard deviation of distribution. Default: self._sd_value.
+        >>>
+        >>>         # Example of mean. sd, var have similar usage.
+        >>>         ans = self.n1.mean() # return 0.0
+        >>>         ans = self.n1.mean(mean_b, sd_b) # return mean_b
+        >>>         # mean and sd must be passed in during function calls
         >>>         ans = self.n2.mean(mean_a, sd_a)
         >>>
-        >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
+        >>>
+        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are similar:
+        >>>         # Args:
+        >>>         #     dist (str): type of the distributions. Should be "Normal" in this case.
+        >>>         #     mean_b (Tensor): mean of distribution b.
+        >>>         #     sd_b (Tensor): standard deviation distribution b.
+        >>>         #     mean_a (Tensor): mean of distribution a. Default: self._mean_value.
+        >>>         #     sd_a (Tensor): standard deviation distribution a. Default: self._sd_value.
+        >>>
+        >>>         # Example of kl_loss (cross_entropy is similar):
         >>>         ans = self.n1.kl_loss('Normal', mean_b, sd_b)
         >>>         ans = self.n1.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
-        >>>
-        >>>         # Additional mean and sd must be passed
+        >>>         # Additional mean and sd must be passed in
         >>>         ans = self.n2.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
         >>>
-        >>>         # Sample
+        >>>         # sample
+        >>>         # Args:
+        >>>         #     shape (tuple): shape of the sample. Default: ()
+        >>>         #     mean (Tensor): mean of distribution. Default: self._mean_value.
+        >>>         #     sd (Tensor): standard deviation of distribution. Default: self._sd_value.
         >>>         ans = self.n1.sample()
         >>>         ans = self.n1.sample((2,3))
         >>>         ans = self.n1.sample((2,3), mean_b, sd_b)
