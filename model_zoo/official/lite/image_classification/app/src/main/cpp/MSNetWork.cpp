@@ -54,6 +54,8 @@ int MSNetWork::ReleaseNets(void) {
   return 0;
 }
 
+const int MSNetWork::RET_CATEGORY_SUM = 601;
+
 const char *MSNetWork::labels_name_map[MSNetWork::RET_CATEGORY_SUM] = {
     {"Tortoise"}, {"Container"}, {"Magpie"}, {"Seaturtle"}, {"Football"}, {"Ambulance"}, {"Ladder"},
     {"Toothbrush"}, {"Syringe"}, {"Sink"}, {"Toy"}, {"Organ(MusicalInstrument) "}, {"Cassettedeck"},

@@ -91,13 +91,13 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
     int y_bottom = y_bottoms[h];
     int y_top = y_tops[h];
     float y_bottom_weight = y_bottom_weights[h];
-    float y_top_weight = 1.0f - y_bottom_weight;
+    const float y_top_weight = 1.0f - y_bottom_weight;
 
     for (w = 0; w < new_width; w++) {
       int x_left = x_lefts[w];
       int x_right = x_rights[w];
       float x_left_weight = x_left_weights[w];
-      float x_right_weight = 1.0f - x_left_weight;
+      const float x_right_weight = 1.0f - x_left_weight;
       float top_left_weight = y_top_weight * x_left_weight;
       float top_right_weight = y_top_weight * x_right_weight;
       float bottom_left_weight = y_bottom_weight * x_left_weight;

@@ -76,10 +76,10 @@ cv::Mat PreProcessImageData(cv::Mat input) {
 
   imgFloatTmp.convertTo(imgResized256, CV_32FC3, normalizMin / normalizMax);
 
-  int offsetX = 16;
-  int offsetY = 16;
-  int cropWidth = 224;
-  int cropHeight = 224;
+  const int offsetX = 16;
+  const int offsetY = 16;
+  const int cropWidth = 224;
+  const int cropHeight = 224;
 
   // Standardization processing.
   float meanR = 0.485;

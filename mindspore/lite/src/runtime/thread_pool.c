@@ -500,12 +500,11 @@ int DistributeTask(int thread_pool_id, Task *task, int task_num) {
     } while (!k_success_flag);
   }
   // master thread
-  task->func(task->content, size - 1);
   if (task->func == NULL) {
     LOG_ERROR("task->func is nullptr");
     return RET_TP_ERROR;
   }
-
+  task->func(task->content, size - 1);
   // wait
   WaitAllThread(thread_pool_id);
   return RET_TP_OK;
@@ -547,11 +546,11 @@ void ThreadRun(Thread *thread) {
   while (thread_pool->is_alive) {
     while (thread->activate) {
       if (PopTaskFromQueue(thread, &task)) {
-        task->func(task->content, thread_id);
         if (task->func == NULL) {
           LOG_ERROR("task->func is nullptr");
           return;
         }
+        task->func(task->content, thread_id);
         atomic_fetch_sub_explicit(&thread->task_size, 1, memory_order_relaxed);
         // atomic_store_explicit(&thread->task_size, thread->task_size - 1, memory_order_relaxed);
         spin_count = 0;

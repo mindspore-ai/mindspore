@@ -352,6 +352,7 @@ int ConvolutionBaseCPUKernel::RestoreFilter(lite::tensor::Tensor *input_tensor) 
     size_t channels = static_cast<size_t>(input_tensor->Batch());
     if (input_tensor->GetQuantParams().size() != channels) {
       MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
+      free(dequant_data);
       return RET_ERROR;
     }
     size_t per_channel_size = input_tensor->DataSize() / channels;
