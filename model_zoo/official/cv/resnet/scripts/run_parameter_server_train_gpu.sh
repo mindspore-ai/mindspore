@@ -86,14 +86,14 @@ cp -r ../src ./sched
 cd ./sched || exit
 if [ $# == 3 ]
 then	    
-        mpirun --allow-run-as-root -n 1 \
+        mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
 	      python train.py --net=$1 --dataset=$2 --run_distribute=True \
 	      --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True &> sched.log &
 fi
     
 if [ $# == 4 ]
 then
-        mpirun --allow-run-as-root -n 1 \
+        mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
           python train.py --net=$1 --dataset=$2 --run_distribute=True \
 	  --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True --pre_trained=$PATH2 &> sched.log &
 fi
@@ -111,14 +111,14 @@ do
   cd ./server_$i || exit
   if [ $# == 3 ]
   then	    
-          mpirun --allow-run-as-root -n 1 \
+          mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
           python train.py --net=$1 --dataset=$2 --run_distribute=True \
           --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True &> server_$i.log &
   fi
       
   if [ $# == 4 ]
   then
-          mpirun --allow-run-as-root -n 1 \
+          mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
             python train.py --net=$1 --dataset=$2 --run_distribute=True \
       --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True --pre_trained=$PATH2 &> server_$i.log &
   fi
@@ -134,14 +134,14 @@ cp -r ../src ./worker
 cd ./worker || exit
 if [ $# == 3 ]
 then	    
-        mpirun --allow-run-as-root -n $RANK_SIZE \
+        mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
 	      python train.py --net=$1 --dataset=$2 --run_distribute=True \
 	      --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True &> worker.log &
 fi
     
 if [ $# == 4 ]
 then
-        mpirun --allow-run-as-root -n $RANK_SIZE \
+        mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
           python train.py --net=$1 --dataset=$2 --run_distribute=True \
 	  --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --parameter_server=True --pre_trained=$PATH2 &> worker.log &
 fi

@@ -44,7 +44,7 @@ cp ../*.py ./distribute_train
 cp -r ../src ./distribute_train
 cd ./distribute_train || exit
 
-mpirun --allow-run-as-root -n $RANK_SIZE \
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
   python train.py  \
     --dataset_path=$DATASET_PATH  \
     --platform=GPU  \

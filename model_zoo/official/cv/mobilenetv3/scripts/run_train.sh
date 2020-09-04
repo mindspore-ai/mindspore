@@ -38,7 +38,7 @@ run_gpu()
     cd ../train || exit
 
     export CUDA_VISIBLE_DEVICES="$3"
-    mpirun -n $2 --allow-run-as-root \
+    mpirun -n $2 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
     python ${BASEPATH}/../train.py \
         --dataset_path=$4 \
         --device_target=$1 \

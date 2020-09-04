@@ -146,7 +146,8 @@ if [ "$task" == "train" ]
 then
   if [ $RANK_SIZE -gt 1 ]
     then
-      mpirun -n $RANK_SIZE python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
+      mpirun -n $RANK_SIZE --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
+      python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
     fi
   python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
 elif [ "$task" == "infer" ]

@@ -50,7 +50,7 @@ export CUDA_VISIBLE_DEVICES="$2"
 
 if [ $# == 3 ]
 then
-    mpirun -n $1 --allow-run-as-root \
+    mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
     python ${BASEPATH}/../train.py --platform='GPU' --is_distributed=True --dataset_path=$3 > train.log 2>&1 &
 fi
 

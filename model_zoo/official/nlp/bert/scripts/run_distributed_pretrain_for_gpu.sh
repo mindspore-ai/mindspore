@@ -26,7 +26,7 @@ EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
-mpirun --allow-run-as-root -n $RANK_SIZE \
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
 	python run_pretrain.py				\
 		--device_target="GPU"			\
 		--distribute="true"				\

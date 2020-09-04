@@ -44,7 +44,7 @@ export CUDA_VISIBLE_DEVICES="$2"
 
 if [ $1 -gt 1 ]
 then
-    mpirun -n $1 --allow-run-as-root \
+    mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
     python3 ${BASEPATH}/../train.py > train.log 2>&1 &
 else
     python3 ${BASEPATH}/../train.py > train.log 2>&1 &

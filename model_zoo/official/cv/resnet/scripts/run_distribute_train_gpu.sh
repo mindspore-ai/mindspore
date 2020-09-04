@@ -80,14 +80,14 @@ cd ./train_parallel || exit
 
 if [ $# == 3 ]
 then	    
-        mpirun --allow-run-as-root -n $RANK_SIZE \
+        mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
 	      python train.py --net=$1 --dataset=$2 --run_distribute=True \
 	      --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 &> log &
 fi
     
 if [ $# == 4 ]
 then
-        mpirun --allow-run-as-root -n $RANK_SIZE \
+        mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
           python train.py --net=$1 --dataset=$2 --run_distribute=True \
 	  --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
 fi

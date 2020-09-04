@@ -28,7 +28,7 @@ cp *.py ./log
 cp -r src ./log
 cd ./log || exit
 env > env.log
-mpirun --allow-run-as-root -n $RANK_SIZE \
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
   python -u train.py \
     --dataset_path=$DATA_URL \
     --ckpt_path="checkpoint" \

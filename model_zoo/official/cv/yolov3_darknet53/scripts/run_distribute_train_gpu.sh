@@ -53,7 +53,8 @@ cp ../*.py ./train_parallel
 cp -r ../src ./train_parallel
 cd ./train_parallel || exit
 env > env.log
-mpirun --allow-run-as-root -n ${DEVICE_NUM} python train.py \
+mpirun --allow-run-as-root -n ${DEVICE_NUM} --output-filename log_output --merge-stderr-to-stdout \
+python train.py \
     --data_dir=$DATASET_PATH \
     --pretrained_backbone=$PRETRAINED_BACKBONE \
     --device_target=GPU \
