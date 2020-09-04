@@ -58,10 +58,10 @@ __kernel void transpose_NHWC4_BUF(__read_only image2d_t src_data, global FLT4 *d
   bool over_size = W * C.y > 65535;
   FLT4 x0, x1, x2, x3;
   if (over_size) {
-    x0 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X));
-    x1 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X + 1));
-    x2 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X + 2));
-    x3 = READ_IMAGE(src_data, smp_zero, (int2)(C, 4 * X + 3));
+    x0 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X));
+    x1 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X + 1));
+    x2 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X + 2));
+    x3 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * X + 3));
   } else {
     x0 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X) % W * C.y + Y, (4 * X) / W));
     x1 = READ_IMAGE(src_data, smp_zero, (int2)((4 * X + 1) % W * C.y + Y, (4 * X + 1) / W));
