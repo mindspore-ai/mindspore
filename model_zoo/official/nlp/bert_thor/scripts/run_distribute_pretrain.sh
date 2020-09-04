@@ -25,6 +25,9 @@ EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+cd $BASE_PATH/ || exit
+
 ulimit -u unlimited
 export RANK_TABLE_FILE=$5
 export RANK_SIZE=$1
@@ -55,6 +58,7 @@ do
     --load_checkpoint_path="" \
     --save_checkpoint_path='./' \
     --save_checkpoint_steps=1000 \
+    --train_steps=3000 \
     --save_checkpoint_num=30 \
     --data_dir=$DATA_DIR \
     --schema_dir=$SCHEMA_DIR > log.txt 2>&1 &

@@ -55,7 +55,7 @@ def get_poly_lr(global_step, lr_init, lr_end, lr_max, warmup_steps, total_steps,
     return learning_rate
 
 
-# bert kfac hyperparam setting
+# bert thor hyperparam setting
 def get_bert_lr():
     learning_rate = Tensor(
         get_poly_lr(global_step=0, lr_init=0.0, lr_end=1e-6, lr_max=3.1e-3, warmup_steps=0, total_steps=30000,

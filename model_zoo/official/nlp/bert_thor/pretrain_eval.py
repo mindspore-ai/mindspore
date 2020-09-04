@@ -153,10 +153,8 @@ def MLM_eval():
     net = Model(net_for_pretraining, eval_network=net_for_pretraining, eval_indexes=[0, 1, 2],
                 metrics={'name': myMetric()})
     res = net.eval(dataset, dataset_sink_mode=False)
-    print("==============================================================")
     for _, v in res.items():
         print("Accuracy is: ", v)
-    print("==============================================================")
 
 
 if __name__ == "__main__":
