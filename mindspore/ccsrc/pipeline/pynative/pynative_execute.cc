@@ -19,18 +19,22 @@
 #include <typeinfo>
 #include <map>
 #include <set>
+#include <memory>
 #include <unordered_set>
 #include <algorithm>
 
 #include "debug/trace.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "ir/param_info.h"
+#include "ir/anf.h"
+#include "ir/tensor.h"
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils_py.h"
+#include "utils/base_ref_extends.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -554,6 +558,32 @@ void EraseValueNodeTensor(const std::vector<int> &tensors_mask, std::vector<tens
   *input_tensors = new_input_tensors;
 }
 
+BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref) {
+  if (utils::isa<VectorRef>(base_ref)) {
+    auto ref_list = utils::cast<VectorRef>(base_ref);
+    py::tuple output_tensors(ref_list.size());
+    for (size_t i = 0; i < ref_list.size(); ++i) {
+      auto output = TransformBaseRefListToTuple(ref_list[i]);
+      if (utils::isa<tensor::TensorPtr>(output)) {
+        auto tensor_ptr = utils::cast<tensor::TensorPtr>(output);
+        MS_EXCEPTION_IF_NULL(tensor_ptr);
+        output_tensors[i] = tensor_ptr;
+      } else if (utils::isa<PyObjectRef>(output)) {
+        py::object obj = utils::cast<PyObjectRef>(output).object_;
+        py::tuple tensor_tuple = py::cast<py::tuple>(obj);
+        output_tensors[i] = tensor_tuple;
+      } else {
+        MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
+      }
+    }
+    return std::make_shared<PyObjectRef>(output_tensors);
+  } else if (utils::isa<tensor::TensorPtr>(base_ref)) {
+    return base_ref;
+  } else {
+    MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
+  }
+}
+
 py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(INFO) << "Start run op[" << op_exec_info->op_name << "] with backend policy ms";
@@ -577,7 +607,19 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
   session->BuildOpAsync(op_exec_info.get(), graph_info, input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, &input_tensors);
-  py::tuple result = session->RunOpAsync(op_exec_info.get(), graph_info, input_tensors);
+
+  VectorRef outputs;
+  session->RunOpAsync(op_exec_info.get(), graph_info, input_tensors, &outputs);
+
+  // Trans output to tuple
+  auto output_tensors = TransformBaseRefListToTuple(outputs);
+  if (!utils::isa<PyObjectRef>(output_tensors) ||
+      !py::isinstance<py::tuple>(utils::cast<PyObjectRef>(output_tensors).object_)) {
+    MS_EXCEPTION(NotSupportError) << "The output tensors should be a tuple !";
+  }
+  py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
+  py::tuple result = py::cast<py::tuple>(tuple_obj);
+
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   *status = PYNATIVE_SUCCESS;
   MS_LOG(INFO) << "End run op[" << op_exec_info->op_name << "] with backend policy ms";

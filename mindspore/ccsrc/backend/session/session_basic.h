@@ -90,7 +90,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void BuildOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
                     const std::vector<int> &tensors_mask);
-  py::tuple RunOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors);
+  void RunOpAsync(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
+                  VectorRef *outputs);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 

@@ -65,6 +65,7 @@ class GroupManager {
   void Clear();
 
  private:
+  Status DestroyGroup(const std::string &group_name);
   // the key is group name (name_)
   std::map<std::string, Group> groups_;
   std::string world_group_;
