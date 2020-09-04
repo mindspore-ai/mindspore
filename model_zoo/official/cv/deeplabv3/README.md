@@ -1,226 +1,284 @@
-# Contents
+# DeepLabV3 for MindSpore
 
-- [DeeplabV3 Description](#DeeplabV3-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Features](#features)
-    - [Mixed Precision](#mixed-precision)
-- [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+DeepLab is a series of image semantic segmentation models, DeepLabV3 improves significantly over previous versions. Two keypoints of DeepLabV3:Its multi-grid atrous convolution makes it better to deal with segmenting objects at multiple scales, and augmented ASPP makes image-level features available to capture long range information. 
+This repository provides a script and recipe to DeepLabV3 model and achieve state-of-the-art performance.
 
-# [DeeplabV3 Description](#contents)
+## Table Of Contents
 
-DeepLabv3 is a semantic segmentation architecture that improves upon DeepLabv2 with several modifications.To handle the problem of segmenting objects at multiple scales, modules are designed which employ atrous convolution in cascade or in parallel to capture multi-scale context by adopting multiple atrous rates.
-
-[Paper](https://arxiv.org/pdf/1706.05587.pdf) Chen L C , Papandreou G , Schroff F , et al. Rethinking Atrous Convolution for Semantic Image Segmentation[J]. 2017.
-
-# [Model architecture](#contents)
-
-The overall network architecture of DeepLabv3 is show below:
-
-[Link](https://arxiv.org/pdf/1706.05587.pdf)
+* [Model overview](#model-overview)
+  * [Model Architecture](#model-architecture)  
+  * [Default configuration](#default-configuration)
+* [Setup](#setup)
+  * [Requirements](#requirements)
+* [Quick start guide](#quick-start-guide)
+* [Performance](#performance)
+  * [Results](#results)
+    * [Training accuracy](#training-accuracy)
+    * [Training performance](#training-performance)
+    * [One-hour performance](#one-hour-performance)
 
 
-# [Dataset](#contents)
+​    
 
-Dataset used: [VOC2012](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html)
+## Model overview
 
-20 classes. The train/val data has 11,530 images containing 27,450 ROI annotated objects and 6,929 segmentations. And we need to remove color map from annotation.
+Refer to [this paper][1] for network details.
 
-# [Features](#contents)
+`Chen L C, Papandreou G, Schroff F, et al. Rethinking atrous convolution for semantic image segmentation[J]. arXiv preprint arXiv:1706.05587, 2017.`
 
-## [Mixed Precision(Ascend)](#contents)
+[1]: https://arxiv.org/abs/1706.05587
 
-The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+## Default Configuration
 
-For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
+- network structure
 
-# [Environment Requirements](#contents)
+  Resnet101 as backbone, atrous convolution for dense feature extraction.
 
-- Hardware（Ascend）
-  - Prepare hardware environment with Ascend. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
-- Framework
-  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
-- For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+- preprocessing on training data：
 
-# [Script description](#contents)
+  crop size: 513 * 513
 
-## [Script and sample code](#contents)
+  random scale: scale range 0.5 to 2.0
 
-```shell
-.
-└─deeplabv3   
-    ├──README.md   
-	├──eval.py
-	├──train.py
-	├──scripts
-	│  ├──run_distribute_train.sh  # launch distributed training with ascend platform(8p)
-	│  ├──run_eval.sh				# launch evaluating with ascend platform
-	│  ├──run_standalone_train.sh  # launch standalone training with ascend platform(1p)
-	├──src
-	│	├──config.py				# parameter configuration
-	│	├──deeplabv3.py				# network definition
-	│	├──ei_dataset.py			# data preprocessing for EI
-	│	├──losses.py				# customized loss function
-	│	├──md_dataset.py			# data preprocessing
-	│	├──miou_precision.py		# miou metrics
-	│	├──__init__.py
-	│	│
-	│	├──backbone
-	│	│  ├──resnet_deeplab.py	# backbone network definition
-	│	│  ├──__init__.py
-	│	│
-	│	└──utils
-    │      ├──adapter.py				# adapter of dataset
-    │      ├──custom_transforms.py    # random process dataset
-    │      ├──file_io.py              # file operation module
-    │      ├──__init__.py                    
+  random flip
+
+  mean subtraction: means are [103.53, 116.28, 123.675]
+
+- preprocessing on validation data：
+
+  The image's long side is resized to 513, then the image is padded to 513 * 513
+
+- training parameters：
+
+  - Momentum: 0.9
+  - LR scheduler: cosine
+  - Weight decay: 0.0001
+
+## Setup
+
+The following section lists the requirements to start training the deeplabv3 model.
+
+
+### Requirements
+
+Before running code of this project，please ensure you have the following environments：
+  - [MindSpore](https://www.mindspore.cn/)
+  - Hardware environment with the Ascend AI processor
+
+
+  For more information about how to get started with MindSpore, see the following sections:
+  - [MindSpore's Tutorial](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
+  - [MindSpore's Api](https://www.mindspore.cn/api/zh-CN/master/index.html)
+
+
+## Quick Start Guide
+
+### 1. Clone the respository
+
+```
+git clone xxx
+cd ModelZoo_DeepLabV3_MS_MTI/00-access
+```
+### 2. Install python packages in requirements.txt
+
+### 3. Download and preprocess the dataset
+
+   - Download segmentation dataset.
+
+   - Prepare the training data list file. The list file saves the relative path to image and annotation pairs. Lines are like:
+
+     ```
+     JPEGImages/00001.jpg SegmentationClassGray/00001.png
+     JPEGImages/00002.jpg SegmentationClassGray/00002.png
+     JPEGImages/00003.jpg SegmentationClassGray/00003.png
+     JPEGImages/00004.jpg SegmentationClassGray/00004.png
+     ......
+     ```
+
+   - Configure and run build_data.sh to convert dataset to mindrecords. Arguments in build_data.sh:
+
+     ```
+     --data_root                 root path of training data
+     --data_lst                  list of training data(prepared above)
+     --dst_path                  where mindrecords are saved
+     --num_shards                number of shards of the mindrecords
+     --shuffle                   shuffle or not
+     ```
+
+### 4. Generate config json file for 8-cards training
+
+   ```
+   # From the root of this projectcd tools
+   python get_multicards_json.py 10.111.*.*
+   # 10.111.*.* is the computer's ip address.
+   ```
+
+### 5. Train
+
+Based on original DeeplabV3 paper, we reproduce two training experiments on vocaug (also as trainaug) dataset and evaluate on voc val dataset.
+
+For single device training, please config parameters, training script is as follows: 
+```
+# run_standalone_train.sh
+python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
+                    --train_dir=${train_path}/ckpt  \
+                    --train_epochs=200  \
+                    --batch_size=32  \
+                    --crop_size=513  \
+                    --base_lr=0.015  \
+                    --lr_type=cos  \
+                    --min_scale=0.5  \
+                    --max_scale=2.0  \
+                    --ignore_label=255  \
+                    --num_classes=21  \
+                    --model=deeplab_v3_s16  \
+                    --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                    --save_steps=1500  \
+                    --keep_checkpoint_max=200 >log 2>&1 &
+```
+For 8 devices training, training steps are as follows:
+
+1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is as follows: 
+
+```
+# run_distribute_train_s16_r1.sh
+for((i=0;i<=$RANK_SIZE-1;i++));
+do
+    export RANK_ID=$i
+    export DEVICE_ID=`expr $i + $RANK_START_ID` 
+    echo 'start rank='$i', device id='$DEVICE_ID'...'
+    mkdir ${train_path}/device$DEVICE_ID
+    cd ${train_path}/device$DEVICE_ID
+    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
+                                               --data_file=/PATH/TO/MINDRECORD_NAME  \
+                                               --train_epochs=300  \
+                                               --batch_size=32  \
+                                               --crop_size=513  \
+                                               --base_lr=0.08  \
+                                               --lr_type=cos  \
+                                               --min_scale=0.5  \
+                                               --max_scale=2.0  \
+                                               --ignore_label=255  \
+                                               --num_classes=21  \
+                                               --model=deeplab_v3_s16  \
+                                               --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                                               --is_distributed  \
+                                               --save_steps=410  \
+                                               --keep_checkpoint_max=200 >log 2>&1 &
+done
+```
+2. Train s8 with vocaug dataset, finetuning from model in previous step, training script is as follows:
+```
+# run_distribute_train_s8_r1.sh
+for((i=0;i<=$RANK_SIZE-1;i++));
+do
+    export RANK_ID=$i
+    export DEVICE_ID=`expr $i + $RANK_START_ID` 
+    echo 'start rank='$i', device id='$DEVICE_ID'...'
+    mkdir ${train_path}/device$DEVICE_ID
+    cd ${train_path}/device$DEVICE_ID
+    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
+                                               --data_file=/PATH/TO/MINDRECORD_NAME  \
+                                               --train_epochs=800  \
+                                               --batch_size=16  \
+                                               --crop_size=513  \
+                                               --base_lr=0.02  \
+                                               --lr_type=cos  \
+                                               --min_scale=0.5  \
+                                               --max_scale=2.0  \
+                                               --ignore_label=255  \
+                                               --num_classes=21  \
+                                               --model=deeplab_v3_s8  \
+                                               --loss_scale=2048  \
+                                               --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                                               --is_distributed  \
+                                               --save_steps=820  \
+                                               --keep_checkpoint_max=200 >log 2>&1 &
+done
+```
+3. Train s8 with voctrain dataset, finetuning from model in pervious step, training script is as follows:
+```
+# run_distribute_train_r2.sh
+for((i=0;i<=$RANK_SIZE-1;i++));
+do
+    export RANK_ID=$i
+    export DEVICE_ID=`expr $i + $RANK_START_ID` 
+    echo 'start rank='$i', device id='$DEVICE_ID'...'
+    mkdir ${train_path}/device$DEVICE_ID
+    cd ${train_path}/device$DEVICE_ID
+    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
+                                               --data_file=/PATH/TO/MINDRECORD_NAME  \
+                                               --train_epochs=300  \
+                                               --batch_size=16  \
+                                               --crop_size=513  \
+                                               --base_lr=0.008  \
+                                               --lr_type=cos  \
+                                               --min_scale=0.5  \
+                                               --max_scale=2.0  \
+                                               --ignore_label=255  \
+                                               --num_classes=21  \
+                                               --model=deeplab_v3_s8  \
+                                               --loss_scale=2048  \
+                                               --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                                               --is_distributed  \
+                                               --save_steps=110  \
+                                               --keep_checkpoint_max=200 >log 2>&1 &
+done
+```
+### 6. Test
+
+Config checkpoint with --ckpt_path, run script, mIOU with print in eval_path/eval_log.
+```
+./run_eval_s16.sh                     # test s16
+./run_eval_s8.sh                      # test s8
+./run_eval_s8_multiscale.sh           # test s8 + multiscale
+./run_eval_s8_multiscale_flip.sh      # test s8 + multiscale + flip
+```
+Example of test script is as follows:
+```
+python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
+                    --data_lst=/PATH/TO/DATA_lst.txt  \
+                    --batch_size=16  \
+                    --crop_size=513  \
+                    --ignore_label=255  \
+                    --num_classes=21  \
+                    --model=deeplab_v3_s8  \
+                    --scales=0.5  \
+                    --scales=0.75  \
+                    --scales=1.0  \
+                    --scales=1.25  \
+                    --scales=1.75  \
+                    --flip  \
+                    --freeze_bn  \
+                    --ckpt_path=/PATH/TO/PRETRAIN_MODEL >${eval_path}/eval_log 2>&1 &
 ```
 
-## [Script Parameters](#contents)
-
-```python
-Major parameters in train.py and config.py are:   
-	learning_rate                   Learning rate, default is 0.0014.
-    weight_decay                	Weight decay, default is 5e-5.
-    momentum                    	Momentum, default is 0.97.
-    crop_size                       Image crop size [height, width] during training, default is 513.
-    eval_scales                     The scales to resize images for evaluation, default is [0.5, 0.75, 1.0, 1.25, 1.5, 1.75].
-	output_stride					The ratio of input to output spatial resolution, default is 16.
-	ignore_label					Ignore label value,	default is 255.
-	seg_num_classes					Number of semantic classes, including the background class. 
-									foreground classes + 1 background class in the PASCAL VOC 2012 dataset, default is 21.
-	fine_tune_batch_norm			Fine tune the batch norm parameters or not, default is False.
-	atrous_rates					Atrous rates for atrous spatial pyramid pooling, default is None.
-	decoder_output_stride			The ratio of input to output spatial resolution when employing decoder
-									to refine segmentation results, default is None.
-	image_pyramid					Input scales for multi-scale feature extraction, default is None.
-	epoch_size						Epoch size, default is 6.
-    batch_size                      Batch size of input dataset: N, default is 2.
-	enable_save_ckpt				Enable save checkpoint, default is true.
-	save_checkpoint_steps			Save checkpoint steps, default is 1000.
-	save_checkpoint_num				Save checkpoint numbers, default is 1.
-```
-
-## [Training process](#contents)
-
-### Usage
-
-
-You can start training using python or shell scripts. The usage of shell scripts as follows:
-```
-	sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH (CKPT_PATH)
-```
-> Notes: 
-    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
-
-### Launch
-
-``` 
-# training example
-  python:
-      python train.py --dataset_url DATA_PATH 
-
-  shell:
-      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH (CKPT_PATH)
-```
-> Notes: 
-  If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
+## Performance
 
 ### Result
 
-Training result(8p) will be stored in the example path. Checkpoints will be stored at `. /train_parallel0/` by default, and training log  will be redirected to `./train_parallel0/log.txt` like followings. 
+Our result were obtained by running the applicable training script. To achieve the same results, follow the steps in the Quick Start Guide.
 
-``` 
-epoch: 1 step: 732, loss is 0.11594
-Epoch time: 78748.379, per step time: 107.378
-epoch: 2 step: 732, loss is 0.092868
-Epoch time: 160917.911, per step time: 36.631
-```
-## [Eval process](#contents)
+#### Training accuracy
 
-### Usage
+| **Network**    | OS=16 | OS=8 | MS   | Flip  | mIOU  | mIOU in paper |
+| :----------: | :-----: | :----: | :----: | :-----: | :-----: | :-------------: |
+| deeplab_v3 | √     |      |      |       | 77.37 | 77.21    |
+| deeplab_v3 |       | √    |      |       | 78.84 | 78.51    |
+| deeplab_v3 |       | √    | √    |       | 79.70 |79.45   |
+| deeplab_v3 |       | √    | √    | √     | 79.89 | 79.77        |
 
-You can start training using python or shell scripts. The usage of shell scripts as follows:
+#### Training performance
 
-```
-	sh scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
-```
-### Launch
+| **NPUs** | train performance |
+| :------: | :---------------: |
+|    1     |   26 img/s   |
+|    8     |   131 img/s   |
 
-``` 
-# eval example
-  python:
-      python eval.py --device_id DEVICE_ID --dataset_url DATA_DIR --checkpoint_url PATH_CHECKPOINT
 
-  shell:
-      sh scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH
-```
 
-> checkpoint can be produced in training process. 
 
-### Result
 
-Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`. 
 
-``` 
-mIoU = 0.65049
-```
-# [Model description](#contents)
 
-## [Performance](#contents)
 
-### Training Performance
-
-| Parameters                 | DeeplabV3                                                |
-| -------------------------- | ---------------------------------------------------------- |
-| Model Version              | V1                                                           |          
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | 
-| Uploaded Date              | 08/24/2020(month/day/year)                                                 | 
-| MindSpore Version          | 0.6.0-beta                                                 |
-| Dataset                    | voc2012/train                 								  |
-| Batch_size                 | 2                           								  |   
-| Optimizer                  | Momentum                                                   | 
-| Loss Function              | SoftmaxCrossEntropy                                        | 
-| Outputs                    | probability                                                | 
-| Loss                       | 0.98                                                       | 
-| Accuracy                   | mIoU:65%                                   				  | 
-| Total time                 | 5mins                                                      | 
-| Params (M)                 | 94M                                                        | 
-| Checkpoint for Fine tuning | 100M                                                       | 
-| Scripts                    | [deeplabv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) | [deeplabv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) |
-
-#### Inference Performance
-
-| Parameters                 | DeeplabV3                 |
-| -------------------------- | ---------------------------------------------------------- |
-| Model Version       | V1                          |
-| Resource            | Ascend 910, cpu:2.60GHz 56cores, memory:314G                  |
-| Uploaded Date       | 08/24/2020 (month/day/year) |
-| MindSpore Version   | 0.6.0-beta                  |
-| Dataset             | voc2012/val                 |
-| Batch_size          | 2                           |
-| Outputs             | probability                 |
-| Accuracy            | mIoU:65%                    |
-| Total time          | 10mins                      |
-| Model for inference | 97M (.GEIR file)            |
-
-# [Description of Random Situation](#contents)
-
-We use random in custom_transforms.py for data preprocessing.
-
-# [ModelZoo Homepage](#contents)
- 
-Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 
