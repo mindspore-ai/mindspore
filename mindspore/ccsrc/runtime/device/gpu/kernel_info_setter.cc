@@ -252,11 +252,11 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
       bn_cnt++;
     }
   }
-  if (conv_cnt == kConv2dCount && bn_cnt == kFusedBatchNormCount) {
-    format_transform_ = false;
+  if (conv_cnt + bn_cnt > 1) {
+    format_transform_ = true;
     return;
   }
-  format_transform_ = true;
+  format_transform_ = false;
 }
 
 void SetKernelInfo(const CNodePtr &kernel_node) {

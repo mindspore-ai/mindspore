@@ -34,23 +34,27 @@ namespace gpu {
 // map<opName, (inputFormatPosition, outputFormatPosition)>, used for getting the insert position of format transform.
 // If input position is empty, then insert all the input positions, because the input numbers of this op are variable.
 static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>> kKernelFormatPositionMap = {
+  // Format sensitive.
   {prim::kPrimConv2D->name(), {{0, 1}, {0}}},
   {prim::kPrimConv2DBackpropInput->name(), {{0, 1}, {0}}},
   {prim::kPrimConv2DBackpropFilter->name(), {{0, 1}, {0}}},
-  {prim::kPrimRelu->name(), {{0}, {0}}},
-  {prim::kPrimReluGrad->name(), {{0, 1}, {0}}},
   {prim::kPrimMaxPool->name(), {{0}, {0}}},
   {prim::kPrimMaxPoolGrad->name(), {{0, 1, 2}, {0}}},
-  {kSliceOpName, {{0}, {0}}},
   {kAvgPoolOpName, {{0}, {0}}},
   {kAvgPoolGradGpuOpName, {{0, 1, 2}, {0}}},
-  {kTensorAddOpName, {{0, 1}, {0}}},
   {kFusedBatchNormEx, {{0}, {0}}},
   {kFusedBatchNormExWithActivation, {{0}, {0}}},
   {kFusedBatchNormExWithAddAndActivation, {{0, 5}, {0}}},
   {kFusedBatchNormGradEx, {{0, 1}, {0}}},
   {kFusedBatchNormGradExWithActivation, {{0, 1, 7}, {0}}},
   {kFusedBatchNormGradExWithAddAndActivation, {{0, 1, 7}, {0, 3}}},
+  {kBiasAddOpName, {{0}, {0}}},
+  {prim::kPrimBiasAddGrad->name(), {{0}, {}}},
+  // Format insensitive.
+  {prim::kPrimRelu->name(), {{0}, {0}}},
+  {prim::kPrimReluGrad->name(), {{0, 1}, {0}}},
+  {kSliceOpName, {{0}, {0}}},
+  {kTensorAddOpName, {{0, 1}, {0}}},
   {prim::kPrimConcat->name(), {{}, {0}}},
   {prim::kPrimAddN->name(), {{}, {0}}},
 };
@@ -74,8 +78,6 @@ class FormatTransformChecker {
   FormatTransformChecker &operator=(const FormatTransformChecker &);
 
   bool format_transform_{true};
-  static constexpr size_t kConv2dCount = 96;
-  static constexpr size_t kFusedBatchNormCount = 94;
 };
 
 class KernelAttr {
