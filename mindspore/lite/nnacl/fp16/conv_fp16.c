@@ -540,7 +540,7 @@ void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, i
 // fp16 convolution winograd
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
                       TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
-                      InputTransformUnitFp16Func input_trans_func, OutputTransformUnitFp16Func output_trans_func) {
+                      MatricesFp16 *matrices) {
   int thread_num = conv_param->thread_num_;
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
@@ -575,14 +575,14 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
       cal_num = cal_num > tile_num ? tile_num : cal_num;
       WinogradInputTransformFp16(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                                  tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
-                                 input_trans_func);
+                                 matrices[2], matrices[3]);
       // step 3 : gemm
       IndirectGemmFp16_16x8(gemm_out + task_id * gemm_out_offset, trans_input + task_id * trans_input_offset,
                             trans_weight, NULL, input_unit_square, ic8 * 2, oc8 * C8NUM, output_offset, 1, 1, 0, 0);
 
       // step 4 : output transform
       WinogradOutputTransformFp16(gemm_out + task_id * gemm_out_offset, tmp_out_data + tmp_out_batch_offset, bias_data,
-                                  cal_num, out_tile_index, out_w_block, conv_param, output_trans_func);
+                                  cal_num, out_tile_index, out_w_block, conv_param, matrices[0], matrices[1]);
     }
   }
 }

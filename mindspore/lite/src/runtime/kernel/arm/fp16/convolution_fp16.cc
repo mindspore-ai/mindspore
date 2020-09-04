@@ -238,9 +238,7 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
   } else {
     bool use_winograd = false;
     int out_unit;
-    InputTransformUnitFunc input_trans_func = nullptr;
-    OutputTransformUnitFunc output_trans_func = nullptr;
-    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
     if (use_winograd) {
       kernel = new (std::nothrow)
         kernel::ConvolutionWinogradFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive, out_unit);

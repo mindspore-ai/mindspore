@@ -228,10 +228,8 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
   bool use_winograd = false;
   int out_unit;
-  InputTransformUnitFunc input_trans_func = nullptr;
-  OutputTransformUnitFunc output_trans_func = nullptr;
   if (primitive != nullptr && primitive->GetInferFlag()) {
-    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param, input_trans_func, output_trans_func);
+    CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
   }
 
   auto *weight_tensor = inputs.at(kWeightIndex);

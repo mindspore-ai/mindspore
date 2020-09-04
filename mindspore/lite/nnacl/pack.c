@@ -101,10 +101,6 @@ void PackWeightInt8(int8_t *weight_data, ConvParameter *conv_param, int8_t *pack
             int8_t *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
             int8_t *packed_data_ptr = packed_weight + packed_kernel_block_size + k * C4NUM * C4NUM;
             *packed_data_ptr = origin_data_ptr[0];
-            // value of weight must between [-127, 127]
-            if (packed_data_ptr[0] == -128) {
-              packed_data_ptr[0] = -127;
-            }
             weight_sum[j * C4NUM + k] += (int32_t)packed_data_ptr[0];
           }
         }  // kernel block loop
@@ -146,9 +142,6 @@ void PackWeightInt8Opt(int8_t *weight_data, ConvParameter *conv_param, int8_t *p
             int8_t *origin_data_ptr = weight_data + kernel_block_stride + k * kernel_plane * in_channel;
             int8_t *packed_data_ptr = packed_weight + packed_kernel_block_size + k * C4NUM;
             *packed_data_ptr = origin_data_ptr[0];
-            if (packed_data_ptr[0] == -128) {
-              packed_data_ptr[0] = -127;
-            }
             weight_sum[j * C4NUM + k] += (int32_t)(packed_data_ptr[0]);
           }
         }  // kernel block loop

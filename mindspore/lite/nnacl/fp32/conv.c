@@ -259,8 +259,8 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
 
 // fp32 conv winograd
 void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,
-                      int task_id, ConvParameter *conv_param, InputTransformUnitFunc input_trans_func,
-                      OutputTransformUnitFunc output_trans_func, GEMM_FUNC_FP32 gemm_func) {
+                      int task_id, ConvParameter *conv_param, InputTransFunc in_func, OutputTransFunc out_func,
+                      GEMM_FUNC_FP32 gemm_func) {
   int thread_num = conv_param->thread_num_;
   int input_unit = conv_param->input_unit_;
   int in_batch = conv_param->input_batch_;
@@ -296,7 +296,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
       cal_num = cal_num > C12NUM ? C12NUM : cal_num;
       WinogradInputTransform(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                              tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
-                             input_trans_func);
+                             in_func);
       // step 3 : gemm
       float *src_ptr = trans_input + task_id * trans_input_offset;
       float *dst_ptr = gemm_out + task_id * gemm_out_offset;
@@ -309,7 +309,7 @@ void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_
 
       // step 4 : output transform
       WinogradOutputTransform(dst_ptr, tmp_out_data + tmp_out_batch_offset, bias_data, cal_num, out_tile_index,
-                              out_w_block, conv_param, output_trans_func);
+                              out_w_block, conv_param, out_func);
     }
   }
 }

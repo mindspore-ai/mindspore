@@ -22,9 +22,9 @@
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "nnacl/fp16/conv_fp16.h"
-#include "src/runtime/kernel/arm/fp16/matrix_fp16.h"
 #include "nnacl/fp16/winograd_utils_fp16.h"
 #include "nnacl/optimized_kernel.h"
+#include "nnacl/minimal_filtering_generator.h"
 
 namespace mindspore::kernel {
 class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
@@ -39,9 +39,10 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       fp16_weight_ = nullptr;
     }
     if (trans_weight_ != nullptr) {
-      delete trans_weight_;
+      free(trans_weight_);
       trans_weight_ = nullptr;
     }
+    FreeTransformMatrices();
   }
 
   int Init() override;
@@ -49,10 +50,12 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int Run() override;
   int RunImpl(int task_id);
   int InitWeightBias();
-  int MallocFilterMatrix(int oc_block, int oc_block_num);
+  int MallocTransformMatrices();
+  void FreeTransformMatrices();
   int InitTmpBuffer();
   int ConfigInputOutput();
   int PostProcess();
+  int WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
 
  private:
   void FreeTmpBuffer() {
@@ -80,13 +83,14 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   float16_t *trans_input_ = nullptr;
   float16_t *gemm_out_ = nullptr;
   float16_t *tmp_out_data_ = nullptr;
-  Matrix *trans_weight_ = nullptr;
-  InputTransformUnitFp16Func input_trans_func_;
-  OutputTransformUnitFp16Func output_trans_func_;
+  float16_t *matrix_a_ = nullptr;
+  float16_t *matrix_at_ = nullptr;
+  float16_t *matrix_b_ = nullptr;
+  float16_t *matrix_bt_ = nullptr;
+  float16_t *trans_weight_ = nullptr;
   TmpBufferAddressFp16 tmp_buffer_address_list_[4];
+  MatricesFp16 matrices_[4];
 };
-int WinogradFilterTransformFp16(const float16_t *weight_data, Matrix *trans_weight, int kernel_unit, int input_unit,
-                                ConvParameter *conv_param, int oc_block);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_WINOGRAD_FP16_H_

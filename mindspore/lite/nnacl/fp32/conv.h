@@ -28,6 +28,7 @@
 #include "nnacl/fp32/conv_depthwise.h"
 
 typedef float *TmpBufferAddress;
+typedef float *Matrices;
 typedef void (*GEMM_FUNC_FP32)(float *output, const float *input, const float *weight, const float *bias, size_t step,
                                size_t ic4, size_t output_channel, size_t offset, size_t mode, size_t writeC4,
                                size_t relu, size_t relu6);
@@ -53,8 +54,8 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
 
 // fp32 convolution winograd
 void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, TmpBufferAddress *buffer_list,
-                      int task_id, ConvParameter *conv_param, InputTransformUnitFunc input_trans_func,
-                      OutputTransformUnitFunc output_trans_func, GEMM_FUNC_FP32 gemm_func);
+                      int task_id, ConvParameter *conv_param, InputTransFunc in_func, OutputTransFunc out_func,
+                      GEMM_FUNC_FP32 gemm_func);
 
 void UnPackWinogradOutput(const float *src, float *dst, int batch, int height, int width, int channel, int output_unit);
 

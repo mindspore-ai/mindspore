@@ -43,12 +43,12 @@ void Conv3x3Fp16OutputTransform(const float16_t *gemm_out, float16_t *out_data, 
 
 // fp16 common winograd
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
-                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
-                                InputTransformUnitFp16Func input_trans_func);
+                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param, float16_t *matrix_b,
+                                float16_t *matrix_bt);
 
 void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
                                  int cal_num, int out_tile_index, int output_unit_num, ConvParameter *conv_param,
-                                 OutputTransformUnitFp16Func output_trans_func);
+                                 float16_t *matrix_a, float16_t *matrix_at);
 #ifdef __cplusplus
 }
 #endif

@@ -22,6 +22,7 @@
 #include "nnacl/fp16/winograd_transform_fp16.h"
 
 typedef float16_t *TmpBufferAddressFp16;
+typedef float16_t *MatricesFp16;
 
 #ifndef ENABLE_NEON
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
@@ -69,7 +70,7 @@ void UnPack3x3Relu6OutputFp16(const float16_t *src, float16_t *dst, int batch, i
 // fp16 convolution winograd
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
                       TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
-                      InputTransformUnitFp16Func input_trans_func, OutputTransformUnitFp16Func output_trans_func);
+                      MatricesFp16 *matrices);
 
 void UnPackWinogradOutputFp16(const float16_t *src, float16_t *dst, int batch, int height, int width, int channel,
                               int output_unit);

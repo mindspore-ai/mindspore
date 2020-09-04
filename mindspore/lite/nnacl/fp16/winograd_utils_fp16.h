@@ -21,45 +21,17 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
-typedef void (*InputTransformUnitFp16Func)(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step);
-typedef void (*OutputTransformUnitFp16Func)(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                            int src_step, int dst_step);
+#define MAX_LEN 256
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void InputTransform4x4UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step);
+void GeneralInputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, float16_t *matrix_b,
+                                   float16_t *matrix_bt, int src_step, int dst_step, int in_unit);
 
-void InputTransform8x8UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step);
-
-void OutputTransform4x2UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform4x3UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform8x2UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform8x3UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform8x4UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform8x5UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform8x6UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-void OutputTransform8x7UnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                int src_step, int dst_step);
-
-InputTransformUnitFp16Func GetInputTransFuncFp16(int input_unit);
-
-OutputTransformUnitFp16Func GetOutputTransFuncFp16(int input_unit, int output_unit);
-
+void GeneralOutputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
+                                    float16_t *matrix_a, float16_t *matrix_at, int src_step, int dst_step, int in_unit,
+                                    int out_unit);
 #ifdef __cplusplus
 }
 #endif
