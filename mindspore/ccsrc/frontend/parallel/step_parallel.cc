@@ -2488,7 +2488,7 @@ Status ParallelInit() {
   }
 
   MS_LOG(INFO) << "The parallel context: dev num: " << device_num << ", global rank: " << global_rank
-               << ", backend: " << backend << ", mirror_mean: " << ParallelContext::GetInstance()->mirror_mean()
+               << ", backend: " << backend << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
                << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
   return SUCCESS;
 }

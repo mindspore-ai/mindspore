@@ -81,7 +81,7 @@ def run_general_distill():
             rank = D.get_rank()
             save_ckpt_dir = save_ckpt_dir + '_ckpt_' + str(rank)
         context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
     else:
         rank = 0

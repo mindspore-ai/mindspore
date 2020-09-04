@@ -279,7 +279,7 @@ class BertTrainOneStepCell(nn.Cell):
             self.reducer_flag = True
         self.grad_reducer = None
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 

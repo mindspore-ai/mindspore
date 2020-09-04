@@ -97,7 +97,8 @@ if __name__ == "__main__":
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
     if device_target == "GPU":
-        context.set_auto_parallel_context(parallel_mode="data_parallel", mirror_mean=True, device_num=get_group_size())
+        context.set_auto_parallel_context(parallel_mode="data_parallel", gradients_mean=True,
+                                          device_num=get_group_size())
     net_with_criterion = WithLossCell(network, criterion)
     train_network = TrainOneStepCell(net_with_criterion, net_opt)
     train_network.set_train()

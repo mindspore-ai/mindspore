@@ -66,7 +66,7 @@ class BertFinetuneCell(nn.Cell):
             self.reducer_flag = True
         self.grad_reducer = None
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
@@ -167,7 +167,7 @@ class BertSquadCell(nn.Cell):
             self.reducer_flag = True
         self.grad_reducer = None
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)

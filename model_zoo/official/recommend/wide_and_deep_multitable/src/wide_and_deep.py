@@ -554,7 +554,7 @@ class TrainStepWrap(nn.Cell):
                              ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             degree = context.get_auto_parallel_context("device_num")
             self.grad_reducer_w = DistributedGradReducer(
                 self.optimizer_w.parameters, mean, degree)

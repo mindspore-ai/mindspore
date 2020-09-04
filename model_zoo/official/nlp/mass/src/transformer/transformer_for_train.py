@@ -23,7 +23,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.context import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 
 from .transformer import Transformer
 from .grad_clip import GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE, ClipGradients
@@ -251,7 +251,7 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
             self.reducer_flag = True
         self.grad_reducer = None
         if self.reducer_flag:
-            mean = _get_mirror_mean()
+            mean = _get_gradients_mean()
             degree = _get_device_num()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)

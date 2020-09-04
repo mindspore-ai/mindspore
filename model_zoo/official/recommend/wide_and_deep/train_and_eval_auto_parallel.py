@@ -147,8 +147,8 @@ if __name__ == "__main__":
     init()
     if wide_deep_config.host_device_mix == 1:
         context.set_auto_parallel_context(
-            parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, mirror_mean=True)
+            parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, gradients_mean=True)
     else:
         context.set_auto_parallel_context(
-            parallel_mode=ParallelMode.AUTO_PARALLEL, mirror_mean=True)
+            parallel_mode=ParallelMode.AUTO_PARALLEL, gradients_mean=True)
     train_and_eval(wide_deep_config)

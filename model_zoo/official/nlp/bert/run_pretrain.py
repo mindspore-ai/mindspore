@@ -85,7 +85,7 @@ def run_pretrain():
             ckpt_save_dir = args_opt.save_checkpoint_path + 'ckpt_' + str(rank) + '/'
 
         context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
         from mindspore.parallel._auto_parallel_context import auto_parallel_context
         if bert_net_cfg.num_hidden_layers == 12:

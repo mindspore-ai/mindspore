@@ -60,7 +60,7 @@ if __name__ == '__main__':
         cfg.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=cfg.group_size,
-                                          parameter_broadcast=True, mirror_mean=True)
+                                          parameter_broadcast=True, gradients_mean=True)
     else:
         cfg.rank = 0
         cfg.group_size = 1

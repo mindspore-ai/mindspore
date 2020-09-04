@@ -65,7 +65,7 @@ def test_two_matmul():
             out = self.matmul2(out, b)
             return out
 
-    context.set_auto_parallel_context(device_num=8, global_rank=0, mirror_mean=True)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True)
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
@@ -90,7 +90,7 @@ def test_two_matmul_repeated_calculation1():
             out = self.matmul2(out, b)
             return out
 
-    context.set_auto_parallel_context(device_num=64, global_rank=5, mirror_mean=True)
+    context.set_auto_parallel_context(device_num=64, global_rank=5, gradients_mean=True)
     strategy1 = ((2, 4), (4, 8))
     strategy2 = ((1, 1), (1, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))

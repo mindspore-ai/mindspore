@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Cell_wrapper."""
-from mindspore.parallel._utils import (_get_device_num, _get_mirror_mean,
+from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
                                        _get_parallel_mode)
 from mindspore.context import ParallelMode
 from ...common import dtype as mstype
@@ -190,7 +190,7 @@ class TrainOneStepCell(Cell):
         if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_mirror_mean()
+            mean = _get_gradients_mean()
             degree = _get_device_num()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 

@@ -421,7 +421,7 @@ class TrainingWrapper(nn.Cell):
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             if auto_parallel_context().get_device_num_is_set():
                 degree = context.get_auto_parallel_context("device_num")
             else:

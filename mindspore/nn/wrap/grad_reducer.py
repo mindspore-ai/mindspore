@@ -279,7 +279,7 @@ class DistributedGradReducer(Cell):
         >>>                                            ParallelMode.HYBRID_PARALLEL]:
         >>>             self.reducer_flag = True
         >>>         if self.reducer_flag:
-        >>>             mean = context.get_auto_parallel_context("mirror_mean")
+        >>>             mean = context.get_auto_parallel_context("gradients_mean")
         >>>             if mean.get_device_num_is_set():
         >>>                 degree = context.get_auto_parallel_context("device_num")
         >>>             else:

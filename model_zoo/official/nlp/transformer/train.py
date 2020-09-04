@@ -118,7 +118,7 @@ def run_transformer_train():
     if args.distribute == "true":
         device_num = args.device_num
         context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           parameter_broadcast=True, device_num=device_num)
         D.init()
         rank_id = args.device_id % device_num

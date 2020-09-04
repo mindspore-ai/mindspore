@@ -76,7 +76,7 @@ if __name__ == '__main__':
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True)
+                                              gradients_mean=True)
             if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
                 auto_parallel_context().set_all_reduce_fusion_split_indices([85, 160])
             else:
@@ -86,7 +86,7 @@ if __name__ == '__main__':
         else:
             init()
             context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True)
+                                              gradients_mean=True)
             if args_opt.net == "resnet50":
                 auto_parallel_context().set_all_reduce_fusion_split_indices([85, 160])
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"

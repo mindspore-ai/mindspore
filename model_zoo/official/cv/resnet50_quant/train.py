@@ -76,11 +76,11 @@ if __name__ == '__main__':
         context.set_auto_parallel_context(device_num=rank_size,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           parameter_broadcast=True,
-                                          mirror_mean=True)
+                                          gradients_mean=True)
         init()
         context.set_auto_parallel_context(device_num=args_opt.device_num,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
+                                          gradients_mean=True)
         auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
 
     # define network

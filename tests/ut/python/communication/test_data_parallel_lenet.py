@@ -80,7 +80,7 @@ def test_lenet5_train_step_training_pynative():
     context.set_context(mode=context.PYNATIVE_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
-                                      device_num=8, mirror_mean=True)
+                                      device_num=8, gradients_mean=True)
     predict = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     DatasetLenet(predict, label, 2)

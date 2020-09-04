@@ -318,7 +318,7 @@ class BertTrainCell(nn.Cell):
         self.grad_reducer = F.identity
         self.degree = 1
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             self.degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, self.degree)
         self.cast = P.Cast()
@@ -568,7 +568,7 @@ class BertEvaluationCell(nn.Cell):
         self.grad_reducer = F.identity
         self.degree = 1
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             self.degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, self.degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)

@@ -234,7 +234,7 @@ def _setup_parallel_env(platform):
         parallel_mode=ParallelMode.DATA_PARALLEL,
         device_num=MultiAscend.get_group_size(),
         parameter_broadcast=True,
-        mirror_mean=True
+        gradients_mean=True
     )
 
 
