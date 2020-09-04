@@ -70,7 +70,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ├── mobileNetv2_quant
   ├── Readme.md     # descriptions about MobileNetV2-Quant
   ├── scripts
-  │   ├──run_train_quant.sh   # shell script for train on Ascend
+  │   ├──run_train.sh   # shell script for train on Ascend and GPU
   │   ├──run_infer_quant.sh    # shell script for evaluation on Ascend
   ├── src
   │   ├──config.py      # parameter configuration
@@ -91,19 +91,22 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: sh run_train_quant.sh Ascend [DEVICE_NUM] [SERVER_IP(x.x.x.x)] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH]
+- bash run_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
+- bash run_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
+
 
 ### Launch
 
-```
-# training example
-  shell:
-      Ascend: sh run_train_quant.sh Ascend 8 10.222.223.224 0,1,2,3,4,5,6,7 ~/imagenet/train/ mobilenet_199.ckpt
+``` bash
+  # training example
+  >>> bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
+  >>> bash run_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./train/train.log` like followings.
+Training result will be stored in the example path. Checkpoints trained by `Ascend` will be stored at `./train/device$i/checkpoint` by default, and training log  will be redirected to `./train/device$i/train.log`. Checkpoints trained by `GPU` will be stored in `./train/checkpointckpt_$i` by default, and training log will be redirected to `./train/train.log`.  
+`train.log` is as follows:
 
 ```
 epoch: [  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
