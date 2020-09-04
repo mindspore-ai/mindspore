@@ -344,6 +344,10 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyProximalAdagradOpName,
   kApplyProximalGradientDescentOpName,
   kApplyRMSPropOpName,
+  kFusedAdamWeightDecayName,
+  kFusedAdamName,
+  kFusedWeightScaleApplyMomentum,
+  kFusedScaleApplyMomentum,
   kPullOpName,
 };
 
