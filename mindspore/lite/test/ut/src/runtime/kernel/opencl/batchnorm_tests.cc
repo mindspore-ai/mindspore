@@ -197,7 +197,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
     return;
   }
   auto *output_tensor =
-    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC4, tensor_type);
+    new (std::nothrow) lite::tensor::Tensor(data_type, output_shape, schema::Format_NHWC, tensor_type);
   if (output_tensor == nullptr) {
     MS_LOG(INFO) << " init tensor failed ";
     delete tensor_data;

@@ -180,8 +180,8 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
   MS_LOG(INFO) << " init tensors ";
   constexpr int INPUT_NUM = 3;
   std::array<std::vector<int>, INPUT_NUM> input_shapes = {
-    std::vector<int>{1, 2, 4, 8}, std::vector<int>{1, 2, 4, 8}, std::vector<int>{1, 2, 4, 8}};
-  std::vector<int> output_shape = {3, 2, 4, 8};
+    std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}, std::vector<int>{1, 16, 256, 80}};
+  std::vector<int> output_shape = {1, 48, 256, 80};
   auto data_type = kNumberTypeFloat32;
   auto tensor_type = schema::NodeType_ValueNode;
   std::vector<lite::tensor::Tensor *> inputs;
@@ -217,7 +217,7 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_2input_dim4_axis3) {
     }
     return;
   }
-  param->axis_ = 0;
+  param->axis_ = 1;
   auto *concat_kernel =
     new (std::nothrow) kernel::ConcatOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
   if (concat_kernel == nullptr) {
