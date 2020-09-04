@@ -273,9 +273,9 @@ int ConvolutionBaseCPUKernel::SetQuantMultiplier() {
   conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
 
   for (int i = 0; i < weight_arg_num; ++i) {
-    double real_multiplier = conv_quant_arg_->filter_quant_args_[i].scale_ *
-                             conv_quant_arg_->input_quant_args_[0].scale_ /
-                             conv_quant_arg_->output_quant_args_[0].scale_;
+    const double in_scale =
+      static_cast<double>(conv_quant_arg_->input_quant_args_[0].scale_ * conv_quant_arg_->filter_quant_args_[i].scale_);
+    double real_multiplier = in_scale / static_cast<double>(conv_quant_arg_->output_quant_args_[0].scale_);
     conv_quant_arg_->real_multiplier_[i] = real_multiplier;
     QuantizeRoundParameter(real_multiplier, &conv_quant_arg_->quant_multiplier_[i], &conv_quant_arg_->left_shift_[i],
                            &conv_quant_arg_->right_shift_[i]);
