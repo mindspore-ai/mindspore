@@ -35,6 +35,7 @@ Flags::Flags() {
   AddFlag(&Flags::inputInferenceTypeIn, "inputInferenceType", "Input inference data type. FLOAT | INT8", "FLOAT");
   AddFlag(&Flags::stdDev, "stdDev", "Standard deviation value for aware-quantization", "128");
   AddFlag(&Flags::mean, "mean", "Mean value for aware-quantization", "-0.5");
+  AddFlag(&Flags::bitNum, "bitNum", "Weight quantization bitNum", "8");
   AddFlag(&Flags::quantSize, "quantSize", "Weight quantization size threshold", "0");
   AddFlag(&Flags::convWeightQuantChannelThreshold, "convWeightQuantChannelThreshold",
     "convWeightQuantChannelThreshold", "16");
