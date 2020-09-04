@@ -19,8 +19,6 @@ import os
 import time
 import argparse
 import ast
-import random
-import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
@@ -30,7 +28,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn import SGD
-import mindspore.dataset.engine as de
+from mindspore.common import set_seed
 
 from src.FasterRcnn.faster_rcnn_r50 import Faster_Rcnn_Resnet50
 from src.network_define import LossCallBack, WithLossCell, TrainOneStepCell, LossNet
@@ -38,9 +36,7 @@ from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_fasterrcnn_dataset
 from src.lr_schedule import dynamic_lr
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description="FasterRcnn training")
 parser.add_argument("--run_distribute", type=ast.literal_eval, default=False, help="Run distribute, default: false.")
@@ -78,18 +74,24 @@ if __name__ == '__main__':
             os.makedirs(mindrecord_dir)
         if args_opt.dataset == "coco":
             if os.path.isdir(config.coco_root):
+                if not os.path.exists(config.coco_root):
+                    print("Please make sure config:coco_root is valid.")
+                    raise ValueError(config.coco_root)
                 print("Create Mindrecord. It may take some time.")
                 data_to_mindrecord_byte_image("coco", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("coco_root not exits.")
         else:
-            if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
+            if os.path.isdir(config.image_dir) and os.path.exists(config.anno_path):
+                if not os.path.exists(config.image_dir):
+                    print("Please make sure config:image_dir is valid.")
+                    raise ValueError(config.image_dir)
                 print("Create Mindrecord. It may take some time.")
                 data_to_mindrecord_byte_image("other", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
-                print("IMAGE_DIR or ANNO_PATH not exits.")
+                print("image_dir or anno_path not exits.")
 
     while not os.path.exists(mindrecord_file + ".db"):
         time.sleep(5)

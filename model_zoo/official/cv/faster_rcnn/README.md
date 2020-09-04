@@ -87,7 +87,9 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows: 
 
-Note: 1.the first run will generate the mindeocrd file, which will take a long time. 2. pretrained model is a resnet50 checkpoint that trained over ImageNet2012. 3. VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained. 
+Note: 1.the first run will generate the mindeocrd file, which will take a long time.
+      2.pretrained model is a resnet50 checkpoint that trained over ImageNet2012.
+      3.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained. 
 
 ```
 # standalone training
@@ -106,7 +108,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```shell
 .
-└─FasterRcnn      
+└─faster_rcnn      
   ├─README.md    // descriptions about fasterrcnn
   ├─scripts
     ├─run_standalone_train_ascend.sh    // shell script for standalone on ascend
@@ -148,6 +150,7 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
  
 > Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 > As for PRETRAINED_MODEL，it should be a ResNet50 checkpoint that trained over ImageNet2012. Ready-made pretrained_models are not available now. Stay tuned.
+> The original dataset path needs to be in the config.py,you can select "coco_root" or "image_dir".
 
 ### Result
  
@@ -205,10 +208,10 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
-| uploaded Date              | 06/01/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.3.0-alpha                                                       |
+| uploaded Date              | 08/31/2020 (month/day/year)                                 |
+| MindSpore Version          | 0.7.0-beta                                                       |
 | Dataset                    | COCO2017                                                   |
-| Training Parameters        | epoch=12,  batch_size = 2          |
+| Training Parameters        | epoch=12,  batch_size=2          |
 | Optimizer                  | SGD                                                         |
 | Loss Function              | Softmax Cross Entropy ,Sigmoid Cross Entropy,SmoothL1Loss                                      |
 | Speed                      | 1pc: 190 ms/step;  8pcs: 200 ms/step                          |
@@ -223,12 +226,12 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | ------------------- | --------------------------- |
 | Model Version       | V1                |
 | Resource            | Ascend 910                  |
-| Uploaded Date       | 06/01/2020 (month/day/year) |
-| MindSpore Version   | 0.3.0-alpha                       |
+| Uploaded Date       | 08/31/2020 (month/day/year) |
+| MindSpore Version   | 0.7.0-beta                       |
 | Dataset             | COCO2017    |
 | batch_size          | 2                         |
 | outputs             | mAP                 |
-| Accuracy            |  IoU=0.50: 58.6%  |
+| Accuracy            |  IoU=0.50: 57.6%  |
 | Model for inference | 250M (.ckpt file)         |
 
 # [ModelZoo Homepage](#contents)  

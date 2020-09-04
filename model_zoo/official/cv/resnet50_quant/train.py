@@ -31,6 +31,7 @@ from mindspore.train.quant.quant_utils import load_nonquant_param_into_quant_net
 from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
+from mindspore.common import set_seed
 
 #from models.resnet_quant import resnet50_quant #auto construct quantative network of resnet50
 from models.resnet_quant_manual import resnet50_quant #manually construct quantative network of resnet50
@@ -38,6 +39,8 @@ from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_quant
 from src.crossentropy import CrossEntropy
+
+set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')

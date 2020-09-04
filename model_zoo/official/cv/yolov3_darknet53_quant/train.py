@@ -29,6 +29,7 @@ from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
 import mindspore as ms
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.quant import quant
+from mindspore.common import set_seed
 
 from src.yolo import YOLOV3DarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
@@ -41,6 +42,7 @@ from src.config import ConfigYOLOV3DarkNet53
 from src.transforms import batch_preprocess_true_box, batch_preprocess_true_box_single
 from src.util import ShapeRecord
 
+set_seed(1)
 
 devid = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,

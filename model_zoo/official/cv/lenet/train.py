@@ -29,7 +29,9 @@ from mindspore import context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
+from mindspore.common import set_seed
 
+set_seed(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MindSpore Lenet Example')

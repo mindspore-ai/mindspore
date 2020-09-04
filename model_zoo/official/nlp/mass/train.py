@@ -30,6 +30,7 @@ from mindspore import context, Parameter
 from mindspore.context import ParallelMode
 from mindspore.communication import management as MultiAscend
 from mindspore.train.serialization import load_checkpoint
+from mindspore.common import set_seed
 
 from config import TransformerConfig
 from src.dataset import load_dataset
@@ -337,7 +338,7 @@ if __name__ == '__main__':
     _check_args(args.config)
     _config = get_config(args.config)
 
-    np.random.seed(_config.random_seed)
+    set_seed(_config.random_seed)
     context.set_context(save_graphs=_config.save_graphs)
 
     if _rank_size is not None and int(_rank_size) > 1:

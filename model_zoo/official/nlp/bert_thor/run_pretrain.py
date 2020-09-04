@@ -19,7 +19,6 @@ python run_pretrain.py
 
 import argparse
 import os
-import numpy
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from src.bert_net_config import bert_net_cfg
 from src.config import cfg
@@ -36,6 +35,7 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common import set_seed
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -197,5 +197,5 @@ def run_pretrain():
 
 
 if __name__ == '__main__':
-    numpy.random.seed(0)
+    set_seed(0)
     run_pretrain()

@@ -15,12 +15,10 @@
 """Warpctc training"""
 import os
 import math as m
-import random
 import argparse
-import numpy as np
 import mindspore.nn as nn
 from mindspore import context
-from mindspore import dataset as de
+from mindspore.common import set_seed
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap import WithLossCell
@@ -34,9 +32,7 @@ from src.warpctc import StackedRNN, StackedRNNForGPU
 from src.warpctc_for_train import TrainOneStepCellWithGradClip
 from src.lr_schedule import get_lr
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description="Warpctc training")
 parser.add_argument("--run_distribute", action='store_true', help="Run distribute, default is false.")

@@ -19,12 +19,14 @@ import os
 import numpy as np
 import mindspore.context as context
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
+from mindspore.common import set_seed
 
 from src.config import GatConfig
 from src.dataset import load_and_process
 from src.gat import GAT
 from src.utils import LossAccuracyWrapper, TrainGAT
 
+set_seed(1)
 
 def train():
     """Train GAT model."""

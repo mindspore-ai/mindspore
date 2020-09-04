@@ -17,9 +17,7 @@
 
 import os
 import argparse
-import random
 import ast
-import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
@@ -29,7 +27,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn import SGD
-import mindspore.dataset.engine as de
+from mindspore.common import set_seed
 
 from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
 from src.network_define import LossCallBack, WithLossCell, TrainOneStepCell, LossNet
@@ -37,9 +35,7 @@ from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
 from src.lr_schedule import dynamic_lr
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description="MaskRcnn training")
 parser.add_argument("--only_create_dataset", type=ast.literal_eval, default=False, help="If set it true, only create "

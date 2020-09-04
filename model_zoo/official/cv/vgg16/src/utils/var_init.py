@@ -151,7 +151,6 @@ class KaimingUniform(KaimingInit):
     def _initialize(self, arr):
         fan = _select_fan(arr, self.mode)
         bound = math.sqrt(3.0) * self.gain / math.sqrt(fan)
-        np.random.seed(0)
         data = np.random.uniform(-bound, bound, arr.shape)
 
         _assignment(arr, data)
@@ -179,7 +178,6 @@ class KaimingNormal(KaimingInit):
     def _initialize(self, arr):
         fan = _select_fan(arr, self.mode)
         std = self.gain / math.sqrt(fan)
-        np.random.seed(0)
         data = np.random.normal(0, std, arr.shape)
 
         _assignment(arr, data)
@@ -195,7 +193,6 @@ def default_recurisive_init(custom_cell):
             if cell.bias is not None:
                 fan_in, _ = _calculate_in_and_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
-                np.random.seed(0)
                 cell.bias.default_input = init.initializer(init.Uniform(bound),
                                                            cell.bias.shape,
                                                            cell.bias.dtype)
@@ -206,7 +203,6 @@ def default_recurisive_init(custom_cell):
             if cell.bias is not None:
                 fan_in, _ = _calculate_in_and_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
-                np.random.seed(0)
                 cell.bias.default_input = init.initializer(init.Uniform(bound),
                                                            cell.bias.shape,
                                                            cell.bias.dtype)

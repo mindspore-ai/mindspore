@@ -16,14 +16,11 @@
 import argparse
 import ast
 import os
-import random
-import numpy as np
 
 from network import ShuffleNetV2
 
 import mindspore.nn as nn
 from mindspore import context
-from mindspore import dataset as de
 from mindspore.context import ParallelMode
 from mindspore import Tensor
 from mindspore.communication.management import init, get_rank, get_group_size
@@ -31,14 +28,13 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common import set_seed
 
 from src.config import config_gpu as cfg
 from src.dataset import create_dataset
 from src.lr_generator import get_lr_basic
 
-random.seed(cfg.random_seed)
-np.random.seed(cfg.random_seed)
-de.config.set_seed(cfg.random_seed)
+set_seed(cfg.random_seed)
 
 
 if __name__ == '__main__':

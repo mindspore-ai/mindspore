@@ -14,13 +14,12 @@
 # ============================================================================
 """train resnet."""
 import os
-import random
 import argparse
 import numpy as np
 
 from mindspore import context
 from mindspore import Tensor
-from mindspore import dataset as de
+from mindspore.common import set_seed
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
@@ -46,9 +45,7 @@ else:
     from src.thor import THOR_GPU as THOR
     from src.config import config_gpu as config
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 
 def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch, decay_epochs=100):

@@ -14,7 +14,6 @@
 # ============================================================================
 """Parameters utils"""
 
-import numpy as np
 from mindspore.common.initializer import initializer, TruncatedNormal
 
 def init_net_param(network, initialize_mode='TruncatedNormal'):
@@ -22,7 +21,6 @@ def init_net_param(network, initialize_mode='TruncatedNormal'):
     params = network.trainable_params()
     for p in params:
         if 'beta' not in p.name and 'gamma' not in p.name and 'bias' not in p.name:
-            np.random.seed(seed=1)
             if initialize_mode == 'TruncatedNormal':
                 p.set_parameter_data(initializer(TruncatedNormal(), p.data.shape, p.data.dtype))
             else:

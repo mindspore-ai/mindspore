@@ -23,10 +23,13 @@ from mindspore import context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common import set_seed
 
 from src.config import cifar_cfg as cfg
 from src.dataset import create_dataset
 from src.googlenet import GoogleNet
+
+set_seed(1)
 
 parser = argparse.ArgumentParser(description='googlenet')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')

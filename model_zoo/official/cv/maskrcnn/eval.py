@@ -17,21 +17,18 @@
 import os
 import argparse
 import time
-import random
 import numpy as np
 from pycocotools.coco import COCO
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine as de
+from mindspore.common import set_seed
 
 from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
 from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
 from src.util import coco_eval, bbox2result_1image, results2json, get_seg_masks
 
-random.seed(1)
-np.random.seed(1)
-de.config.set_seed(1)
+set_seed(1)
 
 parser = argparse.ArgumentParser(description="MaskRcnn evaluation")
 parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
