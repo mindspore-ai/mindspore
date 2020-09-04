@@ -58,7 +58,7 @@ if __name__ == '__main__':
         rank = args_opt.rank_id
         device_num = args_opt.device_num
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True, parameter_broadcast=True)
+                                          gradients_mean=True, parameter_broadcast=True)
         init()
     else:
         rank = 0

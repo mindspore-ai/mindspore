@@ -46,7 +46,7 @@ class Net(nn.Cell):
 def test_dense_gen_graph():
     context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.HYBRID_PARALLEL, mirror_mean=True, device_num=8)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.HYBRID_PARALLEL, gradients_mean=True, device_num=8)
     init()
     network = Net(512, 128)
 

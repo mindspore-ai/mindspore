@@ -52,8 +52,8 @@ class ParallelContext {
 
   static std::shared_ptr<ParallelContext> GetInstance();
 
-  void set_mirror_mean(bool mirror_mean);
-  bool mirror_mean() const { return mirror_mean_; }
+  void set_gradients_mean(bool gradients_mean);
+  bool gradients_mean() const { return gradients_mean_; }
 
   void set_full_batch(bool full_batch);
   bool full_batch() const { return full_batch_; }
@@ -107,7 +107,7 @@ class ParallelContext {
  private:
   ParallelContext();
   static std::shared_ptr<ParallelContext> inst_context_;
-  bool mirror_mean_;
+  bool gradients_mean_;
   bool full_batch_;
   bool gradient_fp32_sync_;
   bool loss_repeated_mean_;

@@ -113,6 +113,6 @@ if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target="Davinci",
                         save_graphs=True)
     init()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                       device_num=get_group_size())
     train_and_eval(wide_and_deep_config)

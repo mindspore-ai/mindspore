@@ -323,7 +323,7 @@ def _context():
     return _k_context
 
 
-@args_type_check(device_num=int, global_rank=int, mirror_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
+@args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool)
 def set_auto_parallel_context(**kwargs):
@@ -341,8 +341,8 @@ def set_auto_parallel_context(**kwargs):
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
-        mirror_mean (bool): Whether to perform mean operator after all-reduce of mirror.
-                     "stand_alone" do not support mirror_mean. Default: False.
+        gradients_mean (bool): Whether to perform mean operator after all-reduce of mirror.
+                     "stand_alone" do not support gradients_mean. Default: False.
         gradient_fp32_sync (bool): Gradients allreduce by fp32 even though gradients is fp16 if this flag is True..
                      "stand_alone", "data_parallel" and "hybrid_parallel" do not support
                      gradient_fp32_sync. Default: True.
@@ -380,7 +380,7 @@ def set_auto_parallel_context(**kwargs):
     Examples:
         >>> context.set_auto_parallel_context(device_num=8)
         >>> context.set_auto_parallel_context(global_rank=0)
-        >>> context.set_auto_parallel_context(mirror_mean=True)
+        >>> context.set_auto_parallel_context(gradients_mean=True)
         >>> context.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
@@ -412,7 +412,7 @@ def reset_auto_parallel_context():
 
     - device_num: 1.
     - global_rank: 0.
-    - mirror_mean: False.
+    - gradients_mean: False.
     - gradient_fp32_sync: True.
     - parallel_mode: "stand_alone".
     - parameter_broadcast: False.

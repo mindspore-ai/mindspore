@@ -39,7 +39,7 @@ def context_device_init(config):
         init("nccl")
         context.set_auto_parallel_context(device_num=get_group_size(),
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
+                                          gradients_mean=True)
 
     elif config.platform == "Ascend":
         context.set_context(mode=context.GRAPH_MODE, device_target=config.platform, device_id=config.device_id,
@@ -47,7 +47,7 @@ def context_device_init(config):
         if config.run_distribute:
             context.set_auto_parallel_context(device_num=config.rank_size,
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              parameter_broadcast=True, mirror_mean=True)
+                                              parameter_broadcast=True, gradients_mean=True)
             auto_parallel_context().set_all_reduce_fusion_split_indices([140])
             init()
     else:

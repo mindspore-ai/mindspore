@@ -24,7 +24,7 @@ from mindspore.nn.optim import Adam, FTRL
 # from mindspore.nn.metrics import Metric
 from mindspore.common.initializer import Uniform, initializer
 # from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
@@ -299,7 +299,7 @@ class TrainStepWrap(nn.Cell):
         self.reducer_flag = parallel_mode in (ParallelMode.DATA_PARALLEL,
                                               ParallelMode.HYBRID_PARALLEL)
         if self.reducer_flag:
-            mean = _get_mirror_mean()
+            mean = _get_gradients_mean()
             degree = _get_device_num()
             self.grad_reducer_w = DistributedGradReducer(self.optimizer_w.parameters, mean, degree)
             self.grad_reducer_d = DistributedGradReducer(self.optimizer_d.parameters, mean, degree)

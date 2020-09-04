@@ -20,7 +20,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.parallel._utils import _get_device_num, _get_mirror_mean
+from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
 from .grad_reducer_thor import DistributedGradReducerThor
 
 momentum_opt = C.MultitypeFuncGraph("momentum_opt")
@@ -83,7 +83,7 @@ class THOR(Optimizer):
         self.damping = damping
         self.one = Tensor(1, mstype.int32)
         self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
-        mean = _get_mirror_mean()
+        mean = _get_gradients_mean()
         degree = _get_device_num()
         self.grad_reducer_g = DistributedGradReducerThor(self.parameters, 3, mean, degree)
 

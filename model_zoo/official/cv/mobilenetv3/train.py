@@ -55,7 +55,7 @@ if args_opt.device_target == "GPU":
     init()
     context.set_auto_parallel_context(device_num=get_group_size(),
                                       parallel_mode=ParallelMode.DATA_PARALLEL,
-                                      mirror_mean=True)
+                                      gradients_mean=True)
 else:
     raise ValueError("Unsupported device_target.")
 

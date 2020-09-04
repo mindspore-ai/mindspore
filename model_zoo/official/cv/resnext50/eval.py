@@ -117,7 +117,7 @@ def test(cloud_args=None):
         args.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
-                                          parameter_broadcast=True, mirror_mean=True)
+                                          parameter_broadcast=True, gradients_mean=True)
     else:
         args.rank = 0
         args.group_size = 1

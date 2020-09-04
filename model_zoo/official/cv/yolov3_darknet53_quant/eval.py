@@ -254,7 +254,7 @@ def test():
 
     context.reset_auto_parallel_context()
     parallel_mode = ParallelMode.STAND_ALONE
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, mirror_mean=True, device_num=1)
+    context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=1)
 
     args.logger.info('Creating Network....')
     network = YOLOV3DarkNet53(is_training=False)

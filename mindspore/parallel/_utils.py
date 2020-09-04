@@ -88,9 +88,9 @@ def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
         lst.append(Tensor(scaling_sens, mstype.float32))
     return tuple(lst)
 
-def _get_mirror_mean():
-    """Get if using mirror_mean."""
-    return auto_parallel_context().get_mirror_mean()
+def _get_gradients_mean():
+    """Get if using gradients_mean."""
+    return auto_parallel_context().get_gradients_mean()
 
 
 def _get_device_num():

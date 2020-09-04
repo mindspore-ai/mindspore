@@ -57,7 +57,7 @@ elif args_opt.device_target == "GPU":
     init()
     context.set_auto_parallel_context(device_num=get_group_size(),
                                       parallel_mode=ParallelMode.DATA_PARALLEL,
-                                      mirror_mean=True)
+                                      gradients_mean=True)
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="GPU",
                         save_graphs=False)
@@ -77,7 +77,7 @@ def train_on_ascend():
         context.set_auto_parallel_context(device_num=rank_size,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           parameter_broadcast=True,
-                                          mirror_mean=True)
+                                          gradients_mean=True)
         init()
 
     # define network

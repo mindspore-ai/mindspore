@@ -66,7 +66,7 @@ def model_fine_tune(flags, train_net, fix_weight_layer):
             para.requires_grad = False
 if __name__ == "__main__":
     if args_opt.distribute == "true":
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True)
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True)
         init()
     args_opt.base_size = config.crop_size
     args_opt.crop_size = config.crop_size

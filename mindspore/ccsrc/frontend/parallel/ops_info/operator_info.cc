@@ -251,7 +251,7 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
     MS_LOG(EXCEPTION) << "Invalid dev num: " << dev_num;
   }
   OperatorVector op_for_weight;
-  bool mean_flag = ParallelContext::GetInstance()->mirror_mean();
+  bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
 
   OperatorName operator_name = MIRROR_OPERATOR;
   ValuePtr attr0_value = MakeValue(group_name);

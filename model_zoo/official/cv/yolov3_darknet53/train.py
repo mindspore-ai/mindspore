@@ -178,7 +178,7 @@ def train():
     else:
         parallel_mode = ParallelMode.STAND_ALONE
         degree = 1
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, mirror_mean=True, device_num=degree)
+    context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
 
     network = YOLOV3DarkNet53(is_training=True)
     # default is kaiming-normal

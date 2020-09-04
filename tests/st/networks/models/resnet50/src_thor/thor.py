@@ -20,7 +20,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.parallel._utils import _get_device_num, _get_mirror_mean
+from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
 
 from .grad_reducer_thor import DistributedGradReducerThor
 
@@ -87,7 +87,7 @@ class THOR(Optimizer):
                             1.0 / 196, 1.0 / 196, 1.0 / 196,
                             1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49,
                             1.0]
-        mean = _get_mirror_mean()
+        mean = _get_gradients_mean()
         degree = _get_device_num()
         self.grad_reducer_Amax = DistributedGradReducerThor(self.parameters, 2, mean, degree)
         self.grad_reducer_Gmax = DistributedGradReducerThor(self.parameters, 5, mean, degree)

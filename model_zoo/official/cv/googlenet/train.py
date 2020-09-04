@@ -78,7 +78,7 @@ if __name__ == '__main__':
         if device_num > 1:
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True)
+                                              gradients_mean=True)
             init()
     elif device_target == "GPU":
         init()
@@ -86,7 +86,7 @@ if __name__ == '__main__':
         if device_num > 1:
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True)
+                                              gradients_mean=True)
     else:
         raise ValueError("Unsupported platform.")
 

@@ -45,7 +45,7 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
 ParallelContext::ParallelContext() { Reset(); }
 
 void ParallelContext::Reset() {
-  mirror_mean_ = false;
+  gradients_mean_ = false;
   full_batch_ = false;
   gradient_fp32_sync_ = true;
   loss_repeated_mean_ = true;
@@ -74,7 +74,7 @@ void ParallelContext::set_global_rank(int32_t global_rank) {
   global_rank_is_set_ = true;
 }
 
-void ParallelContext::set_mirror_mean(bool mirror_mean) { mirror_mean_ = mirror_mean; }
+void ParallelContext::set_gradients_mean(bool gradients_mean) { gradients_mean_ = gradients_mean; }
 
 void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
 

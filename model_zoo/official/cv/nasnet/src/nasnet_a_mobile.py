@@ -24,7 +24,7 @@ import mindspore.ops.composite as C
 import mindspore.common.dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 
 
 GRADIENT_CLIP_TYPE = 1
@@ -921,7 +921,7 @@ class NASNetAMobileTrainOneStepWithClipGradient(nn.Cell):
         if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_mirror_mean()
+            mean = _get_gradients_mean()
             degree = _get_device_num()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 

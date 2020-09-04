@@ -16,7 +16,7 @@
 import mindspore.context as context
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.context import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from ..cell import Cell
 from ...common import Tensor, RowTensor
 from ...common.parameter import Parameter
@@ -231,7 +231,7 @@ class TrainOneStepWithLossScaleCell(Cell):
         self.grad_reducer = F.identity
         self.reducer_flag = self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]
         if self.reducer_flag:
-            mean = _get_mirror_mean()
+            mean = _get_gradients_mean()
             degree = _get_device_num()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE

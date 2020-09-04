@@ -64,7 +64,7 @@ if __name__ == '__main__':
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(device_num=device_num,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
+                                          gradients_mean=True)
     else:
         device_num = 1
         rank = 0

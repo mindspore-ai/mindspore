@@ -58,7 +58,7 @@ def test_data_parallel_dense():
     """test_data_parallel_dense"""
     context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True, device_num=8)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True, device_num=8)
     inp = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = DenseMMNet()

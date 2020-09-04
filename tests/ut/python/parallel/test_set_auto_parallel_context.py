@@ -20,17 +20,17 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
 def test_set_auto_parallel_context():
-    context.set_auto_parallel_context(device_num=4, global_rank=3, mirror_mean=True, gradient_fp32_sync=False,
+    context.set_auto_parallel_context(device_num=4, global_rank=3, gradients_mean=True, gradient_fp32_sync=False,
                                       parallel_mode="auto_parallel", parameter_broadcast=False)
     device_num = context.get_auto_parallel_context("device_num")
     global_rank = context.get_auto_parallel_context("global_rank")
-    mirror_mean = context.get_auto_parallel_context("mirror_mean")
+    gradients_mean = context.get_auto_parallel_context("gradients_mean")
     gradient_fp32_sync = context.get_auto_parallel_context("gradient_fp32_sync")
     parallel_mode = context.get_auto_parallel_context("parallel_mode")
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
     assert device_num == 4
     assert global_rank == 3
-    assert mirror_mean
+    assert gradients_mean
     assert not gradient_fp32_sync
     assert parallel_mode == "auto_parallel"
     assert not parameter_broadcast
@@ -45,9 +45,9 @@ def test_set_auto_parallel_context():
     global_rank = auto_parallel_context().get_global_rank()
     assert global_rank == 4
 
-    auto_parallel_context().set_mirror_mean(True)
-    mirror_mean = auto_parallel_context().get_mirror_mean()
-    assert mirror_mean
+    auto_parallel_context().set_gradients_mean(True)
+    gradients_mean = auto_parallel_context().get_gradients_mean()
+    assert gradients_mean
 
     auto_parallel_context().set_gradient_fp32_sync(False)
     gradient_fp32_sync = auto_parallel_context().get_gradient_fp32_sync()
@@ -86,7 +86,7 @@ def test_reset_auto_parallel_context():
     context.reset_auto_parallel_context()
     device_num = context.get_auto_parallel_context("device_num")
     global_rank = context.get_auto_parallel_context("global_rank")
-    mirror_mean = context.get_auto_parallel_context("mirror_mean")
+    gradients_mean = context.get_auto_parallel_context("gradients_mean")
     gradient_fp32_sync = context.get_auto_parallel_context("gradient_fp32_sync")
     parallel_mode = context.get_auto_parallel_context("parallel_mode")
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
@@ -94,7 +94,7 @@ def test_reset_auto_parallel_context():
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
     assert device_num == 1
     assert global_rank == 0
-    assert not mirror_mean
+    assert not gradients_mean
     assert gradient_fp32_sync
     assert parallel_mode == "stand_alone"
     assert not parameter_broadcast
