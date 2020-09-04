@@ -100,7 +100,7 @@ __global__ void MirrorPadGrad(const size_t size, const T *dy, const int num, con
     const int padded_y = ((pos / old_width) % old_height) + pad_top_;
 
     // copy positions own value into output
-    dx[pos] = dx[pos] + dy[(block_num * padded_height + padded_y) * padded_width + padded_x];
+    dx[pos] = dy[(block_num * padded_height + padded_y) * padded_width + padded_x];
 
     int x_dist_1 = (ap1_x - padded_x - adjust);
     int y_dist_1 = (ap1_y - padded_y - adjust);
