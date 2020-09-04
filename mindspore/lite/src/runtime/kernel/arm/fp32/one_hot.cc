@@ -179,7 +179,7 @@ kernel::LiteKernel *CpuOneHotFp32KernelCreator(const std::vector<lite::tensor::T
                                                OpParameter *opParameter, const lite::Context *ctx,
                                                const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter != nullptr) {
+  if (opParameter == nullptr) {
     MS_LOG(ERROR) << "OneHot opParameter nullptr.";
     return nullptr;
   }
