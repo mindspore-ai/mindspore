@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore._checkparam import check_bool
 from mindspore._checkparam import Validator as validator
 from mindspore.nn.optim.optimizer import Optimizer
-from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
+from mindspore.parallel._utils import _get_device_num, _get_mirror_mean
 from src.grad_reducer_thor import DistributedGradReducerThor
 
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
@@ -85,10 +85,12 @@ class THOR_GPU(Optimizer):
         self.assign = P.Assign()
         self.mul = P.Mul()
 
-        mean = _get_gradients_mean()
+        mean = _get_mirror_mean()
         degree = _get_device_num()
-        self.grad_reducer_thorA = DistributedGradReducerThor(self.parameters, 0, mean, degree)
-        self.grad_reducer_thorG = DistributedGradReducerThor(self.parameters, 0, mean, degree)
+
+        parameter_length = len(self.feature_map)
+        self.grad_reducer_thorA = DistributedGradReducerThor(parameter_length, ((parameter_length,), 0), mean, degree)
+        self.grad_reducer_thorG = DistributedGradReducerThor(parameter_length, ((parameter_length,), 0), mean, degree)
         self.weight_decay = weight_decay
         self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
         self.update_gradient = P.UpdateThorGradient(split_dim=128)
@@ -191,12 +193,13 @@ class THOR(Optimizer):
                             1.0 / 196, 1.0 / 196, 1.0 / 196,
                             1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49, 1.0 / 49,
                             1.0]
-        mean = _get_gradients_mean()
+        mean = _get_mirror_mean()
         degree = _get_device_num()
-        self.grad_reducer_Amax = DistributedGradReducerThor(self.parameters, 2, mean, degree)
-        self.grad_reducer_Gmax = DistributedGradReducerThor(self.parameters, 5, mean, degree)
-        self.grad_reducer_A = DistributedGradReducerThor(self.parameters, 3, mean, degree)
-        self.grad_reducer_G = DistributedGradReducerThor(self.parameters, 4, mean, degree)
+        parameter_length = len(self.feature_map)
+        self.grad_reducer_Amax = DistributedGradReducerThor(parameter_length, ((27,), 2), mean, degree)
+        self.grad_reducer_Gmax = DistributedGradReducerThor(parameter_length, ((27,), 4), mean, degree)
+        self.grad_reducer_A = DistributedGradReducerThor(parameter_length, ((27,), 6), mean, degree)
+        self.grad_reducer_G = DistributedGradReducerThor(parameter_length, ((27,), 8), mean, degree)
         self.matrix_A_inv = ()
         self.matrix_G_inv = ()
         self.matrix_max_inv = ()

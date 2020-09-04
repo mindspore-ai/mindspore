@@ -241,11 +241,7 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     if enable_hccl:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True, parameter_broadcast=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([107], "hccl_world_groupsum1")
-        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum2")
-        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum3")
-        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum4")
-        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum5")
+        auto_parallel_context().set_all_reduce_fusion_split_indices([107])
         init()
 
     # network
