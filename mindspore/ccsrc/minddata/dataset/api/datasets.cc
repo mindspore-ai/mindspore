@@ -32,6 +32,7 @@
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #endif
@@ -1505,6 +1506,56 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileDataset::Build() {
 
   // Add TextFileOp
   node_ops.push_back(text_file_op);
+  return node_ops;
+}
+
+// Validator for TFRecordDataset
+bool TFRecordDataset::ValidateParams() { return true; }
+
+// Function to build TFRecordDataset
+std::vector<std::shared_ptr<DatasetOp>> TFRecordDataset::Build() {
+  // A vector containing shared pointer to the Dataset Ops that this object will create
+  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+
+  // Sort the datasets file in a lexicographical order
+  std::vector<std::string> sorted_dir_files = dataset_files_;
+  std::sort(sorted_dir_files.begin(), sorted_dir_files.end());
+
+  // Create Schema Object
+  std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
+  if (!schema_path_.empty()) {
+    RETURN_EMPTY_IF_ERROR(data_schema->LoadSchemaFile(schema_path_, columns_list_));
+  } else if (schema_obj_ != nullptr) {
+    std::string schema_json_string = schema_obj_->to_json();
+    RETURN_EMPTY_IF_ERROR(data_schema->LoadSchemaString(schema_json_string, columns_list_));
+  }
+
+  bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+
+  // Create and initalize TFReaderOp
+  std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
+    num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files, std::move(data_schema),
+    connector_que_size_, columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_, nullptr);
+
+  RETURN_EMPTY_IF_ERROR(tf_reader_op->Init());
+
+  if (shuffle_ == ShuffleMode::kGlobal) {
+    // Inject ShuffleOp
+
+    std::shared_ptr<DatasetOp> shuffle_op = nullptr;
+    int64_t num_rows = 0;
+
+    // First, get the number of rows in the dataset
+    RETURN_EMPTY_IF_ERROR(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
+
+    // Add the shuffle op after this op
+    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                       rows_per_buffer_, &shuffle_op));
+    node_ops.push_back(shuffle_op);
+  }
+
+  // Add TFReaderOp
+  node_ops.push_back(tf_reader_op);
   return node_ops;
 }
 
