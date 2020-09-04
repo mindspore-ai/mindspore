@@ -41,6 +41,6 @@ cp *.sh ./train_parallel
 cp -r ../src ./train_parallel
 cd ./train_parallel || exit
 
-mpirun -n $RANK_SIZE \
+mpirun --allow-run-as-root -n $RANK_SIZE \
 python train.py --run_distribute=True \
 --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 &> log &

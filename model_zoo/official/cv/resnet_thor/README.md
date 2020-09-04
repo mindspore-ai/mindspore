@@ -21,7 +21,7 @@
 This is an example of training ResNet-50 V1.5 with ImageNet2012 dataset by second-order optimizer THOR. THOR is a novel approximate seond-order optimization method in MindSpore. With fewer iterations, THOR can finish ResNet-50 V1.5 training in 72 minutes to top-1 accuracy of 75.9% using 8 Ascend 910, which is much faster than SGD with Momentum. 
 
 ## Model Architecture
-The architecture of ResNet50 has 4 stages. The ResNet architecture performs the initial convolution and max-pooling using 7×7 and 3×3 kernel sizes respectively. Afterward,  every stage of the network has different Residual blocks(3, 4, 6, 3) containing 3 layers each including 1×1 conv, 3×3 conv and 1×1 conv. The size of input of every stage will be reduced to half in terms of height and width but the channel width will be doubled. As we progress from one stage to another, the channel width is doubled and the size of the input is reduced to half. Finally, the network has an Average Pooling layer followed by a fully connected layer having 1000 neurons (ImageNet2012 class output).
+The overall network architecture of ResNet-50 is show below:[link](https://arxiv.org/pdf/1512.03385.pdf)
 
 ## Dataset
 Dataset used: ImageNet2012
@@ -42,13 +42,13 @@ Dataset used: ImageNet2012
 
 
 ## Features
-The classical first-order optimization algorithm, such as SGD, has a small amount of computation, but the convergence speed is slow and requires lots of iterations. The second-order optimization algorithm uses the second-order derivative of the target function to accelerate convergence, can converge faster to the optimal value of the model and requires less iterations. But the application of the second-order optimization algorithm in deep neural network training is not common because of the high computation cost. The main computational cost of the second-order optimization algorithm lies in the inverse operation of the second-order information matrix (Hessian matrix, FIM information matrix, etc.), and the time complexity is about $O (n^3)$. On the basis of the existing natural gradient algorithm,  we developed the available second-order optimizer THOR  in MindSpore by adopting approximation and shearing of  FIM information matrix to reduce the computational complexity of the inverse matrix. With eight Ascend 910 chips, THOR can complete ResNet50-v1.5-ImageNet training in 72 minutes.
+The classical first-order optimization algorithm, such as SGD, has a small amount of computation, but the convergence speed is slow and requires lots of iterations. The second-order optimization algorithm uses the second-order derivative of the target function to accelerate convergence, can converge faster to the optimal value of the model and requires less iterations. But the application of the second-order optimization algorithm in deep neural network training is not common because of the high computation cost. The main computational cost of the second-order optimization algorithm lies in the inverse operation of the second-order information matrix (Hessian matrix, Fisher information matrix, etc.), and the time complexity is about $O (n^3)$. On the basis of the existing natural gradient algorithm,  we developed the available second-order optimizer THOR  in MindSpore by adopting approximation and shearing of  Fisher information matrix to reduce the computational complexity of the inverse matrix. With eight Ascend 910 chips, THOR can complete ResNet50-v1.5-ImageNet training in 72 minutes.
 
 ## Environment Requirements
 - Hardware（Ascend/GPU）
   - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
 - Framework
-  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+  - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
   - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
   - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
@@ -116,7 +116,7 @@ Parameters for both training and inference can be set in config.py.
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the checkpoint will be saved every epoch
 "keep_checkpoint_max": 15,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
-"label_smooth": True,             # label smooth
+"use_label_smooth": True,         # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
 "lr_init": 0.045,                 # learning rate init value
 "lr_decay": 6,                    # learning rate decay rate value
@@ -137,7 +137,7 @@ Parameters for both training and inference can be set in config.py.
 "save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the checkpoint will be saved every epoch
 "keep_checkpoint_max": 15,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
-"label_smooth": True,             # label smooth
+"use_label_smooth": True,         # label smooth
 "label_smooth_factor": 0.1,       # label smooth factor
 "lr_init": 0.05672,               # learning rate init value
 "lr_decay": 4.9687,               # learning rate decay rate value
@@ -180,15 +180,13 @@ sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
 Training result will be stored in the current path, whose folder name begins with "train_parallel".  Under this, you can find checkpoint file together with result like the followings in log.
 ```
 ...
-epoch: 1 step: 5004, loss is 4.3069
-epoch: 2 step: 5004, loss is 3.5695
-epoch: 3 step: 5004, loss is 3.5893
-epoch: 4 step: 5004, loss is 3.1987
-epoch: 5 step: 5004, loss is 3.3526
+epoch: 1 step: 5004, loss is 4.2546034
+epoch: 2 step: 5004, loss is 4.0819564
+epoch: 3 step: 5004, loss is 3.7005644
+epoch: 4 step: 5004, loss is 3.2668946
+epoch: 5 step: 5004, loss is 3.023509
 ......
-epoch: 40 step: 5004, loss is 1.9482
-epoch: 41 step: 5004, loss is 1.8950
-epoch: 42 step: 5004, loss is 1.9023
+epoch: 36 step: 5004, loss is 1.645802
 ...
 ```
 
@@ -207,7 +205,7 @@ We need two parameters for this scripts.
 
 > checkpoint can be produced in training process.
 
-Inference result will be stored in the example path, whose folder name is "infer". Under this, you can find result like the followings in log.
+Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
 
 ```
   result: {'top_5_accuracy': 0.9295574583866837, 'top_1_accuracy': 0.761443661971831} ckpt=train_parallel0/resnet-42_5004.ckpt
@@ -217,9 +215,9 @@ Inference result will be stored in the example path, whose folder name is "infer
 ```
   sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
-Inference result will be stored in the example path, whose folder name is "infer". Under this, you can find result like the followings in log.
+Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
 ```
-  result: {'top_5_accuracy': 0.9281169974391805, 'top_1_accuracy': 0.7593830025608195} ckpt=train_parallel/resnet-42_5004.ckpt
+  result: {'top_5_accuracy': 0.9286771766965429, 'top_1_accuracy': 0.7613036171574904} ckpt=train_parallel/resnet-36_5004.ckpt
 ```
 
 ## Model Description
@@ -230,16 +228,16 @@ Inference result will be stored in the example path, whose folder name is "infer
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | Resource                   | Ascend 910，CPU 2.60GHz 56cores，Memory 314G  | GPU，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 06/01/2020 (month/day/year)  ；                        | 08/14/2020 (month/day/year)  
-| MindSpore Version          | 0.6.0-alpha                                                       |0.6.0-alpha   |
+| uploaded Date              | 06/01/2020 (month/day/year)  ；                        | 09/01/2020 (month/day/year)  
+| MindSpore Version          | 0.3.0-alpha                                                       |0.7.0-beta   |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
-| Training Parameters        | epoch=42, steps per epoch=5004, batch_size = 32             |epoch=42, steps per epoch=5004, batch_size = 32  |
+| Training Parameters        | epoch=42, steps per epoch=5004, batch_size = 32             |epoch=36, steps per epoch=5004, batch_size = 32  |
 | Optimizer                  | THOR                                                         |THOR|
 | Loss Function              | Softmax Cross Entropy                                       |Softmax Cross Entropy           |
 | outputs                    | probability                                                 |  probability          |
-| Loss                       |1.6453942                                                    | 1.9023  |
-| Speed                      |  20.4ms/step（8pcs）                     |79ms/step（8pcs）|
-| Total time                 | 72 mins                          | 258 mins|
+| Loss                       |1.6453942                                                    | 1.645802 |
+| Speed                      |  20.4ms/step（8pcs）                     |76ms/step（8pcs）|
+| Total time                 | 72 mins                          | 229 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 491M (.ckpt file)                                         |380M (.ckpt file)     |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor |https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet_thor |
