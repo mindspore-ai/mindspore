@@ -578,7 +578,7 @@ def check_rescale(method):
 
 
 def check_uniform_augment_cpp(method):
-    """Wrapper method to check the parameters of UniformAugment cpp op."""
+    """Wrapper method to check the parameters of UniformAugment C++ op."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -596,7 +596,7 @@ def check_uniform_augment_cpp(method):
 
 
 def check_bounding_box_augment_cpp(method):
-    """Wrapper method to check the parameters of BoundingBoxAugment cpp op."""
+    """Wrapper method to check the parameters of BoundingBoxAugment C++ op."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

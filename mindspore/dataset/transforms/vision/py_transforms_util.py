@@ -285,7 +285,7 @@ def resize(img, size, interpolation=Inter.BILINEAR):
     Args:
         img (PIL image): Image to be resized.
         size (Union[int, sequence]): The output size of the resized image.
-            If size is an int, smaller edge of the image will be resized to this value with
+            If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of (height, width), this will be the desired output size.
         interpolation (interpolation mode): Image interpolation mode. Default is Inter.BILINEAR = 2.
@@ -322,7 +322,7 @@ def center_crop(img, size):
     Args:
         img (PIL image): Image to be cropped.
         size (Union[int, tuple]): The size of the crop box.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Returns:
@@ -347,7 +347,7 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
     Args:
         img (PIL image): Image to be randomly cropped and resized.
         size (Union[int, sequence]): The size of the output image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple): Range (min, max) of respective size of the original size to be cropped.
         ratio (tuple): Range (min, max) of aspect ratio to be cropped.
@@ -417,7 +417,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
     Args:
         img (PIL image): Image to be randomly cropped.
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
@@ -790,7 +790,7 @@ def five_crop(img, size):
     Args:
         img (PIL image): PIL image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Returns:
@@ -830,7 +830,7 @@ def ten_crop(img, size, use_vertical_flip=False):
     Args:
         img (PIL image): PIL image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
-            If size is an int, a square crop of size (size, size) is returned.
+            If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         use_vertical_flip (bool): Flip the image vertically instead of horizontally if set to True.
 
