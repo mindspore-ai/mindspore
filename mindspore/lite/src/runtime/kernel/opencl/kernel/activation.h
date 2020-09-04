@@ -50,6 +50,7 @@ class ActivationOpenClKernel : public OpenCLKernel {
   int out_size_;
   size_t fp_size;
   bool enable_fp16_{false};
+  std::vector<size_t> nhwc_shape_;
 };
 
 }  // namespace mindspore::kernel

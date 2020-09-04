@@ -24,6 +24,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
+#include "nnacl/fp32/common_func.h"
 #include "src/runtime/kernel/opencl/cl/activation.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -40,14 +41,41 @@ namespace mindspore::kernel {
 
 void ActivationOpenClKernel::InitBuffer() {
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
-  alpha_buff_ = allocator->Malloc(fp_size);
+  int elem_num = UP_ROUND(nhwc_shape_[3], C4NUM);
+  alpha_buff_ = allocator->Malloc(elem_num * fp_size);
   alpha_buff_ = allocator->MapBuffer(alpha_buff_, CL_MAP_WRITE, nullptr, true);
-  memset(alpha_buff_, 0x00, fp_size);
-  if (enable_fp16_) {
-    auto fp16 = (int16_t)alpha_;
-    memcpy(alpha_buff_, &fp16, fp_size);
+  memset(alpha_buff_, 0x00, elem_num * fp_size);
+  if (in_tensors_.size() == 1) {
+    if (enable_fp16_) {
+      uint16_t alpha_fp16 = Float32ToShort(alpha_);
+      auto alpha_buff_fp16 = reinterpret_cast<uint16_t *>(alpha_buff_);
+      for (int i = 0; i < nhwc_shape_[3]; i++) {
+        alpha_buff_fp16[i] = alpha_fp16;
+      }
+    } else {
+      auto alpha_buff_fp16 = reinterpret_cast<float *>(alpha_buff_);
+      for (int i = 0; i < nhwc_shape_[3]; i++) {
+        alpha_buff_fp16[i] = alpha_;
+      }
+    }
   } else {
-    memcpy(alpha_buff_, &alpha_, fp_size);
+    if (enable_fp16_) {
+      if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+        auto alpha_buff_fp16 = reinterpret_cast<uint16_t *>(alpha_buff_);
+        for (int i = 0; i < nhwc_shape_[3]; i++) {
+          alpha_buff_fp16[i] = Float32ToShort(reinterpret_cast<float *>(in_tensors_[0]->Data())[i]);
+        }
+      } else {
+        memcpy(alpha_buff_, in_tensors_[0]->Data(), nhwc_shape_[3] * fp_size);
+      }
+    } else {
+      if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
+        MS_LOG(WARNING) << "fp16 model run in fp32 mode not support.";
+        memcpy(alpha_buff_, in_tensors_[0]->Data(), nhwc_shape_[3] * fp_size);
+      } else {
+        memcpy(alpha_buff_, in_tensors_[0]->Data(), nhwc_shape_[3] * fp_size);
+      }
+    }
   }
   allocator->UnmapBuffer(alpha_buff_);
 }
@@ -55,6 +83,18 @@ void ActivationOpenClKernel::InitBuffer() {
 int ActivationOpenClKernel::Init() {
   in_size_ = in_tensors_[0]->shape().size();
   out_size_ = out_tensors_[0]->shape().size();
+  size_t n, h, w, c;
+  if (in_size_ == 2) {
+    n = in_tensors_[0]->shape()[0];
+    c = in_tensors_[0]->shape()[1];
+    h = w = 1;
+  } else {
+    n = in_tensors_[0]->shape()[0];
+    h = in_tensors_[0]->shape()[1];
+    w = in_tensors_[0]->shape()[2];
+    c = in_tensors_[0]->shape()[3];
+  }
+  nhwc_shape_ = {n, h, w, c};
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   enable_fp16_ = ocl_runtime->GetFp16Enable();
   fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
@@ -62,7 +102,9 @@ int ActivationOpenClKernel::Init() {
     MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
     return RET_ERROR;
   }
-  InitBuffer();
+  if (type_ == ActivationType_LEAKY_RELU) {
+    InitBuffer();
+  }
   std::map<int, std::vector<std::string>> Program_Kernel{
     {ActivationType_LEAKY_RELU, std::vector<std::string>{"LEAKY_RELU", "LeakyRelu"}},
     {ActivationType_RELU, std::vector<std::string>{"RELU", "Relu"}},
@@ -76,7 +118,11 @@ int ActivationOpenClKernel::Init() {
   std::string source = activation_source;
   std::set<std::string> build_options;
   ocl_runtime->LoadSource(Program_Kernel[type_][0], source);
-  ocl_runtime->BuildKernel(kernel_, Program_Kernel[type_][0], Program_Kernel[type_][1], build_options);
+  std::string kernel_name = Program_Kernel[type_][1];
+  if (type_ == ActivationType_LEAKY_RELU) {
+    kernel_name += "_" + std::string(EnumNameFormat(op_format_));
+  }
+  ocl_runtime->BuildKernel(kernel_, Program_Kernel[type_][0], kernel_name, build_options);
   in_ori_format_ = in_tensors_[0]->GetFormat();
   out_ori_format_ = out_tensors_[0]->GetFormat();
   in_tensors_[0]->SetFormat(op_format_);
@@ -95,8 +141,11 @@ int ActivationOpenClKernel::Run() {
   ocl_runtime->SetKernelArg(kernel_, arg_idx++, img2d_shape);
   if (type_ == ActivationType_LEAKY_RELU) {
     ocl_runtime->SetKernelArg(kernel_, arg_idx++, alpha_buff_, lite::opencl::MemType::BUF);
+    cl_int4 input_shape = {static_cast<int>(nhwc_shape_[0]), static_cast<int>(nhwc_shape_[1]),
+                           static_cast<int>(nhwc_shape_[2]), static_cast<int>(nhwc_shape_[3])};
+    ocl_runtime->SetKernelArg(kernel_, arg_idx++, input_shape);
   }
-  std::vector<size_t> local = {1, 1};
+  std::vector<size_t> local = {};
   std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
   auto ret = ocl_runtime->RunKernel(kernel_, global, local, nullptr);
   if (ret != RET_OK) {
@@ -107,17 +156,15 @@ int ActivationOpenClKernel::Run() {
 }
 
 cl_int4 ActivationOpenClKernel::GetImg2dShape() {
-  cl_int4 img2d_shape = {0, 0, 0, 0};
-  for (int i = 0; i < in_size_; ++i) {
-    img2d_shape.s[i + 4 - in_size_] = in_tensors_[0]->shape()[i];
-  }
-  if (op_format_ == schema::Format_NC4) {
-    img2d_shape.s[1] = img2d_shape.s[2];
-    img2d_shape.s[2] = UP_DIV(img2d_shape.s[3], C4NUM);
+  cl_int4 img2d_shape = {1, 1, 1, 1};
+  if (op_format_ == schema::Format_NHWC4) {
+    img2d_shape.s[1] = nhwc_shape_[1];
+    img2d_shape.s[2] = nhwc_shape_[2] * UP_DIV(nhwc_shape_[3], C4NUM);
     img2d_shape.s[3] = C4NUM;
   }
   if (op_format_ == schema::Format_NC4HW4) {
-    img2d_shape.s[1] = UP_DIV(img2d_shape.s[3], C4NUM) * img2d_shape.s[1];  // UP(c / 4) * H
+    img2d_shape.s[1] = UP_DIV(nhwc_shape_[3], C4NUM) * nhwc_shape_[1];
+    img2d_shape.s[2] = nhwc_shape_[2];
     img2d_shape.s[3] = C4NUM;
   }
   return img2d_shape;
@@ -130,7 +177,7 @@ int ActivationOpenClKernel::GetImageSize(size_t idx, std::vector<size_t> *img_si
     img_dtype = CL_HALF_FLOAT;
   }
   img_size->clear();
-  img_size->push_back(img_shape.s[2] * UP_DIV(img_shape.s[3], C4NUM));
+  img_size->push_back(img_shape.s[2]);
   img_size->push_back(img_shape.s[1]);
   img_size->push_back(img_dtype);
   return RET_OK;
