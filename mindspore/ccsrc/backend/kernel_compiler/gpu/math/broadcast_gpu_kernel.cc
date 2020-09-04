@@ -110,6 +110,9 @@ MS_REG_GPU_KERNEL_ONE(
 
 // int32
 MS_REG_GPU_KERNEL_ONE(
+  Greater, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
   BroadcastOpGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(

@@ -43,6 +43,9 @@ def test_nobroadcast():
     output_ms = P.Greater()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np > x2_np
     assert np.allclose(output_ms.asnumpy(), output_np)
+    output_ms = P.Greater()(Tensor(x1_np_int32), Tensor(x2_np_int32))
+    output_np = x1_np_int32 > x2_np_int32
+    assert np.allclose(output_ms.asnumpy(), output_np)
 
     output_ms = P.Less()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np < x2_np
@@ -132,6 +135,9 @@ def test_broadcast():
     output_ms = P.Greater()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np > x2_np
     assert np.allclose(output_ms.asnumpy(), output_np)
+    output_ms = P.Greater()(Tensor(x1_np_int32), Tensor(x2_np_int32))
+    output_np = x1_np_int32 > x2_np_int32
+    assert np.allclose(output_ms.asnumpy(), output_np)
 
     output_ms = P.Less()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np < x2_np
@@ -174,6 +180,9 @@ def test_broadcast_diff_dims():
 
     output_ms = P.Maximum()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.maximum(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+    output_ms = P.Greater()(Tensor(x1_np_int32), Tensor(x2_np_int32))
+    output_np = x1_np_int32 > x2_np_int32
     assert np.allclose(output_ms.asnumpy(), output_np)
 
     output_ms = P.Greater()(Tensor(x1_np), Tensor(x2_np))
