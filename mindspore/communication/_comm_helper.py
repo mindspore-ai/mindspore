@@ -14,7 +14,7 @@
 # ============================================================================
 """comm_helper"""
 
-import os
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from ._hccl_management import load_lib as hccl_load_lib
 
 _HCCL_AVAILABLE = False
@@ -44,7 +44,6 @@ else:
 
 HCCL_WORLD_COMM_GROUP = "hccl_world_group"
 NCCL_WORLD_COMM_GROUP = "nccl_world_group"
-MS_ROLE = os.getenv("MS_ROLE")
 
 class Backend:
     """
@@ -113,7 +112,7 @@ def check_parameter_available(func):
         Wrapper. If not available, raise Error.
     """
     def wrapper(*args, **kargs):
-        if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+        if _is_role_pserver() or _is_role_sched():
             return func(*args, **kargs)
         group = None
         if "group" in kargs.keys():
@@ -154,7 +153,7 @@ def _get_rank_helper(group, backend):
         Integer. The local rank id of the calling process.
     """
     rank_id = None
-    if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+    if _is_role_pserver() or _is_role_sched():
         rank_id = 0
         return rank_id
     if backend == Backend.HCCL:
@@ -213,7 +212,7 @@ def _get_size_helper(group, backend):
         Integer. The rank size of specified group.
     """
     size = None
-    if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+    if _is_role_pserver() or _is_role_sched():
         size = 1
         return size
     if backend == Backend.HCCL:

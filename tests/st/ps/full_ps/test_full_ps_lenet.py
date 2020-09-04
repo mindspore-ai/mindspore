@@ -35,6 +35,7 @@ args, _ = parser.parse_known_args()
 device_target = args.device_target
 dataset_path = args.dataset_path
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+context.set_ps_context(enable_ps=True)
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
     """weight initial for conv layer"""

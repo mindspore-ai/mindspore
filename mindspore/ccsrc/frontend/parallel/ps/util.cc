@@ -16,7 +16,9 @@
 
 #include "frontend/parallel/ps/util.h"
 #include <unordered_map>
+#include <vector>
 #include "frontend/parallel/ps/common.h"
+#include "frontend/parallel/ps/ps_context.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -45,34 +47,13 @@ std::unordered_map<int, std::string> Util::id_to_optimizer_nodes{
   {3, kSparseFtrlOp},
 };
 
-bool Util::IsParamServerMode() { return IsRoleOfWorker() || IsRoleOfPServer() || IsRoleOfScheduler(); }
+bool Util::IsParamServerMode() { return PSContext::instance()->is_ps_enabled(); }
 
-bool Util::IsRoleOfWorker() {
-  auto role = common::GetEnv(kEnvRole);
-  if (strcmp(role.c_str(), kEnvRoleOfWorker) == 0) {
-    return true;
-  } else {
-    return false;
-  }
-}
+bool Util::IsRoleOfWorker() { return PSContext::instance()->is_role_worker(); }
 
-bool Util::IsRoleOfPServer() {
-  auto role = common::GetEnv(kEnvRole);
-  if (strcmp(role.c_str(), kEnvRoleOfPServer) == 0) {
-    return true;
-  } else {
-    return false;
-  }
-}
+bool Util::IsRoleOfPServer() { return PSContext::instance()->is_role_pserver(); }
 
-bool Util::IsRoleOfScheduler() {
-  auto role = common::GetEnv(kEnvRole);
-  if (strcmp(role.c_str(), kEnvRoleOfScheduler) == 0) {
-    return true;
-  } else {
-    return false;
-  }
-}
+bool Util::IsRoleOfScheduler() { return PSContext::instance()->is_role_sched(); }
 
 void Util::SetInternalEnvVar() {
   if (IsParamServerMode()) {
@@ -162,10 +143,6 @@ std::map<int, int> Util::AllRankLocalShard(int first_dim, int rank_id, int serve
   }
   return shard_dims;
 }
-
-void Util::SetRankId(int rank_id) { rank_id_ = rank_id; }
-
-int Util::GetRankId() { return rank_id_; }
 
 void Util::ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
                                 const size_t first_dim_size, const size_t outer_dim_size,

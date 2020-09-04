@@ -27,6 +27,7 @@
 #include "ps/ps.h"
 #include "frontend/parallel/ps/util.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "frontend/parallel/ps/ps_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -43,7 +44,7 @@ class WorkerProxy : public ::ps::KVWorker<T> {
   explicit WorkerProxy(int app_id, int customer_id, int lookup_customer_id, int general_customer_id)
       : Worker(app_id, customer_id) {
     server_num_ = ::ps::NumServers();
-    Util::SetRankId(::ps::MyRank());
+    PSContext::instance()->SetPSRankId(::ps::MyRank());
     using std::placeholders::_1;
     using std::placeholders::_2;
     using std::placeholders::_3;

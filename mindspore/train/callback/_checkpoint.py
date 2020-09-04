@@ -24,6 +24,7 @@ from mindspore import log as logger
 from mindspore._checkparam import check_bool, check_int_non_negative
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
+from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank
 from ._callback import Callback, set_cur_net
 
 
@@ -280,8 +281,7 @@ class ModelCheckpoint(Callback):
         if save_ckpt:
             cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
                                + str(step_num_in_epoch) + ".ckpt"
-            if os.getenv("MS_ROLE") == "MS_PSERVER":
-                from mindspore.parallel._ps_utils import _get_ps_mode_rank
+            if _is_role_pserver():
                 cur_ckpoint_file = "PServer_" + str(_get_ps_mode_rank()) + "_" + cur_ckpoint_file
             # update checkpoint file list.
             self._manager.update_ckpoint_filelist(self._directory, self._prefix)

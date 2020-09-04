@@ -40,8 +40,6 @@ class Util {
   static bool is_optimizer(std::string name);
   static int LocalShard(int first_dim, int rank_id, int server_num);
   static std::map<int, int> AllRankLocalShard(int first_dim, int rank_id, int server_num);
-  static void SetRankId(int rank_id);
-  static int GetRankId();
   static void ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
                                    const size_t first_dim_size, const size_t outer_dim_size,
                                    mindspore::kernel::SparseGradient<int> *unique_sparse_grad);

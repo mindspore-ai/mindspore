@@ -15,7 +15,6 @@
 # limitations under the License.
 # ============================================================================
 """Providing interface methods."""
-import os
 import types
 from collections import OrderedDict
 from functools import wraps
@@ -25,6 +24,7 @@ from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, Pynativ
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_tensor
+from ..parallel._ps_context import _is_role_pserver
 # store ms_function class compiled pipeline cache
 ms_compile_cache = {}
 
@@ -469,7 +469,7 @@ class _Executor:
         return self._executor.has_compiled(phase)
 
     def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only") or os.getenv("MS_ROLE") == "MS_PSERVER":
+        if context.get_context("precompile_only") or _is_role_pserver():
             return None
         return self.run(obj, *args, phase=phase)
 
