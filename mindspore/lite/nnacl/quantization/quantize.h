@@ -29,7 +29,7 @@
 #define OUTPUT_PER_CHANNEL 0b100
 
 typedef struct QuantArg {
-  double scale_;
+  float scale_;
   int32_t zp_;
 } QuantArg;
 
