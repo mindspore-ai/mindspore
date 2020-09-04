@@ -464,6 +464,10 @@ def initializer(init, shape=None, dtype=mstype.float32):
     elif isinstance(shape, numbers.Number):
         shape = (shape,)
 
+    for value in shape if shape is not None else ():
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError(f"shape is invalid, shape value must be positive integer, shape:{shape}")
+
     if isinstance(init, Initializer):
         init.shape = init.shape if init.shape is not None else shape
         init.dtype = init.dtype if init.dtype is not None else dtype
