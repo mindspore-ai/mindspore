@@ -200,6 +200,24 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       FreeTensors(&input_tensors, &output_tensors);
       return nullptr;
     }
+    auto inputQuantParams = lite_primitive->GetInputQuantParams();
+    for (size_t m = 0; m < inputQuantParams.size(); m++) {
+      for (auto inputQuantParam : inputQuantParams[m]) {
+        lite::tensor::QuantArg quant_arg{};
+        quant_arg.scale = inputQuantParam.scale;
+        quant_arg.zeroPoint = inputQuantParam.zeroPoint;
+        input_tensors[m]->AddQuantParam(quant_arg);
+      }
+    }
+    auto outputQuantParams = lite_primitive->GetOutputQuantParams();
+    for (size_t m = 0; m < outputQuantParams.size(); m++) {
+      for (auto outputQuantParam : outputQuantParams[m]) {
+        lite::tensor::QuantArg quant_arg{};
+        quant_arg.scale = outputQuantParam.scale;
+        quant_arg.zeroPoint = outputQuantParam.zeroPoint;
+        output_tensors[m]->AddQuantParam(quant_arg);
+      }
+    }
     // here, input_tensor's format need to be transposed nhwc according to fmkType,
     // but for the time being, we only transpose the tensor with 0/1/2/3D.
     // Others should be added in future.
