@@ -5,9 +5,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_
     message(FATAL_ERROR "GCC vesion ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
 endif ()
 
-set(MS_VERSION_MAJOR 0)
-set(MS_VERSION_MINOR 7)
-set(MS_VERSION_REVISION 0)
+option(MS_VERSION_MAJOR "major version" 0)
+option(MS_VERSION_MINOR "minor version" 7)
+option(MS_VERSION_REVISION "revision version" 0)
 
 set(DIR_PREFIX mindspore-lite)
 set(MS_VERSION ${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
