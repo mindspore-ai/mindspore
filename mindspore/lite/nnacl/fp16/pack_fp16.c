@@ -232,6 +232,7 @@ void PackNCHWToNHWCFp16(const void *src, void *dst, int batch, int plane, int ch
 
 void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel) {
   int ic4 = UP_DIV(channel, C4NUM);
+  int c4_channel = ic4 * C4NUM;
   int nhwc4_batch_unit_offset = ic4 * C4NUM * plane;
   int ic_remainder_ = channel % C4NUM;
   if (ic_remainder_ != 0) {
@@ -239,8 +240,11 @@ void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int c
     for (int b = 0; b < batch; b++) {
       int batch_offset = b * channel * plane;
       for (int i = 0; i < plane; i++) {
-        memcpy((float16_t *)dst + nhwc4_batch_offset + i * ic4 * C4NUM, (float16_t *)src + batch_offset + i * channel,
-               channel * sizeof(float16_t));
+        float16_t *dst_per_plane = (float16_t *)dst + nhwc4_batch_offset + i * c4_channel;
+        memcpy(dst_per_plane, (float16_t *)src + batch_offset + i * channel, channel * sizeof(float16_t));
+        for (int j = channel; j < c4_channel; ++j) {
+          dst_per_plane[j] = 0;
+        }
       }
       nhwc4_batch_offset += nhwc4_batch_unit_offset;
     }
