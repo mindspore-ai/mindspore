@@ -156,6 +156,8 @@ using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeI
 
 RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode);
 
+std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node);
+
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
 }  // namespace parallel
 }  // namespace mindspore
