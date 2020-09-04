@@ -165,6 +165,9 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return false;
   }
+  if (!FormatTransformChecker::GetInstance().format_transform()) {
+    return false;
+  }
   if (!AnfAlgo::IsRealCNodeKernel(kernel_node)) {
     return false;
   }
@@ -232,7 +235,31 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
 }
 }  // namespace
 
-void SetKernelInfo(const CNodePtr &kernel_node, bool graph_format_transform) {
+void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  auto kernels = kernel_graph->execution_order();
+  size_t conv_cnt = 0;
+  size_t bn_cnt = 0;
+  for (const auto &kernel : kernels) {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel);
+    if (kernel_name == prim::kPrimLayerNorm->name()) {
+      format_transform_ = false;
+      return;
+    }
+    if (kernel_name == prim::kPrimConv2D->name()) {
+      conv_cnt++;
+    }
+    if (kernel_name == prim::kPrimFusedBatchNormEx->name()) {
+      bn_cnt++;
+    }
+  }
+  if (conv_cnt == kConv2dCount && bn_cnt == kFusedBatchNormCount) {
+    format_transform_ = false;
+    return;
+  }
+  format_transform_ = true;
+}
+
+void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
@@ -246,7 +273,7 @@ void SetKernelInfo(const CNodePtr &kernel_node, bool graph_format_transform) {
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
   std::string origin_data_format = kOpFormat_DEFAULT;
-  if (graph_format_transform && IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
+  if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
     UpdateKernelFormatInfo(kernel_node, inputs_type, &inputs_format, &outputs_format, &origin_data_format);
   }
   std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> builder =

@@ -20,11 +20,13 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include <memory>
 #include <map>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "utils/utils.h"
 #include "frontend/operator/ops.h"
+#include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace device {
@@ -53,7 +55,28 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimAddN->name(), {{}, {0}}},
 };
 
-void SetKernelInfo(const CNodePtr &kernel_node, bool graph_format_transform = false);
+void SetKernelInfo(const CNodePtr &kernel_node);
+
+class FormatTransformChecker {
+ public:
+  void CheckSupportFormatTransform(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+  bool format_transform() const { return format_transform_; }
+
+  static FormatTransformChecker &GetInstance() {
+    static FormatTransformChecker instance;
+    return instance;
+  }
+
+ private:
+  FormatTransformChecker() = default;
+  ~FormatTransformChecker() = default;
+  FormatTransformChecker(const FormatTransformChecker &);
+  FormatTransformChecker &operator=(const FormatTransformChecker &);
+
+  bool format_transform_{true};
+  static constexpr size_t kConv2dCount = 96;
+  static constexpr size_t kFusedBatchNormCount = 94;
+};
 
 class KernelAttr {
  public:

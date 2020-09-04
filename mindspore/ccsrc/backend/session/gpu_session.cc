@@ -53,10 +53,10 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 void GPUSession::SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  bool graph_format_transform = IsSupportFormatTransform(kernel_graph);
+  device::gpu::FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
   for (const auto &kernel_node : kernel_graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    device::gpu::SetKernelInfo(kernel_node, graph_format_transform);
+    device::gpu::SetKernelInfo(kernel_node);
   }
 }
 
@@ -82,12 +82,6 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ReplaceBNGradCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
-  if (IsSupportFormatTransform(kernel_graph) && context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
-    pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
-    pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
-    // pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
-  }
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -96,6 +90,10 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
+  // pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
@@ -201,28 +199,6 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
   }
 }
 
-bool GPUSession::IsSupportFormatTransform(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  auto kernels = kernel_graph->execution_order();
-  size_t conv_cnt = 0;
-  size_t bn_cnt = 0;
-  for (const auto &kernel : kernels) {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name == prim::kPrimLayerNorm->name()) {
-      return false;
-    }
-    if (kernel_name == prim::kPrimConv2D->name()) {
-      conv_cnt++;
-    }
-    if (kernel_name == prim::kPrimFusedBatchNormEx->name()) {
-      bn_cnt++;
-    }
-  }
-  if (conv_cnt == kConv2dCount && bn_cnt == kFusedBatchNormCount) {
-    return false;
-  }
-  return true;
-}
-
 GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   // Construct graph, if successfully, graph_sum_ + 1
   auto graph_id = graph_sum_;
@@ -232,26 +208,27 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  // Optimize
+  // Dump .pb graph before graph optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "before_opt_" + std::to_string(graph_id));
+  }
+  // Graph optimization irrelevant to device data format
   Optimize(graph);
   // Select kernel build info
   SelectKernel(graph);
+  // Graph optimization relevant to device data format
+  HardwareOptimize(graph);
+  // Dump .pb graph after graph optimization
+  if (save_graphs) {
+    DumpIRProto(graph, "after_opt_" + std::to_string(graph_id));
+  }
+
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   // Assign parameter keys.
   AssignParamKey(graph);
 #endif
   // Start gpu kernel runtime
   StartKernelRT();
-  // Dump .pb graph before hardware optimization
-  if (save_graphs) {
-    DumpIRProto(graph, "before_hwopt_" + std::to_string(graph_id));
-  }
-  // HardwareOptimize
-  HardwareOptimize(graph);
-  // Dump .pb graph after hardware optimization
-  if (save_graphs) {
-    DumpIRProto(graph, "after_hwopt_" + std::to_string(graph_id));
-  }
   // Assign CUDA streams
   AssignStream(graph);
   // Hide NopOp from execution graph

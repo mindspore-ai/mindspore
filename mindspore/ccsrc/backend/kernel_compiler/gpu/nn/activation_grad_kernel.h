@@ -96,9 +96,15 @@ class ActivationGradGpuKernel : public GpuKernel {
     const int split_dim = 4;
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &shape);
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                             shape[0], shape[1], shape[2], shape[3]),
-                                  "SetTensor4dDescriptor failed");
+      if (AnfAlgo::GetInputFormat(kernel_node, 0) == kOpFormat_NHWC) {
+        CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_,
+                                                               shape[0], shape[3], shape[1], shape[2]),
+                                    "cudnnSetTensor4dDescriptor failed");
+      } else {
+        CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
+                                                               shape[0], shape[1], shape[2], shape[3]),
+                                    "cudnnSetTensor4dDescriptor failed");
+      }
     } else {
       CudnnSetTensorNdDescriptor(input_shape, data_descriptor_, cudnn_data_type_);
     }
