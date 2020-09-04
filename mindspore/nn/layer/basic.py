@@ -470,6 +470,8 @@ class Pad(Cell):
         for item in paddings:
             if len(item) != 2:
                 raise ValueError('The shape of paddings must be (n, 2).')
+        if len(paddings) > 4:
+            raise ValueError('Only padding up to 4 dims is supported')
         if mode == "CONSTANT":
             self.pad = P.Pad(self.paddings)
         else:
