@@ -115,6 +115,8 @@ class ExpandDims(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> expand_dims = P.ExpandDims()
         >>> output = expand_dims(input_tensor, 0)
+        [[[2.0, 2.0],
+          [2.0, 2.0]]]
     """
 
     @prim_attr_register
@@ -887,6 +889,8 @@ class Fill(PrimitiveWithInfer):
     Examples:
         >>> fill = P.Fill()
         >>> fill(mindspore.float32, (2, 2), 1)
+        [[1.0, 1.0],
+         [1.0, 1.0]]
     """
 
     @prim_attr_register
@@ -2364,6 +2368,8 @@ class Eye(PrimitiveWithInfer):
     Examples:
         >>> eye = P.Eye()
         >>> out_tensor = eye(2, 2, mindspore.int32)
+        [[1, 0],
+         [0, 1]]
     """
 
     @prim_attr_register
