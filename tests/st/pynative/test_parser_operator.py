@@ -13,43 +13,29 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-import numpy as np
 from mindspore import context
 from mindspore.nn import ReLU
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+import numpy as np
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_staging_together():
-    class NetPynative(Cell):
+def test_parser_operator_floor_div():
+    class Net(Cell):
         def __init__(self):
-            super().__init__()
+            super(Net, self).__init__()
             self.relu = ReLU()
+
         def construct(self, x):
-            return self.relu(x)
+            x = self.relu(x)
+            x = 3 // x
+            return x
 
-    class NetStaging(Cell):
-        def __init__(self):
-            super().__init__()
-            self.relu = ReLU()
-        @ms_function
-        def construct(self, x):
-            return self.relu(x)
+    input_np_x = np.array(2).astype(np.float32)
+    input_me_x = Tensor(input_np_x)
+    net = Net()
+    out_me = net(input_me_x)
 
-    input1 = np.random.randn(2, 2).astype(np.float32)
-
-    net1 = NetPynative()
-    out_me_pynative = net1(Tensor(input1)).asnumpy()
-
-    net2 = NetStaging()
-    out_me_staging = net2(Tensor(input1)).asnumpy()
-
-    assert np.allclose(out_me_pynative, out_me_staging, 0.001, 0.001)
+    assert np.allclose(out_me.asnumpy(), 3 // input_np_x, 0.001, 0.001)
