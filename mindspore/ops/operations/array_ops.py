@@ -2257,10 +2257,10 @@ class Diag(PrimitiveWithInfer):
     :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The input shape should be less than 5d.
 
     Outputs:
-        Tensor.
+        Tensor, has the same dtype as the 'input_x'.
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])

@@ -1001,14 +1001,14 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     :math:`\text{in_channels} * \text{channel_multiplier}` channels.
 
     Args:
-        channel_multiplier (int): The multipiler for the original output conv.
+        channel_multiplier (int): The multipiler for the original output conv. Its value must be greater than 0.
         kernel_size (Union[int, tuple[int]]): The size of the conv kernel.
         mode (int): 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (Union[int, tuple[int]]): The pad value to fill. Default: 0. If `pad` is one integer, the padding of
+        pad (Union[int, tuple[int]]): The pad value to fill. If `pad` is one integer, the padding of
             top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
-            of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding.
+            of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding. Default: 0.
         stride (Union[int, tuple[int]]): The stride to apply conv filter. Default: 1.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits input into groups. Default: 1.
@@ -1026,7 +1026,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         >>> weight = Tensor(np.ones([1, 32, 3, 3]), mindspore.float32)
         >>> depthwise_conv2d = P.DepthwiseConv2dNative(channel_multiplier = 3, kernel_size = (3, 3))
         >>> output = depthwise_conv2d(input, weight)
-        >>> assert output.shape == (10, 96, 30, 30)
+        >>> output.shape == (10, 96, 30, 30)
     """
 
     @prim_attr_register
@@ -1850,7 +1850,7 @@ class DataFormatDimMap(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - A Tensor with each element as a dimension index in source data format.
-          Must be in the range [-4, 4). It's type is int32.
+          The suggested values is in the range [-4, 4). It's type is int32.
 
     Outputs:
         Tensor, has the same type as the `input_x`.
