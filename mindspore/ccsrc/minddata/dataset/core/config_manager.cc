@@ -36,10 +36,10 @@ ConfigManager::ConfigManager()
       cache_port_(kCfgDefaultCachePort) {
   auto env_cache_host = std::getenv("MS_CACHE_HOST");
   auto env_cache_port = std::getenv("MS_CACHE_PORT");
-  if (env_cache_host) {
+  if (env_cache_host != nullptr) {
     cache_host_ = env_cache_host;
   }
-  if (env_cache_port) {
+  if (env_cache_port != nullptr) {
     char *end = nullptr;
     cache_port_ = strtol(env_cache_port, &end, 10);
     if (*end != '\0') {
