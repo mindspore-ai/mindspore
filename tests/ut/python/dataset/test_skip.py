@@ -58,7 +58,7 @@ def test_generator_skip():
     ds1 = ds1.skip(3)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 2
     assert buf == [3, 4]
@@ -71,7 +71,7 @@ def test_skip_1():
     ds1 = ds1.skip(7)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert buf == []
 
@@ -83,7 +83,7 @@ def test_skip_2():
     ds1 = ds1.skip(0)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 5
     assert buf == [0, 1, 2, 3, 4]
@@ -99,7 +99,7 @@ def test_skip_repeat_1():
     ds1 = ds1.skip(3)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 7
     assert buf == [3, 4, 0, 1, 2, 3, 4]
@@ -115,7 +115,7 @@ def test_skip_repeat_2():
     ds1 = ds1.repeat(2)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 4
     assert buf == [3, 4, 3, 4]
@@ -134,7 +134,7 @@ def test_skip_repeat_3():
     ds1 = ds1.repeat(3)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 6
     assert buf == [3, 4, 3, 4, 3, 4]
@@ -150,7 +150,7 @@ def test_skip_take_1():
     ds1 = ds1.skip(2)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 2
     assert buf == [2, 3]
@@ -166,7 +166,7 @@ def test_skip_take_2():
     ds1 = ds1.take(2)
 
     buf = []
-    for data in ds1:
+    for data in ds1.create_tuple_iterator(output_numpy=True):
         buf.append(data[0][0])
     assert len(buf) == 2
     assert buf == [2, 3]
@@ -183,7 +183,7 @@ def test_skip_filter_1():
     dataset = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
 
     buf = []
-    for item in dataset:
+    for item in dataset.create_tuple_iterator(output_numpy=True):
         buf.append(item[0][0])
     assert buf == [5, 6, 7, 8, 9, 10]
 
@@ -194,7 +194,7 @@ def test_skip_filter_2():
     dataset = dataset.skip(5)
 
     buf = []
-    for item in dataset:
+    for item in dataset.create_tuple_iterator(output_numpy=True):
         buf.append(item[0][0])
     assert buf == [5, 6, 7, 8, 9, 10]
 
@@ -205,7 +205,7 @@ def test_skip_exception_1():
     try:
         data1 = data1.skip(count=-1)
         num_iter = 0
-        for _ in data1.create_dict_iterator(num_epochs=1):
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
 
     except RuntimeError as e:

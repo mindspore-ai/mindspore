@@ -59,7 +59,7 @@ def mask_compare(array, op, constant, dtype=mstype.bool_):
 
         array = array.astype(dtype=mstype_to_np_type[dtype])
 
-        np.testing.assert_array_equal(array, d[0])
+        np.testing.assert_array_equal(array, d[0].asnumpy())
 
 
 def test_mask_int_comparison():

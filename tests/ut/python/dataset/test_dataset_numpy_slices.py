@@ -28,7 +28,7 @@ def test_numpy_slices_list_1():
     ds = de.NumpySlicesDataset(np_data, shuffle=False)
 
     for i, data in enumerate(ds):
-        assert data[0] == np_data[i]
+        assert data[0].asnumpy() == np_data[i]
 
 
 def test_numpy_slices_list_2():
@@ -38,7 +38,7 @@ def test_numpy_slices_list_2():
     ds = de.NumpySlicesDataset(np_data, column_names=["col1"], shuffle=False)
 
     for i, data in enumerate(ds):
-        assert np.equal(data[0], np_data[i]).all()
+        assert np.equal(data[0].asnumpy(), np_data[i]).all()
 
 
 def test_numpy_slices_list_3():
@@ -48,7 +48,7 @@ def test_numpy_slices_list_3():
     ds = de.NumpySlicesDataset(np_data, column_names=["col1"], shuffle=False)
 
     for i, data in enumerate(ds):
-        assert np.equal(data[0], np_data[i]).all()
+        assert np.equal(data[0].asnumpy(), np_data[i]).all()
 
 
 def test_numpy_slices_list_append():
@@ -62,12 +62,12 @@ def test_numpy_slices_list_append():
     data1 = data1.map(operations=[vision.Decode(True), resize_op], input_columns=["image"])
 
     res = []
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         res.append(data["image"])
 
     ds = de.NumpySlicesDataset(res, column_names=["col1"], shuffle=False)
 
-    for i, data in enumerate(ds):
+    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
         assert np.equal(data, res[i]).all()
 
 
@@ -79,8 +79,8 @@ def test_numpy_slices_dict_1():
     res = [[1, 3], [2, 4]]
 
     for i, data in enumerate(ds):
-        assert data[0] == res[i][0]
-        assert data[1] == res[i][1]
+        assert data[0].asnumpy() == res[i][0]
+        assert data[1].asnumpy() == res[i][1]
 
 
 def test_numpy_slices_tuple_1():
@@ -89,7 +89,7 @@ def test_numpy_slices_tuple_1():
     np_data = [([1, 2], [3, 4]), ([11, 12], [13, 14]), ([21, 22], [23, 24])]
     ds = de.NumpySlicesDataset(np_data, shuffle=False)
 
-    for i, data in enumerate(ds):
+    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
         assert np.equal(data, np_data[i]).all()
 
     assert sum([1 for _ in ds]) == 3
@@ -102,7 +102,7 @@ def test_numpy_slices_tuple_2():
     expected = [[1, 3, 5], [2, 4, 6]]
     ds = de.NumpySlicesDataset(np_data, shuffle=False)
 
-    for i, data in enumerate(ds):
+    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
         assert np.equal(data, expected[i]).all()
 
     assert sum([1 for _ in ds]) == 2
@@ -116,8 +116,8 @@ def test_numpy_slices_tuple_3():
     ds = de.NumpySlicesDataset(data, column_names=["col1", "col2"], shuffle=False)
 
     for i, data in enumerate(ds):
-        assert np.equal(data[0], features[i]).all()
-        assert data[1] == labels[i]
+        assert np.equal(data[0].asnumpy(), features[i]).all()
+        assert data[1].asnumpy() == labels[i]
 
 
 def test_numpy_slices_csv_value():
@@ -132,8 +132,8 @@ def test_numpy_slices_csv_value():
     ds = de.NumpySlicesDataset(np_data, column_names=["col1", "col2"], shuffle=False)
 
     for i, data in enumerate(ds):
-        assert np.equal(np_data[0][i], data[0]).all()
-        assert np.equal(np_data[1][i], data[1]).all()
+        assert np.equal(np_data[0][i], data[0].asnumpy()).all()
+        assert np.equal(np_data[1][i], data[1].asnumpy()).all()
 
 
 def test_numpy_slices_csv_dict():
@@ -146,7 +146,7 @@ def test_numpy_slices_csv_dict():
 
     ds = de.NumpySlicesDataset(dict(df), shuffle=False)
 
-    for i, data in enumerate(ds):
+    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
         assert np.equal(data, res[i]).all()
 
 
@@ -157,7 +157,7 @@ def test_numpy_slices_num_samplers():
     ds = de.NumpySlicesDataset(np_data, shuffle=False, num_samples=2)
 
     for i, data in enumerate(ds):
-        assert np.equal(data[0], np_data[i]).all()
+        assert np.equal(data[0].asnumpy(), np_data[i]).all()
 
     assert sum([1 for _ in ds]) == 2
 
@@ -169,7 +169,7 @@ def test_numpy_slices_distributed_sampler():
     ds = de.NumpySlicesDataset(np_data, shuffle=False, shard_id=0, num_shards=4)
 
     for i, data in enumerate(ds):
-        assert np.equal(data[0], np_data[i * 4]).all()
+        assert np.equal(data[0].asnumpy(), np_data[i * 4]).all()
 
     assert sum([1 for _ in ds]) == 2
 
@@ -200,7 +200,7 @@ def test_numpy_slices_sequential_sampler():
     ds = de.NumpySlicesDataset(np_data, sampler=de.SequentialSampler()).repeat(2)
 
     for i, data in enumerate(ds):
-        assert np.equal(data[0], np_data[i % 8]).all()
+        assert np.equal(data[0].asnumpy(), np_data[i % 8]).all()
 
 
 def test_numpy_slices_invalid_column_names_type():

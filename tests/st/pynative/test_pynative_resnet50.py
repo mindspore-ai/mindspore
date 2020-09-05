@@ -423,8 +423,8 @@ def test_pynative_resnet50():
         if step > max_step:
             break
         start_time = time.time()
-        input_data = Tensor(element["image"])
-        input_label = Tensor(element["label"])
+        input_data = element["image"]
+        input_label = element["label"]
         loss_output = net_with_criterion(input_data, input_label)
         grads = train_network(input_data, input_label)
         optimizer(grads)

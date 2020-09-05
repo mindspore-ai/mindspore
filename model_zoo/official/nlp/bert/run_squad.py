@@ -112,7 +112,7 @@ def do_eval(dataset=None, vocab_file="", eval_json="", load_checkpoint_path="", 
     for data in dataset.create_dict_iterator():
         input_data = []
         for i in columns_list:
-            input_data.append(Tensor(data[i]))
+            input_data.append(data[i])
         input_ids, input_mask, segment_ids, unique_ids = input_data
         start_positions = Tensor([1], mstype.float32)
         end_positions = Tensor([1], mstype.float32)

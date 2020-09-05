@@ -48,10 +48,10 @@ def test_auto_contrast_py(plot=False):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2, 3, 1))
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
             # AutoContrast Images
@@ -69,10 +69,10 @@ def test_auto_contrast_py(plot=False):
 
     for idx, (image, _) in enumerate(ds_auto_contrast):
         if idx == 0:
-            images_auto_contrast = np.transpose(image, (0, 2, 3, 1))
+            images_auto_contrast = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_auto_contrast = np.append(images_auto_contrast,
-                                             np.transpose(image, (0, 2, 3, 1)),
+                                             np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                              axis=0)
 
     num_samples = images_original.shape[0]
@@ -110,10 +110,10 @@ def test_auto_contrast_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_auto_contrast_py):
         if idx == 0:
-            images_auto_contrast_py = image
+            images_auto_contrast_py = image.asnumpy()
         else:
             images_auto_contrast_py = np.append(images_auto_contrast_py,
-                                                image,
+                                                image.asnumpy(),
                                                 axis=0)
 
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -125,10 +125,10 @@ def test_auto_contrast_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_auto_contrast_c):
         if idx == 0:
-            images_auto_contrast_c = image
+            images_auto_contrast_c = image.asnumpy()
         else:
             images_auto_contrast_c = np.append(images_auto_contrast_c,
-                                               image,
+                                               image.asnumpy(),
                                                axis=0)
 
     num_samples = images_auto_contrast_c.shape[0]
@@ -170,10 +170,10 @@ def test_auto_contrast_one_channel_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_auto_contrast_py):
         if idx == 0:
-            images_auto_contrast_py = image
+            images_auto_contrast_py = image.asnumpy()
         else:
             images_auto_contrast_py = np.append(images_auto_contrast_py,
-                                                image,
+                                                image.asnumpy(),
                                                 axis=0)
 
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -186,10 +186,10 @@ def test_auto_contrast_one_channel_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_auto_contrast_c):
         if idx == 0:
-            images_auto_contrast_c = image
+            images_auto_contrast_c = image.asnumpy()
         else:
             images_auto_contrast_c = np.append(images_auto_contrast_c,
-                                               image,
+                                               image.asnumpy(),
                                                axis=0)
 
     num_samples = images_auto_contrast_c.shape[0]
@@ -218,9 +218,9 @@ def test_auto_contrast_mnist_c(plot=False):
     for _, (data_orig, data_trans) in enumerate(zip(ds_orig, ds_auto_contrast_c)):
         image_orig, label_orig = data_orig
         image_trans, _ = data_trans
-        images.append(image_orig)
-        labels.append(label_orig)
-        images_trans.append(image_trans)
+        images.append(image_orig.asnumpy())
+        labels.append(label_orig.asnumpy())
+        images_trans.append(image_trans.asnumpy())
 
     # Compare with expected md5 from images
     filename = "autocontrast_mnist_result_c.npz"

@@ -33,7 +33,7 @@ def test_coco_detection():
     image_shape = []
     bbox = []
     category_id = []
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
@@ -66,7 +66,7 @@ def test_coco_stuff():
     image_shape = []
     segmentation = []
     iscrowd = []
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         image_shape.append(data["image"].shape)
         segmentation.append(data["segmentation"])
         iscrowd.append(data["iscrowd"])
@@ -107,7 +107,7 @@ def test_coco_keypoint():
     image_shape = []
     keypoints = []
     num_keypoints = []
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         image_shape.append(data["image"].shape)
         keypoints.append(data["keypoints"])
         num_keypoints.append(data["num_keypoints"])
@@ -136,7 +136,7 @@ def test_coco_panoptic():
     category_id = []
     iscrowd = []
     area = []
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])

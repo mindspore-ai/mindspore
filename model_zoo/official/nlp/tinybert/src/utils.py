@@ -96,7 +96,7 @@ class EvalCallBack(Callback):
             for data in self.dataset.create_dict_iterator():
                 input_data = []
                 for i in columns_list:
-                    input_data.append(Tensor(data[i]))
+                    input_data.append(data[i])
                 input_ids, input_mask, token_type_id, label_ids = input_data
                 self.network.set_train(False)
                 logits = self.network(input_ids, token_type_id, input_mask)

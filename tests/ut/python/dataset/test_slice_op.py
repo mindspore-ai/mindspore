@@ -26,7 +26,7 @@ def slice_compare(array, indexing):
     data = ds.NumpySlicesDataset([array])
     array = np.array(array)
     data = data.map(operations=ops.Slice(indexing))
-    for d in data:
+    for d in data.create_tuple_iterator(output_numpy=True):
         if indexing is None:
             array = array[:]
         else:
@@ -93,7 +93,7 @@ def test_slice_multiple_rows():
     for i, d in enumerate(data):
         array = np.array(dataset[i])
         array = array[indexing]
-        np.testing.assert_array_equal(array, d[0])
+        np.testing.assert_array_equal(array, d[0].asnumpy())
 
 
 def test_slice_slice_obj_3s_double():

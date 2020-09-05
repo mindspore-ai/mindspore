@@ -303,7 +303,7 @@ def train():
 
     old_progress = -1
     t_end = time.time()
-    data_loader = ds.create_dict_iterator()
+    data_loader = ds.create_dict_iterator(output_numpy=True)
 
     shape_record = ShapeRecord()
     for i, data in enumerate(data_loader):

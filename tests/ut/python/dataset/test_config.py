@@ -288,7 +288,7 @@ def test_deterministic_python_seed():
     data1 = data1.map(operations=transform, input_columns=["image"])
     data1_output = []
     # config.set_seed() calls random.seed()
-    for data_one in data1.create_dict_iterator(num_epochs=1):
+    for data_one in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         data1_output.append(data_one["image"])
 
     # Second dataset
@@ -298,7 +298,7 @@ def test_deterministic_python_seed():
     ds.config.set_seed(0)
 
     data2_output = []
-    for data_two in data2.create_dict_iterator(num_epochs=1):
+    for data_two in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
         data2_output.append(data_two["image"])
 
     np.testing.assert_equal(data1_output, data2_output)
@@ -331,7 +331,7 @@ def test_deterministic_python_seed_multi_thread():
     data1 = data1.map(operations=transform, input_columns=["image"], python_multiprocessing=True)
     data1_output = []
     # config.set_seed() calls random.seed()
-    for data_one in data1.create_dict_iterator(num_epochs=1):
+    for data_one in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         data1_output.append(data_one["image"])
 
     # Second dataset
@@ -342,7 +342,7 @@ def test_deterministic_python_seed_multi_thread():
     ds.config.set_seed(0)
 
     data2_output = []
-    for data_two in data2.create_dict_iterator(num_epochs=1):
+    for data_two in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
         data2_output.append(data_two["image"])
 
     try:

@@ -31,7 +31,7 @@ def test_fillop_basic():
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array([3, 3, 3, 3], dtype=np.uint8)
     for data_row in data:
-        np.testing.assert_array_equal(data_row[0], expected)
+        np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
 
 
 def test_fillop_down_type_cast():
@@ -44,7 +44,7 @@ def test_fillop_down_type_cast():
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array([253, 253, 253, 253], dtype=np.uint8)
     for data_row in data:
-        np.testing.assert_array_equal(data_row[0], expected)
+        np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
 
 
 def test_fillop_up_type_cast():
@@ -57,7 +57,7 @@ def test_fillop_up_type_cast():
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array([3., 3., 3., 3.], dtype=np.float)
     for data_row in data:
-        np.testing.assert_array_equal(data_row[0], expected)
+        np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
 
 
 def test_fillop_string():
@@ -69,7 +69,7 @@ def test_fillop_string():
 
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array(['error', 'error'], dtype='S')
-    for data_row in data:
+    for data_row in data.create_tuple_iterator(output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
 
 

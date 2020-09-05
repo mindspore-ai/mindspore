@@ -187,7 +187,7 @@ def test_nlp_compress_data(add_and_remove_nlp_compress_file):
         NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
     assert data_set.get_dataset_size() == 16
     num_iter = 0
-    for x, item in zip(data, data_set.create_dict_iterator(num_epochs=1)):
+    for x, item in zip(data, data_set.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert (item["array_a"] == x["array_a"]).all()
         assert (item["array_b"] == x["array_b"]).all()
         assert item["array_c"].tobytes() == x["array_c"]
@@ -206,7 +206,8 @@ def test_nlp_compress_data_old_version(add_and_remove_nlp_compress_file):
         OLD_NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
     assert old_data_set.get_dataset_size() == 16
     num_iter = 0
-    for x, item in zip(old_data_set.create_dict_iterator(num_epochs=1), data_set.create_dict_iterator(num_epochs=1)):
+    for x, item in zip(old_data_set.create_dict_iterator(num_epochs=1, output_numpy=True),
+                       data_set.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert (item["array_a"] == x["array_a"]).all()
         assert (item["array_b"] == x["array_b"]).all()
         assert (item["array_c"] == x["array_c"]).all()
@@ -255,7 +256,7 @@ def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
             data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                                       num_shards=num_shards, shard_id=partition_id)
             num_iter = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- partition : {} ------------------------".format(partition_id))
                 logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
                 logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
@@ -278,7 +279,7 @@ def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=1)
             num_iter = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- partition : {} ------------------------".format(partition_id))
                 logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
                 logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
@@ -301,7 +302,7 @@ def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=2)
             num_iter = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- partition : {} ------------------------".format(partition_id))
                 logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
                 logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
@@ -324,7 +325,7 @@ def test_cv_minddataset_partition_num_samples_2(add_and_remove_cv_file):
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=3)
             num_iter = 0
-            for item in data_set.create_dict_iterator(num_epochs=1):
+            for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
                 logger.info("-------------- partition : {} ------------------------".format(partition_id))
                 logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
                 logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
@@ -352,7 +353,7 @@ def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_c
         data_set = data_set.repeat(3)
 
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info("-------------- partition : {} ------------------------".format(partition_id))
             logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
             logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
@@ -391,7 +392,7 @@ def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoc
         data_set = data_set.repeat(3)
 
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info("-------------- partition : {} ------------------------".format(partition_id))
             logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
             logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
@@ -424,7 +425,7 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     data_set = data_set.repeat(3)
 
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
         logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
         num_iter += 1
@@ -450,7 +451,7 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     data_set2 = data_set2.repeat(3)
 
     num_iter = 0
-    for item in data_set2.create_dict_iterator(num_epochs=1):
+    for item in data_set2.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
         logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
         num_iter += 1
@@ -481,7 +482,7 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     data_set3 = data_set3.repeat(3)
 
     num_iter = 0
-    for item in data_set3.create_dict_iterator(num_epochs=1):
+    for item in data_set3.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
         logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
         num_iter += 1
@@ -513,7 +514,7 @@ def test_cv_minddataset_dataset_size(add_and_remove_cv_file):
     repeat_num = 2
     data_set = data_set.repeat(repeat_num)
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- get dataset size {} -----------------".format(num_iter))
         logger.info(
@@ -542,7 +543,7 @@ def test_cv_minddataset_repeat_reshuffle(add_and_remove_cv_file):
     data_set = data_set.repeat(2)
     num_iter = 0
     labels = []
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- get dataset size {} -----------------".format(num_iter))
         logger.info(
@@ -571,7 +572,7 @@ def test_cv_minddataset_batch_size_larger_than_records(add_and_remove_cv_file):
                             num_parallel_workers=2)
     data_set = data_set.batch(32, drop_remainder=True)
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- get dataset size {} -----------------".format(num_iter))
         logger.info(
@@ -603,7 +604,7 @@ def test_cv_minddataset_reader_file_list(add_and_remove_cv_file):
                                for x in range(FILES_NUM)], columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -625,7 +626,7 @@ def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
     data_set = ds.MindDataset([CV_FILE_NAME + "0"], columns_list, num_readers)
     assert data_set.get_dataset_size() < 10
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -678,7 +679,7 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
                                   columns_list, num_readers)
         assert data_set.get_dataset_size() == 30
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info(
                 "-------------- cv reader basic: {} ------------------------".format(num_iter))
             logger.info(
@@ -739,7 +740,7 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
                                   columns_list, num_readers)
         assert data_set.get_dataset_size() < 20
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             logger.info(
                 "-------------- cv reader basic: {} ------------------------".format(num_iter))
             logger.info(
@@ -770,7 +771,7 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -791,7 +792,7 @@ def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
     data_set = ds.MindDataset(NLP_FILE_NAME + "0", None, num_readers)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -821,7 +822,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
     assert data_set.get_dataset_size() == 10
     for _ in range(5):
         num_iter = 0
-        for data in data_set:
+        for data in data_set.create_tuple_iterator(output_numpy=True):
             logger.info("data is {}".format(data))
             num_iter += 1
         assert num_iter == 10
@@ -852,7 +853,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_
     assert data_set.get_dataset_size() == 5
     for _ in range(5):
         num_iter = 0
-        for data in data_set:
+        for data in data_set.create_tuple_iterator(output_numpy=True):
             logger.info("data is {}".format(data))
             num_iter += 1
         assert num_iter == 5
@@ -865,7 +866,7 @@ def test_cv_minddataset_reader_no_columns(add_and_remove_cv_file):
     data_set = ds.MindDataset(CV_FILE_NAME + "0")
     assert data_set.get_dataset_size() == 10
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info(
@@ -888,7 +889,7 @@ def test_cv_minddataset_reader_repeat_tutorial(add_and_remove_cv_file):
     repeat_num = 2
     data_set = data_set.repeat(repeat_num)
     num_iter = 0
-    for item in data_set.create_dict_iterator(num_epochs=1):
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(
             "-------------- repeat two test {} ------------------------".format(num_iter))
         logger.info(
@@ -1217,7 +1218,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 13
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1236,7 +1237,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1253,7 +1254,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 4
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1272,7 +1273,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1291,7 +1292,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 5
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1310,7 +1311,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 5
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1330,7 +1331,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 11
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1420,7 +1421,7 @@ def test_write_with_multi_bytes_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 7
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1438,7 +1439,7 @@ def test_write_with_multi_bytes_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1456,7 +1457,7 @@ def test_write_with_multi_bytes_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 2
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1474,7 +1475,7 @@ def test_write_with_multi_bytes_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 2
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1492,7 +1493,7 @@ def test_write_with_multi_bytes_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1511,7 +1512,7 @@ def test_write_with_multi_bytes_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 5
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1615,7 +1616,7 @@ def test_write_with_multi_array_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 8
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1635,7 +1636,7 @@ def test_write_with_multi_array_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 6
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1655,7 +1656,7 @@ def test_write_with_multi_array_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1675,7 +1676,7 @@ def test_write_with_multi_array_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1693,7 +1694,7 @@ def test_write_with_multi_array_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 1
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1714,7 +1715,7 @@ def test_write_with_multi_array_and_MindDataset():
                                   shuffle=False)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 8
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1761,7 +1762,7 @@ def test_numpy_generic():
         data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers, shuffle=False)
         assert data_set.get_dataset_size() == 10
         idx = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert item['label1'] == item['label1']
             assert item['label2'] == item['label2']
             assert item['label3'] == item['label3']
@@ -1861,7 +1862,7 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
                                   shuffle=False)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 8
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1883,7 +1884,7 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
                                   shuffle=False)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 2
             for field in item:
                 if isinstance(item[field], np.ndarray):
@@ -1905,7 +1906,7 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
                                   shuffle=False)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
-        for item in data_set.create_dict_iterator(num_epochs=1):
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 2
             for field in item:
                 if isinstance(item[field], np.ndarray):

@@ -53,7 +53,8 @@ def test_random_crop_op_c(plot=False):
 
     image_cropped = []
     image = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_cropped.append(image1)
@@ -87,7 +88,8 @@ def test_random_crop_op_py(plot=False):
 
     crop_images = []
     original_images = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         crop = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         crop_images.append(crop)
@@ -530,7 +532,8 @@ def test_random_crop_comp(plot=False):
 
     image_c_cropped = []
     image_py_cropped = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_c_cropped.append(c_image)

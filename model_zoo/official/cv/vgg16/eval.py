@@ -159,7 +159,7 @@ def test(cloud_args=None):
 
         for model in args.models:
             dataset = classification_dataset(args.data_path, args.image_size, args.per_batch_size, mode='eval')
-            eval_dataloader = dataset.create_tuple_iterator()
+            eval_dataloader = dataset.create_tuple_iterator(output_numpy=True)
             network = vgg16(args.num_classes, args, phase="test")
 
             # pre_trained

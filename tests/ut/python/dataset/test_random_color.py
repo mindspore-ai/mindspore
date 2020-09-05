@@ -56,10 +56,10 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2, 3, 1))
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
             # Random Color Adjusted Images
@@ -76,10 +76,10 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
 
     for idx, (image, _) in enumerate(ds_random_color):
         if idx == 0:
-            images_random_color = np.transpose(image, (0, 2, 3, 1))
+            images_random_color = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_random_color = np.append(images_random_color,
-                                            np.transpose(image, (0, 2, 3, 1)),
+                                            np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                             axis=0)
 
     num_samples = images_original.shape[0]
@@ -117,7 +117,8 @@ def test_random_color_c(degrees=(0.1, 1.9), plot=False, run_golden=True):
     image_random_color_op = []
     image = []
 
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         actual = item1["image"]
         expected = item2["image"]
         image.append(actual)
@@ -193,7 +194,8 @@ def test_compare_random_color_op(degrees=None, plot=False):
     image_random_color_op = []
     image = []
 
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         actual = item1["image"]
         expected = item2["image"]
         image_random_color_op.append(actual)

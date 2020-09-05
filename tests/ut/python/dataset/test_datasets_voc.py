@@ -23,7 +23,7 @@ TARGET_SHAPE = [680, 680, 680, 680, 642, 607, 561, 596, 612, 680]
 def test_voc_segmentation():
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0
-    for item in data1.create_dict_iterator(num_epochs=1):
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert item["image"].shape[0] == IMAGE_SHAPE[num]
         assert item["target"].shape[0] == TARGET_SHAPE[num]
         num += 1
@@ -34,7 +34,7 @@ def test_voc_detection():
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     num = 0
     count = [0, 0, 0, 0, 0, 0]
-    for item in data1.create_dict_iterator(num_epochs=1):
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert item["image"].shape[0] == IMAGE_SHAPE[num]
         for label in item["label"]:
             count[label[0]] += 1
@@ -53,7 +53,7 @@ def test_voc_class_index():
     assert (class_index2 == {'car': 0, 'cat': 1, 'train': 5})
     num = 0
     count = [0, 0, 0, 0, 0, 0]
-    for item in data1.create_dict_iterator(num_epochs=1):
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         for label in item["label"]:
             count[label[0]] += 1
             assert label[0] in (0, 1, 5)
@@ -71,7 +71,7 @@ def test_voc_get_class_indexing():
     assert (class_index2 == {'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5})
     num = 0
     count = [0, 0, 0, 0, 0, 0]
-    for item in data1.create_dict_iterator(num_epochs=1):
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         for label in item["label"]:
             count[label[0]] += 1
             assert label[0] in (0, 1, 2, 3, 4, 5)

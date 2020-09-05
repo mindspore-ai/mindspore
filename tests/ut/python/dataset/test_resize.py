@@ -47,7 +47,8 @@ def test_resize_op(plot=False):
         data2 = data1.map(operations=resize_op, input_columns=["image"])
         image_original = []
         image_resized = []
-        for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+        for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
             image_1 = item1["image"]
             image_2 = item2["image"]
             image_original.append(image_1)
@@ -79,7 +80,8 @@ def test_resize_md5(plot=False):
         # Compare with expected md5 from images
         save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
-        for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+        for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
             image_1 = item1["image"]
             image_2 = item2["image"]
             image_original.append(image_1)

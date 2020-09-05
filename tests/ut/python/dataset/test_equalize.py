@@ -49,10 +49,10 @@ def test_equalize_py(plot=False):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2, 3, 1))
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
             # Color Equalized Images
@@ -69,10 +69,10 @@ def test_equalize_py(plot=False):
 
     for idx, (image, _) in enumerate(ds_equalize):
         if idx == 0:
-            images_equalize = np.transpose(image, (0, 2, 3, 1))
+            images_equalize = np.transpose(image.asnumpy(), (0, 2, 3, 1))
         else:
             images_equalize = np.append(images_equalize,
-                                        np.transpose(image, (0, 2, 3, 1)),
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
     num_samples = images_original.shape[0]
@@ -102,10 +102,10 @@ def test_equalize_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
-            images_original = image
+            images_original = image.asnumpy()
         else:
             images_original = np.append(images_original,
-                                        image,
+                                        image.asnumpy(),
                                         axis=0)
 
     # Equalize Images
@@ -120,10 +120,10 @@ def test_equalize_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_equalize):
         if idx == 0:
-            images_equalize = image
+            images_equalize = image.asnumpy()
         else:
             images_equalize = np.append(images_equalize,
-                                        image,
+                                        image.asnumpy(),
                                         axis=0)
     if plot:
         visualize_list(images_original, images_equalize)
@@ -151,10 +151,10 @@ def test_equalize_py_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_c_equalize):
         if idx == 0:
-            images_c_equalize = image
+            images_c_equalize = image.asnumpy()
         else:
             images_c_equalize = np.append(images_c_equalize,
-                                          image,
+                                          image.asnumpy(),
                                           axis=0)
 
     # Equalize images in python
@@ -172,10 +172,10 @@ def test_equalize_py_c(plot=False):
 
     for idx, (image, _) in enumerate(ds_p_equalize):
         if idx == 0:
-            images_p_equalize = image
+            images_p_equalize = image.asnumpy()
         else:
             images_p_equalize = np.append(images_p_equalize,
-                                          image,
+                                          image.asnumpy(),
                                           axis=0)
 
     num_samples = images_c_equalize.shape[0]
@@ -223,9 +223,9 @@ def test_equalize_mnist_c(plot=False):
     for _, (data_orig, data_trans) in enumerate(zip(ds_orig, ds_equalize_c)):
         image_orig, label_orig = data_orig
         image_trans, _ = data_trans
-        images.append(image_orig)
-        labels.append(label_orig)
-        images_trans.append(image_trans)
+        images.append(image_orig.asnumpy())
+        labels.append(label_orig.asnumpy())
+        images_trans.append(image_trans.asnumpy())
 
     # Compare with expected md5 from images
     filename = "equalize_mnist_result_c.npz"

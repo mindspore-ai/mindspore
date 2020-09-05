@@ -88,7 +88,7 @@ def save_and_check_dict(data, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         for data_key in list(item.keys()):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -119,7 +119,7 @@ def save_and_check_md5(data, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         for data_key in list(item.keys()):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -146,7 +146,7 @@ def save_and_check_tuple(data, parameters, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data.create_tuple_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         for data_key, _ in enumerate(item):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -392,7 +392,7 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
         data = data.map(operations=[test_op], input_columns=["image", "bbox"],
                         output_columns=["image", "bbox"],
                         column_order=["image", "bbox"])  # Add column for "bbox"
-        for _, _ in enumerate(data.create_dict_iterator(num_epochs=1)):
+        for _, _ in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
             break
     except RuntimeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
@@ -406,7 +406,7 @@ def dataset_equal(data1, data2, mse_threshold):
     equal = True
     for item1, item2 in itertools.zip_longest(data1, data2):
         for column1, column2 in itertools.zip_longest(item1, item2):
-            mse = diff_mse(column1, column2)
+            mse = diff_mse(column1.asnumpy(), column2.asnumpy())
             if mse > mse_threshold:
                 equal = False
                 break
@@ -428,8 +428,8 @@ def dataset_equal_with_function(data_unchanged, data_target, mse_threshold, foo,
     for item1, item2 in itertools.zip_longest(data_unchanged, data_target):
         for column1, column2 in itertools.zip_longest(item1, item2):
             # note the function is to be applied to the second dataset
-            column2 = foo(column2, *foo_args)
-            mse = diff_mse(column1, column2)
+            column2 = foo(column2.asnumpy(), *foo_args)
+            mse = diff_mse(column1.asnumpy(), column2)
             if mse > mse_threshold:
                 equal = False
                 break

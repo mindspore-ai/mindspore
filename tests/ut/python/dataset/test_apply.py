@@ -40,7 +40,8 @@ def test_apply_generator_case():
     data2 = data2.repeat(2)
     data2 = data2.batch(4)
 
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(item1["data"], item2["data"])
 
 
@@ -63,7 +64,8 @@ def test_apply_imagefolder_case():
     data2 = data2.map(operations=normalize_op)
     data2 = data2.repeat(2)
 
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(item1["image"], item2["image"])
 
 

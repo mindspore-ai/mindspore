@@ -53,7 +53,8 @@ def test_random_posterize_op_c(plot=False, run_golden=False):
 
     image_posterize = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_posterize.append(image1)
@@ -99,7 +100,8 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
 
     image_posterize = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_posterize.append(image1)
@@ -136,7 +138,8 @@ def test_random_posterize_default_c_md5(plot=False, run_golden=True):
 
     image_posterize = []
     image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+    for item1, item2 in zip(data1.create_dict_iterator(output_numpy=True),
+                            data2.create_dict_iterator(output_numpy=True)):
         image1 = item1["image"]
         image2 = item2["image"]
         image_posterize.append(image1)

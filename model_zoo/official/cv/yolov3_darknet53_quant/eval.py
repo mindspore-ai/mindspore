@@ -306,10 +306,10 @@ def test():
     input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
     args.logger.info('Start inference....')
     for i, data in enumerate(ds.create_dict_iterator()):
-        image = Tensor(data["image"])
+        image = data["image"]
 
-        image_shape = Tensor(data["image_shape"])
-        image_id = Tensor(data["img_id"])
+        image_shape = data["image_shape"]
+        image_id = data["img_id"]
 
         prediction = network(image, input_shape)
         output_big, output_me, output_small = prediction

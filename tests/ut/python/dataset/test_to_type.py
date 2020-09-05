@@ -54,7 +54,8 @@ def test_to_type_op():
     transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image1 = item1["image"]
         image2 = item2["image"]
 

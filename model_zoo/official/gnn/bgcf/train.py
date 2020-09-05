@@ -52,7 +52,7 @@ def train_and_eval():
 
     eval_class = BGCFEvaluate(parser, train_graph, test_graph, parser.Ks)
 
-    itr = train_ds.create_dict_iterator(parser.num_epoch)
+    itr = train_ds.create_dict_iterator(parser.num_epoch, output_numpy=True)
     num_iter = int(num_pairs / parser.batch_pairs)
 
     for _epoch in range(1, parser.num_epoch + 1):

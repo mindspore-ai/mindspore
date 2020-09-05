@@ -107,7 +107,8 @@ def test_normalize_op_c(plot=False):
     data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image_de_normalized = item1["image"]
         image_original = item2["image"]
         image_np_normalized = normalize_np(image_original, mean, std)
@@ -144,7 +145,8 @@ def test_normalize_op_py(plot=False):
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image_de_normalized = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         image_np_normalized = (normalize_np(item2["image"].transpose(1, 2, 0), mean, std) * 255).astype(np.uint8)
         image_original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)

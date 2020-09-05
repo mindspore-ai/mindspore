@@ -31,7 +31,7 @@ def test_map_reorder0():
     data0 = data0.map(operations=(lambda x: x), input_columns="col0", output_columns="out",
                       column_order=["col1", "out"])
 
-    for item in data0.create_tuple_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data0.create_tuple_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         assert item == [np.array(1), np.array(0)]
 
 
@@ -51,7 +51,7 @@ def test_map_reorder1():
     data2 = ds.zip((data0, data1))
     data2 = data2.map(operations=(lambda x: x), input_columns="a0", column_order=["b2", "a2", "b1", "a1", "b0", "a0"])
 
-    for item in data2.create_tuple_iterator(num_epochs=1):
+    for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert item == [np.array(2), np.array(2), np.array(1), np.array(1), np.array(0), np.array(0)]
 
 
@@ -67,7 +67,7 @@ def test_shuffle():
     data2 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
-    for d1, d2 in zip(data1, data2):
+    for d1, d2 in zip(data1.create_tuple_iterator(output_numpy=True), data2.create_tuple_iterator(output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
 
@@ -77,7 +77,7 @@ def test_shuffle():
     data2 = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
-    for d1, d2 in zip(data1, data2):
+    for d1, d2 in zip(data1.create_tuple_iterator(output_numpy=True), data2.create_tuple_iterator(output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
 
@@ -87,7 +87,7 @@ def test_shuffle():
     data2 = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
-    for d1, d2 in zip(data1, data2):
+    for d1, d2 in zip(data1.create_tuple_iterator(output_numpy=True), data2.create_tuple_iterator(output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
 

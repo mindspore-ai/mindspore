@@ -29,7 +29,7 @@ def test_random_choice():
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
             data = data.map(operations=ops.RandomChoice(op_list), input_columns=["col"])
             res = []
-            for i in data.create_dict_iterator(num_epochs=1):
+            for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
                 res.append(i["col"].tolist())
             return res
         except (TypeError, ValueError) as e:

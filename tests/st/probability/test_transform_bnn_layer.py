@@ -93,7 +93,7 @@ class LeNet5(nn.Cell):
 def train_model(train_net, net, dataset):
     accs = []
     loss_sum = 0
-    for _, data in enumerate(dataset.create_dict_iterator()):
+    for _, data in enumerate(dataset.create_dict_iterator(output_numpy=True)):
         train_x = Tensor(data['image'].astype(np.float32))
         label = Tensor(data['label'].astype(np.int32))
         loss = train_net(train_x, label)
@@ -110,7 +110,7 @@ def train_model(train_net, net, dataset):
 
 def validate_model(net, dataset):
     accs = []
-    for _, data in enumerate(dataset.create_dict_iterator()):
+    for _, data in enumerate(dataset.create_dict_iterator(output_numpy=True)):
         train_x = Tensor(data['image'].astype(np.float32))
         label = Tensor(data['label'].astype(np.int32))
         output = net(train_x)

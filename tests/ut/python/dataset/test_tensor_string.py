@@ -35,7 +35,7 @@ def compare(strings, dtype='S'):
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
-    for d in data:
+    for d in data.create_tuple_iterator(output_numpy=True):
         np.testing.assert_array_equal(d[0], arr.astype('S'))
 
 
@@ -79,7 +79,7 @@ def test_batching_strings():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     data = data.batch(2, drop_remainder=True)
 
-    for d in data:
+    for d in data.create_tuple_iterator(output_numpy=True):
         np.testing.assert_array_equal(d[0], to_bytes(chinese[0:2]))
 
 
@@ -96,7 +96,7 @@ def test_map():
 
     data = data.map(operations=split, input_columns=["col"])
     expected = np.array(["ab", "cde", "121"], dtype='S')
-    for d in data:
+    for d in data.create_tuple_iterator(output_numpy=True):
         np.testing.assert_array_equal(d[0], expected)
 
 
@@ -112,7 +112,7 @@ def test_map2():
 
     data = data.map(operations=upper, input_columns=["col"])
     expected = np.array(["AB CDE 121"], dtype='S')
-    for d in data:
+    for d in data.create_tuple_iterator(output_numpy=True):
         np.testing.assert_array_equal(d[0], expected)
 
 
@@ -124,7 +124,7 @@ def test_tfrecord1():
 
     data = ds.TFRecordDataset("../data/dataset/testTextTFRecord/text.tfrecord", shuffle=False, schema=s)
 
-    for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
+    for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].shape
         assert d["chinese"].shape == chinese[i].shape
@@ -136,7 +136,7 @@ def test_tfrecord1():
 def test_tfrecord2():
     data = ds.TFRecordDataset("../data/dataset/testTextTFRecord/text.tfrecord", shuffle=False,
                               schema='../data/dataset/testTextTFRecord/datasetSchema.json')
-    for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
+    for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].shape
         assert d["chinese"].shape == chinese[i].shape
@@ -153,7 +153,7 @@ def test_tfrecord3():
 
     data = ds.TFRecordDataset("../data/dataset/testTextTFRecord/text.tfrecord", shuffle=False, schema=s)
 
-    for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
+    for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].reshape([2, 2]).shape
         assert d["chinese"].shape == chinese[i].shape
@@ -186,7 +186,7 @@ def create_text_mindrecord():
 def test_mindrecord():
     data = ds.MindDataset("../data/dataset/testTextMindRecord/test.mindrecord", shuffle=False)
 
-    for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
+    for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert d["english"].shape == line[i].shape
         assert d["chinese"].shape == chinese[i].shape
         np.testing.assert_array_equal(line[i], to_str(d["english"]))
@@ -231,7 +231,7 @@ def test_batch_padding_01():
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], b"-2"), "col1d": ([2], b"-1")})
     data1 = data1.repeat(2)
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal([[b"0", b"-1"], [b"1", b"-1"]], data["col1d"])
         np.testing.assert_array_equal([[[b"100", b"-2"], [b"200", b"-2"]], [[b"101", b"-2"], [b"201", b"-2"]]],
                                       data["col2d"])
@@ -241,7 +241,7 @@ def test_batch_padding_02():
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], "")})
     data1 = data1.repeat(2)
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal([[b"0"], [b"1"]], data["col1d"])
         np.testing.assert_array_equal([[[b"100", b""]], [[b"101", b""]]], data["col2d"])
 
@@ -251,7 +251,7 @@ def test_batch_padding_03():
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, "PAD_VALUE")})  # pad automatically
     data1 = data1.repeat(2)
     res = dict()
-    for ind, data in enumerate(data1.create_dict_iterator(num_epochs=1)):
+    for ind, data in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
         res[ind] = data["col"].copy()
     np.testing.assert_array_equal(res[0], [[b"0", b"PAD_VALUE"], [0, 1]])
     np.testing.assert_array_equal(res[1], [[b"0", b"1", b"2", b"PAD_VALUE"], [b"0", b"1", b"2", b"3"]])
@@ -263,7 +263,7 @@ def test_batch_padding_04():
     data1 = ds.GeneratorDataset((lambda: gen_var_cols(2)), ["col1", "col2"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"], [[b"0", b""], [b"0", b"1"]])
         np.testing.assert_array_equal(data["col2"], [[b"100", b""], [b"100", b"101"]])
 
@@ -272,7 +272,7 @@ def test_batch_padding_05():
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
     data1 = data1.batch(batch_size=3, drop_remainder=False,
                         pad_info={"col2": ([2, None], "-2"), "col1": (None, "-1")})  # pad automatically
-    for data in data1.create_dict_iterator(num_epochs=1):
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"],
                                       [[[b"0", b"-1", b"-1"]], [[b"0", b"1", b"-1"]], [[b"0", b"1", b"2"]]])
         np.testing.assert_array_equal(data["col2"],

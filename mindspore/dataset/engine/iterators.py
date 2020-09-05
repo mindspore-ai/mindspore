@@ -67,8 +67,9 @@ class Iterator:
         dataset: Dataset to be iterated over
     """
 
-    def __init__(self, dataset, num_epochs=-1):
+    def __init__(self, dataset, num_epochs=-1, output_numpy=False):
         self.num_epochs = num_epochs
+        self.output_numpy = output_numpy
         ITERATORS_LIST.append(weakref.ref(self))
         # create a copy of tree and work on it.
         self.dataset = copy.deepcopy(dataset)
@@ -305,8 +306,8 @@ class DictIterator(Iterator):
     """
     The derived class of Iterator with dict type.
     """
-    def __init__(self, dataset, num_epochs=-1):
-        super().__init__(dataset, num_epochs)
+    def __init__(self, dataset, num_epochs=-1, output_numpy=False):
+        super().__init__(dataset, num_epochs, output_numpy)
         self.depipeline.LaunchTreeExec()
 
     def check_node_type(self, node):
@@ -323,7 +324,9 @@ class DictIterator(Iterator):
             Dict, the next record in the dataset.
         """
 
-        return {k: v.as_array() for k, v in self.depipeline.GetNextAsMap().items()}
+        if self.output_numpy:
+            return {k: v.as_array() for k, v in self.depipeline.GetNextAsMap().items()}
+        return {k: Tensor(v.as_array()) for k, v in self.depipeline.GetNextAsMap().items()}
 
 
 class TupleIterator(Iterator):
@@ -333,12 +336,12 @@ class TupleIterator(Iterator):
     def check_node_type(self, node):
         pass
 
-    def __init__(self, dataset, columns=None, num_epochs=-1):
+    def __init__(self, dataset, columns=None, num_epochs=-1, output_numpy=False):
         if columns is not None:
             if not isinstance(columns, list):
                 columns = [columns]
             dataset = dataset.project(columns)
-        super().__init__(dataset, num_epochs)
+        super().__init__(dataset, num_epochs, output_numpy)
         self.depipeline.LaunchTreeExec()
 
     def __iter__(self):
@@ -352,7 +355,9 @@ class TupleIterator(Iterator):
             List, the next record in the dataset.
         """
 
-        return [t.as_array() for t in self.depipeline.GetNextAsList()]
+        if self.output_numpy:
+            return [t.as_array() for t in self.depipeline.GetNextAsList()]
+        return [Tensor(t.as_array()) for t in self.depipeline.GetNextAsList()]
 
 
 class DummyIterator():

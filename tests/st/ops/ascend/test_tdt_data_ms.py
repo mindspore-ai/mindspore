@@ -96,7 +96,7 @@ if __name__ == '__main__':
                            dataset_types, dataset_shapes, (), 'dataset')
     ds1.send()
 
-    for data in data_set.create_tuple_iterator():
+    for data in data_set.create_tuple_iterator(output_numpy=True):
         output = net()
         print(data[0].any())
         print(

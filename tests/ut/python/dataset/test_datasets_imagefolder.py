@@ -171,7 +171,7 @@ def test_imagefolder_classindex():
               333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333]
 
     num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -196,7 +196,7 @@ def test_imagefolder_negative_classindex():
               -333, -333, -333, -333, -333, -333, -333, -333, -333, -333, -333]
 
     num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
@@ -267,7 +267,7 @@ def test_sequential_sampler():
 
     result = []
     num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
         result.append(item["label"])
         num_iter += 1

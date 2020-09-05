@@ -15,6 +15,8 @@
 import numpy as np
 import pytest
 
+import mindspore.common.dtype as mstype
+from mindspore.common.tensor import Tensor
 import mindspore.dataset as ds
 from mindspore.dataset.engine.iterators import ITERATORS_LIST, _cleanup
 
@@ -28,15 +30,15 @@ def check(project_columns):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS, shuffle=False)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=project_columns, shuffle=False)
 
-    for data_actual, data_expected in zip(data1.create_tuple_iterator(project_columns, num_epochs=1),
-                                          data2.create_tuple_iterator(num_epochs=1)):
+    for data_actual, data_expected in zip(data1.create_tuple_iterator(project_columns, num_epochs=1, output_numpy=True),
+                                          data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert len(data_actual) == len(data_expected)
         assert all([np.array_equal(d1, d2) for d1, d2 in zip(data_actual, data_expected)])
 
 
-def test_iterator_create_tuple():
+def test_iterator_create_tuple_numpy():
     """
-    Test creating tuple iterator
+    Test creating tuple iterator with output NumPy
     """
     check(COLUMNS)
     check(COLUMNS[0:1])
@@ -44,6 +46,46 @@ def test_iterator_create_tuple():
     check(COLUMNS[0:7])
     check(COLUMNS[7:8])
     check(COLUMNS[0:2:8])
+
+def test_iterator_create_dict_mstensor():
+    """
+    Test creating dict iterator with output MSTensor
+    """
+    def generator():
+        for i in range(64):
+            yield (np.array([i], dtype=np.float32),)
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator, ["data"])
+
+    i = 0
+    for item in data1.create_dict_iterator(num_epochs=1):
+        golden = np.array([i], dtype=np.float32)
+        np.testing.assert_array_equal(item["data"].asnumpy(), golden)
+        assert isinstance(item["data"], Tensor)
+        assert item["data"].dtype == mstype.float32
+        i += 1
+    assert i == 64
+
+def test_iterator_create_tuple_mstensor():
+    """
+    Test creating tuple iterator with output MSTensor
+    """
+    def generator():
+        for i in range(64):
+            yield (np.array([i], dtype=np.float32),)
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator, ["data"])
+
+    i = 0
+    for item in data1.create_tuple_iterator(num_epochs=1):
+        golden = np.array([i], dtype=np.float32)
+        np.testing.assert_array_equal(item[0].asnumpy(), golden)
+        assert isinstance(item[0], Tensor)
+        assert item[0].dtype == mstype.float32
+        i += 1
+    assert i == 64
 
 
 def test_iterator_weak_ref():
@@ -113,6 +155,6 @@ def test_tree_copy():
 
 
 if __name__ == '__main__':
-    test_iterator_create_tuple()
+    test_iterator_create_tuple_numpy()
     test_iterator_weak_ref()
     test_tree_copy()
