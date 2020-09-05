@@ -15,12 +15,12 @@
  */
 
 #include "frontend/parallel/group_manager.h"
-
 #include <algorithm>
 #include <vector>
-
 #include "frontend/parallel/device_manager.h"
+#include "backend/session/executor_manager.h"
 #include "utils/comm_manager.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -96,8 +96,14 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
     vector<uint32_t> ranks;
     (void)std::transform(std::begin(devices), std::end(devices), std::back_inserter(ranks),
                          [](const Device dev) { return (uint32_t)dev.rank(); });
-    // Create group through the CommManager interface
-    bool ret = CommManager::GetInstance().CreateGroupSync(group_name, ranks);
+    // Create group through the executor
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+    MS_EXCEPTION_IF_NULL(executor);
+    bool ret = executor->CreateCommGroup(group_name, ranks);
     if (!ret) {
       MS_LOG(ERROR) << "Create group failed, group name is " << group_name;
       return Status::FAILED;
@@ -108,6 +114,20 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
   }
 }
 
+Status GroupManager::DestroyGroup(const std::string &group_name) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+  MS_EXCEPTION_IF_NULL(executor);
+  bool ret = executor->DestroyCommGroup(group_name);
+  if (!ret) {
+    return Status::FAILED;
+  }
+  return Status::SUCCESS;
+}
+
 Status GroupManager::DestroyGroup(mindspore::parallel::Group *const group) {
   std::string name = (*group).name();
   auto it = groups_.find(name);
@@ -116,18 +136,14 @@ Status GroupManager::DestroyGroup(mindspore::parallel::Group *const group) {
     return Status::FAILED;
   }
   (void)groups_.erase(it);
-  bool ret = CommManager::GetInstance().DestroyGroup(name);
-  if (!ret) {
-    return Status::FAILED;
-  }
-  return Status::SUCCESS;
+  return DestroyGroup(name);
 }
 
 Status GroupManager::DestroyAllGroups() {
   for (auto &it : groups_) {
     std::string name = it.first;
-    bool ret = CommManager::GetInstance().DestroyGroup(name);
-    if (!ret) {
+    auto ret = DestroyGroup(name);
+    if (ret != Status::SUCCESS) {
       return Status::FAILED;
     }
   }

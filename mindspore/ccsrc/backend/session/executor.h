@@ -32,10 +32,22 @@
 #include "ir/tensor.h"
 #include "utils/any.h"
 #include "utils/contract.h"
+#include "utils/comm_manager.h"
 
 namespace mindspore {
 namespace session {
-enum TaskType { kUnKnown, kExit, kCompileNodes, kCompileGraph, kBuildGraph, kBuildOp, kRunGraph, kRunOp };
+enum TaskType {
+  kUnKnown,
+  kExit,
+  kCompileNodes,
+  kCompileGraph,
+  kBuildGraph,
+  kBuildOp,
+  kRunGraph,
+  kRunOp,
+  kCreateCommGroup,
+  kDestroyCommGroup
+};
 
 class Task {
  public:
@@ -106,6 +118,25 @@ class RunOpTask : public Task {
   VectorRef outputs_;
 };
 
+class CreateCommGroupTask : public Task {
+ public:
+  CreateCommGroupTask() { type_ = kCreateCommGroup; }
+  ~CreateCommGroupTask() override = default;
+  void Run() override;
+  std::string group_name_;
+  std::vector<uint32_t> ranks_;
+  bool result_;
+};
+
+class DestroyCommGroupTask : public Task {
+ public:
+  DestroyCommGroupTask() { type_ = kDestroyCommGroup; }
+  ~DestroyCommGroupTask() override = default;
+  void Run() override;
+  std::string group_name_;
+  bool result_;
+};
+
 class ExitTask : public Task {
  public:
   ExitTask() { type_ = kExit; }
@@ -125,9 +156,11 @@ class Executor {
                      VectorRef *outputs);
   void BuildOpAsync(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
                     const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask);
-  py::tuple RunOpAsync(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                       const std::vector<tensor::TensorPtr> &input_tensors);
+  void RunOpAsync(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
+                  const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
   void OnRunGraphFinished();
+  bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks);
+  bool DestroyCommGroup(const std::string &group_name);
 
  private:
   void UpdateOutputTensors(VectorRef *outputs,
@@ -143,11 +176,7 @@ class Executor {
   std::mutex task_mutex_;
   std::mutex pending_task_mutex_;
   std::condition_variable task_cond_var_;
-  std::condition_variable compile_cond_var_;
-  std::condition_variable build_cond_var_;
-  std::condition_variable run_cond_var_;
-  std::condition_variable build_op_cond_var_;
-  std::condition_variable run_op_cond_var_;
+  std::condition_variable sync_cond_var_;
   std::queue<std::shared_ptr<Task>> ready_tasks_;
   std::list<std::shared_ptr<RunGraphTask>> pending_tasks_;
   std::shared_ptr<std::thread> worker_;

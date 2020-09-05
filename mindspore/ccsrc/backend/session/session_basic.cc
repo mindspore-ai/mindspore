@@ -1344,10 +1344,10 @@ void SessionBasic::BuildOpAsync(OpRunInfo *op_run_info, const GraphInfo &graph_i
   executor_->BuildOpAsync(shared_from_this(), op_run_info, graph_info, input_tensors, tensors_mask);
 }
 
-py::tuple SessionBasic::RunOpAsync(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                                   const std::vector<tensor::TensorPtr> &input_tensors) {
+void SessionBasic::RunOpAsync(OpRunInfo *op_run_info, const GraphInfo &graph_info,
+                              const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
-  return executor_->RunOpAsync(shared_from_this(), op_run_info, graph_info, input_tensors);
+  executor_->RunOpAsync(shared_from_this(), op_run_info, graph_info, input_tensors, outputs);
 }
 
 void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
