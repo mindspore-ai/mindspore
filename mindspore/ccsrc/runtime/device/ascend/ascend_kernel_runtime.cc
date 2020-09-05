@@ -454,19 +454,31 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
-bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
-  SetContext();
-  if (graph == nullptr) {
-    MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
-  }
-  MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
+bool AscendKernelRuntime::Load(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   if (!is_task_sink) {
     return true;
   }
+  if (!GenTask(graph)) {
+    return false;
+  }
+  if (!LoadTask(graph)) {
+    return false;
+  }
+  return true;
+}
+
+bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
+  SetContext();
+  if (graph == nullptr) {
+    MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
+  }
+  MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
 #ifdef MEM_REUSE_DEBUG
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE)) {
     // Get normal graph ir for memreuse
     mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(graph);
@@ -517,13 +529,6 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
     MS_EXCEPTION(NotExistsError) << "Null pointer graph, LoadTask failed. ";
   }
   MS_LOG(INFO) << "LoadTask start. GraphId:" << graph->graph_id();
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (!is_task_sink) {
-    return true;
-  }
-
   if (GraphWithEmptyTaskList(graph)) {
     MS_LOG(WARNING) << "LoadTask end, task list is empty";
     return true;
@@ -602,6 +607,36 @@ void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
     MS_LOG(WARNING) << "Task name:" << iter.first << " task_id:" << std::get<kTupleTaskId>(*iter.second)
                     << " stream_id:" << std::get<kTupleStreamId>(*iter.second);
   }
+}
+
+bool AscendKernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
+  bool ret = false;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#if defined(_WIN32) || defined(_WIN64)
+  auto start_time = std::chrono::steady_clock::now();
+#else
+  struct timeval start_time, end_time;
+  (void)gettimeofday(&start_time, nullptr);
+#endif
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  if (is_task_sink) {
+    ret = RunTask(graph);
+  } else {
+    ret = LaunchKernel(graph);
+  }
+#if defined(_WIN32) || defined(_WIN64)
+  auto end_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+  MS_LOG(INFO) << "Call MS Run Success in " << cost.count() << " us";
+#else
+  (void)gettimeofday(&end_time, nullptr);
+  const uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
+#endif
+  return ret;
 }
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {

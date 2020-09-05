@@ -40,69 +40,9 @@ KernelRuntime::~KernelRuntime() {
 #endif
 }
 
-bool KernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
-  bool ret = false;
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#if defined(_WIN32) || defined(_WIN64)
-  auto start_time = std::chrono::steady_clock::now();
-#else
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
-#endif
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (is_task_sink) {
-    ret = RunTask(graph);
-  } else {
-    ret = LaunchKernel(graph);
-  }
-#if defined(_WIN32) || defined(_WIN64)
-  auto end_time = std::chrono::steady_clock::now();
-  std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
-  MS_LOG(INFO) << "Call MS Run Success in " << cost.count() << " us";
-#else
-  (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
-#endif
-  return ret;
-}
+bool KernelRuntime::Load(session::KernelGraph *graph) { return true; }
 
-// for D to impl
 bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
-  if (graph != nullptr) {
-    return true;
-  }
-  return false;
-}
-
-// for D to impl
-bool KernelRuntime::LoadData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
-  if (graph != nullptr) {
-    return true;
-  }
-  return false;
-}
-
-// for D to impl
-bool KernelRuntime::GenTask(const session::KernelGraph *graph) {
-  if (graph != nullptr) {
-    return true;
-  }
-  return false;
-}
-
-bool KernelRuntime::LoadTask(const session::KernelGraph *graph) {
-  if (graph != nullptr) {
-    return true;
-  }
-  return false;
-}
-
-// for D to impl
-bool KernelRuntime::RunTask(const session::KernelGraph *graph) {
   if (graph != nullptr) {
     return true;
   }

@@ -178,10 +178,8 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
 #endif
   // alloc mem
   MemoryAlloc(root_graph.get());
-  // task generate
-  GenerateTaskInfo(root_graph);
-  // load task into device
-  LoadTask(root_graph);
+  // generate and load task into device
+  Load(root_graph);
   DumpAllGraphs(all_graphs);
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();
@@ -258,10 +256,8 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   } else {
     // alloc memory, including static memory and dynamic memory
     MemoryAlloc(graph.get());
-    // generate task info for task sink mode
-    GenerateTaskInfo(graph);
-    // load task info to device if it is sink mode
-    LoadTask(graph);
+    // generate and load task info to device if it is sink mode
+    Load(graph);
   }
   // sync the inital const tensor to device
   SyncInitialTenosrToDevice();
@@ -322,7 +318,7 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
 #endif
   {
     // run task on device
-    ExecTask(kernel_graph);
+    Execute(kernel_graph);
   }
   // summary
   Summary(kernel_graph.get());
@@ -554,30 +550,19 @@ void AscendSession::RunOpMemoryClear(const KernelGraph *kernel_graph) const {
   runtime_instance->RunOpClearMemory(kernel_graph);
 }
 
-void AscendSession::GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   (void)device::KernelAdjust::GetInstance().StepLoadCtrlInputs(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  bool ret_ok = runtime_instance->GenTask(kernel_graph.get());
-  if (!ret_ok) {
-    MS_LOG(EXCEPTION) << "Generate task error!";
-  }
-  MS_LOG(INFO) << "Finish!";
-}
-
-void AscendSession::LoadTask(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  bool ret_ok = runtime_instance->LoadTask(kernel_graph.get());
+  bool ret_ok = runtime_instance->Load(kernel_graph.get());
   if (!ret_ok) {
     MS_LOG(EXCEPTION) << "Load task error!";
   }
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::ExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
