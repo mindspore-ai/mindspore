@@ -42,10 +42,12 @@ int ToFormatOpenCLKernel::Init() {
                                                    {schema::Format_NC, "NHWC"},       {schema::Format_NHWC4, "NHWC4"}};
   std::string kernel_name =
     "to_format_" + format_str[in_tensors_[0]->GetFormat()] + "_to_" + format_str[out_tensors_[0]->GetFormat()];
+  std::map<TypeId, std::string> dtype_str{
+    {kNumberTypeFloat32, "float"}, {kNumberTypeFloat16, "half"}, {kNumberTypeInt8, "Int8"}};
   if (out_mem_type_ == OpenCLMemType::IMG) {
-    kernel_name += "_IMG";
+    kernel_name += "_IMG_" + dtype_str[in_tensors_[0]->data_type()];
   } else {
-    kernel_name += "_BUF";
+    kernel_name += "_BUF_" + dtype_str[out_tensors_[0]->data_type()];
   }
 
   this->set_name(kernel_name);

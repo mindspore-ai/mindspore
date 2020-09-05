@@ -1,3 +1,4 @@
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 #define divide_no_check(a, b) (a / b)
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
@@ -62,7 +63,7 @@ __kernel void BoardcastArith_IMG(__read_only image2d_t input_a, float weight, fl
   }
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  WRITE_IMAGE(output, (int2)(X, Y), weight * a + bias);
+  WRITE_IMAGE(output, (int2)(X, Y), ((FLT)weight) * a + (FLT)bias);
 }
 
 __kernel void ElementAdd_BUF(__global float *input_a, __global float *input_b, __global float *output,
