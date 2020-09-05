@@ -16,9 +16,8 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_ENV_CHECKER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_CUDA_ENV_CHECKER_H_
 
-#include <vector>
+#include <set>
 #include <string>
-#include <utility>
 
 namespace mindspore {
 namespace device {
@@ -38,15 +37,12 @@ class CudaEnvChecker {
   CudaEnvChecker(const CudaEnvChecker &);
   CudaEnvChecker &operator=(const CudaEnvChecker &);
 
-  std::vector<std::string> GetCudaRealPaths() const;
-  std::pair<std::string, bool> IsCudaRealPath(const std::string &path) const;
+  void GetRealPaths(std::set<std::string> *paths) const;
 
   bool already_check_nvcc_ = false;
   bool find_nvcc_ = false;
   static constexpr auto kPathEnv = "PATH";
   static constexpr auto kNvcc = "nvcc";
-  static constexpr auto kCudaSoftLinkPath = "cuda/bin";
-  static constexpr auto kCudaRealPath = "cuda-10.1/bin";
 };
 }  // namespace gpu
 }  // namespace device
