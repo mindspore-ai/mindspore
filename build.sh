@@ -571,9 +571,9 @@ build_minddata_lite_deps()
 
 build_lite()
 {
-    VERSION_MAJOR=`grep "#define MS_VERSION_MAJOR" mindspore/lite/include/version.h | tr -dc "[0-9]"`
-    VERSION_MINOR=`grep "#define MS_VERSION_MINOR" mindspore/lite/include/version.h | tr -dc "[0-9]"`
-    VERSION_REVISION=`grep "#define MS_VERSION_REVISION" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_MAJOR=`grep "const int ms_version_major =" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_MINOR=`grep "const int ms_version_minor =" mindspore/lite/include/version.h | tr -dc "[0-9]"`
+    VERSION_REVISION=`grep "const int ms_version_revision =" mindspore/lite/include/version.h | tr -dc "[0-9]"`
     echo "============ Start building MindSpore Lite ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION} ============"
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"

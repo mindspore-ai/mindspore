@@ -21,16 +21,16 @@
 
 namespace mindspore {
 namespace lite {
-#define MS_VERSION_MAJOR 0
-#define MS_VERSION_MINOR 7
-#define MS_VERSION_REVISION 0
+const int ms_version_major = 0;
+const int ms_version_minor = 7;
+const int ms_version_revision = 0;
 
 /// \brief Global method to get a version string.
 ///
 /// \return The version string of MindSpore Lite.
-std::string Version() {
-  return "MindSpore Lite " + std::to_string(MS_VERSION_MAJOR) + "." + std::to_string(MS_VERSION_MINOR) + "." +
-         std::to_string(MS_VERSION_REVISION);
+inline std::string Version() {
+  return "MindSpore Lite " + std::to_string(ms_version_major) + "." + std::to_string(ms_version_minor) + "." +
+         std::to_string(ms_version_revision);
 }
 }  // namespace lite
 }  // namespace mindspore
