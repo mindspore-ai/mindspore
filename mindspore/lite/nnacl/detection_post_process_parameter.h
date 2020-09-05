@@ -33,6 +33,8 @@ typedef struct DetectionPostProcessParameter {
   bool use_regular_nms_;
   bool out_quantized_;
 
+  float *anchors_;
+
   void *decoded_boxes_;
   void *nms_candidate_;
   void *selected_;

@@ -44,15 +44,15 @@ float IntersectionOverUnion(const BboxCorner *a, const BboxCorner *b) {
   const float h = ymax - ymin > 0.0f ? ymax - ymin : 0.0f;
   const float w = xmax - xmin > 0.0f ? xmax - xmin : 0.0f;
   const float inter = h * w;
-  return inter / (area_a + area_b - inter + 1e-8);
+  return inter / (area_a + area_b - inter);
 }
 
 void DecodeBoxes(const int num_boxes, const float *input_boxes, const float *anchors, const BboxCenter scaler,
                  float *decoded_boxes) {
   for (int i = 0; i < num_boxes; ++i) {
-    BboxCenter *box = (BboxCenter *)(input_boxes + i * 4);
-    BboxCenter *anchor = (BboxCenter *)(anchors + i * 4);
-    BboxCorner *decoded_box = (BboxCorner *)(decoded_boxes + i * 4);
+    BboxCenter *box = (BboxCenter *)(input_boxes) + i;
+    BboxCenter *anchor = (BboxCenter *)(anchors) + i;
+    BboxCorner *decoded_box = (BboxCorner *)(decoded_boxes) + i;
     float y_center = box->y / scaler.y * anchor->h + anchor->y;
     float x_center = box->x / scaler.x * anchor->w + anchor->x;
     float h_half = 0.5f * expf(box->h / scaler.h) * anchor->h;
@@ -137,7 +137,7 @@ int NmsMultiClassesRegular(const int num_boxes, const int num_classes_with_bg, c
       const int class_index = score_with_index_all[i].index - box_index * num_classes_with_bg - first_class_index;
       *((BboxCorner *)(output_boxes) + i) = *((BboxCorner *)(decoded_boxes) + box_index);
       output_classes[i] = (float)class_index;
-      output_scores[i] = score_with_index_all[i].score;;
+      output_scores[i] = score_with_index_all[i].score;
     } else {
       ((BboxCorner *)(output_boxes) + i)->ymin = 0;
       ((BboxCorner *)(output_boxes) + i)->xmin = 0;
