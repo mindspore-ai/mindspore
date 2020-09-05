@@ -219,6 +219,7 @@ table CNode {
 
 table MetaGraph {
     name: string;
+    version: string;
     fmkType: int; // 0:tf,1:caffe
     inputIndex: [uint];
     outputIndex: [uint];

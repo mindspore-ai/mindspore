@@ -24,6 +24,7 @@
 #include "include/ms_tensor.h"
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
+#include "include/version.h"
 
 namespace mindspore {
 namespace lite {
@@ -352,6 +353,10 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
+  auto model_version = model->GetMetaGraph()->version()->str();
+  if (model_version != Version()) {
+    MS_LOG(WARNING) << "model version is "<< model_version << ", inference version is " << Version() << " not equal";
+  }
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
     std::cerr << "Import model file failed while running " << modelName.c_str() << std::endl;

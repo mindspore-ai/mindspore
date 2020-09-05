@@ -33,6 +33,7 @@
 #include "tools/converter/parser/onnx/onnx.pb.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
+#include "include/version.h"
 
 namespace mindspore {
 namespace lite {
@@ -154,6 +155,7 @@ int RunConverter(int argc, const char **argv) {
 
   //   save graph to file
   Storage storage;
+  fb_graph->version = Version();
   status = storage.Save(*fb_graph, flags->outputFile);
   if (status != 0) {
     MS_LOG(ERROR) << "Save graph failed";
