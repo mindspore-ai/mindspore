@@ -27,6 +27,7 @@ fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${BUILD_PATH}/third_party/gtest/lib
 export PYTHONPATH=$PYTHONPATH:${PROJECT_PATH}:${PROJECT_PATH}/tests/ut/cpp/python_input:${PROJECT_PATH}/tests/ut/python
 echo "export PYTHONPATH=$PYTHONPATH"
+export GC_COLLECT_IN_CELL=1
 
 if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == "stage3" ]); then
     if [ $1 == "stage1" ]; then

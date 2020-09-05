@@ -35,10 +35,10 @@ class Net_Pool(nn.Cell):
 class Net_Pool2(nn.Cell):
     def __init__(self):
         super(Net_Pool2, self).__init__()
-        self.maxpool_fun = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="SAME")
+        self.maxpool_fun2 = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="SAME")
 
     def construct(self, x):
-        return self.maxpool_fun(x)
+        return self.maxpool_fun2(x)
 
 
 @pytest.mark.level0
