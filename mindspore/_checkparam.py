@@ -139,7 +139,7 @@ class Validator:
     def check_int_range(arg_name, arg_value, lower_limit, upper_limit, rel, prim_name):
         """Method for checking whether an int value is in some range."""
         rel_fn = Rel.get_fns(rel)
-        type_mismatch = not isinstance(arg_value, int)
+        type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
         excp_cls = TypeError if type_mismatch else ValueError
         if type_mismatch or not rel_fn(arg_value, lower_limit, upper_limit):
             rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)

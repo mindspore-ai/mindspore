@@ -461,7 +461,8 @@ class Conv2dTranspose(_Conv):
             width of the kernel.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
+            represent height and width of movement respectively. Its value should be equal to or greater than 1.
+            Default: 1.
         pad_mode (str): Select the mode of the pad. The optional values are
             "pad", "same", "valid". Default: "same".
 
