@@ -5308,7 +5308,7 @@ class CTCLoss(PrimitiveWithInfer):
 
     Outputs:
         - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. The tensor has
-        the same type with `inputs`.
+          the same type with `inputs`.
         - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
 
     Examples:
