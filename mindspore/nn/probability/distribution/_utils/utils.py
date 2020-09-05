@@ -271,24 +271,6 @@ def probs_to_logits(probs, is_binary=False):
     return P.Log()(ps_clamped)
 
 
-def check_tensor_type(name, inputs, valid_type):
-    """
-   Check if inputs is proper.
-
-   Args:
-       name: inputs name
-       inputs: Tensor to be checked.
-
-   Raises:
-       ValueError: if inputs is not a proper Tensor.
-   """
-    if not isinstance(inputs, Tensor):
-        raise TypeError(f"{name} should be a Tensor")
-    input_type = P.DType()(inputs)
-    if input_type not in valid_type:
-        raise TypeError(f"{name} dtype is invalid")
-
-
 def check_type(data_type, value_type, name):
     if not data_type in value_type:
         raise TypeError(
@@ -303,6 +285,10 @@ def raise_none_error(name):
 @constexpr
 def raise_probs_logits_error():
     raise TypeError("Either 'probs' or 'logits' must be specified, but not both.")
+
+@constexpr
+def raise_broadcast_error(shape_a, shape_b):
+    raise ValueError(f"Shape {shape_a} and {shape_b} is not broadcastable.")
 
 @constexpr
 def raise_not_impl_error(name):

@@ -42,7 +42,7 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
                            const dnnl::memory &weights_h_memory, const dnnl::memory &bias_memory,
                            const dnnl::memory &diff_weights_memory, const dnnl::memory &diff_weights_h_memory,
                            const dnnl::memory &diff_bias_memory);
-  void Memset_op(const dnnl::memory &mem, string name);
+  void ResetMemory(const dnnl::memory &mem, string name);
   void CheckParam(const CNodePtr &kernel_node);
   int weight_size_ = 0;
   int weight_h_size_ = 0;

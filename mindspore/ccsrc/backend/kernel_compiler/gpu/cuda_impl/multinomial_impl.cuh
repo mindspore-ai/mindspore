@@ -26,4 +26,7 @@ template <typename T>
 void CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t stream);
 template <typename T>
 void CheckZero(const size_t distributions, const size_t categories, const T *input, T *output, cudaStream_t stream);
+template <typename T>
+void NormInput(T *input, const size_t distributions, const size_t categories, cudaStream_t cuda_stream);
+
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MULTINOMIAL_IMPL_CUH_

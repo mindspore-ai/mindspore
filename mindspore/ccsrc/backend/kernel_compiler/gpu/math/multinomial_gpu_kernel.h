@@ -47,22 +47,23 @@ class MultinomialGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
+    void *workspace_addr = GetDeviceAddress<void *>(workspace, 1);
+    T *cum_sum_input = GetDeviceAddress<T>(workspace, 0);
     curandState *devStates = reinterpret_cast<curandState *>(workspace_addr);
     int *output_addr = GetDeviceAddress<int>(outputs, 0);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     int categories = SizeToInt(inputs[0]->size / sizeof(T)) / distributions_;
-    int num_sample = SizeToInt(outputs[0]->size / sizeof(T)) / distributions_;
+    int num_sample = SizeToInt(outputs[0]->size / sizeof(int)) / distributions_;
     // check input
-    T *cum_sum_input = nullptr;
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(&cum_sum_input), input_size_0_),
-                               "cudaMalloc failed.");
     CheckPeram(input_addr, cum_sum_input, categories, stream_ptr);
     if (replacement_) {
+      NormInput(cum_sum_input, IntToSize(distributions_), IntToSize(categories),
+                reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "cudaStreamSynchronize failed.");
       Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
                   IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(cum_sum_input), "cudaFree failed.");
     return true;
   }
 
@@ -145,6 +146,7 @@ class MultinomialGpuKernel : public GpuKernel {
     input_size_list_.push_back(input_size_0_);
     input_size_list_.push_back(sizeof(int));
     output_size_list_.push_back(output_size_);
+    workspace_size_list_.push_back(input_size_0_);
     workspace_size_list_.push_back(workspace_size_);
   }
 
