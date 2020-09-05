@@ -94,11 +94,9 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train", shu
     """
     # create iter dataset
     dataset = HwVocRawDataset(data_url, usage=usage)
-    dataset_len = len(dataset)
 
     # wrapped with GeneratorDataset
     dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=None)
-    dataset.set_dataset_size(dataset_len)
     dataset = dataset.map(input_columns=["image", "label"], operations=DataTransform(args, usage=usage))
 
     channelswap_op = C.HWC2CHW()

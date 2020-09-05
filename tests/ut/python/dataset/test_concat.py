@@ -262,9 +262,6 @@ def test_concat_12():
     data1 = ds.GeneratorDataset(generator, ["col1"])
     data2 = ds.GeneratorDataset(generator_10, ["col1"])
 
-    data1.set_dataset_size(3)
-    data2.set_dataset_size(7)
-
     data3 = data1 + data2
     res = [8, 6, 2, 5, 0, 4, 9, 3, 7, 1]
 
@@ -287,9 +284,6 @@ def test_concat_13():
     logger.info("test_concat_13")
     data1 = ds.GeneratorDataset(generator, ["col1"])
     data2 = ds.GeneratorDataset(generator_20, ["col1"])
-
-    data1.set_dataset_size(3)
-    data2.set_dataset_size(10)
 
     data1 = data1.batch(3)
     data2 = data2.batch(5)
