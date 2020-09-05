@@ -33,15 +33,9 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
   const float *inPtr = NULL;
   for (int i = 0; i < output_h * output_w * channel * output_batch; i++) output_ptr[i] = 0.0;
 
-  // int pad_top = padding[2];
-
   float kk = (float)(win_h * win_w);
 
   for (uint16_t ib = 0; ib < output_batch; ib++) {
-    // int in_batch_offset = batch * in_h * in_w * channel;
-    // int out_batch_offset = batch * output_h * output_w * channel;
-    // out = grads->getData(ib*grads->imgSize());
-    // inPtr = in->getData(ib*in->imgSize());
     float *out;
     out = &output_ptr[(ib * output_h * output_w)];
     inPtr = (float *)(&input_ptr[(ib * in_h * in_w)]);
@@ -97,12 +91,6 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
 }
 
 void MaxPoolingGrad(const float *dy, const int *indices, float *output_ptr, PoolingParameter *pooling_param) {
-  // int stride_w = pooling_param->stride_w_;
-  // int stride_h = pooling_param->stride_h_;
-  // int pad_w = pooling_param->pad_l_;
-  // int pad_h = pooling_param->pad_u_;
-  // int win_w = pooling_param->window_w_;
-  // int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
   int in_w = pooling_param->input_w_;
   int in_h = pooling_param->input_h_;

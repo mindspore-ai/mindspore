@@ -60,9 +60,6 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
     return RET_ERROR;
   }
   // compute alpha, beta;
-  // 0. tmp = (S4 * Sqrt(e + S3 * (q3 - Z3)));
-  // 1. A = S1 / tmp;
-  // 2. B = Z4 - (A1 * Z1) -((S2 * (q2 - Z2)) / tmp;
   auto eps = batchnorm_param_->epsilon_;
   auto zp_in = input->GetQuantParams().front().zeroPoint;
   auto zp_mean = mean->GetQuantParams().front().zeroPoint;
@@ -107,9 +104,6 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
     return RET_ERROR;
   }
   // compute alpha, beta;
-  // 0. tmp = (S6 * Sqrt(e + S5 * (q5 - Z5)));
-  // 1. A = S1 * S2 * (q2 - Z2) / tmp;
-  // 2. B = Z6 - (A1 * Z1) -((S3 * (q3 - Z3)) / S6 - S2 * S4 * (q2 - Z4) * (q4 - z4) / tmp;
   auto eps = batchnorm_param_->epsilon_;
   auto zp_in = input->GetQuantParams().front().zeroPoint;
   auto zp_scale = scale->GetQuantParams().front().zeroPoint;

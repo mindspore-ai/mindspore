@@ -703,16 +703,12 @@ table SpaceToBatch {
 }
 
 table SparseToDense {
-    outputShape: [int];
-    sparseValue: [int];
-    defaultValue: [int];
     validateIndices: bool;
 }
 
 table ReverseSequence {
     seqAxis: int;
     batchAxis: int;
-    seqLengths: [int];
 }
 
 table Rank {

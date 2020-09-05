@@ -35,9 +35,6 @@ class PoolingGradCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~PoolingGradCPUKernel() override = default;
 
-  // int TfPadding(int input_w, int input_h, int &output_w, int &output_h);
-  // int CaffePadding(int input_w, int input_h, int &output_w, int &output_h);
-  // int OnnxPadding(int input_w, int input_h, int &output_w, int &output_h);
 
   int Init() override;
   int ReSize() override;

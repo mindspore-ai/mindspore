@@ -99,22 +99,6 @@ typedef struct PreluQuantArg {
   QuantArg out_quant_args_;
 } PreluQuantArg;
 
-/*typedef struct SigmoidQuantArg {
-    int *input_sizes_;
-    int output_size_;
-    int **input_shapes_;
-    int *output_shape_;
-    size_t input_num_;
-    size_t output_dim_;
-    float alpha_;
-    QuantArg in_args_;
-    QuantArg out_args_;
-    int output_activation_min_;
-    int output_activation_max_;
-    QuantArg *in_quant_args_;
-    QuantArg out_quant_args_;
-} SigmoidQuantArg;*/
-
 typedef struct MatmulQuantArg {
   QuantArg input;
   QuantArg weight;

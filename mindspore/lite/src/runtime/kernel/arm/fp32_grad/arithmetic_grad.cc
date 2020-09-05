@@ -146,7 +146,6 @@ int ArithmeticGradCPUKernel::InferShape() {
 
   dx1->set_shape(x1->shape());
   dx2->set_shape(x2->shape());
-  // outTensor->set_shape(out_shape);
   dx1->set_data_type(dy->data_type());
   dx2->set_data_type(dy->data_type());
   return RET_OK;
@@ -261,7 +260,6 @@ int ArithmeticGradCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticGradCPUKernel::Run() {
   auto dy = reinterpret_cast<float *>(inputs_[0]->Data());
-  // auto input1_data1 = reinterpret_cast<float *>(inputs_[1]->Data());
   auto dx1 = reinterpret_cast<float *>(outputs_[0]->Data());
   auto dx2 = reinterpret_cast<float *>(outputs_[1]->Data());
 

@@ -28,90 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PoolingGrad;
 
 namespace mindspore::kernel {
-#if 0
-int PoolingGradCPUKernel::TfPadding(int input_w, int input_h, int &output_w, int &output_h) {
-  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *> (opParameter);
-
-  auto stride_w = pool_param->stride_w_;
-  auto stride_h = pool_param->stride_h_;
-  auto window_w = pool_param->window_w_;
-  auto window_h = pool_param->window_h_;
-  auto pad_up = pool_param->pad_u_;
-  auto pad_down = pool_param->pad_d_;
-  auto pad_left = pool_param->pad_l_;
-  auto pad_right = pool_param->pad_r_;
-  if (pool_param->pad_mode_ == PADMODE_SAME) {
-    output_w = ceil(input_w / stride_w);
-    output_h = ceil(input_h / stride_h);
-  } else {
-    output_w = ceil((input_w + pad_left + pad_right - window_w + 1) / stride_w);
-    output_h = ceil((input_h + pad_up + pad_down - window_h + 1) / stride_h);
-  }
-  return RET_OK;
-}
-
-int PoolingGradCPUKernel::CaffePadding(int input_w, int input_h, int &output_w, int &output_h) {
-  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *> (opParameter);
-
-  auto round_mode = pool_param->round_mode_;
-  auto stride_w = pool_param->stride_w_;
-  auto stride_h = pool_param->stride_h_;
-  auto window_w = pool_param->window_w_;
-  auto window_h = pool_param->window_h_;
-  auto pad_up = pool_param->pad_u_;
-  auto pad_down = pool_param->pad_d_;
-  auto pad_left = pool_param->pad_l_;
-  auto pad_right = pool_param->pad_r_;
-  if (round_mode == ROUNDMODE_FLOOR && false) {
-    output_w = floor((input_w + pad_left + pad_right - window_w) / stride_w + 1);
-    output_h = floor((input_h + pad_up + pad_down - window_h) / stride_h + 1);
-  } else if (round_mode == ROUNDMODE_CEIL || true) {
-    output_w = ceil((input_w + pad_left + pad_right - window_w) / stride_w + 1);
-    output_h = ceil((input_h + pad_up + pad_down - window_h) / stride_h + 1);
-  } else {
-    MS_LOG(ERROR) << "round mode not support.";
-  }
-
-  if (pad_left > 0 || pad_up > 0) {
-    if ((output_w - 1) * stride_w >= input_w + pad_left) {
-      --output_w;
-    }
-    if ((output_h - 1) * stride_h >= input_h + pad_up) {
-      --output_h;
-    }
-  }
-  return RET_OK;
-}
-
-int PoolingGradCPUKernel::OnnxPadding(int input_w, int input_h, int &output_w, int &output_h) {
-  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *> (opParameter);
-
-  auto round_mode = pool_param->round_mode_;
-  auto stride_w = pool_param->stride_w_;
-  auto stride_h = pool_param->stride_h_;
-  auto window_w = pool_param->window_w_;
-  auto window_h = pool_param->window_h_;
-  auto pad_up = pool_param->pad_u_;
-  auto pad_down = pool_param->pad_d_;
-  auto pad_left = pool_param->pad_l_;
-  auto pad_right = pool_param->pad_r_;
-  if (round_mode == ROUNDMODE_FLOOR) {
-    output_w = floor((input_w + pad_left + pad_right - window_w) / stride_w + 1);
-    output_h = floor((input_h + pad_up + pad_down - window_h) / stride_h + 1);
-  } else if (round_mode == ROUNDMODE_CEIL) {
-    MS_LOG(ERROR) << "RoundMode_CEIL mode not support.";
-  } else {
-    MS_LOG(ERROR) << "OnnxPadding round mode not support.";
-  }
-  return RET_OK;
-}
-#endif
-
 int PoolingGradCPUKernel::Init() {
-  // InferShape():
-  // auto *in_tensor = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  // auto *x_tensor = reinterpret_cast<float *>(inputs_.at(1)->Data());
-
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(opParameter);
 
   auto in_shape = inputs_.at(0)->shape();
@@ -127,30 +44,6 @@ int PoolingGradCPUKernel::Init() {
   auto *out_tensor = outputs_.front();
   auto out_shape = out_tensor->shape();
 
-#if 0
-  int output_w = 0, output_h = 0;
-  auto fmk_type = pool_param->fmk_type_;
-  switch (fmk_type) {
-    case lite::FmkType_TF:
-      break;
-    case lite::FmkType_CAFFE:
-      CaffePadding(input_w, input_h, output_w, output_h);
-      break;
-    case lite::FmkType_ONNX:
-      OnnxPadding(input_w, input_h, output_w, output_h);
-      break;
-    case lite::FmkType_MS:
-      break;
-    case lite::FmkType_TFLITE:
-      TfPadding(input_w, input_h, output_w, output_h);
-      break;
-    default:
-      MS_LOG(ERROR) << "Not support this framework.";
-  }
-  std::vector<int> out_shape{in_tensor->shape()};
-  out_shape.at(1) = output_h;
-  out_shape.at(2) = output_w;
-#endif
   out_tensor->set_shape(out_shape);
   out_tensor->set_data_type(inputs_.at(0)->data_type());
   return RET_OK;

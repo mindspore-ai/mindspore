@@ -54,16 +54,13 @@ STATUS TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::Operator
   attr->seqAxis = tflite_attr->seq_dim;
   attr->batchAxis = tflite_attr->batch_dim;
 
-  if (GetTfliteData(tflite_op->inputs[1], tflite_tensors, tflite_model_buffer, attr->seqLengths)) {
-    MS_LOG(ERROR) << "get reverse_sequence -> seqLengths failed";
-    return RET_ERROR;
-  }
-
   op->primitive->value.type = schema::PrimitiveType_ReverseSequence;
   op->primitive->value.value = attr.release();
 
   AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
              tflite_op->inputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
+  AddOpInput(op, tensors_id, tensors_format, tensors_id_map,
+             tflite_op->inputs[1], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   AddOpOutput(op, tensors_id, tensors_format, tensors_id_map,
               tflite_op->outputs[0], tensors_id->size(), tflite_tensors.size(), schema::Format_NHWC);
   return RET_OK;
