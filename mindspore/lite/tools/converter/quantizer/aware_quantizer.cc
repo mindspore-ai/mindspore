@@ -103,62 +103,7 @@ STATUS AwareQuantizer::GenerateDefaultQuantParam(const schema::MetaGraphT *subGr
   return RET_OK;
 }
 
-STATUS AwareQuantizer::SetAttrToConvolution(const schema::MetaGraphT *subGraph, schema::CNodeT *node) {
-  //  MS_ASSERT(subGraph != nullptr);
-  //  MS_ASSERT(node != nullptr);
-  //  auto inputIndexes = node->inputIndex;
-  //  MS_ASSERT(GetCNodeTType(*node) == OpT_Conv2D || GetCNodeTType(*node) ==
-  //  OpT_DepthwiseConv2D ||
-  //            GetCNodeTType(*node) == OpT_DeConv2D || GetCNodeTType(*node) ==
-  //            OpT_DeDepthwiseConv2D);
-  //  if (inputIndexes.size() < 2) {
-  //    MS_LOGE("in aware quant %s node's input tensors is invalid(%zu)!",
-  //    node->name.c_str(), inputIndexes.size()); return RET_ERROR;
-  //  }
-  //  TensorDefT *filterTensor = subGraph->allTensors.at(inputIndexes[1]).get();
-  //  MS_ASSERT(filterTensor != nullptr);
-  //  auto filterDims = filterTensor->dims;
-  //  MS_ASSERT(filterDims.size() == 4);
-  //  if (GetCNodeTType(*node) == OpT_Conv2D) {
-  //    if (node->fmkType == FmkType_MS) {
-  //      node->attr.AsConv2D()->channelOut = (int32_t)filterDims[0];
-  //      node->attr.AsConv2D()->channelIn = (int32_t)filterDims[1];
-  //      node->attr.AsConv2D()->kernelH = (int32_t)filterDims[2];
-  //      node->attr.AsConv2D()->kernelW = (int32_t)filterDims[3];
-  //    } else if (node->fmkType == FmkType_TF) {
-  //      node->attr.AsConv2D()->kernelH = (int32_t)filterDims[0];
-  //      node->attr.AsConv2D()->kernelW = (int32_t)filterDims[1];
-  //      node->attr.AsConv2D()->channelIn = (int32_t)filterDims[2];
-  //      node->attr.AsConv2D()->channelOut = (int32_t)filterDims[3];
-  //    } else {
-  //      MS_LOGE("Unsupport");
-  //    }
-  //  }
-  //  if (GetCNodeTType(*node) == OpT_DepthwiseConv2D) {
-  //    if (node->fmkType == FmkType_MS) {
-  //      node->attr.AsDepthwiseConv2D()->channelIn = (int32_t)filterDims[0];
-  //      node->attr.AsDepthwiseConv2D()->channelMultiplier =
-  //      (int32_t)filterDims[1]; node->attr.AsDepthwiseConv2D()->kernelH =
-  //      (int32_t)filterDims[2]; node->attr.AsDepthwiseConv2D()->kernelW =
-  //      (int32_t)filterDims[3];
-  //    } else if (node->fmkType == FmkType_TF) {
-  //      node->attr.AsDepthwiseConv2D()->kernelH = (int32_t)filterDims[0];
-  //      node->attr.AsDepthwiseConv2D()->kernelW = (int32_t)filterDims[1];
-  //      node->attr.AsDepthwiseConv2D()->channelIn = (int32_t)filterDims[2];
-  //      node->attr.AsDepthwiseConv2D()->channelMultiplier =
-  //      (int32_t)filterDims[3];
-  //    } else {
-  //      MS_LOGE("Unsupport");
-  //    }
-  //  }
-  //  if (GetCNodeTType(*node) == OpT_DeConv2D) {
-  //    MS_ASSERT(false);
-  //  }
-  //  if (GetCNodeTType(*node) == OpT_DeDepthwiseConv2D) {
-  //    MS_ASSERT(false);
-  //  }
-  return RET_OK;
-}
+STATUS AwareQuantizer::SetAttrToConvolution(const schema::MetaGraphT *subGraph, schema::CNodeT *node) { return RET_OK; }
 
 STATUS AwareQuantizer::GenerateQuantParam() {
   MS_ASSERT(graph->inputIndex.size() == 1);
@@ -288,7 +233,7 @@ STATUS AwareQuantizer::QuantAddConstTensor(const schema::MetaGraphT *graph, sche
         case kNumberTypeUInt8:
           break;
         default:
-          //          MS_LOGE("Unsupported dataType: %d", inTensor->dataType);
+          MS_LOG(ERROR) << "Unsupported dataType: " << inTensor->dataType;
           return RET_ERROR;
       }
     }
@@ -307,7 +252,7 @@ STATUS AwareQuantizer::QuantDetectionPostProcessConstTensor(const schema::MetaGr
     size_t constTensorShapeSize = GetShapeSize(*constTensor);
     std::unique_ptr<QuantParamT> quantParam = GetTensorQuantParam(constTensor);
     if (quantParam == nullptr) {
-      //    MS_LOGE("new QuantParamT failed");
+      MS_LOG(ERROR) << "new QuantParamT failed";
       return RET_NULL_PTR;
     }
     vector<uint8_t> qDatas(constTensorShapeSize);
@@ -335,7 +280,7 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
     return RET_OK;
   }
   if (biasTensor->dataType != TypeId::kNumberTypeFloat && biasTensor->dataType != TypeId::kNumberTypeFloat32) {
-    //    MS_LOGE("conv %s's bias data is not float", node->name.c_str());
+    MS_LOG(ERROR) << "conv " << node->name << "'s bias data is not float";
     return RET_ERROR;
   }
   auto &inputTensor = graph->allTensors.at(inputIndexes.at(0));
@@ -349,7 +294,7 @@ STATUS AwareQuantizer::QuantConvBias(const mindspore::schema::MetaGraphT *graph,
   // set bias quant param
   std::unique_ptr<QuantParamT> biasQuantParam = GetTensorQuantParam(biasTensor);
   if (biasQuantParam == nullptr) {
-    //    MS_LOGE("new QuantParamT failed");
+    MS_LOG(ERROR) << "new QuantParamT failed";
     return RET_ERROR;
   }
   biasQuantParam->inited = true;

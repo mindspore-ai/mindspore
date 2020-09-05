@@ -114,7 +114,7 @@ template <typename Flags, typename T>
 void FlagParser::ConstructFlag(Option<T> Flags::*t1, const std::string &flagName, const std::string &helpInfo,
                                FlagInfo *flag) {
   if (flag == nullptr) {
-    // MS_LOGE("FlagInfo is nullptr");
+    MS_LOG(ERROR) << "FlagInfo is nullptr";
     return;
   }
   flag->flagName = flagName;
@@ -128,11 +128,11 @@ void FlagParser::ConstructFlag(Option<T> Flags::*t1, const std::string &flagName
 template <typename Flags, typename T>
 void FlagParser::ConstructFlag(T Flags::*t1, const std::string &flagName, const std::string &helpInfo, FlagInfo *flag) {
   if (flag == nullptr) {
-    // MS_LOGE("FlagInfo is nullptr");
+    MS_LOG(ERROR) << "FlagInfo is nullptr";
     return;
   }
   if (t1 == nullptr) {
-    // MS_LOGE("t1 is nullptr");
+    MS_LOG(ERROR) << "t1 is nullptr";
     return;
   }
   flag->flagName = flagName;
@@ -146,7 +146,7 @@ inline void FlagParser::AddFlag(const FlagInfo &flagItem) { flags[flagItem.flagN
 template <typename Flags, typename T>
 void FlagParser::AddFlag(T Flags::*t, const std::string &flagName, const std::string &helpInfo) {
   if (t == nullptr) {
-    // MS_LOGE("t1 is nullptr");
+    MS_LOG(ERROR) << "t1 is nullptr";
     return;
   }
   AddFlag(t, flagName, helpInfo, static_cast<const T *>(nullptr));
@@ -155,7 +155,7 @@ void FlagParser::AddFlag(T Flags::*t, const std::string &flagName, const std::st
 template <typename Flags, typename T1, typename T2>
 void FlagParser::AddFlag(T1 Flags::*t1, const std::string &flagName, const std::string &helpInfo, const T2 &t2) {
   if (t1 == nullptr) {
-    // MS_LOGE("t1 is nullptr");
+    MS_LOG(ERROR) << "t1 is nullptr";
     return;
   }
   AddFlag(t1, flagName, helpInfo, &t2);
@@ -165,7 +165,7 @@ void FlagParser::AddFlag(T1 Flags::*t1, const std::string &flagName, const std::
 template <typename Flags, typename T1, typename T2>
 void AddFlag(T1 *t1, const std::string &flagName, const std::string &helpInfo, const T2 &t2) {
   if (t1 == nullptr) {
-    // MS_LOGE("t1 is nullptr");
+    MS_LOG(ERROR) << "t1 is nullptr";
     return;
   }
   AddFlag(t1, flagName, helpInfo, &t2);
@@ -174,7 +174,7 @@ void AddFlag(T1 *t1, const std::string &flagName, const std::string &helpInfo, c
 template <typename Flags, typename T1, typename T2>
 void FlagParser::AddFlag(T1 *t1, const std::string &flagName, const std::string &helpInfo, const T2 *t2) {
   if (t1 == nullptr) {
-    // MS_LOGE("t1 is nullptr");
+    MS_LOG(ERROR) << "t1 is nullptr";
     return;
   }
 
@@ -214,7 +214,7 @@ void FlagParser::AddFlag(T1 *t1, const std::string &flagName, const std::string 
 template <typename Flags, typename T1, typename T2>
 void FlagParser::AddFlag(T1 Flags::*t1, const std::string &flagName, const std::string &helpInfo, const T2 *t2) {
   if (t1 == nullptr) {
-    // MS_LOGE("t1 is nullptr");
+    MS_LOG(ERROR) << "t1 is nullptr";
     return;
   }
 
@@ -263,13 +263,13 @@ void FlagParser::AddFlag(T1 Flags::*t1, const std::string &flagName, const std::
 template <typename Flags, typename T>
 void FlagParser::AddFlag(Option<T> Flags::*t, const std::string &flagName, const std::string &helpInfo) {
   if (t == nullptr) {
-    // MS_LOGE("t is nullptr");
+    MS_LOG(ERROR) << "t is nullptr";
     return;
   }
 
   Flags *flag = dynamic_cast<Flags *>(this);
   if (flag == nullptr) {
-    // MS_LOGE("dynamic_cast failed");
+    MS_LOG(ERROR) << "dynamic_cast failed";
     return;
   }
 

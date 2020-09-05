@@ -108,7 +108,6 @@ class MS_API Benchmark {
 
   int Init();
   int RunBenchmark(const std::string &deviceType = "NPU");
-  //  int RunNPUBenchmark();
 
  private:
   // call GenerateInputData or ReadInputFile to init inputTensors
@@ -131,7 +130,6 @@ class MS_API Benchmark {
     static int i = 0;
     auto inData = reinterpret_cast<T *>(input->MutableData());
     std::cout << "InData" << i++ << ": ";
-//    int printSize = std::min(20, input->ElementsNum());
     for (size_t j = 0; j < 20; j++) {
       std::cout << static_cast<float >(inData[j]) << " ";
     }
@@ -217,7 +215,6 @@ class MS_API Benchmark {
   std::unordered_map<std::string, CheckTensor *> calibData;
   std::unordered_map<std::string, TypeId> dataTypeMap{
     {"FLOAT", TypeId::kNumberTypeFloat}, {"INT8", TypeId::kNumberTypeInt8}, {"INT32", TypeId::kNumberTypeInt32}};
-//  TypeId msInputBinDataType = TypeId::kNumberTypeFloat;
   TypeId msCalibDataType = TypeId::kNumberTypeFloat;
 };
 

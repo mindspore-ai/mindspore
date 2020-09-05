@@ -141,7 +141,6 @@ schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType 
 std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType) {
   auto iter = tfMsOpTypeMap.find(tfliteOpType);
   if (iter == tfMsOpTypeMap.end()) {
-    // return "unsupported_op_type";
     return tflite::EnumNameBuiltinOperator(tfliteOpType);
   }
   return iter->second;

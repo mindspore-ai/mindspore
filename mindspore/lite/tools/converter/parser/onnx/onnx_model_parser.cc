@@ -323,7 +323,6 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
       quant_param->min = FLT_MAX;
       quant_param->max = FLT_MAX;
     }
-    // quant_param_array->param.emplace_back(std::move(quant_param));
     dst_tensor->quantParams.emplace_back(std::move(quant_param));
     if (argNum == 2) {
       findQuantParams++;

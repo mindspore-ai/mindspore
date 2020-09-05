@@ -198,7 +198,6 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   auto quantMaxFloat = static_cast<double>(quant_max);
   double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
   const double zeroPointFromMin = quantMinFloat - mMin / scale;
-  // const double zeroPointFromMax = quantMaxFloat - mMax / scale;
   int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
 
   // The zero point should always be in the range of quantized value,
