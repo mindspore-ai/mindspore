@@ -56,9 +56,13 @@ void DetectionPostProcessTestInit(std::vector<lite::tensor::Tensor *> *inputs_,
   std::string input_anchors_path = "./test_data/detectionPostProcess/input_anchors.bin";
   size_t input_anchors_size;
   auto input_anchors_data =
-    reinterpret_cast<float *>(mindspore::lite::ReadFile(input_anchors_path.c_str(), &input_anchors_size));
+    reinterpret_cast<uint8_t *>(mindspore::lite::ReadFile(input_anchors_path.c_str(), &input_anchors_size));
   auto *input_anchors = new lite::tensor::Tensor;
-  input_anchors->set_data_type(kNumberTypeFloat32);
+  lite::tensor::QuantArg quant_arg;
+  quant_arg.zeroPoint = 0;
+  quant_arg.scale = 0.00645306;
+  input_anchors->AddQuantParam(quant_arg);
+  input_anchors->set_data_type(kNumberTypeUInt8);
   input_anchors->SetFormat(schema::Format_NHWC);
   input_anchors->set_shape({1917, 4});
   input_anchors->MallocData();

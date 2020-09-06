@@ -26,7 +26,32 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
-int DetectionPostProcessCPUKernel::Init() { return RET_OK; }
+int DetectionPostProcessCPUKernel::Init() {
+  MS_ASSERT(context_->allocator != nullptr);
+  auto anchor_tensor = in_tensors_.at(2);
+  DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
+  if (anchor_tensor->data_type() == kNumberTypeUInt8) {
+    const auto quant_params = anchor_tensor->GetQuantParams();
+    const double scale = quant_params.at(0).scale;
+    const int32_t zp = quant_params.at(0).zeroPoint;
+    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->Data());
+    auto anchor_fp32 =
+      reinterpret_cast<float *>(context_->allocator->Malloc(anchor_tensor->ElementsNum() * sizeof(float)));
+    for (int i = 0; i < anchor_tensor->ElementsNum(); ++i) {
+      *(anchor_fp32 + i) = static_cast<float>((static_cast<int>(anchor_uint8[i]) - zp) * scale);
+    }
+    parameter->anchors_ = anchor_fp32;
+  } else if (anchor_tensor->data_type() == kNumberTypeFloat32) {
+    auto anchor_fp32 = reinterpret_cast<float *>(anchor_tensor->Data());
+    for (int i = 0; i < anchor_tensor->ElementsNum(); ++i) {
+      parameter->anchors_[i] = anchor_fp32[i];
+    }
+  } else {
+    MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
 int DetectionPostProcessCPUKernel::ReSize() { return RET_OK; }
 
@@ -38,7 +63,6 @@ int DetectionPostProcessCPUKernel::Run() {
   }
   auto input_boxes = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
   auto input_scores = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
-  auto input_anchors = reinterpret_cast<float *>(in_tensors_.at(2)->Data());
 
   // output_classes and output_num use float type now
   auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
@@ -61,7 +85,7 @@ int DetectionPostProcessCPUKernel::Run() {
     parameter->score_with_class_all_ =
       context_->allocator->Malloc((num_boxes * parameter->num_classes_) * sizeof(ScoreWithIndex));
   }
-  DetectionPostProcess(num_boxes, num_classes_with_bg, input_boxes, input_scores, input_anchors, output_boxes,
+  DetectionPostProcess(num_boxes, num_classes_with_bg, input_boxes, input_scores, parameter->anchors_, output_boxes,
                        output_classes, output_scores, output_num, parameter);
   context_->allocator->Free(parameter->decoded_boxes_);
   context_->allocator->Free(parameter->nms_candidate_);
