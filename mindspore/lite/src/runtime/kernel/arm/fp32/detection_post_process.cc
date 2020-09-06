@@ -30,6 +30,7 @@ int DetectionPostProcessCPUKernel::Init() {
   MS_ASSERT(context_->allocator != nullptr);
   auto anchor_tensor = in_tensors_.at(2);
   DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
+  parameter->anchors_ = nullptr;
   if (anchor_tensor->data_type() == kNumberTypeUInt8) {
     const auto quant_params = anchor_tensor->GetQuantParams();
     const double scale = quant_params.at(0).scale;
@@ -37,20 +38,31 @@ int DetectionPostProcessCPUKernel::Init() {
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->Data());
     auto anchor_fp32 =
       reinterpret_cast<float *>(context_->allocator->Malloc(anchor_tensor->ElementsNum() * sizeof(float)));
+    if (anchor_fp32 == nullptr) {
+      MS_LOG(ERROR) << "Malloc anchor failed";
+      return RET_ERROR;
+    }
     for (int i = 0; i < anchor_tensor->ElementsNum(); ++i) {
       *(anchor_fp32 + i) = static_cast<float>((static_cast<int>(anchor_uint8[i]) - zp) * scale);
     }
     parameter->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeFloat32) {
-    auto anchor_fp32 = reinterpret_cast<float *>(anchor_tensor->Data());
-    for (int i = 0; i < anchor_tensor->ElementsNum(); ++i) {
-      parameter->anchors_[i] = anchor_fp32[i];
+    parameter->anchors_ = reinterpret_cast<float *>(context_->allocator->Malloc(anchor_tensor->Size()));
+    if (parameter->anchors_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc anchor failed";
+      return RET_ERROR;
     }
+    memcpy(parameter->anchors_, anchor_tensor->Data(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+DetectionPostProcessCPUKernel::~DetectionPostProcessCPUKernel() {
+  DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
+  context_->allocator->Free(parameter->anchors_);
 }
 
 int DetectionPostProcessCPUKernel::ReSize() { return RET_OK; }
