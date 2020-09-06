@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
-#define LITE_MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
+#define MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
 #include <vector>
 #include "src/ops/primitive_c.h"
 
@@ -37,4 +37,4 @@ class MakeTuple : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_MAKE_TUPLE_H_

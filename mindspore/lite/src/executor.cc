@@ -39,6 +39,10 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
     }
   }
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
+  for (auto out_tensor : out_tensors) {  // increase RefCount of output tensors, such that Run will not free them
+    out_tensor->SetRefCount(out_tensor->RefCount() + 1);
+  }
+
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
 
@@ -48,6 +52,8 @@ int Executor::Run(std::vector<tensor::Tensor *> &in_tensors, std::vector<tensor:
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
       }
     }
+    // JBDEBUG
+    // std::cout << "executing kernel " << kernel->name() << "\n";
     auto ret = kernel->Run();
     if (0 != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();

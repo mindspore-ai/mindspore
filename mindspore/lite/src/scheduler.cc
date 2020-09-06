@@ -94,8 +94,10 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
       inputs.emplace_back(tensors->at(size_t(inIndexes->GetAs<uint32_t>(j))));
     }
     auto outIndexes = cNode->outputIndex();
-    for (size_t j = 0; j < outIndexes->size(); j++) {
-      outputs.emplace_back(tensors->at(size_t(outIndexes->GetAs<uint32_t>(j))));
+    if (outIndexes != nullptr) {
+      for (size_t j = 0; j < outIndexes->size(); j++) {
+        outputs.emplace_back(tensors->at(size_t(outIndexes->GetAs<uint32_t>(j))));
+      }
     }
     auto *primitive = model->GetOp(cNode->name()->str());
     if (primitive == nullptr) {

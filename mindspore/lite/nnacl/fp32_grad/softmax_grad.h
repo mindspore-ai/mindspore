@@ -20,7 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct SoftmaxCrossEntropyParameter {
-  OpParameter op_parameter;
+  OpParameter op_parameter_;
   int32_t batch_size_;
   unsigned int number_of_classes_;
   int n_dim_;

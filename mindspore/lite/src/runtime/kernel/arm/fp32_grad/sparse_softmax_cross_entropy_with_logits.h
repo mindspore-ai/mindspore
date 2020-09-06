@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/train/loss_kernel.h"
 #include "ir/anf.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include "nnacl/fp32/arithmetic.h"
+#include "nnacl/softmax_parameter.h"
 
 namespace mindspore::kernel {
 
-class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LiteKernel {
+class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
  public:
   explicit SparseSoftmaxCrossEntropyWithLogitsCPUKernel(OpParameter *parameter,
                                                         const std::vector<lite::tensor::Tensor *> &inputs,
                                                         const std::vector<lite::tensor::Tensor *> &outputs,
                                                         const lite::Context *ctx,
                                                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+      : LossKernel(parameter, inputs, outputs, ctx, primitive) {
     param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
-  ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override = default;
+  ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override { delete[] losses_; delete[] sum_data_; }
 
   void ForwardPostExecute(const int *labels, const float *losses, float *output) const;
-  void GradPostExecute(const int *labels, const float *losses, float *output) const;
+  void GradPostExecute(const int *labels, const float *losses, float* grads, float *output) const;
 
   int Init() override;
   int ReSize() override;
@@ -46,7 +47,11 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LiteKernel {
 
  private:
   SoftmaxCrossEntropyParameter *param;
+  SoftmaxParameter sm_params_;
+  float *losses_ = nullptr;
+  float *sum_data_ = nullptr;
 };
+
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_

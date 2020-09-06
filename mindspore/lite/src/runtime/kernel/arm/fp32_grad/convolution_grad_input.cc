@@ -29,23 +29,14 @@ using mindspore::schema::PrimitiveType_Conv2DGradInput;
 
 namespace mindspore::kernel {
 int ConvolutionGradInputCPUKernel::Init() {
-  if (2 != this->inputs_.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad should has 2 inputs";
-    return RET_ERROR;
-  }
-  if (1 != this->outputs_.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad should has one output";
-    return RET_ERROR;
-  }
-
-  auto *dy_tensor = inputs_.at(kInputIndex);
+  auto *dy_tensor = in_tensors_.at(kInputIndex);
   MS_ASSERT(dy_tensor != nullptr);
-  auto *weight_tensor = inputs_.at(kWeightIndex);
+  auto *weight_tensor = in_tensors_.at(kWeightIndex);
   MS_ASSERT(weight_tensor != nullptr);
-  auto *dx_tensor = outputs_.at(kOutputIndex);
+  auto *dx_tensor = out_tensors_.at(kOutputIndex);
   MS_ASSERT(dx_tensor != nullptr);
 
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   conv_param->output_batch_ = dx_tensor->shape()[(kNHWC_N)];
   conv_param->input_batch_ = dy_tensor->shape()[(kNHWC_N)];
 
@@ -74,10 +65,16 @@ int ConvolutionGradInputCPUKernel::Init() {
 int ConvolutionGradInputCPUKernel::ReSize() { return 0; }
 
 int ConvolutionGradInputCPUKernel::Run() {
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  auto *input_dy = inputs_.at(0);
-  auto *input_w = inputs_.at(1);
-  auto *out_dx = outputs_.at(0);
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  auto *input_dy = in_tensors_.at(0);
+  auto *input_w = in_tensors_.at(1);
+  auto *out_dx = out_tensors_.at(0);
 
   auto dy_addr = reinterpret_cast<float *>(input_dy->Data());
   auto w_addr = reinterpret_cast<float *>(input_w->Data());
@@ -115,6 +112,49 @@ int ConvolutionGradInputCPUKernel::Run() {
   // std::cout << "run succ" << std::endl;
   return 0;
 }
+
+#if 0
+OpParameter *PopulateConvolutionGradInputParameter(const lite::Primitive *primitive) {
+  ConvParameter *param = new (std::nothrow) ConvParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new Param for conv grad input failed.";
+    return nullptr;
+  }
+  param->op_parameter_.type_ = primitive->Type();
+
+  auto convg_primitive = primitive->Value()->value_as_Conv2DGradInput();
+  param->kernel_h_ = convg_primitive->kernelH();
+  param->kernel_w_ = convg_primitive->kernelW();
+  param->stride_h_ = convg_primitive->strideH();
+  param->stride_w_ = convg_primitive->strideW();
+  param->dilation_h_ = convg_primitive->dilateH();
+  param->dilation_w_ = convg_primitive->dilateW();
+  param->pad_h_ = convg_primitive->padUp();
+  param->pad_w_ = convg_primitive->padLeft();
+  param->pad_u_ = convg_primitive->padUp();
+  param->pad_d_ = convg_primitive->padDown();
+  param->pad_l_ = convg_primitive->padLeft();
+  param->pad_r_ = convg_primitive->padRight();
+  param->group_ = convg_primitive->group();
+  auto act_type = convg_primitive->activationType();
+  switch (act_type) {
+    case schema::ActivationType_RELU:
+      param->is_relu_ = true;
+      param->is_relu6_ = false;
+      break;
+    case schema::ActivationType_RELU6:
+      param->is_relu_ = false;
+      param->is_relu6_ = true;
+      break;
+    default:
+      param->is_relu_ = false;
+      param->is_relu6_ = false;
+      break;
+  }
+
+  return reinterpret_cast<OpParameter *>(param);
+}
+#endif
 
 kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                       const std::vector<lite::tensor::Tensor *> &outputs,

@@ -27,33 +27,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasGrad;
 
 namespace mindspore::kernel {
-int BiasGradCPUKernel::InferShape() {
-  if (1 != this->inputs_.size()) {
-    MS_LOG(ERROR) << "BiasGrad should have one input";
-    return RET_ERROR;
-  }
-  if (1 != this->outputs_.size()) {
-    MS_LOG(ERROR) << "BiasGrad should have one output";
-    return RET_ERROR;
-  }
-  auto *in0 = inputs_.front();
-  auto *out = outputs_.front();
-  MS_ASSERT(in0 != nullptr);
-  MS_ASSERT(out != nullptr);
-  auto inshape = in0->shape();
-  int ndim = inshape.size();
-  for (int i = 0; i < ndim - 1; i++) {
-    inshape[i] = 1;
-  }
-  out->set_shape(inshape);
-  out->set_data_type(in0->data_type());
-  return RET_OK;
-}
 
 int BiasGradCPUKernel::Init() {
-  MS_ASSERT(InferShape() == RET_OK);
-
-  auto dims = inputs_[0]->shape();
+  auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
   for (unsigned int i = 0; i < bias_param->ndim_; i++) {
     bias_param->in_shape0_[i] = dims[i];
@@ -75,8 +51,8 @@ int BiasGradCPUKernel::Run() {
     MS_LOG(ERROR) << "Prepare failed.";
     return RET_ERROR;
   }
-  auto in = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto out = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto in = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   size_t nhw_size = 1;
   size_t channels = bias_param->in_shape0_[bias_param->ndim_ - 1];  // C in NHWC

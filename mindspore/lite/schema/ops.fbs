@@ -149,7 +149,8 @@ table Activation {
     alpha: float = 0.2;
 }
 table ActivationGrad {
-    type: ActivationGradType = 0;
+    type: ActivationType = 0;
+    alpha: float = 0.2;
 }
 
 
@@ -228,6 +229,9 @@ table BiasGrad {
 
 table SoftmaxCrossEntropy {
     axis: [int];
+}
+
+table make_tuple {
 }
 
 
@@ -390,10 +394,11 @@ table DeConv2D {
     hasBias: bool = false;
     activationType: ActivationType = 0;
 }
-table BNGradInput {
+table BNGrad {
     eps : float;
-    channels: int;
+    momentum: float;
 }
+
 table Scale {
     axis: int;
 }
@@ -841,7 +846,10 @@ table SquaredDifference {
 table TupleGetItem {
 }
 
-table OptMomentum {
+table ApplyMomentum {
+    gradientScale: float;
+    useLocking: bool;
+    useNesterov: bool;
 }
 
 
@@ -882,6 +890,10 @@ table MakeTuple {
 table ToFormat {
     srcT: int;
     dstT: int;
+}
+
+
+table Depend {
 }
 
 table Return {

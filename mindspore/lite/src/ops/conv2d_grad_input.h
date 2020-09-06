@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_CONV2_D_GRAD_INPUT_H_
-#define LITE_MINDSPORE_LITE_C_OPS_CONV2_D_GRAD_INPUT_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_CONV2D_GRAD_INPUT_H_
+#define MINDSPORE_LITE_SRC_OPS_CONV2D_GRAD_INPUT_H_
 
 #include <vector>
 #include <set>
@@ -53,6 +53,7 @@ class Conv2DGradInput : public PrimitiveC {
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetGroup() const;
   int GetChannelIn() const;
@@ -74,4 +75,4 @@ class Conv2DGradInput : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_CONV2_D_GRAD_INPUT_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_CONV2D_GRAD_INPUT_H_

@@ -115,7 +115,7 @@ constexpr size_t kInputSize = 1;
 constexpr size_t kOutputSize = 1;
 }  // namespace
 int Reduce::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
-  if (inputs_.size() != kInputSize || outputs_.size() != kOutputSize) {
+  if (inputs_.size() < kInputSize || outputs_.size() != kOutputSize) {
     return RET_ERROR;
   }
   auto input = inputs_.front();

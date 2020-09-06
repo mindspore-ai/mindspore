@@ -40,7 +40,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   y_tensor.SetData(input_data);
 
   std::string label_path = "./test_data/operators/sce_fp32_1_l_6.bin";
-  auto ll_labels = reinterpret_cast<int64 *>(mindspore::lite::ReadFile(label_path.c_str(), &input_size));
+  auto ll_labels = reinterpret_cast<int64_t *>(mindspore::lite::ReadFile(label_path.c_str(), &input_size));
   auto labels = new int[6];
   for (int i = 0; i < 6; i++) labels[i] = static_cast<int>(ll_labels[i]);
 
@@ -57,7 +57,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   auto grad = new float[24];
   lite::tensor::Tensor grad_tensor(TypeId::kNumberTypeFloat32, dim_y);
   grad_tensor.SetData(grad);
-  std::vector<lite::tensor::Tensor *> outputs = {&grad_tensor, &loss_tensor};
+  std::vector<lite::tensor::Tensor *> outputs = {&loss_tensor, &grad_tensor};
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SoftmaxCrossEntropy};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

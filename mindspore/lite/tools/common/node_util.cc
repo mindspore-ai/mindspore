@@ -25,6 +25,10 @@
 namespace mindspore {
 namespace lite {
 static const std::vector<schema::PrimitiveType> nhwcOpList = {
+#ifdef SUPPORT_TRAIN
+  schema::PrimitiveType_Conv2DGradFilter, schema::PrimitiveType_Conv2DGradInput,
+  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_BiasGrad,
+#endif
   schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
   schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
   schema::PrimitiveType_Pooling,         schema::PrimitiveType_Resize,

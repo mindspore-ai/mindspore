@@ -20,11 +20,11 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int ActivationGrad::GetType() const { return this->primitive_->value.AsActivationGrad()->type; }
-
+float ActivationGrad::GetAlpha() const { return this->primitive_->value.AsActivationGrad()->alpha; }
 void ActivationGrad::SetType(int type) {
-  this->primitive_->value.AsActivationGrad()->type = (schema::ActivationGradType)type;
+  this->primitive_->value.AsActivationGrad()->type = (schema::ActivationType)type;
 }
-
+void ActivationGrad::SetAlpha(float alpha) { this->primitive_->value.AsActivationGrad()->alpha = alpha; }
 #else
 int ActivationGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -40,7 +40,7 @@ int ActivationGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flat
   return RET_OK;
 }
 int ActivationGrad::GetType() const { return this->primitive_->value_as_ActivationGrad()->type(); }
-
+float ActivationGrad::GetAlpha() const { return this->primitive_->value_as_ActivationGrad()->alpha(); }
 #endif
 }  // namespace lite
 }  // namespace mindspore

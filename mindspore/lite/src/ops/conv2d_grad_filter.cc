@@ -105,5 +105,47 @@ int Conv2DGradFilter::GetActivationType() const {
 }
 
 #endif
+
+int Conv2DGradFilter::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+  if (3 != inputs.size()) {
+    MS_LOG(ERROR) << "Conv2d Grad Filter should have 3 inputs";
+    return RET_ERROR;
+  }
+  if (1 != outputs.size()) {
+    MS_LOG(ERROR) << "Conv2d Grad Filter should have one output";
+    return RET_ERROR;
+  }
+
+  auto *in0 = inputs.at(0);
+  auto *in = inputs.at(2);
+  MS_ASSERT(out != nullptr);
+
+  std::vector<int> output_shape;
+  int *out_shape = reinterpret_cast<int *>(in->Data());
+  int new_size = in->ElementsNum();
+  if (in0->GetFormat() == in->GetFormat()) {
+    for (int i = 0; i < new_size; i++) output_shape.push_back(out_shape[i]);
+  } else {
+    if ((in0->GetFormat() == schema::Format_NHWC) && (in->GetFormat() == schema::Format_NCHW)) {
+      output_shape.push_back(out_shape[0]);
+      output_shape.push_back(out_shape[2]);
+      output_shape.push_back(out_shape[3]);
+      output_shape.push_back(out_shape[1]);
+    } else {
+      MS_LOG(ERROR) << "Shape covnert is not supported";
+      return RET_ERROR;
+    }
+  }
+
+  auto *out = outputs.at(0);
+  MS_ASSERT(out != nullptr);
+
+  out->set_shape(output_shape);
+  out->set_data_type(in0->data_type());
+  out->SetFormat(in0->GetFormat());
+
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore

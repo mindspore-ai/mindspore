@@ -21,6 +21,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/common/file_utils_ext.h"
+#include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/convolution_grad_filter.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/convolution_grad_input.h"
 #include "mindspore/lite/nnacl/conv_parameter.h"
@@ -130,11 +131,14 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
 
   EXPECT_EQ(res, 0);
 
-  // delete input_data;
-  // delete dy_data;
-  // delete [] dw_data;
+  delete [] input_data;
+  delete [] dy_data;
+  delete [] dw_data;
   delete kernel;
-  delete conv_param;
+  // delete conv_param;
+  dw_tensor.SetData(nullptr);
+  x_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -193,9 +197,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   std::string output_path = "./test_data/conv/convfp32_dx_1_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
-
+  delete [] dx_data;
+  delete [] w_data;
+  delete [] dy_data;
+  w_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
+  dx_tensor.SetData(nullptr);
   delete kernel;
-  delete conv_param;
+  // delete conv_param;
+
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -254,11 +264,14 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   auto res = lite::CompareRelativeOutput(dw_data, output_path);
   EXPECT_EQ(res, 0);
 
-  // delete input_data;
-  // delete dy_data;
-  // delete [] dw_data;
+  delete [] input_data;
+  delete [] dy_data;
+  delete [] dw_data;
+  dw_tensor.SetData(nullptr);
+  x_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
   delete kernel;
-  delete conv_param;
+  // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -317,9 +330,15 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   std::string output_path = "./test_data/conv/convfp32_dx_g3_1_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
+  delete [] dx_data;
+  delete [] w_data;
+  delete [] dy_data;
+  dx_tensor.SetData(nullptr);
+  w_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
 
   delete kernel;
-  delete conv_param;
+  // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -378,11 +397,14 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   std::string output_path = "./test_data/conv/convfp32_dw_g3_d2_18_3_3_3.bin";
   auto res = lite::CompareRelativeOutput(dw_data, output_path);
   EXPECT_EQ(res, 0);
-  // delete input_data;
-  // delete dy_data;
-  // delete [] dw_data;
+  delete [] input_data;
+  delete [] dy_data;
+  delete [] dw_data;
+  dw_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
+  x_tensor.SetData(nullptr);
   delete kernel;
-  delete conv_param;
+  // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -441,80 +463,93 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   std::string output_path = "./test_data/conv/convfp32_dx_g3_d2_1_28_28_3.bin";
   auto res = lite::CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
-
+  delete [] dx_data;
+  delete [] w_data;
+  delete [] dy_data;
+  dx_tensor.SetData(nullptr);
+  dy_tensor.SetData(nullptr);
+  w_tensor.SetData(nullptr);
   delete kernel;
-  delete conv_param;
+  // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
-// TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
-//   // prepare stage
-//   auto conv_param = new ConvParameter();
-//   InitConvParamGroup3Dilation2FP32(conv_param);
+TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
+  // prepare stage
+  auto conv_param = new ConvParameter();
+  InitConvParamGroup3Dilation2FP32(conv_param);
 
-//   size_t x_size;
-//   std::string x_path = "./test_data/conv/convfp32_x_g3_d2_1_28_28_3.bin";
-//   auto x_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(x_path.c_str(), &x_size));
-//   std::vector<int> dim_x({1, 28, 28, 3});
-//   tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
-//   x_tensor.SetData(x_data);
+  size_t x_size;
+  std::string x_path = "./test_data/conv/convfp32_x_g3_d2_1_28_28_3.bin";
+  auto x_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(x_path.c_str(), &x_size));
+  std::vector<int> dim_x({1, 28, 28, 3});
+  lite::tensor::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
+  x_tensor.SetData(x_data);
 
-//   size_t w_size;
-//   std::string w_path = "./test_data/conv/convfp32_w_g3_d2_18_3_3_3.bin";
-//   auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
-//   std::vector<int> dim_w({18, 3, 3, 1});
-//   tensor::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_w);
-//   w_tensor.SetData(w_data);
+  size_t w_size;
+  std::string w_path = "./test_data/conv/convfp32_w_g3_d2_18_3_3_3.bin";
+  auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
+  std::vector<int> dim_w({18, 3, 3, 1});
+  lite::tensor::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_w);
+  w_tensor.SetData(w_data);
 
-//   size_t output_data_size =
-//     conv_param->output_batch_ * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
-//   auto y_data = new float[output_data_size];
-//   std::vector<int> dim_y({1, 26, 26, 18});
-//   tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
-//   y_tensor.SetData(y_data);
+  size_t output_data_size =
+    conv_param->output_batch_ * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
+  auto y_data = new float[output_data_size];
+  std::vector<int> dim_y({1, 26, 26, 18});
+  lite::tensor::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
+  y_tensor.SetData(y_data);
 
-//   std::vector<tensor::Tensor *> inputs = {&x_tensor, &w_tensor};
-//   std::vector<tensor::Tensor *> outputs = {&y_tensor};
-//   // runtime part
+  std::vector<lite::tensor::Tensor *> inputs = {&x_tensor, &w_tensor};
+  std::vector<lite::tensor::Tensor *> outputs = {&y_tensor};
+  // runtime part
 
-//   printf("Calculating runtime cost...\n");
-//   uint64_t time_avg = 0;
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
 
-//   lite::Context context;
-//   ;
-//   context.deviceCtx.type = lite::DT_CPU;
-//   context.threadNum = 1;
+  lite::Context context;
+  context.device_ctx_.type = lite::DT_CPU;
+  context.thread_num_ = 1;
 
-//   kernel::KernelKey desc = {kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2D};
-//   auto creator = lite::KernelRegistry::GetInstance()->GetKernelCreator(desc);
-//   auto kernel = creator(inputs, outputs, (OpParameter *)conv_param, &context, desc);
 
-//   kernel->train();
-//   EXPECT_EQ(kernel->is_train(), 1);
+  auto *kernel = new mindspore::kernel::ConvolutionTrainCPUKernel(reinterpret_cast<OpParameter *>(conv_param),
+   inputs, outputs, &context, 0);
+  kernel->Init();
+  // kernel::KernelKey desc = {kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2D};
+  // auto creator = lite::KernelRegistry::GetInstance()->GetKernelCreator(desc);
+  // auto kernel = creator(inputs, outputs, (OpParameter *)conv_param, &context, desc);
 
-//   // warm up loop
-//   for (int i = 0; i < 3; i++) {
-//     kernel->Run();
-//   }
+  kernel->train();
+  EXPECT_EQ(kernel->is_train(), 1);
 
-//   int loop_count = 100;
-//   auto time_start = mindspore::lite::GetTimeUs();
-//   for (int i = 0; i < loop_count; i++) {
-//     kernel->Run();
-//   }
-//   auto time_end = mindspore::lite::GetTimeUs();
-//   auto cost = time_end - time_start;
-//   time_avg = cost / loop_count;
-//   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
+  // warm up loop
+  for (int i = 0; i < 3; i++) {
+    kernel->Run();
+  }
 
-//   std::string output_path = "./test_data/conv/convfp32_y_g3_d2_1_26_26_18.bin";
-//   auto res = lite::CompareRelativeOutput(y_data, output_path);
-//   EXPECT_EQ(res, 0);
+  int loop_count = 100;
+  auto time_start = mindspore::lite::GetTimeUs();
+  for (int i = 0; i < loop_count; i++) {
+    kernel->Run();
+  }
+  auto time_end = mindspore::lite::GetTimeUs();
+  auto cost = time_end - time_start;
+  time_avg = cost / loop_count;
+  printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-//   delete kernel;
-//   delete conv_param;
+  std::string output_path = "./test_data/conv/convfp32_y_g3_d2_1_26_26_18.bin";
+  auto res = lite::CompareRelativeOutput(y_data, output_path);
+  EXPECT_EQ(res, 0);
 
-//   MS_LOG(INFO) << "TestConvolutionFp32 Filter Grad passed";
-// }
+  delete [] y_data;
+  delete [] x_data;
+  delete [] w_data;
+  x_tensor.SetData(nullptr);
+  y_tensor.SetData(nullptr);
+  w_tensor.SetData(nullptr);
+  delete kernel;
+
+  MS_LOG(INFO) << "TestConvolutionFp32 Filter Grad passed";
+}
 
 }  // namespace mindspore

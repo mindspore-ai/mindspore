@@ -48,6 +48,32 @@ std::vector<int> BiasGrad::GetAxis() const {
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
 
+int BiasGrad::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+  if (1 != inputs.size()) {
+    MS_LOG(ERROR) << "BiasGrad should have one input";
+    return RET_ERROR;
+  }
+  if (1 != outputs.size()) {
+    MS_LOG(ERROR) << "BiasGrad should have one output";
+    return RET_ERROR;
+  }
+  auto *in0 = inputs.front();
+  auto *out = outputs.front();
+  MS_ASSERT(in0 != nullptr);
+  MS_ASSERT(out != nullptr);
+  auto inshape = in0->shape();
+  int ndim = inshape.size();
+  for (int i = 0; i < ndim - 1; i++) {
+    inshape[i] = 1;
+  }
+  out->set_shape(inshape);
+  out->set_data_type(in0->data_type());
+  out->SetFormat(in0->GetFormat());
+
+  return RET_OK;
+}
+
+
 #endif
 }  // namespace lite
 }  // namespace mindspore

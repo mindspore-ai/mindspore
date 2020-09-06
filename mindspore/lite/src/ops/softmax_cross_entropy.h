@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_SOFTMAX_CROSS_ENTROPY_H_
-#define LITE_MINDSPORE_LITE_C_OPS_SOFTMAX_CROSS_ENTROPY_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_SOFTMAX_CROSS_ENTROPY_H_
+#define MINDSPORE_LITE_SRC_OPS_SOFTMAX_CROSS_ENTROPY_H_
 
 #include <vector>
 #include <set>
@@ -39,9 +39,11 @@ class SoftmaxCrossEntropy : public PrimitiveC {
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
+
   std::vector<int> GetAxis() const;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_SOFTMAX_CROSS_ENTROPY_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_SOFTMAX_CROSS_ENTROPY_H_

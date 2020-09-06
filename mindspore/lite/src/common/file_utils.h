@@ -47,7 +47,7 @@ void WriteToTxt(const std::string& file_path, void *data, size_t element_size) {
 int WriteToBin(const std::string& file_path, void *data, size_t size);
 
 int CompareOutputData(float *output_data, float *correct_data, int data_size);
-void CompareOutput(float *output_data, std::string file_path);
+int  CompareOutput(float *output_data, std::string file_path);
 
 std::string GetAndroidPackageName();
 std::string GetAndroidPackagePath();

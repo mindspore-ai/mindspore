@@ -33,30 +33,24 @@ int ConvolutionGradFilterCPUKernel::Init() {
   // x is in input 1
   // dw is output 0
 
-  if (2 != this->inputs_.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad should has 2 inputs";
-    return RET_ERROR;
-  }
-  if (1 != this->outputs_.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad should has one output";
-    return RET_ERROR;
-  }
-
-  auto *input_tensor = inputs_.at(1);
-  MS_ASSERT(input_tensor != nullptr);
-  auto *dy = inputs_.at(0);
-  MS_ASSERT(dy != nullptr);
-  auto *weight_tensor = outputs_.at(0);
+  auto *x_tensor = in_tensors_.at(1);
+  MS_ASSERT(x_tensor != nullptr);
+  auto *dy_tensor = in_tensors_.at(0);
+  MS_ASSERT(dy_tensor != nullptr);
+  auto *weight_tensor = out_tensors_.at(0);
   MS_ASSERT(weight_tensor != nullptr);
 
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  conv_param->output_batch_ = this->inputs_.at(0)->shape().at(kNHWC_N);
-  conv_param->input_batch_ = this->inputs_.at(1)->shape().at(kNHWC_N);
-  conv_param->input_h_ = this->inputs_.at(1)->shape().at(kNHWC_H);
-  conv_param->input_w_ = this->inputs_.at(1)->shape().at(kNHWC_W);
-  // assume OutCh|kh|kw|In
-  conv_param->input_channel_ = this->inputs_.at(1)->shape().at(kNHWC_C);
-  conv_param->output_channel_ = this->outputs_.at(0)->shape().at(kNHWC_N);
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
+  conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
+  conv_param->input_h_ = x_tensor->shape().at(kNHWC_H);
+  conv_param->input_w_ = x_tensor->shape().at(kNHWC_W);
+  // assume OutCh|kh|kw|InCh
+  conv_param->input_channel_ = x_tensor->shape().at(kNHWC_C);
+  conv_param->output_channel_ = dy_tensor->shape().at(kNHWC_C);
+  // TBD
+  conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
+  conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
   int ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
                 conv_param->input_channel_ / conv_param->group_;
@@ -67,34 +61,21 @@ int ConvolutionGradFilterCPUKernel::Init() {
     return RET_ERROR;
   }
 
-  int output_w = 0;
-  int output_h = 0;
-  output_h = dy->shape()[kNHWC_H];
-  output_w = dy->shape()[kNHWC_W];
-
-  std::vector<int> out_shape(4);
-  out_shape.at(0) = conv_param->output_channel_;
-  out_shape.at(1) = conv_param->kernel_h_;
-  out_shape.at(2) = conv_param->kernel_w_;
-  out_shape.at(3) = conv_param->input_channel_ / conv_param->group_;
-
-  // weight is output
-  weight_tensor->set_shape(out_shape);
-  weight_tensor->set_data_type(input_tensor->data_type());
-
-  conv_param->output_h_ = output_h;
-  conv_param->output_w_ = output_w;
-
   return RET_OK;
 }
 
-int ConvolutionGradFilterCPUKernel::ReSize() { return 0; }
+int ConvolutionGradFilterCPUKernel::ReSize() { return RET_OK; }
 
 int ConvolutionGradFilterCPUKernel::Run() {
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  auto *input_dy = inputs_.at(0);
-  auto *input_x = inputs_.at(1);
-  auto *out_dw = outputs_.at(0);
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  auto *input_dy = in_tensors_.at(0);
+  auto *input_x = in_tensors_.at(1);
+  auto *out_dw = out_tensors_.at(0);
 
   auto x_addr = reinterpret_cast<float *>(input_x->Data());
   auto dy_addr = reinterpret_cast<float *>(input_dy->Data());
@@ -135,7 +116,48 @@ int ConvolutionGradFilterCPUKernel::Run() {
   // std::cout << "run succ" << std::endl;
   return RET_OK;
 }
+#if 0
+OpParameter *PopulateConvolutionGradFilterParameter(const lite::Primitive *primitive) {
+  ConvParameter *param = new (std::nothrow) ConvParameter();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
+    return nullptr;
+  }
+  param->op_parameter_.type_ = primitive->Type();
 
+  auto convg_primitive = primitive->Value()->value_as_Conv2DGradFilter();
+  param->kernel_h_ = convg_primitive->kernelH();
+  param->kernel_w_ = convg_primitive->kernelW();
+  param->stride_h_ = convg_primitive->strideH();
+  param->stride_w_ = convg_primitive->strideW();
+  param->dilation_h_ = convg_primitive->dilateH();
+  param->dilation_w_ = convg_primitive->dilateW();
+  param->pad_h_ = convg_primitive->padUp();
+  param->pad_w_ = convg_primitive->padLeft();
+  param->pad_u_ = convg_primitive->padUp();
+  param->pad_d_ = convg_primitive->padDown();
+  param->pad_l_ = convg_primitive->padLeft();
+  param->pad_r_ = convg_primitive->padRight();
+  param->group_ = convg_primitive->group();
+  auto act_type = convg_primitive->activationType();
+  switch (act_type) {
+    case schema::ActivationType_RELU:
+      param->is_relu_ = true;
+      param->is_relu6_ = false;
+      break;
+    case schema::ActivationType_RELU6:
+      param->is_relu_ = false;
+      param->is_relu6_ = true;
+      break;
+    default:
+      param->is_relu_ = false;
+      param->is_relu6_ = false;
+      break;
+  }
+
+  return reinterpret_cast<OpParameter *>(param);
+}
+#endif
 kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                        const std::vector<lite::tensor::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::Context *ctx,

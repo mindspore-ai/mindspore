@@ -51,5 +51,31 @@ int SoftmaxCrossEntropy::UnPackToFlatBuilder(const schema::Primitive *primitive,
   return RET_OK;
 }
 #endif
+
+int SoftmaxCrossEntropy::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) {
+  if (1 > outputs.size()) {
+    MS_LOG(ERROR) << "SoftmaxCrossEntropy should have at least one output";
+    return RET_ERROR;
+  }
+  auto *in0 = inputs.front();
+  MS_ASSERT(in0 != nullptr);
+  auto *out = outputs.front();
+  MS_ASSERT(out != nullptr);
+
+  std::vector<int> outshape;
+  outshape.push_back(1);
+  out->set_shape(outshape);
+  out->set_data_type(in0->data_type());
+
+  if (1 < outputs.size()) {
+    auto *grads = outputs.at(1);
+    MS_ASSERT(grads != nullptr);
+    grads->set_shape(in0->shape());
+    grads->set_data_type(in0->data_type());
+    grads->SetFormat(in0->GetFormat());
+  }
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore

@@ -125,6 +125,21 @@
 #ifdef PRIMITIVE_WRITEABLE
 #include "tools/converter/quantizer/quantize_util.h"
 #endif
+
+#ifdef SUPPORT_TRAIN
+#include "src/ops/activation_grad.h"
+#include "src/ops/apply_momentum.h"
+#include "src/ops/bias_grad.h"
+#include "src/ops/pooling_grad.h"
+#include "src/ops/conv2d_grad_filter.h"
+#include "src/ops/conv2d_grad_input.h"
+#include "src/ops/power_grad.h"
+#include "src/ops/softmax_cross_entropy.h"
+#include "src/ops/bn_grad.h"
+#include "src/ops/arithmetic_grad.h"
+#endif
+
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -353,6 +368,22 @@ std::shared_ptr<PrimitiveC> PrimitiveC::UnPackFromPrimitive(const Primitive &pri
     return NewPrimitiveC<TupleGetItem>(prim, inputs, quantType);
   } else if (op_type == "Softmax") {
     return NewPrimitiveC<SoftMax>(prim, inputs, quantType);
+#ifdef SUPPORT_TRAIN0
+  } else if ((op_type == "ReluGrad" || op_type == "Relu6Grad" || op_type == "SigmoidGrad")) {
+    return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
+  } else if ((op_type == "MaxPoolGrad") || (op_type == "MeanPoolGrad")) {
+    return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
+  } else if (op_type == "Conv2DBackpropFilter") {
+    return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
+  } else if (op_type == "Conv2DBackpropInput") {
+    return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
+  } else if (op_type == "BiasAddGrad") {
+    return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
+  } else if (op_type == "ApplyMomentum") {
+    return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
+  } else if (op_type == "BatchNormGrad") {
+    return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
+#endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromPrimitive : " << op_type;
     return nullptr;
@@ -565,6 +596,32 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new SparseToDense(primitive);
     case schema::PrimitiveType_DetectionPostProcess:
       return new DetectionPostProcess(primitive);
+
+#ifdef SUPPORT_TRAIN
+    case schema::PrimitiveType_ActivationGrad:
+      return new ActivationGrad(primitive);
+    case schema::PrimitiveType_PoolingGrad:
+      return new PoolingGrad(primitive);
+    case schema::PrimitiveType_Conv2DGradFilter:
+      return new Conv2DGradFilter(primitive);
+    case schema::PrimitiveType_Conv2DGradInput:
+      return new Conv2DGradInput(primitive);
+    case schema::PrimitiveType_BiasGrad:
+      return new BiasGrad(primitive);
+    case schema::PrimitiveType_ApplyMomentum:
+      return new ApplyMomentum(primitive);
+    case schema::PrimitiveType_BNGrad:
+      return new BNGrad(primitive);
+    case schema::PrimitiveType_AddGrad:
+      return new ArithmeticGrad(primitive);
+    case schema::PrimitiveType_SubGrad:
+      return new ArithmeticGrad(primitive);
+    case schema::PrimitiveType_MulGrad:
+      return new ArithmeticGrad(primitive);
+    case schema::PrimitiveType_DivGrad:
+      return new ArithmeticGrad(primitive);
+#endif
+
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitiveT : "
                     << schema::EnumNamePrimitiveType(op_type);
@@ -779,6 +836,31 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitive(const schema::Primitive *primi
       return NewPrimitiveC<SparseToDense>(primitive);
     case schema::PrimitiveType_DetectionPostProcess:
       return NewPrimitiveC<DetectionPostProcess>(primitive);
+
+#ifdef SUPPORT_TRAIN
+    case schema::PrimitiveType_ActivationGrad:
+      return NewPrimitiveC<ActivationGrad>(primitive);
+    case schema::PrimitiveType_PoolingGrad:
+      return NewPrimitiveC<PoolingGrad>(primitive);
+    case schema::PrimitiveType_Conv2DGradFilter:
+      return NewPrimitiveC<Conv2DGradFilter>(primitive);
+    case schema::PrimitiveType_Conv2DGradInput:
+      return NewPrimitiveC<Conv2DGradInput>(primitive);
+    case schema::PrimitiveType_BiasGrad:
+      return NewPrimitiveC<BiasGrad>(primitive);
+    case schema::PrimitiveType_ApplyMomentum:
+      return NewPrimitiveC<ApplyMomentum>(primitive);
+    case schema::PrimitiveType_BNGrad:
+      return NewPrimitiveC<BNGrad>(primitive);
+    case schema::PrimitiveType_AddGrad:
+      return NewPrimitiveC<ArithmeticGrad>(primitive);
+    case schema::PrimitiveType_SubGrad:
+      return NewPrimitiveC<ArithmeticGrad>(primitive);
+    case schema::PrimitiveType_MulGrad:
+      return NewPrimitiveC<ArithmeticGrad>(primitive);
+    case schema::PrimitiveType_DivGrad:
+     return NewPrimitiveC<ArithmeticGrad>(primitive);
+#endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromSchemaPrimitive : "
                     << schema::EnumNamePrimitiveType(op_type);

@@ -110,6 +110,7 @@ int CompareOutputData(float *output_data, float *correct_data, int data_size) {
     }
   }
   error /= data_size;
+
   if (error > 0.0001) {
     printf("has accuracy error!\n");
     printf("%f\n", error);
@@ -118,12 +119,14 @@ int CompareOutputData(float *output_data, float *correct_data, int data_size) {
   return 0;
 }
 
-void CompareOutput(float *output_data, std::string file_path) {
+int  CompareOutput(float *output_data, std::string file_path) {
   size_t output_size;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
   printf("output num : %zu\n", output_num);
-  CompareOutputData(output_data, ground_truth, output_num);
+  int res = CompareOutputData(output_data, ground_truth, output_num);
+  delete [] ground_truth;
+  return res;
 }
 }  // namespace lite
 }  // namespace mindspore

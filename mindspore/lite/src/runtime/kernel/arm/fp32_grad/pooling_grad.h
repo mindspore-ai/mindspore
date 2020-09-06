@@ -43,6 +43,7 @@ class PoolingGradCPUKernel : public LiteKernel {
  private:
   uint8_t data_shape_{0};
 };
+
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_POOLING_GRAD_H_

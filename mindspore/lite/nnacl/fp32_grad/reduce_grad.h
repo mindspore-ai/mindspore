@@ -17,8 +17,7 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_REDUCE_GRAD_H_
 #define MINDSPORE_LITE_NNACL_FP32_REDUCE_GRAD_H_
 
-#include <cstddef.h>
-#include <algorithm.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

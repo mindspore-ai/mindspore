@@ -20,6 +20,7 @@
 #include "nnacl/fp32/pooling.h"
 #include "nnacl/fp32_grad/pooling_grad.h"
 #include "include/errorcode.h"
+// #include "src/train/ops/train_ops.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -29,9 +30,15 @@ using mindspore::schema::PrimitiveType_PoolingGrad;
 
 namespace mindspore::kernel {
 int PoolingGradCPUKernel::Init() {
-  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(opParameter);
+  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
 
-  auto in_shape = inputs_.at(0)->shape();
+  auto in_shape = in_tensors_.at(0)->shape();
+  auto out_shape = in_tensors_.at(1)->shape();
+
+  if (pool_param->pool_mode_ == PoolMode_AvgPool) {
+    in_shape = in_tensors_.at(1)->shape();
+    out_shape = in_tensors_.at(0)->shape();
+  }
   int input_h = in_shape.at(1);
   int input_w = in_shape.at(2);
 
@@ -40,25 +47,39 @@ int PoolingGradCPUKernel::Init() {
     pool_param->window_h_ = input_h;
   }
 
-  // Emir -- here I assume we get the outputshape in the output tensor
-  auto *out_tensor = outputs_.front();
-  auto out_shape = out_tensor->shape();
+  pool_param->input_h_ = in_shape[kNHWC_H];
+  pool_param->input_w_ = in_shape[kNHWC_W];
+  pool_param->input_batch_ = in_shape[kNHWC_N];
+  pool_param->input_channel_ = in_shape[kNHWC_C];
 
-  out_tensor->set_shape(out_shape);
-  out_tensor->set_data_type(inputs_.at(0)->data_type());
+  // Emir -- here I assume we get the outputshape in the output tensor
+  // auto *out_tensor = out_tensors_.front();
+  // auto out_shape = in_tensors_.at(1)->shape();
+
+  pool_param->output_h_ = out_shape[kNHWC_H];
+  pool_param->output_w_ = out_shape[kNHWC_W];
+  pool_param->output_batch_ = out_shape[kNHWC_N];
+  pool_param->output_channel_ = out_shape[kNHWC_C];
+
   return RET_OK;
 }
 
 int PoolingGradCPUKernel::ReSize() { return RET_OK; }
 
 int PoolingGradCPUKernel::Run() {
-  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(opParameter);
-  auto input_ptr = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto output_ptr = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto prepare_ret = Prepare();
+  if (prepare_ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
+    return prepare_ret;
+  }
+  PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
 
   if (pool_param->pool_mode_ == PoolMode_MaxPool) {
-    auto ind = reinterpret_cast<int *>(inputs_.at(1)->Data());
-    MaxPoolingGrad(input_ptr, ind, output_ptr, pool_param);
+    auto dx_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
+    auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->Data());
+    MaxPoolingGrad(input_ptr, dx_ptr, dy_ptr, output_ptr, pool_param);
   } else {
     AvgPoolingGrad(input_ptr, output_ptr, pool_param);
   }

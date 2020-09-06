@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_DE_DEPTHWISE_CONV2_D_H_
-#define LITE_MINDSPORE_LITE_C_OPS_DE_DEPTHWISE_CONV2_D_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_DEDEPTHWISE_CONV2D_H_
+#define MINDSPORE_LITE_SRC_OPS_DEDEPTHWISE_CONV2D_H_
 
 #include <vector>
 #include <set>
@@ -84,4 +84,4 @@ class DeDepthwiseConv2D : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_DE_DEPTHWISE_CONV2_D_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_DEDEPTHWISE_CONV2D_H_
