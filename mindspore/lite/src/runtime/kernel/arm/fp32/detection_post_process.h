@@ -33,7 +33,7 @@ class DetectionPostProcessCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     param_ = reinterpret_cast<DetectionPostProcessCPUKernel *>(parameter);
   }
-  ~DetectionPostProcessCPUKernel() override = default;
+  ~DetectionPostProcessCPUKernel() override;
 
   int Init() override;
   int ReSize() override;

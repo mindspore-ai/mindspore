@@ -426,7 +426,15 @@ build_flatbuffer() {
     cd ${BASEPATH}
     FLATC="${BASEPATH}"/third_party/flatbuffers/build/flatc
     if [[ ! -f "${FLATC}" ]]; then
-        git submodule update --init --recursive third_party/flatbuffers
+        if [[ ${MSLIBS_SERVER} ]]; then
+            cd "${BASEPATH}"/third_party/
+            rm -rf ./v1.11.0.tar.gz ./flatbuffers
+            wget http://${MSLIBS_SERVER}:8081/libs/flatbuffers/v1.11.0.tar.gz
+            tar -zxvf ./v1.11.0.tar.gz
+            mv ./flatbuffers-1.11.0 ./flatbuffers
+        else
+            git submodule update --init --recursive third_party/flatbuffers
+        fi
         cd ${BASEPATH}/third_party/flatbuffers
         rm -rf build && mkdir -pv build && cd build && cmake -DFLATBUFFERS_BUILD_SHAREDLIB=ON .. && make -j$THREAD_NUM
         gene_flatbuffer
@@ -447,7 +455,15 @@ build_protobuf() {
     cd ${BASEPATH}
     PROTOC="${BASEPATH}"/third_party/protobuf/build/bin/protoc
     if [[ ! -f "${PROTOC}" ]]; then
-        git submodule update --init --recursive third_party/protobuf
+        if [[ ${MSLIBS_SERVER} ]]; then
+            cd "${BASEPATH}"/third_party/
+            rm -rf ./v3.8.0.tar.gz ./protobuf
+            wget http://${MSLIBS_SERVER}:8081/libs/protobuf/v3.8.0.tar.gz
+            tar -zxvf ./v3.8.0.tar.gz
+            mv ./protobuf-3.8.0 ./protobuf
+        else
+            git submodule update --init --recursive third_party/protobuf
+        fi
         cd ${BASEPATH}/third_party/protobuf
         rm -rf build && mkdir -pv build && ./autogen.sh
         ./configure --prefix=${BASEPATH}/third_party/protobuf/build
@@ -584,7 +600,7 @@ build_lite()
     fi
     build_flatbuffer
     build_gtest
-
+    
     if [ "${COMPILE_MINDDATA_LITE}" == "lite" ] || [ "${COMPILE_MINDDATA_LITE}" == "full" ]; then
         build_minddata_lite_deps
     fi
