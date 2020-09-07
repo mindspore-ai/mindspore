@@ -88,7 +88,7 @@ rank_start=$((DEVICE_NUM * SERVER_ID))
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do
-    export DEVICE_ID=$i
+    export DEVICE_ID=${i}
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
