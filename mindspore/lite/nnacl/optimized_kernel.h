@@ -57,7 +57,7 @@ class OptimizeModule {
     }
 #endif
 #endif
-    if ((!support_optimize_ops) && (!support_fp16)) {
+    if (!(support_optimize_ops && support_fp16)) {
       return;
     }
 #ifndef _WIN32
