@@ -57,7 +57,7 @@ int AnfConverter::ValidateFileStr(const std::string &modelFile, std::string file
 
 bool AnfConverter::ReadOnnxFromBinary(const std::string &modelFile, google::protobuf::Message *onnx_model) {
   std::unique_ptr<char> onnx_file(new (std::nothrow) char[PATH_MAX]{0});
-  int fd = open(onnx_file.get(), O_RDONLY);
+  int fd = open(modelFile.c_str(), O_RDONLY);
   if (fd < 0) {
     MS_LOG(EXCEPTION) << "failed to open file";
   }

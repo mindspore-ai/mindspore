@@ -52,18 +52,17 @@ class MSANFModelParser {
   bool GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
                                  const onnx::TensorProto &attr_tensor);
-  bool ObtainCNodeAttrInScalarForm(const PrimitivePtr &prim, const std::string &attr_name,
-                                   const onnx::TensorProto &attr_tensor);
+  ValuePtr ObtainCNodeAttrInScalarForm(const onnx::TensorProto &attr_tensor);
   bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
                                    const onnx::TensorProto &attr_tensor);
   bool BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto);
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
 
   bool ObtainValueNodeInScalarForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
-  bool GetAttrValueForValueNode(const string &ref_attr_name, const std::string &value_node_name,
-                                const onnx::TensorProto &attr_tensor);
+  bool GetAttrValueForValueNode(const std::string &value_node_name, const onnx::AttributeProto &attr_tensor);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
-  AbstractBasePtr GetAbstractForCNode(const onnx::AttributeProto &attr_proto);
+  std::unordered_map<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
+    const onnx::AttributeProto &attr_proto);
 
   std::string producer_name_;
   int model_version_;
