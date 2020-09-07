@@ -91,6 +91,7 @@ int DetectionPostProcessCPUKernel::Run() {
   if (parameter->use_regular_nms_) {
     parameter->score_with_class_all_ =
       context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(ScoreWithIndex));
+    parameter->indexes_ = context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(int));
   } else {
     parameter->score_with_class_all_ =
       context_->allocator->Malloc((num_boxes * parameter->num_classes_) * sizeof(ScoreWithIndex));
@@ -102,6 +103,9 @@ int DetectionPostProcessCPUKernel::Run() {
   context_->allocator->Free(parameter->selected_);
   context_->allocator->Free(parameter->score_with_class_);
   context_->allocator->Free(parameter->score_with_class_all_);
+  if (parameter->use_regular_nms_) {
+    context_->allocator->Free(parameter->indexes_);
+  }
   return RET_OK;
 }
 

@@ -27,7 +27,7 @@ int ScoreWithIndexCmp(const void *a, const void *b) {
   } else if (pa->score < pb->score) {
     return 1;
   } else {
-    return 0;
+    return pa->index - pb->index;
   }
 }
 
@@ -108,6 +108,7 @@ int NmsMultiClassesRegular(const int num_boxes, const int num_classes_with_bg, c
   int all_classes_sorted_num = 0;
   int all_classes_output_num = 0;
   ScoreWithIndex *score_with_index_all = (ScoreWithIndex *)(param->score_with_class_all_);
+  int *indexes = (int *)(param->indexes_);
   for (int j = first_class_index; j < num_classes_with_bg; ++j) {
     int candidate_num = 0;
     // process single class
@@ -120,15 +121,23 @@ int NmsMultiClassesRegular(const int num_boxes, const int num_classes_with_bg, c
     }
     int selected_num = NmsSingleClass(candidate_num, decoded_boxes, param->detections_per_class_,
                                       score_with_index_single, selected, param);
+    for (int i = 0; i < all_classes_sorted_num; ++i) {
+      indexes[i] = score_with_index_all[i].index;
+      score_with_index_all[i].index = i;
+    }
     // process all classes
     for (int i = 0; i < selected_num; ++i) {
       // store class to index
-      score_with_index_all[all_classes_sorted_num].index = selected[i] * num_classes_with_bg + j;
+      indexes[all_classes_sorted_num] = selected[i] * num_classes_with_bg + j;
+      score_with_index_all[all_classes_sorted_num].index = all_classes_sorted_num;
       score_with_index_all[all_classes_sorted_num++].score = input_scores[selected[i] * num_classes_with_bg + j];
     }
     all_classes_output_num =
       all_classes_sorted_num < param->max_detections_ ? all_classes_sorted_num : param->max_detections_;
     qsort(score_with_index_all, all_classes_sorted_num, sizeof(ScoreWithIndex), ScoreWithIndexCmp);
+    for (int i = 0; i < all_classes_output_num; ++i) {
+      score_with_index_all[i].index = indexes[score_with_index_all[i].index];
+    }
     all_classes_sorted_num = all_classes_output_num;
   }
   for (int i = 0; i < param->max_detections_ * param->max_classes_per_detection_; ++i) {
