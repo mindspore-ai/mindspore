@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BIAS_GRAD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BIAS_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BIAS_GRAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BIAS_GRAD_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -35,7 +35,6 @@ class BiasGradCPUKernel : public LiteKernel {
   ~BiasGradCPUKernel() override = default;
 
   int Init() override;
-  int InferShape();
   int ReSize() override;
   int Run() override;
 
@@ -44,4 +43,4 @@ class BiasGradCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BIAS_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BIAS_GRAD_H_

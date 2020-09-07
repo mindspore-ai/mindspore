@@ -18,8 +18,8 @@
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/bias_grad.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "src/runtime/kernel/arm/fp32_grad/bias_grad.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore {
 
@@ -40,9 +40,8 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   dy_tensor.SetData(input_data);
 
   std::vector<lite::tensor::Tensor *> inputs = {&dy_tensor};
-
   auto output_data = new float[7];
-  std::vector<int> dim_dw({7});
+  std::vector<int> dim_dw = {7};
   lite::tensor::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.SetData(output_data);
   std::vector<lite::tensor::Tensor *> outputs = {&dw_tensor};
@@ -62,9 +61,12 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   std::string output_path = "./test_data/operators/biasgradfp32_1_db_7.bin";
   lite::CompareOutput(output_data, output_path);
 
-  // delete input_data;
-  // delete[] output_data;
-  delete bias_param;
+  delete [] input_data;
+  delete[] output_data;
+  // delete bias_param;
+  dy_tensor.SetData(nullptr);
+  dw_tensor.SetData(nullptr);
+  delete kernel_obj;
   MS_LOG(INFO) << "BiasGradFp32 passed";
 }
 

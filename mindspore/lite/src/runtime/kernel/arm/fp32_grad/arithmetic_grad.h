@@ -40,7 +40,7 @@ class ArithmeticGradCPUKernel : public LiteKernel {
                                    const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                                    const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
-    switch (type()) {
+    switch (Type()) {
       case PrimitiveType_MulGrad:
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul;  // this will be adjusted in InferShape
         break;

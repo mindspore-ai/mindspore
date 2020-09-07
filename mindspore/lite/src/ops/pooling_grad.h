@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_POOLING_GRAD_H_
-#define LITE_MINDSPORE_LITE_C_OPS_POOLING_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_POOLING_GRAD_H_
+#define MINDSPORE_LITE_SRC_OPS_POOLING_GRAD_H_
 
 #include <vector>
 #include <set>
@@ -49,6 +49,7 @@ class PoolingGrad : public PrimitiveC {
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
+  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
   int GetFormat() const;
   int GetPoolingMode() const;
   bool GetGlobal() const;
@@ -62,8 +63,14 @@ class PoolingGrad : public PrimitiveC {
   int GetPadLeft() const;
   int GetPadRight() const;
   int GetRoundMode() const;
+
+ protected:
+  int pad_u_ = 0;
+  int pad_d_ = 0;
+  int pad_l_ = 0;
+  int pad_r_ = 0;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_POOLING_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_POOLING_GRAD_H_

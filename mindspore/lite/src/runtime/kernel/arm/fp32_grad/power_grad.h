@@ -45,6 +45,7 @@ class PowerGradCPUKernel : public LiteKernel {
   float scale_;
   float shift_;
 };
+
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_POWER_GRAD_H_

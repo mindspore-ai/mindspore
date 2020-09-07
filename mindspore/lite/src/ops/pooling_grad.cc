@@ -86,5 +86,52 @@ int PoolingGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuf
   return RET_OK;
 }
 #endif
+
+int PoolingGrad::InferShape(std::vector<tensor::Tensor *> inputs_, std::vector<tensor::Tensor *> outputs_) {
+  MS_ASSERT(this->primitive != nullptr);
+  auto input = inputs_.at(0);
+  MS_ASSERT(input != nullptr);
+  int input_h = input->shape().at(1);
+  int input_w = input->shape().at(2);
+
+  auto window_h = GetWindowH();
+  auto window_w = GetWindowW();
+  if (GetGlobal()) {
+    window_h = input_h;
+    window_w = input_w;
+  }
+
+  pad_l_ = GetPadLeft();
+  pad_u_ = GetPadUp();
+  pad_d_ = GetPadDown();
+  pad_r_ = GetPadRight();
+  if (GetPadMode() == schema::PadMode_SAME) {
+    int output_w = std::ceil(static_cast<float>(input_w) / static_cast<float>(GetStrideW()));
+    int output_h = std::ceil(static_cast<float>(input_h) / static_cast<float>(GetStrideH()));
+    auto pad_h_all = ((output_h - 1) * GetStrideH() + (window_h - 1) + 1 - input_h);
+    auto pad_w_all = ((output_w - 1) * GetStrideW() + (window_w - 1) + 1 - input_w);
+    if (pad_h_all < 0) {
+      pad_u_ = pad_d_ = 0;
+    } else {
+      pad_u_ = pad_h_all / 2;
+      pad_d_ = pad_h_all - pad_u_;
+    }
+    if (pad_w_all < 0) {
+      pad_l_ = pad_r_ = 0;
+    } else {
+      pad_l_ = pad_w_all / 2;
+      pad_r_ = pad_w_all - pad_l_;
+    }
+  }
+  auto grad_output = outputs_.at(0);
+  // todo: fmk type
+  auto output_shape = input->shape();
+  grad_output->set_shape(output_shape);
+  grad_output->set_data_type(input->data_type());
+  // todo: temp fix
+  grad_output->SetFormat(input->GetFormat());
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore

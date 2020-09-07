@@ -37,8 +37,8 @@ constexpr size_t kOutputNum = 1;
 }  // namespace
 
 int ReduceBaseCPUKernel::CheckInputsOutputs() {
-  if (in_tensors_.size() != kInputNum) {
-    MS_LOG(ERROR) << "Reduce inputs size should be " << kInputNum << " but got " << in_tensors_.size();
+  if (in_tensors_.size() < kInputNum) {
+    MS_LOG(ERROR) << "Reduce inputs size should be at least " << kInputNum << " but got " << in_tensors_.size();
     return RET_ERROR;
   }
   if (out_tensors_.size() != kOutputNum) {
@@ -99,7 +99,15 @@ int ReduceBaseCPUKernel::Init() {
   if (reduce_param == nullptr) {
     return RET_NULL_PTR;
   }
-  num_axes_ = reduce_param->num_axes_;
+  if (in_tensors_.size() > 1) {
+    auto axes_ptr = in_tensors_.at(1);
+    num_axes_ = axes_ptr->ElementsNum();
+    memcpy(axes_, axes_ptr->Data(), axes_ptr->Size());
+  } else {
+    num_axes_ = reduce_param->num_axes_;
+    memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
+  }
+
   mode_ = reduce_param->mode_;
   memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
   reduce_to_end_ = reduce_param->reduce_to_end_;

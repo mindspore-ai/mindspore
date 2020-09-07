@@ -31,10 +31,10 @@ int PowerGradCPUKernel::Init() { return RET_OK; }
 int PowerGradCPUKernel::ReSize() { return RET_OK; }
 
 int PowerGradCPUKernel::Run() {
-  auto dy_addr = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto x_addr = reinterpret_cast<float *>(inputs_.at(1)->Data());
-  auto dx_addr = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto size = inputs_.at(0)->ElementsNum();
+  auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
+  auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  auto size = in_tensors_.at(0)->ElementsNum();
 
   float exp = power_ - 1;
   Power(x_addr, &exp, dx_addr, size, scale_, shift_, true);
@@ -46,6 +46,7 @@ int PowerGradCPUKernel::Run() {
 
   return RET_OK;
 }
+
 
 kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::tensor::Tensor *> &inputs,
                                                   const std::vector<lite::tensor::Tensor *> &outputs,

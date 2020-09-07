@@ -1678,6 +1678,13 @@ PopulateParameterFunc PopulateParameterRegistry::GetParameterFunc(int type) {
   return populate_parameter_funcs_[schema::PrimitiveType(type)];
 }
 
+int PopulateParameterRegistry::AddPopulateParameterFunc(const schema::PrimitiveType &type, PopulateParameterFunc func) {
+  if ((type <  schema::PrimitiveType_MIN)|| (type > schema::PrimitiveType_MAX))
+    return -1;
+  populate_parameter_funcs_[type]  = func;
+  return 0;
+}
+
 OpParameter *PopulateParameter(const mindspore::lite::PrimitiveC *primitive) {
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";

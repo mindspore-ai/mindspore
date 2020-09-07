@@ -27,7 +27,7 @@ set(LITE_SRC
     )
 
 if (SUPPORT_GPU)
-  set(LITE_SRC
+set(LITE_SRC
       ${LITE_SRC}
           ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/subgraph_opencl_kernel.cc
           ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/utils.cc
@@ -36,6 +36,24 @@ if (SUPPORT_GPU)
           ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_runtime.cc
           ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_wrapper.cc
       )
+endif()
+
+
+if (SUPPORT_TRAIN)
+    set(ANF_SRC
+             ${ANF_SRC}
+
+            )
+    set(PASS_SRC)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${ANF_SRC}
+        #   ${CMAKE_CURRENT_SOURCE_DIR}/train/ops/train_ops.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
+            )
+            
 endif ()
 
 file(GLOB_RECURSE C_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)

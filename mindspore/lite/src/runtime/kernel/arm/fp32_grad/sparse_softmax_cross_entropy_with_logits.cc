@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <math.h>
 #include "src/kernel_registry.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/fp32/softmax.h"
@@ -46,9 +47,10 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int 
   output[0] = total_loss / param->batch_size_;
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses,
+void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses, float *grads,
                                                                    float *output) const {
   size_t row_start = 0;
+  float total_loss = 0;
   for (int i = 0; i < param->batch_size_; ++i) {
     if (labels[i] < 0) {
       MS_LOG(EXCEPTION) << "label value must >= 0";
@@ -56,77 +58,87 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *la
     size_t label = labels[i];
     if (label > param->number_of_classes_) {
       MS_LOG(EXCEPTION) << "error label input!";
-    }
-    for (size_t j = 0; j < param->number_of_classes_; ++j) {
-      size_t index = row_start + j;
-      if (j == label) {
-        output[index] = (losses[index] - 1) / param->batch_size_;
-      } else {
-        output[index] = losses[index] / param->batch_size_;
+    } else {
+      total_loss -= logf(losses[i * param->number_of_classes_ + label]);
+      for (size_t j = 0; j < param->number_of_classes_; ++j) {
+        size_t index = row_start + j;
+        if (j == label) {
+          grads[index] = (losses[index] - 1) / param->batch_size_;
+        } else {
+          grads[index] = losses[index] / param->batch_size_;
+        }
       }
     }
     row_start += param->number_of_classes_;
   }
+  output[0] = total_loss / param->batch_size_;
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  auto ins = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto labels = reinterpret_cast<int *>(inputs_.at(1)->Data());
-  auto out = reinterpret_cast<float *>(outputs_.at(1)->Data());
-  float *grads = NULL;
-  if (is_train()) {  // outputs_.size() > 1)
-    grads = reinterpret_cast<float *>(outputs_.at(0)->Data());
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
   }
-  size_t data_size = inputs_.at(0)->ElementsNum();
+
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->Data());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  float *grads = NULL;
+  if (is_train() && out_tensors_.size() > 1) {
+    grads = reinterpret_cast<float *>(out_tensors_.at(1)->Data());
+  }
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
   float *losses = new (std::nothrow) float[data_size];
   if (losses == nullptr) {
     MS_LOG(ERROR) << "losses is null";
-    return nullptr;
+    return RET_ERROR;
   }
-
-  std::fill(losses, losses + data_size, 0);
 
   MS_ASSERT(out != nullptr);
   MS_ASSERT(labels != nullptr);
   MS_ASSERT(ins != nullptr);
-
-  SoftmaxParameter sm_params;
-  sm_params.n_dim_ = param->n_dim_;
-  sm_params.element_size_ = data_size;
-  sm_params.axis_ = 0;
-  for (int i = 0; i < 4; i++)  // softmax has only 4 params in shape
-    sm_params.input_shape_[i] = param->input_shape_[i];
-  float sum_data[sm_params.input_shape_[sm_params.axis_]] = {0};
-  std::fill(sum_data, sum_data + sm_params.input_shape_[sm_params.axis_], 0);
-  Softmax(ins, losses, sum_data, &sm_params);
-
+  std::fill(losses_, losses_ + data_size, 0);
+  std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0);
+  Softmax(ins, losses_, sum_data_, &sm_params_);
   if (is_train()) {
-    GradPostExecute(labels, losses, grads);
-  } else {
-    ForwardPostExecute(labels, losses, out);
+    GradPostExecute(labels, losses_, grads, out);
+  } else if (out != nullptr) {
+    ForwardPostExecute(labels, losses_, out);
   }
   return RET_OK;
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
-  if (context_->infer_shape_interrupt_ && !context_->running_) {
-    SetNeedReInit();
-    return RET_OK;
-  }
-  auto dims = inputs_[0]->shape();
+  // if (context_ && context_->infer_shape_interrupt_ && !context_->running_) {
+  // set_need_reinit();
+  //  return RET_OK;
+  // }
+  auto dims = in_tensors_[0]->shape();
   param->n_dim_ = 2;
   param->number_of_classes_ = dims[1];
   param->batch_size_ = dims[0];
   for (unsigned int i = 0; i < dims.size(); i++) param->input_shape_[i] = dims[i];
-  if (2 != this->inputs_.size()) {
+  if (2 != this->in_tensors_.size()) {
     MS_LOG(ERROR) << "softmax entropy loss should have two inputs";
     return RET_ERROR;
   }
-  auto *in0 = inputs_.front();
+  auto *in0 = in_tensors_.front();
   if (in0 == nullptr) {
     MS_LOG(ERROR) << "softmax etropy loss in0 have no data";
     return RET_ERROR;
   }
+
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
+  losses_ = new (std::nothrow) float[data_size];
+  sum_data_ = new (std::nothrow) float[dims[0]];
+  MS_ASSERT(losses_ != nullptr);
+  MS_ASSERT(sum_data_ != nullptr);
+
+  sm_params_.n_dim_ = 2;
+  sm_params_.element_size_ = data_size;
+  sm_params_.axis_ = 1;
+  for (int i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims[i];
 
   return RET_OK;
 }

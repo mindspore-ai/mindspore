@@ -69,6 +69,7 @@ class MS_API Model {
 
   /// \brief Free MetaGraph in MindSpore Lite Model.
   void FreeMetaGraph();
+  ModelImpl *model_impl() {return model_impl_;}
 
  protected:
   ModelImpl *model_impl_ = nullptr;

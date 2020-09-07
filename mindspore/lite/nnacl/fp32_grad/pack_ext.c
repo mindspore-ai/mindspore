@@ -125,9 +125,9 @@ void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param
 }
 
 void col2im_hwc(const float *data_col, float *data_im, ConvParameter *conv_param) {
-  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_w_;
+  const int pad_left = /*conv_param->pad_l_*/ conv_param->pad_l_;
   // const int pad_right =  /*conv_param->pad_r_*/conv_param->pad_w_;
-  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_h_;
+  const int pad_up = /*conv_param->pad_u_*/ conv_param->pad_u_;
   // const int pad_down =   /*conv_param->pad_d/*/conv_param->pad_h_;
 
   const int stride_h = conv_param->stride_h_;

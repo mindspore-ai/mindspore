@@ -47,7 +47,9 @@ int CompareRelativeOutput(float *output_data, std::string file_path) {
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
   std::cout << "output num : " << output_num << "\n";
-  return CompareOutputRelativeData(output_data, ground_truth, output_num);
+  int res = CompareOutputRelativeData(output_data, ground_truth, output_num);
+  delete [] ground_truth;
+  return res;
 }
 }  // namespace lite
 }  // namespace mindspore

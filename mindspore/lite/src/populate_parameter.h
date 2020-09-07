@@ -30,11 +30,15 @@ class PopulateParameterRegistry {
   ~PopulateParameterRegistry() = default;
 
   static PopulateParameterRegistry *GetInstance();
+  int AddPopulateParameterFunc(const schema::PrimitiveType &type, PopulateParameterFunc func);
   PopulateParameterFunc GetParameterFunc(int type);
 
  protected:
   PopulateParameterFunc populate_parameter_funcs_[schema::PrimitiveType_MAX + 1];
 };
+
+OpParameter *PopulateActivationParameter(const lite::PrimitiveC *primitive);
+OpParameter *PopulateArithmetic(const lite::PrimitiveC *primitive);
 
 OpParameter *PopulateParameter(const mindspore::lite::PrimitiveC *primitive);
 }  // namespace mindspore::kernel

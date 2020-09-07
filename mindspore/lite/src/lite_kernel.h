@@ -27,7 +27,6 @@
 #include "src/ir/tensor.h"
 #include "include/errorcode.h"
 
-
 // using mindspore::kernel::AddressPtr;
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;

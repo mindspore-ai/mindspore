@@ -25,9 +25,10 @@
 #include "mindspore/lite/src/ir/tensor.h"
 #include "mindspore/lite/src/lite_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad.h"
 
 namespace mindspore {
-class TestActGradFp32 :  public mindspore::CommonTest {
+class TestActGradFp32 : public mindspore::CommonTest {
  public:
   TestActGradFp32() {}
 };
@@ -41,13 +42,14 @@ TEST_F(TestActGradFp32, ReluGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/relu_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  EXPECT_EQ(input_size, output_data_size * sizeof(float));
   std::string yt_path = "./test_data/activationGrad/relu_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
-
+  EXPECT_EQ(input_size, output_data_size * sizeof(float));
   auto output_data = new float[output_data_size];
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    ReluGrad(yt_data, input_data, 50, output_data);
+    ReluGrad(yt_data, input_data, output_data_size, output_data);
   }
 
   int loop_count = 100;
@@ -72,9 +74,9 @@ TEST_F(TestActGradFp32, ReluGradFp32) {
 
   EXPECT_EQ(res, 0);
 
-  delete input_data;
+  delete[] input_data;
   delete[] output_data;
-  delete yt_data;
+  delete[] yt_data;
 
   MS_LOG(INFO) << "ReluGradFp32 passed";
 }
@@ -118,9 +120,9 @@ TEST_F(TestActGradFp32, Relu6GradFp32) {
 
   EXPECT_EQ(res, 0);
 
-  delete input_data;
+  delete[] input_data;
   delete[] output_data;
-  delete yt_data;
+  delete[] yt_data;
 
   MS_LOG(INFO) << "Relu6GradFp32 passed";
 }
@@ -164,9 +166,9 @@ TEST_F(TestActGradFp32, LReluGradFp32) {
 
   EXPECT_EQ(res, 0);
 
-  delete input_data;
+  delete[] input_data;
   delete[] output_data;
-  delete yt_data;
+  delete[] yt_data;
 
   MS_LOG(INFO) << "LReluGradFp32 passed";
 }
@@ -211,9 +213,9 @@ TEST_F(TestActGradFp32, SigmoidGradFp32) {
   EXPECT_EQ(res, 0);
   // lite::CompareOutput(output_data, output_path);
 
-  delete input_data;
+  delete[] input_data;
   delete[] output_data;
-  delete yt_data;
+  delete[] yt_data;
 
   MS_LOG(INFO) << "SigmoidGradFp32 passed";
 }
@@ -257,9 +259,9 @@ TEST_F(TestActGradFp32, tanhGradFp32) {
 
   EXPECT_EQ(res, 0);
 
-  delete input_data;
+  delete[] input_data;
   delete[] output_data;
-  delete yt_data;
+  delete[] yt_data;
   MS_LOG(INFO) << "TanhGradFp32 passed";
 }
 
@@ -267,24 +269,25 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   // runtime part
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
-  size_t output_data_size = 50;
+  const size_t output_data_size = 10;
 
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/hswish_x_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  EXPECT_EQ(input_size, output_data_size * sizeof(float));
   std::string yt_path = "./test_data/activationGrad/hswish_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
-
+  EXPECT_EQ(input_size, output_data_size * sizeof(float));
   auto output_data = new float[output_data_size];
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    HSwishGrad(yt_data, input_data, 50, output_data);
+    HSwishGrad(yt_data, input_data, static_cast<int>(output_data_size), output_data);
   }
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    HSwishGrad(yt_data, input_data, 50, output_data);
+    HSwishGrad(yt_data, input_data, output_data_size, output_data);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -292,7 +295,7 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   printf("==================output data=================\n");
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < std::min(output_data_size, 20UL); i++) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
@@ -302,9 +305,9 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
 
   EXPECT_EQ(res, 0);
 
-  delete input_data;
+  delete[] input_data;
   delete[] output_data;
-  delete yt_data;
+  delete[] yt_data;
   MS_LOG(INFO) << "hswishGradFp32 passed";
 }
 

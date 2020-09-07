@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BNGRAD_INPUT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BNGRAD_INPUT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BN_GRAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BN_GRAD_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "ir/anf.h"
 
+
 namespace mindspore::kernel {
-class BNGradInputCPUKernel : public LiteKernel {
+
+
+
+class BNGradCPUKernel : public LiteKernel {
  public:
-  explicit BNGradInputCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
+  explicit BNGradCPUKernel(OpParameter *parameter, const std::vector<lite::tensor::Tensor *> &inputs,
                                 const std::vector<lite::tensor::Tensor *> &outputs, const lite::Context *ctx,
                                 const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~BNGradInputCPUKernel() override { delete workspace; }
+  ~BNGradCPUKernel() override { delete workspace; }
 
   int Init() override;
   int ReSize() override;
@@ -38,5 +42,8 @@ class BNGradInputCPUKernel : public LiteKernel {
   float *workspace;
   int workspace_size;
 };
+
+// OpParameter *PopulateBNGradParameter(const lite::Primitive *primitive);
+
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BNGRAD_INPUT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_BN_GRAD_H_

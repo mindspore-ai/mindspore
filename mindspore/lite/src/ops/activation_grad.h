@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_GRAD_H_
-#define LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_ACTIVATION_GRAD_H_
+#define MINDSPORE_LITE_SRC_OPS_ACTIVATION_GRAD_H_
 
 #include <vector>
 #include <set>
@@ -32,13 +32,15 @@ class ActivationGrad : public PrimitiveC {
   ActivationGrad() = default;
   explicit ActivationGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetType(int type);
+  void SetAlpha(float alpha);
 #else
   ActivationGrad() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetType() const;
+  float GetAlpha() const;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_C_OPS_ACTIVATION_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_ACTIVATION_GRAD_H_

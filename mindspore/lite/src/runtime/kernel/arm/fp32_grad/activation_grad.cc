@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/activation_grad.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
@@ -24,41 +25,38 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::ActivationGradType_HSWISH;
-using mindspore::schema::ActivationGradType_LEAKY_RELU;
-using mindspore::schema::ActivationGradType_RELU;
-using mindspore::schema::ActivationGradType_RELU6;
+using mindspore::schema::ActivationType_HSWISH;
+using mindspore::schema::ActivationType_LEAKY_RELU;
+using mindspore::schema::ActivationType_RELU;
+using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
-int ActivationGradCPUKernel::Init() {
-  outputs_[0]->set_shape(inputs_[0]->shape());
-  return RET_OK;
-}
+int ActivationGradCPUKernel::Init() { return RET_OK; }
 
 int ActivationGradCPUKernel::ReSize() { return RET_OK; }
 
 int ActivationGradCPUKernel::DoActivation(int task_id) {
-  auto yt_addr = reinterpret_cast<float *>(inputs_.at(0)->Data());
-  auto input_addr = reinterpret_cast<float *>(inputs_.at(1)->Data());
-  auto output_addr = reinterpret_cast<float *>(outputs_.at(0)->Data());
-  auto length = inputs_.at(0)->ElementsNum();
+  auto yt_addr = reinterpret_cast<float *>(in_tensors_.at(0)->Data());
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(1)->Data());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->Data());
+  int length = in_tensors_.at(0)->ElementsNum();
 
   auto error_code = RET_OK;
 
-  if (type_ == schema::ActivationGradType_RELU) {
+  if (param_act_grad_->type_ == schema::ActivationType_RELU) {
     error_code = ReluGrad(yt_addr, input_addr, length, output_addr);
-  } else if (type_ == schema::ActivationGradType_RELU6) {
+  } else if (param_act_grad_->type_ == schema::ActivationType_RELU6) {
     error_code = Relu6Grad(yt_addr, input_addr, length, output_addr);
-  } else if (type_ == schema::ActivationGradType_LEAKY_RELU) {
-    error_code = LReluGrad(yt_addr, input_addr, length, output_addr, alpha_);
-  } else if (type_ == schema::ActivationGradType_SIGMOID) {
+  } else if (param_act_grad_->type_ == schema::ActivationType_LEAKY_RELU) {
+    error_code = LReluGrad(yt_addr, input_addr, length, output_addr, param_act_grad_->alpha_);
+  } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
     error_code = SigmoidGrad(yt_addr, input_addr, length, output_addr);
-  } else if (type_ == schema::ActivationGradType_TANH) {
+  } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
     error_code = TanhGrad(yt_addr, input_addr, length, output_addr);
-  } else if (type_ == schema::ActivationGradType_HSWISH) {
+  } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
     error_code = HSwishGrad(yt_addr, input_addr, length, output_addr);
-  } else if (type_ == schema::ActivationGradType_HSIGMOID) {
+  } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
     error_code = HSigmoidGrad(yt_addr, input_addr, length, output_addr);
   } else {
     MS_LOG(ERROR) << "Activation type error";
@@ -81,6 +79,12 @@ int ActivationGradRun(void *cdata, int task_id) {
 }
 
 int ActivationGradCPUKernel::Run() {
+  auto ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare failed.";
+    return ret;
+  }
+
   int error_code = ParallelLaunch(THREAD_POOL_DEFAULT, ActivationGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";

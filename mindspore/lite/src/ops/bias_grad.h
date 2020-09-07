@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_BIAS_GRAD_H_
-#define LITE_MINDSPORE_LITE_C_OPS_BIAS_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_BIAS_GRAD_H_
+#define MINDSPORE_LITE_SRC_OPS_BIAS_GRAD_H_
 
 #include <vector>
 #include <set>
@@ -38,10 +38,11 @@ class BiasGrad : public PrimitiveC {
   BiasGrad() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+  int InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::Tensor *> outputs) override;
 #endif
   std::vector<int> GetAxis() const;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_BIAS_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_BIAS_GRAD_H_

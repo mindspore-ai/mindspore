@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_POWER_GRAD_H_
-#define LITE_MINDSPORE_LITE_C_OPS_POWER_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_POWER_GRAD_H_
+#define MINDSPORE_LITE_SRC_OPS_POWER_GRAD_H_
 
 #include <vector>
 #include <set>
@@ -46,4 +46,4 @@ class PowerGrad : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_POWER_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_POWER_GRAD_H_

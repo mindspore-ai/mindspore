@@ -106,9 +106,14 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_1_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // delete all_tensors;
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestAddGradFp32 passed";
 }
 
@@ -137,9 +142,14 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_1_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i]; //TODO tensor data is unique pointer
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestAddGrad2Fp32 passed";
 }
 
@@ -169,8 +179,14 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_8_dx1_5_4_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
 
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestAddGrad3Fp32 passed";
 }
 
@@ -200,8 +216,14 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_2_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
 
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestSubGradFp32 passed";
 }
 
@@ -231,8 +253,12 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_3_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
 
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  delete kernel_obj;
   MS_LOG(INFO) << "TestSubGrad2Fp32 passed";
 }
 
@@ -271,9 +297,13 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_4_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  delete kernel_obj;
+  // delete param;
   MS_LOG(INFO) << "TestMulGradFp32 passed";
 }
 
@@ -302,9 +332,14 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_4_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestMulGrad2Fp32 passed";
 }
 
@@ -333,9 +368,14 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_9_dx2_5_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestMulGrad3Fp32 passed";
 }
 
@@ -364,9 +404,14 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_9_dx2_5_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestMulGrad4Fp32 passed";
 }
 
@@ -395,9 +440,14 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
 
   std::string dx2_path = "./test_data/operators/arithmetic_fp32_5_dx2_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, dx2_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  delete kernel_obj;
+  // delete param;
   MS_LOG(INFO) << "TestDivGradFp32 passed";
 }
 
@@ -427,8 +477,14 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
   std::string output_path = "./test_data/operators/arithmetic_fp32_6_dx1_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, output_path));
 
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestDivGrad2Fp32 passed";
 }
 
@@ -457,9 +513,14 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
 
   std::string output_path = "./test_data/operators/arithmetic_fp32_10_dx2_5_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, output_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  // for (int i = 0; i < 5; i++) delete all_tensors[i];
+  // delete param;
+  delete kernel_obj;
   MS_LOG(INFO) << "TestDivGrad3Fp32 passed";
 }
 
@@ -488,9 +549,12 @@ TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
 
   std::string output_path = "./test_data/operators/arithmetic_fp32_7_dx2_1_1_6.bin";
   EXPECT_EQ(0, lite::CompareRelativeOutput(output_ptr, output_path));
-
-  for (int i = 0; i < 5; i++) delete all_tensors[i];
-  delete param;
+  for (auto tensor : all_tensors) {
+    delete[] reinterpret_cast<float *>(tensor->Data());
+    tensor->SetData(nullptr);
+    delete tensor;
+  }
+  delete kernel_obj;
   MS_LOG(INFO) << "TestDivGrad2Fp32 passed";
 }
 

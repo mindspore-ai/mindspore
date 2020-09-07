@@ -259,6 +259,10 @@ endif()
 if (SUPPORT_TRAIN)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
+           # ${LITE_DIR}/src/train/ops/train_ops.cc
+            ${LITE_DIR}/src/train/train_populate_parameter.cc
+            ${LITE_DIR}/src/train/train_session.cc
+            ${LITE_DIR}/src/lite_session.cc
             #            ${SRC_DIR}/common/trans.cc
             #            ${SRC_DIR}/common/lite/trans_extends.cc
             #            ${SRC_DIR}/kernel/kernel_build_info.cc

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/arm/fp32_grad/arithmetic_grad.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "nnacl/fp32_grad/reduce_grad.h"
 #include "nnacl/fp32_grad/arithmetic_grad.h"
-#include "src/runtime/kernel/arm/fp32_grad/arithmetic_grad.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -33,108 +33,41 @@ constexpr int kArithGradOpOutputNum = 2;
 }  // namespace
 
 int ArithmeticGradCPUKernel::Init() {
-  auto ret = InferShape();
-  return ret;
-}
+  auto dx1 = out_tensors_[0];
+  auto dx2 = out_tensors_[1];
 
-int ArithmeticGradCPUKernel::InferShape() {
-  if (inputs_.size() != kArithGradOpInputNum) {
-    MS_LOG(ERROR) << "The number of input must be " << kArithGradOpInputNum;
-    return RET_ERROR;
-  }
-  if (outputs_.size() != kArithGradOpOutputNum) {
-    MS_LOG(ERROR) << "The number of output must be " << kArithGradOpOutputNum;
-    return RET_ERROR;
-  }
-  auto dy = inputs_[0];
-  auto x1 = inputs_[1];
-  auto x2 = inputs_[2];
-  auto dx1 = outputs_[0];
-  auto dx2 = outputs_[1];
-
-  MS_ASSERT(dy != nullptr);
-  MS_ASSERT(x1 != nullptr);
-  MS_ASSERT(x2 != nullptr);
   MS_ASSERT(dx1 != nullptr);
   MS_ASSERT(dx2 != nullptr);
 
-  auto inShape0 = x1->shape();
-  auto inShape1 = x2->shape();
-  auto outShape = dy->shape();
-
-  if ((type() == PrimitiveType_AddGrad) || (type() == PrimitiveType_SubGrad)) {
-    arithmeticParameter_->ndim_ = outShape.size();
-    auto fillDimNum0 = outShape.size() - inShape0.size();
-    auto fillDimNum1 = outShape.size() - inShape1.size();
-    int j0 = 0;
-    int j1 = 0;
-    for (unsigned int i = 0; i < outShape.size(); i++) {
-      arithmeticParameter_->in_shape0_[i] = (i < fillDimNum0) ? 1 : inShape0[j0++];
-      arithmeticParameter_->in_shape1_[i] = (i < fillDimNum1) ? 1 : inShape1[j1++];
-      arithmeticParameter_->out_shape_[i] = outShape[i];
-    }
-  } else {
+  if ((Type() == PrimitiveType_MulGrad) || (Type() == PrimitiveType_DivGrad)) {
     // if (inShape0.size() < inShape1.size())
     if (dx1->ElementsNum() < dx2->ElementsNum()) {
-      arithmeticParameter_->ndim_ = inShape1.size();
-      if (type() == PrimitiveType_MulGrad)
+      if (Type() == PrimitiveType_MulGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul2L;
-      else if (type() == PrimitiveType_DivGrad)
+      else if (Type() == PrimitiveType_DivGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradDiv2L;
 
-      auto fillDimNum = inShape1.size() - inShape0.size();  // This will not work for batch!
-      int j = 0;
-      for (unsigned int i = 0; i < inShape1.size(); i++) {
-        if (i < fillDimNum) {
-          arithmeticParameter_->in_shape1_[i] = 1;
-        } else {
-          arithmeticParameter_->in_shape1_[i] = inShape0[j++];
-        }
-        arithmeticParameter_->in_shape0_[i] = inShape1[i];
-        arithmeticParameter_->out_shape_[i] = outShape[i];
-      }
     } else if (dx2->ElementsNum() < dx1->ElementsNum()) {  // if (inShape0.size() > inShape1.size())
-      arithmeticParameter_->ndim_ = inShape0.size();
-      if (type() == PrimitiveType_MulGrad)
+      if (Type() == PrimitiveType_MulGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul1L;
-      else if (type() == PrimitiveType_DivGrad)
+      else if (Type() == PrimitiveType_DivGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradDiv1L;
-      arithmeticParameter_->broadcasting_ = true;
-      arithmeticParameter_->ndim_ = inShape0.size();
-      int j = 0;
-      auto fillDimNum = inShape0.size() - inShape1.size();
-      for (unsigned int i = 0; i < inShape0.size(); i++) {
-        if (i < fillDimNum) {
-          arithmeticParameter_->in_shape1_[i] = 1;
-        } else {
-          arithmeticParameter_->in_shape1_[i] = inShape1[j++];
-        }
-        arithmeticParameter_->in_shape0_[i] = inShape0[i];
-        arithmeticParameter_->out_shape_[i] = outShape[i];
-      }
-    } else {
-      arithmeticParameter_->broadcasting_ = false;
-      for (unsigned int i = 0; i < inShape0.size(); i++) {
-        arithmeticParameter_->in_shape1_[i] = inShape1[i];
-        arithmeticParameter_->in_shape0_[i] = inShape0[i];
-        arithmeticParameter_->out_shape_[i] = outShape[i];
-      }
     }
 
-    tile_data0 = new (std::nothrow) float[inputs_.at(0)->ElementsNum()];
+    tile_data0 = new (std::nothrow) float[in_tensors_.at(0)->ElementsNum()];
     if (tile_data0 == nullptr) {
       MS_LOG(ERROR) << "new data0 fail!";
       return RET_ERROR;
     }
-    tile_data1 = new (std::nothrow) float[inputs_.at(0)->ElementsNum()];
+    tile_data1 = new (std::nothrow) float[in_tensors_.at(0)->ElementsNum()];
     if (tile_data1 == nullptr) {
       MS_LOG(ERROR) << "new data1 fail!";
       delete tile_data0;
       return RET_ERROR;
     }
 
-    if (type() == PrimitiveType_DivGrad) {
-      tile_data2 = new (std::nothrow) float[inputs_.at(0)->ElementsNum()];
+    if (Type() == PrimitiveType_DivGrad) {
+      tile_data2 = new (std::nothrow) float[in_tensors_.at(0)->ElementsNum()];
       if (tile_data2 == nullptr) {
         MS_LOG(ERROR) << "new data2 fail!";
         delete tile_data0;
@@ -144,10 +77,6 @@ int ArithmeticGradCPUKernel::InferShape() {
     }
   }
 
-  dx1->set_shape(x1->shape());
-  dx2->set_shape(x2->shape());
-  dx1->set_data_type(dy->data_type());
-  dx2->set_data_type(dy->data_type());
   return RET_OK;
 }
 
@@ -187,16 +116,16 @@ void ArithmeticGradCPUKernel::ArithmeticGradSub(float *dy, int dy_size, float *d
 
 void ArithmeticGradCPUKernel::ArithmeticGradMul(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                 int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(inputs_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
   ElementMul(dy, x1_data, dx2, dy_size);
   ElementMul(dy, x2_data, dx1, dy_size);
 }
 
 void ArithmeticGradCPUKernel::ArithmeticGradMul1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(inputs_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
   ElementMul(dy, x1_data, tile_data0, dy_size);
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx2, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
@@ -206,8 +135,8 @@ void ArithmeticGradCPUKernel::ArithmeticGradMul1L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradMul2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(inputs_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
   ElementMul(dy, x2_data, tile_data0, dy_size);
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx1, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
@@ -217,16 +146,16 @@ void ArithmeticGradCPUKernel::ArithmeticGradMul2L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradDiv(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                 int dx2_size) {
-  auto x1 = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto x2 = reinterpret_cast<float *>(inputs_[2]->Data());
+  auto x1 = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto x2 = reinterpret_cast<float *>(in_tensors_[2]->Data());
   ElementDiv(dy, x2, dx1, dy_size);
   ElementMulAndDivNegSquare(dy, x1, x2, dx2, dy_size);
 }
 
 void ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(inputs_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
 
   ElementMul(x2_data, x2_data, dx2, dx2_size);
   ElementMul(x1_data, dy, dx1, dy_size);  // use dx1 buffer
@@ -243,8 +172,8 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                   int dx2_size) {
-  auto x1_data = reinterpret_cast<float *>(inputs_[1]->Data());
-  auto x2_data = reinterpret_cast<float *>(inputs_[2]->Data());
+  auto x1_data = reinterpret_cast<float *>(in_tensors_[1]->Data());
+  auto x2_data = reinterpret_cast<float *>(in_tensors_[2]->Data());
 
   // dx1 = dy/x2
   ElementDiv(dy, x2_data, tile_data0, dy_size);  // first multiply into temp
@@ -259,13 +188,13 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float 
 int ArithmeticGradCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticGradCPUKernel::Run() {
-  auto dy = reinterpret_cast<float *>(inputs_[0]->Data());
-  auto dx1 = reinterpret_cast<float *>(outputs_[0]->Data());
-  auto dx2 = reinterpret_cast<float *>(outputs_[1]->Data());
+  auto dy = reinterpret_cast<float *>(in_tensors_[0]->Data());
+  auto dx1 = reinterpret_cast<float *>(out_tensors_[0]->Data());
+  auto dx2 = reinterpret_cast<float *>(out_tensors_[1]->Data());
 
-  size_t dy_size = inputs_.at(0)->ElementsNum();
-  size_t dx1_size = outputs_.at(0)->ElementsNum();
-  size_t dx2_size = outputs_[1]->ElementsNum();
+  size_t dy_size = in_tensors_.at(0)->ElementsNum();
+  size_t dx1_size = out_tensors_.at(0)->ElementsNum();
+  size_t dx2_size = out_tensors_[1]->ElementsNum();
   (this->*arithmetic_grad_)(dy, dy_size, dx1, dx1_size, dx2, dx2_size);
   return RET_OK;
 }

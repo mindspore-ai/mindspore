@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <string.h>
 #include "nnacl/fp32_grad/reduce_grad.h"
 
-static inline bool NextIndex(const int num_dims, const int *dims, int *current) {
+static inline int NextIndex(const int num_dims, const int *dims, int *current) {
   int carry = 1;
   for (int idx = num_dims - 1; idx >= 0; --idx) {
     int current_val = current[idx] + carry;
@@ -45,10 +45,10 @@ static inline size_t GetOutputOffset(const int num_dims, const int *dims, const 
   size_t offset = 0;
   for (int idx = 0; idx < num_dims; ++idx) {
     // if we need to skip this axis
-    bool is_axis = false;
+    int is_axis = 0;
     for (int axis_idx = 0; axis_idx < num_axis; ++axis_idx) {
       if (idx == axes[axis_idx]) {
-        is_axis = true;
+        is_axis = 1;
         break;
       }
     }
@@ -101,10 +101,10 @@ float ReduceMeanAll(const float *src, int size) {
 
 void ReduceSumByAxes(const float *input, const int *input_dims, float *output, const int *output_dims, int num_dims) {
   int num_outputs = 1;
-  int same_shape = true;
+  int same_shape = 1;
   for (int idx = 0; idx < num_dims; ++idx) {
     num_outputs *= output_dims[idx];
-    if (output_dims[idx] != input_dims[idx]) same_shape = false;
+    if (output_dims[idx] != input_dims[idx]) same_shape = 0;
   }
   if (same_shape) {
     memcpy(output, input, num_outputs * sizeof(float));

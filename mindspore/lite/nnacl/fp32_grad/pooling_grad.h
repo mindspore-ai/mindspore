@@ -23,7 +23,9 @@
 extern "C" {
 #endif
 void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param);
-void MaxPoolingGrad(const float *dy, const int *indices_ptr, float *output_ptr, PoolingParameter *pooling_param);
+// void MaxPoolingGrad(const float *dy, const int *indices_ptr, float *output_ptr, PoolingParameter *pooling_param);
+void MaxPoolingGrad(const float *input_ptr, const float *dx_ptr, const float *dy_ptr, float *output_ptr,
+                    PoolingParameter *pooling_param);
 #ifdef __cplusplus
 }
 #endif
