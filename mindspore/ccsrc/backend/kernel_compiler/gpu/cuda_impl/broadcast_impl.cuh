@@ -36,17 +36,21 @@ enum BroadcastOpType {
   BROADCAST_TYPE_INVALID = 0xffffffff,
 };
 
-template <typename T, typename S>
-void Broadcast(const std::vector<int> &lhs_shape, const std::vector<int> &rhs_shape,
-               const std::vector<int> &output_shape, enum BroadcastOpType op, const T *input0, const T *input1,
-               S *output, cudaStream_t stream);
+template <typename T>
+void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, bool *y, cudaStream_t stream);
 
-template <typename T, typename S>
-void NoBroadcast(const int &size, enum BroadcastOpType op, const T *input0, const T *input1, S *output,
-                 cudaStream_t stream);
+template <typename T>
+void ElewiseArith(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream);
+
+template <typename T>
+void BroadcastCmp(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims, const std::vector<int> &y_dims,
+                  enum BroadcastOpType op, const T *x0, const T *x1, bool *y, cudaStream_t stream);
+
+template <typename T>
+void BroadcastArith(const std::vector<int> &x0_dims, const std::vector<int> &x1_dims, const std::vector<int> &y_dims,
+                    enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream);
 
 template <typename T>
 void BroadcastTo(const int &i0, const int &i1, const int &i2, const int &i3, const int &o0, const int &o1,
                  const int &o2, const int &o3, const T *input_addr, T *output_addr, cudaStream_t stream);
-
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BROADCAST_H_

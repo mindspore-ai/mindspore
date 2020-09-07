@@ -58,8 +58,8 @@ class AddNGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < IntToSize(num_input_); i++) {
       T *input_addr = GetDeviceAddress<T>(inputs, i);
       if (cudnn_data_type_ == CUDNN_DATA_INT32) {
-        NoBroadcast(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, output_addr, output_addr,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+        ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, output_addr, output_addr,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
       } else {
         CHECK_CUDNN_RET_WITH_EXCEPT(cudnnAddTensor(cudnn_handle_, &alpha, input_descriptor_, input_addr,
                                                    &(i > 0 ? alpha : beta), input_descriptor_, output_addr),
