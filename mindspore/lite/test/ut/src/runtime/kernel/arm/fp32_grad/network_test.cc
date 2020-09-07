@@ -181,7 +181,6 @@ TEST_F(NetworkTest, tuning_layer) {
   }
   meta_graph->inputIndex = {6, 0};  // XXX TODO why is it reverse?
   meta_graph->outputIndex = {5, 14};
-  const int NUM_OF_OUTPUTS = 2;
 
   auto input0 = std::make_unique<schema::TensorT>();
   input0->nodeType = schema::NodeType::NodeType_ValueNode;
@@ -452,7 +451,7 @@ int32_t fileIterator(mindspore::session::TrainSession *session, const std::strin
   int32_t res = 0;
   if (auto dir = opendir(path.c_str())) {
     while (auto f = readdir(dir)) {
-      if (!f->d_name || f->d_name[0] == '.') continue;
+      if (f->d_name[0] == '.') continue;
       if (f->d_type == DT_DIR) fileIterator(session, path + f->d_name + "/", cb);
 
       if (f->d_type == DT_REG)
@@ -462,11 +461,10 @@ int32_t fileIterator(mindspore::session::TrainSession *session, const std::strin
   }
   return res;
 }
-#if 0
 void replaceExt(const std::string &src, std::string *dst) {
-  dst = &std::move(src.substr(0, src.find_last_of('.')) + ".emb");
+  *dst = src.substr(0, src.find_last_of('.')) + ".emb";
 }
-#endif
+
 int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &in, const std::string &out) {
   // setup input
   auto inputs = session->GetInputs();
@@ -494,7 +492,6 @@ int32_t runEffNet(mindspore::session::TrainSession *session, const std::string &
 }
 
 TEST_F(NetworkTest, efficient_net) {
-  const int NUM_OF_INPUTS = 1;
   char *buf = nullptr;
   size_t net_size = 0;
   std::string net = "./test_data/nets/efficientnet_b0_f.ms";
@@ -520,7 +517,7 @@ TEST_F(NetworkTest, efficient_net) {
     int32_t res = 0;
     if (in.find(".bin") != std::string::npos) {
       std::string out;
-      replaceExt(in, out);
+      replaceExt(in, &out);
       res = runEffNet(session, in, out);
       std::cout << "input file: " << in << (res ?  " Fail" : " Pass") << std::endl;
     }

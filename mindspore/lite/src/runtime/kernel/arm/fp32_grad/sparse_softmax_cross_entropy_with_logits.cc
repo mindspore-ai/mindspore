@@ -138,7 +138,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = data_size;
   sm_params_.axis_ = 1;
-  for (int i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims[i];
+  for (size_t i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims[i];
 
   return RET_OK;
 }

@@ -92,7 +92,6 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
     for (size_t j = 0; j < in_size; ++j) {
       inputs.emplace_back(tensors->at(node->input_indices_[j]));
     }
-
     auto out_size = node->output_indices_.size();
     for (size_t j = 0; j < out_size; ++j) {
       outputs.emplace_back(tensors->at(node->output_indices_[j]));

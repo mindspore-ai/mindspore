@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace lite {
-class Model;
+struct Model;
 }
 namespace lite::tensor {
 class Tensor;

@@ -37,9 +37,10 @@ int ConvolutionGradFilterCPUKernel::Init() {
   MS_ASSERT(x_tensor != nullptr);
   auto *dy_tensor = in_tensors_.at(0);
   MS_ASSERT(dy_tensor != nullptr);
+#if 0
   auto *weight_tensor = out_tensors_.at(0);
   MS_ASSERT(weight_tensor != nullptr);
-
+#endif
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   conv_param->output_batch_ = dy_tensor->shape().at(kNHWC_N);
   conv_param->input_batch_ = x_tensor->shape().at(kNHWC_N);
