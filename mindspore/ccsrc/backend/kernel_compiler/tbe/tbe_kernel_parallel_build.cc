@@ -33,42 +33,6 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::kernel::tbe::TbeUtils;
-
-bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes) {
-  auto build_manger = std::make_shared<ParallelBuildManager>();
-  MS_EXCEPTION_IF_NULL(build_manger);
-  for (const auto &anf_node : anf_nodes) {
-    // gen kernel json
-    MS_EXCEPTION_IF_NULL(anf_node);
-    nlohmann::json kernel_json;
-    TbeKernelJsonCreator creator(OP_PRE_COMPILE);
-    if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {
-      MS_LOG(ERROR) << "GenTbeSingleKernelJson failed";
-      return false;
-    }
-    kernel_json["compile_type"] = "pre_build";
-    // op build
-    auto task_id = build_manger->StartCompileOp(kernel_json);
-    build_manger->SavePreTaskInfo(task_id, anf_node);
-  }
-  while (!build_manger->IsAllPreTaskFinish()) {
-    int task_id = -1;
-    std::string task_result;
-    std::string pre_build_result;
-    auto ret = build_manger->WaitOne(&task_id, &task_result, &pre_build_result);
-    if (!ret) {
-      MS_EXCEPTION(ArgumentError) << "Pre Build Failed. wait one ret:" << ret << ", task id:" << task_id;
-    }
-
-    if (task_result != "Success") {
-      MS_EXCEPTION(ArgumentError) << "task pre compile Failed, task id:" << task_id << ", cause:" << task_result;
-    }
-
-    build_manger->PreTaskFinishProcess(task_id, pre_build_result);
-  }
-  return true;
-}
-
 bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
@@ -123,14 +87,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   return build_manger->GenSameOpKernelMod();
 }
 
-ParallelBuildManager::ParallelBuildManager() {}
-
 ParallelBuildManager::~ParallelBuildManager() { ResetTaskInfo(); }
-
-void ParallelBuildManager::SavePreTaskInfo(int32_t task_id, const mindspore::AnfNodePtr &anf_node) {
-  MS_LOG(INFO) << "SavePreTaskInfo, task id: " << task_id;
-  pre_task_map_[task_id] = anf_node;
-}
 
 void ParallelBuildManager::SaveTaskInfo(int32_t task_id, const mindspore::AnfNodePtr &anf_node,
                                         const std::string &json_name, const std::vector<size_t> &input_size_list,
@@ -150,40 +107,9 @@ void ParallelBuildManager::SaveTaskInfo(int32_t task_id, const mindspore::AnfNod
   task_map_[task_id] = task_info;
 }
 
-bool ParallelBuildManager::IsAllPreTaskFinish() const {
-  MS_LOG(INFO) << "wait pre build process task_num: " << pre_task_map_.size();
-  return pre_task_map_.empty();
-}
-
 bool ParallelBuildManager::IsAllTaskFinish() const {
   MS_LOG(INFO) << "wait process task_num: " << task_map_.size();
   return task_map_.empty();
-}
-
-void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result) {
-  auto task_iter = pre_task_map_.find(task_id);
-  if (task_iter == pre_task_map_.end()) {
-    MS_EXCEPTION(ArgumentError) << "can find pre task_id:" << task_id;
-  }
-  auto node = task_iter->second;
-  auto builder =
-    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
-  std::string start_flag = "fusion_pattern_start";
-  std::string end_flag = "fusion_pattern_end";
-  int start = pre_build_result.find(start_flag);
-  int end = pre_build_result.find(end_flag);
-  if (start != -1 && end != -1 && end >= start) {
-    std::string result = pre_build_result.substr(start + start_flag.size(), end - start - start_flag.size());
-    if (result == "") {
-      (void)pre_task_map_.erase(task_iter);
-      return;
-    }
-    transform(result.begin(), result.end(), result.begin(), ::toupper);
-    FusionType fusion_type = tbe::GetFusionType(result);
-    builder->SetFusionType(fusion_type);
-    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-  }
-  (void)pre_task_map_.erase(task_iter);
 }
 
 std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t task_id, bool set_kernel_mod) {

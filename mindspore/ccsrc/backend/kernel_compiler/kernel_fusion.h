@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNELFUSION_H_
+#include <utility>
 #include <vector>
 #include <map>
 #include "backend/kernel_compiler/kernel.h"
@@ -25,11 +26,9 @@ namespace kernel {
  * @brief fuse op and return a callable mod
  */
 struct FusionScopeInfo {
-  FusionScopeInfo() {}
-  FusionScopeInfo(int32_t id, const std::vector<AnfNodePtr> &in, const std::vector<AnfNodePtr> &comp,
-                  const std::vector<AnfNodePtr> &out)
-      : scope_id(id), input_nodes(in), compute_nodes(comp), output_nodes(out) {}
-  int32_t scope_id;
+  FusionScopeInfo(int32_t id, std::vector<AnfNodePtr> in, std::vector<AnfNodePtr> comp, std::vector<AnfNodePtr> out)
+      : scope_id(id), input_nodes(std::move(in)), compute_nodes(std::move(comp)), output_nodes(std::move(out)) {}
+  int32_t scope_id{};
   std::vector<AnfNodePtr> input_nodes;
   std::vector<AnfNodePtr> compute_nodes;
   std::vector<AnfNodePtr> output_nodes;

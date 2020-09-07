@@ -32,6 +32,7 @@ namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
 constexpr auto kFour2FiveOpName = "Four2Five";
 constexpr auto kFive2FourOpName = "Five2Four";
+constexpr auto kConv2DOpName = "Conv2D";
 constexpr auto kConvBN1OpName = "ConvBN1";
 constexpr auto kBN2AddReluOpName = "BN2AddRelu";
 constexpr auto kBN2ReLUOpName = "BN2Relu";

@@ -41,8 +41,8 @@ class TbeKernelBuild {
                         std::vector<size_t> *output_size_list);
   // Ub Fuison
   static bool GenFusionScopeJson(const std::vector<AnfNodePtr> &input_nodes,
-                                 const std::vector<AnfNodePtr> &compute_nodes, nlohmann::json *fusion_str,
-                                 std::string *fusion_kernel);
+                                 const std::vector<AnfNodePtr> &compute_nodes, nlohmann::json *fusion_json,
+                                 std::string *fusion_kernel_name);
   static bool GetIOSize(const nlohmann::json &fusion_op_list, const std::vector<AnfNodePtr> &output_nodes,
                         std::vector<size_t> *input_size_list, std::vector<size_t> *output_size_list);
 
@@ -61,9 +61,14 @@ class TbeKernelBuild {
   static std::vector<size_t> GetDescOutputIndex(const std::vector<int> &output_used_nums);
   static bool GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode,
                                          std::vector<nlohmann::json> *output_desc_list);
+  static void GenPreDescJson(nlohmann::json *output_desc);
+  static void GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode, nlohmann::json *compute_op_str,
+                                         std::string *fusion_kernel_name);
+  static void GenFusionComputePreBuildJson(const mindspore::CNodePtr &cnode, nlohmann::json *compute_op_str);
   static void GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
                           size_t desc_output_idx, nlohmann::json *output_desc,
                           FusionDataType fusion_data_type = kFusionNormal);
+  static void GenSuffixDescJson(nlohmann::json *output_desc);
   static void GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
                                   size_t output_index, nlohmann::json *output_desc);
   static size_t GetIOSizeImpl(const nlohmann::json &desc);
@@ -76,6 +81,7 @@ class TbeKernelBuild {
   static bool IsDynamicInput(const CNodePtr &cnode);
   static size_t GetOptionalInput(const CNodePtr &cnode, bool is_dynamic_input);
   static std::string GetRealOpType(const std::string &origin_type);
+  static std::string GetNodeFusionType(const CNodePtr &cnode);
 };
 
 class TbeKernelJsonCreator {
@@ -84,14 +90,14 @@ class TbeKernelJsonCreator {
   ~TbeKernelJsonCreator() = default;
   bool GenTbeSingleKernelJson(const std::shared_ptr<AnfNode> &anf_node, nlohmann::json *kernel_json);
   std::string json_name() { return json_name_; }
+  bool GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
+                      nlohmann::json *attrs_json);
 
  private:
   bool GenTbeInputsJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                         nlohmann::json *inputs_json);
   bool GenTbeOutputsJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                          nlohmann::json *outputs_json);
-  bool GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
-                      nlohmann::json *attrs_json);
   static void ParseAttrValue(const std::string &type, const ValuePtr &value, nlohmann::json *attr_obj);
   bool GenInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index, bool value,
                         const std::shared_ptr<OpIOInfo> &input_ptr, const string &op_input_name, size_t input_i,
