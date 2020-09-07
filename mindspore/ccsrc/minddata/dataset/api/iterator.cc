@@ -22,25 +22,29 @@ namespace dataset {
 namespace api {
 
 // Get the next row from the data pipeline.
-void Iterator::GetNextRow(TensorMap *row) {
+bool Iterator::GetNextRow(TensorMap *row) {
   Status rc = iterator_->GetNextAsMap(row);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
     row->clear();
+    return false;
   }
+  return true;
 }
 
 // Get the next row from the data pipeline.
-void Iterator::GetNextRow(TensorVec *row) {
+bool Iterator::GetNextRow(TensorVec *row) {
   TensorRow tensor_row;
   Status rc = iterator_->FetchNextTensorRow(&tensor_row);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
     row->clear();
+    return false;
   }
   // Generate a vector as return
   row->clear();
   std::copy(tensor_row.begin(), tensor_row.end(), std::back_inserter(*row));
+  return true;
 }
 
 // Shut down the data pipeline.

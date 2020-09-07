@@ -271,6 +271,21 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail3) {
   EXPECT_EQ(vocab, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetFail4.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create vocab from dataset
+  // Expected failure: special tokens are already in the dataset
+  std::shared_ptr<Vocab> vocab = ds->BuildVocab({"text"}, {0, std::numeric_limits<int64_t>::max()},
+                                                std::numeric_limits<int64_t>::max(), {"world"});
+  EXPECT_EQ(vocab, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetInt64.";
 
