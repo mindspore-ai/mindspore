@@ -17,18 +17,6 @@
 #include "multinomial_impl.cuh"
 
 template <typename T>
-__global__ void NormInput(T *input, const size_t distributions, const size_t categories) {
-  size_t size = distributions * categories;
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-    if ((pos + 1) % categories != 0) {
-      int de_pos = (1 + pos / categories) * categories - 1;
-      input[pos] /= input[de_pos];
-    }
-  }
-  return;
-}
-
-template <typename T>
 __global__ void CheckZeroKernel(const size_t distributions, const size_t categories, const T *input, T *out) {
   out[0] = 0;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (distributions); pos += blockDim.x * gridDim.x) {
@@ -59,6 +47,24 @@ __global__ void CheckNonNegKernel(const size_t size, const T *input, T *out) {
 template <typename T>
 void CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t cuda_stream) {
   CheckNonNegKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, output);
+}
+
+template <typename T>
+__global__ void NormInputKernel(T *input, const size_t distributions, const size_t categories) {
+  size_t size = distributions * categories;
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if ((pos + 1) % categories != 0) {
+      int de_pos = (1 + pos / categories) * categories - 1;
+      input[pos] /= input[de_pos];
+    }
+  }
+  return;
+}
+
+template <typename T>
+void NormInput(T *input, const size_t distributions, const size_t categories, cudaStream_t cuda_stream) {
+  int count1 = distributions * categories;
+  NormInputKernel<<<GET_BLOCKS(count1), GET_THREADS, 0, cuda_stream>>>(input, distributions, categories);
 }
 
 template <typename T>
@@ -104,8 +110,6 @@ void Multinomial(int seed, T *input, int num_sample, curandState *globalState, i
     RNG_seed = time(NULL);
   }
   int count = distributions * num_sample;
-  int count1 = distributions * categories;
-  NormInput<<<GET_BLOCKS(count1), GET_THREADS, 0, cuda_stream>>>(input, distributions, categories);
   MultinomialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, input, num_sample, globalState,
                                                                         output, distributions, categories);
   return;
@@ -115,4 +119,6 @@ template void Multinomial<float>(int seed, float *input, int num_sample, curandS
                                  size_t distributions, size_t categories, cudaStream_t cuda_stream);
 template void CheckNonNeg<float>(const size_t size, const float *input, float *output, cudaStream_t cuda_stream);
 template void CheckZero<float>(const size_t distributions, const size_t categories, const float *input, float *output,
+                               cudaStream_t cuda_stream);
+template void NormInput<float>(float *input, const size_t distributions, const size_t categories,
                                cudaStream_t cuda_stream);

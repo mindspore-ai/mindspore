@@ -148,7 +148,7 @@ void LSTMGradCPUKernel::SetArgumentHandleOp(const std::vector<kernel::AddressPtr
   SetArgumentHandle(DNNL_ARG_DIFF_DST_ITER_C, inputs[9]->addr);
 }
 
-void LSTMGradCPUKernel::Memset_op(const dnnl::memory &mem, string name) {
+void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, string name) {
   if (memset_s(mem.get_data_handle(), mem.get_desc().get_size(), 0, mem.get_desc().get_size())) {
     MS_LOG(EXCEPTION) << name << " memset error";
   }
@@ -186,10 +186,10 @@ bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto user_diff_weights_h_memory = dnnl::memory(dnnl::memory::desc{{weights_h_dims_}, dt::f32, tag::ldgoi}, eng);
   user_diff_weights_memory.set_data_handle(outputs[3]->addr);
   user_diff_weights_h_memory.set_data_handle(reinterpret_cast<float *>(outputs[3]->addr) + weight_size_);
-  Memset_op(user_diff_weights_memory, "user weights grad");
-  Memset_op(user_diff_weights_h_memory, "user weights iter grad");
-  Memset_op(diff_weights_memory, "weights grad");
-  Memset_op(diff_weights_h_memory, "weights iter grad");
+  ResetMemory(user_diff_weights_memory, "user weights grad");
+  ResetMemory(user_diff_weights_h_memory, "user weights iter grad");
+  ResetMemory(diff_weights_memory, "weights grad");
+  ResetMemory(diff_weights_h_memory, "weights iter grad");
   if (has_bias_) {
     diff_bias_memory.set_data_handle(reinterpret_cast<float *>(outputs[3]->addr) + weight_size_ + weight_h_size_);
   }
