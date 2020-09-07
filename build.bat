@@ -85,6 +85,7 @@ goto run_eof
     cd %BUILD_PATH%/mindspore
     cmake -DBUILD_DEVICE=on -DBUILD_CONVERTER=on -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^
+    -DMS_VERSION_MAJOR=0 -DMS_VERSION_MINOR=7 -DMS_VERSION_REVISION=0 ^
     -G "CodeBlocks - MinGW Makefiles" "%BASEPATH%/mindspore/lite"
 GOTO:EOF
 
