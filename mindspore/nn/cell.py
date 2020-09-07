@@ -241,6 +241,8 @@ class Cell:
             if kwargs:
                 raise ValueError("For 'graph' mode, the outermost network does not support passing "
                                  "key-value pair parameters and variable key-value pair parameters.")
+            if self.enable_hook:
+                raise ValueError("The graph mode does not support hook function.")
             out = self.compile_and_run(*inputs)
             return out
 
