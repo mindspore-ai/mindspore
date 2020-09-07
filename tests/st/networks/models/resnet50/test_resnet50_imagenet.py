@@ -367,8 +367,7 @@ def test_resnet_and_resnet_thor_imagenet_4p():
         os.system("rm -rf " + str(i))
     print("End training...")
     assert acc > 0.15
-    # the original perf is: 20 in C75B100
-    assert cost < 22
+    assert cost < 20
 
     # THOR
     thor_acc = 0.0
@@ -384,5 +383,4 @@ def test_resnet_and_resnet_thor_imagenet_4p():
         os.system("rm -rf " + str(i))
     print("End training...")
     assert thor_acc > 0.22
-    # the original perf is: 21 in C75B100
-    assert thor_cost < 23
+    assert thor_cost < 21

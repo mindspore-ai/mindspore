@@ -19,7 +19,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-
+#include <set>
+#include <map>
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -59,32 +60,6 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
     }
   }
   return kernel_mod_ptr;
-}
-
-static bool KernelPreBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  std::vector<AnfNodePtr> tbe_nodes;
-  for (const auto &anf_node : kernel_graph_ptr->execution_order()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    if (!AnfAlgo::IsRealKernel(anf_node)) {
-      continue;
-    }
-    KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
-    switch (kernel_type) {
-      case KernelType::TBE_KERNEL: {
-        if (AnfAlgo::GetKernelMod(anf_node) == nullptr &&
-            AnfAlgo::GetFusionType(anf_node) == kernel::FusionType::DYNAMIC) {
-          tbe_nodes.push_back(anf_node);
-        }
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-  bool ret = kernel::TbeOpParallelPreBuild(tbe_nodes);
-  return ret;
 }
 
 static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
@@ -228,12 +203,6 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
     AnfAlgo::SetNodeAttr(kAttrAtomicWorkspaceIndexs, MakeValue(workspace_indexs), kernel_node);
   }
   return !(workspace_indexs.empty() && output_indexs.empty());
-}
-
-bool KernelPreBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  bool ret = device::ascend::KernelPreBuildParallelCompile(kernel_graph_ptr);
-  return ret;
 }
 
 bool KernelBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {

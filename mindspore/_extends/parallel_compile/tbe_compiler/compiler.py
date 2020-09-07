@@ -17,8 +17,6 @@ import json
 import os
 import sys
 from te.platform.cce_conf import te_set_version
-from te.platform.fusion_manager import op_build_cfg_dis, op_build_cfg_en, set_current_op_name, \
-    init_op_pattern, set_op_params, set_op_build_type, get_op_pattern, set_current_op_func_name
 from te.platform.fusion_util import fusion_op
 from common import check_kernel_info, get_args, get_build_in_impl_path, get_ddk_version
 
@@ -27,7 +25,6 @@ build_in_impl_path = get_build_in_impl_path()
 
 # op function list
 op_build = "compile"
-op_pre_build = "pre_build"
 fusion_pattern_start_flag = "fusion_pattern_start"
 fusion_pattern_end_flag = "fusion_pattern_end"
 
@@ -83,19 +80,7 @@ def build_op(build_type, json_str):
         else:
             op_module = __import__("impl."+op_name, globals(), locals(), [op_name], 0)
         # get function
-        if build_type == op_pre_build:
-            # set op parameter
-            op_build_cfg_dis()
-            set_current_op_func_name(op_name)
-            set_current_op_name(kernel_name)
-            init_op_pattern()
-            set_op_params(*outputs_args, *attrs_args, kernel_name=kernel_name)
-            set_op_build_type('prebuild')
-            if custom_flag:
-                py_fn_name = kernel_info['op_info']['name']
-            else:
-                py_fn_name = op_name
-        elif build_type == op_build:
+        if build_type == op_build:
             if custom_flag:
                 py_fn_name = kernel_info['op_info']['name']
             else:
@@ -106,13 +91,6 @@ def build_op(build_type, json_str):
         if op_func is None:
             raise ValueError("Op:{} function {} is not supported by Tbe.".format(op_name, build_type))
 
-        # pre build
-        if build_type == op_pre_build:
-            op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
-            # disable only pattern configuration
-            op_build_cfg_en()
-            return get_op_pattern()
-
         # call function
         if kernel_name[0:19] == "bounding_box_encode":
             return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name_val=kernel_name)
@@ -120,8 +98,6 @@ def build_op(build_type, json_str):
         return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
 
     except Exception as e:
-        if build_type == op_pre_build:
-            op_build_cfg_en()
         raise RuntimeError(e)
 
 
@@ -136,14 +112,9 @@ def compile_fusion_op(json_str):
         Exception: If specific keyword is not found.
     """
     args = json.loads(json_str)
+    te_set_version(ddk_version)
     if 'fusion_op' not in args or not args['fusion_op']:
         raise ValueError("Json string Errors, key:fusion_op not found.")
-    if 'prebuild_ops' not in args or not args['prebuild_ops']:
-        raise ValueError("Json string Errors, key:prebuild_ops not found.")
-
-    pre_build_op_list = args['prebuild_ops']
-    for op in pre_build_op_list:
-        build_op(op_pre_build, json.dumps(op))
     fusion_op_arg = args['fusion_op']
     return fusion_op(json.dumps(fusion_op_arg))
 
@@ -159,8 +130,6 @@ def compile_with_json(json_str):
     json_info = json.loads(json_str)
     if "fusion_op" in json_info:
         ret = compile_fusion_op(json_str)
-    elif "compile_type" in json_info:
-        ret = build_op(op_pre_build, json_str)
     else:
         ret = build_op(op_build, json_str)
     return ret

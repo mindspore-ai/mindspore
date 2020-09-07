@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace kernel {
-bool TbeOpParallelPreBuild(const std::vector<AnfNodePtr> &anf_nodes);
 bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
 
 struct KernelBuildTaskInfo {
@@ -42,9 +41,8 @@ struct KernelBuildTaskInfo {
 
 class ParallelBuildManager {
  public:
-  ParallelBuildManager();
+  ParallelBuildManager() = default;
   ~ParallelBuildManager();
-  void SavePreTaskInfo(int32_t task_id, const AnfNodePtr &anf_node);
   void SaveTaskInfo(int32_t task_id, const AnfNodePtr &anf_node, const std::string &json_name,
                     const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                     int32_t scope_id = 0);
@@ -54,10 +52,7 @@ class ParallelBuildManager {
   bool SearchInCache(const std::string &json_name, const std::string &processor,
                      const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                      AnfNode *node) const;
-
-  bool IsAllPreTaskFinish() const;
   bool IsAllTaskFinish() const;
-  void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
   std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, bool set_kernel_mod = true);
   KernelModPtr GenKernelMod(const string &json_name, const string &processor,
                             const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
