@@ -865,7 +865,7 @@ class DepthwiseConv2d(Cell):
                                       be greater than or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
         group (int): Split filter into groups, `in_ channels` and `out_channels` should be
-            divisible by the number of groups. Default: 1.
+            divisible by the number of groups. If 'group' is None, it will be set as the value of 'in_channels'
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             It can be a Tensor, a string, an Initializer or a number. When a string is specified,
@@ -894,11 +894,11 @@ class DepthwiseConv2d(Cell):
                  in_channels,
                  out_channels,
                  kernel_size,
+                 group,
                  stride=1,
                  pad_mode='same',
                  padding=0,
                  dilation=1,
-                 group=1,
                  has_bias=False,
                  weight_init='normal',
                  bias_init='zeros'):
@@ -908,6 +908,8 @@ class DepthwiseConv2d(Cell):
         self.dilation = twice(dilation)
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
+        if group is None:
+            group = in_channels
         validator.check_integer('group', group, in_channels, Rel.EQ)
         validator.check_integer('group', group, out_channels, Rel.EQ)
         validator.check_integer('group', group, 1, Rel.GE)
