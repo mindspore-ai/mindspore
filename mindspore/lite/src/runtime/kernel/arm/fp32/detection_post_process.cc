@@ -27,7 +27,6 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
 int DetectionPostProcessCPUKernel::Init() {
-  MS_ASSERT(context_->allocator != nullptr);
   auto anchor_tensor = in_tensors_.at(2);
   DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
   parameter->anchors_ = nullptr;
@@ -36,8 +35,7 @@ int DetectionPostProcessCPUKernel::Init() {
     const double scale = quant_params.at(0).scale;
     const int32_t zp = quant_params.at(0).zeroPoint;
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->Data());
-    auto anchor_fp32 =
-      reinterpret_cast<float *>(context_->allocator->Malloc(anchor_tensor->ElementsNum() * sizeof(float)));
+    auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
@@ -47,7 +45,7 @@ int DetectionPostProcessCPUKernel::Init() {
     }
     parameter->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeFloat32) {
-    parameter->anchors_ = reinterpret_cast<float *>(context_->allocator->Malloc(anchor_tensor->Size()));
+    parameter->anchors_ = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (parameter->anchors_ == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
@@ -62,7 +60,7 @@ int DetectionPostProcessCPUKernel::Init() {
 
 DetectionPostProcessCPUKernel::~DetectionPostProcessCPUKernel() {
   DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
-  context_->allocator->Free(parameter->anchors_);
+  delete [](parameter->anchors_);
 }
 
 int DetectionPostProcessCPUKernel::ReSize() { return RET_OK; }
