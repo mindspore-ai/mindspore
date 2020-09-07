@@ -134,7 +134,8 @@ def test_yolov3():
 
         model = Model(net)
         print("Start train YOLOv3, the first epoch will be slower because of the graph compilation.")
-        model.train(epoch_size, dataset, callbacks=callback, dataset_sink_mode=True)
+        model.train(epoch_size, dataset, callbacks=callback, dataset_sink_mode=True,
+                    sink_size=dataset.get_dataset_size())
         # assertion occurs while the loss value, overflow state or loss_scale value is wrong
         loss_value = np.array(model_callback.loss_list)
 
@@ -145,12 +146,12 @@ def test_yolov3():
         assert loss_value[2] < expect_loss_value[2]
 
         epoch_mseconds = np.array(time_monitor_callback.epoch_mseconds_list)[2]
-        expect_epoch_mseconds = 2000
+        expect_epoch_mseconds = 950
         print("epoch mseconds: {}".format(epoch_mseconds))
         assert epoch_mseconds <= expect_epoch_mseconds
 
         per_step_mseconds = np.array(time_monitor_callback.per_step_mseconds_list)[2]
-        expect_per_step_mseconds = 220
+        expect_per_step_mseconds = 110
         print("per step mseconds: {}".format(per_step_mseconds))
         assert per_step_mseconds <= expect_per_step_mseconds
         print("yolov3 test case passed.")
