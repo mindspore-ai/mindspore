@@ -20,7 +20,6 @@ import numpy as np
 from mindspore import context
 from mindspore import Tensor
 from mindspore.common import set_seed
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
@@ -94,15 +93,13 @@ if __name__ == '__main__':
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([107])
+                                              gradients_mean=True, all_reduce_fusion_config=[107])
             init()
         # GPU target
         else:
             init()
             context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([107])
+                                              gradients_mean=True, all_reduce_fusion_config=[104])
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset

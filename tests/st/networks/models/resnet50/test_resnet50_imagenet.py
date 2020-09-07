@@ -23,7 +23,6 @@ import numpy as np
 
 from mindspore import context, Tensor
 from mindspore.communication.management import init
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.callback import Callback
@@ -137,8 +136,8 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
     os.environ['RANK_SIZE'] = str(device_num)
     if enable_hccl:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True, parameter_broadcast=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
+                                          gradients_mean=True, parameter_broadcast=True,
+                                          all_reduce_fusion_config=[107, 160])
         init()
 
     # network
@@ -240,8 +239,8 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     os.environ['RANK_SIZE'] = str(device_num)
     if enable_hccl:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True, parameter_broadcast=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([107])
+                                          gradients_mean=True, parameter_broadcast=True,
+                                          all_reduce_fusion_config=[107])
         init()
 
     # network

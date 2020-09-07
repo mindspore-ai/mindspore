@@ -462,7 +462,8 @@ _set_auto_parallel_context_func_map = {
     "strategy_ckpt_load_file": auto_parallel_context().set_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
     "full_batch": auto_parallel_context().set_full_batch,
-    "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer}
+    "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
+    "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices}
 
 
 _get_auto_parallel_context_func_map = {
@@ -477,13 +478,15 @@ _get_auto_parallel_context_func_map = {
     "strategy_ckpt_load_file": auto_parallel_context().get_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file,
     "full_batch": auto_parallel_context().get_full_batch,
-    "enable_parallel_optimizer": auto_parallel_context().get_enable_parallel_optimizer}
+    "enable_parallel_optimizer": auto_parallel_context().get_enable_parallel_optimizer,
+    "all_reduce_fusion_config": auto_parallel_context().get_all_reduce_fusion_split_indices}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
                  loss_repeated_mean=bool, parallel_mode=str, auto_parallel_search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool)
+                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
+                 all_reduce_fusion_config=list)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -526,6 +529,7 @@ def _set_auto_parallel_context(**kwargs):
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
         enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
+        all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

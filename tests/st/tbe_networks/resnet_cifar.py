@@ -31,7 +31,6 @@ from mindspore import context
 from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 
@@ -124,8 +123,8 @@ class CrossEntropyLoss(nn.Cell):
 
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:
-        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([140])
+        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          all_reduce_fusion_config=[140])
         init()
 
     context.set_context(mode=context.GRAPH_MODE)
