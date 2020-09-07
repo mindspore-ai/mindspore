@@ -54,7 +54,7 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
                                    builder_op_connector_size_, builder_decode_, builder_usage_, builder_extensions_,
                                    std::move(builder_schema_), std::move(builder_sampler_));
   if (*op == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "CelebAOp is null");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "CelebAOp init failed.");
   }
 
   return Status::OK();
@@ -63,8 +63,12 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
 Status CelebAOp::Builder::SanityCheck() {
   Path dir(builder_dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() ? "" : "CelebA path is invalid or not set\n";
-  err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is smaller than 1\n" : "";
+  err_msg += dir.IsDirectory() == false
+               ? "Invalid parameter, CelebA path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -85,7 +89,7 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
 
 Status CelebAOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "tree_ not set");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
   }
 
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
@@ -106,7 +110,9 @@ Status CelebAOp::ParseAttrFile() {
   Path folder_path(folder_path_);
   std::ifstream attr_file((folder_path / "list_attr_celeba.txt").toString());
   if (!attr_file.is_open()) {
-    return Status(StatusCode::kFileNotExist, __LINE__, __FILE__, "Celeba attr file does not exist");
+    std::string attr_file_name = (folder_path / "list_attr_celeba.txt").toString();
+    return Status(StatusCode::kFileNotExist, __LINE__, __FILE__,
+                  "Invalid file, failed to open Celeba attr file: " + attr_file_name);
   }
 
   const auto PushBackToQueue = [this](std::vector<std::string> &vec, std::ifstream &attr_file,
@@ -125,9 +131,11 @@ Status CelebAOp::ParseAttrFile() {
   try {
     num_rows_in_attr_file_ = static_cast<int64_t>(std::stoul(rows_num));  // First line is rows number in attr file
   } catch (std::invalid_argument &e) {
-    RETURN_STATUS_UNEXPECTED("Conversion to ulong failed, invalid argument.");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, failed to convert rows_num from attr_file to unsigned long, invalid argument: " + rows_num);
   } catch (std::out_of_range &e) {
-    RETURN_STATUS_UNEXPECTED("Conversion to ulong failed, out of range.");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, failed to convert rows_num from attr_file to unsigned long, out of range: " + rows_num);
   }
 
   (void)getline(attr_file, attr_name);  // Second line is attribute name,ignore it
@@ -172,10 +180,10 @@ bool CelebAOp::CheckDatasetTypeValid() {
   try {
     type = std::stoi(vec[1]);
   } catch (std::invalid_argument &e) {
-    MS_LOG(WARNING) << "Conversion to unsigned long failed, invalid argument, " << vec[0] << ".";
+    MS_LOG(WARNING) << "Invalid data, failed to convert to unsigned long, invalid argument: " << vec[1] << ".";
     return false;
   } catch (std::out_of_range &e) {
-    MS_LOG(WARNING) << "Conversion to unsigned long failed, out of range, " << vec[0] << ".";
+    MS_LOG(WARNING) << "Invalid data, failed to convert to unsigned long, out of range: " << vec[1] << ".";
     return false;
   }
   // train:0, valid=1, test=2
@@ -213,9 +221,9 @@ Status CelebAOp::ParseImageAttrInfo() {
         try {
           value = std::stoi(split[label_index]);
         } catch (std::invalid_argument &e) {
-          RETURN_STATUS_UNEXPECTED("Conversion to int failed, invalid argument.");
+          RETURN_STATUS_UNEXPECTED("Invalid data, failed to convert to ulong, invalid argument: " + split[label_index]);
         } catch (std::out_of_range &e) {
-          RETURN_STATUS_UNEXPECTED("Conversion to int failed, out of range.");
+          RETURN_STATUS_UNEXPECTED("Conversion to int failed, out of range: " + split[label_index]);
         }
         image_labels.second.push_back(value);
       }
@@ -229,8 +237,8 @@ Status CelebAOp::ParseImageAttrInfo() {
   num_rows_ = image_labels_vec_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
-      "validation first.");
+      "Invalid data, no valid data matching the dataset API CelebADataset. "
+      "Please check file path or dataset API validation first");
   }
   MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_ << ".";
   return Status::OK();
@@ -338,7 +346,7 @@ Status CelebAOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   }
-  return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Unexpected nullptr received in worker");
+  return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Unexpected nullptr received in worker.");
 }
 
 Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
@@ -365,7 +373,7 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
       image = nullptr;
-      std::string err_msg = "Fail to decode image: " + image_path.toString();
+      std::string err_msg = "Invalid data, failed to decode image: " + image_path.toString();
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
     }
   }

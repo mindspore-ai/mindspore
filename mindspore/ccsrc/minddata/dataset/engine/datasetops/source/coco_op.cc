@@ -97,7 +97,7 @@ Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
         ColDescriptor(std::string(kJsonAnnoArea), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED("Invalid task type");
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff, Keypoint or Panoptic.");
   }
   *ptr = std::make_shared<CocoOp>(builder_task_type_, builder_dir_, builder_file_, builder_num_workers_,
                                   builder_rows_per_buffer_, builder_op_connector_size_, builder_decode_,
@@ -109,9 +109,15 @@ Status CocoOp::Builder::SanityCheck() {
   Path dir(builder_dir_);
   Path file(builder_file_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false ? "Coco image folder path is invalid or not set\n" : "";
-  err_msg += file.Exists() == false ? "Coco annotation json path is invalid or not set\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is set to 0 or negative\n" : "";
+  err_msg += dir.IsDirectory() == false
+               ? "Invalid parameter, Coco image folder path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += file.Exists() == false
+               ? "Invalid parameter, Coco annotation json path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -156,7 +162,8 @@ Status CocoOp::operator()() {
       std::shared_ptr<Tensor> sample_ids;
       RETURN_IF_NOT_OK(sampler_buffer->GetTensor(&sample_ids, 0, 0));
       if (sample_ids->type() != DataType(DataType::DE_INT64)) {
-        RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't int64");
+        RETURN_STATUS_UNEXPECTED("Invalid parameter, data type of Sampler Tensor isn't int64, got " +
+                                 sample_ids->type().ToString());
       }
       RETURN_IF_NOT_OK(TraverseSampleIds(sample_ids, &keys));
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
@@ -210,7 +217,10 @@ Status CocoOp::Reset() {
 Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *trow) {
   std::shared_ptr<Tensor> image, coordinate;
   auto itr = coordinate_map_.find(image_id);
-  if (itr == coordinate_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
+  if (itr == coordinate_map_.end()) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, image_id: " + image_id +
+                             " in annotation node is not found in image node in json file.");
+  }
 
   std::string kImageFile = image_folder_path_ + std::string("/") + image_id;
   RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
@@ -245,7 +255,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Te
   } else if (task_type_ == TaskType::Panoptic) {
     RETURN_IF_NOT_OK(LoadMixTensorRow(row_id, image_id, image, coordinate, trow));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid task type.");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff or Panoptic.");
   }
 
   return Status::OK();
@@ -264,7 +274,10 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
   std::vector<uint32_t> category_id_row;
   std::vector<uint32_t> iscrowd_row;
   auto itr_item = simple_item_map_.find(image_id);
-  if (itr_item == simple_item_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
+  if (itr_item == simple_item_map_.end()) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, image_id: " + image_id +
+                             " in annotation node is not found in image node in json file.");
+  }
 
   std::vector<uint32_t> annotation = itr_item->second;
   for (int64_t i = 0; i < annotation.size(); i++) {
@@ -293,7 +306,10 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
   std::shared_ptr<Tensor> item;
   std::vector<uint32_t> item_queue;
   auto itr_item = simple_item_map_.find(image_id);
-  if (itr_item == simple_item_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
+  if (itr_item == simple_item_map_.end()) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, image_id: " + image_id +
+                             " in annotation node is not found in image node in json file.");
+  }
 
   item_queue = itr_item->second;
   std::vector<dsize_t> bbox_dim = {static_cast<dsize_t>(item_queue.size()), 1};
@@ -316,7 +332,10 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
   std::vector<uint32_t> iscrowd_row;
   std::vector<uint32_t> area_row;
   auto itr_item = simple_item_map_.find(image_id);
-  if (itr_item == simple_item_map_.end()) RETURN_STATUS_UNEXPECTED("Invalid image_id found :" + image_id);
+  if (itr_item == simple_item_map_.end()) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, image_id: " + image_id +
+                             " in annotation node is not found in image node in json file.");
+  }
 
   std::vector<uint32_t> annotation = itr_item->second;
   for (int64_t i = 0; i < annotation.size(); i++) {
@@ -380,7 +399,7 @@ Status CocoOp::WorkerEntry(int32_t worker_id) {
 template <typename T>
 Status CocoOp::SearchNodeInJson(const nlohmann::json &input_tree, std::string node_name, T *output_node) {
   auto node = input_tree.find(node_name);
-  CHECK_FAIL_RETURN_UNEXPECTED(node != input_tree.end(), "Invalid node found in json : " + node_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(node != input_tree.end(), "Invalid data, invalid node found in json: " + node_name);
   (*output_node) = *node;
   return Status::OK();
 }
@@ -406,8 +425,10 @@ Status CocoOp::ParseAnnotationIds() {
     std::string file_name;
     RETURN_IF_NOT_OK(SearchNodeInJson(annotation, std::string(kJsonAnnoImageId), &image_id));
     auto itr_file = image_index_.find(image_id);
-    if (itr_file == image_index_.end())
-      RETURN_STATUS_UNEXPECTED("Invalid image id of annotations : " + std::to_string(image_id));
+    if (itr_file == image_index_.end()) {
+      RETURN_STATUS_UNEXPECTED("Invalid data, image_id: " + std::to_string(image_id) +
+                               " in annotation node is not found in image node in json file.");
+    }
     file_name = itr_file->second;
     switch (task_type_) {
       case TaskType::Detection:
@@ -426,7 +447,7 @@ Status CocoOp::ParseAnnotationIds() {
         RETURN_IF_NOT_OK(PanopticColumnLoad(annotation, file_name, image_id));
         break;
       default:
-        RETURN_STATUS_UNEXPECTED("Invalid task type");
+        RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff, Keypoint or Panoptic.");
     }
   }
   for (auto img : image_que) {
@@ -438,7 +459,7 @@ Status CocoOp::ParseAnnotationIds() {
 
 Status CocoOp::ImageColumnLoad(const nlohmann::json &image_tree, std::vector<std::string> *image_vec) {
   if (image_tree.size() == 0) {
-    RETURN_STATUS_UNEXPECTED("No images found in " + annotation_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid data, no \"image\" node found in json file: " + annotation_path_);
   }
   for (auto img : image_tree) {
     std::string file_name;
@@ -461,7 +482,8 @@ Status CocoOp::DetectionColumnLoad(const nlohmann::json &annotation_tree, const 
   RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoCategoryId), &category_id));
   auto search_category = category_set_.find(category_id);
   if (search_category == category_set_.end())
-    RETURN_STATUS_UNEXPECTED("category_id can't find in categories where category_id: " + std::to_string(category_id));
+    RETURN_STATUS_UNEXPECTED("Invalid data, category_id can't find in categories where category_id: " +
+                             std::to_string(category_id));
   auto node_iscrowd = annotation_tree.find(kJsonAnnoIscrowd);
   if (node_iscrowd != annotation_tree.end()) iscrowd = *node_iscrowd;
   bbox.insert(bbox.end(), node_bbox.begin(), node_bbox.end());
@@ -498,11 +520,12 @@ Status CocoOp::KeypointColumnLoad(const nlohmann::json &annotation_tree, const s
                                   const int32_t &unique_id) {
   auto itr_num_keypoint = annotation_tree.find(kJsonAnnoNumKeypoints);
   if (itr_num_keypoint == annotation_tree.end())
-    RETURN_STATUS_UNEXPECTED("No num_keypoint found in annotations where id: " + std::to_string(unique_id));
+    RETURN_STATUS_UNEXPECTED("Invalid data, no num_keypoint found in annotations where id: " +
+                             std::to_string(unique_id));
   simple_item_map_[image_file].push_back(*itr_num_keypoint);
   auto itr_keypoint = annotation_tree.find(kJsonAnnoKeypoints);
   if (itr_keypoint == annotation_tree.end())
-    RETURN_STATUS_UNEXPECTED("No keypoint found in annotations where id: " + std::to_string(unique_id));
+    RETURN_STATUS_UNEXPECTED("Invalid data, no keypoint found in annotations where id: " + std::to_string(unique_id));
   coordinate_map_[image_file].push_back(*itr_keypoint);
   return Status::OK();
 }
@@ -511,27 +534,31 @@ Status CocoOp::PanopticColumnLoad(const nlohmann::json &annotation_tree, const s
                                   const int32_t &image_id) {
   auto itr_segments = annotation_tree.find(kJsonAnnoSegmentsInfo);
   if (itr_segments == annotation_tree.end())
-    RETURN_STATUS_UNEXPECTED("No segments_info found in annotations where image_id: " + std::to_string(image_id));
+    RETURN_STATUS_UNEXPECTED("Invalid data, no segments_info found in annotations where image_id: " +
+                             std::to_string(image_id));
   for (auto info : *itr_segments) {
     std::vector<float> bbox;
     uint32_t category_id = 0;
     auto itr_bbox = info.find(kJsonAnnoBbox);
     if (itr_bbox == info.end())
-      RETURN_STATUS_UNEXPECTED("No bbox found in segments_info where image_id: " + std::to_string(image_id));
+      RETURN_STATUS_UNEXPECTED("Invalid data, no bbox found in segments_info where image_id: " +
+                               std::to_string(image_id));
     bbox.insert(bbox.end(), itr_bbox->begin(), itr_bbox->end());
     coordinate_map_[image_file].push_back(bbox);
 
     RETURN_IF_NOT_OK(SearchNodeInJson(info, std::string(kJsonAnnoCategoryId), &category_id));
     auto search_category = category_set_.find(category_id);
     if (search_category == category_set_.end())
-      RETURN_STATUS_UNEXPECTED("category_id can't find in categories where category_id: " +
+      RETURN_STATUS_UNEXPECTED("Invalid data, category_id can't find in categories where category_id: " +
                                std::to_string(category_id));
     auto itr_iscrowd = info.find(kJsonAnnoIscrowd);
     if (itr_iscrowd == info.end())
-      RETURN_STATUS_UNEXPECTED("No iscrowd found in segments_info where image_id: " + std::to_string(image_id));
+      RETURN_STATUS_UNEXPECTED("Invalid data, no iscrowd found in segments_info where image_id: " +
+                               std::to_string(image_id));
     auto itr_area = info.find(kJsonAnnoArea);
     if (itr_area == info.end())
-      RETURN_STATUS_UNEXPECTED("No area found in segments_info where image_id: " + std::to_string(image_id));
+      RETURN_STATUS_UNEXPECTED("Invalid data, no area found in segments_info where image_id: " +
+                               std::to_string(image_id));
     simple_item_map_[image_file].push_back(category_id);
     simple_item_map_[image_file].push_back(*itr_iscrowd);
     simple_item_map_[image_file].push_back(*itr_area);
@@ -540,26 +567,31 @@ Status CocoOp::PanopticColumnLoad(const nlohmann::json &annotation_tree, const s
 }
 
 Status CocoOp::CategoriesColumnLoad(const nlohmann::json &categories_tree) {
-  if (categories_tree.size() == 0) RETURN_STATUS_UNEXPECTED("No categories found in " + annotation_path_);
+  if (categories_tree.size() == 0) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, no categories found in annotation_path: " + annotation_path_);
+  }
   for (auto category : categories_tree) {
     int32_t id = 0;
     std::string name;
     std::vector<int32_t> label_info;
     auto itr_id = category.find(kJsonId);
-    if (itr_id == category.end()) RETURN_STATUS_UNEXPECTED("No id found in categories of " + annotation_path_);
+    if (itr_id == category.end()) {
+      RETURN_STATUS_UNEXPECTED("Invalid data, no json id found in categories of " + annotation_path_);
+    }
     id = *itr_id;
     label_info.push_back(id);
     category_set_.insert(id);
 
     auto itr_name = category.find(kJsonCategoriesName);
-    CHECK_FAIL_RETURN_UNEXPECTED(itr_name != category.end(),
-                                 "No name found in categories where id: " + std::to_string(id));
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      itr_name != category.end(),
+      "Invalid data, no categories name found in categories where id: " + std::to_string(id));
     name = *itr_name;
 
     if (task_type_ == TaskType::Panoptic) {
       auto itr_isthing = category.find(kJsonCategoriesIsthing);
       CHECK_FAIL_RETURN_UNEXPECTED(itr_isthing != category.end(),
-                                   "No isthing found in categories of " + annotation_path_);
+                                   "Invalid data, no isthing found in categories of " + annotation_path_);
       label_info.push_back(*itr_isthing);
     }
     label_index_.emplace_back(std::make_pair(name, label_info));
@@ -574,7 +606,7 @@ Status CocoOp::InitSampler() {
 
 Status CocoOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
@@ -590,7 +622,7 @@ Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &c
 
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
-    CHECK_FAIL_RETURN_UNEXPECTED(rc.IsOk(), "fail to decode file: " + path);
+    CHECK_FAIL_RETURN_UNEXPECTED(rc.IsOk(), "Invalid data, failed to decode image: " + path);
   }
   return Status::OK();
 }

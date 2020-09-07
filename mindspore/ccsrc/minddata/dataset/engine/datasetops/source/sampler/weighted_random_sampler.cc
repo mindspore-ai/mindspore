@@ -42,14 +42,19 @@ Status WeightedRandomSampler::InitSampler() {
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
     num_samples_ = num_rows_;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && num_samples_, "num_samples & num_rows need to be positive");
-  CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0, "samples_per_buffer<=0\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && num_samples_,
+                               "Invalid parameter, num_samples & num_rows must be greater than 0, but got num_rows: " +
+                                 std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
+  CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0,
+                               "Invalid parameter, samples_per_buffer must be greater than 0, but got " +
+                                 std::to_string(samples_per_buffer_) + ".\n");
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
-                  "number of samples weights is more than num of rows. Might generate id out of bound OR other errors");
+                  "Invalid parameter, number of samples weights is more than num of rows. "
+                  "Might generate id out of bound OR other errors");
   }
   if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {
-    RETURN_STATUS_UNEXPECTED("Without replacement, sample weights less than numSamples");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, without replacement, weights size must be greater than num_samples.");
   }
 
   // Initialize random generator with seed from config manager

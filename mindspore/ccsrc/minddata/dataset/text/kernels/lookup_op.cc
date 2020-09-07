@@ -35,7 +35,7 @@ Status LookupOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     word_ids.emplace_back(word_id == Vocab::kNoTokenExists ? default_id_ : word_id);
     CHECK_FAIL_RETURN_UNEXPECTED(
       word_ids.back() != Vocab::kNoTokenExists,
-      "Lookup Error: token: " + std::string(*itr) + " doesn't exist in vocab and no unknown token is specified.");
+      "Invalid data, token: \"" + std::string(*itr) + "\" doesn't exist in vocab and no unknown token is specified.");
   }
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(word_ids, input->shape(), output));
 

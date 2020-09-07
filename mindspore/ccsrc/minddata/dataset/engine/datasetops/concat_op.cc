@@ -162,7 +162,7 @@ Status ConcatOp::Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf) {
     int32_t index = 0;
     for (auto item : new_row) {
       if ((item->type() != data_type_[index]) || item->Rank() != data_rank_[index++]) {
-        RETURN_STATUS_UNEXPECTED("The data type or data rank is not the same with previous dataset.");
+        RETURN_STATUS_UNEXPECTED("Invalid data, data type or data rank is not the same with previous dataset.");
       }
     }
   }
@@ -180,7 +180,7 @@ Status ConcatOp::ComputeColMap() {
     // Verify all children have the same column name map
     for (int32_t i = 0; i < child_.size(); ++i) {
       if (child_[i]->column_name_id_map() != column_name_id_map_) {
-        RETURN_STATUS_UNEXPECTED("The column name or column order is not the same with previous dataset.");
+        RETURN_STATUS_UNEXPECTED("Invalid data, column name or column order is not the same with previous dataset.");
       }
     }
   } else {

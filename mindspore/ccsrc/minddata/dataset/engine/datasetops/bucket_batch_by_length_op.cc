@@ -52,15 +52,16 @@ Status BucketBatchByLengthOp::Builder::SanityCheck() {
   std::string error_message;
 
   if (builder_length_dependent_columns_.empty()) {
-    error_message += "At least 1 column must be specified for element length calculation.\n";
+    error_message += "Invalid parameter, at least 1 column must be specified for element length calculation.\n";
   }
 
   if (builder_bucket_boundaries_.empty()) {
-    error_message += "At least 1 bucket boundary must be specified.\n";
+    error_message += "Invalid parameter, at least 1 bucket boundary must be specified.\n";
   }
 
   if (builder_bucket_batch_sizes_.size() != builder_bucket_boundaries_.size() + 1) {
-    error_message += "There must be exactly one bucket batch size specified for each bucket boundary.\n";
+    error_message +=
+      "Invalid parameter, there must be exactly one bucket batch size specified for each bucket boundary.\n";
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(error_message.empty(), error_message);
@@ -168,7 +169,8 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
     RETURN_IF_NOT_OK(element_length_function_->Compute(input, &output));
     RETURN_IF_NOT_OK(output.at(0)->GetItemAt(out_element_length, {0}));
     if (*out_element_length < 0) {
-      RETURN_STATUS_UNEXPECTED("BucketBatchByLength: element_length_function returned negative integer");
+      RETURN_STATUS_UNEXPECTED(
+        "Invalid parameter, element_length_function must return an integer greater than or equal to 0.");
     }
   } else {
     *out_element_length = element[0]->shape()[0];
@@ -187,7 +189,8 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
       for (size_t i = 0; i < pad_shape.size(); i++) {
         if (pad_shape[i] == TensorShape::kDimUnknown) {
           if (bucket_index + 1 >= bucket_boundaries_.size()) {
-            std::string error_message = "Requested to pad to bucket boundary, element falls in last bucket";
+            std::string error_message =
+              "Invalid data, requested to pad to bucket boundary, element falls in last bucket.";
             return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, error_message);
           }
 

@@ -54,7 +54,9 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
   int32_t row_cnt = 0;
   while (!new_row.empty()) {
     for (int32_t col : col_ids_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(!new_row[col]->type().IsNumeric(), "from_dataset only works on string columns");
+      CHECK_FAIL_RETURN_UNEXPECTED(!new_row[col]->type().IsNumeric(),
+                                   "Invalid data, build_vocab only works on string data, but got numeric data type: " +
+                                     new_row[col]->type().ToString());
       for (auto itr = new_row[col]->begin<std::string_view>(); itr != new_row[col]->end<std::string_view>(); itr++) {
         (*wrkr_map)[std::string(*itr)] += 1;
       }
@@ -77,7 +79,9 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
 
 Status BuildVocabOp::operator()() {
   // launch the collector thread
-  RETURN_UNEXPECTED_IF_NULL(tree_);
+  if (tree_ == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+  }
   RETURN_IF_NOT_OK(distributor_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(collector_queue_->Register(tree_->AllTasks()));
   // launch worker threads and collector thread
@@ -92,7 +96,8 @@ Status BuildVocabOp::operator()() {
     col_ids_.reserve(col_names_.size());
     for (std::string col : col_names_) {
       auto itr = column_name_id_map_.find(col);
-      CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), col + " column doesn't exist");
+      CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
+                                   "Invalid parameter, column name: " + col + " does not exist.");
       col_ids_.push_back(itr->second);
     }
   } else {
@@ -131,7 +136,7 @@ Status BuildVocabOp::CollectorThread() {
       ++num_quited_worker;
     }
   }  // all frequencies are obtained
-  CHECK_FAIL_RETURN_UNEXPECTED(!word_cnt_.empty(), "word_cnt is empty");
+  CHECK_FAIL_RETURN_UNEXPECTED(!word_cnt_.empty(), "Invalid data, no words in the dataset.");
   std::vector<std::string> words;
   // make sure enough is reserved, this will become a partially sorted list eventually
   words.reserve(wrkr_map->size());
@@ -151,7 +156,8 @@ Status BuildVocabOp::CollectorThread() {
     err_msg += (word_cnt_.find(sp_tk) != word_cnt_.end() ? sp_tk + "\t" : "");
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(err_msg.empty(), "These specials words are already in the dataset: " + err_msg + ".");
+  CHECK_FAIL_RETURN_UNEXPECTED(err_msg.empty(),
+                               "Invalid data, these special words are already in the dataset: " + err_msg + ".");
 
   int64_t num_words = std::min(static_cast<int64_t>(words.size()), top_k_);
   if (num_words == 0) {
@@ -185,10 +191,13 @@ Status BuildVocabOp::CollectorThread() {
 }
 
 Status BuildVocabOp::Builder::Build(std::shared_ptr<BuildVocabOp> *op) {
-  CHECK_FAIL_RETURN_UNEXPECTED(builder_num_workers_ > 0, "builder num_workers need to be greater than 0");
-  CHECK_FAIL_RETURN_UNEXPECTED(builder_top_k_ > 0, "top_k needs to be positive number");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    builder_num_workers_ > 0,
+    "Invalid parameter, num_parallel_workers must be greater than 0, but got " + std::to_string(builder_num_workers_));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    builder_top_k_ > 0, "Invalid parameter, top_k must be greater than 0, but got " + std::to_string(builder_top_k_));
   CHECK_FAIL_RETURN_UNEXPECTED(builder_max_freq_ >= builder_min_freq_ && builder_min_freq_ >= 0,
-                               "frequency range [a,b] should be 0 <= a <= b (a,b are inclusive)");
+                               "Invalid parameter, frequency range [a,b] must be 0 <= a <= b (a,b are inclusive).");
   (*op) = std::make_shared<BuildVocabOp>(
     builder_vocab_, builder_col_names_, std::make_pair(builder_min_freq_, builder_max_freq_), builder_top_k_,
     builder_speical_tokens_, builder_special_first_, builder_num_workers_, builder_connector_size_);

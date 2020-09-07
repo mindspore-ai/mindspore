@@ -32,7 +32,7 @@ RepeatOp::Builder::Builder(int32_t count) : build_num_repeats_(count) {}
 
 Status RepeatOp::Builder::SanityCheck() const {
   if (build_num_repeats_ < kInfiniteRepeat || build_num_repeats_ == 0) {
-    std::string err_msg("Repeat count must be > 0 or -1.");
+    std::string err_msg("Invalid parameter, repeat count must be greater than 0 or equal to -1.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();
@@ -83,7 +83,7 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 // this function will retry to pop the connector again and will get the non-EOE buffer if any.
 Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
   if (child_.empty()) {
-    RETURN_STATUS_UNEXPECTED("RepeatOp can't be the leaf node.");
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, RepeatOp can't be the first op in pipeline.");
   }
 
   std::unique_ptr<DataBuffer> buf;

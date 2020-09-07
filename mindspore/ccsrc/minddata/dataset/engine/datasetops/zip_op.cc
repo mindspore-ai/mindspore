@@ -122,7 +122,8 @@ Status ZipOp::prepare(TensorQTable *const table) {
   draining_ = false;
   buffer_id_ = 0;
   if (table == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "ZipOp prepare phase requires a tensor table.");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                  "Invalid data, ZipOp prepare phase requires a tensor table, but got nullptr.");
   }
   // fill initial row
   TensorRow new_row;
@@ -146,7 +147,8 @@ Status ZipOp::prepare(TensorQTable *const table) {
 // fillBuffer always expects a new table to fill
 Status ZipOp::fillBuffer(TensorQTable *const table) {
   if (table == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "ZipOp fillBuffer null table pointer.");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                  "Invalid data, ZipOp fillBuffer null table pointer.");
   }
   TensorRow new_row;
   while (table->size() < static_cast<size_t>(rows_per_buffer_)) {
@@ -252,7 +254,7 @@ Status ZipOp::ComputeColMap() {
         int32_t old_id = pair.second;
         // check if name already exists in column name descriptor
         if (column_name_id_map_.count(name) == 1) {
-          RETURN_STATUS_UNEXPECTED("key already exists when zipping datasets");
+          RETURN_STATUS_UNEXPECTED("Invalid parameter, key: " + name + " already exists when zipping datasets.");
         }
         column_name_id_map_[name] = old_id + colsCurrent;
       }

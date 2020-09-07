@@ -262,7 +262,8 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   if (child_.size() == 0) {
     return this->GetNextBuffer(p_buffer, worker_id);
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(child_index < child_.size(), "Child index too big : " + std::to_string(child_index));
+  CHECK_FAIL_RETURN_UNEXPECTED(child_index < child_.size(),
+                               "Invalid data, child index too big : " + std::to_string(child_index));
   std::shared_ptr<DatasetOp> child = child_[child_index];
   std::unique_ptr<DataBuffer> buf;
   RETURN_IF_NOT_OK(child->GetNextBuffer(&buf, worker_id));

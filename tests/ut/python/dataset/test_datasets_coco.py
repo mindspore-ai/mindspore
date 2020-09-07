@@ -258,7 +258,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "Invalid node found in json" in str(e)
+        assert "invalid node found in json" in str(e)
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_CATEGORY_ID_FILE, task="Detection")

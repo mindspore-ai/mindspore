@@ -497,6 +497,7 @@ def test_generator_error_2():
         data1 = ds.GeneratorDataset(generator_np, ["data"])
         for _ in data1:
             pass
+    print("========", str(info.value))
     assert "Generator should return a tuple of numpy arrays" in str(info.value)
 
 

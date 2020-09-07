@@ -136,6 +136,11 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
                                const std::vector<WordType> &special_tokens, bool prepend_special,
                                std::shared_ptr<Vocab> *vocab) {
   // Validate parameters
+  if (path.empty()) {
+    MS_LOG(ERROR) << "vocab file path is not set!";
+    RETURN_STATUS_UNEXPECTED("vocab file path is not set!");
+  }
+
   if (vocab_size < 0 && vocab_size != -1) {
     MS_LOG(ERROR) << "vocab_size shoule be either -1 or positive integer, but got " << vocab_size;
     RETURN_STATUS_UNEXPECTED("vocab_size shoule be either -1 or positive integer, but got " +

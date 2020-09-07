@@ -126,7 +126,7 @@ Status RenameOp::ComputeColMap() {
     // only checks number of renamed columns have been found, this input check doesn't check everything
     if (found != in_columns_.size()) {
       MS_LOG(DEBUG) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
-      std::string err_msg = "Renamed column doesn't exist in dataset";
+      std::string err_msg = "Invalid parameter, column to be renamed does not exist in dataset.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
 

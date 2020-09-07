@@ -52,7 +52,7 @@ ShuffleOp::Builder::Builder() : build_shuffle_size_(0), build_reshuffle_each_epo
 
 Status ShuffleOp::Builder::SanityCheck() const {
   if (build_shuffle_size_ < 2) {
-    RETURN_STATUS_UNEXPECTED("Shuffle buffer size must be greater than 1.");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, shuffle buffer size must be greater than 1.");
   }
   return Status::OK();
 }

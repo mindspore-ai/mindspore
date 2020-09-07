@@ -56,8 +56,12 @@ Status ImageFolderOp::Builder::Build(std::shared_ptr<ImageFolderOp> *ptr) {
 Status ImageFolderOp::Builder::SanityCheck() {
   Path dir(builder_dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false ? "ImageFolder path is invalid or not set\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is set to 0\n" : "";
+  err_msg += dir.IsDirectory() == false
+               ? "Invalid parameter, ImageFolder path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -113,7 +117,7 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ImageFolderDataset. Please check file path or dataset "
+      "Invalid data, no valid data matching the dataset API ImageFolderDataset. Please check file path or dataset "
       "API validation first.");
   }
   // free memory of two queues used for pre-scan
@@ -207,7 +211,7 @@ Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, 
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Fail to decode image:" + folder_path_ + (pairPtr->first);
+      std::string err = "Invalid data, failed to decode image: " + folder_path_ + (pairPtr->first);
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
@@ -258,7 +262,13 @@ Status ImageFolderOp::InitSampler() {
 // Derived from RandomAccessOp
 Status ImageFolderOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
-    RETURN_STATUS_UNEXPECTED("ImageLabelPair not set");
+    if (image_label_pairs_.empty()) {
+      RETURN_STATUS_UNEXPECTED("No images found in dataset, please check if Op read images successfully or not.");
+    } else {
+      RETURN_STATUS_UNEXPECTED(
+        "Map for storaging image-index pair is nullptr or has been set in other place,"
+        "it must be empty before using GetClassIds.");
+    }
   }
   for (size_t i = 0; i < image_label_pairs_.size(); ++i) {
     (*cls_ids)[image_label_pairs_[i]->second].push_back(i);
@@ -286,7 +296,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
     Path folder(folder_path_ + folder_name);
     std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
     if (folder.Exists() == false || dirItr == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Error unable to open: " + folder_name);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_name);
     }
     std::set<std::string> imgs;  // use this for ordering
     while (dirItr->hasNext()) {
@@ -335,7 +345,7 @@ Status ImageFolderOp::startAsyncWalk() {
   TaskManager::FindMe()->Post();
   Path dir(folder_path_);
   if (dir.Exists() == false || dir.IsDirectory() == false) {
-    RETURN_STATUS_UNEXPECTED("Error unable to open: " + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, failed to open image folder: " + folder_path_);
   }
   dirname_offset_ = folder_path_.length();
   RETURN_IF_NOT_OK(RecursiveWalkFolder(&dir));
@@ -348,7 +358,9 @@ Status ImageFolderOp::startAsyncWalk() {
 }
 
 Status ImageFolderOp::LaunchThreadsAndInitOp() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
+  if (tree_ == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
+  }
   // Registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(folder_name_queue_->Register(tree_->AllTasks()));
@@ -375,9 +387,15 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   Path dir(path);
   std::string err_msg = "";
   int64_t row_cnt = 0;
-  err_msg += (dir.Exists() == false || dir.IsDirectory() == false) ? "unable to open dir " + path : "";
-  err_msg += (num_classes == nullptr || num_rows == nullptr) ? "num_class/num_rows is null\n" : "";
-  err_msg += (dev_id >= num_dev || num_dev <= 0) ? "invalid sharding config\n" : "";
+  err_msg += (dir.Exists() == false || dir.IsDirectory() == false)
+               ? "Invalid parameter, image folde path is invalid or not set, path: " + path
+               : "";
+  err_msg +=
+    (num_classes == nullptr || num_rows == nullptr) ? "Invalid parameter, num_class or num_rows cannot be null.\n" : "";
+  err_msg += (dev_id >= num_dev || num_dev <= 0)
+               ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
+                   std::to_string(num_dev) + ", shard_id: " + std::to_string(dev_id) + ".\n"
+               : "";
   if (err_msg.empty() == false) {
     RETURN_STATUS_UNEXPECTED(err_msg);
   }

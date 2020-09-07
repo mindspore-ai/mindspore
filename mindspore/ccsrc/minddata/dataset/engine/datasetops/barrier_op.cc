@@ -181,7 +181,8 @@ Status BarrierOp::blockCond() {
       py::object ret_py_obj = condition_function_();
       // Process the return value
       if (!py::isinstance<py::bool_>(ret_py_obj)) {
-        return Status(StatusCode::kPyFuncException, "Condition wait function should return true/false");
+        return Status(StatusCode::kPyFuncException,
+                      "Invalid parameter, condition wait function should return true/false.");
       }
     } catch (const py::error_already_set &e) {
       return Status(StatusCode::kPyFuncException, e.what());

@@ -41,8 +41,13 @@ ClueOp::Builder::Builder()
 
 Status ClueOp::Builder::ValidateInputs() const {
   std::string err;
-  err += builder_num_workers_ <= 0 ? "Number of parallel workers should be greater than 0\n" : "";
-  err += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1) ? "Wrong sharding configs\n" : "";
+  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                       std::to_string(builder_num_workers_) + ".\n"
+                                   : "";
+  err += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1)
+           ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
+               std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
+           : "";
   return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err);
 }
 
@@ -128,7 +133,7 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
     if (cursor.find(key_chain[i]) != cursor.end()) {
       cursor = cursor[key_chain[i]];
     } else {
-      RETURN_STATUS_UNEXPECTED("Failed to find key: " + key_chain[i]);
+      RETURN_STATUS_UNEXPECTED("Invalid data, failed to find key: " + key_chain[i]);
     }
   }
   std::string final_str = key_chain.back();
@@ -158,7 +163,7 @@ Status ClueOp::LoadFile(const std::string &file, const int64_t start_offset, con
                         const int32_t worker_id) {
   std::ifstream handle(file);
   if (!handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Failed to open file " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
 
   int64_t rows_each_buffer = 0;
@@ -186,7 +191,7 @@ Status ClueOp::LoadFile(const std::string &file, const int64_t start_offset, con
       js = nlohmann::json::parse(line);
     } catch (const std::exception &err) {
       // Catch any exception and convert to Status return code
-      RETURN_STATUS_UNEXPECTED("Failed to load json file");
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse json file: " + line);
     }
     int cols_count = cols_to_keyword_.size();
     TensorRow tRow(cols_count, nullptr);
@@ -474,7 +479,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
   }
   if (all_num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API CLUEDataset. Please check file path or dataset API "
+      "Invalid data, no valid data matching the dataset API CLUEDataset. Please check file path or dataset API "
       "validation first.");
   }
 
@@ -486,7 +491,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
 int64_t ClueOp::CountTotalRows(const std::string &file) {
   std::ifstream handle(file);
   if (!handle.is_open()) {
-    MS_LOG(ERROR) << "Failed to open file: " << file;
+    MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
     return 0;
   }
 

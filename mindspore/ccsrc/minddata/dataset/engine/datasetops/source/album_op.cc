@@ -44,7 +44,7 @@ Status AlbumOp::Builder::Build(std::shared_ptr<AlbumOp> *ptr) {
   builder_schema_ = std::make_unique<DataSchema>();
   Path schema_file(builder_schema_file_);
   if (builder_schema_file_ == "" || !schema_file.Exists()) {
-    RETURN_STATUS_UNEXPECTED("Schema not provided");
+    RETURN_STATUS_UNEXPECTED("Invalid file, schema_file is invalid or not set: " + builder_schema_file_);
   } else {
     MS_LOG(INFO) << "Schema file provided: " << builder_schema_file_ << ".";
     builder_schema_->LoadSchemaFile(builder_schema_file_, builder_columns_to_load_);
@@ -58,8 +58,12 @@ Status AlbumOp::Builder::Build(std::shared_ptr<AlbumOp> *ptr) {
 Status AlbumOp::Builder::SanityCheck() {
   Path dir(builder_dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false ? "Album path is invalid or not set\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is set to 0\n" : "";
+  err_msg += dir.IsDirectory() == false
+               ? "Invalid parameter, Album path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -99,7 +103,7 @@ Status AlbumOp::PrescanEntry() {
   dirname_offset_ = folder_path_.length();
   std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
   if (folder.Exists() == false || dirItr == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error unable to open: " + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_path_);
   }
   MS_LOG(INFO) << "Album folder Path found: " << folder_path_ << ".";
 
@@ -192,7 +196,7 @@ Status AlbumOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
+  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
 // Only support JPEG/PNG/GIF/BMP
@@ -203,14 +207,14 @@ Status AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
   *valid = false;
   file_handle.open(file_name, std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Can not open image file " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid file, can not open image file: " + file_name);
   }
   unsigned char file_type[read_num];
   (void)file_handle.read(reinterpret_cast<char *>(file_type), read_num);
 
   if (file_handle.fail()) {
     file_handle.close();
-    RETURN_STATUS_UNEXPECTED("Read image file failed " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid data, failed to read image file: " + file_name);
   }
   file_handle.close();
   if (file_type[0] == 0xff && file_type[1] == 0xd8 && file_type[2] == 0xff) {
@@ -250,7 +254,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   if (decode_ && valid) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Fail to decode image:" + image_file_path;
+      std::string err = "Invalid data, failed to decode image: " + image_file_path;
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
@@ -302,7 +306,8 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_
     MS_LOG(INFO) << "Int array found: " << data << ".";
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &label));
   } else {
-    RETURN_STATUS_UNEXPECTED("Error in Load Int Tensor");
+    RETURN_STATUS_UNEXPECTED("Invalid data, column type is neither int32 nor int64, it is " +
+                             data_schema_->column(col_num).type().ToString());
   }
   row->push_back(std::move(label));
   return Status::OK();
@@ -361,7 +366,7 @@ Status AlbumOp::LoadTensorRow(const std::string &file, TensorRow *row) {
 
   std::ifstream file_handle(folder_path_ + file);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Json file " + folder_path_ + file + " can not open.");
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + folder_path_ + file);
   }
   std::string line;
   while (getline(file_handle, line)) {
@@ -425,7 +430,7 @@ Status AlbumOp::LoadTensorRow(const std::string &file, TensorRow *row) {
       }
     } catch (const std::exception &err) {
       file_handle.close();
-      RETURN_STATUS_UNEXPECTED("Parse Json file failed");
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse json file: " + folder_path_ + file);
     }
   }
   file_handle.close();
@@ -476,7 +481,9 @@ Status AlbumOp::InitSampler() {
 }
 
 Status AlbumOp::LaunchThreadsAndInitOp() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
+  if (tree_ == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+  }
   // registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));

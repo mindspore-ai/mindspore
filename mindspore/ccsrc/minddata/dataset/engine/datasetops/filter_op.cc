@@ -37,8 +37,12 @@ namespace dataset {
 
 Status FilterOp::Builder::SanityCheck() {
   std::string err;
-  err += builder_op_connector_size_ <= 0 ? "connector size <= 0\n" : "";
-  err += builder_num_workers_ <= 0 ? "filter num_parallel_workers <= 0\n" : "";
+  err += builder_op_connector_size_ <= 0 ? "Invalid parameter, connector_size must be greater than 0, but got " +
+                                             std::to_string(builder_op_connector_size_) + ".\n"
+                                         : "";
+  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                       std::to_string(builder_num_workers_) + ".\n"
+                                   : "";
   return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
 }
 
@@ -61,7 +65,9 @@ FilterOp::FilterOp(const std::vector<std::string> &in_col_names, int32_t num_wor
 
 Status FilterOp::operator()() {
   // The operator class just starts off threads by calling the tree_ function.
-  RETURN_UNEXPECTED_IF_NULL(tree_);
+  if (tree_ == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+  }
   filter_queues_.Init(num_workers_, oc_queue_size_);
   RETURN_IF_NOT_OK(filter_queues_.Register(tree_->AllTasks()));
   Status rc = tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1));
@@ -81,7 +87,7 @@ Status FilterOp::ValidateInColumns(const std::vector<std::string> *input_columns
   for (const auto &inCol : *input_columns) {
     bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
     if (!found) {
-      std::string err_msg = "input column name: " + inCol + " doesn't exist in the dataset columns.";
+      std::string err_msg = "Invalid parameter, column name: " + inCol + " does not exist in the dataset columns.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
@@ -224,7 +230,7 @@ Status FilterOp::CheckColumns(const DataBuffer *in_buf, const std::vector<std::s
 Status FilterOp::CheckInput(const TensorRow &input) const {
   for (auto &item : input) {
     if (item == nullptr) {
-      RETURN_STATUS_UNEXPECTED("input is null.");
+      RETURN_STATUS_UNEXPECTED("Invalid data, input tensor is null.");
     }
   }
   return Status::OK();
@@ -251,7 +257,7 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
   } catch (const py::error_already_set &e) {
     std::stringstream ss;
     ss << e.what() << std::endl;
-    ss << "The type of the return value of python predicate function is not bool, or can not be convert to bool.";
+    ss << "Invalid parameter, predicate function function should return true/false.";
     return Status(StatusCode::kPyFuncException, ss.str());
   }
   return Status(StatusCode::kOK, "FilterOp predicate func call succeed");

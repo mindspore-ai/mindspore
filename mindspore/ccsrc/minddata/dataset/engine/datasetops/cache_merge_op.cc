@@ -200,11 +200,11 @@ Status CacheMergeOp::PrepareNodePostAction() {  // Run any common code from supe
 }
 
 Status CacheMergeOp::ComputeColMap() {
-  CHECK_FAIL_RETURN_UNEXPECTED(child_[kCacheMissChildIdx] != nullptr, "Cache miss stream empty");
+  CHECK_FAIL_RETURN_UNEXPECTED(child_[kCacheMissChildIdx] != nullptr, "Invalid data, cache miss stream empty.");
   if (column_name_id_map().empty()) {
     column_name_id_map_ = child_[kCacheMissChildIdx]->column_name_id_map();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map().empty(), "No column map detected");
+  CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map().empty(), "Invalid data, column_name_id_map is empty.");
   return Status::OK();
 }
 
@@ -219,12 +219,13 @@ CacheMergeOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(
 // Check if the required parameters are set by the builder.
 Status CacheMergeOp::Builder::SanityCheck() const {
   if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "CacheMergeOp requires a CacheClient");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                  "Invalid parameter, CacheMergeOp requires a CacheClient, but got nullptr.");
   }
   // Make sure the cache client has a valid session
   if (!build_cache_client_->session_id()) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
-                  "Cache client for CacheMergeOp is missing session id");
+                  "Invalid parameter, cache client for CacheMergeOp requires a session id which is not equal to 0.");
   }
   return Status::OK();
 }
@@ -287,7 +288,7 @@ Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowCacheReque
       RETURN_IF_NOT_OK(mem.allocate(1));
       *out = mem.GetMutablePointer();
     } else {
-      RETURN_STATUS_UNEXPECTED("Map insert fail.");
+      RETURN_STATUS_UNEXPECTED("Invalid data, map insert fail.");
     }
   }
   return Status::OK();

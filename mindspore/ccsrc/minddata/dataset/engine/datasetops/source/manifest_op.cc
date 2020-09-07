@@ -57,8 +57,10 @@ Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
 
 Status ManifestOp::Builder::SanityCheck() {
   std::string err_msg;
-  err_msg += builder_file_.empty() ? "Manifest file is not set\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers smaller than 1\n" : "";
+  err_msg += builder_file_.empty() ? "Invalid parameter, Manifest file is not set.\n" : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -135,7 +137,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
 
 Status ManifestOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
@@ -175,7 +177,7 @@ Status ManifestOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
+  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
@@ -197,7 +199,7 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Fail to decode image:" + data.first;
+      std::string err = "Invalid data, failed to decode image: " + data.first;
       RETURN_STATUS_UNEXPECTED(err);
     }
   }
@@ -248,7 +250,13 @@ Status ManifestOp::InitSampler() {
 // Derived from RandomAccessOp
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Class indexing is invalid.");
+    if (image_labelname_.empty()) {
+      RETURN_STATUS_UNEXPECTED("No image found in dataset, please check if Op read images successfully or not.");
+    } else {
+      RETURN_STATUS_UNEXPECTED(
+        "Map for storaging image-index pair is nullptr or has been set in other place,"
+        "it must be empty before using GetClassIds.");
+    }
   }
 
   for (size_t i = 0; i < image_labelname_.size(); i++) {
@@ -272,7 +280,7 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 Status ManifestOp::ParseManifestFile() {
   std::ifstream file_handle(file_);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Manifest file " + file_ + " can not open.");
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Manifest file: " + file_);
   }
   std::string line;
   while (getline(file_handle, line)) {
@@ -297,7 +305,7 @@ Status ManifestOp::ParseManifestFile() {
         std::string label_name = annotation.value("name", "");
         if (label_name == "") {
           file_handle.close();
-          RETURN_STATUS_UNEXPECTED("Label name is not found in manifest file for " + image_file_path);
+          RETURN_STATUS_UNEXPECTED("Invalid data, label name is not found in Manifest file: " + image_file_path);
         }
         if (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) {
           if (label_index_.find(label_name) == label_index_.end()) {
@@ -311,7 +319,7 @@ Status ManifestOp::ParseManifestFile() {
       }
     } catch (const std::exception &err) {
       file_handle.close();
-      RETURN_STATUS_UNEXPECTED("Parse manifest file failed");
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse manifest file: " + line);
     }
   }
   file_handle.close();
@@ -326,14 +334,14 @@ Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
   *valid = false;
   file_handle.open(file_name, std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Can not open image file " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image file: " + file_name);
   }
   unsigned char file_type[read_num];
   (void)file_handle.read(reinterpret_cast<char *>(file_type), read_num);
 
   if (file_handle.fail()) {
     file_handle.close();
-    RETURN_STATUS_UNEXPECTED("Read image file failed " + file_name);
+    RETURN_STATUS_UNEXPECTED("Invalid data, failed to read image file: " + file_name);
   }
   file_handle.close();
   if (file_type[0] == 0xff && file_type[1] == 0xd8 && file_type[2] == 0xff) {
@@ -364,7 +372,7 @@ Status ManifestOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "Invalid data, no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
       "validation first.");
   }
   return Status::OK();

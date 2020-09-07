@@ -66,7 +66,7 @@ Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
 
 Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements) {
   if (num_elements == 0) {
-    RETURN_STATUS_UNEXPECTED("num of Elements is 0");
+    RETURN_STATUS_UNEXPECTED("Invalid data, num of elements cannot be 0.");
   }
   if (col_desc_ == nullptr) {
     // a ColDescriptor for Tensor that holds SampleIds
@@ -124,13 +124,13 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
 #endif
 
 Status Sampler::SetNumSamples(int64_t num_samples) {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "num_samples is negative");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "Invalid parameter, num_samples must be greater than or equal to 0.");
   num_samples_ = num_samples;
   return Status::OK();
 }
 
 Status Sampler::SetNumRowsInDataset(int64_t num_rows) {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "num_rows is negative or 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "Invalid parameter, num_rows must be greater than 0.");
   num_rows_ = num_rows;
   return Status::OK();
 }

@@ -62,9 +62,15 @@ Status MnistOp::Builder::SanityCheck() {
   const std::set<std::string> valid = {"test", "train", "all", ""};
   Path dir(builder_dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false ? "MNIST path is invalid or not set\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers is set to 0 or negative\n" : "";
-  err_msg += valid.find(builder_usage_) == valid.end() ? "usage needs to be 'train','test' or 'all'\n" : "";
+  err_msg += dir.IsDirectory() == false
+               ? "Invalid parameter, MNIST path is invalid or not set, path: " + builder_dir_ + ".\n"
+               : "";
+  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
+                                           std::to_string(builder_num_workers_) + ".\n"
+                                       : "";
+  err_msg += valid.find(builder_usage_) == valid.end()
+               ? "Invalid parameter, usage must be 'train','test' or 'all', but got " + builder_usage_ + ".\n"
+               : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -106,7 +112,8 @@ Status MnistOp::operator()() {
       std::shared_ptr<Tensor> sample_ids;
       RETURN_IF_NOT_OK(sampler_buffer->GetTensor(&sample_ids, 0, 0));
       if (sample_ids->type() != DataType(DataType::DE_INT64)) {
-        RETURN_STATUS_UNEXPECTED("Sampler Tensor isn't UINT64");
+        RETURN_STATUS_UNEXPECTED("Invalid parameter, data type of Sampler Tensor isn't int64, got " +
+                                 sample_ids->type().ToString());
       }
       RETURN_IF_NOT_OK(TraversalSampleIds(sample_ids, &keys));
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
@@ -159,7 +166,7 @@ Status MnistOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&iOBlock));
   }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
+  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
 // Load 1 TensorRow (image,label) using 1 MnistLabelPair.
@@ -216,7 +223,13 @@ Status MnistOp::InitSampler() {
 // Derived from RandomAccessOp
 Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
-    RETURN_STATUS_UNEXPECTED("ImageLabelPair not set");
+    if (image_label_pairs_.empty()) {
+      RETURN_STATUS_UNEXPECTED("No image found in dataset, please check if Op read images successfully or not.");
+    } else {
+      RETURN_STATUS_UNEXPECTED(
+        "Map for storaging image-index pair is nullptr or has been set in other place,"
+        "it must be empty before using GetClassIds.");
+    }
   }
   for (size_t i = 0; i < image_label_pairs_.size(); ++i) {
     (*cls_ids)[image_label_pairs_[i].second].push_back(i);
@@ -230,7 +243,7 @@ Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) co
 Status MnistOp::ReadFromReader(std::ifstream *reader, uint32_t *result) {
   uint32_t res = 0;
   reader->read(reinterpret_cast<char *>(&res), 4);
-  CHECK_FAIL_RETURN_UNEXPECTED(!reader->fail(), "Failed to read 4 bytes from file");
+  CHECK_FAIL_RETURN_UNEXPECTED(!reader->fail(), "Invalid data, failed to read 4 bytes from file.");
   *result = SwapEndian(res);
   return Status::OK();
 }
@@ -241,16 +254,16 @@ uint32_t MnistOp::SwapEndian(uint32_t val) const {
 }
 
 Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images) {
-  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(), "Cannot open mnist image file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(), "Invalid file, failed to open mnist image file: " + file_name);
   int64_t image_len = image_reader->seekg(0, std::ios::end).tellg();
   (void)image_reader->seekg(0, std::ios::beg);
   // The first 16 bytes of the image file are type, number, row and column
-  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16, "Mnist file is corrupted.");
+  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16, "Invalid file, Mnist file is corrupted: " + file_name);
 
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistImageFileMagicNumber,
-                               "This is not the mnist image file: " + file_name);
+                               "Invalid file, this is not the mnist image file: " + file_name);
 
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &num_items));
@@ -259,25 +272,28 @@ Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_re
   uint32_t cols;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &cols));
   // The image size of the Mnist dataset is fixed at [28,28]
-  CHECK_FAIL_RETURN_UNEXPECTED((rows == kMnistImageRows) && (cols == kMnistImageCols), "Wrong shape of image.");
-  CHECK_FAIL_RETURN_UNEXPECTED((image_len - 16) == num_items * rows * cols, "Wrong number of image.");
+  CHECK_FAIL_RETURN_UNEXPECTED((rows == kMnistImageRows) && (cols == kMnistImageCols),
+                               "Invalid data, shape of image is not equal to (28, 28).");
+  CHECK_FAIL_RETURN_UNEXPECTED((image_len - 16) == num_items * rows * cols,
+                               "Invalid data, got truncated data len: " + std::to_string(image_len - 16) +
+                                 ", which is not equal to real data len: " + std::to_string(num_items * rows * cols));
   *num_images = num_items;
   return Status::OK();
 }
 
 Status MnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels) {
-  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(), "Cannot open mnist label file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(), "Invalid file, failed to open mnist label file: " + file_name);
   int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
   (void)label_reader->seekg(0, std::ios::beg);
   // The first 8 bytes of the image file are type and number
-  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Mnist file is corrupted.");
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Invalid file, Mnist file is corrupted: " + file_name);
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistLabelFileMagicNumber,
-                               "This is not the mnist label file: " + file_name);
+                               "Invalid file, this is not the mnist label file: " + file_name);
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &num_items));
-  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 8) == num_items, "Wrong number of labels!");
+  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 8) == num_items, "Invalid data, number of labels is wrong.");
   *num_labels = num_items;
   return Status::OK();
 }
@@ -286,23 +302,25 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   uint32_t num_images, num_labels;
   RETURN_IF_NOT_OK(CheckImage(image_names_[index], image_reader, &num_images));
   RETURN_IF_NOT_OK(CheckLabel(label_names_[index], label_reader, &num_labels));
-  CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels), "num_images != num_labels");
+  CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels), "Invalid data, num_images is not equal to num_labels.");
   // The image size of the Mnist dataset is fixed at [28,28]
   int64_t size = kMnistImageRows * kMnistImageCols;
   auto images_buf = std::make_unique<char[]>(size * num_images);
   auto labels_buf = std::make_unique<char[]>(num_images);
   if (images_buf == nullptr || labels_buf == nullptr) {
-    std::string err_msg = "Fail to allocate memory for MNIST Buffer.";
+    std::string err_msg = "Failed to allocate memory for MNIST buffer.";
     MS_LOG(ERROR) << err_msg.c_str();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (void)image_reader->read(images_buf.get(), size * num_images);
   if (image_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to read:" + image_names_[index] + " size:" + std::to_string(size * num_images));
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read image: " + image_names_[index] +
+                             ", size:" + std::to_string(size * num_images));
   }
   (void)label_reader->read(labels_buf.get(), num_images);
   if (label_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Fail to read:" + label_names_[index] + " size: " + std::to_string(num_images));
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read label:" + label_names_[index] +
+                             ", size: " + std::to_string(num_images));
   }
   TensorShape img_tensor_shape = TensorShape({kMnistImageRows, kMnistImageCols, 1});
   for (int64_t j = 0; j != num_images; ++j) {
@@ -337,7 +355,7 @@ Status MnistOp::ParseMnistData() {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API MnistDataset.Please check file path or dataset API "
+      "Invalid data, no valid data matching the dataset API MnistDataset.Please check file path or dataset API "
       "validation first.");
   }
   return Status::OK();
@@ -372,14 +390,15 @@ Status MnistOp::WalkAllFiles() {
   std::sort(image_names_.begin(), image_names_.end());
   std::sort(label_names_.begin(), label_names_.end());
 
-  CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(), "num of idx3 files != num of idx1 files");
+  CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
+                               "Invalid data, num of images does not equal to num of labels.");
 
   return Status::OK();
 }
 
 Status MnistOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("tree_ not set");
+    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
@@ -409,7 +428,8 @@ Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage,
     RETURN_IF_NOT_OK(op->CheckImage(op->image_names_[i], &image_reader, &num_images));
     uint32_t num_labels;
     RETURN_IF_NOT_OK(op->CheckLabel(op->label_names_[i], &label_reader, &num_labels));
-    CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels), "num of images does not equal to num of labels");
+    CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
+                                 "Invalid data, num of images is not equal to num of labels.");
     *count = *count + num_images;
 
     // Close the readers

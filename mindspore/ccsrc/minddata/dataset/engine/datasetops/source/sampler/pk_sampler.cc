@@ -55,13 +55,15 @@ Status PKSampler::InitSampler() {
   } else {
     std::sort(labels_.begin(), labels_.end());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_class or K (num samples per class) is not positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_samples_ > 0, "Invalid parameter, num_class or K (num samples per class) must be greater than 0, but got " +
+                        std::to_string(num_samples_));
   return Status::OK();
 }
 
 Status PKSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_ || num_samples_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Index out of bound in PKSampler");
+    RETURN_STATUS_UNEXPECTED("Index must be less than or equal to num_samples, but got: " + std::to_string(next_id_));
   } else if (next_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
