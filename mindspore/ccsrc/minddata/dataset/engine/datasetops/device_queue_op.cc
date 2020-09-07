@@ -170,6 +170,7 @@ Status DeviceQueueOp::SendDataToAscend() {
     if (isProfilingEnable) {
       connector_size = ChildOpConnectorSize();
       connector_capacity = ChildOpConnectorCapacity();
+      tree_->SetEpochEnd();
     }
     RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
   }

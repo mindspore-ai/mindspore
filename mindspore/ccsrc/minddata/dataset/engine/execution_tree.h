@@ -48,6 +48,7 @@ class ExecutionTree {
     kDeTStatePrepare,    // The tree has been assigned a root node and is pending prepare
     kDeTStateReady,      // The tree has been prepared and is ready to be launched
     kDeTStateExecuting,  // The tree has been launched and is executing
+    kDeTStateEpochEnd,   // The tree has been received end of epoch signal, just for profiling
     kDeTStateFinished    // The tree has been drained, dataset iterator received EOF
   };
 
@@ -206,6 +207,16 @@ class ExecutionTree {
   // Return the pointer to the TaskGroup
   // @return raw pointer to the TaskGroup
   TaskGroup *AllTasks() const { return tg_.get(); }
+
+  // Return if the ExecutionTree is at end of epoch status
+  // @return bool - true is ExecutionTree is end of epoch status
+  bool IsEpochEnd() const { return tree_state_ == TreeState::kDeTStateEpochEnd; }
+
+  // Set the ExecutionTree to EOE state
+  void SetEpochEnd() { tree_state_ = TreeState::kDeTStateEpochEnd; }
+
+  // Set the ExecutionTree to executing state
+  void SetExecuting() { tree_state_ = TreeState::kDeTStateExecuting; }
 
   // Return if the ExecutionTree is finished (iterator receives EOF).
   // @return Bool - true is ExecutionTree is finished
