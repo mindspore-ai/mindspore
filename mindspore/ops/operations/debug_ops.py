@@ -248,14 +248,14 @@ class InsertGradientOf(PrimitiveWithInfer):
 
 class HookBackward(PrimitiveWithInfer):
     """
-    Used as tag to hook gradient in intermediate variables.  Note that this function
+    This operation is used as a tag to hook gradient in intermediate variables.  Note that this function
     is only supported in Pynative Mode.
 
     Note:
         The hook function should be defined like `hook_fn(grad) -> Tensor or None`,
-        which grad is the gradient passed to the primitive and gradient may be
-        modified and passed to nex primitive. the difference between hook function and
-        callback of InsertGradientOf is that hook function is executed in python
+        where grad is the gradient passed to the primitive and gradient may be
+        modified and passed to next primitive. The difference between a hook function and
+        callback of InsertGradientOf is that a hook function is executed in the python
         environment while callback will be parsed and added to the graph.
 
     Args:

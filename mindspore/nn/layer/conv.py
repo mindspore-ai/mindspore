@@ -111,14 +111,14 @@ class Conv2d(_Conv):
     2D convolution layer.
 
     Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size and :math:`C_{in}` is channel number. For each batch of shape
-    :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
+    where :math:`N` is batch size, :math:`C_{in}` is channel number, and :math:`H_{in}, W_{in})` are height and width.
+    For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
 
     .. math::
 
         out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
 
-    where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
+    where :math:`ccor` is the cross-correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
     from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
@@ -162,8 +162,8 @@ class Conv2d(_Conv):
               Tensor borders. `padding` should be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
-                    the padding of top, bottom, left and right is the same, equal to padding. If `padding` is a tuple
-                    with four integers, the padding of top, bottom, left and right will be equal to padding[0],
+                    the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
+                    with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
@@ -472,8 +472,8 @@ class Conv2dTranspose(_Conv):
 
             - valid: Adopted the way of discarding.
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
-                    the padding of top, bottom, left and right is the same, equal to padding. If `padding` is a tuple
-                    with four integers, the padding of top, bottom, left and right will be equal to padding[0],
+                    the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
+                    with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
@@ -856,8 +856,8 @@ class DepthwiseConv2d(Cell):
               Tensor borders. `padding` should be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
-            the padding of top, bottom, left and right is the same, equal to padding. If `padding` is a tuple
-            with four integers, the padding of top, bottom, left and right will be equal to padding[0],
+            the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
+            with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
             padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will

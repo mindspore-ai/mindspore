@@ -244,7 +244,7 @@ class IOU(PrimitiveWithInfer):
 
     Args:
         mode (string): The mode is used to specify the calculation method,
-                       now support 'iou' (intersection over union) or 'iof'
+                       now supporting 'iou' (intersection over union) or 'iof'
                        (intersection over foreground) mode. Default: 'iou'.
 
     Inputs:
@@ -350,7 +350,7 @@ class Partial(Primitive):
 
 class Depend(Primitive):
     """
-    Depend is used for process side-effect operations.
+    Depend is used for processing side-effect operations.
 
     Inputs:
         - **value** (Tensor) - the real value to return for depend operator.

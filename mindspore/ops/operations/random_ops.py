@@ -131,9 +131,9 @@ class Gamma(PrimitiveWithInfer):
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
         - **alpha** (Tensor) - The α distribution parameter.
-          It is also known as the shape parameter. With float32 data type.
+          It is also known as the shape parameter with float32 data type.
         - **beta** (Tensor) - The β distribution parameter.
-          It is also known as the scale parameter. With float32 data type.
+          It is also known as the scale parameter with float32 data type.
 
     Outputs:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.

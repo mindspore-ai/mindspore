@@ -26,23 +26,24 @@ class ControlDepend(Primitive):
     Adds control dependency relation between source and destination operation.
 
     In many cases, we need to control the execution order of operations. ControlDepend is designed for this.
-    ControlDepend will indicate the execution engine to run the operations in specific order. ControlDepend
+    ControlDepend will instruct the execution engine to run the operations in a specific order. ControlDepend
     tells the engine that the destination operations should depend on the source operation which means the source
     operations should be executed before the destination.
 
     Note:
         This operation does not work in `PYNATIVE_MODE`.
     Args:
-        depend_mode (int): Use 0 for normal depend, 1 for depend on operations that used the parameter. Default: 0.
+        depend_mode (int): Use 0 for a normal dependency relation. Use 1 to depends on operations which using Parameter
+        as its input. Default: 0.
 
     Inputs:
         - **src** (Any) - The source input. It can be a tuple of operations output or a single operation output. We do
           not concern about the input data, but concern about the operation that generates the input data.
-          If `depend_mode = 1` is specified and the source input is parameter, we will try to find the operations that
+          If `depend_mode` is 1 and the source input is Parameter, we will try to find the operations that
           used the parameter as input.
         - **dst** (Any) - The destination input. It can be a tuple of operations output or a single operation output.
           We do not concern about the input data, but concern about the operation that generates the input data.
-          If `depend_mode = 1` is specified and the source input is parameter, we will try to find the operations that
+          If `depend_mode` is 1 and the source input is Parameter, we will try to find the operations that
           used the parameter as input.
 
     Outputs:
@@ -80,7 +81,7 @@ class GeSwitch(PrimitiveWithInfer):
     """
     Adds control switch to data.
 
-    Switch data to flow into false or true branch depend on the condition. If the condition is true,
+    Switch data flows into false or true branch depending on the condition. If the condition is true,
     the true branch will be activated, or vise verse.
 
     Inputs:

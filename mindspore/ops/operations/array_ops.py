@@ -292,7 +292,7 @@ class IsSubClass(PrimitiveWithInfer):
     Check whether one type is sub class of another type.
 
     Inputs:
-        - **sub_type** (mindspore.dtype) - The type to be check. Only constant value is allowed.
+        - **sub_type** (mindspore.dtype) - The type to be checked. Only constant value is allowed.
         - **type_** (mindspore.dtype) - The target type. Only constant value is allowed.
 
     Outputs:
@@ -326,7 +326,7 @@ class IsInstance(PrimitiveWithInfer):
     Check whether an object is an instance of a target type.
 
     Inputs:
-        - **inst** (Any Object) - The instance to be check. Only constant value is allowed.
+        - **inst** (Any Object) - The instance to be checked. Only constant value is allowed.
         - **type_** (mindspore.dtype) - The target type. Only constant value is allowed.
 
     Outputs:
@@ -1100,7 +1100,7 @@ class InvertPermutation(PrimitiveWithInfer):
           Only constant value is allowed.
 
     Outputs:
-        tuple[int]. the lenth is same as input.
+        tuple[int]. It has the same length as the input.
 
     Examples:
         >>> invert = P.InvertPermutation()
@@ -2355,15 +2355,15 @@ class DiagPart(PrimitiveWithInfer):
 class Eye(PrimitiveWithInfer):
     """
 
-    Creates a tensor with ones on the diagonal and zeros elsewhere.
+    Creates a tensor with ones on the diagonal and zeros the rest.
 
     Inputs:
-        - **n** (int) - Number of rows of returned tensor
-        - **m** (int) - Number of columns of returned tensor
+        - **n** (int) - The number of rows of returned tensor
+        - **m** (int) - The number of columns of returned tensor
         - **t** (mindspore.dtype) - MindSpore's dtype, The data type of the returned tensor.
 
     Outputs:
-        Tensor, a tensor with ones on the diagonal and zeros elsewhere.
+        Tensor, a tensor with ones on the diagonal and the rest of elements are zero.
 
     Examples:
         >>> eye = P.Eye()
@@ -3453,8 +3453,8 @@ class InplaceUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
-          float32, float16, int32.
-        - **v** (Tensor) - A tensor of the same type as `x`. Same dimension size as `x` except
+          float32, float16 and int32.
+        - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
           the first dimension, which must be the same as the size of `indices`.
 
     Outputs:

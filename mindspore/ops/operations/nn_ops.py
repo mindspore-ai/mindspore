@@ -657,7 +657,7 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         - **variance** (Tensor) - variance value, Tensor of shape :math:`(C,)`, data type: float32.
 
     Outputs:
-        Tuple of 6 Tensor, the normalized input, the updated parameters and reserve.
+        Tuple of 6 Tensors, the normalized input, the updated parameters and reserve.
 
         - **output_x** (Tensor) - The input of FusedBatchNormEx, same type and shape as the `input_x`.
         - **updated_scale** (Tensor) - Updated parameter scale, Tensor of shape :math:`(C,)`, data type: float32.
@@ -870,13 +870,13 @@ class Conv2D(PrimitiveWithInfer):
     Args:
         out_channel (int): The dimension of the output.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 2D convolution.
-        mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
+        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
-        pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (Union(int, tuple[int])): The pad value to fill. Default: 0. If `pad` is one integer, the padding of
-                    top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
-                    of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding.
-        stride (Union(int, tuple[int])): The stride to apply conv filter. Default: 1.
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
+                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
         dilation (Union(int, tuple[int])): Specify the space to use between kernel elements. Default: 1.
         group (int): Split input into groups. Default: 1.
 
@@ -997,25 +997,26 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     Given an input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` where :math:`N` is the batch size and a
     filter tensor with kernel size :math:`(ks_{h}, ks_{w})`, containing :math:`C_{in} * \text{channel_multiplier}`
     convolutional filters of depth 1; it applies different filters to each input channel (channel_multiplier channels
-    for each with default value 1), then concatenates the results together. The output has
+    for each input channel has the default value 1), then concatenates the results together. The output has
     :math:`\text{in_channels} * \text{channel_multiplier}` channels.
 
     Args:
-        channel_multiplier (int): The multipiler for the original output conv. Its value must be greater than 0.
-        kernel_size (Union[int, tuple[int]]): The size of the conv kernel.
-        mode (int): 0 Math convolution, 1 cross-correlation convolution ,
+        channel_multiplier (int): The multipiler for the original output convolution. Its value must be greater than 0.
+        kernel_size (Union[int, tuple[int]]): The size of the convolution kernel.
+        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
-        pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (Union[int, tuple[int]]): The pad value to fill. If `pad` is one integer, the padding of
-            top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
-            of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding. Default: 0.
-        stride (Union[int, tuple[int]]): The stride to apply conv filter. Default: 1.
-        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad (Union[int, tuple[int]]): The pad value to be filled. If `pad` is an integer, the paddings of
+            top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the padding
+            of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly. Default: 0.
+        stride (Union[int, tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
+            Default: 1.
         group (int): Splits input into groups. Default: 1.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
+        - **weight** (Tensor) - Set the size of kernel as :math:`(K_1, K_2)`, then the shape is
           :math:`(K, C_{in}, K_1, K_2)`, `K` must be 1.
 
     Outputs:
@@ -1398,14 +1399,15 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
     Args:
         out_channel (int): The dimensionality of the output space.
         kernel_size (Union[int, tuple[int]]): The size of the convolution window.
-        pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        pad (Union[int, tuple[int]]): The pad value to fill. Default: 0. If `pad` is one integer, the padding of
-                    top, bottom, left and right is same, equal to pad. If `pad` is tuple with four integer, the padding
-                    of top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3] with corresponding.
-        mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
+                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
-        stride (Union[int. tuple[int]]): The stride to apply conv filter. Default: 1.
-        dilation (Union[int. tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (Union[int. tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
+        dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
+            Default: 1.
         group (int): Splits input into groups. Default: 1.
 
     Returns:
@@ -1842,7 +1844,7 @@ class L2Loss(PrimitiveWithInfer):
 
 class DataFormatDimMap(PrimitiveWithInfer):
     """
-    Returns the dimension index in the destination data format given the one in the source data format.
+    Returns the dimension index in the destination data format given in the source data format.
 
     Args:
         src_format (string): An optional value for source data format. Default: 'NHWC'.
@@ -2336,7 +2338,7 @@ class DropoutDoMask(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - The input tensor.
         - **mask** (Tensor) - The mask to be applied on `input_x`, which is the output of `DropoutGenMask`. And the
-          shape of `input_x` must be same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
+          shape of `input_x` must be the same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
           the output of `DropoutDoMask` are unpredictable.
         - **keep_prob** (Tensor) - The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
           means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
@@ -2494,10 +2496,10 @@ class Gelu(PrimitiveWithInfer):
     Gaussian Error Linear Units activation function.
 
     GeLU is described in the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_.
-    And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.
+    And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
     <https://arxiv.org/abs/1810.04805>`_.
 
-    Defined as follows:
+    Gelu is defined as follows:
 
     .. math::
         \text{output} = 0.5 * x * (1 + erf(x / \sqrt{2})),
@@ -2505,7 +2507,7 @@ class Gelu(PrimitiveWithInfer):
     where :math:`erf` is the "Gauss error function" .
 
     Inputs:
-        - **input_x** (Tensor) - Input to compute the Gelu. With data type of float16 or float32.
+        - **input_x** (Tensor) - Input to compute the Gelu with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as input.
@@ -2534,8 +2536,8 @@ class GetNext(PrimitiveWithInfer):
     Returns the next element in the dataset queue.
 
     Note:
-        GetNext op needs to be associated with network and also depends on the init_dataset interface,
-        it can't be used directly as a single op.
+        The GetNext operation needs to be associated with network and it also depends on the init_dataset interface,
+        it can't be used directly as a single operation.
         For details, please refer to `nn.DataWrapper` source code.
 
     Args:
@@ -3057,7 +3059,7 @@ class Adam(PrimitiveWithInfer):
 
 class FusedSparseAdam(PrimitiveWithInfer):
     r"""
-    Merge the duplicate value of the gradient and then updates parameters by Adaptive Moment Estimation (Adam)
+    Merge the duplicate value of the gradient and then update parameters by Adaptive Moment Estimation (Adam)
     algorithm. This operator is used when the gradient is sparse.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
@@ -3092,22 +3094,22 @@ class FusedSparseAdam(PrimitiveWithInfer):
             If true, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Parameters to be updated. With float32 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var`. With
-                              float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
-          with the same type as `var`. With float32 data type.
-        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
-        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
+        - **var** (Parameter) - Parameters to be updated with float32 data type.
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var` with
+          float32 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients, has the same type as
+          `var` with float32 data type.
+        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula with float32 data type.
+        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula with float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
-        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. With float32 data type.
-        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. With float32 data type.
-        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. With float32 data type.
-        - **gradient** (Tensor) - Gradient value. With float32 data type.
-        - **indices** (Tensor) - Gradient indices. With int32 data type.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations with float32 data type.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations with float32 data type.
+        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability with float32 data type.
+        - **gradient** (Tensor) - Gradient value with float32 data type.
+        - **indices** (Tensor) - Gradient indices with int32 data type.
 
     Outputs:
-        Tuple of 3 Tensor, this operator will update the input parameters directly, the outputs are useless.
+        Tuple of 3 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
         - **var** (Tensor) - A Tensor with shape (1,).
         - **m** (Tensor) - A Tensor with shape (1,).
@@ -3189,7 +3191,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
 class FusedSparseLazyAdam(PrimitiveWithInfer):
     r"""
-    Merge the duplicate value of the gradient and then updates parameters by Adaptive Moment Estimation (Adam)
+    Merge the duplicate value of the gradient and then update parameters by Adaptive Moment Estimation (Adam)
     algorithm. This operator is used when the gradient is sparse. The behavior is not equivalent to the
     original Adam algorithm, as only the current indices parameters will be updated.
 
@@ -3225,22 +3227,22 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
             If true, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Parameters to be updated. With float32 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var`. With
-                              float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
-          with the same type as `var`. With float32 data type.
-        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. With float32 data type.
-        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. With float32 data type.
-        - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
-        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. With float32 data type.
-        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. With float32 data type.
-        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. With float32 data type.
-        - **gradient** (Tensor) - Gradient value. With float32 data type.
-        - **indices** (Tensor) - Gradient indices. With int32 data type.
+        - **var** (Parameter) - Parameters to be updated with float32 data type.
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var` with
+          float32 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients, has the same type as
+          `var` with float32 data type.
+        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula with float32 data type.
+        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula with float32 data type.
+        - **lr** (Tensor) - :math:`l` in the updating formula with float32 data type.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations with float32 data type.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations with float32 data type.
+        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability with float32 data type.
+        - **gradient** (Tensor) - Gradient value with float32 data type.
+        - **indices** (Tensor) - Gradient indices with int32 data type.
 
     Outputs:
-        Tuple of 3 Tensor, this operator will update the input parameters directly, the outputs are useless.
+        Tuple of 3 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
         - **var** (Tensor) - A Tensor with shape (1,).
         - **m** (Tensor) - A Tensor with shape (1,).
@@ -3418,7 +3420,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
 
 class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     r"""
-    Merge the duplicate value of the gradient and then Updates relevant entries according to the proximal adagrad
+    Merge the duplicate value of the gradient and then update relevant entries according to the proximal adagrad
     algorithm.
 
     .. math::
@@ -3434,7 +3436,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
+        use_locking (bool): If true, the variable and accumulation tensors will be protected from being updated.
             Default: False.
 
     Inputs:
@@ -3448,7 +3450,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
           must be int32.
 
     Outputs:
-        Tuple of 2 Tensor, this operator will update the input parameters directly, the outputs are useless.
+        Tuple of 2 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
         - **var** (Tensor) - A Tensor with shape (1,).
         - **accum** (Tensor) - A Tensor with shape (1,).
@@ -3524,9 +3526,9 @@ class KLDivLoss(PrimitiveWithInfer):
 
         .. math::
             \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{'none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+            L, & \text{if reduction} = \text{`none';}\\
+            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
             \end{cases}
 
     Args:
@@ -3535,10 +3537,10 @@ class KLDivLoss(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input Tensor. The data type must be float32.
-        - **input_y** (Tensor) - The label Tensor which has same shape as `input_x`. The data type must be float32.
+        - **input_y** (Tensor) - The label Tensor which has the same shape as `input_x`. The data type must be float32.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
         Otherwise it is a scalar.
 
     Examples:
@@ -5151,15 +5153,15 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
 class ConfusionMulGrad(PrimitiveWithInfer):
     """
-    `output0` is the result of which input0 dot multily input1.
+    `output0` is the dot product result of input0 and input1.
 
-    `output1` is the result of which input0 dot multily input1, then reducesum it.
+    `output1` is the dot product result of input0 and input1, then apply the reducesum operation on it.
 
     Args:
         axis (Union[int, tuple[int], list[int]]): The dimensions to reduce.
             Default:(), reduce all dimensions. Only constant value is allowed.
         keep_dims (bool):
-            - If true, keep these reduced dimensions and the length is 1.
+            - If true, keep these reduced dimensions and the length as 1.
             - If false, don't keep these dimensions. Default:False.
 
     Inputs:
@@ -5167,8 +5169,8 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         - **input_1** (Tensor) - The input Tensor.
         - **input_2** (Tensor) - The input Tensor.
 
-    outputs:
-        - **output_0** (Tensor) - The same shape with `input0`.
+    Outputs:
+        - **output_0** (Tensor) - The same shape as `input0`.
         - **output_1** (Tensor)
 
             - If axis is (), and keep_dims is false, the output is a 0-D array representing
@@ -5462,7 +5464,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         - **w** (Tensor) - Weight. Tensor of shape (`input_size + hidden_size`, `4 x hidden_size`).
           The data type must be float16 or float32.
         - **b** (Tensor) - Bias. Tensor of shape (`4 x hidden_size`).
-          The data type must be same as `c`.
+          The data type must be the same as `c`.
 
     Outputs:
         - **ct** (Tensor) - Forward :math:`c_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
@@ -5532,18 +5534,18 @@ class BasicLSTMCell(PrimitiveWithInfer):
 
 class InTopK(PrimitiveWithInfer):
     r"""
-    Says whether the targets are in the top `k` predictions.
+    Whether the targets are in the top `k` predictions.
 
     Args:
-        k (int): Special the number of top elements to look at for computing precision.
+        k (int): Specify the number of top elements to be used for computing precision.
 
     Inputs:
-        - **x1** (Tensor) - A 2D Tensor define the predictions of a batch of samples with float16 or float32 data type.
-        - **x2** (Tensor) - A 1D Tensor define the labels of a batch of samples with int32 data type.
+        - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32 data type.
+        - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type.
 
     Outputs:
-        Tensor, which is 1 dimension of type bool and has same shape with `x2`. for label of sample `i` in `x2`,
-        if label in first `k` predictions for sample `i` in `x1`, then the value is True else False.
+        Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
+        if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
 
     Examples:
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)

@@ -29,9 +29,9 @@ class CropAndResize(PrimitiveWithInfer):
         In case that the output shape depends on crop_size, the crop_size should be constant.
 
     Args:
-        method (str):  	An optional string specifying the sampling method for resizing.
-            It can be either "bilinear" or "nearest" and default to "bilinear"
-        extrapolation_value (float): An optional float defaults to 0. Value used for extrapolation, when applicable.
+        method (str):  	An optional string that specifies the sampling method for resizing.
+            It can be either "bilinear" or "nearest". Default: "bilinear"
+        extrapolation_value (float): An optional float value used extrapolation, if applicable. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, depth].
