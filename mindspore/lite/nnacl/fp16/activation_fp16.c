@@ -81,9 +81,22 @@ int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num) {
   return NNACL_OK;
 }
 
+float16_t TanhOpt(float16_t src) {
+  if (src > 5.0) {
+    return 1.0f;
+  } else if (src < -5.0) {
+    return -1.0f;
+  } else {
+    float square = src * src;
+    float a = (((square + 378.0f) * square + 17325.0f) * square + 135135.0f) * src;
+    float b = ((28.0f * square + 3150.0f) * square + 62370.0f) * square + 135135.0f;
+    return a / b;
+  }
+}
+
 int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
   for (int i = 0; i < ele_num; ++i) {
-    dst[i] = (float16_t)1.0f - (float16_t)2.0f / (float16_t)(exp(2 * src[i]) + 1);
+    dst[i] = TanhOpt(src[i]);
   }
   return NNACL_OK;
 }
