@@ -324,7 +324,6 @@ int TimeProfile::RunTimeProfile() {
     MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
     std::cerr << "Import model file failed while running " << modelName.c_str() << std::endl;
     delete session_;
-    delete model;
     return RET_ERROR;
   }
   auto ret = session_->CompileGraph(model);

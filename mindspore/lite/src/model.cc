@@ -13,34 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/ops/primitive_c.h"
 #include "include/model.h"
 #include "utils/log_adapter.h"
+#include "include/errorcode.h"
+#include "src/common/graph_util.h"
 
 namespace mindspore::lite {
-
-class ModelImpl {
- public:
-  static ModelImpl *Import(const char *model_buf, size_t size);
-  ModelImpl() = default;
-  explicit ModelImpl(const char *model_buf, size_t size) : model_buf_(model_buf), buf_size_(size) {
-    meta_graph_ = schema::GetMetaGraph(model_buf);
+namespace {
+bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
+  for (size_t i = 0; i < meta_graph->nodes()->size(); ++i) {
+    Model::Node *node = new (std::nothrow) Model::Node();
+    if (node == nullptr) {
+      MS_LOG(ERROR) << "new node fail!";
+      return false;
+    }
+    auto c_node = meta_graph->nodes()->GetAs<schema::CNode>(i);
+    auto src_prim = c_node->primitive();
+    node->primitive_ = PrimitiveC::UnPackFromSchemaPrimitive(const_cast<schema::Primitive *>(src_prim));
+    if (node->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "unpack primitive == nullptr!";
+      return false;
+    }
+    node->primitive_->SetQuantType(c_node->quantType());
+    node->name_ = c_node->name()->c_str();
+    node->node_type_ = c_node->nodeType();
+    auto count = c_node->inputIndex()->size();
+    for (uint32_t j = 0; j < count; ++j) {
+      node->input_indices_.push_back(size_t(c_node->inputIndex()->GetAs<uint32_t>(j)));
+    }
+    count = c_node->outputIndex()->size();
+    for (uint32_t j = 0; j < count; ++j) {
+      node->output_indices_.push_back(size_t(c_node->outputIndex()->GetAs<uint32_t>(j)));
+    }
+    model->nodes_.push_back(node);
   }
-  virtual ~ModelImpl();
-  PrimitiveC *GetOp(const std::string &name) const;
-  const schema::MetaGraph *meta_graph() const;
-  void FreeMetaGraph();
-  int BuildOps();
+  return true;
+}
 
- protected:
-  const char *model_buf_;
-  size_t buf_size_;
-  const schema::MetaGraph *meta_graph_ = nullptr;
-  std::map<std::string, PrimitiveC *> ops_;
-};
+bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model) {
+  auto tensor_count = meta_graph->allTensors()->size();
+  for (uint32_t i = 0; i < tensor_count; ++i) {
+    auto *tensor = meta_graph->allTensors()->GetAs<schema::Tensor>(i);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) <<  i << "th tensor in model is nullptr";
+      return false;
+    }
+    model->all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));
+  }
+  return true;
+}
+}  // namespace
 
-ModelImpl *ModelImpl::Import(const char *model_buf, size_t size) {
+Model *Model::Import(const char *model_buf, size_t size) {
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "The model buf is nullptr";
     return nullptr;
@@ -50,95 +75,61 @@ ModelImpl *ModelImpl::Import(const char *model_buf, size_t size) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
     return nullptr;
   }
-  auto *inner_model_buf = new (std::nothrow) char[size];
-  if (inner_model_buf == nullptr) {
-    MS_LOG(ERROR) << "new model buf fail.";
-    return nullptr;
-  }
-  memcpy(inner_model_buf, model_buf, size);
-  auto model = new (std::nothrow) ModelImpl(inner_model_buf, size);
+  Model *model = new (std::nothrow) Model();
   if (model == nullptr) {
-    MS_LOG(ERROR) << "Create modelImpl failed";
+    MS_LOG(ERROR) << "new model fail!";
     return nullptr;
   }
-  auto ret = model->BuildOps();
-  if (0 != ret) {
-    MS_LOG(ERROR) << "BuildOps failed";
+  model->buf = reinterpret_cast<char *>(malloc(size));
+  if (model->buf == nullptr) {
+    MS_LOG(ERROR) << "new inner model buf fail!";
     return nullptr;
   }
-  return model;
-}
-
-PrimitiveC *ModelImpl::GetOp(const std::string &name) const {
-  auto iter = ops_.find(name);
-  if (iter == ops_.end()) {
-    return nullptr;
-  } else {
-    return iter->second;
-  }
-}
-
-ModelImpl::~ModelImpl() {
-  delete[](this->model_buf_);
-  for (auto iter : ops_) {
-    delete (iter.second);
-  }
-  ops_.clear();
-}
-
-void ModelImpl::FreeMetaGraph() {
-  delete[](this->model_buf_);
-  model_buf_ = nullptr;
-}
-
-const schema::MetaGraph *ModelImpl::meta_graph() const { return this->meta_graph_; }
-
-int ModelImpl::BuildOps() {
-  if (this->meta_graph_ == nullptr) {
-    MS_LOG(ERROR) << "mete_graph is nullptr";
-    return -1;
-  }
-  MS_ASSERT(nullptr != meta_graph_->nodes());
-  for (size_t i = 0; i < meta_graph_->nodes()->size(); i++) {
-    auto cNode = meta_graph_->nodes()->GetAs<schema::CNode>(i);
-    auto name = cNode->name()->str();
-    auto srcPrim = cNode->primitive();
-    auto prim = PrimitiveC::UnPackFromSchemaPrimitive(const_cast<schema::Primitive *>(srcPrim));
-    prim->SetQuantType(cNode->quantType());
-    this->ops_[name] = prim;
-  }
-  return 0;
-}
-
-Model *Model::Import(const char *model_buf, size_t size) {
-  auto model = new Model();
-  model->model_impl_ = ModelImpl::Import(model_buf, size);
-  if (model_buf == nullptr) {
-    MS_LOG(ERROR) << "model buf is null";
+  memcpy(model->buf, model_buf, size);
+  auto meta_graph = schema::GetMetaGraph(model->buf);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "meta_graph is nullptr!";
     return nullptr;
   }
-  if (model->model_impl_ == nullptr) {
-    MS_LOG(ERROR) << "model impl is null";
+
+  if (meta_graph->name() != nullptr) {
+    model->name_ = meta_graph->name()->c_str();
+  }
+  if (meta_graph->version() != nullptr) {
+    model->version_ = meta_graph->version()->c_str();
+  }
+  auto in_count = meta_graph->inputIndex()->size();
+  for (uint32_t i = 0; i < in_count; ++i) {
+    model->input_indices_.push_back(size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i)));
+  }
+
+  auto out_count = meta_graph->outputIndex()->size();
+  for (uint32_t i = 0; i < out_count; ++i) {
+    model->output_indices_.push_back(size_t(meta_graph->outputIndex()->GetAs<uint32_t>(i)));
+  }
+  if (!ConvertNodes(meta_graph, model)) {
+    delete model;
+    return nullptr;
+  }
+
+  if (!ConvertTensors(meta_graph, model)) {
+    delete model;
     return nullptr;
   }
   return model;
 }
 
-Model::~Model() { delete (this->model_impl_); }
-
-mindspore::lite::PrimitiveC *Model::GetOp(const std::string &name) const {
-  MS_ASSERT(nullptr != model_impl_);
-  return const_cast<PrimitiveC *>(model_impl_->GetOp(name));
+void Model::Free() {
+  if (this->buf != nullptr) {
+    free(this->buf);
+    this->buf = nullptr;
+  }
+  auto nodes_size = this->nodes_.size();
+  for (size_t i = 0; i < nodes_size; ++i) {
+    auto node = this->nodes_[i];
+    MS_ASSERT(node != nullptr);
+    delete node;
+  }
+  this->nodes_.clear();
 }
-
-void Model::FreeMetaGraph() {
-  MS_ASSERT(nullptr != model_impl_);
-  model_impl_->FreeMetaGraph();
-}
-
-const schema::MetaGraph *Model::GetMetaGraph() const {
-  MS_ASSERT(nullptr != model_impl_);
-  return model_impl_->meta_graph();
-}
-
 }  // namespace mindspore::lite

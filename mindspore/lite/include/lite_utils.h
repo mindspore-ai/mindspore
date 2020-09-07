@@ -14,29 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_COMMON_GRAPH_UTIL_H_
-#define MINDSPORE_LITE_COMMON_GRAPH_UTIL_H_
-
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
+#ifndef MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_
+#define MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_
 #include <vector>
-#include <memory>
+#include <string>
 #include "schema/model_generated.h"
-#include "utils//log_adapter.h"
-#include "include/errorcode.h"
-#include "include/model.h"
 
-namespace mindspore {
-namespace lite {
-using NODE_ID = std::string;
-
-std::vector<size_t> GetGraphInputNodes(const lite::Model *model);
-
-std::vector<size_t> GetGraphOutputNodes(const lite::Model *model);
-
-std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, const size_t tensor_idx);
-}  // namespace lite
-}  // namespace mindspore
-
-#endif  // MINDSPORE_LITE_COMMON_GRAPH_UTIL_H_
+namespace mindspore::lite {
+using TensorPtrVector = std::vector<mindspore::schema::Tensor *>;
+using Uint32Vector = std::vector<uint32_t>;
+using String = std::string;
+using NodeType = schema::NodeType;
+}  // namespace mindspore::lite
+#endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

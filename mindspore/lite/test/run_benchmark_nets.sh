@@ -494,10 +494,11 @@ while read line; do
       continue
     fi
     echo ${model_name} >> "${run_benchmark_log_file}"
+    echo 'convert mode name: '${model_name}' begin.'
     echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config' >> "${run_benchmark_log_file}"
     ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_posttraining --quantType=PostTraining --config_file=${models_path}/${model_name}_posttraining.config || Convert_status=$?
 done < ${models_tflite_posttraining_config}
-
+    
 # Convert TFLite AwareTraining models:
 while read line; do
     model_name=${line}

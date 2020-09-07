@@ -32,6 +32,7 @@
 
 namespace mindspore {
 namespace lite {
+
 static std::vector<schema::PrimitiveType> packed_op = {
   schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
   schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
@@ -39,27 +40,23 @@ static std::vector<schema::PrimitiveType> packed_op = {
 
 // this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
 static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
-  MS_ASSERT(nullptr != model);
-  auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(nullptr != meta_graph);
-  auto post_node_idxes = GetLinkedPostNodeIdx(*meta_graph, tensor_idx);
+  MS_ASSERT(model != nullptr);
+  auto post_node_idxes = GetLinkedPostNodeIdx(model, tensor_idx);
   return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
-    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(post_node_idx);
-    MS_ASSERT(cNode != nullptr);
-    return IsContain(packed_op, cNode->primitive()->value_type());
+    auto node = model->nodes_[post_node_idx];
+    MS_ASSERT(node != nullptr);
+    return IsContain(packed_op, static_cast<schema::PrimitiveType>(node->primitive_->Type()));
   });
 }
 
 int LiteSession::ConvertTensors(const lite::Model *model) {
-  MS_ASSERT(nullptr != model);
-  auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(nullptr != meta_graph);
+  MS_ASSERT(model != nullptr);
   copyed_tensor_idxes_.clear();
-  uint32_t tensorCount = meta_graph->allTensors()->size();
-  for (uint32_t i = 0; i < tensorCount; i++) {
-    auto *srcTensor = meta_graph->allTensors()->GetAs<schema::Tensor>(i);
+  uint32_t tensor_count = model->all_tensors_.size();
+  for (uint32_t i = 0; i < tensor_count; ++i) {
+    auto *srcTensor = model->all_tensors_[i];
     if (srcTensor == nullptr) {
-      MS_LOG(ERROR) << i << "th tensor in meta_graph is nullptr";
+      MS_LOG(ERROR) << i << "th tensor in model is nullptr";
       return RET_NULL_PTR;
     }
     std::vector<int> shape;
@@ -115,11 +112,9 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
 
 void LiteSession::InitGraphInputTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(this->inputs_.empty());
-  MS_ASSERT(meta_graph != nullptr);
-  for (size_t i = 0; i < meta_graph->inputIndex()->size(); i++) {
-    auto in_tensor_idx = size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i));
+  auto graph_in_size = model->input_indices_.size();
+  for (size_t i = 0; i < graph_in_size; ++i) {
+    auto in_tensor_idx = model->input_indices_[i];
     MS_ASSERT(in_tensor_idx < this->tensors_.size());
     auto *in_tensor = this->tensors_.at(in_tensor_idx);
     MS_ASSERT(in_tensor != nullptr);
@@ -137,11 +132,11 @@ void LiteSession::InitGraphInputMSTensors() {
 
 void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->outputs_.empty());
   MS_ASSERT(meta_graph != nullptr);
-  for (size_t i = 0; i < meta_graph->outputIndex()->size(); i++) {
-    auto out_tensor_idx = size_t(meta_graph->outputIndex()->GetAs<uint32_t>(i));
+  auto graph_out_size = model->output_indices_.size();
+  for (size_t i = 0; i < graph_out_size; ++i) {
+    auto out_tensor_idx = model->output_indices_[i];
     MS_ASSERT(out_tensor_idx < this->tensors_.size());
     auto *out_tensor = this->tensors_.at(out_tensor_idx);
     MS_ASSERT(out_tensor != nullptr);
@@ -151,19 +146,19 @@ void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
 
 void LiteSession::InitGraphInputMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->input_map_.empty());
-  MS_ASSERT(meta_graph != nullptr);
-  auto graph_input_node_indexes = GetGraphInputNodes(meta_graph);
+  auto graph_input_node_indexes = GetGraphInputNodes(model);
+  auto graph_in_size = model->input_indices_.size();
   for (auto in_node_index : graph_input_node_indexes) {
-    auto *in_node = meta_graph->nodes()->GetAs<schema::CNode>(in_node_index);
-    MS_ASSERT(nullptr != in_node);
+    auto in_node = model->nodes_[in_node_index];
+    MS_ASSERT(in_node != nullptr);
     MS_ASSERT(this->input_map_.find(in_node->name()->str()) == this->input_map_.end());
-    for (size_t i = 0; i < in_node->inputIndex()->size(); i++) {
-      auto in_tensor_index = size_t(in_node->inputIndex()->GetAs<uint32_t>(i));
+    auto in_size = in_node->input_indices_.size();
+    for (size_t i = 0; i < in_size; ++i) {
+      auto in_tensor_index = size_t(in_node->input_indices_[i]);
       bool is_graph_input = false;
-      for (size_t j = 0; j < meta_graph->inputIndex()->size(); j++) {
-        if (in_tensor_index == size_t(meta_graph->inputIndex()->GetAs<uint32_t>(j))) {
+      for (size_t j = 0; j < graph_in_size; ++j) {
+        if (in_tensor_index == model->input_indices_[j]) {
           is_graph_input = true;
           break;
         }
@@ -174,28 +169,30 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
       MS_ASSERT(in_tensor_index < this->tensors_.size());
       auto *in_tensor = this->tensors_.at(in_tensor_index);
       MS_ASSERT(in_tensor != nullptr);
-      auto *ms_tensor = new tensor::LiteTensor(in_tensor);
-      MS_ASSERT(nullptr != ms_tensor);
-      this->input_map_[in_node->name()->str()].emplace_back(ms_tensor);
+      auto *ms_tensor = new (std::nothrow) tensor::LiteTensor(in_tensor);
+      if (ms_tensor == nullptr) {
+        MS_LOG(ERROR) << "new lite tensor fail!";
+        return;
+      }
+      this->input_map_[in_node->name_].emplace_back(ms_tensor);
     }
   }
 }
 
 void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(this->output_node_map_.empty());
-  MS_ASSERT(meta_graph != nullptr);
-  auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
+  auto graph_output_node_indexes = GetGraphOutputNodes(model);
+  auto graph_out_size = model->output_indices_.size();
   for (auto out_node_index : graph_output_node_indexes) {
-    auto *out_node = meta_graph->nodes()->GetAs<schema::CNode>(out_node_index);
-    MS_ASSERT(nullptr != out_node);
+    auto out_node = model->nodes_[out_node_index];
+    MS_ASSERT(out_node != nullptr);
     MS_ASSERT(this->output_map_.find(out_node->name()->str()) == this->output_map_.end());
-    for (size_t i = 0; i < out_node->outputIndex()->size(); i++) {
-      auto out_tensor_index = size_t(out_node->outputIndex()->GetAs<uint32_t>(i));
+    auto out_size = out_node->output_indices_.size();
+    for (size_t i = 0; i < out_size; ++i) {
+      auto out_tensor_index = out_node->output_indices_[i];
       bool is_graph_output = false;
-      for (size_t j = 0; j < meta_graph->outputIndex()->size(); j++) {
-        if (out_tensor_index == size_t(meta_graph->outputIndex()->GetAs<uint32_t>(j))) {
+      for (size_t j = 0; j < graph_out_size; ++j) {
+        if (out_tensor_index == model->output_indices_[j]) {
           is_graph_output = true;
           break;
         }
@@ -206,34 +203,39 @@ void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
       MS_ASSERT(out_tensor_index < this->tensors_.size());
       auto *out_tensor = this->tensors_.at(out_tensor_index);
       MS_ASSERT(out_tensor != nullptr);
-      auto *ms_tensor = new tensor::LiteTensor(out_tensor);
-      MS_ASSERT(nullptr != ms_tensor);
-      this->output_node_map_[out_node->name()->str()].emplace_back(ms_tensor);
+      auto *ms_tensor = new (std::nothrow) tensor::LiteTensor(out_tensor);
+      if (ms_tensor == nullptr) {
+        MS_LOG(ERROR) << "new lite tensor fail!";
+        return;
+      }
+      this->output_node_map_[out_node->name_].emplace_back(ms_tensor);
     }
   }
 }
 
 void LiteSession::InitGraphOutputTensorNames(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->output_tensor_names_.empty());
-  MS_ASSERT(meta_graph != nullptr);
-  for (auto output_index : *meta_graph->outputIndex()) {
-    this->output_tensor_names_.emplace_back(std::to_string(output_index));
+  auto out_size = model->output_indices_.size();
+  for (size_t i = 0; i < out_size; ++i) {
+    this->output_tensor_names_.emplace_back(std::to_string(model->output_indices_[i]));
   }
 }
 
 void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto meta_graph = model->GetMetaGraph();
   MS_ASSERT(this->output_tensor_map_.empty());
-  MS_ASSERT(meta_graph != nullptr);
-  for (auto graph_out_index : *(meta_graph->outputIndex())) {
+  auto graph_out_size = model->output_indices_.size();
+  for (size_t i = 0; i < graph_out_size; ++i) {
+    size_t graph_out_index = model->output_indices_[i];
     MS_ASSERT(graph_out_index < this->tensors_.size());
     auto *out_tensor = this->tensors_.at(graph_out_index);
     MS_ASSERT(out_tensor != nullptr);
-    auto *ms_tensor = new tensor::LiteTensor(out_tensor);
-    MS_ASSERT(nullptr != ms_tensor);
+    auto *ms_tensor = new (std::nothrow) tensor::LiteTensor(out_tensor);
+    if (ms_tensor == nullptr) {
+      MS_LOG(ERROR) << "new lite tensor fail!";
+      return;
+    }
     this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), ms_tensor));
   }
 }
@@ -272,7 +274,7 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   executor->Prepare(this->kernels_);
-  model->FreeMetaGraph();
+  model->Free();
   return RET_OK;
 }
 

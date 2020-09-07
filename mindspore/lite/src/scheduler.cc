@@ -79,43 +79,42 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
 }
 
 int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *> *tensors) {
-  MS_ASSERT(nullptr != model);
-  MS_ASSERT(nullptr != tensors);
-  auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(nullptr != meta_graph);
+  MS_ASSERT(model != nullptr);
+  MS_ASSERT(tensors != nullptr);
   bool infer_shape_interrupt = false;
-  uint32_t kernelCount = meta_graph->nodes()->size();
-  for (uint32_t i = 0; i < kernelCount; i++) {
-    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
+  uint32_t kernelCount = model->nodes_.size();
+  for (uint32_t i = 0; i < kernelCount; ++i) {
+    auto node = model->nodes_[i];
+    MS_ASSERT(node != nullptr);
     std::vector<tensor::Tensor *> inputs;
     std::vector<tensor::Tensor *> outputs;
-    auto inIndexes = cNode->inputIndex();
-    for (size_t j = 0; j < inIndexes->size(); j++) {
-      inputs.emplace_back(tensors->at(size_t(inIndexes->GetAs<uint32_t>(j))));
+    auto in_size = node->input_indices_.size();
+    for (size_t j = 0; j < in_size; ++j) {
+      inputs.emplace_back(tensors->at(node->input_indices_[j]));
     }
-    auto outIndexes = cNode->outputIndex();
-    if (outIndexes != nullptr) {
-      for (size_t j = 0; j < outIndexes->size(); j++) {
-        outputs.emplace_back(tensors->at(size_t(outIndexes->GetAs<uint32_t>(j))));
-      }
+
+    auto out_size = node->output_indices_.size();
+    for (size_t j = 0; j < out_size; ++j) {
+      outputs.emplace_back(tensors->at(node->output_indices_[j]));
     }
-    auto *primitive = model->GetOp(cNode->name()->str());
+    auto *primitive = node->primitive_;
     if (primitive == nullptr) {
-      MS_LOG(ERROR) << "Op " << cNode->name()->str() << " should exist in model, type: "
-                    << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+      MS_LOG(ERROR) << "Op " << node->name_ << " should exist in model!";
       return RET_ERROR;
     }
     primitive->SetInferFlag(!infer_shape_interrupt);
     auto ret = primitive->InferShape(inputs, outputs);
     if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << cNode->name()->str()
-                   << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type())
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name_
+                   << ", type: "
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
                    << "flag set to false.";
       primitive->SetInferFlag(false);
       infer_shape_interrupt = true;
     } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << cNode->name()->str()
-                    << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+      MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
+                    << ", type: "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
       return RET_INFER_ERR;
     }
   }
@@ -125,33 +124,34 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<tensor::Tensor *
 
 int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<tensor::Tensor *> *tensors,
                              std::vector<kernel::LiteKernel *> *kernels) {
-  MS_ASSERT(nullptr != model);
-  MS_ASSERT(nullptr != tensors);
-  auto meta_graph = model->GetMetaGraph();
-  MS_ASSERT(nullptr != meta_graph);
-  uint32_t kernelCount = meta_graph->nodes()->size();
-  auto graph_output_node_indexes = GetGraphOutputNodes(meta_graph);
-  for (uint32_t i = 0; i < kernelCount; i++) {
-    auto cNode = meta_graph->nodes()->GetAs<schema::CNode>(i);
+  MS_ASSERT(model != nullptr);
+  MS_ASSERT(tensors != nullptr);
+  uint32_t kernelCount = model->nodes_.size();
+  auto graph_output_node_indexes = GetGraphOutputNodes(model);
+  for (uint32_t i = 0; i < kernelCount; ++i) {
+    auto node = model->nodes_[i];
+    MS_ASSERT(node != nullptr);
     std::vector<tensor::Tensor *> inputs;
     std::vector<tensor::Tensor *> outputs;
-    auto inIndexes = cNode->inputIndex();
-    for (size_t j = 0; j < inIndexes->size(); j++) {
-      inputs.emplace_back(tensors->at(size_t(inIndexes->GetAs<uint32_t>(j))));
+    auto in_size = node->input_indices_.size();
+    for (size_t j = 0; j < in_size; ++j) {
+      inputs.emplace_back(tensors->at(node->input_indices_[j]));
     }
-    auto outIndexes = cNode->outputIndex();
-    for (size_t j = 0; j < outIndexes->size(); j++) {
-      outputs.emplace_back(tensors->at(size_t(outIndexes->GetAs<uint32_t>(j))));
+    auto out_size = node->output_indices_.size();
+    for (size_t j = 0; j < out_size; ++j) {
+      outputs.emplace_back(tensors->at(node->output_indices_[j]));
     }
-    auto *primitive = model->GetOp(cNode->name()->str());
-    auto *kernel = this->ScheduleNode(inputs, outputs, primitive, cNode);
-    if (nullptr == kernel) {
-      MS_LOG(ERROR) << "ScheduleNode return nullptr, name: " << cNode->name()->str()
-                    << ", type: " << schema::EnumNamePrimitiveType(cNode->primitive()->value_type());
+    auto *primitive = node->primitive_;
+    MS_ASSERT(primitive != nullptr);
+    auto *kernel = this->ScheduleNode(inputs, outputs, primitive, node);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "ScheduleNode return nullptr, name: " << node->name_
+                    << ", type: "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
       return RET_ERROR;
     }
     SetKernelTensorDataType(kernel);
-    kernel->set_name(cNode->name()->str());
+    kernel->set_name(node->name_);
     kernel->set_is_model_output(IsContain(graph_output_node_indexes, size_t(i)));
     kernels->emplace_back(kernel);
   }
@@ -231,20 +231,20 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
 
 kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<tensor::Tensor *> &in_tensors,
                                             const std::vector<tensor::Tensor *> &out_tensors,
-                                            const mindspore::lite::PrimitiveC *primitive, const schema::CNode *cnode) {
-  MS_ASSERT(nullptr != primitive);
+                                            const mindspore::lite::PrimitiveC *primitive, const Model::Node *node) {
+  MS_ASSERT(primitive != nullptr);
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
   if (context_->device_ctx_.type == DT_GPU) {
     desc.arch = kernel::KERNEL_ARCH::kGPU;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
-    if (nullptr != kernel) {
+    if (kernel != nullptr) {
       kernel->set_desc(desc);
       return kernel;
     } else {
       MS_LOG(ERROR) << "Not supported GPU Op "
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type())) << " "
-                   << (cnode->name()->str());
+                   << node->name_;
     }
   }
 
