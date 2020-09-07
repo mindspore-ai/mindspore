@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     backbone_net = MobileNetV2Backbone(platform=args_opt.platform)
     head_net = MobileNetV2Head(input_channel=backbone_net.out_channels, num_classes=config.num_classes)
-    net = mobilenet_v2(feature_net, head_net)
+    net = mobilenet_v2(backbone_net, head_net)
 
     #load the trained checkpoint file to the net for evaluation
     if args_opt.head_ckpt:
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     model = Model(net, loss_fn=loss, metrics={'acc'})
 
-    res = model.eval(dataset)
+    res = model.eval(dataset, dataset_sink_mode=False)
     print(f"result:{res}\npretrain_ckpt={args_opt.pretrain_ckpt}")
     if args_opt.head_ckpt:
         print(f"head_ckpt={args_opt.head_ckpt}")

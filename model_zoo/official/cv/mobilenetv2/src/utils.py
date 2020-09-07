@@ -17,8 +17,9 @@ from mindspore import context
 from mindspore import nn
 from mindspore.common import dtype as mstype
 from mindspore.train.model import ParallelMode
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
-from mindspore.communication.management import get_rank, init
+from mindspore.communication.management import get_rank, init, get_group_size
 
 from src.models import Monitor
 

@@ -22,7 +22,7 @@ def launch_parse_args():
         that will spawn up multiple distributed processes")
     launch_parser.add_argument('--platform', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"), \
         help='run platform, only support GPU, CPU and Ascend')
-    launch_parser.add_argument("--nproc_per_node", type=int, default=1, choices=(0, 1, 2, 3, 4, 5, 6, 7), \
+    launch_parser.add_argument("--nproc_per_node", type=int, default=1, choices=(1, 2, 3, 4, 5, 6, 7, 8), \
         help="The number of processes to launch on each node, for D training, this is recommended to be set \
             to the number of D in your system so that each process can be bound to a single D.")
     launch_parser.add_argument("--visible_devices", type=str, default="0,1,2,3,4,5,6,7", help="will use the \
@@ -32,7 +32,7 @@ def launch_parse_args():
             the training script")
 
     launch_args, unknown = launch_parser.parse_known_args()
-    launch_args.train_script_args = unknown
+    launch_args.training_script_args = unknown
     launch_args.training_script_args += ["--platform", launch_args.platform]
     return launch_args
 

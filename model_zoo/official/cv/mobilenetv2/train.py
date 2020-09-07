@@ -88,7 +88,7 @@ if __name__ == '__main__':
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay)
 
         network = WithLossCell(net, loss)
-        network = TrainOneStepCell(net, opt)
+        network = TrainOneStepCell(network, opt)
         network.set_train()
 
         features_path = args_opt.dataset_path + '_features'
