@@ -478,9 +478,9 @@ table Neg {
 }
 
 table Exp {
-    base : float;
-    scale : float;
-    shift : float;
+    base : float = -1.0;
+    scale : float = 1.0;
+    shift : float = 0.0;
 }
 
 table Cos {

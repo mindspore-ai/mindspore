@@ -30,8 +30,6 @@ int ElementAbs(float *input, float *output, int element_size);
 
 int ElementCos(float *input, float *output, int element_size);
 
-int ElementExp(float *input, float *output, int element_size);
-
 int ElementLog(float *input, float *output, int element_size);
 
 int ElementSquare(float *input, float *output, int element_size);

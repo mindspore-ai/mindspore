@@ -34,14 +34,6 @@ int ElementCos(float *input, float *output, int element_size) {
   return NNACL_OK;
 }
 
-// exp:
-int ElementExp(float *input, float *output, int element_size) {
-  for (int i = 0; i < element_size; i++) {
-    output[i] = expf(input[i]);
-  }
-  return NNACL_OK;
-}
-
 // log:
 int ElementLog(float *input, float *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
