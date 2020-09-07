@@ -75,8 +75,6 @@ class SummaryRecord:
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
-        queue_max_size (int): Deprecated. The capacity of event queue.(reserved). Default: 0.
-        flush_time (int): Deprecated. Frequency of flush the summary file to disk. The unit is second. Default: 120.
         file_prefix (str): The prefix of file. Default: "events".
         file_suffix (str): The suffix of file. Default: "_MS".
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
@@ -84,8 +82,7 @@ class SummaryRecord:
             Unlimited by default. For example, to write not larger than 4GB, specify `max_file_size=4 * 1024**3`.
 
     Raises:
-        TypeError: If the data type of `max_file_size`, `queue_max_size` or `flush_time` is not int, \
-            or the data type of `file_prefix` and `file_suffix` is not str.
+        TypeError: If the type of `max_file_size` is not int, or the type of `file_prefix` or `file_suffix` is not str.
         RuntimeError: If the log_dir is not a normalized absolute path name.
 
     Examples:
@@ -100,14 +97,7 @@ class SummaryRecord:
         >>>     summary_record.close()
     """
 
-    def __init__(self,
-                 log_dir,
-                 queue_max_size=0,
-                 flush_time=120,
-                 file_prefix="events",
-                 file_suffix="_MS",
-                 network=None,
-                 max_file_size=None):
+    def __init__(self, log_dir, file_prefix="events", file_suffix="_MS", network=None, max_file_size=None):
 
         self._closed, self._event_writer = False, None
         self._mode, self._data_pool = 'train', _dictlist()
@@ -120,25 +110,12 @@ class SummaryRecord:
         if not isinstance(max_file_size, (int, type(None))):
             raise TypeError("The 'max_file_size' should be int type.")
 
-        if not isinstance(queue_max_size, int) or not isinstance(flush_time, int):
-            raise TypeError("`queue_max_size` and `flush_time` should be int")
         if not isinstance(file_prefix, str) or not isinstance(file_suffix, str):
             raise TypeError("`file_prefix` and `file_suffix`  should be str.")
 
         if max_file_size is not None and max_file_size < 0:
             logger.warning("The 'max_file_size' should be greater than 0.")
             max_file_size = None
-
-        self.queue_max_size = queue_max_size
-        if queue_max_size < 0:
-            # 0 is not limit
-            logger.warning("The queue_max_size(%r) set error, will use the default value: 0", queue_max_size)
-            self.queue_max_size = 0
-
-        self.flush_time = flush_time
-        if flush_time <= 0:
-            logger.warning("The flush_time(%r) set error, will use the default value: 120", flush_time)
-            self.flush_time = 120
 
         self.prefix = file_prefix
         self.suffix = file_suffix
@@ -155,7 +132,7 @@ class SummaryRecord:
         self._event_writer = WriterPool(log_dir,
                                         max_file_size,
                                         summary=self.full_file_name,
-                                        lineage=get_event_file_name('events', '_lineage'))
+                                        lineage=get_event_file_name(self.prefix, '_lineage'))
         _get_summary_tensor_data()
         atexit.register(self.close)
 

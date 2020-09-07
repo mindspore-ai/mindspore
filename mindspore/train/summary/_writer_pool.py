@@ -53,7 +53,8 @@ class WriterPool(ctx.Process):
 
     Args:
         base_dir (str): The base directory to hold all the files.
-        filelist (str): The mapping from short name to long filename.
+        max_file_size (Optional[int]): The maximum size of each file that can be written to disk in bytes.
+        filedict (dict): The mapping from plugin to filename.
     """
 
     def __init__(self, base_dir, max_file_size, **filedict) -> None:
