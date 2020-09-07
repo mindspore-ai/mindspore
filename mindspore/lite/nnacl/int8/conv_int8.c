@@ -371,249 +371,380 @@ void ConvInt8Opt(int8_t *input_data, int8_t *packed_input, int8_t *packed_weight
   }
 }
 
-void Conv1x1PreOpt(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
-                   size_t output_channel, size_t plane_size, ConvParameter *conv_param) {
+void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
+                        size_t output_channel, size_t plane_size, int32_t *filter_zp, size_t inputsum_stride) {
   int ic4 = UP_ROUND(input_channel, C4NUM);
+  int oc8 = UP_ROUND(output_channel, C8NUM);
+  int hw8 = UP_ROUND(plane_size, C8NUM);
   size_t hw_8div = plane_size / C8NUM * C8NUM;
-  size_t hw_8res = plane_size - hw_8div;
+  size_t oc_8div = output_channel / C8NUM * C8NUM;
+  size_t oc_8res = output_channel - oc_8div;
   size_t ic_4div = input_channel / C4NUM * C4NUM;
-  int32_t filter_zp = conv_param->conv_quant_arg_.filter_quant_args_[0].zp_;
 
-  if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
-    const int8_t *src_r = src_input;
-    int8_t *pack_r = packed_input;
-    /* per layer */
-    for (int hwi = 0; hwi < hw_8div; hwi += C8NUM) {
+  const int8_t *src_r = src_input;
+  int8_t *pack_r = packed_input;
+  int32_t *input_sum_r = input_sum;
+
+  /* per layer */
+  for (int hwi = 0; hwi < hw_8div; hwi += C8NUM) {
+    const int8_t *src_ic = src_r;
+    int8_t *pack_ic = pack_r;
+    int32_t *input_sum_oc = input_sum_r;
+
+    int32_t tmp_sum_value[8] = {0};
+    for (int ici = 0; ici < ic_4div; ici += C4NUM) {
+      for (int i = 0; i < C8NUM; i++) {
+        tmp_sum_value[i] += src_ic[0 + i * input_channel];
+        tmp_sum_value[i] += src_ic[1 + i * input_channel];
+        tmp_sum_value[i] += src_ic[2 + i * input_channel];
+        tmp_sum_value[i] += src_ic[3 + i * input_channel];
+        pack_ic[0 + i * C4NUM] = src_ic[0 + i * input_channel];
+        pack_ic[1 + i * C4NUM] = src_ic[1 + i * input_channel];
+        pack_ic[2 + i * C4NUM] = src_ic[2 + i * input_channel];
+        pack_ic[3 + i * C4NUM] = src_ic[3 + i * input_channel];
+      }
+      src_ic += C4NUM;
+      pack_ic += C4NUM * C8NUM;
+    }
+    for (int ici = ic_4div; ici < input_channel; ici += 1) {
+      for (int i = 0; i < C8NUM; i++) {
+        tmp_sum_value[i] += src_ic[i * input_channel];
+        pack_ic[i * C4NUM] = src_ic[i * input_channel];
+      }
+      src_ic += 1;
+      pack_ic += 1;
+    }
+
+    for (int oci = 0; oci < oc_8div; oci += C8NUM) {
+      for (int ri = 0; ri < C8NUM; ri++) {
+        input_sum_oc[ri * C8NUM + 0] = tmp_sum_value[ri] * filter_zp[oci + 0];
+        input_sum_oc[ri * C8NUM + 1] = tmp_sum_value[ri] * filter_zp[oci + 1];
+        input_sum_oc[ri * C8NUM + 2] = tmp_sum_value[ri] * filter_zp[oci + 2];
+        input_sum_oc[ri * C8NUM + 3] = tmp_sum_value[ri] * filter_zp[oci + 3];
+        input_sum_oc[ri * C8NUM + 4] = tmp_sum_value[ri] * filter_zp[oci + 4];
+        input_sum_oc[ri * C8NUM + 5] = tmp_sum_value[ri] * filter_zp[oci + 5];
+        input_sum_oc[ri * C8NUM + 6] = tmp_sum_value[ri] * filter_zp[oci + 6];
+        input_sum_oc[ri * C8NUM + 7] = tmp_sum_value[ri] * filter_zp[oci + 7];
+      }
+      input_sum_oc += inputsum_stride;
+    }
+    if (oc_8div != output_channel) {
+      for (int oci = 0; oci < oc_8res; oci += 1) {
+        for (int ri = 0; ri < C8NUM; ri++) {
+          input_sum_oc[ri * C8NUM + oci] = tmp_sum_value[ri] * filter_zp[oc_8div + oci];
+        }
+      }
+      for (int oci = oc_8res; oci < C8NUM; oci += 1) {
+        for (int ri = 0; ri < C8NUM; ri++) {
+          input_sum_oc[ri * C8NUM + oci] = 0;
+        }
+      }
+    } /* oc8 res done */
+
+    src_r += input_channel * C8NUM;
+    pack_r += ic4 * C8NUM;
+    input_sum_r += C8NUM * C8NUM;
+  }
+
+  if (hw_8div != plane_size) {
+    memset(pack_r, 0, C8NUM * ic4);
+    for (int hwi = hw_8div; hwi < plane_size; hwi += 1) {
+      int32_t *input_sum_oc = input_sum_r;
+      int32_t tmp_sum_value = 0;
       const int8_t *src_ic = src_r;
       int8_t *pack_ic = pack_r;
-      int32_t *input_sum_r = input_sum + hwi;
-#ifdef ENABLE_ARM64
-      size_t src_stride = input_channel;
-      size_t ic_4res = input_channel - ic_4div;
-      asm volatile(
-        "dup v10.4s, wzr \n"
-        "dup v11.4s, wzr \n"
-        "mov x20, %[input_sum_r] \n"
-        "dup v20.4s, %w[filter_zp]  \n"
-
-        "mov x10, %[src_ic] \n"
-        "mov x11, %[pack_ic] \n"
-
-        "mov x0, #0 \n"
-        "1: \n"
-        "cmp x0, %[ic_4div] \n"
-        "add x0, x0, #4\n"
-        "mov x12, x10 \n"
-        "add x10, x10, #4\n"
-        "blt 2f \n"
-        "cmp %[ic_4res], #0\n"
-        "beq 6f \n"
-        "cmp %[ic_4res], #1\n"
-        "beq 3f \n"
-        "cmp %[ic_4res], #2\n"
-        "beq 4f \n"
-        "cmp %[ic_4res], #3\n"
-        "beq 5f \n"
-
-        "2: \n"
-        "ld1 {v0.s}[0], [x12], %[src_stride]\n"
-        "ld1 {v0.s}[1], [x12], %[src_stride]\n"
-        "ld1 {v0.s}[2], [x12], %[src_stride]\n"
-        "ld1 {v0.s}[3], [x12], %[src_stride]\n"
-        "ld1 {v1.s}[0], [x12], %[src_stride]\n"
-        "ld1 {v1.s}[1], [x12], %[src_stride]\n"
-        "ld1 {v1.s}[2], [x12], %[src_stride]\n"
-        "ld1 {v1.s}[3], [x12], %[src_stride]\n"
-
-        "st1 {v0.16b}, [x11], #16\n"
-        "st1 {v1.16b}, [x11], #16\n"
-
-        "saddlp v4.8h, v0.16b \n"
-        "saddlp v5.8h, v1.16b \n"
-
-        "saddlp v0.4s, v4.8h \n"
-        "saddlp v1.4s, v5.8h \n"
-
-        "add v10.4s, v10.4s, v0.4s \n"
-        "add v11.4s, v11.4s, v1.4s \n"
-        "b 1b \n"
-
-        "3: \n" /* col res 1 */
-        "dup v0.4s, wzr \n"
-        "dup v1.4s, wzr \n"
-
-        "ld1 {v0.b}[0],  [x12], %[src_stride]\n"
-        "ld1 {v0.b}[4],  [x12], %[src_stride]\n"
-        "ld1 {v0.b}[8],  [x12], %[src_stride]\n"
-        "ld1 {v0.b}[12], [x12], %[src_stride]\n"
-        "ld1 {v1.b}[0],  [x12], %[src_stride]\n"
-        "ld1 {v1.b}[4],  [x12], %[src_stride]\n"
-        "ld1 {v1.b}[8],  [x12], %[src_stride]\n"
-        "ld1 {v1.b}[12], [x12], %[src_stride]\n"
-
-        "st1 {v0.16b}, [x11], #16\n"
-        "st1 {v1.16b}, [x11], #16\n"
-        "saddlp v4.8h, v0.16b \n"
-        "saddlp v5.8h, v1.16b \n"
-        "saddlp v0.4s, v4.8h \n"
-        "saddlp v1.4s, v5.8h \n"
-        "add v10.4s, v10.4s, v0.4s \n"
-        "add v11.4s, v11.4s, v1.4s \n"
-        "b 6f \n"
-
-        "4: \n" /* col res 2 */
-        "dup v0.4s, wzr \n"
-        "dup v1.4s, wzr \n"
-
-        "ld1 {v0.h}[0], [x12], %[src_stride]\n"
-        "ld1 {v0.h}[2], [x12], %[src_stride]\n"
-        "ld1 {v0.h}[4], [x12], %[src_stride]\n"
-        "ld1 {v0.h}[6], [x12], %[src_stride]\n"
-        "ld1 {v1.h}[0], [x12], %[src_stride]\n"
-        "ld1 {v1.h}[2], [x12], %[src_stride]\n"
-        "ld1 {v1.h}[4], [x12], %[src_stride]\n"
-        "ld1 {v1.h}[6], [x12], %[src_stride]\n"
-
-        "st1 {v0.16b}, [x11], #16\n"
-        "st1 {v1.16b}, [x11], #16\n"
-        "saddlp v4.8h, v0.16b \n"
-        "saddlp v5.8h, v1.16b \n"
-        "saddlp v0.4s, v4.8h \n"
-        "saddlp v1.4s, v5.8h \n"
-        "add v10.4s, v10.4s, v0.4s \n"
-        "add v11.4s, v11.4s, v1.4s \n"
-        "b 6f \n"
-
-        "5: \n" /* col res 3 */
-        "dup v0.4s, wzr \n"
-        "dup v1.4s, wzr \n"
-        "add x13, x12, #2 \n"
-
-        "ld1 {v0.h}[0], [x12], %[src_stride]\n"
-        "ld1 {v0.b}[2], [x13], %[src_stride]\n"
-        "ld1 {v0.h}[2], [x12], %[src_stride]\n"
-        "ld1 {v0.b}[6], [x13], %[src_stride]\n"
-        "ld1 {v0.h}[4], [x12], %[src_stride]\n"
-        "ld1 {v0.b}[10], [x13], %[src_stride]\n"
-        "ld1 {v0.h}[6], [x12], %[src_stride]\n"
-        "ld1 {v0.b}[14], [x13], %[src_stride]\n"
-        "ld1 {v1.h}[0], [x12], %[src_stride]\n"
-        "ld1 {v1.b}[2], [x13], %[src_stride]\n"
-        "ld1 {v1.h}[2], [x12], %[src_stride]\n"
-        "ld1 {v1.b}[6], [x13], %[src_stride]\n"
-        "ld1 {v1.h}[4], [x12], %[src_stride]\n"
-        "ld1 {v1.b}[10], [x13], %[src_stride]\n"
-        "ld1 {v1.h}[6], [x12], %[src_stride]\n"
-        "ld1 {v1.b}[14], [x13], %[src_stride]\n"
-
-        "st1 {v0.16b}, [x11], #16\n"
-        "st1 {v1.16b}, [x11], #16\n"
-        "saddlp v4.8h, v0.16b \n"
-        "saddlp v5.8h, v1.16b \n"
-        "saddlp v0.4s, v4.8h \n"
-        "saddlp v1.4s, v5.8h \n"
-        "add v10.4s, v10.4s, v0.4s \n"
-        "add v11.4s, v11.4s, v1.4s \n"
-        "b 6f \n"
-
-        "6: \n"
-        "mul v10.4s, v10.4s, v20.4s \n"
-        "mul v11.4s, v11.4s, v20.4s \n"
-
-        "st1 {v10.4s}, [x20], #16 \n"
-        "st1 {v11.4s}, [x20], #16 \n"
-
-        :
-        : [ src_ic ] "r"(src_ic), [ pack_ic ] "r"(pack_ic), [ input_sum_r ] "r"(input_sum_r),
-          [ src_stride ] "r"(src_stride), [ ic_4div ] "r"(ic_4div), [ ic_4res ] "r"(ic_4res),
-          [ filter_zp ] "r"(filter_zp)
-        : "x0", "x1", "x10", "x11", "x12", "x13", "x20", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v11",
-          "v20");
-#else
-      int32_t tmp_sum_value[8] = {0};
       for (int ici = 0; ici < ic_4div; ici += C4NUM) {
-        for (int i = 0; i < C8NUM; i++) {
-          tmp_sum_value[i] += src_ic[0 + i * input_channel];
-          tmp_sum_value[i] += src_ic[1 + i * input_channel];
-          tmp_sum_value[i] += src_ic[2 + i * input_channel];
-          tmp_sum_value[i] += src_ic[3 + i * input_channel];
-          pack_ic[0 + i * C4NUM] = src_ic[0 + i * input_channel];
-          pack_ic[1 + i * C4NUM] = src_ic[1 + i * input_channel];
-          pack_ic[2 + i * C4NUM] = src_ic[2 + i * input_channel];
-          pack_ic[3 + i * C4NUM] = src_ic[3 + i * input_channel];
-        }
+        tmp_sum_value += src_ic[0];
+        tmp_sum_value += src_ic[1];
+        tmp_sum_value += src_ic[2];
+        tmp_sum_value += src_ic[3];
+        pack_ic[0] = src_ic[0];
+        pack_ic[1] = src_ic[1];
+        pack_ic[2] = src_ic[2];
+        pack_ic[3] = src_ic[3];
         src_ic += C4NUM;
         pack_ic += C4NUM * C8NUM;
       }
       for (int ici = ic_4div; ici < input_channel; ici += 1) {
-        for (int i = 0; i < C8NUM; i++) {
-          tmp_sum_value[i] += src_ic[i * input_channel];
-          pack_ic[i * C4NUM] = src_ic[i * input_channel];
-        }
+        tmp_sum_value += src_ic[0];
+        pack_ic[0] = src_ic[0];
         src_ic += 1;
         pack_ic += 1;
       }
 
-      for (int i = 0; i < C8NUM; i++) {
-        input_sum_r[i] = tmp_sum_value[i] * filter_zp;
+      for (int oci = 0; oci < oc_8div; oci += C8NUM) {
+        for (int curoi = 0; curoi < C8NUM; curoi++) {
+          input_sum_oc[curoi] = tmp_sum_value * filter_zp[oci + curoi];
+        }
+        input_sum_oc += inputsum_stride;
       }
-#endif
-      src_r += input_channel * C8NUM;
-      pack_r += ic4 * C8NUM;
+      if (oc_8div != output_channel) {
+        for (int oci = 0; oci < oc_8res; oci += 1) {
+          input_sum_oc[oci] = tmp_sum_value * filter_zp[oc_8div + oci];
+        }
+        for (int oci = oc_8res; oci < C8NUM; oci += 1) {
+          input_sum_oc[oci] = 0;
+        }
+      } /* oc8 res done */
+
+      src_r += input_channel;
+      pack_r += C4NUM;
+      input_sum_r += C8NUM;
     }
 
-    if (hw_8div != plane_size) {
-      memset(pack_r, 0, C8NUM * ic4);
-      for (int hwi = hw_8div; hwi < plane_size; hwi += 1) {
-        int32_t tmp_sum_value = 0;
-        const int8_t *src_ic = src_r;
-        int8_t *pack_ic = pack_r;
-        for (int ici = 0; ici < ic_4div; ici += C4NUM) {
-          tmp_sum_value += src_ic[0];
-          tmp_sum_value += src_ic[1];
-          tmp_sum_value += src_ic[2];
-          tmp_sum_value += src_ic[3];
-          pack_ic[0] = src_ic[0];
-          pack_ic[1] = src_ic[1];
-          pack_ic[2] = src_ic[2];
-          pack_ic[3] = src_ic[3];
-          src_ic += C4NUM;
-          pack_ic += C4NUM * C8NUM;
-        }
-        for (int ici = ic_4div; ici < input_channel; ici += 1) {
-          tmp_sum_value += src_ic[0];
-          pack_ic[0] = src_ic[0];
-          src_ic += 1;
-          pack_ic += 1;
-        }
-        input_sum[hwi] = tmp_sum_value * filter_zp;
-        src_r += input_channel;
-        pack_r += C4NUM;
-      }
-      for (int hwi = plane_size; hwi < plane_size + hw_8res; hwi++) {
-        input_sum[hwi] = 0;
+    for (int hwi = plane_size; hwi < hw8; hwi++) {
+      for (int oc = 0; oc < oc8; oc++) {
+        int oc8div = oc / C8NUM, oc8res = oc % C8NUM;
+        input_sum[oc8div * inputsum_stride + hwi * C8NUM + oc8res] = 0;
       }
     }
-  } else {
-    /* per channel */
-    RowMajor2Row4x8MajorInt8(src_input, packed_input, plane_size, input_channel);
-    PackInputSum8x4Int8(packed_input, input_sum, input_channel, output_channel, plane_size, conv_param);
+  }
+  return;
+}
+
+void Conv1x1PreOptPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
+                       size_t plane_size, ConvParameter *conv_param) {
+  int ic4 = UP_ROUND(input_channel, C4NUM);
+  size_t hw_8div = plane_size / C8NUM * C8NUM;
+  size_t ic_4div = input_channel / C4NUM * C4NUM;
+  int32_t filter_zp = conv_param->conv_quant_arg_.filter_quant_args_[0].zp_;
+
+  const int8_t *src_r = src_input;
+  int8_t *pack_r = packed_input;
+  /* per layer */
+  for (int hwi = 0; hwi < hw_8div; hwi += C8NUM) {
+    const int8_t *src_ic = src_r;
+    int8_t *pack_ic = pack_r;
+    int32_t *input_sum_r = input_sum + hwi;
+#ifdef ENABLE_ARM64
+    size_t src_stride = input_channel;
+    size_t ic_4res = input_channel - ic_4div;
+    asm volatile(
+      "dup v10.4s, wzr \n"
+      "dup v11.4s, wzr \n"
+      "mov x20, %[input_sum_r] \n"
+      "dup v20.4s, %w[filter_zp]  \n"
+
+      "mov x10, %[src_ic] \n"
+      "mov x11, %[pack_ic] \n"
+
+      "mov x0, #0 \n"
+      "1: \n"
+      "cmp x0, %[ic_4div] \n"
+      "add x0, x0, #4\n"
+      "mov x12, x10 \n"
+      "add x10, x10, #4\n"
+      "blt 2f \n"
+      "cmp %[ic_4res], #0\n"
+      "beq 6f \n"
+      "cmp %[ic_4res], #1\n"
+      "beq 3f \n"
+      "cmp %[ic_4res], #2\n"
+      "beq 4f \n"
+      "cmp %[ic_4res], #3\n"
+      "beq 5f \n"
+
+      "2: \n"
+      "ld1 {v0.s}[0], [x12], %[src_stride]\n"
+      "ld1 {v0.s}[1], [x12], %[src_stride]\n"
+      "ld1 {v0.s}[2], [x12], %[src_stride]\n"
+      "ld1 {v0.s}[3], [x12], %[src_stride]\n"
+      "ld1 {v1.s}[0], [x12], %[src_stride]\n"
+      "ld1 {v1.s}[1], [x12], %[src_stride]\n"
+      "ld1 {v1.s}[2], [x12], %[src_stride]\n"
+      "ld1 {v1.s}[3], [x12], %[src_stride]\n"
+
+      "st1 {v0.16b}, [x11], #16\n"
+      "st1 {v1.16b}, [x11], #16\n"
+
+      "saddlp v4.8h, v0.16b \n"
+      "saddlp v5.8h, v1.16b \n"
+
+      "saddlp v0.4s, v4.8h \n"
+      "saddlp v1.4s, v5.8h \n"
+
+      "add v10.4s, v10.4s, v0.4s \n"
+      "add v11.4s, v11.4s, v1.4s \n"
+      "b 1b \n"
+
+      "3: \n" /* col res 1 */
+      "dup v0.4s, wzr \n"
+      "dup v1.4s, wzr \n"
+
+      "ld1 {v0.b}[0],  [x12], %[src_stride]\n"
+      "ld1 {v0.b}[4],  [x12], %[src_stride]\n"
+      "ld1 {v0.b}[8],  [x12], %[src_stride]\n"
+      "ld1 {v0.b}[12], [x12], %[src_stride]\n"
+      "ld1 {v1.b}[0],  [x12], %[src_stride]\n"
+      "ld1 {v1.b}[4],  [x12], %[src_stride]\n"
+      "ld1 {v1.b}[8],  [x12], %[src_stride]\n"
+      "ld1 {v1.b}[12], [x12], %[src_stride]\n"
+
+      "st1 {v0.16b}, [x11], #16\n"
+      "st1 {v1.16b}, [x11], #16\n"
+      "saddlp v4.8h, v0.16b \n"
+      "saddlp v5.8h, v1.16b \n"
+      "saddlp v0.4s, v4.8h \n"
+      "saddlp v1.4s, v5.8h \n"
+      "add v10.4s, v10.4s, v0.4s \n"
+      "add v11.4s, v11.4s, v1.4s \n"
+      "b 6f \n"
+
+      "4: \n" /* col res 2 */
+      "dup v0.4s, wzr \n"
+      "dup v1.4s, wzr \n"
+
+      "ld1 {v0.h}[0], [x12], %[src_stride]\n"
+      "ld1 {v0.h}[2], [x12], %[src_stride]\n"
+      "ld1 {v0.h}[4], [x12], %[src_stride]\n"
+      "ld1 {v0.h}[6], [x12], %[src_stride]\n"
+      "ld1 {v1.h}[0], [x12], %[src_stride]\n"
+      "ld1 {v1.h}[2], [x12], %[src_stride]\n"
+      "ld1 {v1.h}[4], [x12], %[src_stride]\n"
+      "ld1 {v1.h}[6], [x12], %[src_stride]\n"
+
+      "st1 {v0.16b}, [x11], #16\n"
+      "st1 {v1.16b}, [x11], #16\n"
+      "saddlp v4.8h, v0.16b \n"
+      "saddlp v5.8h, v1.16b \n"
+      "saddlp v0.4s, v4.8h \n"
+      "saddlp v1.4s, v5.8h \n"
+      "add v10.4s, v10.4s, v0.4s \n"
+      "add v11.4s, v11.4s, v1.4s \n"
+      "b 6f \n"
+
+      "5: \n" /* col res 3 */
+      "dup v0.4s, wzr \n"
+      "dup v1.4s, wzr \n"
+      "add x13, x12, #2 \n"
+
+      "ld1 {v0.h}[0], [x12], %[src_stride]\n"
+      "ld1 {v0.b}[2], [x13], %[src_stride]\n"
+      "ld1 {v0.h}[2], [x12], %[src_stride]\n"
+      "ld1 {v0.b}[6], [x13], %[src_stride]\n"
+      "ld1 {v0.h}[4], [x12], %[src_stride]\n"
+      "ld1 {v0.b}[10], [x13], %[src_stride]\n"
+      "ld1 {v0.h}[6], [x12], %[src_stride]\n"
+      "ld1 {v0.b}[14], [x13], %[src_stride]\n"
+      "ld1 {v1.h}[0], [x12], %[src_stride]\n"
+      "ld1 {v1.b}[2], [x13], %[src_stride]\n"
+      "ld1 {v1.h}[2], [x12], %[src_stride]\n"
+      "ld1 {v1.b}[6], [x13], %[src_stride]\n"
+      "ld1 {v1.h}[4], [x12], %[src_stride]\n"
+      "ld1 {v1.b}[10], [x13], %[src_stride]\n"
+      "ld1 {v1.h}[6], [x12], %[src_stride]\n"
+      "ld1 {v1.b}[14], [x13], %[src_stride]\n"
+
+      "st1 {v0.16b}, [x11], #16\n"
+      "st1 {v1.16b}, [x11], #16\n"
+      "saddlp v4.8h, v0.16b \n"
+      "saddlp v5.8h, v1.16b \n"
+      "saddlp v0.4s, v4.8h \n"
+      "saddlp v1.4s, v5.8h \n"
+      "add v10.4s, v10.4s, v0.4s \n"
+      "add v11.4s, v11.4s, v1.4s \n"
+      "b 6f \n"
+
+      "6: \n"
+      "mul v10.4s, v10.4s, v20.4s \n"
+      "mul v11.4s, v11.4s, v20.4s \n"
+
+      "st1 {v10.4s}, [x20], #16 \n"
+      "st1 {v11.4s}, [x20], #16 \n"
+
+      :
+      : [ src_ic ] "r"(src_ic), [ pack_ic ] "r"(pack_ic), [ input_sum_r ] "r"(input_sum_r),
+        [ src_stride ] "r"(src_stride), [ ic_4div ] "r"(ic_4div), [ ic_4res ] "r"(ic_4res), [ filter_zp ] "r"(filter_zp)
+      : "x0", "x1", "x10", "x11", "x12", "x13", "x20", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v10", "v11",
+        "v20");
+#else
+    int32_t tmp_sum_value[8] = {0};
+    for (int ici = 0; ici < ic_4div; ici += C4NUM) {
+      for (int i = 0; i < C8NUM; i++) {
+        tmp_sum_value[i] += src_ic[0 + i * input_channel];
+        tmp_sum_value[i] += src_ic[1 + i * input_channel];
+        tmp_sum_value[i] += src_ic[2 + i * input_channel];
+        tmp_sum_value[i] += src_ic[3 + i * input_channel];
+        pack_ic[0 + i * C4NUM] = src_ic[0 + i * input_channel];
+        pack_ic[1 + i * C4NUM] = src_ic[1 + i * input_channel];
+        pack_ic[2 + i * C4NUM] = src_ic[2 + i * input_channel];
+        pack_ic[3 + i * C4NUM] = src_ic[3 + i * input_channel];
+      }
+      src_ic += C4NUM;
+      pack_ic += C4NUM * C8NUM;
+    }
+    for (int ici = ic_4div; ici < input_channel; ici += 1) {
+      for (int i = 0; i < C8NUM; i++) {
+        tmp_sum_value[i] += src_ic[i * input_channel];
+        pack_ic[i * C4NUM] = src_ic[i * input_channel];
+      }
+      src_ic += 1;
+      pack_ic += 1;
+    }
+
+    for (int i = 0; i < C8NUM; i++) {
+      input_sum_r[i] = tmp_sum_value[i] * filter_zp;
+    }
+#endif
+    src_r += input_channel * C8NUM;
+    pack_r += ic4 * C8NUM;
+  }
+
+  if (hw_8div != plane_size) {
+    memset(pack_r, 0, C8NUM * ic4);
+    for (int hwi = hw_8div; hwi < plane_size; hwi += 1) {
+      int32_t tmp_sum_value = 0;
+      const int8_t *src_ic = src_r;
+      int8_t *pack_ic = pack_r;
+      for (int ici = 0; ici < ic_4div; ici += C4NUM) {
+        tmp_sum_value += src_ic[0];
+        tmp_sum_value += src_ic[1];
+        tmp_sum_value += src_ic[2];
+        tmp_sum_value += src_ic[3];
+        pack_ic[0] = src_ic[0];
+        pack_ic[1] = src_ic[1];
+        pack_ic[2] = src_ic[2];
+        pack_ic[3] = src_ic[3];
+        src_ic += C4NUM;
+        pack_ic += C4NUM * C8NUM;
+      }
+      for (int ici = ic_4div; ici < input_channel; ici += 1) {
+        tmp_sum_value += src_ic[0];
+        pack_ic[0] = src_ic[0];
+        src_ic += 1;
+        pack_ic += 1;
+      }
+      input_sum[hwi] = tmp_sum_value * filter_zp;
+      src_r += input_channel;
+      pack_r += C4NUM;
+    }
+    for (int hwi = plane_size; hwi < UP_ROUND(plane_size, C8NUM); hwi++) {
+      input_sum[hwi] = 0;
+    }
   }
   return;
 }
 
 void Conv1x1Int8Opt(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
-                    const int32_t *bias, int row, int col, int deep4, ConvParameter *conv_param,
-                    MATMUL_OPT_R_FUNC matmul_func) {
+                    const int32_t *bias, int row, int col, int deep4, int32_t *left_shift, int32_t *right_shift,
+                    int32_t *multiplier, ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func) {
   matmul_func(packed_input, packed_weight, dst, row, col, deep4, conv_param->output_channel_, input_sum, bias,
-              conv_param->conv_quant_arg_.left_shift_, conv_param->conv_quant_arg_.right_shift_,
-              conv_param->conv_quant_arg_.quant_multiplier_, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
-              conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0], false);
+              left_shift, right_shift, multiplier, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+              conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+              conv_param->conv_quant_arg_.filter_arg_num_ != 1);
   return;
 }
 
 void Conv1x1Int8(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
-                 const int32_t *bias, int row, int col, int deep16, ConvParameter *conv_param) {
+                 const int32_t *bias, int row, int col, int deep16, int32_t *left_shift, int32_t *right_shift,
+                 int32_t *multiplier, ConvParameter *conv_param) {
+  if (conv_param->conv_quant_arg_.filter_arg_num_ > 1) {
+    return MatMulInt8_16x4_r(packed_input, packed_weight, dst, row, col, deep16, conv_param->output_channel_, input_sum,
+                             bias, left_shift, right_shift, multiplier,
+                             conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+                             conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+                             conv_param->conv_quant_arg_.filter_arg_num_ != 1);
+  }
 #ifdef ENABLE_ARM64
   MatmulInt8Neon64(packed_input, packed_weight, dst, UP_ROUND(row, C4NUM), UP_ROUND(col, C4NUM), deep16, input_sum,
                    bias, conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
@@ -622,10 +753,9 @@ void Conv1x1Int8(const int8_t *packed_input, const int8_t *packed_weight, int8_t
                    conv_param->conv_quant_arg_.right_shift_[0], row, col, conv_param->output_channel_);
 #else
   MatMulInt8_16x4_r(packed_input, packed_weight, dst, row, col, deep16, conv_param->output_channel_, input_sum, bias,
-                    conv_param->conv_quant_arg_.left_shift_, conv_param->conv_quant_arg_.right_shift_,
-                    conv_param->conv_quant_arg_.quant_multiplier_,
-                    conv_param->conv_quant_arg_.output_quant_args_[0].zp_, conv_param->conv_quant_arg_.out_act_min_[0],
-                    conv_param->conv_quant_arg_.out_act_max_[0], false);
+                    left_shift, right_shift, multiplier, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+                    conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0],
+                    conv_param->conv_quant_arg_.filter_arg_num_ != 1);
 #endif
   return;
 }

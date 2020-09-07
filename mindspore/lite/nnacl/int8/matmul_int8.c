@@ -186,8 +186,9 @@ void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int 
 void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
                        size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                        int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                       bool per_channel) {
-  /*  row4x16-major * row16x4-major => (int8)row-major  : per-channel */
+                       bool peroc) {
+  /* support per-layer && weight per-channel */
+  /*  row4x16-major * row16x4-major => (int8)row-major*/
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
       int r4div = r / C4NUM, r4mod = r % C4NUM;
@@ -200,12 +201,13 @@ void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row
         size_t bi = c4div * deep_16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
         value = value + a[ai] * b[bi];
       }
-      int32_t cur_input_sum = per_channel ? input_sum[c4div * UP_ROUND(row, C4NUM) + r * C4NUM + c4mod] : input_sum[r];
+      int32_t cur_input_sum =
+        peroc ? input_sum[c4div * UP_ROUND(row, C4NUM) * C4NUM + r * C4NUM + c4mod] : input_sum[r];
       value -= cur_input_sum;
       value += bias[c];
-      int32_t cur_left_shift = per_channel ? left_shift[c] : left_shift[0];
-      int32_t cur_right_shift = per_channel ? right_shift[c] : right_shift[0];
-      int32_t cur_multiplier = per_channel ? multiplier[c] : multiplier[0];
+      int32_t cur_left_shift = peroc ? left_shift[c] : left_shift[0];
+      int32_t cur_right_shift = peroc ? right_shift[c] : right_shift[0];
+      int32_t cur_multiplier = peroc ? multiplier[c] : multiplier[0];
       value = MultiplyByQuantizedMultiplier(value, cur_multiplier, cur_left_shift, cur_right_shift) + output_zp;
       value = MSMIN(maxi, value);
       value = MSMAX(mini, value);
@@ -232,7 +234,8 @@ void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
         size_t bi = c8div * deep_4 * C8NUM + d4div * C8NUM * C4NUM + c8mod * C4NUM + d4mod;
         value = value + a[ai] * b[bi];
       }
-      int32_t cur_input_sum = per_channel ? input_sum[c8div * UP_ROUND(row, C8NUM) + r * C8NUM + c8mod] : input_sum[r];
+      int32_t cur_input_sum =
+        per_channel ? input_sum[c8div * UP_ROUND(row, C8NUM) * C8NUM + r * C8NUM + c8mod] : input_sum[r];
       value -= cur_input_sum;
       value += bias[c];
       int32_t cur_left_shift = per_channel ? left_shift[c] : left_shift[0];
