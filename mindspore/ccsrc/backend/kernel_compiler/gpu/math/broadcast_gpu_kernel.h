@@ -28,11 +28,16 @@
 namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
-template <typename T, typename S>
+template <typename T>
 class BroadcastOpGpuKernel : public GpuKernel {
  public:
   BroadcastOpGpuKernel()
-      : op_type_(BROADCAST_TYPE_INVALID), need_broadcast_(false), input1_num_(1), input2_num_(1), output_num_(1) {}
+      : op_type_(BROADCAST_TYPE_INVALID),
+        need_broadcast_(false),
+        is_comp_op_(false),
+        input1_num_(1),
+        input2_num_(1),
+        output_num_(1) {}
   ~BroadcastOpGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -43,13 +48,23 @@ class BroadcastOpGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *lhs = GetDeviceAddress<T>(inputs, 0);
     T *rhs = GetDeviceAddress<T>(inputs, 1);
-    S *output = GetDeviceAddress<S>(outputs, 0);
 
-    if (need_broadcast_) {
-      Broadcast(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (is_comp_op_) {
+      bool *output = GetDeviceAddress<bool>(outputs, 0);
+      if (need_broadcast_) {
+        BroadcastCmp(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else {
+        ElewiseCmp(output_num_, op_type_, lhs, rhs, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      }
     } else {
-      NoBroadcast(output_num_, op_type_, lhs, rhs, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      T *output = GetDeviceAddress<T>(outputs, 0);
+      if (need_broadcast_) {
+        BroadcastArith(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output,
+                       reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else {
+        ElewiseArith(output_num_, op_type_, lhs, rhs, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+      }
     }
 
     return true;
@@ -91,26 +106,42 @@ class BroadcastOpGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input1_num_ * sizeof(T));
     input_size_list_.push_back(input2_num_ * sizeof(T));
-    output_size_list_.push_back(output_num_ * sizeof(S));
+
+    auto unit_size = is_comp_op_ ? sizeof(bool) : sizeof(T);
+    output_size_list_.push_back(output_num_ * unit_size);
   }
 
  private:
   void GetOpType(const CNodePtr &kernel_node) {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
 
-    static std::map<std::string, BroadcastOpType> kBroadcastTypeMap = {
-      {"Greater", BROADCAST_TYPE_GREATER},   {"Less", BROADCAST_TYPE_LESS},       {"Maximum", BROADCAST_TYPE_MAXIMUM},
-      {"Minimum", BROADCAST_TYPE_MINIMUM},   {"Pow", BROADCAST_TYPE_POWER},       {"RealDiv", BROADCAST_TYPE_REALDIV},
-      {"Mul", BROADCAST_TYPE_MUL},           {"Sub", BROADCAST_TYPE_SUB},         {"TensorAdd", BROADCAST_TYPE_ADD},
-      {"FloorDiv", BROADCAST_TYPE_FLOORDIV}, {"AbsGrad", BROADCAST_TYPE_ABSGRAD}, {"Div", BROADCAST_TYPE_DIV},
+    static std::map<std::string, BroadcastOpType> kBroadcastCmpTypeMap = {
+      {"Greater", BROADCAST_TYPE_GREATER},
+      {"Less", BROADCAST_TYPE_LESS},
     };
 
-    auto iter = kBroadcastTypeMap.find(kernel_name);
-    if (iter == kBroadcastTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
-    } else {
+    auto iter = kBroadcastCmpTypeMap.find(kernel_name);
+    if (iter != kBroadcastCmpTypeMap.end()) {
       op_type_ = iter->second;
+      is_comp_op_ = true;
+      return;
     }
+
+    static std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {
+      {"Maximum", BROADCAST_TYPE_MAXIMUM}, {"Minimum", BROADCAST_TYPE_MINIMUM},   {"Pow", BROADCAST_TYPE_POWER},
+      {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL},           {"Sub", BROADCAST_TYPE_SUB},
+      {"TensorAdd", BROADCAST_TYPE_ADD},   {"FloorDiv", BROADCAST_TYPE_FLOORDIV}, {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
+      {"Div", BROADCAST_TYPE_DIV},
+    };
+
+    iter = kBroadcastArithmetricTypeMap.find(kernel_name);
+    if (iter != kBroadcastArithmetricTypeMap.end()) {
+      op_type_ = iter->second;
+      is_comp_op_ = false;
+      return;
+    }
+
+    MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
   }
 
   bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
@@ -127,6 +158,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
 
   BroadcastOpType op_type_;
   bool need_broadcast_;
+  bool is_comp_op_;
   int input1_num_;
   int input2_num_;
   int output_num_;
@@ -137,7 +169,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-};
+};  // namespace kernel
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -19,119 +19,119 @@
 namespace mindspore {
 namespace kernel {
 // fp32
-MS_REG_GPU_KERNEL_TWO(
+MS_REG_GPU_KERNEL_ONE(
   Greater,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  BroadcastOpGpuKernel, float, bool)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Less, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  BroadcastOpGpuKernel, float, bool)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Maximum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Minimum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Pow, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   RealDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Mul, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Sub, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   TensorAdd,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   FloorDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   AbsGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BroadcastOpGpuKernel, float, float)
+  BroadcastOpGpuKernel, float)
 
 // fp16
-MS_REG_GPU_KERNEL_TWO(
+MS_REG_GPU_KERNEL_ONE(
   Greater,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  BroadcastOpGpuKernel, half, bool)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Less, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  BroadcastOpGpuKernel, half, bool)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Maximum,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Minimum,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Pow, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   RealDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Mul, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Sub, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   TensorAdd,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   FloorDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   AbsGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BroadcastOpGpuKernel, half, half)
+  BroadcastOpGpuKernel, half)
 
 // int32
-MS_REG_GPU_KERNEL_TWO(
+MS_REG_GPU_KERNEL_ONE(
   Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  BroadcastOpGpuKernel, int, bool)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   TensorAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   Minimum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   Maximum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   Mul, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   AbsGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
-MS_REG_GPU_KERNEL_TWO(
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  BroadcastOpGpuKernel, int, int)
+  BroadcastOpGpuKernel, int)
 }  // namespace kernel
 }  // namespace mindspore
