@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <stack>
+#include <set>
 
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -145,6 +146,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static ResourcePtr resource_;
   static int graph_id_;
   bool grad_flag_;
+  bool first_grad_step_;
   std::unordered_map<std::string, FuncGraphPtr> graph_map_;
   std::unordered_map<std::string, FuncGraphPtr> cell_graph_map_;
   std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
@@ -158,6 +160,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   FuncGraphPtr df_builder_;
   FuncGraphPtr curr_g_;
   std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
+  std::set<std::string> top_graph_cells_;
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
