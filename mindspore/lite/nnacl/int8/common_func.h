@@ -53,6 +53,9 @@ void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *
                    int output_channel, int input_step, int8_t input_zp);
 void ConvDwInt8PostAlign4(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,
                           int32_t left_shift, int32_t right_shift, int32_t acc_min, int32_t acc_max);
+void ConvDwInt8PostAlign4PerChannel(int8_t *dst, int32_t *buffer, int channel4, int32_t output_zp,
+                                    int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift, int32_t acc_min,
+                                    int32_t acc_max);
 #endif
 
 #ifdef __cplusplus
