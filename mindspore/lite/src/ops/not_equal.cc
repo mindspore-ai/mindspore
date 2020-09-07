@@ -23,8 +23,8 @@ namespace lite {
 int NotEqual::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
-  auto val_offset = schema::CreateSin(*fbb);
-  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Sin, val_offset.o);
+  auto val_offset = schema::CreateNotEqual(*fbb);
+  auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_NotEqual, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }
