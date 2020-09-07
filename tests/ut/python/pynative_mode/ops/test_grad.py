@@ -19,7 +19,6 @@ import mindspore as ms
 import mindspore.ops.operations as P
 from mindspore import Tensor, context
 from mindspore.common.api import ms_function
-from mindspore.common.dtype import get_py_obj_dtype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from ...ut_filter import non_graph_engine
@@ -90,7 +89,7 @@ def test_cast_grad():
 def test_scalar_cast_grad():
     """ test_scalar_cast_grad """
     input_x = 255.5
-    input_t = get_py_obj_dtype(ms.int8)
+    input_t = ms.int8
 
     def fx_cast(x):
         output = F.scalar_cast(x, input_t)
