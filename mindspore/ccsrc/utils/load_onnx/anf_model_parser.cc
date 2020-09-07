@@ -18,8 +18,12 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <stack>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <utility>
+#include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "frontend/operator/ops.h"
@@ -55,6 +59,97 @@ static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
   {onnx::TensorProto_DataType_STRING, kObjectTypeString},
 };
 
+template <typename T, typename P>
+std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<string, P> &kv) {
+  std::stack<std::string> rules;
+  std::stack<P> value;
+  int count = 0;
+  for (size_t i = 0; i < str.length(); i++) {
+    if (str[i] == '[') {
+      rules.push("[");
+    } else if (str[i] == ']') {
+      // rules
+      std::vector<P> vec;
+      while (rules.top() != "[") {
+        rules.pop();
+        vec.push_back(value.top());
+        value.pop();
+      }
+      // pop "["
+      rules.pop();
+      // make tuple for names
+      std::string res = "dummy";
+      // make tuple for values
+      reverse(vec.begin(), vec.end());
+      auto vt = std::make_shared<T>(vec);
+      if (rules.empty() && value.empty()) {
+        return vt;
+      }
+      rules.push(res);
+      value.push(vt);
+    } else if (str[i] == ',') {
+      continue;
+    } else {
+      count++;
+      if (str[i + 1] == '[' || str[i + 1] == ']' || str[i + 1] == ',') {
+        auto value_name = str.substr(i - count + 1, count);
+        value.push(kv.at(value_name));
+        rules.push(value_name);
+        count = 0;
+      }
+    }
+  }
+  return {};
+}
+
+std::shared_ptr<ValueTuple> ParserScalarAttrValue(const std::string &attr_name,
+                                                  const std::unordered_map<string, ValuePtr> &kv) {
+  std::string str = attr_name;
+  auto replace = [&](const string &orgStr, const string &newStr) {
+    std::string::size_type pos(0);
+    while ((pos = str.find(orgStr)) != std::string::npos) {
+      str.replace(pos, orgStr.length(), newStr);
+    }
+    return str;
+  };
+  // remove "scalar:"
+  str = replace("scalar:", "");
+  // remove "Tuple"
+  str = replace("Tuple", "");
+  // remove "List"
+  str = replace("List", "");
+  auto result = ParserAttr<ValueTuple>(str, kv);
+  if (!result) {
+    return {};
+  }
+  return result;
+}
+
+std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
+  const std::string &attr_name, const std::unordered_map<string, abstract::AbstractBasePtr> &kv) {
+  std::string str = attr_name;
+  auto replace = [&](const string &orgStr, const string &newStr) {
+    std::string::size_type pos(0);
+    while ((pos = str.find(orgStr)) != std::string::npos) {
+      str.replace(pos, orgStr.length(), newStr);
+    }
+    return str;
+  };
+  // remove "scalar:"
+  str = replace("shape:", "");
+  // remove "Tuple"
+  str = replace("Tuple", "");
+  // remove "List"
+  str = replace("List", "");
+
+  auto result = ParserAttr<abstract::AbstractTuple>(str, kv);
+  if (!result) {
+    return {};
+  }
+  return result;
+}
+
+#if 0
 #define PARSE_ONNXATTR_IN_SCALAR_FORM(type, valuetype)                                                \
   void ParseAttrInScalar_##type##_##valuetype(const PrimitivePtr &prim, const std::string &attr_name, \
                                               const onnx::TensorProto &attr_tensor) {                 \
@@ -67,8 +162,15 @@ static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
     if (attr_value_vec.size() == 1) {                                                                 \
       prim->AddAttr(attr_name, attr_value_vec[0]);                                                    \
     } else {                                                                                          \
-      prim->AddAttr(attr_name, std::make_shared<ValueList>(attr_value_vec));                          \
+      ParserScalarAttrValue(prim, attr_name, attr_value_vec);                                         \
     }                                                                                                 \
+  }
+#endif
+
+#define PARSE_ONNXATTR_IN_SCALAR_FORM(type, valuetype)                                    \
+  ValuePtr ParseAttrInScalar_##type##_##valuetype(const onnx::TensorProto &attr_tensor) { \
+    auto value = static_cast<valuetype>(attr_tensor.type##_data(0));                      \
+    return MakeValue<valuetype>(value);                                                   \
   }
 
 PARSE_ONNXATTR_IN_SCALAR_FORM(double, double)
@@ -110,6 +212,7 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node, cons
   tensor::TensorPtr tensor_info =
     std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
   MS_EXCEPTION_IF_NULL(tensor_info);
+  // tensor_info->MallocData();
   auto tensor_abstract = tensor_info->ToAbstract();
   MS_EXCEPTION_IF_NULL(tensor_abstract);
   node->set_abstract(tensor_abstract);
@@ -167,45 +270,35 @@ bool MSANFModelParser::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const
   return true;
 }
 
-bool MSANFModelParser::ObtainCNodeAttrInScalarForm(const PrimitivePtr &prim, const std::string &attr_name,
-                                                   const onnx::TensorProto &attr_tensor) {
-  MS_EXCEPTION_IF_NULL(prim);
+ValuePtr MSANFModelParser::ObtainCNodeAttrInScalarForm(const onnx::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
   switch (attr_tensor_type) {
     case onnx::TensorProto_DataType_STRING: {
-      ParseAttrInScalar_string_string(prim, attr_name, attr_tensor);
-      break;
+      return ParseAttrInScalar_string_string(attr_tensor);
     }
     case onnx::TensorProto_DataType_INT32: {
-      ParseAttrInScalar_int32_int32(prim, attr_name, attr_tensor);
-      break;
+      return ParseAttrInScalar_int32_int32(attr_tensor);
     }
     case onnx::TensorProto_DataType_INT64: {
-      ParseAttrInScalar_int64_int64(prim, attr_name, attr_tensor);
-      break;
+      return ParseAttrInScalar_int64_int64(attr_tensor);
     }
     case onnx::TensorProto_DataType_UINT64: {
-      ParseAttrInScalar_uint64_uint64(prim, attr_name, attr_tensor);
-      break;
+      return ParseAttrInScalar_uint64_uint64(attr_tensor);
     }
     case onnx::TensorProto_DataType_FLOAT: {
-      ParseAttrInScalar_float_float(prim, attr_name, attr_tensor);
-      break;
+      return ParseAttrInScalar_float_float(attr_tensor);
     }
     case onnx::TensorProto_DataType_DOUBLE: {
-      ParseAttrInScalar_double_double(prim, attr_name, attr_tensor);
-      break;
+      return ParseAttrInScalar_double_double(attr_tensor);
     }
     case onnx::TensorProto_DataType_BOOL: {
-      ParseAttrInScalar_int32_bool(prim, attr_name, attr_tensor);
-      auto value = prim->GetAttr(attr_name);
-      break;
+      return ParseAttrInScalar_int32_bool(attr_tensor);
     }
     default:
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
-      return false;
+      return {};
   }
-  return true;
+  return {};
 }
 
 bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
@@ -223,21 +316,48 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const onnx
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  const onnx::TensorProto &attr_tensor = attr_proto.t();
-  switch (kParseTypeSwitchMap[ref_attr_name]) {
-    case FORM_PARSE_TYPE: {
-      return ObtainCNodeAttrInTypeForm(prim, attr_name, attr_tensor);
-    }
-    case FORM_PARSE_SCALAR: {
-      return ObtainCNodeAttrInScalarForm(prim, attr_name, attr_tensor);
-    }
-    case FORM_PARSE_TENSOR: {
-      return ObtainCNodeAttrInTensorForm(prim, attr_name, attr_tensor);
-    }
-    default:
-      MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
-      return false;
+  string type;
+  std::size_t pos(0);
+  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
+  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("type:").length() - 1);
+  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
   }
+  std::unordered_map<std::string, ValuePtr> kv;
+  for (int i = 0; i < attr_proto.tensors_size(); i++) {
+    const onnx::TensorProto &attr_tensor = attr_proto.tensors(i);
+    switch (kParseTypeSwitchMap[type]) {
+      case FORM_PARSE_TYPE: {
+        ObtainCNodeAttrInTypeForm(prim, attr_name, attr_tensor);
+        break;
+      }
+      case FORM_PARSE_SCALAR: {
+        auto res = ObtainCNodeAttrInScalarForm(attr_tensor);
+        kv.insert(std::pair<string, ValuePtr>(attr_tensor.name(), res));
+        break;
+      }
+      case FORM_PARSE_TENSOR: {
+        ObtainCNodeAttrInTensorForm(prim, attr_name, attr_tensor);
+        break;
+      }
+      default:
+        MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
+        return false;
+    }
+  }
+
+  if (kParseTypeSwitchMap[type] == FORM_PARSE_SCALAR) {
+    if (kv.size() == 1) {
+      auto iter = kv.begin();
+      prim->AddAttr(attr_name, iter->second);
+    } else {
+      auto res = ParserScalarAttrValue(ref_attr_name, kv);
+      prim->AddAttr(attr_name, res);
+    }
+  }
+  return true;
 }
 bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node_name,
                                                    const onnx::TensorProto &attr_tensor) {
@@ -247,6 +367,7 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
     shape.push_back(attr_tensor.dims(i));
   }
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+  // tensor_info->MallocData();
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
@@ -324,22 +445,58 @@ bool MSANFModelParser::ObtainValueNodeInTypeForm(const std::string &value_node_n
   return true;
 }
 
-bool MSANFModelParser::GetAttrValueForValueNode(const std::string &ref_attr_name, const std::string &value_node_name,
-                                                const onnx::TensorProto &attr_tensor) {
-  switch (kParseTypeSwitchMap[ref_attr_name]) {
-    case FORM_PARSE_SCALAR: {
-      return ObtainValueNodeInScalarForm(value_node_name, attr_tensor);
-    }
-    case FORM_PARSE_TENSOR: {
-      return ObtainValueNodeInTensorForm(value_node_name, attr_tensor);
-    }
-    case FORM_PARSE_TYPE: {
-      return ObtainValueNodeInTypeForm(value_node_name, attr_tensor);
-    }
-    default:
-      MS_LOG(ERROR) << "parse ValueNode value don't support input of ref_attr_name";
-      return false;
+bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_name,
+                                                const onnx::AttributeProto &attr_proto) {
+  if (!attr_proto.has_ref_attr_name()) {
+    MS_LOG(ERROR) << "CNode parse attr type has no ref_attr_name";
+    return false;
   }
+  const std::string &ref_attr_name = attr_proto.ref_attr_name();
+  string type;
+  std::size_t pos(0);
+  if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("scalar:").length() - 1);
+  } else if ((pos = ref_attr_name.find("type:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("type:").length() - 1);
+  } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
+  }
+  std::unordered_map<std::string, ValuePtr> kv;
+  for (int i = 0; i < attr_proto.tensors_size(); i++) {
+    const onnx::TensorProto &attr_tensor = attr_proto.tensors(i);
+    auto attr_name = attr_tensor.name();
+    switch (kParseTypeSwitchMap[type]) {
+      case FORM_PARSE_TYPE: {
+        return ObtainValueNodeInTypeForm(value_node_name, attr_tensor);
+      }
+      case FORM_PARSE_SCALAR: {
+        auto res = ObtainCNodeAttrInScalarForm(attr_tensor);
+        kv.insert(std::pair<string, ValuePtr>(attr_tensor.name(), res));
+        break;
+      }
+      case FORM_PARSE_TENSOR: {
+        return ObtainValueNodeInTensorForm(value_node_name, attr_tensor);
+      }
+      default:
+        MS_LOG(ERROR) << "parse attr type don't support input of ref_attr_name";
+        return false;
+    }
+  }
+
+  ValueNodePtr new_value_node;
+  if (kParseTypeSwitchMap[type] == FORM_PARSE_SCALAR) {
+    if (kv.size() == 1) {
+      auto iter = kv.begin();
+      new_value_node = NewValueNode(iter->second);
+      new_value_node->set_abstract(iter->second->ToAbstract());
+    } else {
+      auto value_ptr = ParserScalarAttrValue(ref_attr_name, kv);
+      new_value_node = NewValueNode(value_ptr);
+      new_value_node->set_abstract(value_ptr->ToAbstract());
+    }
+    anfnode_build_map_[value_node_name] = new_value_node;
+  }
+  return true;
 }
 
 bool MSANFModelParser::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto) {
@@ -349,24 +506,26 @@ bool MSANFModelParser::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_pr
     MS_LOG(ERROR) << "parse ValueNode  don't have ref_attr_name";
     return false;
   }
-  const std::string &ref_attr_name = attr_proto.ref_attr_name();
-  const onnx::TensorProto &attr_tensor = attr_proto.t();
-
-  return GetAttrValueForValueNode(ref_attr_name, value_node_name, attr_tensor);
+  return GetAttrValueForValueNode(value_node_name, attr_proto);
 }
 
-AbstractBasePtr MSANFModelParser::GetAbstractForCNode(const onnx::AttributeProto &attr_proto) {
-  ShapeVector shape_vec;
-  const onnx::TensorProto &attr_tensor = attr_proto.t();
-  for (int i = 0; i < attr_tensor.dims_size(); ++i) {
-    shape_vec.push_back(attr_tensor.dims(i));
+std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::GetAbstractForCNode(
+  const onnx::AttributeProto &attr_proto) {
+  std::unordered_map<std::string, abstract::AbstractBasePtr> kv;
+  for (int i = 0; i < attr_proto.tensors_size(); ++i) {
+    ShapeVector shape_vec;
+    const onnx::TensorProto &attr_tensor = attr_proto.tensors(i);
+    for (int j = 0; j < attr_tensor.dims_size(); ++j) {
+      shape_vec.push_back(attr_tensor.dims(j));
+    }
+    tensor::TensorPtr tensor_info =
+      std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor.data_type()], shape_vec);
+    MS_EXCEPTION_IF_NULL(tensor_info);
+    auto abstract = tensor_info->ToAbstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    kv.insert(std::pair<string, abstract::AbstractBasePtr>(attr_tensor.name(), abstract));
   }
-  tensor::TensorPtr tensor_info =
-    std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor.data_type()], shape_vec);
-  MS_EXCEPTION_IF_NULL(tensor_info);
-  auto abstract = tensor_info->ToAbstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  return abstract;
+  return kv;
 }
 
 CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
@@ -383,21 +542,13 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   MS_EXCEPTION_IF_NULL(prim);
   prim->set_instance_name(node_type);
 
-  AbstractBasePtr abstract = nullptr;
-  AbstractBasePtr abstract_first = nullptr;
-  AbstractBasePtr abstract_second = nullptr;
+  std::unordered_map<std::string, abstract::AbstractBasePtr> kv;
+  string shape_ref_attr_name;
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
     const onnx::AttributeProto &attr_proto = node_proto.attribute(i);
-    if (attr_proto.name() == kCNodeShapeAttr) {
-      abstract = GetAbstractForCNode(attr_proto);
-      continue;
-    }
-    if (attr_proto.name() == kCNodeShape1Attr) {
-      abstract_first = GetAbstractForCNode(attr_proto);
-      continue;
-    }
-    if (attr_proto.name() == kCNodeShape2Attr) {
-      abstract_second = GetAbstractForCNode(attr_proto);
+    if (attr_proto.ref_attr_name().find("shape:") != string::npos) {
+      shape_ref_attr_name = attr_proto.ref_attr_name();
+      kv = GetAbstractForCNode(attr_proto);
       continue;
     }
     if (!GetAttrValueForCNode(prim, attr_proto)) {
@@ -419,24 +570,17 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   }
   CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
-  if (node_type == "LayerNorm") {
-    AbstractBasePtrList elem;
-    elem.push_back(abstract);
-    elem.push_back(abstract_first);
-    elem.push_back(abstract_second);
-    cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
-  } else if (node_type == "ArgMaxWithValue") {
-    AbstractBasePtrList elem;
-    elem.push_back(abstract);
-    elem.push_back(abstract_first);
-    cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
-  } else if (nullptr == abstract) {
+  if (0 == kv.size()) {
     AbstractBasePtrList elem;
     for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
       elem.push_back(cnode_ptr->input(index)->abstract());
     }
     cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+  } else if (1 == kv.size()) {
+    std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
+    cnode_ptr->set_abstract(iter->second);
   } else {
+    auto abstract = ParserAttrShape(shape_ref_attr_name, kv);
     cnode_ptr->set_abstract(abstract);
   }
   cnode_ptr->set_fullname_with_scope(fullname_with_scope);
@@ -471,19 +615,15 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
   } else {
     const onnx::ValueInfoProto &output_node = importProto.output(0);
     const onnx::TypeProto &output_typeproto = output_node.type();
-    int output_type = output_typeproto.tensor_type().elem_type();
     ShapeVector output_shape;
     for (int i = 0; i < output_typeproto.tensor_type().shape().dim_size(); ++i) {
       output_shape.push_back(output_typeproto.tensor_type().shape().dim(i).dim_value());
     }
-    tensor::TensorPtr tensor_return =
-      std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[output_type], output_shape);
     inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimReturn));
     inputs.push_back(cnode_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
-    return_node->set_abstract(tensor_return->ToAbstract());
     outputFuncGraph->set_return(return_node);
     MS_LOG(INFO) << "Construct funcgraph finined, all success!";
   }
