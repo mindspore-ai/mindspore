@@ -104,6 +104,8 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // Common code init and error checking in the base class.
   RETURN_IF_NOT_OK(IteratorBase::FetchNextTensorRow(out_row));
 
+  bool isProfilingEnable = root_->Tree()->GetProfilingManager()->IsProfilingEnable();
+
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.
   if (eof_handled_) {
@@ -127,6 +129,9 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
     if (curr_buffer_->eoe()) {
       MS_LOG(INFO) << "End of data iteration.";
       curr_buffer_.reset();  // explicitly free the eoe buffer
+      if (isProfilingEnable) {
+        root_->Tree()->SetEpochEnd();
+      }
       return Status::OK();
     }
 
@@ -136,6 +141,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
     if (curr_buffer_->eof()) {
       eof_handled_ = true;
       curr_buffer_.reset();  // explicitly free the eof buffer
+      root_->Tree()->SetFinished();
       std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
       RETURN_STATUS_UNEXPECTED(err);
     }

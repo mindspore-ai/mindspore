@@ -36,6 +36,10 @@ Status Monitor::operator()() {
   // 1) Monitor Task is not interrupted by TaskManager AND
   // 2) Iterator has not received EOF
   while (!this_thread::is_interrupted() && !(tree_->isFinished())) {
+    if (tree_->IsEpochEnd()) {
+      tree_->GetProfilingManager()->SaveProfilingData();
+      tree_->SetExecuting();
+    }
     for (auto &node : tree_->GetProfilingManager()->GetSamplingNodes()) {
       RETURN_IF_NOT_OK(node.second->Sample());
     }
