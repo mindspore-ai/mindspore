@@ -179,6 +179,7 @@ union PrimitiveType {
     Conv2DGradInput,
     PoolingGrad,
     BNGrad,
+    BNGradInput,
     ApplyMomentum,
     BiasGrad,
     SoftmaxCrossEntropy,

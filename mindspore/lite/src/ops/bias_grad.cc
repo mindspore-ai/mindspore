@@ -22,7 +22,34 @@ namespace lite {
 std::vector<int> BiasGrad::GetAxis() const { return this->primitive_->value.AsBiasGrad()->axis; }
 
 void BiasGrad::SetAxis(const std::vector<int> &axis) { this->primitive_->value.AsBiasGrad()->axis = axis; }
-
+int BiasGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_BiasGrad;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_BiasGrad) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::BiasGradT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    attr->axis = GetValue<std::vector<int>>(prim.GetAttr("axis"));
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 #else
 int BiasGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);

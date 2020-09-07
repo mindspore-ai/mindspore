@@ -383,6 +383,20 @@ std::shared_ptr<PrimitiveC> PrimitiveC::UnPackFromPrimitive(const Primitive &pri
     return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
   } else if (op_type == "BatchNormGrad") {
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
+  } else if (op_type == "Conv2DGradInput") {
+    return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
+  } else if (op_type == "Conv2DGradFilter") {
+    return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
+  } else if (op_type == "BiasGrad") {
+    return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
+  } else if (op_type == "ActivationGrad") {
+    return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
+  } else if (op_type == "PoolingGrad") {
+    return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
+  } else if (op_type == "BNGradInput") {
+    return NewPrimitiveC<BNGradInput>(prim, inputs, quantType);
+  } else if (op_type == "PowerGrad") {
+    return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
 #endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in UnPackFromPrimitive : " << op_type;
@@ -620,6 +634,10 @@ PrimitiveC *PrimitiveC::UnPackFromSchemaPrimitiveT(mindspore::schema::PrimitiveT
       return new ArithmeticGrad(primitive);
     case schema::PrimitiveType_DivGrad:
       return new ArithmeticGrad(primitive);
+    case schema::PrimitiveType_PowerGrad:
+      return new PowerGrad(primitive);
+    case schema::PrimitiveType_BNGradInput:
+      return new BNGradInput(primitive);
 #endif
 
     default:

@@ -34,6 +34,7 @@ class PowerGrad : public PrimitiveC {
   void SetPower(float power);
   void SetScale(float scale);
   void SetShift(float shift);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   PowerGrad() = default;
 

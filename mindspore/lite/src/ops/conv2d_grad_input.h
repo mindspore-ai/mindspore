@@ -20,6 +20,8 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
+#include <string>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -48,6 +50,10 @@ class Conv2DGradInput : public PrimitiveC {
   void SetDilateH(int dilate_h);
   void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
+                                 const std::vector<AnfNodePtr> &inputs);
+  void PopulaterConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
 #else
   Conv2DGradInput() = default;
 

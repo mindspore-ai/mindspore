@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_B_N_GRAD_H_
-#define LITE_MINDSPORE_LITE_C_OPS_B_N_GRAD_H_
+#ifndef LITE_MINDSPORE_LITE_C_OPS_B_N_GRAD_INPUT_H_
+#define LITE_MINDSPORE_LITE_C_OPS_B_N_GRAD_INPUT_H_
 
 #include <vector>
 #include <set>
@@ -25,16 +25,17 @@
 
 namespace mindspore {
 namespace lite {
-class BNGrad : public PrimitiveC {
+class BNGradInput : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(BNGrad, PrimitiveC);
-  BNGrad() = default;
-  explicit BNGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  MS_DECLARE_PARENT(BNGradInput, PrimitiveC);
+  BNGradInput() = default;
+  explicit BNGradInput(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetEps(float eps);
   void SetMomentum(float momentum);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  BNGrad() = default;
+  BNGradInput() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetEps() const;

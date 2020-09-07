@@ -33,7 +33,7 @@ class BiasGrad : public PrimitiveC {
   BiasGrad() = default;
   explicit BiasGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
-
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   BiasGrad() = default;
 
