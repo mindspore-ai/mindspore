@@ -24,6 +24,17 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+struct ComputeParams {
+  T *x_{nullptr};
+  int *indices_{nullptr};
+  T *updates_{nullptr};
+  int unit_size_{0};
+  int indices_unit_rank_{0};
+  std::vector<int> *out_strides_{nullptr};
+  size_t x_mem_size_{0};
+};
+
 class ScatterNdUpdateCPUKernel : public CPUKernel {
  public:
   ScatterNdUpdateCPUKernel() = default;
@@ -41,10 +52,8 @@ class ScatterNdUpdateCPUKernel : public CPUKernel {
   void Check(const CNodePtr &kernel_node);
   TypeId dtype_{kTypeUnknown};
   int unit_size_{0};
-  int num_units_{0};
+  size_t num_units_{0};
   int indices_unit_rank_{0};
-  std::vector<size_t> shape_;
-  std::vector<int> output_unit_offsets_;
   std::vector<int> out_strides_;
 };
 
