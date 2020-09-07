@@ -116,11 +116,6 @@ int RestoreMulWeight(lite::tensor::Tensor *input_tensor) {
   return RET_OK;
 }
 int ArithmeticSelfCPUKernel::Run() {
-  void *restore_data = nullptr;
-  if (primitive_->GetQuantType() == schema::QuantType_WeightQuant) {
-    restore_data = in_tensors_[1]->Data();
-    RestoreMulWeight(in_tensors_[1]);
-  }
   auto ret = Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare fail!ret: " << ret;
@@ -134,10 +129,6 @@ int ArithmeticSelfCPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
     return ret;
-  }
-  if (primitive_->GetQuantType() == schema::QuantType_WeightQuant) {
-    in_tensors_[1]->FreeData();
-    in_tensors_[1]->SetData(restore_data);
   }
   return RET_OK;
 }

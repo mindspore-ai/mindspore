@@ -59,8 +59,8 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
       std::memcpy(tensor_data, tensor->data.data(), size);
       param_value->set_tensor_addr(tensor_data);
       param_value->set_tensor_size(size);
+      parameter->set_default_param(param_value);
     }
-    parameter->set_default_param(param_value);
     AddNode(i, parameter);
   }
   return RET_OK;

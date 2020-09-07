@@ -55,7 +55,7 @@ kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::t
 }
 int RestoreFullconnectWeight(lite::tensor::Tensor *input_tensor) {
   MS_ASSERT(input_tensor != nullptr);
-  if (input_tensor->data_type() != kNumberTypeUInt8) {
+  if (input_tensor->data_type() != kNumberTypeInt8) {
     MS_LOG(ERROR) << "full connect input type error" << input_tensor->data_type();
     return RET_ERROR;
   }
@@ -63,7 +63,7 @@ int RestoreFullconnectWeight(lite::tensor::Tensor *input_tensor) {
     MS_LOG(ERROR) << "no quant param";
     return RET_ERROR;
   }
-  const auto* quant_data = static_cast<const uint8_t*>(input_tensor->Data());
+  const auto* quant_data = static_cast<const int8_t*>(input_tensor->Data());
   auto* dequant_data = static_cast<float *>(malloc(input_tensor->DataSize() * sizeof(float)));
   if (dequant_data == nullptr) {
     MS_LOG(ERROR) << "malloc faile";
@@ -108,7 +108,7 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::t
   MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->Data();
-  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (!weight_tensor->GetQuantParams().empty()) {
     RestoreFullconnectWeight(inputs.at(kWeightIndex));
   }
   auto kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
@@ -123,7 +123,7 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::t
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     return nullptr;
   }
-  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (!weight_tensor->GetQuantParams().empty()) {
     weight_tensor->FreeData();
     weight_tensor->SetData(restore_data);
   }

@@ -30,8 +30,6 @@ class GatherInt8CPUKernel : public LiteKernel {
                       const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~GatherInt8CPUKernel() {
-    free(indices_);
-    indices_ = nullptr;
   }
 
   int Init() override;
@@ -40,7 +38,6 @@ class GatherInt8CPUKernel : public LiteKernel {
   int DoGather(int task_id);
 
  private:
-  int *indices_ = nullptr;
   int thread_count_;
   int batchDims_;
   int axis_;
