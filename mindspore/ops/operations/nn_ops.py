@@ -5298,7 +5298,7 @@ class CTCLoss(PrimitiveWithInfer):
         - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
           :math:`(max_time, batch_size, num_classes)`. `num_classes` should be `num_labels + 1` classes, `num_labels`
           indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
-          Data type must be float32 or float64.
+          Data type must be float16, float32 or float64.
         - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
           stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
         - **labels_values** (Tensor) - A `1-D` input tensor. The values are associated with the given batch and time.
@@ -5348,7 +5348,8 @@ class CTCLoss(PrimitiveWithInfer):
         return batch_size, inputs
 
     def infer_dtype(self, inputs, labels_indices, labels_values, sequence_length):
-        validator.check_tensor_type_same({"inputs_dtype": inputs}, [mstype.float32, mstype.double], self.name)
+        valid_dtype = [mstype.float16, mstype.float32, mstype.double]
+        validator.check_tensor_type_same({"inputs_dtype": inputs}, valid_dtype, self.name)
         validator.check_tensor_type_same({"labels_indices_dtype": labels_indices}, [mstype.int64], self.name)
         validator.check_tensor_type_same({"labels_values_dtype": labels_values}, [mstype.int32], self.name)
         validator.check_tensor_type_same({"sequence_length_dtype": sequence_length}, [mstype.int32], self.name)
