@@ -32,12 +32,13 @@ _INITIALIZER_ALIAS = dict()
 class Initializer:
     """
     The base class of the initializer.
+    Initialization of tensor basic attributes and model weight values.
 
     Args:
         kwargs (dict): Keyword arguments for Initializer.
 
     Returns:
-        Array, assigned array.
+        Array, an array after being initialized.
     """
     def __init__(self, **kwargs):
         self._kwargs = kwargs
@@ -72,9 +73,9 @@ class Initializer:
 
         Args:
             slice_index (int): Slice index of a parameter's slices.
-                Used when initialize a slice of the parameter, it guarantee that
-                devices use the same slice can generate the same tensor.
-            shape (list[int]): Shape of the slice, used when initialize a slice of the parameter.
+                It is used when initialize a slice of a parameter, it guarantees that devices
+                using the same slice can generate the same tensor.
+            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
         """
         arr = None
         if shape is None:
@@ -138,7 +139,7 @@ class Zero(Initializer):
         arr (Array): The array to be assigned.
 
     Returns:
-        Array, assigned array.
+        Array, an array after being assigned.
     """
     def _initialize(self, arr):
         _assignment(arr, 0)
@@ -265,7 +266,12 @@ def _calculate_in_and_out(arr):
 class XavierUniform(Initializer):
     r"""
     Initialize the array with xavier uniform algorithm, and from a uniform distribution collect samples within
-    U[-boundary, boundary] where :math:`boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}`.
+    U[-boundary, boundary] The boundary is defined as :
+
+                    math:`boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}`.
+
+    math:`n_{in}` is the number of input units in the weight tensor.
+    math:`n_{out}` is the number of output units in the weight tensor.
 
     Args:
         gain (Array): The array to be assigned. Default: 1.
@@ -290,8 +296,11 @@ class XavierUniform(Initializer):
 class HeUniform(Initializer):
     r"""
     Initialize the array with He kaiming uniform algorithm, and from a uniform distribution collect samples within
-    U[-boundary, boundary] where :math:`boundary = \sqrt{\frac{6}{n_{in}}}` where :math:`n_{in}` is the number of
-    input units in the weight tensor.
+    U[-boundary, boundary] The boundary is defined as :
+
+                    math:`boundary = \sqrt{\frac{6}{n_{in}}}`
+
+    math:`n_{in}` is the number of input units in the weight tensor.
 
     Args:
         arr (Array): The array to be assigned.
@@ -346,7 +355,7 @@ class Constant(Initializer):
         value (Union[int, numpy.ndarray]): The value to initialize.
 
     Returns:
-        Array, initialize array.
+        Array, an array after being assigned.
     """
     def __init__(self, value):
         super(Constant, self).__init__(value=value)
