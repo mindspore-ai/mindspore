@@ -353,7 +353,7 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
     return RET_ERROR;
   }
   auto model = lite::Model::Import(graphBuf, size);
-  auto model_version = model->GetMetaGraph()->version()->str();
+  auto model_version = model->version_;
   if (model_version != Version()) {
     MS_LOG(WARNING) << "model version is "<< model_version << ", inference version is " << Version() << " not equal";
   }
