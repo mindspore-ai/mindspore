@@ -46,8 +46,8 @@ def main():
         os.mkdir(device_dir)
         os.chdir(device_dir)
         cmd = [sys.executable, '-u']
-        cmd.append(args.train_script)
-        cmd.extend(args.train_script_args)
+        cmd.append(args.training_script)
+        cmd.extend(args.training_script_args)
         log_file = open('{dir}/log{id}.log'.format(dir=device_dir, id=rank_id), 'w')
         process = subprocess.Popen(cmd, stdout=log_file, stderr=log_file, env=env)
         processes.append(process)

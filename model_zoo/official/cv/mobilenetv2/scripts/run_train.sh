@@ -84,9 +84,9 @@ run_gpu()
 run_cpu()
 {
 
-    if [ ! -d $4 ]
+    if [ ! -d $2 ]
     then
-        echo "error: DATASET_PATH=$4 is not a directory"
+        echo "error: DATASET_PATH=$2 is not a directory"
     exit 1
     fi
 
