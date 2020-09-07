@@ -217,7 +217,7 @@ Inference result will be stored in the example path, whose folder name is "eval"
 ```
 Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
 ```
-  result: {'top_5_accuracy': 0.9286771766965429, 'top_1_accuracy': 0.7613036171574904} ckpt=train_parallel/resnet-36_5004.ckpt
+  result: {'top_5_accuracy': 0.9287972151088348, 'top_1_accuracy': 0.7597031049935979} ckpt=train_parallel/resnet-36_5004.ckpt
 ```
 
 ## Model Description
