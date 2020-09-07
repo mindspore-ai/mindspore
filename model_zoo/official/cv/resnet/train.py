@@ -18,7 +18,6 @@ import argparse
 import ast
 from mindspore import context
 from mindspore import Tensor
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -78,9 +77,9 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
-                auto_parallel_context().set_all_reduce_fusion_split_indices([85, 160])
+                context.set_auto_parallel_context(all_reduce_fusion_config=[85, 150])
             else:
-                auto_parallel_context().set_all_reduce_fusion_split_indices([180, 313])
+                context.set_auto_parallel_context(all_reduce_fusion_config=[180, 313])
             init()
         # GPU target
         else:
@@ -88,7 +87,7 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             if args_opt.net == "resnet50":
-                auto_parallel_context().set_all_reduce_fusion_split_indices([85, 160])
+                context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset

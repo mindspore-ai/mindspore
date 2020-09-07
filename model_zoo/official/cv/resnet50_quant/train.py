@@ -19,7 +19,6 @@ import argparse
 
 from mindspore import context
 from mindspore import Tensor
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -80,8 +79,7 @@ if __name__ == '__main__':
         init()
         context.set_auto_parallel_context(device_num=args_opt.device_num,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
+                                          gradients_mean=True, all_reduce_fusion_config=[107, 160])
 
     # define network
     net = resnet50_quant(class_num=config.class_num)

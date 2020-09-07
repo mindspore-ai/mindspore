@@ -23,7 +23,6 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam, AdamWeightDecay, Lamb
 from mindspore.ops import operations as P
 from mindspore import context
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 class Net(nn.Cell):
     """Net definition"""
@@ -85,8 +84,8 @@ def test_lamb_compile():
 
 def test_lamb_split_fusion():
     """ test_Lamb_split_fusion """
-    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)
-    auto_parallel_context().set_all_reduce_fusion_split_indices([2, 4, 6, 8])
+    context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True,
+                                      all_reduce_fusion_config=[2, 4, 6, 8])
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     label = Tensor(np.zeros([32, 768]).astype(np.float32))
     net = Net()
