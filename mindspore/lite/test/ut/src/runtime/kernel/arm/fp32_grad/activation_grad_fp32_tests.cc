@@ -16,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include "utils/log_adapter.h"
 #include "common/common_test.h"
@@ -295,7 +296,8 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   printf("==================output data=================\n");
-  for (int i = 0; i < std::min(output_data_size, 20UL); i++) {
+  size_t min = (output_data_size < 20UL) ? output_data_size : 20UL;
+  for (size_t i = 0; i < min; i++) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;

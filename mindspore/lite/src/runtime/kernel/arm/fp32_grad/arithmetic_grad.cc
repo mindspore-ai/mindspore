@@ -27,10 +27,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kArithGradOpInputNum = 3;
-constexpr int kArithGradOpOutputNum = 2;
-}  // namespace
 
 int ArithmeticGradCPUKernel::Init() {
   auto dx1 = out_tensors_[0];
