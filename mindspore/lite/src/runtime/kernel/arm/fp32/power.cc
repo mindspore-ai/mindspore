@@ -64,11 +64,11 @@ int PowerCPUKernel::RunImpl(int task_id) {
   bool broadcast = true;
   if (in_tensors_.size() == 2) {
     exp_addr = reinterpret_cast<float *>(in_tensors_[1]->Data());
-    broadcast = false;
+    broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
   }
   float *cur_exp = nullptr;
   if (broadcast) {
-    cur_exp = &power_;
+    cur_exp = in_tensors_.size() == 2 ? exp_addr : &power_;
   } else {
     cur_exp = exp_addr + stride * task_id;
   }

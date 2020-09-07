@@ -64,7 +64,9 @@ int Power::InferShape(std::vector<tensor::Tensor *> inputs, std::vector<tensor::
     return RET_OK;
   }
   if (exp_tensor != nullptr) {
-    if (exp_tensor->shape() != x_tensor->shape() || exp_tensor->data_type() != x_tensor->data_type()) {
+    if ((exp_tensor->shape().size() > 1 && exp_tensor->shape() != x_tensor->shape()) ||
+        (exp_tensor->shape().size() == 1 && exp_tensor->shape()[0] != 1) ||
+        exp_tensor->data_type() != x_tensor->data_type()) {
       MS_LOG(ERROR) << "Power inputs shape or type is not equal!";
       return RET_INPUT_TENSOR_ERROR;
     }
