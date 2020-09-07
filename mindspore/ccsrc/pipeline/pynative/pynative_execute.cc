@@ -137,10 +137,10 @@ static std::string GetId(const py::object &obj) {
   }
   if (py::isinstance<mindspore::Type>(to_process)) {
     auto type_ptr = py::cast<mindspore::TypePtr>(to_process);
-    return prefix + type_ptr->ToString();
+    return "type" + type_ptr->ToString();
   }
   if (py::isinstance<py::str>(to_process)) {
-    return prefix + std::string(py::str(to_process));
+    return "s" + std::string(py::str(to_process));
   }
   if (py::isinstance<py::int_>(to_process)) {
     return prefix + std::string(py::str(to_process));
