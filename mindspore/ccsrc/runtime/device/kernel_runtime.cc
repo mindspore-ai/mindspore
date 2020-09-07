@@ -40,7 +40,7 @@ KernelRuntime::~KernelRuntime() {
 #endif
 }
 
-bool KernelRuntime::Load(session::KernelGraph *graph) { return true; }
+bool KernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) { return true; }
 
 bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *debugger) {
   if (graph != nullptr) {

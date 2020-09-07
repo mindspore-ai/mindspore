@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
 #define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
+
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -82,13 +84,12 @@ class AscendSession : public SessionBasic {
                         KernelGraph *kernel_graph) const;
   void RunOpMemoryClear(const KernelGraph *kernel_graph) const;
   void Load(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+  void Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bool is_task) const;
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs);
   void LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
-  void RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
   static void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);
   static void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
