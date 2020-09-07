@@ -42,7 +42,7 @@ class GPUKernelRuntime : public KernelRuntime {
                                  const std::unordered_set<ValueNodePtr> &value_nodes,
                                  const std::vector<CNodePtr> &execution_order) override;
   void AssignMemory(session::KernelGraph *graph) override;
-  bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
+  bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) override;
 #ifdef ENABLE_DUMP_E2E
   bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
 #endif

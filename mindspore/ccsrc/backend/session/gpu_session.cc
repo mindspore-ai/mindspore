@@ -191,9 +191,9 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
 #ifdef ENABLE_DEBUGGER
-  if (!runtime_instance->Run(kernel_graph.get(), debugger_.get())) {
+  if (!runtime_instance->Run(kernel_graph.get(), false, debugger_.get())) {
 #else
-  if (!runtime_instance->Run(kernel_graph.get())) {
+  if (!runtime_instance->Run(kernel_graph.get(), false)) {
 #endif
     MS_LOG(EXCEPTION) << "GPU execute graph failed!";
   }

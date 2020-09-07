@@ -433,7 +433,7 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   }
 }
 
-bool GPUKernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
+bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger) {
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   bool ret = true;

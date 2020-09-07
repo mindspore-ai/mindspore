@@ -454,10 +454,7 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
-bool AscendKernelRuntime::Load(session::KernelGraph *graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   if (!is_task_sink) {
     return true;
   }
@@ -609,17 +606,14 @@ void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
   }
 }
 
-bool AscendKernelRuntime::Run(session::KernelGraph *graph, Debugger *debugger) {
+bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger) {
   bool ret = false;
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
 #else
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 #endif
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   if (is_task_sink) {
     ret = RunTask(graph);
   } else {

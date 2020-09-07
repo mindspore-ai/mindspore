@@ -44,8 +44,8 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GenTask(const session::KernelGraph *graph);
   bool LoadTask(const session::KernelGraph *graph);
   bool RunTask(const session::KernelGraph *graph);
-  bool Load(session::KernelGraph *graph) override;
-  bool Run(session::KernelGraph *graph, Debugger *debugger = nullptr) override;
+  bool Load(session::KernelGraph *graph, bool is_task_sink) override;
+  bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) override;
   void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
                                  const std::unordered_set<ValueNodePtr> &value_nodes,
                                  const std::vector<CNodePtr> &execution_order) override;

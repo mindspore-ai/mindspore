@@ -118,7 +118,7 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
     debugger_->PreExecute(kernel_graph);
   }
 #endif
-  bool ret = runtime_.Run(kernel_graph.get());
+  bool ret = runtime_.Run(kernel_graph.get(), false);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
