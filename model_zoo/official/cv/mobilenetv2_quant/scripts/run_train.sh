@@ -227,7 +227,7 @@ run_ascend(){
         
         if [ $# == 4 ]
         then
-            python train.py --device_traget=$1  --dataset_path=$PATH2 --pre_trained=$PATH3 &> train.log &
+            python train.py --device_target=$1  --dataset_path=$PATH2 --pre_trained=$PATH3 &> train.log &
         fi
 
         cd ../.. || exit
@@ -284,7 +284,7 @@ run_gpu(){
     if [ $# == 4 ]
     then
         mpirun --allow-run-as-root -n ${RANK_SIZE} \
-        python train.py --device_traget=$1  --dataset_path=$PATH1 --pre_trained=$PATH2 &> train.log &
+        python train.py --device_target=$1  --dataset_path=$PATH1 --pre_trained=$PATH2 &> train.log &
     fi
 
     cd ..
