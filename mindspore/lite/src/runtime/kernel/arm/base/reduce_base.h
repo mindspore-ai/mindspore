@@ -45,10 +45,15 @@ class ReduceBaseCPUKernel : public LiteKernel {
   bool reduce_to_end_;
 
  protected:
+  void CalculateTmpBufferSize();
+  void CalculateInnerOuterSize();
+  std::vector<size_t> buffer_sizes_;
+  std::vector<int> outer_sizes_;
+  std::vector<int> inner_sizes_;
+  std::vector<int> axis_sizes_;
   int outer_size_;
   int inner_size_;
   int axis_size_;
-  std::vector<int> tmp_shape_;
 };
 }  // namespace mindspore::kernel
 

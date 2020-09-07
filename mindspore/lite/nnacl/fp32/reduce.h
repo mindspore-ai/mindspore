@@ -22,18 +22,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-               const int *src_shape, float *dst_data, const int tid, const int thread_num);
-int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-              const int *src_shape, float *dst_data, const int tid, const int thread_num);
-int ReduceMax(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-              const int *src_shape, float *dst_data, const int tid, const int thread_num);
-int ReduceMin(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-              const int *src_shape, float *dst_data, const int tid, const int thread_num);
-int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-               const int *src_shape, float *dst_data, const int tid, const int thread_num);
+int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+               const int tid, const int thread_num);
+int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+              const int tid, const int thread_num);
+int ReduceMax(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+              const int tid, const int thread_num);
+int ReduceMin(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+              const int tid, const int thread_num);
+int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
+               const int tid, const int thread_num);
 int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-                    const int *src_shape, float *dst_data, const int tid, const int thread_num);
+                    float *dst_data, const int tid, const int thread_num);
 #ifdef __cplusplus
 }
 #endif

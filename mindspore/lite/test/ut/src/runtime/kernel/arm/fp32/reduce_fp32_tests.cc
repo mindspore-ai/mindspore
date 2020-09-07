@@ -46,7 +46,7 @@ TEST_F(TestReduceFp32, Mean) {
   int outer_size = 2;
   int inner_size = 12;
   int axis_size = 4;
-  (void)ReduceMean(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -72,9 +72,9 @@ TEST_F(TestReduceFp32, Mean2Thread) {
   int axis_size = 4;
   thread_num = 2;
   tid = 0;
-  (void)ReduceMean(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, in, out, tid, thread_num);
   tid = 1;
-  (void)ReduceMean(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -98,7 +98,7 @@ TEST_F(TestReduceFp32, MeanAllAxis) {
   float *src = in;
   float dst1[48] = {0};
   MS_ASSERT(dst != nullptr);
-  (void)ReduceMean(outer_size, inner_size, axis_size, src, input_shape, dst1, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, src, dst1, tid, thread_num);
 
   input_shape[0] = 1;  // 1 4 4 3
   outer_size = 1;
@@ -106,7 +106,7 @@ TEST_F(TestReduceFp32, MeanAllAxis) {
   axis_size = 4;
   src = dst1;
   float dst2[12] = {0};
-  (void)ReduceMean(outer_size, inner_size, axis_size, src, input_shape, dst2, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, src, dst2, tid, thread_num);
 
   input_shape[1] = 1;  // 1 1 4 3
   outer_size = 1;
@@ -114,14 +114,14 @@ TEST_F(TestReduceFp32, MeanAllAxis) {
   axis_size = 4;
   src = dst2;
   float dst3[3] = {0};
-  (void)ReduceMean(outer_size, inner_size, axis_size, src, input_shape, dst3, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, src, dst3, tid, thread_num);
 
   input_shape[2] = 1;  // 1 1 1 3
   outer_size = 1;
   inner_size = 1;
   axis_size = 3;
   src = dst3;
-  (void)ReduceMean(outer_size, inner_size, axis_size, src, input_shape, out, tid, thread_num);
+  (void)ReduceMean(outer_size, inner_size, axis_size, src, out, tid, thread_num);
 
   int output_size = 1;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -145,7 +145,7 @@ TEST_F(TestReduceFp32, Sum) {
   int outer_size = 2;
   int inner_size = 12;
   int axis_size = 4;
-  (void)ReduceSum(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -171,9 +171,9 @@ TEST_F(TestReduceFp32, Sum2Thread) {
   int axis_size = 4;
   thread_num = 2;
   tid = 0;
-  (void)ReduceSum(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, in, out, tid, thread_num);
   tid = 1;
-  (void)ReduceSum(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -197,7 +197,7 @@ TEST_F(TestReduceFp32, SumAllAxis) {
   float *src = in;
   float dst1[48] = {0};
   MS_ASSERT(dst != nullptr);
-  (void)ReduceSum(outer_size, inner_size, axis_size, src, input_shape, dst1, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, src, dst1, tid, thread_num);
 
   input_shape[0] = 1;  // 1 4 4 3
   outer_size = 1;
@@ -205,7 +205,7 @@ TEST_F(TestReduceFp32, SumAllAxis) {
   axis_size = 4;
   src = dst1;
   float dst2[12] = {0};
-  (void)ReduceSum(outer_size, inner_size, axis_size, src, input_shape, dst2, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, src, dst2, tid, thread_num);
 
   input_shape[1] = 1;  // 1 1 4 3
   outer_size = 1;
@@ -213,14 +213,14 @@ TEST_F(TestReduceFp32, SumAllAxis) {
   axis_size = 4;
   src = dst2;
   float dst3[3] = {0};
-  (void)ReduceSum(outer_size, inner_size, axis_size, src, input_shape, dst3, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, src, dst3, tid, thread_num);
 
   input_shape[2] = 1;  // 1 1 1 3
   outer_size = 1;
   inner_size = 1;
   axis_size = 3;
   src = dst3;
-  (void)ReduceSum(outer_size, inner_size, axis_size, src, input_shape, out, tid, thread_num);
+  (void)ReduceSum(outer_size, inner_size, axis_size, src, out, tid, thread_num);
 
   int output_size = 1;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -244,7 +244,7 @@ TEST_F(TestReduceFp32, Max) {
   int outer_size = 2;
   int inner_size = 12;
   int axis_size = 4;
-  (void)ReduceMax(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceMax(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -268,7 +268,7 @@ TEST_F(TestReduceFp32, Min) {
   int outer_size = 2;
   int inner_size = 12;
   int axis_size = 4;
-  (void)ReduceMin(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceMin(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -293,7 +293,7 @@ TEST_F(TestReduceFp32, Prod) {
   int outer_size = 2;
   int inner_size = 12;
   int axis_size = 4;
-  (void)ReduceProd(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceProd(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);
@@ -318,7 +318,7 @@ TEST_F(TestReduceFp32, SumSquare) {
   int outer_size = 2;
   int inner_size = 12;
   int axis_size = 4;
-  (void)ReduceSumSquare(outer_size, inner_size, axis_size, in, input_shape, out, tid, thread_num);
+  (void)ReduceSumSquare(outer_size, inner_size, axis_size, in, out, tid, thread_num);
 
   int output_size = 24;
   CompareOutputData(out, correct, output_size, err_tol);

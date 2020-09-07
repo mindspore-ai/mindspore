@@ -27,7 +27,7 @@ using mindspore::schema::ReduceMode;
 namespace mindspore::kernel {
 class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
   typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float16_t *src_data,
-                         const int *src_shape, float16_t *dst_data, const int tid, const int thread_num);
+                         float16_t *dst_data, const int tid, const int thread_num);
 
  public:
   ReduceFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
