@@ -36,6 +36,7 @@ class LossCallBack(Callback):
 
     Note:
         If per_print_times is 0, do NOT print loss.
+        If this process is MS_PSERVER role, do not run callbacks.
 
     Args:
         per_print_times (int): Print loss every times. Default: 1.
@@ -50,6 +51,8 @@ class LossCallBack(Callback):
     def step_end(self, run_context):
         """Monitor the loss in training."""
         cb_params = run_context.original_args()
+        if cb_params.net_outputs is None:
+            return
         wide_loss, deep_loss = cb_params.net_outputs[0].asnumpy(), cb_params.net_outputs[1].asnumpy()
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
         cur_num = cb_params.cur_step_num
