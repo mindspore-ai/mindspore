@@ -535,10 +535,9 @@ class Model:
         """
         Training API where the iteration is controlled by python front-end.
 
-        When setting pynative mode, the training process will be performed with dataset not sink.
+        When setting pynative mode or CPU, the training process will be performed with dataset not sink.
 
         Note:
-            CPU is not supported when dataset_sink_mode is true.
             If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
             operation in dataset processing. Otherwise, errors could occur since the amount of data
             is not equal to the required amount of training .
@@ -558,7 +557,7 @@ class Model:
                                      function respectively.
             callbacks (list): List of callback objects which should be executed while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
-                                      Configure pynative mode, the training process will be performed with
+                                      Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink.
                              If sink_size = -1, sink the complete dataset for each epoch.
@@ -667,10 +666,9 @@ class Model:
         """
         Evaluation API where the iteration is controlled by python front-end.
 
-        Configure to pynative mode, the evaluation will be performed with dataset non-sink mode.
+        Configure to pynative mode or CPU, the evaluating process will be performed with dataset non-sink mode.
 
         Note:
-            CPU is not supported when dataset_sink_mode is true.
             If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
@@ -707,6 +705,11 @@ class Model:
         self._eval_network.phase = 'eval'
 
         self._clear_metrics()
+
+        if context.get_context("device_target") == "CPU":
+            dataset_sink_mode = False
+            logger.warning("CPU cannot support dataset sink mode currently."
+                           "So the evaluating process will be performed with dataset non-sink mode.")
 
         with _CallbackManager(callbacks) as list_callback:
             if dataset_sink_mode:
