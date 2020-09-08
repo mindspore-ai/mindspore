@@ -40,7 +40,6 @@ class Session {
  public:
   static Session &Instance();
   Status CreatDeviceSession(const std::string &device, uint32_t device_id);
-  // Status Predict(const inference::MultiTensor &inputs, inference::MultiTensor &output);
   Status Predict(const PredictRequest &request, PredictReply &reply);
   Status Warmup(const MindSporeModelPtr model);
   Status Clear();
@@ -55,6 +54,8 @@ class Session {
   uint32_t graph_id_{0};
   std::mutex mutex_;
   std::string device_type_;
+
+  Status PredictInner(const PredictRequest &request, PredictReply &reply);
 };
 
 }  // namespace serving

@@ -138,14 +138,9 @@ static std::pair<struct evhttp *, struct event_base *> NewHttpServer() {
   return std::make_pair(http_server, eb);
 }
 
-Status Server::BuildAndStart() {
-  // handle exit signal
-  signal(SIGINT, HandleSignal);
-  signal(SIGTERM, HandleSignal);
+Status BuildAndStartModelInner() {
   Status res;
-
   auto option_args = Options::Instance().GetArgs();
-  std::string server_address = "0.0.0.0:" + std::to_string(option_args->grpc_port);
   std::string model_path = option_args->model_path;
   std::string model_name = option_args->model_name;
   std::string device_type = option_args->device_type;
@@ -156,7 +151,6 @@ Status Server::BuildAndStart() {
                    << device_id;
     std::cout << "Serving Error: create inference session failed, device type  " << device_type << " device id "
               << device_id << std::endl;
-    ClearEnv();
     return res;
   }
   VersionController version_controller(option_args->poll_model_wait_seconds, model_path, model_name);
@@ -166,9 +160,43 @@ Status Server::BuildAndStart() {
                    << option_args->model_name;
     std::cout << "Serving Error: load model failed, model directory " << option_args->model_path << " model name "
               << option_args->model_name << std::endl;
+    return res;
+  }
+  return SUCCESS;
+}
+
+Status BuildAndStartModel() {
+  try {
+    auto status = BuildAndStartModelInner();
+    return status;
+  } catch (const std::bad_alloc &ex) {
+    MSI_LOG(ERROR) << "Serving Error: malloc memory failed";
+    std::cout << "Serving Error: malloc memory failed" << std::endl;
+  } catch (const std::runtime_error &ex) {
+    MSI_LOG(ERROR) << "Serving Error: runtime error occurred: " << ex.what();
+    std::cout << "Serving Error: runtime error occurred: " << ex.what() << std::endl;
+  } catch (const std::exception &ex) {
+    MSI_LOG(ERROR) << "Serving Error: exception occurred: " << ex.what();
+    std::cout << "Serving Error: exception occurred: " << ex.what() << std::endl;
+  } catch (...) {
+    MSI_LOG(ERROR) << "Serving Error: exception occurred";
+    std::cout << "Serving Error: exception occurred";
+  }
+  return FAILED;
+}
+
+Status Server::BuildAndStart() {
+  // handle exit signal
+  signal(SIGINT, HandleSignal);
+  signal(SIGTERM, HandleSignal);
+  Status res = BuildAndStartModel();
+  if (res != SUCCESS) {
     ClearEnv();
     return res;
   }
+  auto option_args = Options::Instance().GetArgs();
+  std::string server_address = "0.0.0.0:" + std::to_string(option_args->grpc_port);
+
   auto http_server_new_ret = NewHttpServer();
   struct evhttp *http_server = http_server_new_ret.first;
   struct event_base *eb = http_server_new_ret.second;

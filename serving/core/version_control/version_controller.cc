@@ -30,8 +30,8 @@ volatile bool stop_poll = false;
 
 std::string GetVersionFromPath(const std::string &path) {
   std::string new_path = path;
-  if (path.back() == '/') {
-    new_path = path.substr(0, path.size() - 1);
+  while (!new_path.empty() && new_path.back() == '/') {
+    new_path = new_path.substr(0, new_path.size() - 1);
   }
 
   std::string::size_type index = new_path.find_last_of("/");
@@ -90,8 +90,6 @@ Status VersionController::Run() {
   if (ret != SUCCESS) {
     return ret;
   }
-  // disable periodic check
-  // StartPollModelPeriodic();
   return SUCCESS;
 }
 

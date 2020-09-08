@@ -21,9 +21,11 @@
 #include "utils/load_onnx/anf_converter.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/session_factory.h"
+#include "backend/session/executor_manager.h"
 #include "base/base_ref_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/context/context_extends.h"
+#include "runtime/device/kernel_runtime_manager.h"
 
 #ifdef ENABLE_D
 #include "utils/ms_context.h"
@@ -236,6 +238,8 @@ Status MSInferSession::ExecuteModel(uint32_t model_id, const RequestBase &reques
 }
 
 Status MSInferSession::FinalizeEnv() {
+  session::ExecutorManager::Instance().Clear();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {
     MS_LOG(ERROR) << "Get Context failed!";

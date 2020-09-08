@@ -52,6 +52,26 @@ Session &Session::Instance() {
 }
 
 Status Session::Predict(const PredictRequest &request, PredictReply &reply) {
+  try {
+    auto status = PredictInner(request, reply);
+    return status;
+  } catch (const std::bad_alloc &ex) {
+    MSI_LOG(ERROR) << "Serving Error: malloc memory failed";
+    std::cout << "Serving Error: malloc memory failed" << std::endl;
+  } catch (const std::runtime_error &ex) {
+    MSI_LOG(ERROR) << "Serving Error: runtime error occurred: " << ex.what();
+    std::cout << "Serving Error: runtime error occurred: " << ex.what() << std::endl;
+  } catch (const std::exception &ex) {
+    MSI_LOG(ERROR) << "Serving Error: exception occurred: " << ex.what();
+    std::cout << "Serving Error: exception occurred: " << ex.what() << std::endl;
+  } catch (...) {
+    MSI_LOG(ERROR) << "Serving Error: exception occurred";
+    std::cout << "Serving Error: exception occurred";
+  }
+  return FAILED;
+}
+
+Status Session::PredictInner(const PredictRequest &request, PredictReply &reply) {
   if (!model_loaded_) {
     MSI_LOG(ERROR) << "the model has not loaded";
     return FAILED;
