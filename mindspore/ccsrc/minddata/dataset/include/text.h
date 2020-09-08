@@ -20,9 +20,11 @@
 #include <vector>
 #include <memory>
 #include <string>
+
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/text/vocab.h"
+#include "mindspore/ccsrc/minddata/dataset/core/data_type.h"
 
 namespace mindspore {
 namespace dataset {
@@ -37,15 +39,18 @@ class LookupOperation;
 /// \brief Lookup operator that looks up a word to an id.
 /// \param[in] vocab a Vocab object.
 /// \param[in] unknown_token word to use for lookup if the word being looked up is out of Vocabulary (oov).
-///   If unknown_token is oov, runtime error will be thrown
+///   If unknown_token is oov, runtime error will be thrown.
+/// \param[in] DataType type of the tensor after lookup, typically int32.
 /// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token);
+std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+                                        const mindspore::dataset::DataType &data_type = DataType("int32"));
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
 class LookupOperation : public TensorOperation {
  public:
-  explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token);
+  explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+                           const DataType &data_type);
 
   ~LookupOperation() = default;
 
@@ -57,6 +62,7 @@ class LookupOperation : public TensorOperation {
   std::shared_ptr<Vocab> vocab_;
   std::string unknown_token_;
   int32_t default_id_;
+  DataType data_type_;
 };
 }  // namespace text
 }  // namespace api

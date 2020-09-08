@@ -49,6 +49,7 @@ import platform
 import numpy as np
 
 import mindspore._c_dataengine as cde
+import mindspore.common.dtype as mstype
 
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
@@ -66,11 +67,12 @@ class Lookup(cde.LookupOp):
         vocab(Vocab): a Vocab object.
         unknown_token(str, optional): word to use for lookup if the word being looked up is out of Vocabulary (oov).
             If unknown_token is oov, runtime error will be thrown (default=None).
+        data_type (mindspore.dtype, optional): mindspore.dtype lookup maps string to (default=mstype.int32)
     """
 
     @check_lookup
-    def __init__(self, vocab, unknown_token=None):
-        super().__init__(vocab, unknown_token)
+    def __init__(self, vocab, unknown_token=None, data_type=mstype.int32):
+        super().__init__(vocab, unknown_token, mstype_to_detype(data_type))
 
 
 class SlidingWindow(cde.SlidingWindowOp):
@@ -101,7 +103,6 @@ class SlidingWindow(cde.SlidingWindowOp):
     @check_slidingwindow
     def __init__(self, width, axis=0):
         super().__init__(width, axis)
-
 
 
 class Ngram(cde.NgramOp):

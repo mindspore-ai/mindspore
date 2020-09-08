@@ -44,12 +44,13 @@ def check_lookup(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [vocab, unknown_token], _ = parse_user_args(method, *args, **kwargs)
+        [vocab, unknown_token, data_type], _ = parse_user_args(method, *args, **kwargs)
 
         if unknown_token is not None:
             type_check(unknown_token, (str,), "unknown_token")
 
         type_check(vocab, (cde.Vocab,), "vocab is not an instance of cde.Vocab.")
+        type_check(data_type, (typing.Type,), "data_type")
 
         return method(self, *args, **kwargs)
 
@@ -327,6 +328,7 @@ def check_from_dataset(method):
 
     return new_method
 
+
 def check_slidingwindow(method):
     """A wrapper that wraps a parameter checker to the original function(sliding window operation)."""
 
@@ -338,6 +340,7 @@ def check_slidingwindow(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
 
 def check_ngram(method):
     """A wrapper that wraps a parameter checker to the original function."""

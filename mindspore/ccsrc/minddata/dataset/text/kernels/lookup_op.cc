@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/text/kernels/lookup_op.h"
-
 #include <string>
+
+#include "minddata/dataset/kernels/data/data_utils.h"
+#include "minddata/dataset/text/kernels/lookup_op.h"
 
 namespace mindspore {
 namespace dataset {
 
-LookupOp::LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id)
-    : vocab_(vocab), default_id_(default_id), type_(DataType("int32")) {}
+LookupOp::LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id, const DataType &data_type)
+    : vocab_(vocab), default_id_(default_id), type_(data_type) {}
 
 Status LookupOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -37,6 +38,14 @@ Status LookupOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
       "Lookup Error: token: " + std::string(*itr) + " doesn't exist in vocab and no unknown token is specified.");
   }
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(word_ids, input->shape(), output));
+
+  // type cast to user's requirements if what user wants isn't int32_t
+  if ((*output)->type() != type_) {
+    std::shared_ptr<Tensor> cast_to;
+    RETURN_IF_NOT_OK(TypeCast(*output, &cast_to, type_));
+    *output = cast_to;
+  }
+
   return Status::OK();
 }
 Status LookupOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {

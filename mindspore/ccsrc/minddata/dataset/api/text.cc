@@ -22,8 +22,9 @@ namespace dataset {
 namespace api {
 namespace text {
 
-std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token) {
-  auto op = std::make_shared<LookupOperation>(vocab, unknown_token);
+std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+                                        const DataType &data_type) {
+  auto op = std::make_shared<LookupOperation>(vocab, unknown_token, data_type);
 
   if (!op->ValidateParams()) {
     return nullptr;
@@ -32,8 +33,9 @@ std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, con
 }
 
 // LookupOperation
-LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token)
-    : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists) {}
+LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+                                 const DataType &data_type)
+    : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
 
 bool LookupOperation::ValidateParams() {
   if (vocab_ == nullptr) {
@@ -54,7 +56,7 @@ bool LookupOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> LookupOperation::Build() {
-  std::shared_ptr<LookupOp> tensor_op = std::make_shared<LookupOp>(vocab_, default_id_);
+  std::shared_ptr<LookupOp> tensor_op = std::make_shared<LookupOp>(vocab_, default_id_, data_type_);
   return tensor_op;
 }
 

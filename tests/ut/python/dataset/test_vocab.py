@@ -17,6 +17,7 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
+import mindspore.common.dtype as mstype
 
 # this file contains "home is behind the world head" each word is 1 line
 DATA_FILE = "../data/dataset/testVocab/words.txt"
@@ -137,6 +138,36 @@ def test_from_file():
     assert "Input vocab_size must be greater than 0" in test_config("w1 w2", 0, [], True)
     assert "Input vocab_size must be greater than 0" in test_config("w1 w2", -1, [], True)
 
+
+def test_lookup_cast_type():
+    def gen(texts):
+        for word in texts.split(" "):
+            yield (np.array(word, dtype='S'),)
+
+    def test_config(lookup_str, data_type=None):
+        try:
+            vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
+            data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
+            # if data_type is None, test the default value of data_type
+            op = text.Lookup(vocab, "<unk>") if data_type is None else text.Lookup(vocab, "<unk>", data_type)
+            data = data.map(input_columns=["text"], operations=op)
+            res = []
+            for d in data.create_dict_iterator(num_epochs=1):
+                res.append(d["text"])
+            return res[0].dtype
+        except (ValueError, RuntimeError, TypeError) as e:
+            return str(e)
+
+    # test result is correct
+    assert test_config("w1", mstype.int8) == np.dtype("int8")
+    assert test_config("w2", mstype.int32) == np.dtype("int32")
+    assert test_config("w3", mstype.int64) == np.dtype("int64")
+    assert test_config("unk", mstype.float32) != np.dtype("int32")
+    assert test_config("unk") == np.dtype("int32")
+    # test exception, data_type isn't the correct type
+    assert "tldr is not of type (<class 'mindspore._c_expression.typing.Type'>,)" in test_config("unk", "tldr")
+
+
 if __name__ == '__main__':
     test_from_dict_exception()
     test_from_list_tutorial()
@@ -144,3 +175,4 @@ if __name__ == '__main__':
     test_from_dict_tutorial()
     test_from_list()
     test_from_file()
+    test_lookup_cast_type()
