@@ -17,7 +17,6 @@ import argparse
 import ast
 import os
 
-from network import ShuffleNetV2
 
 import mindspore.nn as nn
 from mindspore import context
@@ -30,9 +29,11 @@ from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 
+from src.shufflenetv2 import ShuffleNetV2
 from src.config import config_gpu as cfg
 from src.dataset import create_dataset
 from src.lr_generator import get_lr_basic
+from src.CrossEntropySmooth import CrossEntropySmooth
 
 set_seed(cfg.random_seed)
 
@@ -73,8 +74,8 @@ if __name__ == '__main__':
     net = ShuffleNetV2(n_class=cfg.num_classes, model_size=args_opt.model_size)
 
     # loss
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean", is_grad=False,
-                                            smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes)
+    loss = CrossEntropySmooth(sparse=True, reduction="mean",
+                              smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes)
 
     # learning rate schedule
     lr = get_lr_basic(lr_init=cfg.lr_init, total_epochs=cfg.epoch_size,
