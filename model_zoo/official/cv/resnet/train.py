@@ -70,6 +70,7 @@ if __name__ == '__main__':
 
     # init context
     context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+    context.set_ps_context(enable_ps=True)
     if args_opt.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))

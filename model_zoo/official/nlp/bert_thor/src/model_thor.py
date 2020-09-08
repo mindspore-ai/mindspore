@@ -14,7 +14,6 @@
 # ============================================================================
 """Model."""
 import math
-import os
 from collections.abc import Iterable
 
 import numpy as np
@@ -405,9 +404,6 @@ class Model:
         cb_params.list_callback = self._transform_callbacks(callbacks)
         cb_params.train_dataset_element = None
         cb_params.network = self._network
-        ms_role = os.getenv("MS_ROLE")
-        if ms_role in ("MS_PSERVER", "MS_SCHED"):
-            epoch = 1
 
         # build callback list
         with _CallbackManager(callbacks) as list_callback:

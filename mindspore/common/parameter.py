@@ -22,6 +22,7 @@ from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
 from ..parallel._tensor import _get_slice_index
 from ..parallel._auto_parallel_context import auto_parallel_context
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -168,8 +169,13 @@ class Parameter(MetaTensor):
         """For parse check."""
 
     def set_param_ps(self, init_in_server=False):
-        self.is_param_ps = True
-        self.init_in_server = init_in_server
+        if _is_role_worker() or _is_role_pserver() or _is_role_sched():
+            self.is_param_ps = True
+            self.init_in_server = init_in_server
+        else:
+            raise RuntimeError("Must complete following two steps before calling set_param_ps: \
+                               1. set_ps_context(enable_ps=True) \
+                               2. export MS_ROLE environment variable.")
 
 
     @property

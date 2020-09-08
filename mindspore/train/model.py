@@ -27,6 +27,7 @@ from .callback import _InternalCallbackParam, RunContext, _CallbackManager
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
+from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
@@ -378,8 +379,7 @@ class Model:
         cb_params.list_callback = self._transform_callbacks(callbacks)
         cb_params.train_dataset_element = None
         cb_params.network = self._network
-        ms_role = os.getenv("MS_ROLE")
-        if ms_role in ("MS_PSERVER", "MS_SCHED"):
+        if _is_role_pserver() or _is_role_sched():
             epoch = 1
 
         # build callback list
@@ -516,7 +516,7 @@ class Model:
                     self._loss_scale_manager.update_loss_scale(overflow)
 
                 list_callback.step_end(run_context)
-                if os.getenv("MS_ROLE") == "MS_PSERVER":
+                if _is_role_pserver():
                     os._exit(0)
                 should_stop = should_stop or run_context.get_stop_requested()
                 if should_stop:

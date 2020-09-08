@@ -26,9 +26,11 @@ from mindspore._c_expression import MSContext, ms_ctx_param
 from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
+from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
-           'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode']
+           'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode', 'set_ps_context',
+           'get_ps_context', 'reset_ps_context']
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
@@ -569,3 +571,58 @@ class ParallelMode:
     SEMI_AUTO_PARALLEL = "semi_auto_parallel"
     AUTO_PARALLEL = "auto_parallel"
     MODE_LIST = [STAND_ALONE, DATA_PARALLEL, HYBRID_PARALLEL, SEMI_AUTO_PARALLEL, AUTO_PARALLEL]
+
+@args_type_check(enable_ps=bool)
+def set_ps_context(**kwargs):
+    """
+    Set parameter server training mode context.
+
+    Note:
+        Some other environment variables should also be set for parameter server training mode.
+        These environment variables are listed below:
+        MS_SERVER_NUM  # Server number
+        MS_WORKER_NUM  # Worker number
+        MS_SCHED_HOST  # Scheduler IP address
+        MS_SCHED_PORT  # Scheduler port
+        MS_ROLE        # The role of this process:
+                         MS_SCHED represents the scheduler,
+                         MS_WORKER represents the worker,
+                         MS_PSERVER represents the Server
+
+
+    Args:
+        enable_ps (bool): Whether to enable parameter server training mode.
+                          Only after enable_ps is set True, the environment variables will be effective.
+                          Default: False.
+
+    Raises:
+        ValueError: If input key is not the attribute in parameter server training mode context.
+
+    Examples:
+        >>> context.set_ps_context(enable_ps=True)
+    """
+    _set_ps_context(**kwargs)
+
+
+def get_ps_context(attr_key):
+    """
+    Get parameter server training mode context attribute value according to the key.
+
+    Args:
+        attr_key (str): The key of the attribute.
+
+    Returns:
+        Returns attribute value according to the key.
+
+    Raises:
+        ValueError: If input key is not attribute in auto parallel context.
+    """
+    return _get_ps_context(attr_key)
+
+def reset_ps_context():
+    """
+    Reset parameter server training mode context attributes to the default values:
+
+    - enable_ps: False.
+    """
+    _reset_ps_context()

@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Communication management API"""
-import os
 from mindspore import context
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
@@ -29,7 +29,6 @@ __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
 
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 DEFAULT_BACKEND = Backend("hccl")
-MS_ROLE = os.getenv("MS_ROLE")
 
 
 def _get_group(group):
@@ -61,7 +60,7 @@ def init(backend_name=None):
         RuntimeError: If device target is invalid.
         RuntimeError: If backend is invalid or distributed init fails.
     """
-    if MS_ROLE in ("MS_PSERVER", "MS_SCHED"):
+    if _is_role_pserver() or _is_role_sched():
         return
     if backend_name is None:
         device_target = context.get_context("device_target")

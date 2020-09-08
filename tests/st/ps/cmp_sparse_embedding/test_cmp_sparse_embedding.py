@@ -26,6 +26,7 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
 from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_worker
 
 parser = argparse.ArgumentParser(description="test_sparse_embedding")
 parser.add_argument("--device_target", type=str, default="Ascend")
@@ -34,6 +35,7 @@ device_target = args.device_target
 context.set_context(
     mode=context.GRAPH_MODE, device_target=device_target, enable_sparse=True
 )
+context.set_ps_context(enable_ps=True)
 
 
 def fc_with_initialize(input_channels, out_channels):
@@ -81,7 +83,7 @@ def do_sparse_embedding(ps=False):
     for _ in range(epoch):
         data = Tensor(np.random.randint(0, 15, (32, 3), np.int32))
         label = Tensor(np.random.randint(0, 9, (32), np.int32))
-        if envs.get("MS_ROLE") == "MS_PSERVER":
+        if _is_role_pserver():
             train_network(data, label)
             sys.exit()
         else:
@@ -96,10 +98,10 @@ if __name__ == "__main__":
     np.random.seed(0)
     ps_loss = do_sparse_embedding(True)
 
-    if envs.get("MS_ROLE") == "MS_WORKER":
-        envs["MS_ROLE"] = ""
+    if _is_role_worker():
+        context.reset_ps_context()
         np.random.seed(0)
         no_ps_loss = do_sparse_embedding()
-        envs["MS_ROLE"] = "MS_WORKER"
+        context.set_ps_context(enable_ps=True)
 
     assert np.allclose(ps_loss, no_ps_loss, rtol=1.0e-6, atol=1.0e-6)

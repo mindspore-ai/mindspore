@@ -36,6 +36,7 @@
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/util.h"
 #endif
+#include "frontend/parallel/ps/ps_context.h"
 namespace py = pybind11;
 
 using EnvInstance = mindspore::EnvInstance;
@@ -49,6 +50,7 @@ using OpInfoLoaderPy = mindspore::kernel::OpInfoLoaderPy;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using mindspore::MsCtxParam;
+using PSContext = mindspore::parallel::ps::PSContext;
 
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
@@ -276,9 +278,15 @@ PYBIND11_MODULE(_c_expression, m) {
               "Finalize gpu collective communication mode.");
 #endif
 
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  (void)m.def("get_ps_mode_rank", &mindspore::parallel::ps::Util::GetRankId, "Get Worker and PServer rank id.");
-#endif
+  (void)py::class_<PSContext, std::shared_ptr<PSContext>>(m, "PSContext")
+    .def_static("get_instance", &PSContext::instance, "Get PS context instance.")
+    .def("set_ps_enable", &PSContext::SetPSEnable, "Set PS mode enabled or disabled.")
+    .def("is_ps_enabled", &PSContext::is_ps_enabled, "Get PS mode enable-disable status.")
+    .def("reset", &PSContext::Reset, "Reset PS context attributes.")
+    .def("is_role_worker", &PSContext::is_role_worker, "Get whether the role of this process is Worker.")
+    .def("is_role_pserver", &PSContext::is_role_pserver, "Get whether the role of this process is PServer.")
+    .def("is_role_sched", &PSContext::is_role_sched, "Get whether the role of this process is Scheduler.")
+    .def("ps_rank_id", &PSContext::ps_rank_id, "Get Worker and PServer rank id.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())

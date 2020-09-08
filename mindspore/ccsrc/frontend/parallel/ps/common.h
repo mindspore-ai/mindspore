@@ -32,11 +32,6 @@ constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
 constexpr char kEnvSchedulerHost[] = "MS_SCHED_HOST";
 constexpr char kEnvSchedulerPort[] = "MS_SCHED_PORT";
 
-constexpr char kEnvRole[] = "MS_ROLE";
-constexpr char kEnvRoleOfPServer[] = "MS_PSERVER";
-constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
-constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
-
 constexpr char kDmlcCommType[] = "DMLC_PS_VAN_TYPE";
 constexpr char kDmlcInterface[] = "DMLC_INTERFACE";
 constexpr char kDmlcPServerNum[] = "DMLC_NUM_SERVER";

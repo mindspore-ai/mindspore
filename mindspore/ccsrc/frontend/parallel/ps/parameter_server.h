@@ -39,6 +39,7 @@
 #include "frontend/parallel/ps/optimizer_info.h"
 #include "frontend/parallel/ps/optimizer_info_builder.h"
 #include "frontend/parallel/ps/util.h"
+#include "frontend/parallel/ps/ps_context.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "utils/ms_context.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -741,7 +742,7 @@ void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
     return;
   }
   Init(func_graph);
-  Util::SetRankId(rank_id_);
+  PSContext::instance()->SetPSRankId(rank_id_);
   thread_->join();
   ::ps::Finalize(0, true);
 }

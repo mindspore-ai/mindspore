@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import sys
 import argparse
 import numpy as np
 
@@ -22,6 +23,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.communication.management import init, get_group_size
+from mindspore.parallel._ps_context import _is_role_pserver
 # from resnet import resnet50
 
 parser = argparse.ArgumentParser(description="test_ps_lenet")
@@ -29,6 +31,7 @@ parser.add_argument("--device_target", type=str, default="Ascend")
 args, _ = parser.parse_known_args()
 device_target = args.device_target
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+context.set_ps_context(enable_ps=True)
 if device_target == "GPU":
     init()
 
@@ -106,6 +109,10 @@ if __name__ == "__main__":
     for _ in range(epoch):
         data = Tensor(np.random.rand(32, 3, 32, 32).astype(np.float32))
         label = Tensor(np.random.randint(0, 9, (32)).astype(np.int32))
-        loss = train_network(data, label).asnumpy()
-        losses.append(loss)
+        if _is_role_pserver():
+            train_network(data, label)
+            sys.exit()
+        else:
+            loss = train_network(data, label).asnumpy()
+            losses.append(loss)
     print(losses)
