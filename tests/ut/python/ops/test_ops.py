@@ -2457,15 +2457,7 @@ raise_set = [
     ('SSIM', {
         'block': (nn.SSIM(), {'exception': ValueError}),
         'desc_inputs': [Tensor(np.ones((1, 3, 8, 8)), mstype.float32),
-                        Tensor(np.ones((1, 3, 8, 8)), mstype.float32)]}),
-    ('StridedSlice_0', {
-        'block': (P.StridedSlice(), {'exception': ValueError}),
-        'desc_const': [(1, 2.2, 3), (3, 4, 5), (1, 1, 1)],
-        'desc_inputs': [[4, 5, 6, 7]]}),
-    ('StridedSlice_1', {
-        'block': (P.StridedSlice(), {'exception': ValueError}),
-        'desc_const': [(1, 2, 3), (3, 4, 5), (1, 1)],
-        'desc_inputs': [[4, 5, 6, 7]]})
+                        Tensor(np.ones((1, 3, 8, 8)), mstype.float32)]})
 ]
 
 
