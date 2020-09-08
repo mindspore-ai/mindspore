@@ -42,6 +42,7 @@ void UpdateOutputTensors(const VectorRef *outputs,
       if (tensor->NeedSyncDeviceToHostImmediately()) {
         tensor->data_sync();
         tensor->set_device_address(nullptr);
+        tensor->set_sync_status(kNeedSyncHostToDevice);
       }
     }
   }

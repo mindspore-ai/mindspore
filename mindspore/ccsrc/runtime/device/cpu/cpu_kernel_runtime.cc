@@ -248,7 +248,6 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
         }
-        tensor->set_sync_status(kNeedSyncHostToDevice);
       }
       address->ref_count_ = INIT_NODE_REF;
       tensor->set_device_address(address);
