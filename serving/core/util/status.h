@@ -19,10 +19,10 @@
 
 namespace mindspore {
 namespace serving {
-using inference::Status;
-using inference::SUCCESS;
 using inference::FAILED;
 using inference::INVALID_INPUTS;
+using inference::Status;
+using inference::SUCCESS;
 }  // namespace serving
 }  // namespace mindspore
 

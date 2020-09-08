@@ -15,9 +15,9 @@
 
 import random
 import json
-import requests
 import grpc
 import numpy as np
+import requests
 import ms_service_pb2
 import ms_service_pb2_grpc
 import mindspore.dataset as de

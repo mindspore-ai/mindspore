@@ -16,6 +16,8 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <functional>
+#include <utility>
 #include <nlohmann/json.hpp>
 #include "serving/ms_service.pb.h"
 #include "util/status.h"
@@ -51,7 +53,7 @@ Status GetPostMessage(struct evhttp_request *req, std::string *buf) {
     return status;
   } else {
     buf->resize(post_size);
-    memcpy(buf->data(), evbuffer_pullup(req->input_buffer, -1), post_size);
+    memcpy_s(buf->data(), post_size, evbuffer_pullup(req->input_buffer, -1), post_size);
     return status;
   }
 }
