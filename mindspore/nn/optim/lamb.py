@@ -104,11 +104,11 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
 
         next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
 
-        next_param = F.depend(next_param, F.assign(param, next_param))
-        next_param = F.depend(next_param, F.assign(m, next_m))
-        next_param = F.depend(next_param, F.assign(v, next_v))
+        next_param = F.depend(next_param, F.assign(param, op_cast(next_param, F.dtype(param))))
+        next_param = F.depend(next_param, F.assign(m, op_cast(next_m, F.dtype(m))))
+        next_param = F.depend(next_param, F.assign(v, op_cast(next_v, F.dtype(v))))
 
-        return next_param
+        return op_cast(next_param, F.dtype(param))
     return gradient
 
 
