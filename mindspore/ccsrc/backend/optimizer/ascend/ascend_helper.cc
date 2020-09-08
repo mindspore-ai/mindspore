@@ -142,6 +142,15 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
   return node;
 }
 
+void ReFreshInferShape(const AnfNodePtr &node, const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (op_name == kBasicLSTMCellWeightGradOpName && AnfAlgo::GetCNodeName(node) == prim::kPrimReshape->name()) {
+    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+    auto type = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+    AnfAlgo::SetOutputInferTypeAndShape({type}, {{shape[0], shape[1]}}, node.get());
+  }
+}
+
 AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                           const KernelSelectPtr &kernel_select) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -149,6 +158,10 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   size_t out_num = AnfAlgo::GetOutputTensorNum(node);
+  std::string op_name;
+  if (node->isa<CNode>()) {
+    op_name = AnfAlgo::GetCNodeName(node);
+  }
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, output_idx);
     if (output_format == kOpFormat_NC1KHKWHWC0) {
@@ -159,6 +172,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
     std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
     if (origin_shape.size() > 1 && kCommonFormatSet.find(output_format) == kCommonFormatSet.end()) {
       auto trans_op = AddTransOpNodeToGraph(func_graph, tuple_getitem, kernel_select, 0, false);
+      ReFreshInferShape(trans_op, op_name);
       if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, output_idx)) {
         kernel_graph->ReplaceInternalOutput(node, trans_op, output_idx, 0);
       }

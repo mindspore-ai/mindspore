@@ -26,7 +26,7 @@ basic_lstm_cell_weight_grad_op_info = TBERegOp("BasicLSTMCellWeightGrad") \
     .input(0, "x", False, "required", "all") \
     .input(1, "h", False, "required", "all") \
     .input(2, "dgate", False, "required", "all") \
-    .output(0, "dw", False, "required", "all") \
+    .output(0, "dw", False, "required", "all", reshape_type="CN") \
     .output(1, "db", False, "required", "all") \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracZ,
                   DataType.F32_Default) \
