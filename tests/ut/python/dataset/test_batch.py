@@ -449,22 +449,6 @@ def test_batch_exception_13():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "shard_id" in str(e)
 
-    # test non-functional parameters
-    try:
-        data1 = data1.batch(batch_size, output_columns="3")
-        sum([1 for _ in data1])
-
-    except ValueError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "output_columns is currently not implemented." in str(e)
-
-    try:
-        data1 = data1.batch(batch_size, column_order="3")
-        sum([1 for _ in data1])
-
-    except ValueError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "column_order is currently not implemented." in str(e)
 
 def test_batch_exception_14():
     batch_size = 2

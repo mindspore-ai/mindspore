@@ -276,6 +276,7 @@ def check_save(method):
 
     return new_method
 
+
 def check_iterator(method):
     """A wrapper that wraps a parameter checker around the original create_tuple_iterator and create_dict_iterator."""
 
@@ -529,10 +530,10 @@ def check_batch(method):
                 raise ValueError("the signature of per_batch_map should match with input columns")
 
         if output_columns is not None:
-            raise ValueError("output_columns is currently not implemented.")
+            check_columns(output_columns, "output_columns")
 
         if column_order is not None:
-            raise ValueError("column_order is currently not implemented.")
+            check_columns(column_order, "column_order")
 
         return method(self, *args, **kwargs)
 

@@ -767,7 +767,7 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
             tensor_op_list.push_back(tensor_op);
           }
         }
-        if (tensor_op_list.empty()) RETURN_STATUS_UNEXPECTED("Error: tensor_op is invalid or not set.");
+        CHECK_FAIL_RETURN_UNEXPECTED(!tensor_op_list.empty(), "Error: tensor_op is invalid or not set.");
         (void)map_builder.SetTensorFuncs(std::move(tensor_op_list));
       } else if (key == "cache") {
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
@@ -913,6 +913,7 @@ Status DEPipeline::ParseGeneratorOp(const py::dict &args, std::shared_ptr<Datase
 Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                                 std::shared_ptr<DatasetOp> *bottom) {
   std::shared_ptr<BatchOp::Builder> builder;
+  std::vector<std::string> project_columns;
   if (py::isinstance<py::int_>(args["batch_size"])) {
     batch_size_ = ToInt(args["batch_size"]);
     CHECK_FAIL_RETURN_UNEXPECTED(batch_size_ > 0, "Error: batch_size is invalid.");
@@ -921,10 +922,8 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
     builder = std::make_shared<BatchOp::Builder>(1);
     (void)builder->SetBatchSizeFunc(args["batch_size"].cast<py::function>());
   } else {
-    std::string err_msg = "Error: batch_size is neither an Integer nor a python function";
-    RETURN_STATUS_UNEXPECTED(err_msg);
+    RETURN_STATUS_UNEXPECTED("Error: batch_size is neither an Integer nor a python function.");
   }
-
   for (auto arg : args) {
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
@@ -936,7 +935,11 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
       } else if (key == "per_batch_map") {
         (void)builder->SetBatchMapFunc(value.cast<py::function>());
       } else if (key == "input_columns") {
-        (void)builder->SetColumnsToMap(ToStringVector(value));
+        (void)builder->SetInColNames(ToStringVector(value));
+      } else if (key == "output_columns") {
+        (void)builder->SetOutColNames(ToStringVector(value));
+      } else if (key == "column_order") {
+        project_columns = ToStringVector(value);
       } else if (key == "pad_info") {
         PadInfo pad_info;
         RETURN_IF_NOT_OK(ParsePadInfo(value, &pad_info));
@@ -945,9 +948,21 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
     }
   }
 
-  std::shared_ptr<BatchOp> op;
-  RETURN_IF_NOT_OK(builder->Build(&op));
-  *top = op;
+  std::shared_ptr<BatchOp> batch_op;
+  RETURN_IF_NOT_OK(builder->Build(&batch_op));
+  *top = batch_op;
+
+  // Add a project op over top of the batch if the user wanted to reposition the columns after per_batch_map
+  if (!project_columns.empty()) {
+    ProjectOp::Builder proj_builder(project_columns);
+    std::shared_ptr<ProjectOp> proj_op;
+    RETURN_IF_NOT_OK(proj_builder.Build(&proj_op));
+    RETURN_IF_NOT_OK(tree_->AssociateNode(batch_op));
+    RETURN_IF_NOT_OK(tree_->AssociateNode(proj_op));
+    RETURN_IF_NOT_OK(proj_op->AddChild(batch_op));
+    *top = proj_op;
+    *bottom = batch_op;
+  }
   return Status::OK();
 }
 
