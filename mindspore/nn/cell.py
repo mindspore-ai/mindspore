@@ -25,14 +25,14 @@ from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
 from .._checkparam import _check_str_by_regular
 from ..common.parameter import Parameter, ParameterTuple
-from .._c_expression import init_backend
+from .._c_expression import init_backend, Cell_
 from ..ops.primitive import Primitive
 from ..ops.operations import HookBackward
 from ..ops.functional import cast
 from ..parallel._tensor import _load_tensor_by_layout
 from ..common.tensor import Tensor
 
-class Cell:
+class Cell(Cell_):
     """
     Base class for all neural networks.
 
@@ -59,14 +59,21 @@ class Cell:
         >>>    def construct(self, x):
         >>>        return self.relu(x)
     """
+    IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
+                   '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
+                   '_parameter_layout_dict', '_already_run', '_params_list', '_phase', '_auto_parallel_mode',
+                   '_backward_hook', '_bprop_debug', '_is_run', '_param_prefix', '_attr_synced',
+                   'enable_hook', 'pynative', 'requires_grad', '_auto_parallel_compile_and_run', 'cell_type']
 
     def __init__(self, auto_prefix=True, flags=None):
+        Cell_.__init__(self, self._cell_tag)
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self._params_list = OrderedDict()
         self.training = False
         self.requires_grad = False
         self.pynative = False
+        self._attr_synced = False
         self._param_prefix = ''
         self._auto_prefix = auto_prefix
         self._scope = None
@@ -95,6 +102,12 @@ class Cell:
     @property
     def already_run(self):
         return self._already_run
+
+    @property
+    def _cell_tag(self):
+        # `<class 'xxxxxxx'>`
+        # -> `xxxxxxx`
+        return str(self.__class__)[8:-2]
 
     @already_run.setter
     def already_run(self, value):
@@ -226,6 +239,7 @@ class Cell:
             del self._cells[name]
         else:
             object.__delattr__(self, name)
+        self._attr_synced = False
 
     def cast_inputs(self, inputs, dst_type):
         res = list()
@@ -283,6 +297,34 @@ class Cell:
         self._already_run = True
         return output
 
+    def _add_attr(self, name, value):
+        if name and name[:2] != '__' and name not in Cell.IGNORE_LIST:
+            super(Cell, self)._add_attr(name, value)
+
+    def _sync_attr_for_compile(self):
+        """Sync the attr to c++ object."""
+        if self._attr_synced:
+            return
+        cells = self.__dict__.get('_cells')
+        for key in cells:
+            cell = cells[key]
+            cell._sync_attr_for_compile()
+            self._add_attr(key, cell)
+        params = self.__dict__.get('_params')
+        for key in params:
+            if '.' in key:
+                continue
+            param = params[key]
+            self._add_attr(key, param)
+        params_list = self.__dict__.get('_params_list')
+        for key in params_list:
+            params_list_item = params_list[key]
+            self._add_attr(key, params_list_item)
+        for key in self.__dict__:
+            value = self.__dict__[key]
+            self._add_attr(key, value)
+        self._attr_synced = True
+
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -335,6 +377,8 @@ class Cell:
             if isinstance(value, Primitive):
                 value.set_prim_instance_name(name)
             object.__setattr__(self, name, value)
+        if name not in Cell.IGNORE_LIST:
+            self._attr_synced = False
 
     def extend_repr(self):
         """
@@ -457,7 +501,7 @@ class Cell:
             Object, the result of executing.
         """
         self._auto_parallel_compile_and_run = True
-        _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+        self.compile(*inputs)
 
         if self._auto_parallel_mode:
             if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag:

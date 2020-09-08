@@ -199,9 +199,12 @@ def get_object_key(obj):
             obj_key = "%s_ID" % (str(obj.__class__.__name__) + str(obj.__name__) + obj.cell_init_args)
         obj_id = "%s_ID%d" % (str(obj.__class__.__name__) + str(obj.__name__), id(obj))
     else:
+        # `<class 'xxxxxxx'>`
+        # -> `xxxxxxx`
+        tag = str(obj.__class__)[8:-2]
         if hasattr(obj, "cell_init_args"):
-            obj_key = "%s_ID" % (str(obj.__class__.__name__) + obj.cell_init_args)
-        obj_id = "%s_ID%d" % (str(obj.__class__.__name__), id(obj))
+            obj_key = "%s_ID" % (tag + obj.cell_init_args)
+        obj_id = "%s_ID%d" % (tag, id(obj))
     logger.debug("obj_key %s obj_id = %s", obj_key, obj_id)
 
     # method has same id of different instance

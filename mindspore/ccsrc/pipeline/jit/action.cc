@@ -25,6 +25,7 @@
 
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"
+#include "ir/cell.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/context.h"
 #include "pipeline/jit/pass.h"
@@ -122,17 +123,29 @@ bool ParseAction(const ResourcePtr &res) {
   parse::python_adapter::set_python_env_flag(true);
   parse::python_adapter::SetPythonPath(dir);
 
-  FuncGraphPtr fg = parse::ConvertToFuncGraph(input);
-  if (fg == nullptr) {
-    MS_LOG(EXCEPTION) << "Parse error.";
+  ValuePtr converted_ret = nullptr;
+  bool converted = parse::ConvertData(input, &converted_ret, true);
+  if (!converted) {
+    MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
   }
-  res->set_func_graph(fg);
+
+  FuncGraphPtr top_graph = nullptr;
+  if (py::isinstance<Cell>(input)) {
+    top_graph = parse::MakeTopGraph(input, converted_ret);
+  } else if (converted_ret->isa<FuncGraph>()) {
+    top_graph = converted_ret->cast<FuncGraphPtr>();
+  } else {
+    MS_LOG(EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
+  }
+  parse::Parser::UpdateTopFuncGraph(top_graph);
+
+  res->set_func_graph(top_graph);
 
   FuncGraphManagerPtr manager = res->manager();
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Manager is nullptr.";
   }
-  manager->AddFuncGraph(fg);
+  manager->AddFuncGraph(top_graph);
   return true;
 }
 

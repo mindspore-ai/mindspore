@@ -49,7 +49,8 @@ NameWithTrace RootName(const DebugInfoPtr &debug_info, TraceLabelType trace_labe
   while (temp_info != nullptr) {
     if (temp_info->trace_info() != nullptr) {
       if (temp_info->trace_info()->isa<TraceResolve>() || temp_info->trace_info()->isa<TraceExpandJ>() ||
-          temp_info->trace_info()->isa<TraceGenMetaFuncGraph>()) {
+          temp_info->trace_info()->isa<TraceGenMetaFuncGraph>() ||
+          temp_info->trace_info()->isa<TraceGenerateVarArg>() || temp_info->trace_info()->isa<TraceGenerateKwArg>()) {
         break;
       }
       trace_name.trace_labels.push_back(GetTraceName(temp_info->trace_info(), trace_label));
