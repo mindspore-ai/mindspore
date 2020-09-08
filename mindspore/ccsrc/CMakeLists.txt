@@ -21,23 +21,50 @@ if(ENABLE_GPU)
     endif()
     enable_language(CUDA)
     if(NOT CUDA_PATH OR CUDA_PATH STREQUAL "")
-        if(DEFINED ENV{CUDA_HOME})
+        if(DEFINED ENV{CUDA_HOME} AND NOT $ENV{CUDA_HOME} STREQUAL "")
             set(CUDA_PATH $ENV{CUDA_HOME})
         else()
             set(CUDA_PATH ${CUDA_TOOLKIT_ROOT_DIR})
         endif()
     endif()
-    if(NOT CUDNN_PATH OR CUDNN_PATH STREQUAL "")
-        set(CUDNN_PATH ${CUDA_PATH})
+
+    if (DEFINED ENV{CUDNN_HOME} AND NOT $ENV{CUDNN_HOME} STREQUAL "")
+        set(CUDNN_INCLUDE_DIR $ENV{CUDNN_HOME}/include)
+        set(CUDNN_LIBRARY_DIR $ENV{CUDNN_HOME}/lib64)
+        find_path(CUDNN_INCLUDE_PATH cudnn.h HINTS ${CUDNN_INCLUDE_DIR} NO_DEFAULT_PATH)
+        find_library(CUDNN_LIBRARY_PATH "cudnn" HINTS ${CUDNN_LIBRARY_DIR} NO_DEFAULT_PATH)
+        if (CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn header file, please set environment variable CUDNN_HOME to cudnn installation position.")
+        endif()
+        if (CUDNN_LIBRARY_PATH STREQUAL CUDNN_LIBRARY_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn library file, please set environment variable CUDNN_HOME to cudnn installation position.")
+        endif()
+    else()
+        list(APPEND CMAKE_PREFIX_PATH  ${CUDA_TOOLKIT_ROOT_DIR})
+        find_path(CUDNN_INCLUDE_PATH cudnn.h PATH_SUFFIXES cuda/inclulde include cuda)
+        find_library(CUDNN_LIBRARY_PATH "cudnn" PATH_SUFFIXES cuda/lib64 lib64 lib cuda/lib lib/x86_64-linux-gnu)
+        if (CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn header file, if cudnn library is not installed, please put cudnn header file in cuda include path \
+                    or user include path(eg. /usr/local/cuda/include; /usr/local/include; /usr/include), if cudnn library is installed in other position,\
+                    please set environment variable CUDNN_HOME to cudnn installation position, there should be cudnn.h in {CUDNN_HOME}/include.")
+        endif()
+        if (CUDNN_LIBRARY_PATH STREQUAL CUDNN_LIBRARY_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn library file, if cudnn library is not installed, please put cudnn library file in \
+                    cuda library path or user library path(eg. /usr/local/cuda/lib64; /usr/local/lib64; /usr/lib64; /usr/local/lib; /usr/lib),\
+                    if cudnn library is installed in other position, please set environment variable CUDNN_HOME to cudnn installation position, \
+                    there should be cudnn library file in {CUDNN_HOME}/lib64.")
+        endif()
     endif()
+
     if(NOT CUPTI_INCLUDE_DIRS OR CUPTI_INCLUDE_DIRS STREQUAL "")
         set(CUPTI_INCLUDE_DIRS  ${CUDA_PATH}/extras/CUPTI/include)
     endif()
     message("CUDA_PATH: ${CUDA_PATH}")
     message("CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
-    message("CUDNN_PATH: ${CUDNN_PATH}")
+    message("CUDNN_INCLUDE_PATH: ${CUDNN_INCLUDE_PATH}")
+    message("CUDNN_LIBRARY_PATH: ${CUDNN_LIBRARY_PATH}")
     message("CUPTI_INCLUDE_DIRS: ${CUPTI_INCLUDE_DIRS}")
-    include_directories(${CUDNN_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
+    include_directories(${CUDNN_INCLUDE_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
 
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "runtime/device/gpu/*.cc"
@@ -261,7 +288,7 @@ if (ENABLE_GPU)
     message("add gpu lib to c_expression")
     target_link_libraries(_c_expression PRIVATE gpu_cuda_lib gpu_queue cublas
                           ${CUDA_PATH}/lib64/libcurand.so
-                          ${CUDNN_PATH}/lib64/libcudnn.so
+                          ${CUDNN_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so
                           ${CUDA_PATH}/lib64/libcusolver.so)
