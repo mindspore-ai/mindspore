@@ -52,6 +52,7 @@ MindRecordOp::Builder::Builder() : build_dataset_file_({}) {
   build_rows_per_buffer_ = cfg->rows_per_buffer();
   build_op_connector_queue_size_ = cfg->op_connector_size();
   builder_num_workers_ = 0;
+  build_load_dataset_ = false;
   build_num_padded_ = 0;
   build_sample_ = nullptr;
 }
@@ -344,6 +345,7 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     DataType type = column.type();
 
     // Set shape
+    CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0, "The divisor cannot be 0.");
     auto num_elements = n_bytes / column_data_type_size;
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};
