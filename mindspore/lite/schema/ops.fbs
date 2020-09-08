@@ -398,7 +398,10 @@ table BNGrad {
     eps : float;
     momentum: float;
 }
-
+table BNGradInput {
+    eps : float;
+    momentum: float;
+}
 table Scale {
     axis: int;
 }

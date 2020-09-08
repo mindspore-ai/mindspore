@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -33,6 +34,7 @@ class ActivationGrad : public PrimitiveC {
   explicit ActivationGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetType(int type);
   void SetAlpha(float alpha);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   ActivationGrad() = default;
 

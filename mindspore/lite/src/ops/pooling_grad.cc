@@ -52,7 +52,64 @@ void PoolingGrad::SetPadRight(int pad_right) { this->primitive_->value.AsPooling
 void PoolingGrad::SetRoundMode(int round_mode) {
   this->primitive_->value.AsPoolingGrad()->roundMode = (schema::RoundMode)round_mode;
 }
+int PoolingGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_PoolingGrad;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_PoolingGrad) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::PoolingGradT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
 
+    auto format = GetValue<std::string>(prim.GetAttr("data_format"));
+    if (format == "NCHW") {
+      attr->format = schema::Format_NCHW;
+    } else if (format == "NHWC") {
+      attr->format = schema::Format_NHWC;
+    } else {
+      attr->format = schema::Format_NUM_OF_FORMAT;
+    }
+    if (prim.instance_name() == "MaxPool") {
+      attr->poolingMode = schema::PoolMode_MAX_POOLING;
+    } else if (prim.instance_name() == "MeanPool") {
+      attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+    }
+
+    auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));
+    if (pad_mode == "VALID") {
+      attr->padMode = schema::PadMode_VALID;
+    } else if (pad_mode == "SAME") {
+      attr->padMode = schema::PadMode_SAME;
+    } else {
+      attr->padMode = schema::PadMode_NOTSET;
+    }
+
+    auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("ksize"));
+    attr->windowH = kernel_size[2];
+    attr->windowW = kernel_size[3];
+
+    auto stride = GetValue<std::vector<int>>(prim.GetAttr("strides"));
+    attr->strideH = stride[2];
+    attr->strideW = stride[3];
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 #else
 
 int PoolingGrad::GetFormat() const { return this->primitive_->value_as_PoolingGrad()->format(); }

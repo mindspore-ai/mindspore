@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <string>
 #include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
@@ -44,6 +45,7 @@ class PoolingGrad : public PrimitiveC {
   void SetPadLeft(int pad_left);
   void SetPadRight(int pad_right);
   void SetRoundMode(int round_mode);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   PoolingGrad() = default;
 
