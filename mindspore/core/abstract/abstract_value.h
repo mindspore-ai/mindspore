@@ -563,7 +563,9 @@ class AbstractRefKey : public AbstractBase {
   }
   inline void set_value(const ValuePtr &value) {
     AbstractBase::set_value(value);
-    ref_key_value_ = value->cast<RefKeyPtr>();
+    if (value != nullptr) {
+      ref_key_value_ = value->cast<RefKeyPtr>();
+    }
   }
   RefKeyPtr ref_key_value() const { return ref_key_value_; }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
