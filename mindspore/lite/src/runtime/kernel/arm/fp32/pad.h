@@ -28,7 +28,7 @@ class PadCPUKernel : public LiteKernel {
   PadCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const lite::Context *ctx,
                const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), context_(ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     pad_param_ = reinterpret_cast<PadParameter *>(parameter);
   }
 
@@ -37,14 +37,15 @@ class PadCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int RunImpl(int task_id);
+  virtual int RunImpl(int task_id);
 
- private:
-  const lite::Context *context_;
+ protected:
   const PadParameter *pad_param_;
   int in_[4] = {1, 1, 1, 1};
   int out_[4] = {1, 1, 1, 1};
 };
+
+int PadImpl(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PAD_H_
