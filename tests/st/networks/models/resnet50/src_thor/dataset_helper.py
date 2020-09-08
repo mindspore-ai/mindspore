@@ -18,12 +18,14 @@ from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _to_f
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.context import ParallelMode
 
+
 def _send_data(dataset):
     """Engine dataset to write data to tdt queue."""
     if not hasattr(dataset, '__has_sent__'):
         exec_dataset = dataset.__TRANSFER_DATASET__
         exec_dataset.send()
         dataset.__has_sent__ = True
+
 
 class DatasetHelper:
     """
@@ -69,13 +71,12 @@ class _DatasetIter:
 
     def __init__(self, dataset):
         self.loop_size = 1
-        if not hasattr(dataset, '__ME_INITED__'):
+        if not hasattr(dataset, '__TRANSFER_DATASET__'):
             if not hasattr(dataset, '__loop_size__'):
                 self.loop_size = dataset.get_dataset_size()
             else:
                 self.loop_size = dataset.__loop_size__
             dataset.__TRANSFER_DATASET__ = _exec_datagraph(dataset, self.loop_size)
-            dataset.__ME_INITED__ = dataset.__TRANSFER_DATASET__.queue_name
 
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset)

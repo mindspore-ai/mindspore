@@ -28,6 +28,7 @@ from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.metrics import Loss
 from mindspore.nn.metrics import get_metrics
+from mindspore.train.dataset_helper import connect_network_with_dataset
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
@@ -70,7 +71,7 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
 
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
-    init_exec_dataset(exec_dataset.__ME_INITED__,
+    init_exec_dataset(exec_dataset.__TRANSFER_DATASET__.queue_name,
                       dataset_size,
                       batch_size,
                       dataset_types,
@@ -275,23 +276,14 @@ class Model:
     def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1,
                          iter_first_order=9):
         """Initializes dataset."""
-        need_wrap = False
-        if dataset_sink_mode:
-            # remove later to deal with loop sink
-            if not hasattr(dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" \
-                    and not context.get_context("enable_ge"):
-                need_wrap = True
-
-            if not is_train:
-                dataset.__loop_size__ = 1
-
+        if dataset_sink_mode and not is_train:
+            dataset.__loop_size__ = 1
         dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num, iter_first_order)
 
-        # remove later to deal with loop sink
-        if need_wrap:
-            network = nn.DataWrapper(network, *(dataset_helper.types_shapes()), dataset.__ME_INITED__)
-            network.set_train(is_train)
-            network.phase = phase
+        if dataset_sink_mode:
+            network = connect_network_with_dataset(network, dataset_helper)
+        network.set_train(is_train)
+        network.phase = phase
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             network.set_auto_parallel()

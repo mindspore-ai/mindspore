@@ -35,7 +35,7 @@ from ..context import ParallelMode
 from ..parallel._utils import _need_to_full, _to_full_tensor
 from ..parallel._cost_model_context import _set_multi_subgraphs
 from ..common import dtype as mstype
-from .dataset_helper import DatasetHelper
+from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
 
 
@@ -249,23 +249,15 @@ class Model:
 
     def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1):
         """Initializes dataset."""
-        need_wrap = False
-        if dataset_sink_mode:
-            # remove later to deal with loop sink
-            if not hasattr(dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" \
-                    and not context.get_context("enable_ge"):
-                need_wrap = True
-
-            if not is_train:
-                dataset.__loop_size__ = 1
-
+        if dataset_sink_mode and not is_train:
+            dataset.__loop_size__ = 1
         dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num)
 
-        # remove later to deal with loop sink
-        if need_wrap:
-            network = nn.DataWrapper(network, *(dataset_helper.types_shapes()), dataset.__ME_INITED__)
-            network.set_train(is_train)
-            network.phase = phase
+        if dataset_sink_mode:
+            network = connect_network_with_dataset(network, dataset_helper)
+
+        network.set_train(is_train)
+        network.phase = phase
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             network.set_auto_parallel()
@@ -306,11 +298,9 @@ class Model:
 
         if train_dataset:
             _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
-            self._train_network.set_train()
-            self._train_network.phase = 'train'
-
             if self._parameter_broadcast:
                 self._train_network.set_broadcast_flag()
+
             train_dataset.__no_send__ = True
             train_dataset_helper, train_network = self._exec_preprocess(self._train_network,
                                                                         is_train=True,
@@ -326,8 +316,6 @@ class Model:
             if not self._metric_fns:
                 raise RuntimeError('If define `valid_dataset`, metric fn can not be None or empty.')
 
-            self._eval_network.set_train(False)
-            self._eval_network.phase = 'eval'
             valid_dataset.__no_send__ = True
             valid_dataset_helper, eval_network = self._exec_preprocess(self._eval_network,
                                                                        is_train=False,
@@ -358,8 +346,6 @@ class Model:
             sink_size (int): Control the amount of data in each sink. Default: -1.
         """
         epoch = check_int_positive(epoch)
-        self._train_network.set_train()
-
         if self._parameter_broadcast:
             self._train_network.set_broadcast_flag()
 
@@ -700,9 +686,6 @@ class Model:
         cb_params.cur_step_num = 0
         cb_params.list_callback = self._transform_callbacks(callbacks)
         cb_params.network = self._network
-
-        self._eval_network.set_train(mode=False)
-        self._eval_network.phase = 'eval'
 
         self._clear_metrics()
 
