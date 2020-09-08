@@ -432,7 +432,7 @@ TEST_F(TestActivationOpenCL, LeakyReluFp_dim4) {
   std::vector<int> input_shape = {1, 9};  // need modify
   auto tensor_type = schema::NodeType_ValueNode;
   schema::Format format = schema::Format_NC;      // need modify
-  schema::Format op_format = schema::Format_NC4;  // need modify
+  schema::Format op_format = schema::Format_NHWC4;  // need modify
   auto *input_tensor = new (std::nothrow) lite::tensor::Tensor(data_type, input_shape, format, tensor_type);
   if (input_tensor == nullptr) {
     MS_LOG(ERROR) << "new input tensor error!";

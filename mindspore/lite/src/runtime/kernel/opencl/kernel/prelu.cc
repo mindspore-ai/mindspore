@@ -22,6 +22,7 @@
 
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/fp32/common_func.h"
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/cl/prelu.cl.inc"
@@ -35,18 +36,38 @@ using mindspore::schema::PrimitiveType_PReLU;
 namespace mindspore::kernel {
 
 void PReluOpenCLKernel::InitBuffer() {
-  int C = in_tensors_[1]->shape()[0];
-  int div_ci = UP_DIV(C, C4NUM);
   auto allocator = lite::opencl::OpenCLRuntime::GetInstance()->GetAllocator();
+  int elem_num = in_tensors_[0]->shape().size() == 2 ? in_tensors_[0]->shape()[1] : in_tensors_[0]->shape()[3];
+  int elem_num_c4 = UP_DIV(elem_num, C4NUM);
   size_t img_dtype = CL_FLOAT;
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
   }
-  std::vector<size_t> img_size{size_t(div_ci), 1, img_dtype};
-  PReluWeight_ = allocator->Malloc(div_ci * C4NUM * fp_size, img_size);
+  std::vector<size_t> img_size{size_t(elem_num_c4), 1, img_dtype};
+  PReluWeight_ = allocator->Malloc(elem_num_c4 * C4NUM * fp_size, img_size);
   PReluWeight_ = allocator->MapBuffer(PReluWeight_, CL_MAP_WRITE, nullptr, true);
-  memset(PReluWeight_, 0x00, div_ci * C4NUM * fp_size);
-  memcpy(PReluWeight_, in_tensors_[1]->Data(), C * fp_size);
+  memset(PReluWeight_, 0x00, elem_num_c4 * C4NUM * fp_size);
+  if (enable_fp16_) {
+    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+      auto PReluWeight_fp16 = reinterpret_cast<uint16_t *>(PReluWeight_);
+      auto in_tensor_data_fp32 = reinterpret_cast<float *>(in_tensors_[1]->Data());
+      for (int i = 0; i < elem_num; i++) {
+        PReluWeight_fp16[i] = Float32ToShort(in_tensor_data_fp32[i]);
+      }
+    } else {
+      memcpy(PReluWeight_, in_tensors_[1]->Data(), elem_num * fp_size);
+    }
+  } else {
+    if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
+      auto PReluWeight_fp32 = reinterpret_cast<float *>(PReluWeight_);
+      auto in_tensor_data_fp16 = reinterpret_cast<uint16_t *>(in_tensors_[1]->Data());
+      for (int i = 0; i < elem_num; i++) {
+        PReluWeight_fp32[i] = ShortToFloat32(in_tensor_data_fp16[i]);
+      }
+    } else {
+      memcpy(PReluWeight_, in_tensors_[1]->Data(), elem_num * fp_size);
+    }
+  }
   allocator->UnmapBuffer(PReluWeight_);
 }
 
