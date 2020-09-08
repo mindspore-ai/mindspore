@@ -242,13 +242,14 @@ class TestSummaryCollector:
             SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))._check_callbacks(cb_params)
         assert f"more than one SummaryCollector instance in callback list" in str(exc.value)
 
-    def test_collect_input_data_with_train_dataset_element_none(self):
-        """Test the param 'train_dataset_element' in cb_params is none."""
+    def test_collect_input_data_with_train_dataset_element_invalid(self):
+        """Test the param 'train_dataset_element' in cb_params is invalid."""
         cb_params = _InternalCallbackParam()
-        cb_params.train_dataset_element = None
-        summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
-        summary_collector._collect_input_data(cb_params)
-        assert not summary_collector._collect_specified_data['collect_input_data']
+        for invalid in (), [], None, [None]:
+            cb_params.train_dataset_element = invalid
+            with SummaryCollector(tempfile.mkdtemp(dir=self.base_summary_dir)) as summary_collector:
+                summary_collector._collect_input_data(cb_params)
+                assert not summary_collector._collect_specified_data['collect_input_data']
 
     @mock.patch.object(SummaryRecord, 'add_value')
     def test_collect_input_data_success(self, mock_add_value):

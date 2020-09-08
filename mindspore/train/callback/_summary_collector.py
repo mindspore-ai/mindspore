@@ -414,11 +414,11 @@ class SummaryCollector(Callback):
             logger.info("The 'train_dataset_element' in cb_params is None, maybe there is dataset sink mode.")
             return
 
-        if isinstance(input_data, (list, tuple)):
+        if isinstance(input_data, (list, tuple)) and input_data:
             input_data = input_data[0]
         try:
             self._record.add_value(PluginEnum.IMAGE.value, 'input_data/auto', input_data)
-        except ValueError:
+        except (TypeError, ValueError):
             logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
             self._collect_specified_data['collect_input_data'] = False
             return
