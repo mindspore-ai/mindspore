@@ -45,10 +45,11 @@ void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *wei
 void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, size_t height, size_t width,
                         size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                         size_t in_sw_step, size_t in_kh_step, size_t in_kw_step);
-void ConvDwInt8Center(int8_t *dst, const int16_t *src, const int16_t *weight, const int32_t *bias, size_t height,
+void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t height,
                       size_t width, size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel,
-                      size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, int out_multiplier,
-                      int left_shift, int right_shift, int32_t out_zp, int32_t acc_min, int32_t acc_max);
+                      size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, int8_t *in_zp,
+                      int32_t *out_zp, int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift,
+                      int32_t *acc_min, int32_t *acc_max);
 void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
                    int output_channel, int input_step, int8_t input_zp);
 void ConvDwInt8PostAlign4(int8_t *dst, int32_t *buffer, int num_pixels, int32_t output_zp, int32_t out_multiplier,

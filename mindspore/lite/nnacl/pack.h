@@ -96,6 +96,10 @@ void PackNHWCToNHWC4Int8(const void *src, void *dst, int batch, int plane, int c
 
 void PackNHWC4ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
 
+void PackNHWCToNHWC8Int8(const void *src, void *dst, int batch, int plane, int channel);
+
+void PackNHWC8ToNHWCInt8(const void *src, void *dst, int batch, int plane, int channel);
+
 void PackNCHWToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel);
 
 void PackNC4HW4ToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel);
@@ -114,6 +118,9 @@ void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter
 
 void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
                              ConvQuantArg *quant_qrg);
+
+void PackDeconvDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
+                                   ConvQuantArg *quant_qrg);
 #ifdef __cplusplus
 }
 #endif
