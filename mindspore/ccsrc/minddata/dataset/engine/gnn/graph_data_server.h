@@ -89,6 +89,8 @@ class UntypedCall {
   virtual ~UntypedCall() {}
 
   virtual Status operator()() = 0;
+
+  virtual bool JudgeFinish() = 0;
 };
 
 template <class ServiceImpl, class AsyncService, class RequestMessage, class ResponseMessage>
@@ -120,21 +122,27 @@ class CallData : public UntypedCall {
     return Status::OK();
   }
 
-  Status operator()() {
+  Status operator()() override {
     if (status_ == STATE::CREATE) {
       status_ = STATE::PROCESS;
       (async_service_->*enqueue_function_)(&ctx_, &request_, &responder_, cq_, cq_, this);
     } else if (status_ == STATE::PROCESS) {
       EnqueueRequest(service_impl_, async_service_, cq_, enqueue_function_, handle_request_function_);
       status_ = STATE::FINISH;
-      // new CallData(service_, cq_, this->s_type_);
       grpc::Status s = (service_impl_->*handle_request_function_)(&ctx_, &request_, &response_);
       responder_.Finish(response_, s, this);
     } else {
-      GPR_ASSERT(status_ == STATE::FINISH);
-      delete this;
+      MS_LOG(WARNING) << "The CallData status is finish and the pointer needs to be released.";
     }
     return Status::OK();
+  }
+
+  bool JudgeFinish() override {
+    if (status_ == STATE::FINISH) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
  private:
@@ -183,7 +191,11 @@ class GraphDataGrpcServer : public GrpcAsyncServer {
 
   Status ProcessRequest(void *tag) {
     auto rq = static_cast<UntypedCall *>(tag);
-    RETURN_IF_NOT_OK((*rq)());
+    if (rq->JudgeFinish()) {
+      delete rq;
+    } else {
+      RETURN_IF_NOT_OK((*rq)());
+    }
     return Status::OK();
   }
 
