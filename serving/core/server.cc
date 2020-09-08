@@ -44,6 +44,7 @@ namespace serving {
 namespace {
 static const uint32_t uint32max = 0x7FFFFFFF;
 std::promise<void> exit_requested;
+static const char kServerHttpIp[] = "0.0.0.0";
 
 void ClearEnv() { Session::Instance().Clear(); }
 void HandleSignal(int sig) { exit_requested.set_value(); }
@@ -195,7 +196,7 @@ Status Server::BuildAndStart() {
     return res;
   }
   auto option_args = Options::Instance().GetArgs();
-  std::string server_address = "0.0.0.0:" + std::to_string(option_args->grpc_port);
+  std::string server_address = std::string(kServerHttpIp) + ":" + std::to_string(option_args->grpc_port);
 
   auto http_server_new_ret = NewHttpServer();
   struct evhttp *http_server = http_server_new_ret.first;
@@ -211,7 +212,7 @@ Status Server::BuildAndStart() {
     event_base_free(eb);
   };
   int32_t http_port = option_args->rest_api_port;
-  std::string http_addr = "0.0.0.0";
+  std::string http_addr = kServerHttpIp;
 
   evhttp_set_timeout(http_server, 60);
   evhttp_set_gencb(http_server, http_handler_msg, nullptr);

@@ -33,6 +33,8 @@ class Status {
   Status() : status_code_(FAILED) {}
   Status(enum StatusCode status_code, const std::string &status_msg = "")
       : status_code_(status_code), status_msg_(status_msg) {}
+  ~Status() = default;
+
   bool IsSuccess() const { return status_code_ == SUCCESS; }
   enum StatusCode StatusCode() const { return status_code_; }
   std::string StatusMessage() const { return status_msg_; }

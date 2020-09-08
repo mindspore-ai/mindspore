@@ -29,13 +29,13 @@ bool StartWith(const std::string &str, const std::string &expected) {
          (str.size() >= expected.size() && memcmp(str.data(), expected.data(), expected.size()) == 0);
 }
 
-bool RemovePrefix(std::string *str, const std::string &prefix) {
+bool RemovePrefix(std::string *const str, const std::string &prefix) {
   if (!StartWith(*str, prefix)) return false;
   str->replace(str->begin(), str->begin() + prefix.size(), "");
   return true;
 }
 
-bool Option::ParseInt32(std::string *arg) {
+bool Option::ParseInt32(std::string *const arg) {
   if (RemovePrefix(arg, "--") && RemovePrefix(arg, name_) && RemovePrefix(arg, "=")) {
     int32_t parsed_value;
     try {
@@ -50,7 +50,7 @@ bool Option::ParseInt32(std::string *arg) {
   return false;
 }
 
-bool Option::ParseBool(std::string *arg) {
+bool Option::ParseBool(std::string *const arg) {
   if (RemovePrefix(arg, "--") && RemovePrefix(arg, name_) && RemovePrefix(arg, "=")) {
     if (*arg == "true") {
       *bool_default_ = true;
@@ -66,7 +66,7 @@ bool Option::ParseBool(std::string *arg) {
   return false;
 }
 
-bool Option::ParseString(std::string *arg) {
+bool Option::ParseString(std::string *const arg) {
   if (RemovePrefix(arg, "--") && RemovePrefix(arg, name_) && RemovePrefix(arg, "=")) {
     *string_default_ = *arg;
     return true;
@@ -74,7 +74,7 @@ bool Option::ParseString(std::string *arg) {
   return false;
 }
 
-bool Option::ParseFloat(std::string *arg) {
+bool Option::ParseFloat(std::string *const arg) {
   if (RemovePrefix(arg, "--") && RemovePrefix(arg, name_) && RemovePrefix(arg, "=")) {
     float parsed_value;
     try {
@@ -89,7 +89,7 @@ bool Option::ParseFloat(std::string *arg) {
   return false;
 }
 
-Option::Option(const std::string &name, int32_t *default_point, const std::string &usage)
+Option::Option(const std::string &name, int32_t *const default_point, const std::string &usage)
     : name_(name),
       type_(MS_TYPE_INT32),
       int32_default_(default_point),
@@ -98,7 +98,7 @@ Option::Option(const std::string &name, int32_t *default_point, const std::strin
       float_default_(nullptr),
       usage_(usage) {}
 
-Option::Option(const std::string &name, bool *default_point, const std::string &usage)
+Option::Option(const std::string &name, bool *const default_point, const std::string &usage)
     : name_(name),
       type_(MS_TYPE_BOOL),
       int32_default_(nullptr),
@@ -107,7 +107,7 @@ Option::Option(const std::string &name, bool *default_point, const std::string &
       float_default_(nullptr),
       usage_(usage) {}
 
-Option::Option(const std::string &name, std::string *default_point, const std::string &usage)
+Option::Option(const std::string &name, std::string *const default_point, const std::string &usage)
     : name_(name),
       type_(MS_TYPE_STRING),
       int32_default_(nullptr),
@@ -116,7 +116,7 @@ Option::Option(const std::string &name, std::string *default_point, const std::s
       float_default_(nullptr),
       usage_(usage) {}
 
-Option::Option(const std::string &name, float *default_point, const std::string &usage)
+Option::Option(const std::string &name, float *const default_point, const std::string &usage)
     : name_(name),
       type_(MS_TYPE_FLOAT),
       int32_default_(nullptr),
@@ -125,7 +125,7 @@ Option::Option(const std::string &name, float *default_point, const std::string 
       float_default_(default_point),
       usage_(usage) {}
 
-bool Option::Parse(std::string *arg) {
+bool Option::Parse(std::string *const arg) {
   bool result = false;
   switch (type_) {
     case MS_TYPE_BOOL:
