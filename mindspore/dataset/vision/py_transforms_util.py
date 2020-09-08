@@ -580,7 +580,7 @@ def rotate(img, angle, resample, expand, center, fill_value):
             Origin is the top left corner.
         fill_value (Union[int, tuple]): Optional fill color for the area outside the rotated image.
             If it is a 3-tuple, it is used for R, G, B channels respectively.
-            If it is an int, it is used for all RGB channels.
+            If it is an integer, it is used for all RGB channels.
 
     Returns:
         img (PIL image), Rotated image.
@@ -677,7 +677,7 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
             Origin is the top left corner.
         fill_value (Union[int, tuple]): Optional fill color for the area outside the rotated image.
             If it is a 3-tuple, it is used for R, G, B channels respectively.
-            If it is an int, it is used for all RGB channels.
+            If it is an integer, it is used for all RGB channels.
 
     Returns:
         img (PIL image), Rotated image.
@@ -1108,7 +1108,7 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
         angle (Union[int, float]): Rotation angle in degrees, clockwise.
         translations (sequence): Translations in horizontal and vertical axis.
         scale (float): Scale parameter, a single number.
-        shear (Union[float, sequence]): Shear amount parallel to x and y axis.
+        shear (Union[float, sequence]): Shear amount parallel to X axis and Y axis.
         resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
         fill_value (Union[tuple int], optional): Optional fill_value to fill the area outside the transform
             in the output image. Used only in Pillow versions > 5.0.0.
@@ -1294,7 +1294,7 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
     shape_size = len(np_rgb_imgs.shape)
 
     if not shape_size in (3, 4):
-        raise TypeError('img shape should be (H, W, C)/(N, H, W, C)/(C,H,W)/(N,C,H,W). \
+        raise TypeError('img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). \
                          Got {}'.format(np_rgb_imgs.shape))
 
     if shape_size == 3:
@@ -1362,7 +1362,7 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
     shape_size = len(np_hsv_imgs.shape)
 
     if not shape_size in (3, 4):
-        raise TypeError('img shape should be (H, W, C)/(N, H, W, C)/(C,H,W)/(N,C,H,W). \
+        raise TypeError('img shape should be (H, W, C)/(N, H, W, C)/(C, H, W)/(N, C, H, W). \
                          Got {}'.format(np_hsv_imgs.shape))
 
     if shape_size == 3:

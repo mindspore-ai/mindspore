@@ -17,9 +17,8 @@
 The module vision.py_transforms is implemented based on Python PIL.
 This module provides many kinds of image augmentations. It also provides
 transferring methods between PIL image and NumPy array. For users who prefer
-Python PIL in image learning task, this module is a good tool to process image
-augmentations. Users can also self-define their own augmentations with Python
-PIL.
+Python PIL in image learning tasks, this module is a good tool to process images.
+Users can also self-define their own augmentations with Python PIL.
 """
 import numbers
 import random
@@ -48,22 +47,22 @@ DE_PY_BORDER_TYPE = {Border.CONSTANT: 'constant',
 
 class ToTensor:
     """
-    Convert the input NumPy image array or PIL image of shape (H,W,C) to a NumPy ndarray of shape (C,H,W).
+    Convert the input NumPy image array or PIL image of shape (H, W, C) to a NumPy ndarray of shape (C, H, W).
 
     Note:
-        The ranges of values in height and width dimension changes from [0, 255] to [0.0, 1.0]. Type cast to output_type
-        (default NumPy float 32).
+        The ranges of values in height and width dimension are converted from [0, 255] to [0.0, 1.0].
+        The type is cast to output_type (default NumPy float32).
         The range of channel dimension remains the same.
 
     Args:
-        output_type (Numpy datatype, optional): The datatype of the NumPy output (default=np.float32).
+        output_type (NumPy datatype, optional): The datatype of the NumPy output (default=np.float32).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(), py_transforms.RandomHorizontalFlip(0.5),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(), py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor()])
     """
 
     def __init__(self, output_type=np.float32):
@@ -87,16 +86,16 @@ class ToType:
     Convert the input NumPy image array to desired NumPy dtype.
 
     Args:
-        output_type (Numpy datatype): The datatype of the NumPy output, e.g. numpy.float32.
+        output_type (NumPy datatype): The datatype of the NumPy output, e.g. numpy.float32.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> import numpy as np
         >>>
-        >>> Compose([py_transforms.Decode(), py_transforms.RandomHorizontalFlip(0.5),
-        >>>          py_transforms.ToTensor(),
-        >>>          py_transforms.ToType(np.float32)])
+        >>> Compose([py_vision.Decode(), py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.ToType(np.float32)])
     """
 
     def __init__(self, output_type):
@@ -118,6 +117,13 @@ class ToType:
 class HWC2CHW:
     """
     Transpose a NumPy image array; shape (H, W, C) to shape (C, H, W).
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.HWC2CHW()])
     """
 
     def __call__(self, img):
@@ -139,11 +145,11 @@ class ToPIL:
 
     Examples:
         >>> # data is already decoded, but not in PIL image format
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.ToPIL(),  py_transforms.RandomHorizontalFlip(0.5),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.ToPIL(),  py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor()])
     """
 
     def __call__(self, img):
@@ -164,12 +170,12 @@ class Decode:
     Decode the input image to PIL image format in RGB mode.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>                          py_transforms.RandomHorizontalFlip(0.5),
-        >>>                          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor()])
     """
 
     def __call__(self, img):
@@ -189,22 +195,22 @@ class Normalize:
     """
     Normalize the input NumPy image array of shape (C, H, W) with the given mean and standard deviation.
 
-    The values of the array need to be in range (0.0, 1.0].
+    The values of the array need to be in the range (0.0, 1.0].
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
-            The mean values must be in range (0.0, 1.0].
+            The mean values must be in the range (0.0, 1.0].
         std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
-            The standard deviation values must be in range (0.0, 1.0].
+            The standard deviation values must be in the range (0.0, 1.0].
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomHorizontalFlip(0.5),
-        >>>          py_transforms.ToTensor(),
-        >>>          py_transforms.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262))])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262))])
     """
 
     @check_normalize_py
@@ -259,12 +265,12 @@ class RandomCrop:
               value of edge.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomCrop(224),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomCrop(224),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_crop
@@ -301,12 +307,12 @@ class RandomHorizontalFlip:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomHorizontalFlip(0.5),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_prob
@@ -334,12 +340,12 @@ class RandomVerticalFlip:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.RandomVerticalFlip(0.5),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomVerticalFlip(0.5),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_prob
@@ -371,19 +377,19 @@ class Resize:
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.Resize(256),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.Resize(256),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_resize_interpolation
@@ -418,22 +424,22 @@ class RandomResizedCrop:
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area (default=10). If exceeded, fall back to use center crop instead.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.RandomResizedCrop(224),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomResizedCrop(224),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_resize_crop
@@ -469,12 +475,12 @@ class CenterCrop:
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.CenterCrop(64),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.CenterCrop(64),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_crop
@@ -513,12 +519,12 @@ class RandomColorAdjust:
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_color_adjust
@@ -556,11 +562,11 @@ class RandomRotation:
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means resampling method is bilinear interpolation.
+            - Inter.BILINEAR, means the resampling method is bilinear interpolation.
 
-            - Inter.NEAREST, means resampling method is nearest-neighbor interpolation.
+            - Inter.NEAREST, means the resampling method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means resampling method is bicubic interpolation.
+            - Inter.BICUBIC, means the resampling method is bicubic interpolation.
 
         expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -571,15 +577,15 @@ class RandomRotation:
         fill_value (int or tuple, optional): Optional fill color for the area outside the rotated
             image (default=0).
             If it is a 3-tuple, it is used for R, G, B channels respectively.
-            If it is an int, it is used for all RGB channels. Default is 0.
+            If it is an integer, it is used for all RGB channels. Default is 0.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.RandomRotation(30),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomRotation(30),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_rotation
@@ -608,15 +614,15 @@ class RandomOrder:
     Perform a series of transforms to the input PIL image in a random order.
 
     Args:
-        transforms (list): List of the transformations to be applied.
+        transforms (list): List of the transformations to apply.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomOrder(transforms_list),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomOrder(transforms_list),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_transforms_list
@@ -628,7 +634,7 @@ class RandomOrder:
         Call method.
 
         Args:
-            img (PIL image): Image to be applied transformations in a random order.
+            img (PIL image): Image to apply transformations in a random order.
 
         Returns:
             img (PIL image), Transformed image.
@@ -641,16 +647,16 @@ class RandomApply:
     Randomly perform a series of transforms with a given probability.
 
     Args:
-        transforms (list): List of transformations to be applied.
+        transforms (list): List of transformations to apply.
         prob (float, optional): The probability to apply the transformation list (default=0.5).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.RandomApply(transforms_list, prob=0.6),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomApply(transforms_list, prob=0.6),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_apply
@@ -673,18 +679,18 @@ class RandomApply:
 
 class RandomChoice:
     """
-    Randomly select one transform from a series of transforms and applies that on the image.
+    Randomly select one transform from a series of transforms and apply that transform on the image.
 
     Args:
          transforms (list): List of transformations to be chosen from to apply.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomChoice(transforms_list),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomChoice(transforms_list),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_transforms_list
@@ -696,7 +702,7 @@ class RandomChoice:
         Call method.
 
         Args:
-            img (PIL image): Image to be applied transformation.
+            img (PIL image): Image to apply transformation.
 
         Returns:
             img (PIL image), Transformed image.
@@ -706,7 +712,7 @@ class RandomChoice:
 
 class FiveCrop:
     """
-    Generate 5 cropped images (one central and four corners).
+    Generate 5 cropped images (one central image and four corners images).
 
     Args:
         size (int or sequence): The output size of the crop.
@@ -714,13 +720,13 @@ class FiveCrop:
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.FiveCrop(size),
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.FiveCrop(size),
         >>>          # 4D stack of 5 images
-        >>>          lambda images: numpy.stack([py_transforms.ToTensor()(image) for image in images])])
+        >>>          lambda images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
     """
 
     @check_crop
@@ -743,7 +749,8 @@ class FiveCrop:
 
 class TenCrop:
     """
-    Generate 10 cropped images (first 5 from FiveCrop, second 5 from their flipped version).
+    Generate 10 cropped images (first 5 images from FiveCrop, second 5 images from their flipped version
+    as per input flag to flip vertically or horizontally).
 
     Args:
         size (Union[int, sequence]): The output size of the crop.
@@ -753,13 +760,13 @@ class TenCrop:
             if set to True (default=False).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.TenCrop(size),
-        >>>         # 4D stack of 10 images
-        >>>         lambda images: numpy.stack([py_transforms.ToTensor()(image) for image in images])])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.TenCrop(size),
+        >>>          # 4D stack of 10 images
+        >>>          lambda images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
     """
 
     @check_ten_crop
@@ -793,12 +800,12 @@ class Grayscale:
             Default is 1. If set to 3, the returned image has 3 identical RGB channels.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.Grayscale(3),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.Grayscale(3),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_num_channels
@@ -826,12 +833,12 @@ class RandomGrayscale:
         prob (float, optional): Probability of the image being converted to grayscale (default=0.1).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomGrayscale(0.3),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomGrayscale(0.3),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_prob
@@ -846,7 +853,7 @@ class RandomGrayscale:
             img (PIL image): PIL image to be converted to grayscale randomly.
 
         Returns:
-            img (PIL image), Randomly grayscale image, same number of channels as input image.
+            img (PIL image), Randomly apply grayscale to image, same number of channels as the input image.
                 If input image has 1 channel, the output grayscale image is 1 channel.
                 If input image has 3 channels, the output image has 3 identical grayscale channels.
         """
@@ -866,16 +873,16 @@ class Pad:
 
     Args:
         padding (Union[int, sequence]): The number of pixels to pad the image.
-            If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a single number is provided, pad all borders with this value.
+            If a tuple or list of 2 values is provided, pad the left and top
+            with the first value and the right and bottom with the second value.
             If 4 values are provided as a list or tuple,
-            it pads the left, top, right and bottom respectively.
-        fill_value (Union[int, tuple], optional): Filling value (default=0). The pixel intensity
-            of the borders if the padding_mode is Border.CONSTANT.
+            pad the left, top, right and bottom respectively.
+        fill_value (Union[int, tuple], optional): Filling value for the pixel intensity
+            of the borders if the padding_mode is Border.CONSTANT (Default=0).
             If it is a 3-tuple, it is used to fill R, G, B channels respectively.
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT).
-            Can be any of [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
+            It can be any of [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
             - Border.CONSTANT, means it fills the border with constant values.
 
@@ -888,13 +895,13 @@ class Pad:
               value of edge.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
+        >>> Compose([py_vision.Decode(),
         >>>          # adds 10 pixels (default black) to each side of the border of the image
-        >>>          py_transforms.Pad(padding=10),
-        >>>          py_transforms.ToTensor()])
+        >>>          py_vision.Pad(padding=10),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_pad
@@ -923,24 +930,24 @@ class RandomPerspective:
     Randomly apply perspective transformation to the input PIL image with a given probability.
 
     Args:
-        distortion_scale (float, optional): The scale of distortion, float between 0 and 1 (default=0.5).
+        distortion_scale (float, optional): The scale of distortion, a float value between 0 and 1 (default=0.5).
         prob (float, optional): Probability of the image being applied perspective transformation (default=0.5).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BICUBIC).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.RandomPerspective(prob=0.1),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomPerspective(prob=0.1),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_perspective
@@ -954,7 +961,7 @@ class RandomPerspective:
         Call method.
 
         Args:
-            img (PIL image): PIL image to be applied perspective transformation randomly.
+            img (PIL image): PIL image to apply perspective transformation randomly.
 
         Returns:
             img (PIL image), Image after being perspectively transformed randomly.
@@ -979,21 +986,21 @@ class RandomErasing:
             original image (default=(0.02, 0.33)).
         ratio (sequence of floats, optional): Range of the aspect ratio of the erase
             area (default=(0.3, 3.3)).
-        value (Union[int, sequence]): Erasing value (default=0).
-            If value is a single int, it is applied to all pixels to be erases.
+        value (Union[int, sequence, string]): Erasing value (default=0).
+            If value is a single intieger, it is applied to all pixels to be erased.
             If value is a sequence of length 3, it is applied to R, G, B channels respectively.
-            If value is a str 'random', the erase value will be obtained from a standard normal distribution.
-        inplace (bool, optional): Apply this transform inplace (default=False).
+            If value is a string 'random', the erase value will be obtained from a standard normal distribution.
+        inplace (bool, optional): Apply this transform in-place (default=False).
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             erase_area (default=10). If exceeded, return the original image.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.ToTensor(),
-        >>>          py_transforms.RandomErasing(value='random')])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.RandomErasing(value='random')])
     """
 
     @check_random_erasing
@@ -1035,12 +1042,12 @@ class Cutout:
         num_patches (int, optional): Number of patches to be cut out of an image (default=1).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.ToTensor(),
-        >>>         py_transforms.Cutout(80)])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.Cutout(80)])
     """
 
     @check_cutout
@@ -1074,23 +1081,23 @@ class Cutout:
 class LinearTransformation:
     """
     Apply linear transformation to the input NumPy image array, given a square transformation matrix and
-    a mean_vector.
+    a mean vector.
 
-    The transformation first flattens the input array and subtract mean_vector from it, then computes the
-    dot product with the transformation matrix, and reshapes it back to its original shape.
+    The transformation first flattens the input array and subtracts the mean vector from it. It then computes
+    the dot product with the transformation matrix, and reshapes it back to its original shape.
 
     Args:
         transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), D = C x H x W.
         mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.Resize(256),
-        >>>          py_transforms.ToTensor(),
-        >>>          py_transforms.LinearTransformation(transformation_matrix, mean_vector)])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.Resize(256),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.LinearTransformation(transformation_matrix, mean_vector)])
     """
 
     @check_linear_transform
@@ -1121,17 +1128,17 @@ class RandomAffine:
             If degrees is a sequence, it should be (min, max).
         translate (sequence, optional): Sequence (tx, ty) of maximum translation in
             x(horizontal) and y(vertical) directions (default=None).
-            The horizontal and vertical shift is selected randomly from the range:
+            The horizontal shift and vertical shift are selected randomly from the range:
             (-tx*width, tx*width) and (-ty*height, ty*height), respectively.
-            If None, no translations gets applied.
+            If None, no translations are applied.
         scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
         shear (Union[int, float, sequence], optional): Range of shear factor (default=None).
-            If a number 'shear', then a shear parallel to the x axis in the range of (-shear, +shear) is applied.
-            If a tuple or list of size 2, then a shear parallel to the x axis in the range of (shear[0], shear[1])
-            is applied.
-            If a tuple of list of size 4, then a shear parallel to x axis in the range of (shear[0], shear[1])
-            and a shear parallel to y axis in the range of (shear[2], shear[3]) is applied.
-            If None, no shear is applied.
+            If shear is an integer, then a shear parallel to the X axis in the range of (-shear, +shear) is applied.
+            If shear is a tuple or list of size 2, then a shear parallel to the X axis in the range of
+            (shear[0], shear[1]) is applied.
+            If shear is a tuple of list of size 4, then a shear parallel to X axis in the range of
+            (shear[0], shear[1]) and a shear parallel to Y axis in the range of (shear[2], shear[3]) is applied.
+            If shear is None, no shear is applied.
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -1142,8 +1149,9 @@ class RandomAffine:
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-        fill_value (Union[tuple, int], optional): Optional fill_value to fill the area outside the transform
-            in the output image. There must be three elements in tuple and the value of single element is [0, 255].
+        fill_value (Union[tuple, int], optional): Optional filling value to fill the area outside the transform
+            in the output image. There must be three elements in the tuple and the value of a single element is
+            within the range [0, 255].
             Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
 
     Raises:
@@ -1159,12 +1167,12 @@ class RandomAffine:
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_random_affine
@@ -1195,7 +1203,7 @@ class RandomAffine:
         Call method.
 
         Args:
-            img (PIL image): Image to be applied affine transformation.
+            img (PIL image): Image to apply affine transformation.
 
         Returns:
             img (PIL image), Randomly affine transformed image.
@@ -1212,12 +1220,22 @@ class RandomAffine:
 
 class MixUp:
     """
-    Apply mix up transformation to the input image and label, make one input data combined with others.
+    Apply mix up transformation to the input image and label. Make one input data combined with others.
 
     Args:
-        batch_size (int): the batch size of dataset.
-        alpha (float):  the mix up rate.
-        is_single (bool): for deciding using single batch or muti batch mix up transformation.
+        batch_size (int): Batch size of dataset.
+        alpha (float):  Mix up rate.
+        is_single (bool): Identify if single batch or multi-batch mix up transformation is to be used
+        (Default=True, which is single batch).
+
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>>
+        >>> # Setup multi-batch mixup transformation
+        >>> transform = [py_vision.MixUp(batch_size=16, alpha=0.2, is_single=False)]
+        >>> # Apply the transform to the dataset through dataset.map()
+        >>> dataset = dataset.map(input_columns="image", operations=transform())
     """
 
     @check_mix_up
@@ -1234,12 +1252,12 @@ class MixUp:
         Call method.
 
         Args:
-            image (numpy.ndarray): NumPy image to be applied mix up transformation.
-            label(numpy.ndarray): NumPy label to be applied mix up transformation.
+            image (numpy.ndarray): NumPy image to apply mix up transformation.
+            label(numpy.ndarray): NumPy label to apply mix up transformation.
 
         Returns:
-            image (numpy.ndarray): NumPy image after being applied mix up transformation.
-            label(numpy.ndarray): NumPy label after being applied mix up transformation.
+            image (numpy.ndarray): NumPy image after applying mix up transformation.
+            label(numpy.ndarray): NumPy label after applying mix up transformation.
         """
         if self.is_single:
             return util.mix_up_single(self.batch_size, image, label, self.alpha)
@@ -1248,11 +1266,20 @@ class MixUp:
 
 class RgbToHsv:
     """
-    Convert a NumPy RGB image or one batch NumPy RGB images to HSV images.
+    Convert a NumPy RGB image or a batch of NumPy RGB images to HSV images.
 
     Args:
         is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
                        and (C, H, W) or (N, C, H, W) if False (default=False).
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.CenterCrop(20),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.RgbToHsv()])
     """
 
     def __init__(self, is_hwc=False):
@@ -1279,6 +1306,15 @@ class HsvToRgb:
     Args:
         is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
                        and (C, H, W) or (N, C, H, W) if False (default=False).
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.CenterCrop(20),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.HsvToRgb()])
     """
 
     def __init__(self, is_hwc=False):
@@ -1307,12 +1343,12 @@ class RandomColor:
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomColor((0.5,1.5)),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomColor((0.5, 2.0)),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_positive_degrees
@@ -1342,13 +1378,12 @@ class RandomSharpness:
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.RandomSharpness((0.5,1.5)),
-        >>>          py_transforms.ToTensor()])
-
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomSharpness((0.5, 1.5)),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_positive_degrees
@@ -1378,12 +1413,12 @@ class AutoContrast:
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>         py_transforms.AutoContrast(),
-        >>>         py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.AutoContrast(),
+        >>>          py_vision.ToTensor()])
 
     """
 
@@ -1411,12 +1446,12 @@ class Invert:
     Invert colors of input PIL image.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.Invert(),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.Invert(),
+        >>>          py_vision.ToTensor()])
 
     """
 
@@ -1439,12 +1474,12 @@ class Equalize:
     Equalize the histogram of input PIL image.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.Equalize(),
-        >>>          py_transforms.ToTensor()])
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.Equalize(),
+        >>>          py_vision.ToTensor()])
 
     """
 
@@ -1465,8 +1500,9 @@ class Equalize:
 class UniformAugment:
     """
     Uniformly select and apply a number of transforms sequentially from
-    a list of transforms. Randomly assigns a probability to each transform for
-    each image to decide whether apply it or not.
+    a list of transforms. Randomly assign a probability to each transform for
+    each image to decide whether to apply the transform or not.
+
     All the transforms in transform list must have the same input/output data type.
 
     Args:
@@ -1474,16 +1510,16 @@ class UniformAugment:
          num_ops (int, optional): number of transforms to sequentially apply (default=2).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> transforms_list = [py_transforms.CenterCrop(64),
-        >>>                    py_transforms.RandomColor(),
-        >>>                    py_transforms.RandomSharpness(),
-        >>>                    py_transforms.RandomRotation(30)]
-        >>> Compose([py_transforms.Decode(),
-        >>>          py_transforms.UniformAugment(transforms_list),
-        >>>          py_transforms.ToTensor()])
+        >>> transforms_list = [py_vision.CenterCrop(64),
+        >>>                    py_vision.RandomColor(),
+        >>>                    py_vision.RandomSharpness(),
+        >>>                    py_vision.RandomRotation(30)]
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.UniformAugment(transforms_list),
+        >>>          py_vision.ToTensor()])
     """
 
     @check_uniform_augment_py
@@ -1496,7 +1532,7 @@ class UniformAugment:
         Call method.
 
         Args:
-            img (PIL image): Image to be applied transformation.
+            img (PIL image): Image to apply transformation.
 
         Returns:
             img (PIL image), Transformed image.
