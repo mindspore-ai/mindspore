@@ -399,6 +399,6 @@ class PredictWithSigmoid(nn.Cell):
         self.sigmoid = P.Sigmoid()
 
     def construct(self, batch_ids, batch_wts, labels):
-        logits, _, _, = self.network(batch_ids, batch_wts)
+        logits, _, = self.network(batch_ids, batch_wts)
         pred_probs = self.sigmoid(logits)
         return logits, pred_probs, labels

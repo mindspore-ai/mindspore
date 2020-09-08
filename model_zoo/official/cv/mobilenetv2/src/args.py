@@ -14,7 +14,7 @@
 # ============================================================================
 
 import argparse
-
+import ast
 
 def launch_parse_args():
 
@@ -43,6 +43,7 @@ def train_parse_args():
         help='run platform, only support CPU, GPU and Ascend')
     train_parser.add_argument('--pretrain_ckpt', type=str, default=None, help='Pretrained checkpoint path \
         for fine tune or incremental learning')
+    train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
     train_parser.add_argument('--train_method', type=str, choices=("train", "fine_tune", "incremental_learn"), \
         help="\"fine_tune\"or \"incremental_learn\" if to fine tune the net  after loading the ckpt, \"train\" to \
         train from initialization model")
