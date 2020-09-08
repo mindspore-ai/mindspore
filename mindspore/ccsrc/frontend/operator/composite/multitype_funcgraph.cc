@@ -27,6 +27,7 @@
 #include "utils/ms_context.h"
 #include "pybind_api/api_register.h"
 #include "ir/signature.h"
+#include "ir/dtype.h"
 #include "debug/trace.h"
 
 namespace mindspore {
@@ -57,29 +58,25 @@ void MultitypeFuncGraph::Register(const TypePtrList &types, const py::function &
   fn_cache_py_[types] = py_fn;
 }
 
-void MultitypeFuncGraph::Register(const std::vector<std::string> &types_name, const py::function &py_fn) {
+void MultitypeFuncGraph::PyRegister(const py::tuple &tuple, const py::function &py_fn) {
   TypePtrList types;
-  for (auto &type_name : types_name) {
-    auto type_ptr = StringToType(type_name);
-    if (type_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << type_name << " convert from string error ";
+  for (size_t it = 0; it < tuple.size(); ++it) {
+    py::object type_in = tuple[it];
+    TypePtr type_ptr = nullptr;
+    if (py::isinstance<py::str>(type_in)) {
+      auto type_name = type_in.cast<std::string>();
+      type_ptr = StringToType(type_name);
+      if (type_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << type_name << " convert from string error ";
+      }
+    } else if (py::isinstance<Type>(type_in)) {
+      type_ptr = type_in.cast<TypePtr>();
+    } else {
+      MS_LOG(EXCEPTION) << "Register must be string or `mindspore.dtype.Type`";
     }
     types.push_back(type_ptr);
   }
   Register(types, py_fn);
-}
-
-void MultitypeFuncGraph::PyRegister(const py::tuple &tuple, const py::function &py_fn) {
-  std::vector<std::string> types_name;
-  for (size_t it = 0; it < tuple.size(); ++it) {
-    py::object name_py = tuple[it];
-    if (py::isinstance<py::str>(name_py)) {
-      types_name.push_back(name_py.cast<std::string>());
-      continue;
-    }
-    MS_LOG(EXCEPTION) << "Register must be string";
-  }
-  Register(types_name, py_fn);
 }
 
 // Return Exact match if exists,  else return non ambiguous sub class match

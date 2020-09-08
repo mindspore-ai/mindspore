@@ -396,7 +396,9 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
       MS_LOG(DEBUG) << "Replace " << node->DebugString() << "'s abstract " << node->abstract()->ToString() << " with "
                     << ret->ToString();
       node->set_abstract(ret);
-      changed = true;
+      if (ret->cast<abstract::AbstractTuplePtr>()->size() > 0) {
+        changed = true;
+      }
     }
   }
   return changed;
