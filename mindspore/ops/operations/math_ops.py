@@ -122,7 +122,7 @@ class TensorAdd(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -957,11 +957,11 @@ class InplaceAdd(PrimitiveWithInfer):
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
-            to add with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+            to add with v. It is an integer or a tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **input_x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
-        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
+        - **input_v** (Tensor) - The second input is a tensor that has the same dimension sizes as x except
           the first dimension, which must be the same as indices's size. It has the same data type with `input_x`.
 
     Outputs:
@@ -1015,7 +1015,7 @@ class InplaceSub(PrimitiveWithInfer):
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of x, and determines which rows of x
-            to sub with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
+            to subtract with v. It is a int or tuple, whose value is in [0, the first dimension size of x).
 
     Inputs:
         - **input_x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
@@ -1076,7 +1076,7 @@ class Sub(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1115,7 +1115,7 @@ class Mul(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1154,7 +1154,7 @@ class SquaredDifference(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1341,7 +1341,7 @@ class Pow(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1453,11 +1453,11 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Args:
         dtype (string): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
-        nbins (int): Number of histogram bins, the type is positive integer.
+        nbins (int): The number of histogram bins, the type is a positive integer.
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
-        - **range** (Tensor) - Must have the same type as x. Shape [2] Tensor of same dtype as x.
+        - **range** (Tensor) - Must has the same data type as `x`, and the shape is [2].
           x <= range[0] will be mapped to hist[0], x >= range[1] will be mapped to hist[-1].
 
     Outputs:
@@ -1593,7 +1593,7 @@ class Erfc(PrimitiveWithInfer):
     Computes the complementary error function of `input_x` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
+        - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
@@ -1627,7 +1627,7 @@ class Minimum(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1666,7 +1666,7 @@ class Maximum(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1705,7 +1705,7 @@ class RealDiv(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1744,13 +1744,13 @@ class Div(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
           a bool or a tensor whose data type is number or bool.
         - **input_y** (Union[Tensor, Number, bool]) - When the first input is a tensor, The second input
-          could be a number or a bool, or a tensor whose data type is number or bool. When the first input
+          could be a number, a bool, or a tensor whose data type is number or bool. When the first input
           is a number or a bool, the second input should be a tensor whose data type is number or bool.
 
     Outputs:
@@ -1758,7 +1758,7 @@ class Div(_MathBinaryOp):
         and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
-        ValueError: When `input_x` and `input_y` are not the same dtype.
+        ValueError: When `input_x` and `input_y` do not have the same dtype.
 
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
@@ -1786,7 +1786,7 @@ class DivNoNan(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1799,7 +1799,7 @@ class DivNoNan(_MathBinaryOp):
         and the data type is the one with high precision or high digits among the two inputs.
 
     Raises:
-        ValueError: When `input_x` and `input_y` are not the same dtype.
+        ValueError: When `input_x` and `input_y` do not have the same dtype.
 
     Examples:
         >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
@@ -1822,14 +1822,14 @@ class DivNoNan(_MathBinaryOp):
 
 class FloorDiv(_MathBinaryOp):
     """
-    Divide the first input tensor by the second input tensor element-wise and rounds down to the closest integer.
+    Divide the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1860,7 +1860,7 @@ class TruncateDiv(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1890,7 +1890,7 @@ class TruncateMod(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -1918,7 +1918,7 @@ class Mod(_MathBinaryOp):
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors,
     both dtypes cannot be bool, and the shapes of them could be broadcast. When the inputs are one tensor
-    and one scalar, the scalar only could be a constant.
+    and one scalar, the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The first input is a number or a tensor whose data type is number.
@@ -1953,7 +1953,7 @@ class Floor(PrimitiveWithInfer):
     Round a tensor down to the closest integer element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. It's element data type must be float.
+        - **input_x** (Tensor) - The input tensor. Its element data type must be float.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -1979,14 +1979,14 @@ class Floor(PrimitiveWithInfer):
 
 class FloorMod(_MathBinaryOp):
     """
-    Compute element-wise remainder of division.
+    Compute the remainder of division element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be both bool , and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2045,7 +2045,7 @@ class Xdivy(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2079,7 +2079,7 @@ class Xlogy(_MathBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2241,7 +2241,7 @@ class Equal(_LogicBinaryOp):
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar only could be a constant.
+    When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The first input is a number or
@@ -2356,7 +2356,7 @@ class NotEqual(_LogicBinaryOp):
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar only could be a constant.
+    When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2393,7 +2393,7 @@ class Greater(_LogicBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2430,7 +2430,7 @@ class GreaterEqual(_LogicBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2467,7 +2467,7 @@ class Less(_LogicBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2504,7 +2504,7 @@ class LessEqual(_LogicBinaryOp):
     When the inputs are two tensors,
     dtypes of them cannot be both bool , and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
-    the scalar only could be a constant.
+    the scalar could only be a constant.
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2570,7 +2570,7 @@ class LogicalAnd(_LogicBinaryOp):
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
-    When the inputs are one tensor and one bool, the bool object only could be a constant,
+    When the inputs are one tensor and one bool, the bool object could only be a constant,
     and the data type of the tensor should be bool.
 
     Inputs:
@@ -2601,7 +2601,7 @@ class LogicalOr(_LogicBinaryOp):
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them should be bool.
-    When the inputs are one tensor and one bool, the bool object only could be a constant,
+    When the inputs are one tensor and one bool, the bool object could only be a constant,
     and the data type of the tensor should be bool.
 
     Inputs:
@@ -2626,7 +2626,7 @@ class LogicalOr(_LogicBinaryOp):
 
 class IsNan(PrimitiveWithInfer):
     """
-    Judging which elements are nan for each position
+    Judge which elements are nan for each position.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2682,7 +2682,7 @@ class IsInf(PrimitiveWithInfer):
 
 class IsFinite(PrimitiveWithInfer):
     """
-    Judging which elements are finite for each position
+    Judge which elements are finite for each position.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2713,7 +2713,7 @@ class IsFinite(PrimitiveWithInfer):
 
 class FloatStatus(PrimitiveWithInfer):
     """
-    Determine if the elements contains nan, inf or -inf. `0` for normal, `1` for overflow.
+    Determine if the elements contain Not a Number(NaN), infinite or negative infinite. 0 for normal, 1 for overflow.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.

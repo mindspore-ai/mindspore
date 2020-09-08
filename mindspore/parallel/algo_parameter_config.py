@@ -130,14 +130,14 @@ def set_algo_parameters(**kwargs):
     Set algo parameter config.
 
     Note:
-        Attribute name is needed.
+        The attribute name is required.
 
     Args:
-        tensor_slice_align_enable (bool): Whether checking tensor slice shape for MatMul. Default: False
+        tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
             Default: 16
         fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices. Default: True
-        elementwise_op_strategy_follow (bool): Whether the elementwise operator have the same strategies as its
+        elementwise_op_strategy_follow (bool): Whether the elementwise operator has the same strategies as its
             subsequent operators. Default: False
 
     Raises:
@@ -155,7 +155,7 @@ def get_algo_parameters(attr_key):
     Get algo parameter config attributes.
 
     Note:
-        Return value according to the attribute value.
+        Returns the specified attribute value.
 
     Args:
         attr_key (str): The key of the attribute.
