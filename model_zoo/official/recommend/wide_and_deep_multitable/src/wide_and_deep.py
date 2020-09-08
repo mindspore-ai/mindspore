@@ -510,6 +510,7 @@ class TrainStepWrap(nn.Cell):
     def __init__(self, network, config, sens=1000.0):
         super(TrainStepWrap, self).__init__()
         self.network = network
+        self.network.set_grad()
         self.network.set_train()
         self.trainable_params = network.trainable_params()
         weights_w = []

@@ -236,6 +236,7 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
 
         super(TransformerTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
         self.optimizer = optimizer

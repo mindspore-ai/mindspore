@@ -273,6 +273,7 @@ class BertTrainOneStepCell(nn.Cell):
     def __init__(self, network, optimizer, sens=1.0):
         super(BertTrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
@@ -352,6 +353,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None, enable_global_norm=False):
         super(BertTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.enable_global_norm = enable_global_norm
@@ -482,6 +484,7 @@ class BertTrainAccumulateStepsWithLossScaleCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None, accumulation_steps=1, enable_global_norm=False):
         super(BertTrainAccumulateStepsWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.accumulation_steps = accumulation_steps

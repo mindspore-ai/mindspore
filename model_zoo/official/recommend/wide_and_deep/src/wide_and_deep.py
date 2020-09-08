@@ -328,6 +328,7 @@ class TrainStepWrap(nn.Cell):
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         self.network = network
+        self.network.set_grad()
         self.network.set_train()
         self.trainable_params = network.trainable_params()
         weights_w = []

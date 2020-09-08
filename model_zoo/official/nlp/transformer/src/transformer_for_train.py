@@ -156,6 +156,7 @@ class TransformerTrainOneStepCell(nn.Cell):
     def __init__(self, network, optimizer, sens=1.0):
         super(TransformerTrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
@@ -241,6 +242,7 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(TransformerTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.network.add_flags(defer_inline=True)
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
