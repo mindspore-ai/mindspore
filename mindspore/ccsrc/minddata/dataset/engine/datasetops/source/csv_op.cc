@@ -518,6 +518,10 @@ Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, cons
 Status CsvOp::operator()() {
   RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
 
+  // Move register to the front of launching thread, this will fix the problem
+  // when thread exit unnormally register will failed occasionally.
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
+
   // launch one thread, responsible for filling IoBlockQueue
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&CsvOp::WaitToFillIOBlockQueue, this)));
 
@@ -525,7 +529,6 @@ Status CsvOp::operator()() {
 
   // must be called after launching workers.
   TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
   NotifyToFillIOBlockQueue();
 
   while (!finished_reading_dataset_) {
