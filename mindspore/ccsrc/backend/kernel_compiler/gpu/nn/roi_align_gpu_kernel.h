@@ -71,12 +71,12 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
     }
 
     // Get channels, height & width
-    int batch_N = x_shape[0];
+    batch_N_ = x_shape[0];
     channels_ = x_shape[1];
     height_ = x_shape[2];
     width_ = x_shape[3];
-    x_shape_ = {batch_N, channels_, height_, width_};
-    x_size_ = batch_N * channels_ * height_ * width_ * sizeof(T);
+    x_shape_ = {batch_N_, channels_, height_, width_};
+    x_size_ = batch_N_ * channels_ * height_ * width_ * sizeof(T);
 
     // Get rois rows and cols
     roi_rows_ = rois_shape[0];
@@ -119,6 +119,7 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
 
   int roi_rows_;
   int roi_cols_;
+  int batch_N_;
   int channels_;
   int height_;
   int width_;
