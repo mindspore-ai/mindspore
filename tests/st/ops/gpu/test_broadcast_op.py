@@ -71,6 +71,48 @@ def test_nobroadcast():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_nobroadcast_fp16():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+
+    x1_np = np.random.rand(10, 20).astype(np.float16)
+    x2_np = np.random.rand(10, 20).astype(np.float16)
+
+    output_ms = P.Minimum()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.minimum(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Maximum()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.maximum(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Greater()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np > x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Less()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np < x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Pow()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.power(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.RealDiv()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np / x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Mul()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np * x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Sub()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np - x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 

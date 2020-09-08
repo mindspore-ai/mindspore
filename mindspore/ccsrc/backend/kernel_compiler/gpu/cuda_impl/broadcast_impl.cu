@@ -202,7 +202,8 @@ void ElewiseArith(const int &nums, enum BroadcastOpType op, const T *x0, const T
 template <>
 void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1, half *y,
                   cudaStream_t stream) {
-  if (nums % 2 == 0) {
+  // `>` return true iff both half result are true. fallback to half
+  if (nums % 2 == 0 && op != BROADCAST_TYPE_MINIMUM && op != BROADCAST_TYPE_MAXIMUM && op != BROADCAST_TYPE_ABSGRAD) {
     ElewiseArithKernel<half2>(nums / 2, op, reinterpret_cast<const half2 *>(x0), reinterpret_cast<const half2 *>(x1),
                               reinterpret_cast<half2 *>(y), stream);
   } else {
