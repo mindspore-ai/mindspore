@@ -19,6 +19,7 @@
 #include <iterator>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "ir/meta_func_graph.h"
 #include "ir/param_info.h"
 #include "ir/primitive.h"

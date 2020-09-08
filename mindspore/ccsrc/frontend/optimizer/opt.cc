@@ -19,6 +19,7 @@
 #include <deque>
 #include <memory>
 #include <unordered_map>
+#include <algorithm>
 
 #include "ir/anf.h"
 #include "ir/manager.h"
