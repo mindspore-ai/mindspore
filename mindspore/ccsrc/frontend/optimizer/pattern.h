@@ -217,6 +217,7 @@ class NewParameter : public Pattern {
     default_tensor_ = std::make_shared<tensor::Tensor>(*default_tensor.get());
     built_ = false;
   }
+  ~NewParameter() = default;
   MS_DECLARE_PARENT(NewParameter, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override {
     MS_LOG(EXCEPTION) << "Find NewParameter in pattern, NewParameter should only appear in the target.\n";
@@ -244,6 +245,7 @@ class Imm : public Pattern {
  public:
   Imm() { unique_name_ = std::to_string(g_id_++); }
   explicit Imm(int value) : value_(value) { unique_name_ = std::to_string(g_id_++) + "Imm_" + std::to_string(value); }
+  ~Imm() = default;
   MS_DECLARE_PARENT(Imm, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
   int value() { return value_; }

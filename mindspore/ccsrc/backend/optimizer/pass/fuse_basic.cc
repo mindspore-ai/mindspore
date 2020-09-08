@@ -99,11 +99,11 @@ bool FindControlDependOut(AnfNodePtrList *outputs, const AnfNodePtrList &vir_out
     outputs_set.insert(out);
   }
   bool has_erase_outs = false;
-  size_t index = -1;
+  int index = -1;
   for (auto it = outputs->begin(); it != outputs->end();) {
     index++;
     auto out = *it;
-    (*eqv)[out] = vir_outputs[index];
+    (*eqv)[out] = vir_outputs[IntToSize(index)];
     auto users = mng->node_users()[out];
     bool is_only_control_depend_use = true;
     std::vector<size_t> control_depend_use_index;
