@@ -282,7 +282,7 @@ class ANode : public AnfNode {
 class Parameter : public ANode {
  public:
   explicit Parameter(const FuncGraphPtr &func_graph)
-      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr) {}
+      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), used_graph_count_(0) {}
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
 
@@ -300,6 +300,10 @@ class Parameter : public ANode {
   ValuePtr default_param() const { return default_param_; }
   ParamInfoPtr param_info() const;
 
+  void IncreaseUsedGraphCount() { used_graph_count_++; }
+  void DecreaseUsedGraphCount() { used_graph_count_--; }
+  int used_graph_count() const { return used_graph_count_; }
+
   bool operator==(const AnfNode &other) const override {
     if (!other.isa<Parameter>()) {
       return false;
@@ -315,6 +319,8 @@ class Parameter : public ANode {
   std::string name_;
   bool has_default_;
   ValuePtr default_param_;
+  // The count of graphs using the parameter.
+  int used_graph_count_;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 
