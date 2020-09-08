@@ -16,6 +16,7 @@
 #include <cstring>
 #include <algorithm>
 #include <set>
+#include <string>
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/kernel/batchnorm.h"

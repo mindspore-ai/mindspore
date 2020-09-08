@@ -18,6 +18,7 @@
 #include <float.h>
 #include <string>
 #include <set>
+#include <map>
 #include <utility>
 #include "src/kernel_registry.h"
 #include "src/runtime/opencl/opencl_runtime.h"
