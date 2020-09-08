@@ -390,18 +390,7 @@ void AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_i
   // run op
   Execute(graph, false);
   // get output
-  if (op_run_info.value != nullptr) {
-    std::vector<tensor::TensorPtr> pre_output_tensors;
-    TensorValueToTensor(op_run_info.value, &pre_output_tensors);
-    for (auto &pre_output : pre_output_tensors) {
-      tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
-      tensor->set_device_address(pre_output->device_address());
-      tensor->set_sync_status(kNoNeedSync);
-      outputs->emplace_back(tensor);
-    }
-  } else {
-    UpdateOutputs(graph, outputs, input_tensors);
-  }
+  UpdateOutputs(graph, outputs, input_tensors);
   RunOpMemoryClear(graph.get());
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
 }

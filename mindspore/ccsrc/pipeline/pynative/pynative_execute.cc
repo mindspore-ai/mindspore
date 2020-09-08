@@ -59,6 +59,8 @@
 #include "pipeline/pynative/pynative_execute_ge.h"
 #endif
 
+#include "debug/anf_ir_dump.h"
+
 using mindspore::tensor::TensorPy;
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
@@ -780,19 +782,79 @@ void PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, const py::ob
   set_pyobj(curr_g_, obj_id);
 }
 
-void PynativeExecutor::SaveOpForwardValue(const std::string &id, const ValuePtr &value) {
-  auto iter = op_forward_map_.find(id);
-  if (iter != op_forward_map_.end()) {
+void GenTupleMap(const ValueTuplePtr &tuple, std::map<std::string, tensor::TensorPtr> *t_map) {
+  if (t_map == nullptr) {
     return;
   }
-  auto tuple_info_iter = obj_to_forward_id_tuple_info_.find(id);
-  ValuePtr temp_value = value;
-  if (tuple_info_iter != obj_to_forward_id_tuple_info_.end()) {
-    temp_value = tuple_info_iter->second;
+  for (size_t i = 0; i < tuple->size(); i++) {
+    ValuePtr tuple_i = (*tuple)[i];
+    if (tuple_i->isa<tensor::Tensor>()) {
+      auto t = tuple_i->cast<tensor::TensorPtr>();
+      (*t_map)[t->id()] = t;
+    } else if (tuple_i->isa<ValueTuple>()) {
+      GenTupleMap(tuple_i->cast<ValueTuplePtr>(), t_map);
+    }
   }
-  op_forward_map_[id] = temp_value;
+  MS_LOG(DEBUG) << "End GenTupleMap" << tuple->ToString();
+}
+
+ValuePtr CleanTupleAddr(const ValueTuplePtr &tuple) {
+  std::vector<ValuePtr> value_list;
+  for (size_t i = 0; i < tuple->size(); i++) {
+    ValuePtr tuple_i = (*tuple)[i];
+    if (tuple_i->isa<tensor::Tensor>()) {
+      auto t = tuple_i->cast<tensor::TensorPtr>();
+      auto new_tensor = std::make_shared<tensor::Tensor>(*t);
+      new_tensor->set_device_address(nullptr);
+      value_list.push_back(new_tensor);
+    } else if (tuple_i->isa<ValueTuple>()) {
+      value_list.push_back(CleanTupleAddr(tuple_i->cast<ValueTuplePtr>()));
+    } else {
+      MS_LOG(DEBUG) << "in value" << tuple_i->ToString();
+      value_list.push_back(tuple_i);
+    }
+  }
+  MS_LOG(DEBUG) << "End CleanTupleAddr";
+  return std::make_shared<ValueTuple>(value_list);
+}
+
+void PynativeExecutor::SaveOpForwardValue(const std::string &id, const ValuePtr &value,
+                                          std::map<std::string, tensor::TensorPtr> *t_map) {
+  if (op_forward_map_.find(id) != op_forward_map_.end()) {
+    if (op_forward_map_[id]->isa<ValueTuple>()) {
+      // for one op have multi outputs but save only one tensor
+      if (value->isa<tensor::Tensor>()) {
+        auto tuple = op_forward_map_[id]->cast<ValueTuplePtr>();
+        auto value_t = value->cast<tensor::TensorPtr>();
+        for (size_t i = 0; i < tuple->size(); i++) {
+          if ((*tuple)[i]->isa<tensor::Tensor>()) {
+            auto tuple_t = (*tuple)[i]->cast<tensor::TensorPtr>();
+            if (value_t->id() == tuple_t->id()) {
+              tuple_t->set_device_address(value_t->device_address());
+              MS_LOG(DEBUG) << "After Saveop " << tuple_t->ToString();
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (value->isa<ValueTuple>() && t_map != nullptr) {
+      GenTupleMap(op_forward_map_[id]->cast<ValueTuplePtr>(), t_map);
+    }
+    MS_LOG(DEBUG) << "Save op forward value: "
+                  << "(" << id << "), " << op_forward_map_[id]->ToString();
+    return;
+  }
+
+  if (value->isa<ValueTuple>() && t_map == nullptr) {
+    // make cnode gen all tuple node and set device_address be null
+    op_forward_map_[id] = CleanTupleAddr(value->cast<ValueTuplePtr>());
+  } else {
+    op_forward_map_[id] = value;
+  }
   MS_LOG(DEBUG) << "Save op forward value: "
-                << "(" << id << "), " << temp_value;
+                << "(" << id << "), " << value->ToString();
 }
 
 void PynativeExecutor::SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out) {
@@ -828,7 +890,7 @@ void PynativeExecutor::SaveAllResult(const OpExecInfoPtr &op_exec_info, const CN
         auto tuple_item_id = GetId(tuple_item[i]);
         obj_to_forward_id_[tuple_item_id] = op_id;
       }
-      obj_to_forward_id_tuple_info_[op_id] = value;
+      SaveOpForwardValue(op_id, value, nullptr);
     }
     obj_to_forward_id_[out_id] = op_id;
   }
@@ -840,12 +902,24 @@ AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
   if (out.second.size() == 1 && out.second[0] == -1) {
     return out.first;
   }
-  auto node = out.first;
+  CNodePtr node = out.first->cast<CNodePtr>();
   MS_LOG(DEBUG) << "output size " << out.second.size() << node->DebugString();
   auto abs = node->abstract();
+  ValuePtr out_obj = nullptr;
+  if (node->forward().first != nullptr) {
+    out_obj = node->forward().first;
+  } else {
+    out_obj = PyAttrValue(obj);
+  }
   for (auto &idx : out.second) {
     std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(idx)};
     node = curr_g_->NewCNode(tuple_get_item_inputs);
+    if (out_obj->isa<ValueTuple>()) {
+      node->add_input_value(out_obj, "");
+      node->add_input_value(MakeValue(idx), "");
+      out_obj = (*out_obj->cast<ValueTuplePtr>())[idx];
+      node->set_forward(out_obj, "");
+    }
     if (abs != nullptr && abs->isa<abstract::AbstractTuple>()) {
       auto prim_abs = dyn_cast<abstract::AbstractTuple>(abs)->elements()[idx];
       MS_LOG(DEBUG) << "set tuple getitem abs" << prim_abs->ToString();
@@ -856,7 +930,6 @@ AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
     node_abs_map_[id] = node->abstract();
   }
   MS_LOG(DEBUG) << "GetObjNode output" << node->DebugString(6);
-  node->cast<CNodePtr>()->set_forward(PyAttrValue(obj), "");
   return node;
 }
 
@@ -1306,7 +1379,13 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
     }
     set_obj_node_map(graph_prev, GetId(out), out_cnode);
   } else {
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+      DumpIR("before_resolve.ir", newfg);
+    }
     parse::ResolveFuncGraph(newfg, resource_);
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+      DumpIR("after_resolve.ir", newfg);
+    }
     resource_->set_func_graph(newfg);
     Popp();
   }
@@ -1426,7 +1505,13 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
     MS_LOG(EXCEPTION) << "Could not find top graph by cellid: " << forward_cell_id;
   }
   top_g_ = cell_graph_map_[forward_cell_id];
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("before_grad.ir", resource_->func_graph());
+  }
   auto g = GradGraph(resource_->func_graph(), grad, w_args, size);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("after_grad.ir", g);
+  }
   resource_->set_func_graph(g);
   resource_->manager()->KeepRoots({g});
 

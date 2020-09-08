@@ -155,7 +155,7 @@ def test_softmaxloss_grad():
 
         def __init__(self):
             super(Net, self).__init__()
-            self.weight = Parameter(Tensor(np.ones([64, 10])), name="weight")
+            self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
             self.bias = Parameter(Tensor(np.ones([10]).astype(np.float32)), name="bias")
             self.fc = P.MatMul()
             self.fc2 = nn.Dense(10, 10)
@@ -175,7 +175,7 @@ def test_softmaxloss_grad():
 
     net = GradWrap(NetWithLossClass(Net()))
 
-    predict = Tensor(np.ones([1, 64]))
+    predict = Tensor(np.ones([1, 64]).astype(np.float32))
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     print("pynative run")
     out = net(predict, label)

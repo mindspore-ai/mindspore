@@ -335,18 +335,7 @@ void GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info
   LoadInputData(kernel_graph, input_tensors);
   Execute(kernel_graph);
   // Fetch outputs
-  if (op_run_info.value != nullptr) {
-    std::vector<tensor::TensorPtr> pre_output_tensors;
-    TensorValueToTensor(op_run_info.value, &pre_output_tensors);
-    for (auto &pre_output : pre_output_tensors) {
-      tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(pre_output->data_type(), pre_output->shape());
-      tensor->set_device_address(pre_output->device_address());
-      tensor->set_sync_status(kNoNeedSync);
-      outputs->emplace_back(tensor);
-    }
-  } else {
-    UpdateOutputs(kernel_graph, outputs, input_tensors);
-  }
+  UpdateOutputs(kernel_graph, outputs, input_tensors);
   RunOpClearMemory(kernel_graph.get());
 }
 

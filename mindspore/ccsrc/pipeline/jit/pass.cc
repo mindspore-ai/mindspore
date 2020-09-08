@@ -215,6 +215,17 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   return map;
 }
 
+OptPassGroupMap GetOptPassesPynativeElim(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
+    irpass.pynative_eliminate_,
+  });
+
+  OptPassGroupMap map({
+    {"pynative_eliminate", pynative_eliminate},
+  });
+  return map;
+}
+
 OptPassGroupMap GetOptPassesGraphKernelA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig interface_fusion = opt::OptPassConfig({
     irpass.mark_interface_fusion_,
@@ -419,6 +430,16 @@ bool InferenceOptPreparePass(const ResourcePtr &res) {
   auto prepare_map = GetInferenceOptPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", res, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
+  return true;
+}
+
+bool PynativeOptPass(const ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  opt::irpass::OptimizeIRPassLib irpass;
+  auto pynative_opt = GetOptPassesPynativeElim(irpass);
+  auto pynative_opt_opt = opt::Optimizer::MakeOptimizer("pynative_opt", res, pynative_opt);
+  (void)pynative_opt_opt->step(func_graph, false);
   return true;
 }
 

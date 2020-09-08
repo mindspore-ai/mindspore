@@ -314,6 +314,16 @@ bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPa
 
 bool PynativeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kPynativePasses); }
 
+bool PynativeElimOpt(const ResourcePtr &res) {
+  if (res->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
+  }
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
+  }
+  return PynativeOptPass(res);
+}
+
 static bool IsCtrlSink() {
   auto ms_ctx = MsContext::GetInstance();
   if (ms_ctx->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {

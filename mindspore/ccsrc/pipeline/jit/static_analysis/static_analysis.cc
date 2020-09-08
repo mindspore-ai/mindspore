@@ -206,7 +206,7 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(value_node);
   auto out = ToAbstract(value_node->value(), conf->context(), conf);
-  if (value_node->has_new_value()) {
+  if (value_node->has_new_value() && out->isa<AbstractTensor>()) {
     out = out->Broaden();
   }
   return out;

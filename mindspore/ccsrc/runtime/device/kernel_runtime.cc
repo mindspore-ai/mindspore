@@ -85,6 +85,8 @@ void KernelRuntime::RunOpAssignMemory(const ValuePtr &pre_output_value,
                                       const std::vector<tensor::TensorPtr> &input_tensors,
                                       session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->ResetDynamicMemory();
   RunOpAssignInputMemory(input_tensors, graph);
   AssignStaticMemoryValueNode(graph);
   RunOpAssignOutputNodeMemory(pre_output_value, graph);
@@ -268,7 +270,8 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
     MS_EXCEPTION_IF_NULL(real_output_cnode);
     MS_EXCEPTION_IF_NULL(pre_output_tensors[i]);
     if (pre_output_tensors[i]->device_address() == nullptr) {
-      MS_LOG(EXCEPTION) << "The address of pre output tensor [" << i << "] is a nullptr!";
+      MS_LOG(INFO) << "The address of pre output tensor [" << i << "] is a nullptr!";
+      continue;
     }
     if (opt::IsNopNode(real_output_cnode)) {
       if (real_output_cnode->inputs().size() < 2) {

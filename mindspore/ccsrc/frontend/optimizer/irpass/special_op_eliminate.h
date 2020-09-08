@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "frontend/optimizer/optimizer_caller.h"
 #include "ir/pattern_matcher.h"
@@ -31,6 +32,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "utils/comm_manager.h"
 #include "frontend/parallel/context.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 namespace opt {
@@ -202,6 +204,153 @@ class DependValueElim : public OptimizerCaller {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> x, cond;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x, cond), x, IsVNode(cond.GetNode(node)));
+    return nullptr;
+  }
+};
+
+// {{prim:getattr, {prim::resolve, SymbolStr, C}, zeros_like}, Xy} ->Tensor(0, shape(Xy))
+// {prim:getattr, {prim::resolve, SymbolStr, zeros_like}, Xy} ->Tensor(0, shape(Xy))
+// {{prim::resolve, CommonOPS, getitem}, (tensor0, tensor1,...), 0} -> tensor0
+class PynativeEliminater : public OptimizerCaller {
+  bool CheckNameSpaceVNode(const AnfNodePtr &node, const std::string &str_value) {
+    ValueNodePtr value_node = node->cast<ValueNodePtr>();
+    if (value_node == nullptr) {
+      return false;
+    }
+    return GetValueNode<parse::NameSpacePtr>(value_node)->module() == str_value;
+  }
+
+  bool CheckSymbolVNode(const AnfNodePtr &node, const std::string &str_value) {
+    ValueNodePtr value_node = node->cast<ValueNodePtr>();
+    if (value_node == nullptr) {
+      return false;
+    }
+    return GetValueNode<parse::SymbolPtr>(value_node)->symbol() == str_value;
+  }
+  bool CheckStrVNode(const AnfNodePtr &node, const std::string &str_value) {
+    ValueNodePtr value_node = node->cast<ValueNodePtr>();
+    if (value_node == nullptr) {
+      return false;
+    }
+    return GetValueNode<StringImmPtr>(value_node)->value() == str_value;
+  }
+
+  ValuePtr FillGetItem(const ValuePtr &value, const ValuePtr &idx) {
+    MS_LOG(DEBUG) << "Start FillGetItem" << value->ToString() << idx->ToString();
+    if (!idx->isa<Int32Imm>()) {
+      MS_LOG(EXCEPTION) << "Getitem idx must int:" << idx->ToString();
+    }
+
+    if (!value->isa<ValueTuple>()) {
+      MS_LOG(EXCEPTION) << "Getitem value must tuple:" << value->ToString();
+    }
+
+    auto value_tuple = value->cast<ValueTuplePtr>();
+    int idx_t = idx->cast<Int32ImmPtr>()->value();
+    MS_LOG(DEBUG) << "Fill getitem" << idx_t << (*value_tuple)[idx_t]->ToString();
+    return (*value_tuple)[idx_t];
+  }
+
+  ValuePtr FillZero(const ValuePtr &value) {
+    MS_LOG(DEBUG) << "Start FillZero";
+    ValuePtr out = nullptr;
+    if (value->isa<Int32Imm>()) {
+      return MakeValue(0);
+    }
+
+    if (value->isa<tensor::Tensor>()) {
+      MS_LOG(DEBUG) << "Start FillZero Tensor";
+      auto tensor = value->cast<tensor::TensorPtr>();
+      tensor::TensorPtr out_t = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
+      char *data = reinterpret_cast<char *>(out_t->data_c());
+      std::fill(data, data + out_t->data().nbytes(), 0);
+      out = out_t;
+    }
+
+    std::vector<ValuePtr> value_list;
+    if (value->isa<ValueTuple>()) {
+      MS_LOG(DEBUG) << "Start FillZero Tuple" << value->ToString();
+      auto value_tuple = value->cast<ValueTuplePtr>();
+      for (size_t i = 0; i < value_tuple->size(); i++) {
+        value_list.push_back(FillZero((*value_tuple)[i]));
+      }
+      out = std::make_shared<ValueTuple>(value_list);
+    }
+    if (out == nullptr) {
+      MS_LOG(EXCEPTION) << "FillZero failed:" << value->ToString();
+    }
+    MS_LOG(DEBUG) << "Result: " << out->ToString();
+    return out;
+  }
+
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    MS_LOG(DEBUG) << "Start replace node " << node->DebugString(4);
+    PatternNode<AnfNodePtr> symbol_str_vnode, c_vnode, zeros_like_vnode, getitem_vnode, arg, arg1;
+    auto resolve = PPrimitive(prim::kPrimResolve, symbol_str_vnode, c_vnode);
+    auto getattr = PPrimitive(prim::kPrimGetAttr, resolve, zeros_like_vnode);
+    auto pattern = PCNode(getattr, arg);
+
+    if ((pattern).TryCapture(node) &&
+        (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
+         CheckSymbolVNode(c_vnode.GetNode(node), "C") && CheckStrVNode(zeros_like_vnode.GetNode(node), "zeros_like"))) {
+      auto rep = (arg).GetNode(node);
+      if (rep != nullptr) {
+        if (rep->isa<ValueNode>()) {
+          auto value_node = rep->cast<ValueNodePtr>();
+          value_node->set_value(FillZero(value_node->value()));
+          MS_LOG(DEBUG) << "Zeros_like replace ok " << rep->DebugString(4);
+          return rep;
+        }
+      }
+    }
+
+    MS_LOG(DEBUG) << "End replace 1 " << node->DebugString(4);
+    auto resolve1 = PPrimitive(prim::kPrimResolve, symbol_str_vnode, zeros_like_vnode);
+    auto pattern1 = PCNode(resolve1, arg);
+
+    if ((pattern1).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
+                                        CheckSymbolVNode(zeros_like_vnode.GetNode(node), "zeros_like"))) {
+      auto rep = (arg).GetNode(node);
+      if (rep != nullptr) {
+        if (rep->isa<ValueNode>()) {
+          auto value_node = rep->cast<ValueNodePtr>();
+          value_node->set_value(FillZero(value_node->value()));
+          MS_LOG(DEBUG) << "Zeros_like replace ok 2 " << rep->DebugString(4);
+          return rep;
+        }
+      }
+    }
+
+    // resolve(CommonOPS, getitem)((tensors), 3)
+    auto resolve2 = PPrimitive(prim::kPrimResolve, symbol_str_vnode, getitem_vnode);
+    auto pattern2 = PCNode(resolve2, arg, arg1);
+    if ((pattern2).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "CommonOPS") &&
+                                        CheckSymbolVNode(getitem_vnode.GetNode(node), "getitem"))) {
+      auto rep = (arg).GetNode(node);
+      if (rep != nullptr) {
+        if (rep->isa<ValueNode>()) {
+          MS_LOG(DEBUG) << "Rep is " << rep->DebugString(4);
+          ValueNodePtr new_node;
+          auto value_node = rep->cast<ValueNodePtr>();
+          auto rep1 = (arg1).GetNode(node);
+          if (rep1 != nullptr) {
+            if (rep1->isa<ValueNode>()) {
+              auto idx = rep1->cast<ValueNodePtr>();
+              if (!value_node->value()->isa<ValueTuple>()) {
+                return nullptr;
+              }
+              new_node = NewValueNode(FillGetItem(value_node->value(), idx->value()));
+              new_node->set_has_new_value(value_node->has_new_value());
+            }
+          }
+          MS_LOG(DEBUG) << "Fill getitem  replace ok " << new_node->DebugString(4);
+          return new_node;
+        }
+      }
+    }
+
+    MS_LOG(DEBUG) << "End Replace " << node->DebugString(4);
     return nullptr;
   }
 };

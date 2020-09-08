@@ -123,6 +123,9 @@ class OptimizeIRPassLib {
 
   // SwitchLayer defer inline
   SubstitutionPtr switch_layer_defer_inline_;
+
+  // Pynative Eliminate
+  SubstitutionPtr pynative_eliminate_;
 };
 
 // the collection of irpass for resolve action
