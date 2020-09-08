@@ -217,6 +217,7 @@ class AnfRuntimeAlgorithm {
   static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
   static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
+  static bool IsDynamicShape(const AnfNodePtr &node);
   static bool IsCondControlKernel(const CNodePtr &node);
   static bool IsIndependentNode(const CNodePtr &node);
 };
