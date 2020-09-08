@@ -36,7 +36,7 @@ class Geometric(Distribution):
 
     Note:
         probs should be proper probabilities (0 < p < 1).
-        Dist_spec_args is probs.
+        dist_spec_args is probs.
 
     Examples:
         >>> # To initialize a Geometric distribution of prob 0.5
@@ -60,32 +60,50 @@ class Geometric(Distribution):
         >>>     # Tthe following calls are valid in construct
         >>>     def construct(self, value, probs_b, probs_a):
         >>>
+        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
+        >>>         # 'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival', have the form:
+        >>>         # Args:
+        >>>         #     value (Tensor): value to be evaluated.
+        >>>         #     probs1 (Tensor): probability of success of a Bernoulli trail. Default: self.probs.
+        >>>
+        >>>         # Example of prob.
         >>>         # Similar calls can be made to other probability functions
         >>>         # by replacing 'prob' with the name of the function
         >>>         ans = self.g1.prob(value)
         >>>         # Evaluate with the respect to distribution b
         >>>         ans = self.g1.prob(value, probs_b)
-        >>>
         >>>         # Probs must be passed in during function calls
         >>>         ans = self.g2.prob(value, probs_a)
         >>>
-        >>>         # Functions 'sd', 'var', 'entropy' have the same usage as 'mean'
-        >>>         # Will return 1.0
-        >>>         ans = self.g1.mean()
-        >>>         # Another possible usage
-        >>>         ans = self.g1.mean(probs_b)
         >>>
+        >>>         # Functions 'sd', 'var', 'entropy' have the same args.
+        >>>         # Args:
+        >>>         #     probs1 (Tensor): probability of success of a Bernoulli trail. Default: self.probs.
+        >>>
+        >>>         # Example of mean. sd, var have similar usage.
+        >>>         ans = self.g1.mean() # return 1.0
+        >>>         ans = self.g1.mean(probs_b)
         >>>         # Probs must be passed in during function calls
         >>>         ans = self.g2.mean(probs_a)
         >>>
-        >>>         # Usage of 'kl_loss' and 'cross_entropy' are similar
+        >>>
+        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are similar:
+        >>>         # Args:
+        >>>         #     dist (str): name of the distribution. Only 'Geometric' is supported.
+        >>>         #     probs1_b (Tensor): probability of success of a Bernoulli trail of distribution b.
+        >>>         #     probs1_a (Tensor): probability of success of a Bernoulli trail of distribution a. Default: self.probs.
+        >>>
+        >>>         # Example of kl_loss (cross_entropy is similar):
         >>>         ans = self.g1.kl_loss('Geometric', probs_b)
         >>>         ans = self.g1.kl_loss('Geometric', probs_b, probs_a)
-        >>>
         >>>         # Additional probs must be passed in
         >>>         ans = self.g2.kl_loss('Geometric', probs_b, probs_a)
         >>>
-        >>>         # Sample
+        >>>
+        >>>         # sample
+        >>>         # Args:
+        >>>         #     shape (tuple): shape of the sample. Default: ()
+        >>>         #     probs1 (Tensor): probability of success of a Bernoulli trail. Default: self.probs.
         >>>         ans = self.g1.sample()
         >>>         ans = self.g1.sample((2,3))
         >>>         ans = self.g1.sample((2,3), probs_b)
