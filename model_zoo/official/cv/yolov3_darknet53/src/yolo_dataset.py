@@ -19,7 +19,7 @@ import multiprocessing
 from PIL import Image
 from pycocotools.coco import COCO
 import mindspore.dataset as de
-import mindspore.dataset.transforms.vision.c_transforms as CV
+import mindspore.dataset.vision.c_transforms as CV
 
 from src.distributed_sampler import DistributedSampler
 from src.transforms import reshape_fn, MultiScaleTrans

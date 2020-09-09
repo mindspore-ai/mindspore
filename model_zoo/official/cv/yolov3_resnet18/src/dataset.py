@@ -22,7 +22,7 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from PIL import Image
 import mindspore.dataset as de
 from mindspore.mindrecord import FileWriter
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 from src.config import ConfigYOLOV3ResNet18
 
 iter_cnt = 0

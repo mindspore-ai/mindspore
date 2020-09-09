@@ -24,7 +24,7 @@ import numpy as np
 import cv2
 
 import mindspore.dataset as de
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
 from .config import config
 from .box_utils import jaccard_numpy, ssd_bboxes_encode

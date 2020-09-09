@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.c_transforms as c
-import mindspore.dataset.transforms.vision.c_transforms as vc
+import mindspore.dataset.vision.c_transforms as vc
 from PIL import Image
 from src.config import config as cf
 

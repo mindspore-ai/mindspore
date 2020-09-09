@@ -18,7 +18,7 @@ Produce the dataset
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as CV
+import mindspore.dataset.vision.c_transforms as CV
 from mindspore.common import dtype as mstype
 from .config import alexnet_cfg as cfg
 
