@@ -404,12 +404,14 @@ void Im2ColPackUnitInt8(const int8_t *input_data, int8_t *packed_input, int real
     for (int j = 0; j < kernel_h; j++) {
       int input_y = input_h + j * dilation_h;
       if (input_y < 0 || input_y >= in_h) {
+        input_accumulator += ic4 * C4NUM * conv_param->conv_quant_arg_.input_quant_args_[0].zp_ * kernel_w;
         continue;
       }
       int input_y_stride = input_y * in_w * ic4 * C4NUM;
       for (int n = 0; n < kernel_w; n++) {
         int input_x = input_w + n * dilation_w;
         if (input_x < 0 || input_x >= in_w) {
+          input_accumulator += ic4 * C4NUM * conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
           continue;
         }
         int input_x_stride = input_y_stride + input_x * ic4 * C4NUM;
