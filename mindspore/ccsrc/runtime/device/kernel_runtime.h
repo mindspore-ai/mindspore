@@ -74,6 +74,7 @@ class KernelRuntime {
                                   const std::unordered_set<ValueNodePtr> &value_nodes,
                                   const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
+  virtual void ClearGlobalIdleMem() {}
 
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr GetDumpConf();

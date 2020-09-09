@@ -49,6 +49,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
                                  const std::unordered_set<ValueNodePtr> &value_nodes,
                                  const std::vector<CNodePtr> &execution_order) override;
+  void ClearGlobalIdleMem() override;
   bool SyncStream() override;
 
  protected:

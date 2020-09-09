@@ -1014,6 +1014,7 @@ void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
   // assign static memory for parameters
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->ClearGlobalIdleMem();
   runtime_instance->AssignStaticMemoryInput(graph.get().get());
   runtime_instance->AssignStaticMemoryValueNode(graph.get().get());
   for (auto &child_graph : graph->child_graph_order()) {
