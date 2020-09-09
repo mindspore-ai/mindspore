@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
+#ifndef MINDSPORE_LITE_NNACL_INT8_SPACE_TO_BATCH_INT8_H_
+#define MINDSPORE_LITE_NNACL_INT8_SPACE_TO_BATCH_INT8_H_
+
 #include "nnacl/op_base.h"
 
-typedef struct SpaceToBatchParameter {
-  OpParameter op_parameter_;
-  bool need_paddings_;
-  int block_sizes_[4];
-  int paddings_[4];
-  int input_shape_[4];
-  int output_shape_[4];
-  int padded_in_shape_[4];
-  int padded_input_element_num;
-} SpaceToBatchParameter;
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int *in_shape, int *out_shape);
-void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, int *padding, int *out_shape);
+void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, int *block_sizes, int *in_shape, int *out_shape);
+void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, int *in_shape, int *padding, int *out_shape);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
+#endif  // MINDSPORE_LITE_NNACL_INT8_SPACE_TO_BATCH_INT8_H_
