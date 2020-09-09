@@ -25,6 +25,7 @@ typedef struct StridedSliceParameter {
   int strides_[8];
   int isScale;
   int num_axes_;
+  int in_shape_length_;
   int in_shape_[8];
   LiteDataType data_type;
 } StridedSliceParameter;

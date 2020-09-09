@@ -44,6 +44,11 @@ int StridedSliceCPUKernel::ReSize() {
   MS_ASSERT(input);
   MS_ASSERT(parameter);
   parameter->data_type = input->data_type() == kNumberTypeInt8 ? kDataTypeInt8 : kDataTypeFloat;
+  auto input_shape = input->shape();
+  for (size_t i = 0; i < input_shape.size(); ++i) {
+    parameter->in_shape_[i] = input_shape[i];
+  }
+  parameter->in_shape_length_ = static_cast<int>(input_shape.size());
   return RET_OK;
 }
 
