@@ -41,6 +41,7 @@
 #include "utils/config_manager.h"
 #include "utils/base_ref_extends.h"
 #include "debug/tensor_load.h"
+#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 
 namespace mindspore {
 namespace session {

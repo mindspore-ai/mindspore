@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -14,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/pass/fuse_basic.h"
-#include "backend/optimizer/pass/fuse_graph_kernel.h"
+#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 
 #include <memory>
 #include <algorithm>
@@ -31,17 +29,30 @@
 #include "vm/segment_runner.h"
 #include "debug/anf_ir_dump.h"
 #include "ir/func_graph_cloner.h"
+#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-std::vector<PrimitivePtr> get_fusable_basic_ops(bool is_before_kernel_select) {
+bool IsBasicOp(const AnfNodePtr &node, bool is_before_kernel_select) {
+#if ENABLE_D
   std::vector<PrimitivePtr> fusable_basic_ops = {prim::kPrimTensorAdd, prim::kPrimMul, prim::kPrimSub,
                                                  prim::kPrimExpandDims};
   if (!is_before_kernel_select) {
     fusable_basic_ops.push_back(prim::kPrimCast);
   }
-  return fusable_basic_ops;
+#elif ENABLE_GPU
+  std::vector<PrimitivePtr> fusable_basic_ops = {
+    prim::kPrimAbs,     prim::kPrimRound, prim::kPrimNeg,        prim::kPrimExp,      prim::kPrimTensorAdd,
+    prim::kPrimRealDiv, prim::kPrimMul,   prim::kPrimMinimum,    prim::kPrimMaximum,  prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,   prim::kPrimRsqrt,      prim::kPrimSqrt,     prim::kPrimCast,
+    prim::kPrimAddN,    prim::kPrimEqual, prim::kPrimReciprocal, prim::KPrimTransData};
+#else
+  std::vector<PrimitivePtr> fusable_basic_ops;
+#endif
+  return std::any_of(fusable_basic_ops.begin(), fusable_basic_ops.end(),
+                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
 IncludeType IncludeFusedBasicOpForward(const AnfNodePtr &cur_node, const GraphKernelInfo &info,
@@ -53,16 +64,14 @@ IncludeType IncludeFusedBasicOpForward(const AnfNodePtr &cur_node, const GraphKe
     return EXCLUDE;
   }
 
-  auto fusable_basic_ops = get_fusable_basic_ops(info.is_before_kernel_select);
-  bool is_fusable = std::any_of(fusable_basic_ops.begin(), fusable_basic_ops.end(),
-                                [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-
+  bool is_fusable = IsBasicOp(node, info.is_before_kernel_select);
   return is_fusable ? FOLLOW : EXCLUDE;
 }
 
 std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode, bool is_before_kernel_select) {
   GraphKernelInfo info;
   info.is_before_kernel_select = is_before_kernel_select;
+
   // Search fusable nodes according input direction.
   auto include_func_forward = std::bind(IncludeFusedBasicOpForward, cnode, info, std::placeholders::_1);
   auto used_nodes = DeepLinkedGraphSearch(cnode, include_func_forward);
@@ -170,8 +179,9 @@ void RemoveControlDependOut(const FuncGraphPtr &fg, AnfNodePtrList *outputs, con
   fg->set_output(fg_new_output, true);
 }
 
-void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::vector<AnfNodePtr> &todos,
-               std::unordered_set<AnfNodePtr> *fused_ops, bool is_before_kernel_select) {
+bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr> &todos,
+                  std::unordered_set<AnfNodePtr> *fused_ops, bool is_before_kernel_select) {
+  bool changed = false;
   auto mng = kernel_graph->manager();
   for (auto iter = todos.cbegin(); iter != todos.cend(); ++iter) {
     auto node = (*iter)->cast<CNodePtr>();
@@ -181,9 +191,7 @@ void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, const 
     if (fused_ops->count(node)) {
       continue;
     }
-    auto fusable_basic_ops = get_fusable_basic_ops(is_before_kernel_select);
-    bool is_basic_op = std::any_of(fusable_basic_ops.begin(), fusable_basic_ops.end(),
-                                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+    bool is_basic_op = IsBasicOp(node, is_before_kernel_select);
     if (!is_basic_op || !kernel_graph->nodes().contains(node)) {
       continue;
     }
@@ -193,12 +201,16 @@ void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, const 
       continue;
     }
 
+    changed = true;
     FuncGraphPtr fg;
     AnfNodePtrList inputs;
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(fuse_nodes);
     RemoveControlDependOut(fg, &outputs, mng);
     auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs, is_before_kernel_select);
+    if (!is_before_kernel_select) {
+      SetNewKernelInfo(fuse_new_node, fg, inputs, outputs, AnfAlgo::GetProcessor(fuse_nodes[0]));
+    }
 
     ReplaceNewFuseCNode(kernel_graph, fuse_new_node, outputs);
 
@@ -210,10 +222,12 @@ void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, const 
     fused_ops->insert(fuse_nodes.begin(), fuse_nodes.end());
     fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
   }
+  std::dynamic_pointer_cast<session::KernelGraph>(kernel_graph)->SetExecOrderByDefault();
+  return changed;
 }
 }  // namespace
 
-void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, bool is_before_kernel_select) {
+bool FuseBasicOps(const FuncGraphPtr &kernel_graph, bool is_before_kernel_select) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto mng = kernel_graph->manager();
   if (mng == nullptr) {
@@ -223,7 +237,9 @@ void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, bool i
   std::unordered_set<AnfNodePtr> fused_ops;
   auto todos = TopoSort(kernel_graph->get_return());
   std::reverse(todos.begin(), todos.end());
-  FuseBasic(kernel_graph, todos, &fused_ops, is_before_kernel_select);
+  return FuseBasicOps(kernel_graph, todos, &fused_ops, is_before_kernel_select);
 }
+
+bool BasicOpsFusion::Run(const FuncGraphPtr &func_graph) { return FuseBasicOps(func_graph, false); }
 }  // namespace opt
 }  // namespace mindspore

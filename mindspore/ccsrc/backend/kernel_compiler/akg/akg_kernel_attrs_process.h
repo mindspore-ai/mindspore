@@ -16,43 +16,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H
 
-#include <vector>
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include "ir/anf.h"
-#include "utils/utils.h"
-#include "base/core_ops.h"
 
 namespace mindspore {
 namespace kernel {
-void SetAkgAttrsForFour2Five(const AnfNodePtr &anf_node);
-void SetAkgAttrsForFive2Four(const AnfNodePtr &anf_node);
-void SetAkgAttrsForCast(const AnfNodePtr &anf_node);
-void SetAkgAttrsForBNGrad1(const AnfNodePtr &anf_node);
-void SetAkgAttrsForBNGrad2(const AnfNodePtr &anf_node);
-void SetAkgAttrsForBNGrad3(const AnfNodePtr &anf_node);
-void SetAkgAttrsForFusedBN1(const AnfNodePtr &anf_node);
-void SetAkgAttrsForFusedBN2(const AnfNodePtr &anf_node);
-void SetAkgAttrsForFusedBN3(const AnfNodePtr &anf_node);
-void SetAkgAttrsForConvBN1(const AnfNodePtr &anf_node);
-void SetAkgAttrsForBN2AddRelu(const AnfNodePtr &anf_node);
-void SetAkgAttrsForBN2Relu(const AnfNodePtr &anf_node);
 
-const std::unordered_map<std::string, std::function<void(const AnfNodePtr &anf_node)>> kAkgKernelAttrsProcessMap = {
-  {kFour2FiveOpName, SetAkgAttrsForFour2Five},
-  {kFive2FourOpName, SetAkgAttrsForFive2Four},
-  {"Cast", SetAkgAttrsForCast},
-  {kBNGrad1OpName, SetAkgAttrsForBNGrad1},
-  {kBNGrad2OpName, SetAkgAttrsForBNGrad2},
-  {kBNGrad3OpName, SetAkgAttrsForBNGrad3},
-  {kFusedBN1OpName, SetAkgAttrsForFusedBN1},
-  {kFusedBN2OpName, SetAkgAttrsForFusedBN2},
-  {kFusedBN3OpName, SetAkgAttrsForFusedBN3},
-  {kConvBN1OpName, SetAkgAttrsForConvBN1},
-  {kBN2AddReluOpName, SetAkgAttrsForBN2AddRelu},
-  {kBN2ReLUOpName, SetAkgAttrsForBN2Relu},
-};
+void SetAkgKernelAttrs(const AnfNodePtr &anf_node);
+
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_ATTRS_PROCESS_H

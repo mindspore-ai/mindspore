@@ -290,7 +290,7 @@ class Parameter : public ANode {
   std::string DebugString(int recursive_level = 1) const override;
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
-  std::string fullname_with_scope() override { return name(); };
+  std::string fullname_with_scope() override { return name(); }
 
   bool has_default() const { return has_default_; }
   void set_default_param(ValuePtr param) {

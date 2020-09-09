@@ -16,11 +16,25 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
+#include <string>
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "base/base.h"
 
 namespace mindspore {
 namespace kernel {
+class AkgGpuKernelBuilder {
+ public:
+  AkgGpuKernelBuilder() = default;
+  ~AkgGpuKernelBuilder() = default;
+
+  KernelModPtr BuildByJson(const AnfNodePtr &anf_node);
+  KernelModPtr FuseByJson(const AnfNodePtr &anf_node);
+
+ private:
+  KernelPackPtr OpBuild(const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node);
+};
+
 KernelModPtr AkgGpuKernelBuild(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore

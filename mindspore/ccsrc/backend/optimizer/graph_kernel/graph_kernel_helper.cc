@@ -1,0 +1,674 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include <map>
+#include <unordered_set>
+#include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/action.h"
+#include "backend/kernel_compiler/common_utils.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "vm/segment_runner.h"
+#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
+#include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
+#include "ir/func_graph_cloner.h"
+#include "ir/func_graph.h"
+#include "backend/optimizer/pass/const_input_to_attr_registry.h"
+#ifdef ENABLE_D
+#include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
+#endif
+
+namespace mindspore {
+namespace opt {
+namespace {
+void DebugDump(const FuncGraphPtr &graph, std::stringstream *buf) {
+  (*buf) << "Parameters: \n";
+  const auto &parameters = graph->parameters();
+  (*buf) << "size: " << parameters.size() << "\n";
+  for (const auto &p : parameters) {
+    (*buf) << "\t" << p->DebugString(2) << "\n";
+  }
+  (*buf) << "ValueNodes: \n";
+  const auto &value_nodes = graph->value_nodes();
+  (*buf) << "size: " << value_nodes.size() << "\n";
+  for (const auto &v : value_nodes) {
+    (*buf) << "\t" << v.first->DebugString(2) << "\n";
+  }
+  (*buf) << "CNodes: \n";
+  const auto &all_nodes = graph->nodes();
+  (*buf) << "size: " << all_nodes.size() << "\n";
+  for (const auto &n : all_nodes) {
+    (*buf) << "\t" << n->DebugString(2) << "\n";
+  }
+}
+
+bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
+  MS_EXCEPTION_IF_NULL(real_outs);
+  if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
+    auto &inputs = out->cast<CNodePtr>()->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      real_outs->push_back(inputs[i]);
+    }
+    return true;
+  }
+
+  if (auto fg = AnfAlgo::GetCNodeFuncGraphPtr(out); fg != nullptr) {
+    auto fg_out = fg->output();
+    if (IsPrimitiveCNode(fg_out, prim::kPrimMakeTuple)) {
+      auto inputs = fg_out->cast<CNodePtr>()->inputs();
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        real_outs->push_back(inputs[i]);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx) {
+  auto out_spec = node->abstract();
+  if (out_spec->isa<abstract::AbstractTuple>()) {
+    return out_spec->cast<abstract::AbstractTuplePtr>()->elements()[output_idx];
+  }
+  return out_spec;
+}
+
+ValueNodePtr ProcessAttrsForCast(const CNodePtr &cnode, const std::string &attr_name) {
+  auto dst_type = AnfAlgo::GetNodeAttr<std::string>(cnode, attr_name);
+  auto type = TypeIdToType(kernel::DtypeToTypeId(dst_type));
+  auto type_val_node = NewValueNode(type);
+  return type_val_node;
+}
+
+const std::map<std::string, std::function<ValueNodePtr(const CNodePtr &cnode, const std::string &attr_name)>>
+  attrs_process_map = {
+    {kCastOpName, ProcessAttrsForCast},
+};
+
+ValueNodePtr ProcessAttrValue(const CNodePtr &cnode, const std::string &attr_name) {
+  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  if (attrs_process_map.count(op_name) != 0) {
+    return attrs_process_map.at(op_name)(cnode, attr_name);
+  }
+
+  auto attr_val = AnfAlgo::GetNodeAttr<ValuePtr>(cnode, attr_name);
+  auto attr_val_node = NewValueNode(attr_val);
+  return attr_val_node;
+}
+
+AnfNodePtr ConstAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                            const std::unordered_set<size_t> &input_attrs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(DEBUG) << "process node: " << cnode->DebugString(2);
+  if (input_attrs.empty()) {
+    return nullptr;
+  }
+
+  auto input_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
+  MS_LOG(DEBUG) << "ori_input_names: " << kernel::Vector2Str(input_names);
+  std::vector<AnfNodePtr> new_inputs;
+  std::vector<std::string> new_input_names;
+  const auto &inputs = cnode->inputs();
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    new_input_names.push_back(input_names[i]);
+  }
+
+  (void)new_inputs.insert(new_inputs.end(), inputs.begin(), inputs.end());
+  bool need_update = false;
+  for (size_t i = inputs.size() - 1; i < input_names.size(); ++i) {
+    auto attr_name = input_names[i];
+    if (input_attrs.find(i) == input_attrs.end()) {
+      MS_LOG(WARNING) << "Other type input between tensors and attrs, name: " << attr_name
+                      << ", node: " << cnode->DebugString(2);
+      new_input_names.push_back(attr_name);
+      continue;
+    }
+    if (!AnfAlgo::HasNodeAttr(attr_name, cnode)) {
+      MS_LOG(EXCEPTION) << "Attr: " << attr_name << " not found in node: " << cnode->DebugString(2);
+    }
+
+    // Hardcode. It should convert attrs value according to format, like op ReduceSum.
+    auto attr_val_node = ProcessAttrValue(cnode, attr_name);
+    new_inputs.push_back(attr_val_node);
+    new_input_names.push_back(attr_name);
+    need_update = true;
+    MS_LOG(DEBUG) << "convert attr: " << attr_name << " to input, value: " << attr_val_node;
+  }
+  MS_LOG(DEBUG) << "new_input_names: " << kernel::Vector2Str(new_input_names);
+
+  if (!need_update) {
+    return nullptr;
+  }
+
+  auto new_cnode = func_graph->NewCNode(new_inputs);
+  // we do not modify abstract and kernel info.
+  new_cnode->set_abstract(cnode->abstract());
+  new_cnode->set_kernel_info(cnode->kernel_info_ptr());
+  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(new_input_names), new_cnode);
+  return new_cnode;
+}
+
+AnfNodePtr DeleteAttrInInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                             const std::unordered_set<size_t> &input_attrs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(DEBUG) << "process node: " << cnode->DebugString(2);
+  if (input_attrs.empty()) {
+    return nullptr;
+  }
+
+  auto input_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
+  MS_LOG(DEBUG) << "ori_input_names: " << kernel::Vector2Str(input_names);
+  std::vector<AnfNodePtr> new_inputs;
+  std::vector<std::string> new_input_names;
+
+  const auto &inputs = cnode->inputs();
+  new_inputs.push_back(inputs[0]);
+  bool need_update = false;
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    // The attrs counts from 0
+    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>()) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      MS_LOG(DEBUG) << "delete attr input: " << i << " of node: " << cnode->DebugString(2);
+      if (i >= input_names.size()) {
+        MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size: " << input_names.size();
+      }
+      need_update = true;
+    } else {
+      new_inputs.push_back(input_node);
+      if (i < input_names.size()) {
+        new_input_names.push_back(input_names[i]);
+      }
+    }
+  }
+  MS_LOG(DEBUG) << "new_input_names: " << kernel::Vector2Str(new_input_names);
+
+  if (!need_update) {
+    return nullptr;
+  }
+
+  auto new_cnode = func_graph->NewCNode(new_inputs);
+  // we do not modify abstract and kernel info.
+  new_cnode->set_abstract(cnode->abstract());
+  new_cnode->set_kernel_info(cnode->kernel_info_ptr());
+  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(new_input_names), new_cnode);
+  return new_cnode;
+}
+
+AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr *fg, FuncGraphManagerPtr *mng) {
+  AnfNodePtrList outs;
+  auto out_node = (*fg)->output();
+  if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
+    std::vector<AnfNodePtr> output_args;
+    auto out_cnode = out_node->cast<CNodePtr>();
+    for (auto out : out_cnode->inputs()) {
+      if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
+        auto inputs = out->cast<CNodePtr>()->inputs();
+        for (size_t i = 1; i < inputs.size(); ++i) {
+          output_args.push_back(inputs[i]);
+        }
+      } else {
+        output_args.push_back(out);
+      }
+    }
+    if (output_args.size() != out_cnode->inputs().size()) {
+      auto new_out = (*fg)->NewCNode(output_args);
+      (*mng)->Replace(out_node, new_out);
+    }
+
+    for (size_t i = 1; i < output_args.size(); ++i) {
+      outs.push_back(output_args[i]);
+    }
+    return outs;
+  }
+
+  outs.push_back(out_node);
+  return outs;
+}
+}  // namespace
+
+void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
+                      const AnfNodePtrList &outputs, kernel::Processor processor) {
+  std::vector<std::string> graph_input_format;
+  std::vector<TypeId> graph_input_type;
+  std::vector<std::string> graph_output_format;
+  std::vector<TypeId> graph_output_type;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+    auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+    graph_input_format.push_back(input_format);
+    auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+    graph_input_type.push_back(input_type);
+    auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
+    fg->parameters()[i]->set_abstract(input_abs);
+  }
+  auto new_outputs = outputs;
+  if (outputs.size() == 1 && AnfAlgo::IsGraphKernel(outputs[0])) {
+    std::vector<AnfNodePtr> real_outs;
+    if (IsMakeTupleOut(outputs[0], &real_outs)) {
+      new_outputs = real_outs;
+    }
+  }
+  for (size_t i = 0; i < new_outputs.size(); ++i) {
+    auto kernel_with_index = AnfAlgo::VisitKernel(new_outputs[i], 0);
+    auto output_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+    auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+    graph_output_format.push_back(output_format);
+    graph_output_type.push_back(output_type);
+  }
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
+  graph_info_builder.SetInputsFormat(graph_input_format);
+  graph_info_builder.SetInputsDeviceType(graph_input_type);
+  graph_info_builder.SetOutputsFormat(graph_output_format);
+  graph_info_builder.SetOutputsDeviceType(graph_output_type);
+  graph_info_builder.SetProcessor(processor);
+  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  auto graph_selected_info = graph_info_builder.Build();
+  AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, new_node.get());
+}
+
+void ConstAttrToInput(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  std::vector<AnfNodePtr> todos;
+  kernel::GetValidKernelNodes(func_graph, &todos);
+  for (const auto &node : todos) {
+    ConstInputToAttrInfoRegister reg;
+    if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(node), &reg)) {
+      continue;
+    }
+    auto new_node = ConstAttrToInput(func_graph, node->cast<CNodePtr>(), reg.GetConstInputAttrInfo());
+    if (new_node != nullptr && new_node != node) {
+      mng->Replace(node, new_node);
+    }
+  }
+}
+
+void DeleteAttrInInput(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  std::vector<AnfNodePtr> todos;
+  kernel::GetValidKernelNodes(func_graph, &todos);
+  for (const auto &node : todos) {
+    ConstInputToAttrInfoRegister reg;
+    if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(node), &reg)) {
+      continue;
+    }
+    auto new_node = DeleteAttrInInput(func_graph, node->cast<CNodePtr>(), reg.GetConstInputAttrInfo());
+    if (new_node != nullptr && new_node != node) {
+      mng->Replace(node, new_node);
+    }
+  }
+}
+
+AnfNodePtrList GetExpandOuts(const AnfNodePtrList &outs) {
+  AnfNodePtrList res;
+  if (outs.size() <= 1) {
+    return outs;
+  }
+
+  for (auto out : outs) {
+    AnfNodePtrList real_outs;
+    if (IsMakeTupleOut(out, &real_outs)) {
+      res.insert(res.end(), real_outs.begin(), real_outs.end());
+      continue;
+    }
+    res.push_back(out);
+  }
+  return res;
+}
+
+AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &func_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
+                              const AnfNodePtrList &outputs, bool is_before_kernel_select) {
+  auto func_node = NewValueNode(fg);
+  std::vector<AnfNodePtr> fn_inputs;
+  fn_inputs.push_back(func_node);
+  fn_inputs.insert(fn_inputs.end(), inputs.begin(), inputs.end());
+  auto fuse_cnode = func_graph->NewCNode(fn_inputs);
+  // Set output abstract
+  if (outputs.size() > 1) {
+    std::vector<AbstractBasePtr> out_specs;
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      out_specs.push_back(outputs[i]->abstract());
+    }
+    auto out_spec = std::make_shared<abstract::AbstractTuple>(out_specs);
+    fuse_cnode->set_abstract(out_spec);
+  } else {
+    fuse_cnode->set_abstract(outputs[0]->abstract());
+  }
+  // Set parameter abstract.
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+    auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
+    fg->parameters()[i]->set_abstract(input_abs);
+    if (is_before_kernel_select) {
+      fg->parameters()[i]->set_kernel_info(std::make_shared<device::KernelInfo>());
+    }
+  }
+  return fuse_cnode;
+}
+
+void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_fuse_cnode,
+                         const AnfNodePtrList &outputs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  // single out
+  if (outputs.size() == 1) {
+    mng->Replace(outputs[0], new_fuse_cnode);
+    return;
+  }
+
+  std::vector<AnfNodePtr> fn_inputs;
+  for (size_t out_idx = 0; out_idx < outputs.size(); out_idx++) {
+    AnfNodePtrList real_outs;
+    // not make tuple out, replace
+    if (!IsMakeTupleOut(outputs[out_idx], &real_outs)) {
+      fn_inputs.clear();
+      fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
+      fn_inputs.push_back(new_fuse_cnode);
+      fn_inputs.push_back(NewValueNode(MakeValue(SizeToInt(out_idx))));
+      auto new_out = func_graph->NewCNode(fn_inputs);
+      new_out->set_abstract(outputs[out_idx]->abstract());
+      mng->Replace(outputs[out_idx], new_out);
+      continue;
+    }
+
+    // the out is make tuple , modify the get_item node's value
+    auto users = mng->node_users()[outputs[out_idx]];
+    for (auto &user : users) {
+      auto use_node = user.first;
+      if (!use_node->isa<CNode>() || !IsPrimitiveCNode(use_node, prim::kPrimTupleGetItem)) {
+        continue;
+      }
+      auto get_item_cnode = use_node->cast<CNodePtr>();
+      auto value_input = get_item_cnode->input(kInputNodeOutputIndexInTupleGetItem);
+      MS_EXCEPTION_IF_NULL(value_input);
+      auto value_node = value_input->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      int item_idx = GetValue<int>(value_node->value());
+      int new_item_idx = SizeToInt(out_idx) + item_idx;
+      fn_inputs.clear();
+      fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
+      fn_inputs.push_back(new_fuse_cnode);
+      fn_inputs.push_back(NewValueNode(new_item_idx));
+      auto new_out = func_graph->NewCNode(fn_inputs);
+      new_out->set_abstract(get_item_cnode->abstract());
+      mng->Replace(get_item_cnode, new_out);
+    }
+  }
+}
+
+void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
+                         const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix,
+                         bool is_before_kernel_select) {
+  if (fuse_nodes.empty()) {
+    return;
+  }
+
+  auto mng = kernel_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(kernel_graph, true);
+    kernel_graph->set_manager(mng);
+  }
+
+  FuncGraphPtr fg;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(fuse_nodes);
+
+  // Remove nest make tuple in outs
+  auto expand_out = GetExpandOuts(outputs);
+  auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, expand_out, is_before_kernel_select);
+  if (!is_before_kernel_select) {
+    SetNewKernelInfo(fuse_new_node, fg, inputs, expand_out, AnfAlgo::GetProcessor(fuse_nodes[0]));
+  }
+  ReplaceNewFuseCNode(kernel_graph, fuse_new_node, outputs);
+
+  // Inline origin graphkernel
+  auto cnodes = fg->GetOrderedCnodes();
+  for (const auto &n : cnodes) {
+    if (!AnfAlgo::IsGraphKernel(n)) {
+      continue;
+    }
+    auto graph_kernel_g = GetValueNode<FuncGraphPtr>(n->input(0));
+    AnfNodePtrList ins;
+    ins.insert(ins.end(), n->inputs().begin() + 1, n->inputs().end());
+    auto out = InlineClone(graph_kernel_g, fg, ins, n->input(0)->scope());
+    mng->Replace(n, out);
+  }
+
+  EliminateMakeTuple(&fg, &mng);
+  // set graphKernel attr
+  std::string fuse_op_name = "";
+  for (auto &fuse_node : fuse_nodes) {
+    if (IsPrimitiveCNode(fuse_node)) {
+      fuse_op_name += AnfAlgo::GetCNodePrimitive(fuse_node)->name() + "_";
+    } else if (AnfAlgo::IsGraphKernel(fuse_node)) {
+      auto fuse_cnode = fuse_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(fuse_cnode);
+      auto graph_kernel_fg = GetValueNode<FuncGraphPtr>(fuse_cnode->input(kAnfPrimitiveIndex));
+      auto fg_flag_val = graph_kernel_fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+      auto fuse_fg_name = GetValue<std::string>(fg_flag_val);
+      fuse_op_name += fuse_fg_name + "_";
+    }
+  }
+  fuse_op_name += postfix;
+  fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
+}
+
+bool AnfToJsonDesc(const AnfNodePtrList &nodes, DumpOption dump_option, nlohmann::json *op_desc,
+                   std::map<std::string, AnfNodePtr> *address_node_map) {
+  MS_EXCEPTION_IF_NULL(op_desc);
+  if (nodes.empty()) {
+    MS_LOG(ERROR) << "Input nodes is empty.";
+    return false;
+  }
+  bool has_graph_kernel =
+    std::any_of(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) { return AnfAlgo::IsGraphKernel(node); });
+  bool is_single_graph_kernel = has_graph_kernel && nodes.size() == 1;
+
+  auto gen_json = [&dump_option, &op_desc, &address_node_map](const AnfNodePtrList &op_nodes,
+                                                              const AnfNodePtrList &inputs,
+                                                              const AnfNodePtrList &outputs) -> bool {
+    kernel::AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
+    if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, inputs, outputs)) {
+      MS_LOG(ERROR) << "Collect json desc failed.";
+      return false;
+    }
+
+    *op_desc = akg_kernel_json_generator.kernel_json();
+    if (address_node_map != nullptr) {
+      *address_node_map = akg_kernel_json_generator.address_node_map();
+    }
+    std::string fused_name;
+    std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
+      (void)fused_name.append(AnfAlgo::GetCNodeName(node)).append("_");
+    });
+    MS_LOG(INFO) << "Collect fusion json: " << fused_name;
+    return true;
+  };
+
+  FuncGraphPtr fg;
+  AnfNodePtrList op_nodes;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  if (is_single_graph_kernel) {
+    fg = AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
+    kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
+    return gen_json(op_nodes, inputs, outputs);
+  } else if (!has_graph_kernel) {
+    std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(nodes);
+    op_nodes = nodes;
+    return gen_json(op_nodes, inputs, outputs);
+  }
+
+  std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(nodes);
+  auto mng = Manage(fg, false);
+  fg->set_manager(mng);
+  // Inline origin graph kernel
+  auto fg_nodes = fg->GetOrderedCnodes();
+  for (auto const &n : fg_nodes) {
+    if (!AnfAlgo::IsGraphKernel(n)) {
+      continue;
+    }
+    auto graph_kernel_g = GetValueNode<FuncGraphPtr>(n->input(0));
+    AnfNodePtrList ins;
+    ins.insert(ins.end(), n->inputs().begin() + 1, n->inputs().end());
+    auto out = InlineClone(graph_kernel_g, fg, ins, n->input(0)->scope());
+    mng->Replace(n, out);
+  }
+  inputs.clear();
+  outputs.clear();
+  kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
+  return gen_json(op_nodes, inputs, outputs);
+}
+
+bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, DumpOption dump_option, nlohmann::json *op_desc) {
+  MS_EXCEPTION_IF_NULL(op_desc);
+  std::vector<nlohmann::json> graphs_desc;
+  for (auto const &graph_nodes : graphs) {
+    nlohmann::json desc;
+    if (!AnfToJsonDesc(graph_nodes, dump_option, &desc)) {
+      MS_LOG(ERROR) << "Collect json desc failed.";
+      return false;
+    }
+    graphs_desc.push_back(desc);
+  }
+  if (graphs_desc.empty()) {
+    MS_LOG(ERROR) << "Collect zero json desc.";
+    return false;
+  }
+
+  if (graphs_desc.size() > 1) {
+    nlohmann::json op_json_desc;
+    op_json_desc[kJsonKeyMultiGraph] = true;
+    op_json_desc[kJsonKeyGraphDesc] = graphs_desc;
+    *op_desc = op_json_desc;
+    return true;
+  }
+
+  *op_desc = graphs_desc[0];
+  return true;
+}
+
+FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNodePtr> &inputs) {
+  kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
+  auto fg = akg_kernel_json_decoder.DecodeFusedNodes(json_desc);
+  if (fg == nullptr) {
+    MS_LOG(ERROR) << "Akg decode json to graph failed.";
+    return nullptr;
+  }
+
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  auto mng = resource->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  mng->AddFuncGraph(fg);
+  ConstAttrToInput(fg);
+  std::stringstream buf;
+  buf << "===================== graph after ConstAttrToInput " << fg->ToString() << " =====================\n";
+  DebugDump(fg, &buf);
+  MS_LOG(DEBUG) << buf.str();
+
+  // Do infer and specialize.
+  AbstractBasePtrList args_spec_list;
+  std::for_each(inputs.begin(), inputs.end(),
+                [&args_spec_list](const AnfNodePtr &node) { args_spec_list.push_back(node->abstract()); });
+  auto infer_fg = pipeline::Renormalize(resource, fg, args_spec_list);
+  if (infer_fg == nullptr) {
+    MS_LOG(ERROR) << "Infer decoded graph failed.";
+    return nullptr;
+  }
+  buf.str("");
+  buf << "===================== graph after Renormalize " << infer_fg->ToString() << " =====================\n";
+  DebugDump(infer_fg, &buf);
+  MS_LOG(DEBUG) << buf.str();
+
+  // delete no use inputs(attrs), like op ReduceSum(axis).
+  DeleteAttrInInput(infer_fg);
+  buf.str("");
+  buf << "===================== graph after DeleteAttrInInput " << infer_fg->ToString() << " =====================\n";
+  DebugDump(infer_fg, &buf);
+  MS_LOG(DEBUG) << buf.str();
+
+  // clone a new graph.
+  auto new_fg = TransformableClone(infer_fg, std::make_shared<TraceTransform>("akg_decode"));
+  return new_fg;
+}
+
+bool JsonDescToAnf(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map,
+                   std::vector<AnfNodePtrList> *res_graphs) {
+  MS_EXCEPTION_IF_NULL(res_graphs);
+  auto kernel_json = nlohmann::json::parse(json_desc);
+  if (kernel_json.find(kJsonKeyMultiGraph) == kernel_json.end() || kernel_json[kJsonKeyMultiGraph].is_null()) {
+    // not multi graphs.
+    MS_LOG(ERROR) << "Input json is not multi graph, " << json_desc;
+    return false;
+  }
+
+  kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
+  std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
+  if (graph_descs.empty()) {
+    MS_LOG(ERROR) << "No sub graph found, " << json_desc;
+    return false;
+  }
+
+  for (size_t i = 0; i < graph_descs.size(); ++i) {
+    const auto &graph_desc = graph_descs[i];
+    AnfNodePtrList res_graph;
+    if (!akg_kernel_json_decoder.DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
+      MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
+      return false;
+    }
+    res_graphs->push_back(res_graph);
+  }
+
+  return true;
+}
+
+std::unordered_set<PrimitivePtr> GetExpandOps() {
+  std::unordered_set<PrimitivePtr> expand_ops = {
+    prim::kPrimSquare,
+    prim::kPrimGelu,
+    prim::kPrimSoftmax,
+    prim::kPrimLayerNorm,
+  };
+  return expand_ops;
+}
+
+std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &prefix, const string &postfix) {
+  std::stringstream name;
+  if (prefix != "") {
+    name << prefix << "_";
+  }
+  for (const auto &node : cnodes) {
+    if (node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
+      name << AnfAlgo::GetCNodeName(node) << "_";
+    }
+  }
+  if (postfix != "") {
+    name << postfix;
+  }
+  return name.str();
+}
+}  // namespace opt
+}  // namespace mindspore

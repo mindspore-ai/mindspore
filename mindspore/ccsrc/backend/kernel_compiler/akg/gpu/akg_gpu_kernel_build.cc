@@ -15,29 +15,116 @@
  */
 
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_build.h"
+#include <Python.h>
 #include <vector>
 #include <memory>
+#include <string>
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/akg/akg_kernel_build.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
 #include "utils/ms_utils.h"
+#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 namespace kernel {
-KernelModPtr AkgGpuKernelBuild(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  AkgKernelBuild akg_kernel_build;
+constexpr int32_t ARGS_SIZE = 1;
+constexpr auto kCompileWithJsonFunc = "compilewithjson";
 
-  std::vector<size_t> input_size_list;
-  std::vector<size_t> output_size_list;
-  KernelPackPtr kernel_pack = akg_kernel_build.BuildByJson(anf_node, &input_size_list, &output_size_list);
-  MS_EXCEPTION_IF_NULL(kernel_pack);
+KernelPackPtr AkgGpuKernelBuilder::OpBuild(const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto processor = GetProcessorStr(anf_node);
+  auto kernel_name = json_generator.kernel_name();
+  auto cached_kernel_pack = SearchCache(kernel_name, processor);
+  if (cached_kernel_pack != nullptr) {
+    MS_LOG(INFO) << "Use cached kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
+                 << anf_node->fullname_with_scope() << "].";
+    return cached_kernel_pack;
+  }
+
+  (void)alarm(AUTODIFF_COMPILE_OVERTIME);
+  auto kernel_json = json_generator.kernel_json_str();
+  auto res = GpuKernelBuildClient::Instance().AkgCompileSingle(kernel_json);
+  (void)alarm(0);
+  if (!res) {
+    MS_LOG(ERROR) << "Akg compile failed, json: " << kernel_json;
+    return nullptr;
+  }
+
+  auto new_kernel_pack = InsertCache(kernel_name, processor);
+  kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
+  if (new_kernel_pack == nullptr) {
+    MS_LOG(ERROR) << "Insert to cache failed, kernel_name[" << kernel_name << "], fullname_with_scope["
+                  << anf_node->fullname_with_scope() << "].";
+    return nullptr;
+  }
+  return new_kernel_pack;
+}
+
+KernelModPtr AkgGpuKernelBuilder::BuildByJson(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_LOG(INFO) << "Akg start compile, op[" << anf_node->fullname_with_scope() << "]";
+  AkgKernelJsonGenerator json_generator;
+  if (!json_generator.CollectJson(anf_node)) {
+    MS_LOG(ERROR) << "Op[" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
+  }
+
+  auto kernel_pack = OpBuild(json_generator, anf_node);
+  if (kernel_pack == nullptr) {
+    MS_LOG(ERROR) << "Akg build failed op[" << anf_node->fullname_with_scope() << "].";
+    return nullptr;
+  }
 
   auto kernel_mod_ptr = std::make_shared<GpuKernelMod>(kernel_pack);
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-  kernel_mod_ptr->SetInputSizeList(input_size_list);
-  kernel_mod_ptr->SetOutputSizeList(output_size_list);
+  kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
+  kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
+  MS_LOG(INFO) << "Akg compile success, op[" << anf_node->fullname_with_scope() << "]";
   return kernel_mod_ptr;
+}
+
+KernelModPtr AkgGpuKernelBuilder::FuseByJson(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_LOG(INFO) << "Akg start compile, graph_kernel[" << anf_node->fullname_with_scope() << "]";
+  auto fg = AnfAlgo::GetCNodeFuncGraphPtr(anf_node);
+  MS_EXCEPTION_IF_NULL(fg);
+  auto mng = fg->manager();
+  if (mng == nullptr) {
+    mng = Manage(fg, true);
+    fg->set_manager(mng);
+  }
+
+  AnfNodePtrList node_list;
+  AnfNodePtrList input_list;
+  AnfNodePtrList output_list;
+  GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
+  AkgKernelJsonGenerator json_generator;
+  if (!json_generator.CollectFusedJson(node_list, input_list, output_list)) {
+    MS_LOG(ERROR) << "Op[" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
+  }
+
+  auto kernel_pack = OpBuild(json_generator, anf_node);
+  if (kernel_pack == nullptr) {
+    MS_LOG(ERROR) << "Akg build failed, graph_kernel[" << anf_node->fullname_with_scope() << "].";
+    return nullptr;
+  }
+
+  auto kernel_mod_ptr = std::make_shared<GpuKernelMod>(kernel_pack);
+  MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+  kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
+  kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
+  MS_LOG(INFO) << "Akg compile success, graph_kernel[" << anf_node->fullname_with_scope() << "]";
+  return kernel_mod_ptr;
+}
+
+KernelModPtr AkgGpuKernelBuild(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  AkgGpuKernelBuilder akg_gpu_kernel_builder;
+  if (AnfAlgo::IsGraphKernel(anf_node)) {
+    return akg_gpu_kernel_builder.FuseByJson(anf_node);
+  }
+  return akg_gpu_kernel_builder.BuildByJson(anf_node);
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -15,13 +15,20 @@
  */
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
 
+#include <vector>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "base/core_ops.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
 void SetAkgAttrsForFour2Five(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   // The x and output are akg op input and output param.
@@ -169,5 +176,29 @@ void SetAkgAttrsForBN2Relu(const AnfNodePtr &anf_node) {
   AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(bn2_input_names), anf_node);
   AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(bn2_output_names), anf_node);
 }
+
+const std::unordered_map<std::string, std::function<void(const AnfNodePtr &anf_node)>> kAkgKernelAttrsProcessMap = {
+  {kFour2FiveOpName, SetAkgAttrsForFour2Five},
+  {kFive2FourOpName, SetAkgAttrsForFive2Four},
+  {kCastOpName, SetAkgAttrsForCast},
+  {kBNGrad1OpName, SetAkgAttrsForBNGrad1},
+  {kBNGrad2OpName, SetAkgAttrsForBNGrad2},
+  {kBNGrad3OpName, SetAkgAttrsForBNGrad3},
+  {kFusedBN1OpName, SetAkgAttrsForFusedBN1},
+  {kFusedBN2OpName, SetAkgAttrsForFusedBN2},
+  {kFusedBN3OpName, SetAkgAttrsForFusedBN3},
+  {kConvBN1OpName, SetAkgAttrsForConvBN1},
+  {kBN2AddReluOpName, SetAkgAttrsForBN2AddRelu},
+  {kBN2ReLUOpName, SetAkgAttrsForBN2Relu},
+};
+}  // namespace
+
+void SetAkgKernelAttrs(const AnfNodePtr &anf_node) {
+  auto it = kAkgKernelAttrsProcessMap.find(AnfAlgo::GetCNodeName(anf_node));
+  if (it != kAkgKernelAttrsProcessMap.end()) {
+    it->second(anf_node);
+  }
+}
+
 }  // namespace kernel
 }  // namespace mindspore

@@ -392,9 +392,13 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     mem_manager_->FreeDeviceMemory();
   }
 
-  kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
-  MS_EXCEPTION_IF_NULL(bin_map);
-  bin_map->RemoveKernelCache();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG))) {
+    kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
+    MS_EXCEPTION_IF_NULL(bin_map);
+    bin_map->RemoveKernelCache();
+  }
 }
 
 void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,

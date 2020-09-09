@@ -16,9 +16,9 @@
 #include "runtime/device/gpu/gpu_kernel_build.h"
 #include <string>
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_build.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "frontend/operator/ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_build_client.h"
@@ -56,16 +56,16 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
       }
       auto gpu_kernel_ptr = kernel::AkgGpuKernelBuild(kernel);
       if (!gpu_kernel_ptr) {
-        MS_LOG(EXCEPTION) << "Build akg kernel op[" << kernel_name << "] failed";
+        MS_LOG(EXCEPTION) << "Build akg kernel op[" << kernel->fullname_with_scope() << "] failed";
       }
       session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_ptr, kernel.get());
     } else {
       auto gpu_kernel_ptr = kernel::GpuKernelFactory::GetInstance().Create(kernel_name, kernel);
       if (!gpu_kernel_ptr) {
-        MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel_name << "] failed";
+        MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
       }
       if (!gpu_kernel_ptr->Init(kernel)) {
-        MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel_name << "] failed.";
+        MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
       }
       session::AnfRuntimeAlgorithm::SetKernelMod((kernel::KernelModPtr)gpu_kernel_ptr, kernel.get());
     }

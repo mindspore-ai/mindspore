@@ -233,6 +233,67 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
     *origin_data_format = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "data_format");
   }
 }
+
+void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  std::vector<AnfNodePtr> node_list;
+  std::vector<AnfNodePtr> input_list;
+  std::vector<AnfNodePtr> output_list;
+  kernel::GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
+
+  std::vector<std::string> graph_input_format;
+  std::vector<TypeId> graph_input_type;
+  // set graph kernel inputs kernel info.
+  for (size_t i = 0; i < input_list.size(); ++i) {
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    std::vector<std::string> outputs_format = {kOpFormat_DEFAULT};
+    std::vector<TypeId> outputs_device_type = {AnfAlgo::GetOutputInferDataType(input_list[i], 0)};
+    graph_input_format.push_back(kOpFormat_DEFAULT);
+    graph_input_type.push_back(AnfAlgo::GetOutputInferDataType(input_list[i], 0));
+    builder.SetOutputsFormat(outputs_format);
+    builder.SetOutputsDeviceType(outputs_device_type);
+    AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), input_list[i].get());
+  }
+
+  // set graph kernel innner nodes kernel info.
+  for (size_t i = 0; i < node_list.size(); ++i) {
+    const auto &anf_node = node_list[i];
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto cnode = anf_node->cast<CNodePtr>();
+    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+    SetKernelInfo(cnode, KernelType::AKG_KERNEL);
+  }
+
+  // set graph kernel node kernel info.
+  auto mng = func_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
+  }
+  auto output_index = kernel::GetOutputIndex(node_list, input_list, output_list);
+  std::vector<std::string> graph_output_format;
+  std::vector<TypeId> graph_output_type;
+  for (size_t i = 0; i < output_index.size(); ++i) {
+    auto const &output = output_index[i];
+    graph_output_format.push_back(AnfAlgo::GetOutputFormat(output.first, output.second));
+    graph_output_type.push_back(AnfAlgo::GetOutputDeviceDataType(output.first, output.second));
+  }
+
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
+  graph_info_builder.SetInputsFormat(graph_input_format);
+  graph_info_builder.SetInputsDeviceType(graph_input_type);
+  graph_info_builder.SetOutputsFormat(graph_output_format);
+  graph_info_builder.SetOutputsDeviceType(graph_output_type);
+  graph_info_builder.SetProcessor(kernel::Processor::CUDA);
+  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  auto graph_selected_info = graph_info_builder.Build();
+  MS_EXCEPTION_IF_NULL(graph_selected_info);
+  AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());
+  SetTensorDeviceInfo(*graph_selected_info, kernel_node);
+}
 }  // namespace
 
 void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -259,7 +320,14 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
   format_transform_ = false;
 }
 
-void SetKernelInfo(const CNodePtr &kernel_node) {
+void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+  if (AnfAlgo::IsGraphKernel(kernel_node)) {
+    auto func_graph = GetValueNode<FuncGraphPtr>(kernel_node->input(kAnfPrimitiveIndex));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    SetGraphKernelInfo(kernel_node, func_graph);
+    return;
+  }
+
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
@@ -284,13 +352,19 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
 
-  bool result =
-    kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
-  KernelType kernel_type = UNKNOWN_KERNEL_TYPE;
+  bool result = false;
+  KernelType res_kernel_type = UNKNOWN_KERNEL_TYPE;
+  if (kernel_type == UNKNOWN_KERNEL_TYPE) {
+    result =
+      kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
 
-  if (!result) {
+    if (!result) {
+      result = SelectAkgKernel(kernel_node, builder->Build());
+      res_kernel_type = AKG_KERNEL;
+    }
+  } else if (kernel_type == AKG_KERNEL) {
     result = SelectAkgKernel(kernel_node, builder->Build());
-    kernel_type = AKG_KERNEL;
+    res_kernel_type = AKG_KERNEL;
   }
 
   if (!result) {
@@ -307,7 +381,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
                             << "] fail! Incompatible data type!\nThe supported data types are " << supported_type_lists
                             << ", but get " << build_type;
   }
-  builder->SetKernelType(kernel_type);
+  builder->SetKernelType(res_kernel_type);
   builder->SetProcessor(kernel::Processor::CUDA);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
   SetTensorDeviceInfo(*(builder->Build()), kernel_node);

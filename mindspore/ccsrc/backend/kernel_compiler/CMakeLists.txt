@@ -10,7 +10,8 @@ if (ENABLE_D)
 		"kernel_query.cc"
 		"kernel_fusion.cc"
 		"akg/ascend/*.cc"
-		"akg/akg_kernel_build.cc"
+		"akg/akg_kernel_json_generator.cc"
+		"akg/akg_kernel_json_decoder.cc"
 		"akg/akg_kernel_attrs_process.cc"
 		"akg/akg_kernel_metadata.cc"
 		"tbe/*.cc"
@@ -49,7 +50,8 @@ if (ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cu"
         "akg/gpu/*.cc"
-        "akg/akg_kernel_build.cc"
+        "akg/akg_kernel_json_generator.cc"
+        "akg/akg_kernel_json_decoder.cc"
         "akg/akg_kernel_attrs_process.cc"
 	)
 
