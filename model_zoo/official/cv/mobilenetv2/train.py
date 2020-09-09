@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     # get learning rate
     lr = Tensor(get_lr(global_step=0,
-                       lr_init=0,
+                       lr_init=config.lr_init,
                        lr_end=config.lr_end,
                        lr_max=config.lr_max,
                        warmup_epochs=config.warmup_epochs,
