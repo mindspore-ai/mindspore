@@ -52,7 +52,7 @@
 
 ### MindSpore Lite
 * Converter
-    * Support third party model, including TFLite/Caffe/ONNX.
+    * Support third-party models, including TFLite/Caffe/ONNX.
     * Add 93 TFLite op.
     * Add 24 Caffe op.
     * Add 62 ONNX op.
