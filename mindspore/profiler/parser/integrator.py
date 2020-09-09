@@ -498,10 +498,6 @@ class BaseTimelineGenerator:
         'op_exe_times': 0
     }
 
-    def __init__(self, profiling_dir, device_id):
-        self._profiling_dir = profiling_dir
-        self._device_id = device_id
-
     def _load_timeline_data(self):
         """Load timeline data from file."""
 
@@ -640,6 +636,17 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
     _output_gpu_activity_info_file_path = "gpu_activity_data_{}.csv"
     _activity_keys_list = []
 
+    def __init__(self, profiling_dir, device_id):
+        self._profiling_dir = profiling_dir
+        self._device_id = device_id
+        self._timeline_meta = []
+        self._timeline_summary = {
+            'total_time': 0,
+            'num_of_streams': 0,
+            'num_of_ops': 0,
+            'op_exe_times': 0
+            }
+
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
         file_path = os.path.join(
@@ -678,7 +685,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             timeline_dict['args'] = args_dict
         else:
             # Update total time of operator execution.
-            self._timeline_summary['total_time'] += dur
+            self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
 
         self._timeline_meta.append(timeline_dict)
@@ -744,15 +751,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
 
 
     def init_timeline(self):
-        """
-        Init timeline metadata, adding all collected info.
-
-        Args:
-            all_reduce_info (list[list]): The metadata of AllReduce operator.
-            framework_info (dict): The framework metadata.
-            aicpu_info (dict): The metadata of AICPU operator.
-            min_cycle_counter (float): The minimum cycle counter of the timeline.
-        """
+        """Init timeline metadata, adding all collected info."""
         timeline_list = self._load_timeline_data()
 
         # Init a dict for counting the num of streams.
@@ -770,6 +769,10 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     """Generate ascend Timeline data from file."""
     _display_filename = 'ascend_timeline_display_{}.json'
     _timeline_summary_filename = 'ascend_timeline_summary_{}.json'
+
+    def __init__(self, profiling_dir, device_id):
+        self._profiling_dir = profiling_dir
+        self._device_id = device_id
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
