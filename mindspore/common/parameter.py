@@ -49,7 +49,7 @@ class Parameter(MetaTensor):
         Each parameter of Cell is represented by Parameter class.
 
     Args:
-        default_input (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
+        set_data (Union[Tensor, Initializer, Number]): Parameter data, to be set initialized.
         name (str): Name of the child parameter.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in parallel mode,
@@ -78,7 +78,7 @@ class Parameter(MetaTensor):
         >>> x = Tensor(np.ones((2,1)))
         >>> net(x)
         [[2.]]
-        >>> net.weight.set_parameter_data(Tensor(np.zeros((1,2))))
+        >>> net.weight.set_data(Tensor(np.zeros((1,2))))
         >>> net(x)
         [[0.]]
     """
@@ -136,7 +136,7 @@ class Parameter(MetaTensor):
 
     @staticmethod
     def _get_parameter_new_args(data):
-        """Set `default_input` of current `Parameter`."""
+        """Set `set_data` of current `Parameter`."""
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Initializer):
@@ -266,7 +266,7 @@ class Parameter(MetaTensor):
         if init != 'same':
             shape = self.shape
             dtype = self.dtype
-            x.default_input = initializer(init, shape=shape, dtype=dtype)
+            x.set_data(initializer(init, shape=shape, dtype=dtype))
         return x
 
     @property
@@ -292,15 +292,7 @@ class Parameter(MetaTensor):
 
     @property
     def data(self):
-        return self.default_input
-
-    @property
-    def default_input(self):
         return self
-
-    @default_input.setter
-    def default_input(self, data):
-        self.set_parameter_data(data)
 
     def _update_tensor_data(self, data):
         "Update the parameter by a Tensor."
@@ -311,9 +303,9 @@ class Parameter(MetaTensor):
         # create a new tensor
         return Parameter(data, self.name, self.requires_grad)
 
-    def set_parameter_data(self, data, slice_shape=False):
+    def set_data(self, data, slice_shape=False):
         """
-        Set `default_input` of current `Parameter`.
+        Set `set_data` of current `Parameter`.
 
         Args:
             data (Union[Tensor, Initializer, int, float]): new data.
@@ -339,7 +331,7 @@ class Parameter(MetaTensor):
         is_current_tensor = isinstance(self, Tensor)
 
         if is_incoming_tensor and not is_current_tensor:
-            raise TypeError("Parameter is a `MetaTensor` and not initializered, `data` for `set_parameter_data`"
+            raise TypeError("Parameter is a `MetaTensor` and not initializered, `data` for `set_data`"
                             "should be a Initializer. If you want to update it by Tensor, call method"
                             "`init_parameters_data` of `Cell` to init and replace all the Parameter of"
                             "network, then call this method.")
@@ -360,7 +352,7 @@ class Parameter(MetaTensor):
             else:
                 # also update the related inited parameter data
                 if self.inited_param is not None:
-                    self.inited_param.set_parameter_data(data)
+                    self.inited_param.set_data(data)
                 self.init_mode = data
         elif is_incoming_tensor or is_current_tensor:
             self._update_tensor_data(data)

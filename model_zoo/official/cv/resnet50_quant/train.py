@@ -93,13 +93,13 @@ if __name__ == '__main__':
     else:
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Conv2d):
-                cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
-                                                                    cell.weight.shape,
-                                                                    cell.weight.dtype)
+                cell.weight.set_data(weight_init.initializer(weight_init.XavierUniform(),
+                                                             cell.weight.shape,
+                                                             cell.weight.dtype))
             if isinstance(cell, nn.Dense):
-                cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
-                                                                    cell.weight.shape,
-                                                                    cell.weight.dtype)
+                cell.weight.set_data(weight_init.initializer(weight_init.TruncatedNormal(),
+                                                             cell.weight.shape,
+                                                             cell.weight.dtype))
     if not config.use_label_smooth:
         config.label_smooth_factor = 0.0
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)

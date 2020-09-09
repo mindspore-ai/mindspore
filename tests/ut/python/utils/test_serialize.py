@@ -203,7 +203,7 @@ def test_load_param_into_net_error_dict():
 def test_load_param_into_net_erro_dict_param():
     net = Net(10)
     net.init_parameters_data()
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
     one_param = ''
@@ -216,7 +216,7 @@ def test_load_param_into_net_has_more_param():
     """ test_load_param_into_net_has_more_param """
     net = Net(10)
     net.init_parameters_data()
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
     one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7, 7)), dtype=mstype.float32),
@@ -226,13 +226,13 @@ def test_load_param_into_net_has_more_param():
                           name="conv1.weight")
     parameter_dict["conv1.w"] = two_param
     load_param_into_net(net, parameter_dict)
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 1
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 1
 
 
 def test_load_param_into_net_param_type_and_shape_error():
     net = Net(10)
     net.init_parameters_data()
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
     one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7, 7))), name="conv1.weight")
@@ -244,7 +244,7 @@ def test_load_param_into_net_param_type_and_shape_error():
 def test_load_param_into_net_param_type_error():
     net = Net(10)
     net.init_parameters_data()
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
     one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7, 7)), dtype=mstype.int32),
@@ -257,7 +257,7 @@ def test_load_param_into_net_param_type_error():
 def test_load_param_into_net_param_shape_error():
     net = Net(10)
     net.init_parameters_data()
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
     one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7,)), dtype=mstype.int32),
@@ -270,14 +270,14 @@ def test_load_param_into_net_param_shape_error():
 def test_load_param_into_net():
     net = Net(10)
     net.init_parameters_data()
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
     one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7, 7)), dtype=mstype.float32),
                           name="conv1.weight")
     parameter_dict["conv1.weight"] = one_param
     load_param_into_net(net, parameter_dict)
-    assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 1
+    assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 1
 
 
 def test_save_checkpoint_for_network():

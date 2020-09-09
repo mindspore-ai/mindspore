@@ -155,22 +155,22 @@ def default_recurisive_init(custom_cell):
     """Initialize parameter."""
     for _, cell in custom_cell.cells_and_names():
         if isinstance(cell, nn.Conv2d):
-            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                         cell.weight.default_input.shape,
-                                                         cell.weight.default_input.dtype).to_tensor()
+            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
+                                                  cell.weight.data.shape,
+                                                  cell.weight.data.dtype).to_tensor())
             if cell.bias is not None:
-                fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.default_input.asnumpy())
+                fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.data.asnumpy())
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound, cell.bias.default_input.shape),
-                                                 cell.bias.default_input.dtype)
+                cell.bias.set_data(Tensor(np.random.uniform(-bound, bound, cell.bias.data.shape),
+                                          cell.bias.data.dtype))
         elif isinstance(cell, nn.Dense):
-            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                         cell.weight.default_input.shape,
-                                                         cell.weight.default_input.dtype).to_tensor()
+            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
+                                                  cell.weight.data.shape,
+                                                  cell.weight.data.dtype).to_tensor())
             if cell.bias is not None:
-                fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.default_input.asnumpy())
+                fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.data.asnumpy())
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound, cell.bias.default_input.shape),
-                                                 cell.bias.default_input.dtype)
+                cell.bias.set_data(Tensor(np.random.uniform(-bound, bound, cell.bias.data.shape),
+                                          cell.bias.data.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass

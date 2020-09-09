@@ -364,7 +364,7 @@ class Cell(Cell_):
             cells[name] = value
         elif params and name in params:
             if isinstance(value, Tensor) and self._params[name] is not None:
-                self._params[name].set_parameter_data(value)
+                self._params[name].set_data(value)
             elif value is not None:
                 raise TypeError("Expected type in (Parameter, ParameterTuple), but got {}.".format(type(value)))
             else:
@@ -425,7 +425,7 @@ class Cell(Cell_):
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
-                params[key].set_parameter_data(new_tensor, True)
+                params[key].set_data(new_tensor, True)
         else:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))

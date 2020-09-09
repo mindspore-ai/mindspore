@@ -81,7 +81,7 @@ def transformer_infer(config, dataset):
     weights = load_infer_weights(config)
 
     for param in params:
-        value = param.default_input
+        value = param.data
         name = param.name
         if name not in weights:
             raise ValueError(f"{name} is not found in weights.")
@@ -93,7 +93,7 @@ def transformer_infer(config, dataset):
                 print(name, value.asnumpy().shape)
                 if weights_name in weights:
                     assert weights_name in weights
-                    param.default_input = Tensor(weights[weights_name], mstype.float32)
+                    param.set_data(Tensor(weights[weights_name], mstype.float32))
                 else:
                     raise ValueError(f"{weights_name} is not found in checkpoint.")
             else:

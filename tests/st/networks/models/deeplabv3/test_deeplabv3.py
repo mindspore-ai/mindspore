@@ -65,7 +65,7 @@ class LossCallBack(Callback):
 def model_fine_tune(train_net, fix_weight_layer):
     train_net.init_parameters_data()
     for para in train_net.trainable_params():
-        para.set_parameter_data(Tensor(np.ones(para.data.shape).astype(np.float32) * 0.02))
+        para.set_data(Tensor(np.ones(para.data.shape).astype(np.float32) * 0.02))
         if fix_weight_layer in para.name:
             para.requires_grad = False
 

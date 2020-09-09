@@ -90,7 +90,7 @@ if __name__ == '__main__':
     if args_opt.platform == "Ascend":
         for param in net.trainable_params():
             if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
-                param.set_parameter_data(initializer(XavierUniform(), param.data.shape, param.data.dtype))
+                param.set_data(initializer(XavierUniform(), param.data.shape, param.data.dtype))
     group_params = [{'params': decayed_params, 'weight_decay': cfg.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]

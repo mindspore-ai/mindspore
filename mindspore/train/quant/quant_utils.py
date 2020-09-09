@@ -283,5 +283,5 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
             raise ValueError(f"Can't find match parameter in ckpt,param name = {name}")
         value_param = next(iterable_dict[key_name], None)
         if value_param is not None:
-            param.set_parameter_data(value_param[1].data)
+            param.set_data(value_param[1].data)
             print(f'init model param {name} with checkpoint param {value_param[0]}')

@@ -208,22 +208,22 @@ def test_bert_percision():
     callback = ModelCallback()
     params = netwithloss.trainable_params()
     for param in params:
-        value = param.default_input
+        value = param.data
         name = param.name
         if isinstance(value, Tensor):
             if name.split('.')[-1] in ['weight']:
                 if name.split('.')[-3] in ['cls2']:
                     logger.info("***************** BERT param name is 1 {}".format(name))
-                    param.default_input = weight_variable(value.asnumpy().shape)
+                    param.set_data(weight_variable(value.asnumpy().shape))
                 else:
                     logger.info("***************** BERT param name is 2 {}".format(name))
                     tempshape = value.asnumpy().shape
                     shape = (tempshape[1], tempshape[0])
                     weight_value = weight_variable(shape).asnumpy()
-                    param.default_input = Tensor(np.transpose(weight_value, [1, 0]))
+                    param.set_data(Tensor(np.transpose(weight_value, [1, 0])))
             else:
                 logger.info("***************** BERT param name is 3 {}".format(name))
-                param.default_input = weight_variable(value.asnumpy().shape)
+                param.set_data(weight_variable(value.asnumpy().shape))
     model.train(new_repeat_count, ds, callbacks=callback, dataset_sink_mode=False)
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong

@@ -158,15 +158,15 @@ def test_parameter_compute():
 def test_scalar_parameter_update():
     # float
     fp = Parameter(0.5, 'fp')
-    fp.default_input = 0.8
-    assert np.array_equal(fp.default_input.asnumpy(), np.array(0.8, np.float32))
-    fp.default_input = 1
-    assert np.array_equal(fp.default_input.asnumpy(), np.array(1.0, np.float32))
+    fp.set_data(0.8)
+    assert np.array_equal(fp.data.asnumpy(), np.array(0.8, np.float32))
+    fp.set_data(1)
+    assert np.array_equal(fp.data.asnumpy(), np.array(1.0, np.float32))
     int_ = Parameter(1, 'fp')
-    int_.default_input = 2
-    assert np.array_equal(int_.default_input.asnumpy(), np.array(2, np.int32))
+    int_.set_data(2)
+    assert np.array_equal(int_.data.asnumpy(), np.array(2, np.int32))
     with pytest.raises(TypeError):
-        int_.default_input = 1.2
+        int_.set_data(1.2)
     # Tensor
     fp32 = Tensor(0.5, mstype.float32)
     int32 = Tensor(2, mstype.int32)
@@ -175,59 +175,59 @@ def test_scalar_parameter_update():
     bool_ = Tensor(np.array(True, dtype=np.bool_))
     # updata_by_tensor
     fp32_p = Parameter(fp32, 'fp32')
-    fp32_p.default_input = 0.8
-    fp32_p.default_input = 1
-    fp32_p.default_input = int32
-    fp32_p.default_input = fp32
-    fp32_p.default_input = int16
-    fp32_p.default_input = fp16
-    fp32_p.default_input = bool_
+    fp32_p.set_data(0.8)
+    fp32_p.set_data(1)
+    fp32_p.set_data(int32)
+    fp32_p.set_data(fp32)
+    fp32_p.set_data(int16)
+    fp32_p.set_data(fp16)
+    fp32_p.set_data(bool_)
 
     # updata_by_tensor
     fp16_p = Parameter(fp16, 'fp16')
     with pytest.raises(TypeError):
-        fp16_p.default_input = fp32
+        fp16_p.set_data(fp32)
 
 
 def test_parameter_lazy_init():
     # support lazy init in SEMI_AUTO_PARALLEL mode
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8)
-    # Call init_data() without set default_input.
+    # Call init_data() without set set_data.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test1')
-    assert not isinstance(para.default_input, Tensor)
+    assert not isinstance(para.data, Tensor)
     para = para.init_data()
-    assert isinstance(para.default_input, Tensor)
-    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+    assert isinstance(para.data, Tensor)
+    assert np.array_equal(para.data.asnumpy(), np.ones((1, 2, 3)))
 
-    # Call init_data() after default_input is set.
+    # Call init_data() after set_data is set.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test2')
-    assert not isinstance(para.default_input, Tensor)
+    assert not isinstance(para.data, Tensor)
     # expect type error when not init
     with pytest.raises(TypeError):
-        para.default_input = Tensor(np.zeros((1, 2, 3)))
+        para.set_data(Tensor(np.zeros((1, 2, 3))))
     # init then assign
     para = para.init_data()
     # check the type
     with pytest.raises(TypeError):
-        para.default_input = Tensor(np.zeros((1, 2, 3)))
+        para.set_data(Tensor(np.zeros((1, 2, 3))))
     # check the shape
     with pytest.raises(ValueError):
-        para.default_input = Tensor(np.zeros((1, 2)))
+        para.set_data(Tensor(np.zeros((1, 2))))
     # expect change ok
-    para.default_input = Tensor(np.zeros((1, 2, 3)).astype(np.float32))
-    assert np.array_equal(para.default_input.asnumpy(), np.zeros((1, 2, 3)))
-    para.default_input = initializer('ones', [1, 2, 3], mstype.float32)
-    assert isinstance(para.default_input, Tensor)
+    para.set_data(Tensor(np.zeros((1, 2, 3)).astype(np.float32)))
+    assert np.array_equal(para.data.asnumpy(), np.zeros((1, 2, 3)))
+    para.set_data(initializer('ones', [1, 2, 3], mstype.float32))
+    assert isinstance(para.data, Tensor)
     # same object and has inited
-    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
+    assert np.array_equal(para.data.asnumpy(), np.ones((1, 2, 3)))
     # expect no effect.
     para.init_data()
-    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2, 3)))
-    para.set_parameter_data(Tensor(np.zeros((1, 2)).astype(np.float32)), slice_shape=True)
-    assert np.array_equal(para.default_input.asnumpy(), np.zeros((1, 2)))
-    para.set_parameter_data(initializer('ones', [1, 2], mstype.float32), slice_shape=True)
-    assert np.array_equal(para.default_input.asnumpy(), np.ones((1, 2)))
+    assert np.array_equal(para.data.asnumpy(), np.ones((1, 2, 3)))
+    para.set_data(Tensor(np.zeros((1, 2)).astype(np.float32)), slice_shape=True)
+    assert np.array_equal(para.data.asnumpy(), np.zeros((1, 2)))
+    para.set_data(initializer('ones', [1, 2], mstype.float32), slice_shape=True)
+    assert np.array_equal(para.data.asnumpy(), np.ones((1, 2)))
     context.reset_auto_parallel_context()
 
 
@@ -243,7 +243,7 @@ def test_parameter_as_output():
             self.updated = updated
             self.p = Parameter(self.initial, name="weight")
             self.new_p = self.p.init_data()
-            self.new_p.set_parameter_data(self.updated)
+            self.new_p.set_data(self.updated)
         def construct(self):
             return self.new_p
 

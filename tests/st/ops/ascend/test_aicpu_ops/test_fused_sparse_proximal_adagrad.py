@@ -43,5 +43,5 @@ def test_net():
     net = Net()
     output = net(gradient, indices)
     print(output)
-    print(net.var.default_input)
-    print(net.accum.default_input)
+    print(net.var.data)
+    print(net.accum.data)

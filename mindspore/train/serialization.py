@@ -63,7 +63,7 @@ def _special_process_par(par, new_par):
     if delta_i == delta_len - 1:
         new_val = new_par.data.asnumpy()
         new_val = new_val.reshape(par.data.shape)
-        par.set_parameter_data(Tensor(new_val, par.data.dtype))
+        par.set_data(Tensor(new_val, par.data.dtype))
         return True
     return False
 
@@ -86,7 +86,7 @@ def _update_param(param, new_param):
                 raise RuntimeError(msg)
             return
 
-        param.set_parameter_data(new_param.data)
+        param.set_data(new_param.data)
         return
 
     if isinstance(param.data, Tensor) and not isinstance(new_param.data, Tensor):
@@ -95,7 +95,7 @@ def _update_param(param, new_param):
             msg = ("Net parameters {} shape({}) is not (1,), inconsitent with parameter_dict's(scalar)."
                    .format(param.name, param.data.shape))
             raise RuntimeError(msg)
-        param.set_parameter_data(initializer(new_param.data, param.data.shape, param.data.dtype))
+        param.set_data(initializer(new_param.data, param.data.shape, param.data.dtype))
 
     elif isinstance(new_param.data, Tensor) and not isinstance(param.data, Tensor):
         logger.error("Failed to combine the net and the parameters for param %s.", param.name)
@@ -104,7 +104,7 @@ def _update_param(param, new_param):
         raise RuntimeError(msg)
 
     else:
-        param.set_parameter_data(type(param.data)(new_param.data))
+        param.set_data(type(param.data)(new_param.data))
 
 
 def _exec_save(ckpt_file_name, data_list):
