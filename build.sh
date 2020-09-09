@@ -542,9 +542,27 @@ build_opencl() {
 }
 
 build_opencv() {
+    # check what platform we are building opencv on
     cd ${BASEPATH}
-    if [[ "${INC_BUILD}" == "off" ]]; then
-        git submodule update --init --recursive third_party/opencv
+    if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
+        OPENCV_BIN="${BASEPATH}"/third_party/opencv/build/lib/libopencv_core.so.4.2.0
+    elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
+        OPENCV_BIN="${BASEPATH}"/third_party/opencv/build/lib/armeabi-v7a/libopencv_core.so
+    else
+        OPENCV_BIN="${BASEPATH}"/third_party/opencv/build/lib/arm64-v8a/libopencv_core.so
+	
+    fi
+    if [[ ! -f "${OPENCV_BIN}" ]]; then
+        if [[ ${MSLIBS_SERVER} ]]; then
+	    cd "${BASEPATH}"/third_party/
+	    rm -rf 4.2.0.tar.gz ./opencv
+	    wget http://${MSLIBS_SERVER}:8081/libs/opencv/4.2.0.tar.gz
+            tar -zxvf ./4.2.0.tar.gz
+	    mv ./opencv-4.2.0 ./opencv
+            rm -rf 4.2.0.tar.gz
+	else
+            git submodule update --init --recursive third_party/opencv
+        fi
         cd ${BASEPATH}/third_party/opencv
         rm -rf build && mkdir -p build && cd build && cmake ${CMAKE_MINDDATA_ARGS} -DBUILD_SHARED_LIBS=ON -DBUILD_ANDROID_PROJECTS=OFF \
           -DBUILD_LIST=core,imgcodecs,imgproc -DBUILD_ZLIB=ON .. && make -j$THREAD_NUM
@@ -553,8 +571,24 @@ build_opencv() {
 
 build_jpeg_turbo() {
     cd ${BASEPATH}
-    if [[ "${INC_BUILD}" == "off" ]]; then
-        git submodule update --init --recursive third_party/libjpeg-turbo
+    if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
+        JPEG_TURBO="${BASEPATH}"/third_party/libjpeg-turbo/lib/libjpeg.so.62.3.0
+    else
+        JPEG_TURBO="${BASEPATH}"/third_party/libjpeg-turbo/lib/libjpeg.so
+    fi
+
+    if [[ ! -f "${JPEG_TURBO}" ]]; then
+        if [[ ${MSLIBS_SERVER} ]]; then
+            cd "${BASEPATH}"/third_party/
+	    rm -rf 2.0.4.tar.gz ./libjpeg-turbo
+	    wget http://${MSLIBS_SERVER}:8081/libs/jpeg_turbo/2.0.4.tar.gz
+	    tar -zxvf ./2.0.4.tar.gz
+	    mv ./libjpeg-turbo-2.0.4 ./libjpeg-turbo
+	    rm -rf ./2.0.4.tar.gz
+        else
+            git submodule update --init --recursive third_party/libjpeg-turbo
+        fi
+
         cd ${BASEPATH}/third_party/libjpeg-turbo
         rm -rf build && mkdir -p build && cd build && cmake ${CMAKE_MINDDATA_ARGS} -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_INSTALL_PREFIX="${BASEPATH}/third_party/libjpeg-turbo" .. && make -j$THREAD_NUM && make install
@@ -563,7 +597,17 @@ build_jpeg_turbo() {
 
 build_eigen() {
     cd ${BASEPATH}
-    git submodule update --init --recursive third_party/eigen
+    if [[ ${MSLIBS_SERVER} ]]; then
+        cd "${BASEPATH}"/third_party/
+	rm -rf ./eigen-3.*.tar.gz ./eigen
+        wget http://${MSLIBS_SERVER}:8081/libs/eigen3/eigen-3.3.7.tar.gz
+        tar -zxvf ./eigen-3.3.7.tar.gz
+        mv ./eigen-3.3.7 ./eigen
+	rm -rf ./eigen-3.*.tar.gz
+    else
+        git submodule update --init --recursive third_party/eigen
+
+    fi
 }
 
 build_minddata_lite_deps()
