@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <random>
 #include "multinomial_impl.cuh"
 
 template <typename T>
@@ -107,7 +108,8 @@ void Multinomial(int seed, T *input, int num_sample, curandState *globalState, i
   if (seed != 0) {
     RNG_seed = seed;
   } else {
-    RNG_seed = time(NULL);
+    std::random_device rd;
+    RNG_seed = static_cast<int>(rd());
   }
   int count = distributions * num_sample;
   MultinomialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, input, num_sample, globalState,
