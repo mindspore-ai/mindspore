@@ -289,7 +289,7 @@ class Tensor : public MetaTensor {
     if (event_ != nullptr) {
       event_->Wait();
     }
-    event_ == nullptr;
+    event_ = nullptr;
   }
 
   void set_sync_status(TensorSyncStatus sync_status) { sync_status_ = sync_status; }
@@ -306,7 +306,7 @@ class Tensor : public MetaTensor {
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};
   std::string id_{""};
-  std::shared_ptr<WaitEvent> event_{nullptr};
+  mutable std::shared_ptr<WaitEvent> event_{nullptr};
   mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   DeviceSyncPtr device_sync_{nullptr};
   std::vector<Axis> padding_type_;

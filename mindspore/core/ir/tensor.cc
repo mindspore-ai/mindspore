@@ -557,7 +557,6 @@ void Tensor::data_sync() const {
   if (!device_sync_->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
     MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
   }
-  sync_status_ = kNeedSyncHostToDevice;
 }
 
 TypeId Tensor::set_data_type(const TypeId data_type) {
