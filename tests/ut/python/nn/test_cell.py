@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test cell """
+import copy
 import numpy as np
 import pytest
 
@@ -198,6 +199,11 @@ def test_exceptions():
     m = nn.Cell()
     with pytest.raises(NotImplementedError):
         m.construct()
+
+
+def test_cell_copy():
+    net = ConvNet()
+    copy.deepcopy(net)
 
 
 def test_del():

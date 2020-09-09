@@ -45,6 +45,19 @@ REGISTER_PYBIND_DEFINE(Cell, ([](const py::module *m) {
                            .def("_del_attr", &Cell::DelAttr, "Delete Cell attr.")
                            .def(
                              "construct", []() { MS_LOG(EXCEPTION) << "we should define `construct` for all `cell`."; },
-                             "construct");
+                             "construct")
+                           .def(py::pickle(
+                             [](const Cell &cell) {  // __getstate__
+                               /* Return a tuple that fully encodes the state of the object */
+                               return py::make_tuple(py::str(cell.name()));
+                             },
+                             [](const py::tuple &tup) {  // __setstate__
+                               if (tup.size() != 1) {
+                                 throw std::runtime_error("Invalid state!");
+                               }
+                               /* Create a new C++ instance */
+                               Cell data(tup[0].cast<std::string>());
+                               return data;
+                             }));
                        }));
 }  // namespace mindspore
