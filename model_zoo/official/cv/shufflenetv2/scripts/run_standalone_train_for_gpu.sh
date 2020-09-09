@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# -lt 1 ]
+if [ $# != 1 ] && [ $# != 2 ]
 then
-    echo "Usage: \
-          sh run_standalone_train_for_gpu.sh [DATASET_PATH] \
+    echo "Usage: 
+          sh run_standalone_train_for_gpu.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional) 
           "
 exit 1
 fi
@@ -37,4 +37,12 @@ fi
 mkdir ../train
 cd ../train || exit
 
-python ${BASEPATH}/../train.py --platform='GPU' --dataset_path=$1 > train.log 2>&1 &
+if [ $# == 1 ]
+then
+    python ${BASEPATH}/../train.py --platform='GPU' --dataset_path=$1 > train.log 2>&1 &
+fi
+
+if [ $# == 2 ]
+then
+    python ${BASEPATH}/../train.py --platform='GPU' --dataset_path=$1 --resume=$2 > train.log 2>&1 &
+fi

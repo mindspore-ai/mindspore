@@ -71,8 +71,14 @@ if __name__ == '__main__':
             print("Unsupported device_target ", args_opt.device_target)
             exit()
     else:
-        device_id = int(os.getenv('DEVICE_ID'))
-        context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
+        if args_opt.device_target == "Ascend":
+            device_id = int(os.getenv('DEVICE_ID'))
+            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
+        elif args_opt.device_target == "GPU":
+            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+        else:
+            print("Unsupported device_target ", args_opt.device_target)
+            exit()
         rank_size = None
         rank_id = None
 

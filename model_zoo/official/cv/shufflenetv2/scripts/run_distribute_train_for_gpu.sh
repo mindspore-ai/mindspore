@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# -lt 3 ]
+if [ $# != 3 ] && [ $# != 4 ]
 then
-    echo "Usage: \
-          sh run_distribute_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] \
+    echo "Usage: 
+          sh run_distribute_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
           "
 exit 1
 fi
@@ -48,10 +48,15 @@ cd ../train || exit
 
 export CUDA_VISIBLE_DEVICES="$2"
 
-if [ $1 -gt 1 ]
+if [ $# == 3 ]
 then
     mpirun -n $1 --allow-run-as-root \
     python ${BASEPATH}/../train.py --platform='GPU' --is_distributed=True --dataset_path=$3 > train.log 2>&1 &
-else
-    python ${BASEPATH}/../train.py --platform='GPU' --dataset_path=$3 > train.log 2>&1 &
 fi
+
+if [ $# == 4 ]
+then
+    mpirun -n $1 --allow-run-as-root \
+    python ${BASEPATH}/../train.py --platform='GPU' --is_distributed=True --dataset_path=$3 --resume=$4 > train.log 2>&1 &
+fi
+

@@ -23,8 +23,8 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.config import config_gpu as cfg
 from src.dataset import create_dataset
-from network import ShuffleNetV2
-
+from src.shufflenetv2 import ShuffleNetV2
+from src.CrossEntropySmooth import CrossEntropySmooth
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='image classification evaluation')
@@ -43,8 +43,8 @@ if __name__ == '__main__':
     load_param_into_net(net, ckpt)
     net.set_train(False)
     dataset = create_dataset(args_opt.dataset_path, False, 0, 1)
-    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False,
-                                            smooth_factor=0.1, num_classes=cfg.num_classes)
+    loss = CrossEntropySmooth(sparse=True, reduction='mean',
+                              smooth_factor=0.1, num_classes=cfg.num_classes)
     eval_metrics = {'Loss': nn.Loss(),
                     'Top1-Acc': nn.Top1CategoricalAccuracy(),
                     'Top5-Acc': nn.Top5CategoricalAccuracy()}
