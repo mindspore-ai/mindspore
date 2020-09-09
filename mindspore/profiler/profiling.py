@@ -18,7 +18,7 @@ import time
 from enum import Enum
 
 from mindspore import log as logger, context
-from mindspore.communication.management import release
+from mindspore.communication.management import release, init, get_rank
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException
 from mindspore.profiler.common.util import get_file_names, fwrite_format
@@ -93,6 +93,8 @@ class Profiler:
             self._gpu_profiler = GPUProfiler.get_instance()
             self._gpu_profiler.init(self._output_path)
             self._gpu_profiler.step_profiling_enable(True)
+            init()
+            self._dev_id = get_rank()
 
             if kwargs:
                 logger.warning("Params not be supported yet on GPU.")
@@ -291,18 +293,10 @@ class Profiler:
         """Used for gpu, generate timeline info, write to json format file."""
         try:
             size_limit = 100 * 1024 * 1024  # 100MB
-            #stastic the number of dev_id
-            file_list = os.listdir(self._output_path)
-            dev_id_list = []
-            for file_name in file_list:
-                if file_name.startswith('gpu_op_detail'):
-                    _dev_id = file_name.split('.')[0].split('_')[-1]
-                    dev_id_list.append(_dev_id)
-            for dev_id in dev_id_list:
-                timeline_generator = GpuTimelineGenerator(self._output_path, dev_id)
-                timeline_generator.init_timeline()
-                timeline_generator.write_timeline(size_limit)
-                timeline_generator.write_timeline_summary()
+            timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id)
+            timeline_generator.init_timeline()
+            timeline_generator.write_timeline(size_limit)
+            timeline_generator.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.')
