@@ -56,7 +56,7 @@ usage()
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
   echo "    -w Enable acl module, default off"
-  echo "    -B Enable debugger, default off"
+  echo "    -B Enable debugger, default on"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"
 }
@@ -102,7 +102,7 @@ checkopts()
   ENABLE_AKG="on"
   ENABLE_SERVING="off"
   ENABLE_ACL="off"
-  ENABLE_DEBUGGER="off"
+  ENABLE_DEBUGGER="on"
   ENABLE_IBVERBS="off"
   ENABLE_PYTHON="on"
   ENABLE_GPU="off"
@@ -282,8 +282,7 @@ checkopts()
         ;;
       B)
         check_on_off $OPTARG B
-        ENABLE_DEBUGGER="on"
-        echo "enable debugger"
+        ENABLE_DEBUGGER="$OPTARG"
         ;;
       E)
         ENABLE_IBVERBS="on"

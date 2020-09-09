@@ -16,9 +16,6 @@
 #include "backend/kernel_compiler/cpu/debug_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
-#ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
-#endif
 
 namespace mindspore {
 namespace kernel {
@@ -38,11 +35,6 @@ bool DebugCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = val[i];
   }
-
-#ifdef ENABLE_DEBUGGER
-  // debugger will suspend execution is neccessary
-  Debugger::GetInstance()->PostDebugOp();
-#endif
 
   return true;
 }

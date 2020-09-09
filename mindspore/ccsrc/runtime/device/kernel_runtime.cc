@@ -49,6 +49,8 @@ bool KernelRuntime::DumpData(mindspore::session::KernelGraph *graph, Debugger *d
   return false;
 }
 
+bool KernelRuntime::LoadData(session::KernelGraph *graph, Debugger *debugger) { return false; }
+
 bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel);
   if (AnfAlgo::OutputAddrExist(kernel, index)) {

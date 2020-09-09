@@ -26,9 +26,6 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
-#ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
-#endif
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "frontend/parallel/ps/util.h"
 #endif
@@ -112,12 +109,7 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
     summary_outputs = kernel_graph->summary_nodes();
     runtime_.IncreaseSummaryRefCount(summary_outputs);
   }
-#ifdef ENABLE_DEBUGGER
-  // debugger pre-execution processing
-  if (debugger_) {
-    debugger_->PreExecute(kernel_graph);
-  }
-#endif
+
   bool ret = runtime_.Run(kernel_graph.get(), false);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
@@ -128,12 +120,6 @@ void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
     runtime_.DecreaseSummaryRefCount(summary_outputs);
   }
 
-#ifdef ENABLE_DEBUGGER
-  // debugger post-execution processing
-  if (debugger_) {
-    debugger_->PostExecute();
-  }
-#endif
   MS_LOG(INFO) << "Run graph end";
 }
 

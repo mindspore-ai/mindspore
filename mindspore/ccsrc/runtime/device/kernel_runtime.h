@@ -59,6 +59,7 @@ class KernelRuntime {
   bool DumpDataEnabled();
   bool DumpDataEnabledIteration();
   virtual bool DumpData(session::KernelGraph *graph, Debugger *debugger = nullptr);
+  virtual bool LoadData(session::KernelGraph *graph, Debugger *debugger);
   virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
   virtual bool Run(session::KernelGraph *graph, bool is_task_sink, Debugger *debugger = nullptr) = 0;
   bool LaunchKernel(const session::KernelGraph *graph);
