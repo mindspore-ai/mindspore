@@ -263,7 +263,7 @@ def _get_tf_dataset(data_dir,
             'multi_doc_ad_topic_id_mask', 'ad_id', 'display_ad_and_is_leak',
             'display_id', 'is_leak'
         ],
-        columns_order=[
+        column_order=[
             'label', 'continue_val', 'indicator_id', 'emb_128_id',
             'emb_64_single_id', 'multi_doc_ad_category_id',
             'multi_doc_ad_category_id_mask', 'multi_doc_event_entity_id',

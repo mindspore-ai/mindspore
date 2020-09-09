@@ -17,9 +17,8 @@
 This module py_transforms is implemented basing on Python. It provides common
 operations including OneHotOp.
 """
-
-from .validators import check_one_hot_op
-from .vision import py_transforms_util as util
+from .validators import check_one_hot_op, check_compose_list
+from . import py_transforms_util as util
 
 
 class OneHotOp:
@@ -48,3 +47,48 @@ class OneHotOp:
             label (numpy.ndarray), label after being Smoothed.
         """
         return util.one_hot_encoding(label, self.num_classes, self.smoothing_rate)
+
+
+class Compose:
+    """
+    Compose a list of transforms.
+
+    .. Note::
+        Compose takes a list of transformations either provided in py_transforms or from user-defined implementation;
+        each can be an initialized transformation class or a lambda function, as long as the output from the last
+        transformation is a single tensor of type numpy.ndarray. See below for an example of how to use Compose
+        with py_transforms classes and check out FiveCrop or TenCrop for the use of them in conjunction with lambda
+        functions.
+
+    Args:
+        transforms (list): List of transformations to be applied.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision.py_transforms as py_transforms
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>> dataset_dir = "path/to/imagefolder_directory"
+        >>> # create a dataset that reads all files in dataset_dir with 8 threads
+        >>> dataset = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
+        >>> # create a list of transformations to be applied to the image data
+        >>> transform = Compose([py_transforms.Decode(),
+        >>>                      py_transforms.RandomHorizontalFlip(0.5),
+        >>>                      py_transforms.ToTensor(),
+        >>>                      py_transforms.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        >>>                      py_transforms.RandomErasing()])
+        >>> # apply the transform to the dataset through dataset.map()
+        >>> dataset = dataset.map(operations=transform, input_columns="image")
+    """
+
+    @check_compose_list
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Returns:
+            lambda function, Lambda function that takes in an img to apply transformations on.
+        """
+        return util.compose(img, self.transforms)

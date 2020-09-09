@@ -21,7 +21,8 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-import mindspore.dataset.transforms.vision.py_transforms as P
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as P
 
 
 def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, batch_size=32):
@@ -44,7 +45,7 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
         if config.data_load_mode == "mindrecord":
             load_func = partial(de.MindDataset, dataset_path, columns_list)
         else:
-            load_func = partial(de.ImageFolderDatasetV2, dataset_path)
+            load_func = partial(de.ImageFolderDataset, dataset_path)
         if do_train:
             if rank_size == 1:
                 ds = load_func(num_parallel_workers=8, shuffle=True)
@@ -56,10 +57,10 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     elif device_target == "GPU":
         if do_train:
             from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=get_group_size(), shard_id=get_rank())
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                       num_shards=get_group_size(), shard_id=get_rank())
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
         raise ValueError("Unsupported device_target.")
 
@@ -118,12 +119,12 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
         rank_id = int(os.getenv("RANK_ID"))
         if do_train:
             if rank_size == 1:
-                ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
             else:
-                ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                             num_shards=rank_size, shard_id=rank_id)
+                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                           num_shards=rank_size, shard_id=rank_id)
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=False)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=False)
     else:
         raise ValueError("Unsupported device target.")
 
@@ -149,9 +150,9 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
     else:
         trans = [decode_op, resize_op, center_crop, to_tensor, normalize_op]
 
-    compose = P.ComposeOp(trans)
+    compose = mindspore.dataset.transforms.py_transforms.Compose(trans)
 
-    ds = ds.map(input_columns="image", operations=compose(), num_parallel_workers=8, python_multiprocessing=True)
+    ds = ds.map(input_columns="image", operations=compose, num_parallel_workers=8, python_multiprocessing=True)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)

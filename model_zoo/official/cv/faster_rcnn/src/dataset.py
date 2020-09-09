@@ -449,7 +449,7 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, repeat_num=12, devi
     if is_training:
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
-                    columns_order=["image", "image_shape", "box", "label", "valid_num"],
+                    column_order=["image", "image_shape", "box", "label", "valid_num"],
                     operations=compose_map_func, num_parallel_workers=num_parallel_workers)
 
         flip = (np.random.rand() < config.flip_ratio)
@@ -467,7 +467,7 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, repeat_num=12, devi
     else:
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
-                    columns_order=["image", "image_shape", "box", "label", "valid_num"],
+                    column_order=["image", "image_shape", "box", "label", "valid_num"],
                     operations=compose_map_func,
                     num_parallel_workers=num_parallel_workers)
 

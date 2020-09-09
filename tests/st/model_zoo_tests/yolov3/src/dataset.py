@@ -22,7 +22,7 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from PIL import Image
 import mindspore.dataset as de
 from mindspore.mindrecord import FileWriter
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 from src.config import ConfigYOLOV3ResNet18
 
 iter_cnt = 0
@@ -305,7 +305,7 @@ def create_yolo_dataset(mindrecord_dir, batch_size=32, repeat_num=10, device_num
         hwc_to_chw = C.HWC2CHW()
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
-                    columns_order=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
+                    column_order=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
                     operations=compose_map_func, num_parallel_workers=num_parallel_workers)
         ds = ds.map(input_columns=["image"], operations=hwc_to_chw, num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True)
@@ -313,6 +313,6 @@ def create_yolo_dataset(mindrecord_dir, batch_size=32, repeat_num=10, device_num
     else:
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "annotation"],
-                    columns_order=["image", "image_shape", "annotation"],
+                    column_order=["image", "image_shape", "annotation"],
                     operations=compose_map_func, num_parallel_workers=num_parallel_workers)
     return ds

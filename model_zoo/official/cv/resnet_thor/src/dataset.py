@@ -47,10 +47,10 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
         num_parallels = 4
 
     if device_num == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=num_parallels, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallels, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=num_parallels, shuffle=True,
-                                     num_shards=device_num, shard_id=rank_id)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallels, shuffle=True,
+                                   num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -85,6 +85,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     ds = ds.repeat(repeat_num)
 
     return ds
+
 
 def _get_rank_info():
     """

@@ -244,7 +244,7 @@ def test_generator_8():
     data1 = data1.map(input_columns="col0", output_columns="out0", operations=(lambda x: x * 3),
                       num_parallel_workers=2)
     data1 = data1.map(input_columns="col1", output_columns=["out1", "out2"], operations=(lambda x: (x * 7, x)),
-                      num_parallel_workers=2, columns_order=["out0", "out1", "out2"])
+                      num_parallel_workers=2, column_order=["out0", "out1", "out2"])
     data1 = data1.map(input_columns="out2", output_columns="out2", operations=(lambda x: x + 1),
                       num_parallel_workers=2)
 
@@ -299,7 +299,7 @@ def test_generator_10():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
     data1 = data1.map(input_columns="col1", output_columns=["out1", "out2"], operations=(lambda x: (x, x * 5)),
-                      columns_order=['col0', 'out1', 'out2'], num_parallel_workers=2)
+                      column_order=['col0', 'out1', 'out2'], num_parallel_workers=2)
 
     # Expected column order is |col0|out1|out2|
     i = 0
@@ -318,17 +318,17 @@ def test_generator_11():
     Test map column order when len(input_columns) != len(output_columns).
     """
     logger.info("Test map column order when len(input_columns) != len(output_columns), "
-                "and columns_order drops some columns.")
+                "and column_order drops some columns.")
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
     data1 = data1.map(input_columns="col1", output_columns=["out1", "out2"], operations=(lambda x: (x, x * 5)),
-                      columns_order=['out1', 'out2'], num_parallel_workers=2)
+                      column_order=['out1', 'out2'], num_parallel_workers=2)
 
     # Expected column order is |out1|out2|
     i = 0
     for item in data1.create_tuple_iterator(num_epochs=1):
-        # len should be 2 because col0 is dropped (not included in columns_order)
+        # len should be 2 because col0 is dropped (not included in column_order)
         assert len(item) == 2
         golden = np.array([[i, i + 1], [i + 2, i + 3]])
         np.testing.assert_array_equal(item[0], golden)
@@ -358,7 +358,7 @@ def test_generator_12():
         i = i + 1
 
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
-    data1 = data1.map(operations=(lambda x: (x * 5)), columns_order=["col1", "col0"], num_parallel_workers=2)
+    data1 = data1.map(operations=(lambda x: (x * 5)), column_order=["col1", "col0"], num_parallel_workers=2)
 
     # Expected column order is |col0|col1|
     i = 0
@@ -392,7 +392,7 @@ def test_generator_13():
         i = i + 1
 
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # len should be 2 because col0 is dropped (not included in columns_order)
+        # len should be 2 because col0 is dropped (not included in column_order)
         assert len(item) == 2
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item["out0"], golden)
@@ -508,7 +508,7 @@ def test_generator_error_3():
 
         for _ in data1:
             pass
-    assert "When (len(input_columns) != len(output_columns)), columns_order must be specified." in str(info.value)
+    assert "When (len(input_columns) != len(output_columns)), column_order must be specified." in str(info.value)
 
 
 def test_generator_error_4():

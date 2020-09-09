@@ -54,7 +54,7 @@ def test_case_1():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     data1 = data1.map(input_columns=col, output_columns=["out0", "out1"], operations=(lambda x: (x, x + x)),
-                      columns_order=["out0", "out1"])
+                      column_order=["out0", "out1"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -78,7 +78,7 @@ def test_case_2():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(input_columns=col, output_columns="out", operations=(lambda x, y: x + y),
-                      columns_order=["out"])
+                      column_order=["out"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -100,7 +100,7 @@ def test_case_3():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(input_columns=col, output_columns=["out0", "out1", "out2"],
-                      operations=(lambda x, y: (x, x + y, x + y + 1)), columns_order=["out0", "out1", "out2"])
+                      operations=(lambda x, y: (x, x + y, x + y + 1)), column_order=["out0", "out1", "out2"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -126,7 +126,7 @@ def test_case_4():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(input_columns=col, output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
-                      operations=(lambda x, y: (x, x + y, x + y + 1)), columns_order=["out0", "out1", "out2"])
+                      operations=(lambda x, y: (x, x + y, x + y + 1)), column_order=["out0", "out1", "out2"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -166,7 +166,7 @@ def test_case_6():
     """
     Test PyFunc
     """
-    logger.info("Test PyFunc ComposeOp : (lambda x : x + x), (lambda x : x + x)")
+    logger.info("Test PyFunc Compose : (lambda x : x + x), (lambda x : x + x)")
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -214,7 +214,7 @@ def test_case_8():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
     data1 = data1.map(input_columns=col, output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
-                      operations=(lambda x, y: (x, x + y, x + y + 1)), columns_order=["out0", "out1", "out2"],
+                      operations=(lambda x, y: (x, x + y, x + y + 1)), column_order=["out0", "out1", "out2"],
                       python_multiprocessing=True)
 
     i = 0

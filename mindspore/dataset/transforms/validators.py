@@ -200,3 +200,19 @@ def check_random_transform_ops(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_compose_list(method):
+    """Wrapper method to check the transform list of Compose."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [transforms], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(transforms, (list,), transforms)
+        if not transforms:
+            raise ValueError("transforms list is empty.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method

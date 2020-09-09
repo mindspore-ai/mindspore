@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.communication.management import init

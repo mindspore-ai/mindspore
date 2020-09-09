@@ -24,7 +24,7 @@ import mindspore.dataset.transforms.c_transforms as ops
 def compare(array):
     data = ds.NumpySlicesDataset([array], column_names="x")
     array = np.array(array)
-    data = data.map(input_columns=["x"], output_columns=["x", "y"], columns_order=["x", "y"],
+    data = data.map(input_columns=["x"], output_columns=["x", "y"], column_order=["x", "y"],
                     operations=ops.Duplicate())
     for d in data.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(array, d["x"])

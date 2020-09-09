@@ -25,11 +25,12 @@ to improve their training models.
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.transforms.vision.c_transforms as c_vision
+        >>> import mindspore.dataset.vision.c_transforms as c_vision
         >>> from mindspore.dataset.transforms.vision.utils import Border, ImageBatchFormat, Inter
+
         >>> dataset_dir = "path/to/imagefolder_directory"
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> data1 = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8)
+        >>> data1 = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
         >>> # create a list of transformations to be applied to the image data
         >>> transforms_list = [c_vision.Decode(),
         >>>                    c_vision.Resize((256, 256)),
@@ -1095,7 +1096,7 @@ class UniformAugment(cde.UniformAugOp):
         num_ops (int, optional): Number of operations to be selected and applied (default=2).
 
     Examples:
-        >>> import mindspore.dataset.transforms.vision.py_transforms as py_vision
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> transforms_list = [c_vision.RandomHorizontalFlip(),
         >>>                    c_vision.RandomVerticalFlip(),
         >>>                    c_vision.RandomColorAdjust(),

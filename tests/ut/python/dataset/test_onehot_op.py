@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as data_trans
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.vision.c_transforms as c_vision
 from mindspore import log as logger
 from util import dataset_equal_with_function
 
@@ -47,7 +47,7 @@ def test_one_hot():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     one_hot_op = data_trans.OneHot(num_classes=depth)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op, columns_order=["label"])
+    data1 = data1.map(input_columns=["label"], operations=one_hot_op, column_order=["label"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["label"], shuffle=False)

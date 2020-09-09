@@ -26,9 +26,9 @@ from util import config_get_set_num_parallel_workers
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 from mindspore import log as logger
-from mindspore.dataset.transforms.vision import Inter
+from mindspore.dataset.vision import Inter
 
 
 
@@ -47,7 +47,7 @@ def test_imagefolder(remove_json_files=True):
 
     # Constructing DE pipeline
     sampler = ds.WeightedRandomSampler(weights, 11)
-    data1 = ds.ImageFolderDatasetV2(data_dir, sampler=sampler)
+    data1 = ds.ImageFolderDataset(data_dir, sampler=sampler)
     data1 = data1.repeat(1)
     data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True)])
     rescale_op = vision.Rescale(rescale, shift)

@@ -66,7 +66,7 @@ def test_profiling_complex_pipeline():
 
     source = [(np.array([x]),) for x in range(1024)]
     data1 = ds.GeneratorDataset(source, ["gen"])
-    data1 = data1.map("gen", operations=[(lambda x: x + 1)])
+    data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["gen"])
 
     pattern = DATASET_ROOT + "/test.data"
     data2 = ds.TFRecordDataset(pattern, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)

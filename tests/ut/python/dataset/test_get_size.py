@@ -150,13 +150,13 @@ def test_manifest():
 
 
 def test_imagefolder():
-    data = ds.ImageFolderDatasetV2("../data/dataset/testPK/data/")
+    data = ds.ImageFolderDataset("../data/dataset/testPK/data/")
     assert data.get_dataset_size() == 44
     assert data.num_classes() == 4
     data = data.shuffle(100)
     assert data.num_classes() == 4
 
-    data = ds.ImageFolderDatasetV2("../data/dataset/testPK/data/", num_samples=10)
+    data = ds.ImageFolderDataset("../data/dataset/testPK/data/", num_samples=10)
     assert data.get_dataset_size() == 10
     assert data.num_classes() == 4
 

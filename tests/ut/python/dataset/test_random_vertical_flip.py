@@ -17,8 +17,9 @@ Testing the random vertical flip op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, visualize_image, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -114,8 +115,8 @@ def test_random_vertical_valid_prob_py():
         py_vision.RandomVerticalFlip(0.8),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
 
     filename = "random_vertical_01_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -159,8 +160,8 @@ def test_random_vertical_invalid_prob_py():
             py_vision.RandomVerticalFlip(1.5),
             py_vision.ToTensor()
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert 'Input prob is not within the required interval of (0.0 to 1.0).' in str(e)
@@ -188,8 +189,8 @@ def test_random_vertical_comp(plot=False):
         py_vision.RandomVerticalFlip(1),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     images_list_c = []
     images_list_py = []

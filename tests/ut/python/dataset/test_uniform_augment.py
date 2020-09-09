@@ -19,8 +19,9 @@ import numpy as np
 import pytest
 
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.c_transforms as C
-import mindspore.dataset.transforms.vision.py_transforms as F
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision.py_transforms as F
 from mindspore import log as logger
 from util import visualize_list, diff_mse
 
@@ -34,14 +35,14 @@ def test_uniform_augment(plot=False, num_ops=2):
     logger.info("Test UniformAugment")
 
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224, 224)),
-                                       F.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                              F.Resize((224, 224)),
+                                                                              F.ToTensor()])
 
     ds_original = ds.map(input_columns="image",
-                         operations=transforms_original())
+                         operations=transforms_original)
 
     ds_original = ds_original.batch(512)
 
@@ -54,7 +55,7 @@ def test_uniform_augment(plot=False, num_ops=2):
                                         axis=0)
 
             # UniformAugment Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transform_list = [F.RandomRotation(45),
                       F.RandomColor(),
@@ -63,13 +64,15 @@ def test_uniform_augment(plot=False, num_ops=2):
                       F.AutoContrast(),
                       F.Equalize()]
 
-    transforms_ua = F.ComposeOp([F.Decode(),
-                                 F.Resize((224, 224)),
-                                 F.UniformAugment(transforms=transform_list, num_ops=num_ops),
-                                 F.ToTensor()])
+    transforms_ua = \
+        mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                            F.Resize((224, 224)),
+                                                            F.UniformAugment(transforms=transform_list,
+                                                                             num_ops=num_ops),
+                                                            F.ToTensor()])
 
     ds_ua = ds.map(input_columns="image",
-                   operations=transforms_ua())
+                   operations=transforms_ua)
 
     ds_ua = ds_ua.batch(512)
 
@@ -98,7 +101,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
     logger.info("Test CPP UniformAugment")
 
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = [C.Decode(), C.Resize(size=[224, 224]),
                            F.ToTensor()]
@@ -117,7 +120,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
                                         axis=0)
 
     # UniformAugment Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     transforms_ua = [C.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
                      C.RandomHorizontalFlip(),
                      C.RandomVerticalFlip(),
@@ -170,7 +173,7 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
 
     logger.info("Got an exception in DE: {}".format(str(e)))
     assert "Argument tensor_ops[5] with value" \
-           " <mindspore.dataset.transforms.vision.py_transforms.Invert" in str(e.value)
+           " <mindspore.dataset.vision.py_transforms.Invert" in str(e.value)
     assert "is not of type (<class 'mindspore._c_dataengine.TensorOp'>,)" in str(e.value)
 
 

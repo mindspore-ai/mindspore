@@ -25,8 +25,8 @@ from mindspore import nn, Tensor, context
 from mindspore.nn.metrics import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.dataset.transforms import c_transforms as C
-from mindspore.dataset.transforms.vision import c_transforms as CV
-from mindspore.dataset.transforms.vision import Inter
+from mindspore.dataset.vision import c_transforms as CV
+from mindspore.dataset.vision import Inter
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P

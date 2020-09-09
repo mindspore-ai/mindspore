@@ -17,7 +17,8 @@ Testing ToType op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -41,8 +42,8 @@ def test_to_type_op():
         # Note: Convert the datatype from float32 to int16
         py_vision.ToType(np.int16)
     ]
-    transform1 = py_vision.ComposeOp(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1())
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    data1 = data1.map(input_columns=["image"], operations=transform1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -50,8 +51,8 @@ def test_to_type_op():
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = py_vision.ComposeOp(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2())
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    data2 = data2.map(input_columns=["image"], operations=transform2)
 
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = item1["image"]
@@ -78,8 +79,8 @@ def test_to_type_01():
         # Note: Convert the datatype from float32 to int32
         py_vision.ToType(np.int32)
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
 
     # Compare with expected md5 from images
     filename = "to_type_01_result.npz"
@@ -99,8 +100,8 @@ def test_to_type_02():
         # Note: Convert to type int
         py_vision.ToType('int')
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
 
     # Compare with expected md5 from images
     filename = "to_type_02_result.npz"
@@ -121,8 +122,8 @@ def test_to_type_03():
             # Note: If the object is not numpy, e.g. PIL image, TypeError will raise
             py_vision.ToType(np.int32)
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Numpy" in str(e)
@@ -143,8 +144,8 @@ def test_to_type_04():
             # Note: if output_type is not explicitly given
             py_vision.ToType()
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "missing" in str(e)
@@ -165,8 +166,8 @@ def test_to_type_05():
             # Note: if output_type is not explicitly given
             py_vision.ToType('invalid')
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "data type" in str(e)

@@ -18,7 +18,7 @@ The VAE interface can be called to construct VAE-GAN network.
 import os
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as CV
+import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.ops import operations as P

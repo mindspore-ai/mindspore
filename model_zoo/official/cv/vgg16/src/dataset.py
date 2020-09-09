@@ -149,9 +149,9 @@ def classification_dataset(data_dir, image_size, per_batch_size, rank=0, group_s
         transform_label = target_transform
 
     if input_mode == 'folder':
-        de_dataset = de.ImageFolderDatasetV2(data_dir, num_parallel_workers=num_parallel_workers,
-                                             shuffle=shuffle, sampler=sampler, class_indexing=class_indexing,
-                                             num_shards=group_size, shard_id=rank)
+        de_dataset = de.ImageFolderDataset(data_dir, num_parallel_workers=num_parallel_workers,
+                                           shuffle=shuffle, sampler=sampler, class_indexing=class_indexing,
+                                           num_shards=group_size, shard_id=rank)
     else:
         dataset = TxtDataset(root, data_dir)
         sampler = DistributedSampler(dataset, rank, group_size, shuffle=shuffle)

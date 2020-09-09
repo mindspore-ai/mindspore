@@ -21,7 +21,8 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-import mindspore.dataset.transforms.vision.py_transforms as P
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as P
 from mindspore.communication.management import init, get_rank, get_group_size
 from src.config import config_quant
 
@@ -54,7 +55,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     if config.data_load_mode == "mindrecord":
         load_func = partial(de.MindDataset, dataset_path, columns_list)
     else:
-        load_func = partial(de.ImageFolderDatasetV2, dataset_path)
+        load_func = partial(de.ImageFolderDataset, dataset_path)
     if device_num == 1:
         ds = load_func(num_parallel_workers=8, shuffle=True)
     else:
@@ -120,12 +121,12 @@ def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, targe
 
     if do_train:
         if device_num == 1:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                         num_shards=device_num, shard_id=rank_id)
+            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                       num_shards=device_num, shard_id=rank_id)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=False)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=False)
 
     image_size = 224
 
@@ -145,8 +146,8 @@ def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, targe
     else:
         trans = [decode_op, resize_op, center_crop, to_tensor, normalize_op]
 
-    compose = P.ComposeOp(trans)
-    ds = ds.map(input_columns="image", operations=compose(), num_parallel_workers=8, python_multiprocessing=True)
+    compose = mindspore.dataset.transforms.py_transforms.Compose(trans)
+    ds = ds.map(input_columns="image", operations=compose, num_parallel_workers=8, python_multiprocessing=True)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)

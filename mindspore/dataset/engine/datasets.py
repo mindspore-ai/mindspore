@@ -41,7 +41,7 @@ from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp, Iterator
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, check_device_send, \
-    check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
+    check_take, check_project, check_imagefolderdataset, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
@@ -81,8 +81,8 @@ def zip(datasets):
             >>>
             >>> dataset_dir1 = "path/to/imagefolder_directory1"
             >>> dataset_dir2 = "path/to/imagefolder_directory2"
-            >>> ds1 = ds.ImageFolderDatasetV2(dataset_dir1, num_parallel_workers=8)
-            >>> ds2 = ds.ImageFolderDatasetV2(dataset_dir2, num_parallel_workers=8)
+            >>> ds1 = ds.ImageFolderDataset(dataset_dir1, num_parallel_workers=8)
+            >>> ds2 = ds.ImageFolderDataset(dataset_dir2, num_parallel_workers=8)
             >>>
             >>> # creates a dataset which is the combination of ds1 and ds2
             >>> data = ds.zip((ds1, ds2))
@@ -246,7 +246,7 @@ class Dataset:
 
     @check_batch
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
-              input_columns=None, pad_info=None):
+              input_columns=None, output_columns=None, column_order=None, pad_info=None):
         """
         Combine batch_size number of consecutive rows into batches.
 
@@ -272,6 +272,18 @@ class Dataset:
                 The last parameter of the callable should always be a BatchInfo object.
             input_columns (list[str], optional): List of names of the input columns. The size of the list should
                 match with signature of per_batch_map callable.
+            output_columns (list[str], optional): [Not currently implmented] List of names assigned to the columns
+                outputted by the last operation. This parameter is mandatory if len(input_columns) !=
+                len(output_columns). The size of this list must match the number of output
+                columns of the last operation. (default=None, output columns will have the same
+                name as the input columns, i.e., the columns will be replaced).
+            column_order (list[str], optional): [Not currently implmented] list of all the desired columns to
+                propagate to the child node. This list must be a subset of all the columns in the dataset after
+                all operations are applied. The order of the columns in each row propagated to the
+                child node follow the order they appear in this list. The parameter is mandatory
+                if the len(input_columns) != len(output_columns). (default=None, all columns
+                will be propagated to the child node, the order of the columns will remain the
+                same).
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
                 would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
 
@@ -286,7 +298,7 @@ class Dataset:
             >>> data = data.batch(100, True)
         """
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
-                            pad_info)
+                            output_columns, column_order, pad_info)
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
@@ -367,7 +379,7 @@ class Dataset:
             >>> # declare a function which returns a Dataset object
             >>> def flat_map_func(x):
             >>>     data_dir = text.to_str(x[0])
-            >>>     d = ds.ImageFolderDatasetV2(data_dir)
+            >>>     d = ds.ImageFolderDataset(data_dir)
             >>>     return d
             >>> # data is a Dataset object
             >>> data = ds.TextFileDataset(DATA_FILE)
@@ -394,7 +406,7 @@ class Dataset:
         return dataset
 
     @check_map
-    def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
+    def map(self, operations=None, input_columns=None, output_columns=None, column_order=None,
             num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
         """
         Apply each operation in operations to this dataset.
@@ -409,23 +421,23 @@ class Dataset:
         The columns outputted by the very last operation will be assigned names specified by
         output_columns.
 
-        Only the columns specified in columns_order will be propagated to the child node. These
-        columns will be in the same order as specified in columns_order.
+        Only the columns specified in column_order will be propagated to the child node. These
+        columns will be in the same order as specified in column_order.
 
         Args:
+            operations (Union[list[TensorOp], list[functions]]): List of operations to be
+                applied on the dataset. Operations are applied in the order they appear in this list.
             input_columns (list[str]): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
                 input columns expected by the first operator. (default=None, the first
                 operation will be passed however many columns that is required, starting from
                 the first column).
-            operations (Union[list[TensorOp], list[functions]]): List of operations to be
-                applied on the dataset. Operations are applied in the order they appear in this list.
             output_columns (list[str], optional): List of names assigned to the columns outputted by
                 the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            columns_order (list[str], optional): list of all the desired columns to propagate to the
+            column_order (list[str], optional): list of all the desired columns to propagate to the
                 child node. This list must be a subset of all the columns in the dataset after
                 all operations are applied. The order of the columns in each row propagated to the
                 child node follow the order they appear in this list. The parameter is mandatory
@@ -446,7 +458,7 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> import mindspore.dataset.transforms.vision.c_transforms as c_transforms
+            >>> import mindspore.dataset.vision.c_transforms as c_transforms
             >>>
             >>> # data is an instance of Dataset which has 2 columns, "image" and "label".
             >>> # ds_pyfunc is an instance of Dataset which has 3 columns, "col0", "col1", and "col2". Each column is
@@ -468,33 +480,33 @@ class Dataset:
             >>> input_columns = ["image"]
             >>>
             >>> # Applies decode_op on column "image". This column will be replaced by the outputed
-            >>> # column of decode_op. Since columns_order is not provided, both columns "image"
+            >>> # column of decode_op. Since column_order is not provided, both columns "image"
             >>> # and "label" will be propagated to the child node in their original order.
-            >>> ds_decoded = data.map(input_columns, operations)
+            >>> ds_decoded = data.map(operations, input_columns)
             >>>
             >>> # Rename column "image" to "decoded_image"
             >>> output_columns = ["decoded_image"]
-            >>> ds_decoded = data.map(input_columns, operations, output_columns)
+            >>> ds_decoded = data.map(operations, input_columns, output_columns)
             >>>
             >>> # Specify the order of the columns.
-            >>> columns_order ["label", "image"]
-            >>> ds_decoded = data.map(input_columns, operations, None, columns_order)
+            >>> column_order ["label", "image"]
+            >>> ds_decoded = data.map(operations, input_columns, None, column_order)
             >>>
             >>> # Rename column "image" to "decoded_image" and also specify the order of the columns.
-            >>> columns_order ["label", "decoded_image"]
+            >>> column_order ["label", "decoded_image"]
             >>> output_columns = ["decoded_image"]
-            >>> ds_decoded = data.map(input_columns, operations, output_columns, columns_order)
+            >>> ds_decoded = data.map(operations, input_columns, output_columns, column_order)
             >>>
             >>> # Rename column "image" to "decoded_image" and keep only this column.
-            >>> columns_order ["decoded_image"]
+            >>> column_order ["decoded_image"]
             >>> output_columns = ["decoded_image"]
-            >>> ds_decoded = data.map(input_columns, operations, output_columns, columns_order)
+            >>> ds_decoded = data.map(operations, input_columns, output_columns, column_order)
             >>>
             >>> # Simple example using pyfunc. Renaming columns and specifying column order
             >>> # work in the same way as the previous examples.
             >>> input_columns = ["col0"]
             >>> operations = [(lambda x: x + 1)]
-            >>> ds_mapped = ds_pyfunc.map(input_columns, operations)
+            >>> ds_mapped = ds_pyfunc.map(operations, input_columns)
             >>>
             >>> # 2) Map example with more than one operation
             >>>
@@ -509,22 +521,22 @@ class Dataset:
             >>> # outputted by decode_op is passed as input to random_jitter_op.
             >>> # random_jitter_op will output one column. Column "image" will be replaced by
             >>> # the column outputted by random_jitter_op (the very last operation). All other
-            >>> # columns are unchanged. Since columns_order is not specified, the order of the
+            >>> # columns are unchanged. Since column_order is not specified, the order of the
             >>> # columns will remain the same.
-            >>> ds_mapped = data.map(input_columns, operations)
+            >>> ds_mapped = data.map(operations, input_columns)
             >>>
             >>> # Creates a dataset that is identical to ds_mapped, except the column "image"
             >>> # that is outputted by random_jitter_op is renamed to "image_transformed".
             >>> # Specifying column order works in the same way as examples in 1).
             >>> output_columns = ["image_transformed"]
-            >>> ds_mapped_and_renamed = data.map(input_columns, operation, output_columns)
+            >>> ds_mapped_and_renamed = data.map(operation, input_columns, output_columns)
             >>>
             >>> # Multiple operations using pyfunc. Renaming columns and specifying column order
             >>> # work in the same way as examples in 1).
             >>> input_columns = ["col0"]
             >>> operations = [(lambda x: x + x), (lambda x: x - 1)]
             >>> output_columns = ["col0_mapped"]
-            >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns)
+            >>> ds_mapped = ds_pyfunc.map(operations, input_columns, output_columns)
             >>>
             >>> # 3) Example where number of input columns is not equal to number of output columns
             >>>
@@ -540,20 +552,21 @@ class Dataset:
             >>>               (lambda x: (x % 2, x % 3, x % 5, x % 7))]
             >>>
             >>> # Note: because the number of input columns is not the same as the number of
-            >>> # output columns, the output_columns and columns_order parameter must be
+            >>> # output columns, the output_columns and column_order parameter must be
             >>> # specified. Otherwise, this map call will also result in an error.
             >>> input_columns = ["col2", "col0"]
             >>> output_columns = ["mod2", "mod3", "mod5", "mod7"]
             >>>
             >>> # Propagate all columns to the child node in this order:
-            >>> columns_order = ["col0", "col2", "mod2", "mod3", "mod5", "mod7", "col1"]
-            >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
+            >>> column_order = ["col0", "col2", "mod2", "mod3", "mod5", "mod7", "col1"]
+            >>> ds_mapped = ds_pyfunc.map(operations, input_columns, output_columns, column_order)
             >>>
             >>> # Propagate some columns to the child node in this order:
-            >>> columns_order = ["mod7", "mod3", "col1"]
-            >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
+            >>> column_order = ["mod7", "mod3", "col1"]
+            >>> ds_mapped = ds_pyfunc.map(operations, input_columns, output_columns, column_order)
         """
-        return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers,
+
+        return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
                           python_multiprocessing, cache, callbacks)
 
     @check_filter
@@ -1012,7 +1025,7 @@ class Dataset:
 
         def get_distribution(output_dataset):
             dev_id = 0
-            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDatasetV2,
+            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDataset,
                                            ManifestDataset, MnistDataset, VOCDataset, CocoDataset, CelebADataset,
                                            MindDataset)):
                 sampler = output_dataset.sampler
@@ -1412,7 +1425,7 @@ class MappableDataset(SourceDataset):
             >>>
             >>> dataset_dir = "/path/to/imagefolder_directory"
             >>> # a SequentialSampler is created by default
-            >>> data = ds.ImageFolderDatasetV2(dataset_dir)
+            >>> data = ds.ImageFolderDataset(dataset_dir)
             >>>
             >>> # use a DistributedSampler instead of the SequentialSampler
             >>> new_sampler = ds.DistributedSampler(10, 2)
@@ -1501,7 +1514,7 @@ class MappableDataset(SourceDataset):
             >>> dataset_dir = "/path/to/imagefolder_directory"
             >>>
             >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
-            >>> data = ds.ImageFolderDatasetV2(dataset_dir, shuffle=False)
+            >>> data = ds.ImageFolderDataset(dataset_dir, shuffle=False)
             >>>
             >>> # sets the seed, and tells split to use this seed when randomizing. This
             >>> # is needed because we are sharding later
@@ -1629,13 +1642,25 @@ class BatchDataset(DatasetOp):
             last parameter of the callable should always be a BatchInfo object.
         input_columns (list[str], optional): List of names of the input columns. The size of the list should
             match with signature of per_batch_map callable.
+        output_columns (list[str], optional): List of names assigned to the columns outputted by
+            the last operation. This parameter is mandatory if len(input_columns) !=
+            len(output_columns). The size of this list must match the number of output
+            columns of the last operation. (default=None, output columns will have the same
+            name as the input columns, i.e., the columns will be replaced).
+        column_order (list[str], optional): list of all the desired columns to propagate to the
+            child node. This list must be a subset of all the columns in the dataset after
+            all operations are applied. The order of the columns in each row propagated to the
+            child node follow the order they appear in this list. The parameter is mandatory
+            if the len(input_columns) != len(output_columns). (default=None, all columns
+            will be propagated to the child node, the order of the columns will remain the
+            same).
         pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
             would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
 
     """
 
     def __init__(self, input_dataset, batch_size, drop_remainder=False, num_parallel_workers=None,
-                 per_batch_map=None, input_columns=None, pad_info=None):
+                 per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None):
         super().__init__(num_parallel_workers)
 
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
@@ -1647,6 +1672,8 @@ class BatchDataset(DatasetOp):
         self.drop_remainder = drop_remainder
         self.per_batch_map = per_batch_map
         self.input_columns = input_columns
+        self.output_columns = output_columns
+        self.column_order = column_order
         self.pad_info = pad_info
         self.children.append(input_dataset)
         input_dataset.parent.append(self)
@@ -1962,16 +1989,16 @@ class MapDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
+        operations (TensorOp): A function mapping a nested structure of tensors
+            to another nested structure of tensor (default=None).
         input_columns (list[str]): List of names of the input columns
             (default=None, the operations will be applied on the first columns in the dataset).
             The size of the list should match the number of inputs of the first operator.
-        operations (TensorOp): A function mapping a nested structure of tensors
-            to another nested structure of tensor (default=None).
         output_columns (list[str], optional): list of names of the output columns.
             The size of the list should match the number of outputs of the last operator
             (default=None, output columns will be the input columns, i.e., the columns will
             be replaced).
-        columns_order (list[str], optional): list of all the desired columns of the dataset (default=None).
+        column_order (list[str], optional): list of all the desired columns of the dataset (default=None).
             The argument is mandatory if len(input_columns) != len(output_columns).
         num_parallel_workers (int, optional): Number of workers to process the Dataset
             in parallel (default=None).
@@ -1982,29 +2009,29 @@ class MapDataset(DatasetOp):
         callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None)
 
         Raises:
-            ValueError: If len(input_columns) != len(output_columns) and columns_order is not specified.
+            ValueError: If len(input_columns) != len(output_columns) and column_order is not specified.
     """
 
-    def __init__(self, input_dataset, input_columns=None, operations=None, output_columns=None, columns_order=None,
+    def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None, column_order=None,
                  num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
         super().__init__(num_parallel_workers)
         self.children.append(input_dataset)
-        if input_columns is not None and not isinstance(input_columns, list):
-            input_columns = [input_columns]
-        self.input_columns = input_columns
         if operations is not None and not isinstance(operations, list):
             operations = [operations]
         self.operations = operations
+        if input_columns is not None and not isinstance(input_columns, list):
+            input_columns = [input_columns]
+        self.input_columns = input_columns
         if output_columns is not None and not isinstance(output_columns, list):
             output_columns = [output_columns]
         self.output_columns = output_columns
         self.cache = cache
-        self.columns_order = columns_order
+        self.column_order = column_order
 
         if self.input_columns and self.output_columns \
                 and len(self.input_columns) != len(self.output_columns) \
-                and self.columns_order is None:
-            raise ValueError("When (len(input_columns) != len(output_columns)), columns_order must be specified.")
+                and self.column_order is None:
+            raise ValueError("When (len(input_columns) != len(output_columns)), column_order must be specified.")
 
         input_dataset.parent.append(self)
         self._input_indexs = input_dataset.input_indexs
@@ -2021,7 +2048,7 @@ class MapDataset(DatasetOp):
         args["input_columns"] = self.input_columns
         args["operations"] = self.operations
         args["output_columns"] = self.output_columns
-        args["columns_order"] = self.columns_order
+        args["column_order"] = self.column_order
         args["cache"] = self.cache.cache_client if self.cache is not None else None
 
         if self.callbacks is not None:
@@ -2048,7 +2075,7 @@ class MapDataset(DatasetOp):
         new_op.children = copy.deepcopy(self.children, memodict)
         new_op.input_columns = copy.deepcopy(self.input_columns, memodict)
         new_op.output_columns = copy.deepcopy(self.output_columns, memodict)
-        new_op.columns_order = copy.deepcopy(self.columns_order, memodict)
+        new_op.column_order = copy.deepcopy(self.column_order, memodict)
         new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
         new_op.parent = copy.deepcopy(self.parent, memodict)
         new_op.ms_role = copy.deepcopy(self.ms_role, memodict)
@@ -2646,7 +2673,7 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id, n
     return samplers.SequentialSampler(num_samples=num_samples)
 
 
-class ImageFolderDatasetV2(MappableDataset):
+class ImageFolderDataset(MappableDataset):
     """
     A source dataset that reads images from a tree of directories.
 
@@ -2722,14 +2749,14 @@ class ImageFolderDatasetV2(MappableDataset):
         >>> # path to imagefolder directory. This directory needs to contain sub-directories which contain the images
         >>> dataset_dir = "/path/to/imagefolder_directory"
         >>> # 1) read all samples (image files) in dataset_dir with 8 threads
-        >>> imagefolder_dataset = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8)
+        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
         >>> # 2) read all samples (image files) from folder cat and folder dog with label 0 and 1
-        >>> imagefolder_dataset = ds.ImageFolderDatasetV2(dataset_dir,class_indexing={"cat":0,"dog":1})
+        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir,class_indexing={"cat":0,"dog":1})
         >>> # 3) read all samples (image files) in dataset_dir with extensions .JPEG and .png (case sensitive)
-        >>> imagefolder_dataset = ds.ImageFolderDatasetV2(dataset_dir, extensions=[".JPEG",".png"])
+        >>> imagefolder_dataset = ds.ImageFolderDataset(dataset_dir, extensions=[".JPEG",".png"])
     """
 
-    @check_imagefolderdatasetv2
+    @check_imagefolderdataset
     def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, extensions=None, class_indexing=None,
                  decode=False, num_shards=None, shard_id=None, cache=None):
@@ -3168,6 +3195,7 @@ class SamplerFn:
     """
     Multiprocessing or multithread generator function wrapper master process.
     """
+
     def __init__(self, dataset, num_worker, multi_process):
         self.workers = []
         self.num_worker = num_worker

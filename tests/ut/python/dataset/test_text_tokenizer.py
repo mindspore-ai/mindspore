@@ -60,7 +60,7 @@ def test_unicode_char_tokenizer_with_offsets():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     tokenizer = text.UnicodeCharTokenizer(with_offsets=True)
     dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
-                          columns_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
+                          column_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
     tokens = []
     expected_offsets_start = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
                               [0, 3, 6, 9, 12, 15], [0, 3, 6, 9, 10, 11, 12, 13, 14, 15, 16], [0, 1]]
@@ -107,7 +107,7 @@ def test_whitespace_tokenizer_with_offsets():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     tokenizer = text.WhitespaceTokenizer(with_offsets=True)
     dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
-                          columns_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
+                          column_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
     tokens = []
     expected_offsets_start = [[0, 8, 11], [0], [0], [0]]
     expected_offsets_limit = [[7, 10, 19], [18], [17], [0]]
@@ -173,7 +173,7 @@ def test_unicode_script_tokenizer_with_offsets():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     tokenizer = text.UnicodeScriptTokenizer(keep_whitespace=False, with_offsets=True)
     dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
-                          columns_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
+                          column_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
     tokens = []
     expected_offsets_start = [[0, 8, 11, 18], [0, 15], [0, 9, 16], [0]]
     expected_offsets_limit = [[7, 10, 18, 19], [15, 18], [9, 16, 17], [0]]
@@ -199,7 +199,7 @@ def test_unicode_script_tokenizer_with_offsets2():
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
     tokenizer = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=True)
     dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
-                          columns_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
+                          column_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer)
     tokens = []
     expected_offsets_start = [[0, 7, 8, 10, 11, 18], [0, 15], [0, 9, 16], [0]]
     expected_offsets_limit = [[7, 8, 10, 11, 18, 19], [15, 18], [9, 16, 17], [2]]
@@ -340,7 +340,7 @@ def test_regex_tokenizer_with_offsets():
             dataset = dataset.take(last - first + 1)
         tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=True)
         dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
-                              columns_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer_op)
+                              column_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer_op)
         out_text = []
         count = 0
         for i in dataset.create_dict_iterator(num_epochs=1):

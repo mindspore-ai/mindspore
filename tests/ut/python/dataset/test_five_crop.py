@@ -18,7 +18,8 @@ import pytest
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5
 
@@ -39,8 +40,8 @@ def test_five_crop_op(plot=False):
         vision.Decode(),
         vision.ToTensor(),
     ]
-    transform_1 = vision.ComposeOp(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1())
+    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    data1 = data1.map(input_columns=["image"], operations=transform_1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -49,8 +50,8 @@ def test_five_crop_op(plot=False):
         vision.FiveCrop(200),
         lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
     ]
-    transform_2 = vision.ComposeOp(transforms_2)
-    data2 = data2.map(input_columns=["image"], operations=transform_2())
+    transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
+    data2 = data2.map(input_columns=["image"], operations=transform_2)
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -83,8 +84,8 @@ def test_five_crop_error_msg():
         vision.FiveCrop(200),
         vision.ToTensor()
     ]
-    transform = vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
 
     with pytest.raises(RuntimeError) as info:
         for _ in data:
@@ -108,8 +109,8 @@ def test_five_crop_md5():
         vision.FiveCrop(100),
         lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 5 images
     ]
-    transform = vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
     # Compare with expected md5 from images
     filename = "five_crop_01_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)

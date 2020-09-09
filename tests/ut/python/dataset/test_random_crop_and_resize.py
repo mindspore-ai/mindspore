@@ -18,9 +18,10 @@ Testing RandomCropAndResize op in DE
 import numpy as np
 import cv2
 
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
-import mindspore.dataset.transforms.vision.utils as mode
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
 from util import diff_mse, save_and_check_md5, visualize_list, \
@@ -80,8 +81,8 @@ def test_random_crop_and_resize_op_py(plot=False):
         py_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
         py_vision.ToTensor()
     ]
-    transform1 = py_vision.ComposeOp(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1())
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    data1 = data1.map(input_columns=["image"], operations=transform1)
     # Second dataset
     # Second dataset for comparison
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -89,8 +90,8 @@ def test_random_crop_and_resize_op_py(plot=False):
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = py_vision.ComposeOp(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2())
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    data2 = data2.map(input_columns=["image"], operations=transform2)
     num_iter = 0
     crop_and_resize_images = []
     original_images = []
@@ -131,8 +132,8 @@ def test_random_crop_and_resize_01():
         py_vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1)),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     filename1 = "random_crop_and_resize_01_c_result.npz"
     filename2 = "random_crop_and_resize_01_py_result.npz"
@@ -167,8 +168,8 @@ def test_random_crop_and_resize_02():
         py_vision.RandomResizedCrop((256, 512), interpolation=mode.Inter.NEAREST),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     filename1 = "random_crop_and_resize_02_c_result.npz"
     filename2 = "random_crop_and_resize_02_py_result.npz"
@@ -202,8 +203,8 @@ def test_random_crop_and_resize_03():
         py_vision.RandomResizedCrop((256, 512), max_attempts=1),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     filename1 = "random_crop_and_resize_03_c_result.npz"
     filename2 = "random_crop_and_resize_03_py_result.npz"
@@ -251,8 +252,8 @@ def test_random_crop_and_resize_04_py():
             py_vision.RandomResizedCrop((256, 512), (1, 0.5), (0.5, 0.5)),
             py_vision.ToTensor()
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input is not within the required interval of (0 to 16777216)." in str(e)
@@ -294,8 +295,8 @@ def test_random_crop_and_resize_05_py():
             py_vision.RandomResizedCrop((256, 512), (1, 1), (1, 0.5)),
             py_vision.ToTensor()
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input is not within the required interval of (0 to 16777216)." in str(e)
@@ -321,8 +322,8 @@ def test_random_crop_and_resize_comp(plot=False):
         py_vision.RandomResizedCrop(512, (1, 1), (0.5, 0.5)),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     image_c_cropped = []
     image_py_cropped = []

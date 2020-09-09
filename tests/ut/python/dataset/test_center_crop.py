@@ -17,8 +17,9 @@ Testing CenterCrop op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import diff_mse, visualize_list, save_and_check_md5
 
@@ -93,8 +94,8 @@ def test_center_crop_comp(height=375, width=375, plot=False):
         py_vision.CenterCrop([height, width]),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     image_c_cropped = []
     image_py_cropped = []
@@ -123,9 +124,9 @@ def test_crop_grayscale(height=375, width=375):
         (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    data1 = data1.map(input_columns=["image"], operations=transform)
 
     # If input is grayscale, the output dimensions should be single channel
     crop_gray = vision.CenterCrop([height, width])

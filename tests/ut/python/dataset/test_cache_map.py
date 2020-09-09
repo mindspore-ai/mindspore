@@ -18,7 +18,7 @@ Testing cache operator with mappable datasets
 import os
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.vision.c_transforms as c_vision
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -46,7 +46,7 @@ def test_cache_map_basic1():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
 
     # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR, cache=some_cache)
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.repeat(4)
@@ -75,7 +75,7 @@ def test_cache_map_basic2():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
 
     # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR)
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
     decode_op = c_vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -104,7 +104,7 @@ def test_cache_map_basic3():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
 
     # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR)
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
     decode_op = c_vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
@@ -128,7 +128,7 @@ def test_cache_map_basic4():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
 
     # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR, cache=some_cache)
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
@@ -165,7 +165,7 @@ def test_cache_map_failure1():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
 
     # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDatasetV2(dataset_dir=DATA_DIR, cache=some_cache)
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
     ds1 = ds1.repeat(4)

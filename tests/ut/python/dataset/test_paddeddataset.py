@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
-import mindspore.dataset.transforms.vision.c_transforms as V_C
+import mindspore.dataset.vision.c_transforms as V_C
 from PIL import Image
 
 FILES_NUM = 4
@@ -204,7 +204,7 @@ def test_raise_error():
 
 def test_imagefolder_padded():
     DATA_DIR = "../data/dataset/testPK/data"
-    data = ds.ImageFolderDatasetV2(DATA_DIR)
+    data = ds.ImageFolderDataset(DATA_DIR)
 
     data1 = [{'image': np.zeros(1, np.uint8), 'label': np.array(0, np.int32)},
              {'image': np.zeros(2, np.uint8), 'label': np.array(1, np.int32)},
@@ -230,7 +230,7 @@ def test_imagefolder_padded_with_decode():
     count = 0
     for shard_id in range(num_shards):
         DATA_DIR = "../data/dataset/testPK/data"
-        data = ds.ImageFolderDatasetV2(DATA_DIR)
+        data = ds.ImageFolderDataset(DATA_DIR)
 
         white_io = BytesIO()
         Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')
@@ -258,7 +258,7 @@ def test_imagefolder_padded_with_decode_and_get_dataset_size():
     count = 0
     for shard_id in range(num_shards):
         DATA_DIR = "../data/dataset/testPK/data"
-        data = ds.ImageFolderDatasetV2(DATA_DIR)
+        data = ds.ImageFolderDataset(DATA_DIR)
 
         white_io = BytesIO()
         Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')

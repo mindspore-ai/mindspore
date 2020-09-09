@@ -150,7 +150,7 @@ class Iterator:
             op_type = OpName.SKIP
         elif isinstance(dataset, de.TakeDataset):
             op_type = OpName.TAKE
-        elif isinstance(dataset, de.ImageFolderDatasetV2):
+        elif isinstance(dataset, de.ImageFolderDataset):
             op_type = OpName.IMAGEFOLDER
         elif isinstance(dataset, de.GeneratorDataset):
             op_type = OpName.GENERATOR

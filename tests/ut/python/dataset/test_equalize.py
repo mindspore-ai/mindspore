@@ -18,8 +18,9 @@ Testing Equalize op in DE
 import numpy as np
 
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.c_transforms as C
-import mindspore.dataset.transforms.vision.py_transforms as F
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision.py_transforms as F
 from mindspore import log as logger
 from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
 
@@ -36,14 +37,14 @@ def test_equalize_py(plot=False):
     logger.info("Test Equalize")
 
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224, 224)),
-                                       F.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                              F.Resize((224, 224)),
+                                                                              F.ToTensor()])
 
     ds_original = ds.map(input_columns="image",
-                         operations=transforms_original())
+                         operations=transforms_original)
 
     ds_original = ds_original.batch(512)
 
@@ -56,15 +57,15 @@ def test_equalize_py(plot=False):
                                         axis=0)
 
             # Color Equalized Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_equalize = F.ComposeOp([F.Decode(),
-                                       F.Resize((224, 224)),
-                                       F.Equalize(),
-                                       F.ToTensor()])
+    transforms_equalize = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                              F.Resize((224, 224)),
+                                                                              F.Equalize(),
+                                                                              F.ToTensor()])
 
     ds_equalize = ds.map(input_columns="image",
-                         operations=transforms_equalize())
+                         operations=transforms_equalize)
 
     ds_equalize = ds_equalize.batch(512)
 
@@ -93,7 +94,7 @@ def test_equalize_c(plot=False):
     logger.info("Test Equalize cpp op")
 
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = [C.Decode(), C.Resize(size=[224, 224])]
 
@@ -111,7 +112,7 @@ def test_equalize_c(plot=False):
                                         axis=0)
 
     # Equalize Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transform_equalize = [C.Decode(), C.Resize(size=[224, 224]),
                           C.Equalize()]
@@ -145,7 +146,7 @@ def test_equalize_py_c(plot=False):
     logger.info("Test Equalize cpp and python op")
 
     # equalize Images in cpp
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     ds = ds.map(input_columns=["image"],
                 operations=[C.Decode(), C.Resize((224, 224))])
 
@@ -163,17 +164,17 @@ def test_equalize_py_c(plot=False):
                                           axis=0)
 
     # Equalize images in python
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     ds = ds.map(input_columns=["image"],
                 operations=[C.Decode(), C.Resize((224, 224))])
 
-    transforms_p_equalize = F.ComposeOp([lambda img: img.astype(np.uint8),
-                                         F.ToPIL(),
-                                         F.Equalize(),
-                                         np.array])
+    transforms_p_equalize = mindspore.dataset.transforms.py_transforms.Compose([lambda img: img.astype(np.uint8),
+                                                                                F.ToPIL(),
+                                                                                F.Equalize(),
+                                                                                np.array])
 
     ds_p_equalize = ds.map(input_columns="image",
-                           operations=transforms_p_equalize())
+                           operations=transforms_p_equalize)
 
     ds_p_equalize = ds_p_equalize.batch(512)
 
@@ -204,7 +205,7 @@ def test_equalize_one_channel():
     c_op = C.Equalize()
 
     try:
-        ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+        ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         ds = ds.map(input_columns=["image"],
                     operations=[C.Decode(),
                                 C.Resize((224, 224)),
@@ -253,12 +254,12 @@ def test_equalize_md5_py():
     logger.info("Test Equalize")
 
     # First dataset
-    data1 = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
-    transforms = F.ComposeOp([F.Decode(),
-                              F.Equalize(),
-                              F.ToTensor()])
+    data1 = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    transforms = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                     F.Equalize(),
+                                                                     F.ToTensor()])
 
-    data1 = data1.map(input_columns="image", operations=transforms())
+    data1 = data1.map(input_columns="image", operations=transforms)
     # Compare with expected md5 from images
     filename = "equalize_01_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
@@ -271,7 +272,7 @@ def test_equalize_md5_c():
     logger.info("Test Equalize cpp op with md5 check")
 
     # Generate dataset
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_equalize = [C.Decode(),
                            C.Resize(size=[224, 224]),

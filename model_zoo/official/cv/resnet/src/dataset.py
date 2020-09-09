@@ -98,10 +98,10 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         device_num = get_group_size()
 
     if device_num == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                     num_shards=device_num, shard_id=rank_id)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                   num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -153,10 +153,10 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     device_num, rank_id = _get_rank_info()
 
     if device_num == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
-                                     num_shards=device_num, shard_id=rank_id)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                   num_shards=device_num, shard_id=rank_id)
     image_size = 224
     mean = [0.475 * 255, 0.451 * 255, 0.392 * 255]
     std = [0.275 * 255, 0.267 * 255, 0.278 * 255]
@@ -207,10 +207,10 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     if target == "Ascend":
         device_num, rank_id = _get_rank_info()
     if device_num == 1:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=12, shuffle=True)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True)
     else:
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=12, shuffle=True,
-                                     num_shards=device_num, shard_id=rank_id)
+        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True,
+                                   num_shards=device_num, shard_id=rank_id)
     image_size = 224
     mean = [123.68, 116.78, 103.94]
     std = [1.0, 1.0, 1.0]

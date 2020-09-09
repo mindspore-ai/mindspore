@@ -18,8 +18,9 @@ Testing CutOut op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c
-import mindspore.dataset.transforms.vision.py_transforms as f
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c
+import mindspore.dataset.vision.py_transforms as f
 from mindspore import log as logger
 from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -43,8 +44,8 @@ def test_cut_out_op(plot=False):
         f.ToTensor(),
         f.RandomErasing(value='random')
     ]
-    transform_1 = f.ComposeOp(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1())
+    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    data1 = data1.map(input_columns=["image"], operations=transform_1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -89,8 +90,8 @@ def test_cut_out_op_multicut(plot=False):
         f.Decode(),
         f.ToTensor(),
     ]
-    transform_1 = f.ComposeOp(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1())
+    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    data1 = data1.map(input_columns=["image"], operations=transform_1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -144,8 +145,8 @@ def test_cut_out_md5():
         f.ToTensor(),
         f.Cutout(100)
     ]
-    transform = f.ComposeOp(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     # Compare with expected md5 from images
     filename1 = "cut_out_01_c_result.npz"
@@ -172,8 +173,8 @@ def test_cut_out_comp(plot=False):
         f.ToTensor(),
         f.Cutout(200)
     ]
-    transform_1 = f.ComposeOp(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1())
+    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    data1 = data1.map(input_columns=["image"], operations=transform_1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)

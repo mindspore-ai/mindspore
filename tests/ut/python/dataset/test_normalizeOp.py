@@ -17,8 +17,9 @@ Testing Normalize op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import diff_mse, save_and_check_md5, visualize_image
 
@@ -59,10 +60,10 @@ def util_test_normalize(mean, std, op_type):
             py_vision.ToTensor(),
             py_vision.Normalize(mean, std)
         ]
-        transform = py_vision.ComposeOp(transforms)
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-        data = data.map(input_columns=["image"], operations=transform())
+        data = data.map(input_columns=["image"], operations=transform)
     else:
         raise ValueError("Wrong parameter value")
     return data
@@ -78,10 +79,10 @@ def util_test_normalize_grayscale(num_output_channels, mean, std):
         py_vision.ToTensor(),
         py_vision.Normalize(mean, std)
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(input_columns=["image"], operations=transform())
+    data = data.map(input_columns=["image"], operations=transform)
     return data
 
 
@@ -130,17 +131,17 @@ def test_normalize_op_py(plot=False):
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     normalize_op = py_vision.Normalize(mean, std)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    data1 = data1.map(input_columns=["image"], operations=transform)
     data1 = data1.map(input_columns=["image"], operations=normalize_op)
 
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):

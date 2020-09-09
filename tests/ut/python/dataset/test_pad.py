@@ -18,8 +18,9 @@ Testing Pad op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import diff_mse, save_and_check_md5
 
@@ -51,9 +52,9 @@ def test_pad_op():
         py_vision.Pad(100),
         py_vision.ToTensor(),
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    data2 = data2.map(input_columns=["image"], operations=transform)
 
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         c_image = item1["image"]
@@ -85,9 +86,9 @@ def test_pad_grayscale():
         (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    data1 = data1.map(input_columns=["image"], operations=transform)
 
     # if input is grayscale, the output dimensions should be single channel
     pad_gray = c_vision.Pad(100, fill_value=(20, 20, 20))
@@ -140,8 +141,8 @@ def test_pad_md5():
         py_vision.Pad(150),
         py_vision.ToTensor(),
     ]
-    transform = py_vision.ComposeOp(pytrans)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(pytrans)
+    data2 = data2.map(input_columns=["image"], operations=transform)
     # Compare with expected md5 from images
     filename1 = "pad_01_c_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)

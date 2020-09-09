@@ -17,8 +17,8 @@ Testing Resize op in DE
 """
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
-from mindspore.dataset.transforms.vision.utils import Inter
+import mindspore.dataset.vision.c_transforms as vision
+from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers

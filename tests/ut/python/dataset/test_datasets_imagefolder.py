@@ -24,7 +24,7 @@ def test_imagefolder_basic():
     repeat_count = 1
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR)
+    data1 = ds.ImageFolderDataset(DATA_DIR)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -44,7 +44,7 @@ def test_imagefolder_numsamples():
     repeat_count = 1
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_samples=10, num_parallel_workers=2)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_samples=10, num_parallel_workers=2)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -58,7 +58,7 @@ def test_imagefolder_numsamples():
     assert num_iter == 10
 
     random_sampler = ds.RandomSampler(num_samples=3, replacement=True)
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_parallel_workers=2, sampler=random_sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=2, sampler=random_sampler)
 
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1):
@@ -67,7 +67,7 @@ def test_imagefolder_numsamples():
     assert num_iter == 3
 
     random_sampler = ds.RandomSampler(num_samples=3, replacement=False)
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_parallel_workers=2, sampler=random_sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=2, sampler=random_sampler)
 
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1):
@@ -82,7 +82,7 @@ def test_imagefolder_numshards():
     repeat_count = 1
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_shards=4, shard_id=3)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=3)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -102,7 +102,7 @@ def test_imagefolder_shardid():
     repeat_count = 1
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_shards=4, shard_id=1)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=1)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -122,7 +122,7 @@ def test_imagefolder_noshuffle():
     repeat_count = 1
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, shuffle=False)
+    data1 = ds.ImageFolderDataset(DATA_DIR, shuffle=False)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -142,7 +142,7 @@ def test_imagefolder_extrashuffle():
     repeat_count = 2
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, shuffle=True)
+    data1 = ds.ImageFolderDataset(DATA_DIR, shuffle=True)
     data1 = data1.shuffle(buffer_size=5)
     data1 = data1.repeat(repeat_count)
 
@@ -164,7 +164,7 @@ def test_imagefolder_classindex():
 
     # apply dataset operations
     class_index = {"class3": 333, "class1": 111}
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, class_indexing=class_index, shuffle=False)
+    data1 = ds.ImageFolderDataset(DATA_DIR, class_indexing=class_index, shuffle=False)
     data1 = data1.repeat(repeat_count)
 
     golden = [111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111,
@@ -189,7 +189,7 @@ def test_imagefolder_negative_classindex():
 
     # apply dataset operations
     class_index = {"class3": -333, "class1": 111}
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, class_indexing=class_index, shuffle=False)
+    data1 = ds.ImageFolderDataset(DATA_DIR, class_indexing=class_index, shuffle=False)
     data1 = data1.repeat(repeat_count)
 
     golden = [111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111,
@@ -214,7 +214,7 @@ def test_imagefolder_extensions():
 
     # apply dataset operations
     ext = [".jpg", ".JPEG"]
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, extensions=ext)
+    data1 = ds.ImageFolderDataset(DATA_DIR, extensions=ext)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -235,7 +235,7 @@ def test_imagefolder_decode():
 
     # apply dataset operations
     ext = [".jpg", ".JPEG"]
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, extensions=ext, decode=True)
+    data1 = ds.ImageFolderDataset(DATA_DIR, extensions=ext, decode=True)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -262,7 +262,7 @@ def test_sequential_sampler():
 
     # apply dataset operations
     sampler = ds.SequentialSampler()
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, sampler=sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
     data1 = data1.repeat(repeat_count)
 
     result = []
@@ -283,7 +283,7 @@ def test_random_sampler():
 
     # apply dataset operations
     sampler = ds.RandomSampler()
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, sampler=sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -304,7 +304,7 @@ def test_distributed_sampler():
 
     # apply dataset operations
     sampler = ds.DistributedSampler(10, 1)
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, sampler=sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -325,7 +325,7 @@ def test_pk_sampler():
 
     # apply dataset operations
     sampler = ds.PKSampler(3)
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, sampler=sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -347,7 +347,7 @@ def test_subset_random_sampler():
     # apply dataset operations
     indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 11]
     sampler = ds.SubsetRandomSampler(indices)
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, sampler=sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -369,7 +369,7 @@ def test_weighted_random_sampler():
     # apply dataset operations
     weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05, 1.2, 0.13, 0.14, 0.015, 0.16, 1.1]
     sampler = ds.WeightedRandomSampler(weights, 11)
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, sampler=sampler)
+    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -389,7 +389,7 @@ def test_imagefolder_rename():
     repeat_count = 1
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_samples=10)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_samples=10)
     data1 = data1.repeat(repeat_count)
 
     num_iter = 0
@@ -421,8 +421,8 @@ def test_imagefolder_zip():
     repeat_count = 2
 
     # apply dataset operations
-    data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_samples=10)
-    data2 = ds.ImageFolderDatasetV2(DATA_DIR, num_samples=10)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_samples=10)
+    data2 = ds.ImageFolderDataset(DATA_DIR, num_samples=10)
 
     data1 = data1.repeat(repeat_count)
     # rename dataset2 for no conflict

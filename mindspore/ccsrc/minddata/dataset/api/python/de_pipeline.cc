@@ -733,7 +733,7 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)map_builder.SetInColNames(in_col_names);
       } else if (key == "output_columns") {
         (void)map_builder.SetOutColNames(ToStringVector(value));
-      } else if (key == "columns_order") {
+      } else if (key == "column_order") {
         project_columns = ToStringVector(value);
       } else if (key == "num_parallel_workers") {
         num_workers = ToInt(value);

@@ -17,8 +17,9 @@ Testing RandomAffine op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.c_transforms as c_vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -41,20 +42,20 @@ def test_random_affine_op(plot=False):
         py_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
         py_vision.ToTensor()
     ]
-    transform1 = py_vision.ComposeOp(transforms1)
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
 
     transforms2 = [
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = py_vision.ComposeOp(transforms2)
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform1())
+    data1 = data1.map(input_columns=["image"], operations=transform1)
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform2())
+    data2 = data2.map(input_columns=["image"], operations=transform2)
 
     image_affine = []
     image_original = []
@@ -114,11 +115,11 @@ def test_random_affine_md5():
                                scale=(0.9, 1.1), shear=(-10, 10, -5, 5)),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(input_columns=["image"], operations=transform())
+    data = data.map(input_columns=["image"], operations=transform)
 
     # check results with md5 comparison
     filename = "random_affine_01_result.npz"
@@ -189,9 +190,9 @@ def test_random_affine_py_exception_non_pil_images():
     logger.info("test_random_affine_exception_negative_degrees")
     dataset = ds.MnistDataset(MNIST_DATA_DIR, num_parallel_workers=3)
     try:
-        transform = py_vision.ComposeOp([py_vision.ToTensor(),
-                                         py_vision.RandomAffine(degrees=(15, 15))])
-        dataset = dataset.map(input_columns=["image"], operations=transform(), num_parallel_workers=3,
+        transform = mindspore.dataset.transforms.py_transforms.Compose([py_vision.ToTensor(),
+                                                                        py_vision.RandomAffine(degrees=(15, 15))])
+        dataset = dataset.map(input_columns=["image"], operations=transform, num_parallel_workers=3,
                               python_multiprocessing=True)
         for _ in dataset.create_dict_iterator(num_epochs=1):
             break

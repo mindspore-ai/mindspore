@@ -20,9 +20,9 @@ def test_imagefolder_shardings(print_res=False):
     image_folder_dir = "../data/dataset/testPK/data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, class_index, repeat_cnt=1):
-        data1 = ds.ImageFolderDatasetV2(image_folder_dir, num_samples=num_samples, num_shards=num_shards,
-                                        shard_id=shard_id,
-                                        shuffle=shuffle, class_indexing=class_index, decode=True)
+        data1 = ds.ImageFolderDataset(image_folder_dir, num_samples=num_samples, num_shards=num_shards,
+                                      shard_id=shard_id,
+                                      shuffle=shuffle, class_indexing=class_index, decode=True)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary

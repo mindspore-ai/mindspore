@@ -16,7 +16,9 @@
 Testing RandomGrayscale op in DE
 """
 import numpy as np
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.py_transforms as py_vision
 import mindspore.dataset as ds
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, \
@@ -41,8 +43,8 @@ def test_random_grayscale_valid_prob(plot=False):
         py_vision.RandomGrayscale(1),
         py_vision.ToTensor()
     ]
-    transform1 = py_vision.ComposeOp(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1())
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    data1 = data1.map(input_columns=["image"], operations=transform1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -50,8 +52,8 @@ def test_random_grayscale_valid_prob(plot=False):
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = py_vision.ComposeOp(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2())
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    data2 = data2.map(input_columns=["image"], operations=transform2)
 
     image_gray = []
     image = []
@@ -80,8 +82,8 @@ def test_random_grayscale_input_grayscale_images():
         py_vision.RandomGrayscale(0.5),
         py_vision.ToTensor()
     ]
-    transform1 = py_vision.ComposeOp(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1())
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    data1 = data1.map(input_columns=["image"], operations=transform1)
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -89,8 +91,8 @@ def test_random_grayscale_input_grayscale_images():
         py_vision.Decode(),
         py_vision.ToTensor()
     ]
-    transform2 = py_vision.ComposeOp(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2())
+    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    data2 = data2.map(input_columns=["image"], operations=transform2)
 
     image_gray = []
     image = []
@@ -124,8 +126,8 @@ def test_random_grayscale_md5_valid_input():
         py_vision.RandomGrayscale(0.8),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
 
     # Check output images with md5 comparison
     filename = "random_grayscale_01_result.npz"
@@ -150,8 +152,8 @@ def test_random_grayscale_md5_no_param():
         py_vision.RandomGrayscale(),
         py_vision.ToTensor()
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data = data.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data = data.map(input_columns=["image"], operations=transform)
 
     # Check output images with md5 comparison
     filename = "random_grayscale_02_result.npz"
@@ -175,8 +177,8 @@ def test_random_grayscale_invalid_param():
             py_vision.RandomGrayscale(1.5),
             py_vision.ToTensor()
         ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
+        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        data = data.map(input_columns=["image"], operations=transform)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)

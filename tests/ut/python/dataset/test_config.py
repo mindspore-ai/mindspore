@@ -21,8 +21,9 @@ import glob
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import dataset_equal
 
@@ -283,8 +284,8 @@ def test_deterministic_python_seed():
         py_vision.RandomCrop([512, 512], [200, 200, 200, 200]),
         py_vision.ToTensor(),
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data1 = data1.map(input_columns=["image"], operations=transform())
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data1 = data1.map(input_columns=["image"], operations=transform)
     data1_output = []
     # config.set_seed() calls random.seed()
     for data_one in data1.create_dict_iterator(num_epochs=1):
@@ -292,7 +293,7 @@ def test_deterministic_python_seed():
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform())
+    data2 = data2.map(input_columns=["image"], operations=transform)
     # config.set_seed() calls random.seed(), resets seed for next dataset iterator
     ds.config.set_seed(0)
 
@@ -326,8 +327,8 @@ def test_deterministic_python_seed_multi_thread():
         py_vision.RandomCrop([512, 512], [200, 200, 200, 200]),
         py_vision.ToTensor(),
     ]
-    transform = py_vision.ComposeOp(transforms)
-    data1 = data1.map(input_columns=["image"], operations=transform(), python_multiprocessing=True)
+    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    data1 = data1.map(input_columns=["image"], operations=transform, python_multiprocessing=True)
     data1_output = []
     # config.set_seed() calls random.seed()
     for data_one in data1.create_dict_iterator(num_epochs=1):
@@ -336,7 +337,7 @@ def test_deterministic_python_seed_multi_thread():
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # If seed is set up on constructor
-    data2 = data2.map(input_columns=["image"], operations=transform(), python_multiprocessing=True)
+    data2 = data2.map(input_columns=["image"], operations=transform, python_multiprocessing=True)
     # config.set_seed() calls random.seed()
     ds.config.set_seed(0)
 

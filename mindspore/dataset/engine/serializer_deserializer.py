@@ -21,8 +21,9 @@ import sys
 
 from mindspore import log as logger
 from . import datasets as de
-from ..transforms.vision.utils import Inter, Border
+from ..vision.utils import Inter, Border
 from ..core import config
+
 
 def serialize(dataset, json_filepath=None):
     """
@@ -44,7 +45,7 @@ def serialize(dataset, json_filepath=None):
         >>> DATA_DIR = "../../data/testMnistData"
         >>> data = ds.MnistDataset(DATA_DIR, 100)
         >>> one_hot_encode = C.OneHot(10)  # num_classes is input argument
-        >>> data = data.map(input_column_names="label", operation=one_hot_encode)
+        >>> data = data.map(operation=one_hot_encode, input_column_names="label")
         >>> data = data.batch(batch_size=10, drop_remainder=True)
         >>>
         >>> ds.engine.serialize(data, json_filepath="mnist_dataset_pipeline.json")  # serialize it to json file
@@ -77,7 +78,7 @@ def deserialize(input_dict=None, json_filepath=None):
         >>> DATA_DIR = "../../data/testMnistData"
         >>> data = ds.MnistDataset(DATA_DIR, 100)
         >>> one_hot_encode = C.OneHot(10)  # num_classes is input argument
-        >>> data = data.map(input_column_names="label", operation=one_hot_encode)
+        >>> data = data.map(operation=one_hot_encode, input_column_names="label")
         >>> data = data.batch(batch_size=10, drop_remainder=True)
         >>>
         >>> # Use case 1: to/from json file
@@ -254,7 +255,7 @@ def create_node(node):
     pyobj = None
     # Find a matching Dataset class and call the constructor with the corresponding args.
     # When a new Dataset class is introduced, another if clause and parsing code needs to be added.
-    if dataset_op == 'ImageFolderDatasetV2':
+    if dataset_op == 'ImageFolderDataset':
         sampler = construct_sampler(node.get('sampler'))
         pyobj = pyclass(node['dataset_dir'], node.get('num_samples'), node.get('num_parallel_workers'),
                         node.get('shuffle'), sampler, node.get('extensions'),
@@ -336,8 +337,8 @@ def create_node(node):
 
     elif dataset_op == 'MapDataset':
         tensor_ops = construct_tensor_ops(node.get('operations'))
-        pyobj = de.Dataset().map(node.get('input_columns'), tensor_ops, node.get('output_columns'),
-                                 node.get('columns_order'), node.get('num_parallel_workers'))
+        pyobj = de.Dataset().map(tensor_ops, node.get('input_columns'), node.get('output_columns'),
+                                 node.get('column_order'), node.get('num_parallel_workers'))
 
     elif dataset_op == 'ShuffleDataset':
         pyobj = de.Dataset().shuffle(node.get('buffer_size'))

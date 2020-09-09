@@ -229,8 +229,8 @@ class Duplicate(cde.DuplicateOp):
         >>> # +---------+
         >>> # | [1,2,3] |
         >>> # +---------+
-        >>> data = data.map(input_columns=["x"], operations=Duplicate(),
-        >>>         output_columns=["x", "y"], columns_order=["x", "y"])
+        >>> data = data.map(operations=Duplicate(), input_columns=["x"],
+        >>>         output_columns=["x", "y"], column_order=["x", "y"])
         >>> # Data after
         >>> # |  x      |  y      |
         >>> # +---------+---------+

@@ -15,7 +15,7 @@
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as ops
-import mindspore.dataset.transforms.vision.c_transforms as visions
+import mindspore.dataset.vision.c_transforms as visions
 
 
 def test_random_select_subpolicy():

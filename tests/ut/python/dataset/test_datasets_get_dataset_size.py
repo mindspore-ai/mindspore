@@ -27,16 +27,16 @@ CIFAR100_DATA_DIR = "../data/dataset/testCifar100Data"
 
 
 def test_imagenet_rawdata_dataset_size():
-    ds_total = ds.ImageFolderDatasetV2(IMAGENET_RAWDATA_DIR)
+    ds_total = ds.ImageFolderDataset(IMAGENET_RAWDATA_DIR)
     assert ds_total.get_dataset_size() == 6
 
-    ds_shard_1_0 = ds.ImageFolderDatasetV2(IMAGENET_RAWDATA_DIR, num_shards=1, shard_id=0)
+    ds_shard_1_0 = ds.ImageFolderDataset(IMAGENET_RAWDATA_DIR, num_shards=1, shard_id=0)
     assert ds_shard_1_0.get_dataset_size() == 6
 
-    ds_shard_2_0 = ds.ImageFolderDatasetV2(IMAGENET_RAWDATA_DIR, num_shards=2, shard_id=0)
+    ds_shard_2_0 = ds.ImageFolderDataset(IMAGENET_RAWDATA_DIR, num_shards=2, shard_id=0)
     assert ds_shard_2_0.get_dataset_size() == 3
 
-    ds_shard_3_0 = ds.ImageFolderDatasetV2(IMAGENET_RAWDATA_DIR, num_shards=3, shard_id=0)
+    ds_shard_3_0 = ds.ImageFolderDataset(IMAGENET_RAWDATA_DIR, num_shards=3, shard_id=0)
     assert ds_shard_3_0.get_dataset_size() == 2
 
 
