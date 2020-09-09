@@ -490,8 +490,6 @@ class BaseTimelineGenerator:
     __col_names__ = ['op_name', 'stream_id', 'start_time', 'duration']
     _output_timeline_data_file_path = 'output_timeline_data_{}.txt'
     _min_cycle_counter_file_path = 'min_cycle_counter_{}.txt'
-    _display_filename = 'timeline_display_{}.json'
-    _timeline_summary_filename = 'timeline_summary_{}.json'
     _timeline_meta = []
     _timeline_summary = {
         'total_time': 0,
@@ -680,7 +678,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             timeline_dict['args'] = args_dict
         else:
             # Update total time of operator execution.
-            self._timeline_summary['total_time'] += dur
+            self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
 
         self._timeline_meta.append(timeline_dict)
@@ -770,6 +768,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
 
 class AscendTimelineGenerator(BaseTimelineGenerator):
     """Generate ascend Timeline data from file."""
+    _display_filename = 'ascend_timeline_display_{}.json'
+    _timeline_summary_filename = 'ascend_timeline_summary_{}.json'
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
