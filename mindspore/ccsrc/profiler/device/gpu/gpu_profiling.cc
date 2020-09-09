@@ -390,12 +390,20 @@ void GPUProfiler::SetRunTimeData(const std::string &op_name, const float time_el
   }
 }
 
+void GPUProfiler::SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration) {
+  auto iter = op_info_map_.find(op_name);
+  if (iter != op_info_map_.end()) {
+    iter->second.start_duration.emplace_back(StartDuration({start, duration}));
+  }
+}
+
 void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
   if (sync_enable_flag_) {
     CHECK_CUDA_RET_WITH_ERROR(cudaEventCreate(&op_event_start_), "cudaEventCreate  op event start failed");
     CHECK_CUDA_RET_WITH_ERROR(cudaEventCreate(&op_event_stop_), "cudaEventCreate op event stop failed");
     CHECK_CUDA_RET_WITH_ERROR(cudaEventRecord(op_event_start_, (CUstream)stream_),
                               "cudaEventRecord op event start failed");
+    op_host_time_start_ = GetHostTimeStamp();
   } else {
     op_host_time_start_ = GetHostTimeStamp();
   }
@@ -414,12 +422,14 @@ void GPUProfiler::OpDataProducerEnd() {
     CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(op_event_start_), "cudaEventDestroy  op event start failed");
     CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(op_event_stop_), "cudaEventDestroy  op event stop failed");
     op_time_elapsed = op_time_elapsed * kTimeUnit;
+    op_host_time_stop_ = GetHostTimeStamp();
   } else {
     op_host_time_stop_ = GetHostTimeStamp();
     op_time_elapsed = (op_host_time_stop_ - op_host_time_start_) / kTimeUnit;
   }
   MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
   SetRunTimeData(op_name_, op_time_elapsed);
+  SetRunTimeData(op_name_, op_host_time_start_, op_time_elapsed);
 }
 
 void GPUProfiler::StopCUPTI() {
