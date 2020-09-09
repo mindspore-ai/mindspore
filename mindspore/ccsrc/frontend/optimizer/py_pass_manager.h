@@ -38,7 +38,7 @@ namespace python_pass {
 class PyPassManager;
 using PyPassManagerPtr = std::shared_ptr<PyPassManager>;
 
-enum Phase { RESOLVE, OPT };
+enum Phase { PREAD, OPT };
 
 class PyPassManager {
  protected:
@@ -52,8 +52,8 @@ class PyPassManager {
   // Access the only global instance
   static PyPassManagerPtr GetInstance();
   virtual ~PyPassManager() = default;
-  void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-               bool run_only_once = false);
+  void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target, bool requires_grad,
+               bool run_only_once);
   void Unregiste(const std::string &pass_name);
   void GenNewParameter(const PatternPtr &parameter);
   PassGroupPtr GetPassGroup(Phase phase);

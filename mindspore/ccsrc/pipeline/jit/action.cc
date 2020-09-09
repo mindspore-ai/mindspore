@@ -301,6 +301,8 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
   return true;
 }
 
+bool OptInlineAction(const ResourcePtr &res) { return OptimizeAction(res, kInlinePasses); }
+
 bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePasses); }
 
 bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
@@ -473,7 +475,12 @@ bool ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
   return ppm->GetPassGroup(phase)->Run(res->func_graph());
 }
 
-bool ResolveActionPyStub(const ResourcePtr &res) { return true || ActionPyStub(res, opt::python_pass::Phase::RESOLVE); }
+bool PreAdActionPyStub(const ResourcePtr &res) {
+  if (!ActionPyStub(res, opt::python_pass::Phase::PREAD)) {
+    MS_LOG(DEBUG) << "No Match.";
+  }
+  return true;
+}
 
 bool OptActionVmPyStub(const ResourcePtr &res) {
   if (ActionPyStub(res, opt::python_pass::Phase::OPT)) {
@@ -529,12 +536,14 @@ static std::vector<ActionItem> CommonPipeline() {
   if (!multi_graphs) {
     actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
-  // Add resolve-stage python pass stub
-  actions.emplace_back(std::make_pair("py_resolve", ResolveActionPyStub));
 
   actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
+  // Do data structure simplifications and inline
+  actions.emplace_back(std::make_pair("inline", OptInlineAction));
+  // Add pre-ad, post-inline python pass stub
+  actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
 
   return actions;
 }
