@@ -236,7 +236,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->MutableData();
-  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
     ConvolutionBaseCPUKernel::RestoreFilter(inputs.at(kWeightIndex));
   }
 
@@ -265,7 +265,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
     return nullptr;
   }
 
-  if (primitive->GetQuantType() == schema::QuantType_WeightQuant) {
+  if (weight_tensor->data_type() == kNumberTypeInt8 || primitive->GetQuantType() == schema::QuantType_WeightQuant) {
     weight_tensor->FreeData();
     weight_tensor->SetData(restore_data);
   }
