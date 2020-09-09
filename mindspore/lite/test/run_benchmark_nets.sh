@@ -391,6 +391,8 @@ while getopts "a:c:m:d:" opt; do
     esac
 done
 
+mkdir train
+mv ${arm_path}/*runtime-*train* ./train 
 file_name=$(ls ${arm_path}/*runtime-arm64*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
