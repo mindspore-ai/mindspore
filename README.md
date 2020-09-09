@@ -66,10 +66,12 @@ MindSpore offers build options across multiple backends:
 | Hardware Platform | Operating System | Status |
 | :---------------- | :--------------- | :----- |
 | Ascend910 | Ubuntu-x86 | ✔️ |
+|  | Ubuntu-aarch64 | ✔️ |
 |  | EulerOS-x86 | ✔️ |
 |  | EulerOS-aarch64 | ✔️ |
 | GPU CUDA 10.1 | Ubuntu-x86 | ✔️ |
 | CPU | Ubuntu-x86 | ✔️ |
+|  | Ubuntu-aarch64 | ✔️ |
 |  | Windows-x86 | ✔️ |
 
 For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an example:
