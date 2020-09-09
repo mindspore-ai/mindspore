@@ -3052,14 +3052,6 @@ class MindDataset(MappableDataset):
             self.dataset_size = num_rows
         return self.dataset_size
 
-    # manually set dataset_size as a tempoary solution.
-    def set_dataset_size(self, value):
-        logger.warning("WARN_DEPRECATED: This method is deprecated. Please use get_dataset_size directly.")
-        if value >= 0:
-            self.dataset_size = value
-        else:
-            raise ValueError('Set dataset_size with negative value {}'.format(value))
-
     def is_shuffled(self):
         if self.shuffle_option is None:
             return True
@@ -3503,13 +3495,6 @@ class GeneratorDataset(MappableDataset):
                 self.dataset_size = num_rows
         return self.dataset_size
 
-    # manually set dataset_size as a temporary solution.
-    def set_dataset_size(self, value):
-        if value >= 0:
-            self.dataset_size = value
-        else:
-            raise ValueError('Set dataset_size with negative value {}'.format(value))
-
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
             return memodict[id(self)]
@@ -3695,14 +3680,6 @@ class TFRecordDataset(SourceDataset):
             if self.num_samples is not None and self.num_samples < self.dataset_size:
                 self.dataset_size = self.num_samples
         return self.dataset_size
-
-    # manually set dataset_size as a tempoary solution.
-    def set_dataset_size(self, value):
-        logger.warning("WARN_DEPRECATED: This method is deprecated. Please use get_dataset_size directly.")
-        if value >= 0:
-            self.dataset_size = value
-        else:
-            raise ValueError('Set dataset_size with negative value {}'.format(value))
 
     def is_shuffled(self):
         return self.shuffle_files

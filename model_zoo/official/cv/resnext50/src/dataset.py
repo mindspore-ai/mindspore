@@ -141,7 +141,6 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
         dataset = TxtDataset(root, data_dir)
         sampler = DistributedSampler(dataset, rank, group_size, shuffle=shuffle)
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=sampler)
-        de_dataset.set_dataset_size(len(sampler))
 
     de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=num_parallel_workers,
                                 operations=transform_img)

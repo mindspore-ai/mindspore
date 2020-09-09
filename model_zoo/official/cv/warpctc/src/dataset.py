@@ -81,7 +81,6 @@ def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_
 
     dataset = _CaptchaDataset(dataset_path, cf.max_captcha_digits, device_target)
     ds = de.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
-    ds.set_dataset_size(m.ceil(len(dataset) / num_shards))
     image_trans = [
         vc.Rescale(1.0 / 255.0, 0.0),
         vc.Normalize([0.9010, 0.9049, 0.9025], std=[0.1521, 0.1347, 0.1458]),

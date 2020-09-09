@@ -23,8 +23,7 @@ from mindspore import log as logger
 from .config import bert_net_cfg
 
 
-def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", enable_data_sink="true",
-                        data_sink_steps=1, data_dir=None, schema_dir=None):
+def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", data_dir=None, schema_dir=None):
     """create train dataset"""
     # apply repeat operations
     repeat_count = epoch_size
@@ -40,10 +39,6 @@ def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", e
                             shard_equal_rows=True)
     ori_dataset_size = ds.get_dataset_size()
     print('origin dataset size: ', ori_dataset_size)
-    new_size = ori_dataset_size
-    if enable_data_sink == "true":
-        new_size = data_sink_steps * bert_net_cfg.batch_size
-    ds.set_dataset_size(new_size)
     new_repeat_count = int(repeat_count * ori_dataset_size // ds.get_dataset_size())
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)

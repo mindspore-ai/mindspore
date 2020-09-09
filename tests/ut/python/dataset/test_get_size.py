@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
-
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -159,18 +157,6 @@ def test_imagefolder():
     data = ds.ImageFolderDataset("../data/dataset/testPK/data/", num_samples=10)
     assert data.get_dataset_size() == 10
     assert data.num_classes() == 4
-
-
-def test_generator():
-    def generator():
-        for i in range(64):
-            yield (np.array([i]),)
-
-    data1 = ds.GeneratorDataset(generator, ["data"])
-    data1.set_dataset_size(10)
-    assert data1.get_dataset_size() == 10
-    data1.output_shapes()
-    assert data1.get_dataset_size() == 10
 
 
 if __name__ == '__main__':

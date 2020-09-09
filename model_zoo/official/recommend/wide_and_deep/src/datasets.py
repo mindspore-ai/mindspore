@@ -165,7 +165,6 @@ def _get_h5_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000):
             yield train_eval_gen.__next__()
 
     ds = de.GeneratorDataset(_iter_h5_data(), ["ids", "weights", "labels"])
-    ds.set_dataset_size(numbers_of_batch)
     ds = ds.repeat(epochs)
     return ds
 
