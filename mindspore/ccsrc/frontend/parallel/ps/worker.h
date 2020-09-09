@@ -86,7 +86,9 @@ void Worker<T>::Run() {
     MS_LOG(INFO) << "'Worker is already running.";
     return;
   }
+  MS_LOG(INFO) << "Worker starts connecting to scheduler and server...";
   ::ps::Start(0);
+  MS_LOG(INFO) << "Worker connected successfully.";
   if (!::ps::IsWorker()) {
     MS_LOG(EXCEPTION) << "The role is not worker.";
   }
@@ -176,9 +178,11 @@ void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const :
 template <typename T>
 void Worker<T>::Finalize() {
   if (running_) {
+    MS_LOG(INFO) << "Worker starts finalizing...";
     kv_worker_->Finalize();
     kv_worker_.reset();
     running_ = false;
+    MS_LOG(INFO) << "Worker finalized successfully.";
   }
 }
 
@@ -315,7 +319,7 @@ void Worker<T>::InitPSParamAndOptim(const std::string &param_name, tensor::Tenso
 
   size_t param_key = GetParamKey(param_name);
   if (param_key == kInvalidKey) {
-    MS_LOG(INFO) << "Parameter " << param_name << " has no key assigned.";
+    MS_LOG(DEBUG) << "Parameter " << param_name << " has no key assigned.";
     return;
   }
   bool init_in_server = false;

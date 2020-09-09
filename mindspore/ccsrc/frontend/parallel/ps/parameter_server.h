@@ -736,7 +736,9 @@ void ParameterServer<T>::SyncEmbeddingTables() {
 
 template <typename T>
 void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
   ::ps::Start(0);
+  MS_LOG(INFO) << "PServer connected successfully.";
   if (!::ps::IsServer()) {
     std::cout << "This is not ther Server" << std::endl;
     return;
@@ -744,7 +746,9 @@ void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
   Init(func_graph);
   PSContext::instance()->SetPSRankId(rank_id_);
   thread_->join();
+  MS_LOG(INFO) << "PServer finished updating models, starts finalizing...";
   ::ps::Finalize(0, true);
+  MS_LOG(INFO) << "PServer finalized successfully.";
 }
 }  // namespace ps
 }  // namespace parallel
