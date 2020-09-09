@@ -71,40 +71,29 @@ py::object MsCtxGetParameter(const std::shared_ptr<MsContext> &ctx, MsCtxParam p
 }
 }  // namespace
 
+// Note: exported python enum variables begining with '_' are for internal use
 REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                          (void)py::enum_<MsCtxParam>(*m, "ms_ctx_param", py::arithmetic())
                            .value("enable_auto_mixed_precision", MsCtxParam::MS_CTX_ENABLE_AUTO_MIXED_PRECISION)
                            .value("check_bprop", MsCtxParam::MS_CTX_CHECK_BPROP_FLAG)
                            .value("enable_dump", MsCtxParam::MS_CTX_ENABLE_DUMP)
-                           .value("enable_dynamic_mem_pool", MsCtxParam::MS_CTX_ENABLE_DYNAMIC_MEM_POOL)
-                           .value("enable_gpu_summary", MsCtxParam::MS_CTX_ENABLE_GPU_SUMMARY)
                            .value("enable_graph_kernel", MsCtxParam::MS_CTX_ENABLE_GRAPH_KERNEL)
-                           .value("enable_hccl", MsCtxParam::MS_CTX_ENABLE_HCCL)
-                           .value("enable_mem_reuse", MsCtxParam::MS_CTX_ENABLE_MEM_REUSE)
-                           .value("enable_pynative_hook", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_HOOK)
-                           .value("enable_pynative_infer", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_INFER)
                            .value("enable_reduce_precision", MsCtxParam::MS_CTX_ENABLE_REDUCE_PRECISION)
                            .value("enable_sparse", MsCtxParam::MS_CTX_ENABLE_SPARSE)
-                           .value("enable_task_sink", MsCtxParam::MS_CTX_ENABLE_TASK_SINK)
-                           .value("ir_fusion_flag", MsCtxParam::MS_CTX_IR_FUSION_FLAG)
-                           .value("is_multi_graph_sink", MsCtxParam::MS_CTX_IS_MULTI_GRAPH_SINK)
-                           .value("is_pynative_ge_init", MsCtxParam::MS_CTX_IS_PYNATIVE_GE_INIT)
                            .value("precompile_only", MsCtxParam::MS_CTX_PRECOMPILE_ONLY)
                            .value("enable_profiling", MsCtxParam::MS_CTX_ENABLE_PROFILING)
                            .value("save_graphs", MsCtxParam::MS_CTX_SAVE_GRAPHS_FLAG)
                            .value("max_device_memory", MsCtxParam::MS_CTX_MAX_DEVICE_MEMORY)
                            .value("mode", MsCtxParam::MS_CTX_EXECUTION_MODE)
                            .value("device_target", MsCtxParam::MS_CTX_DEVICE_TARGET)
-                           .value("graph_memory_max_size", MsCtxParam::MS_CTX_GRAPH_MEMORY_MAX_SIZE)
+                           .value("_graph_memory_max_size", MsCtxParam::MS_CTX_GRAPH_MEMORY_MAX_SIZE)
                            .value("print_file_path", MsCtxParam::MS_CTX_PRINT_FILE_PATH)
                            .value("profiling_options", MsCtxParam::MS_CTX_PROFILING_OPTIONS)
                            .value("save_dump_path", MsCtxParam::MS_CTX_SAVE_DUMP_PATH)
                            .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
                            .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)
                            .value("device_id", MsCtxParam::MS_CTX_DEVICE_ID)
-                           .value("ge_ref", MsCtxParam::MS_CTX_GE_REF)
-                           .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
-                           .value("tsd_ref", MsCtxParam::MS_CTX_TSD_REF);
+                           .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH);
 
                          (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
                            .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")

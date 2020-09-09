@@ -120,7 +120,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   engine->IncreaseFunctionCallDepth();
   if (engine->function_call_depth() > MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit "
-                      << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH) << ".";
+                      << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
+                      << ", please call 'context.set_context(max_call_depth=value)' to adjust this value.";
   }
   std::vector<AnfNodePtr> nodes = FastShadowSort(func_node);
   for (auto it = nodes.crbegin(); it != nodes.crend(); it++) {
