@@ -16,6 +16,7 @@
 BGCF training script.
 """
 import os
+import time
 import datetime
 
 from mindspore import Tensor
@@ -56,6 +57,7 @@ def train_and_eval():
 
     for _epoch in range(1, parser.num_epoch + 1):
 
+        epoch_start = time.time()
         iter_num = 1
 
         for data in itr:
@@ -96,7 +98,7 @@ def train_and_eval():
             if iter_num == num_iter:
                 print('Epoch', '%03d' % _epoch, 'iter', '%02d' % iter_num,
                       'loss',
-                      '{}'.format(train_loss))
+                      '{}, cost:{:.4f}'.format(train_loss, time.time() - epoch_start))
             iter_num += 1
 
         if _epoch % parser.eval_interval == 0:
