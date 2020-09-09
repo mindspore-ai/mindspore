@@ -19,9 +19,9 @@ import os
 from functools import partial
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-import mindspore.dataset.transforms.py_transforms
+import mindspore.dataset.transforms.py_transforms as P2
 import mindspore.dataset.vision.py_transforms as P
 
 
@@ -150,7 +150,7 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
     else:
         trans = [decode_op, resize_op, center_crop, to_tensor, normalize_op]
 
-    compose = mindspore.dataset.transforms.py_transforms.Compose(trans)
+    compose = P2.Compose(trans)
 
     ds = ds.map(input_columns="image", operations=compose, num_parallel_workers=8, python_multiprocessing=True)
 

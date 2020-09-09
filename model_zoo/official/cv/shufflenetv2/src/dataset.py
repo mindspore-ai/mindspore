@@ -21,7 +21,7 @@ from src.config import config_gpu as cfg
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.c_transforms as C2
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 
 
 class toBGR():

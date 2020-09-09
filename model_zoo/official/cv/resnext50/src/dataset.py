@@ -19,7 +19,7 @@ import os
 from mindspore.common import dtype as mstype
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as V_C
+import mindspore.dataset.vision.c_transforms as V_C
 from PIL import Image, ImageFile
 from src.utils.sampler import DistributedSampler
 

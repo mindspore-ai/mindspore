@@ -22,7 +22,7 @@ from numpy import random
 
 import mmcv
 import mindspore.dataset as de
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
 from src.config import config
 import cv2

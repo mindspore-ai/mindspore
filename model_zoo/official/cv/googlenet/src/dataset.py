@@ -20,7 +20,7 @@ import os
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.dataset.vision.c_transforms as vision
 from src.config import cifar_cfg as cfg
 
 

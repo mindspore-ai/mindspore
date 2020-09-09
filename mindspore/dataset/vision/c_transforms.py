@@ -26,7 +26,7 @@ to improve their training models.
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>> import mindspore.dataset.vision.c_transforms as c_vision
-        >>> from mindspore.dataset.transforms.vision.utils import Border, ImageBatchFormat, Inter
+        >>> from mindspore.dataset.vision.utils import Border, ImageBatchFormat, Inter
 
         >>> dataset_dir = "path/to/imagefolder_directory"
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
