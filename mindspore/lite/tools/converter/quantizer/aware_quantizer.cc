@@ -115,11 +115,6 @@ STATUS AwareQuantizer::GenerateQuantParam() {
       return status;
     }
   }
-  auto status = GenerateDefaultQuantParam(graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "GenerateDefaultQuantParam failed";
-    return status;
-  }
   auto *quantParamRegister = QuantParamCalcRegister::GetInstance();
 
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
@@ -135,7 +130,7 @@ STATUS AwareQuantizer::GenerateQuantParam() {
                     << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
       node->quantType = static_cast<schema::QuantType>(QuantType_QUANT_NONE);
     } else {
-      status = quantParamCalcer->Calc(graph, *node);
+      auto status = quantParamCalcer->Calc(graph, *node);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
@@ -167,17 +162,23 @@ STATUS AwareQuantizer::DoQuantize() {
         return RET_ERROR;
       }
       // quant weight
-      status = QuantConvWeight(graph, node.get());
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "QuantConvWeight failed!";
-        return RET_ERROR;
+      auto &weightTensor = graph->allTensors.at(node->inputIndex.at(1));
+      if (!weightTensor->quantParams.empty() && weightTensor->quantParams.at(0)->inited) {
+        status = QuantConvWeight(graph, node.get());
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "QuantConvWeight failed!";
+          return RET_ERROR;
+        }
       }
       // quant bias
       if (inputIndexes.size() == 3) {
-        status = QuantConvBias(graph, node.get());
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "QuantConvBias failed!";
-          return RET_ERROR;
+        auto &biasTensor = graph->allTensors.at(node->inputIndex.at(2));
+        if (!biasTensor->quantParams.empty() && biasTensor->quantParams.at(0)->inited) {
+          status = QuantConvBias(graph, node.get());
+          if (status != RET_OK) {
+            MS_LOG(ERROR) << "QuantConvBias failed!";
+            return RET_ERROR;
+          }
         }
       }
     } else if (GetCNodeTType(*node) == schema::PrimitiveType_DetectionPostProcess) {
@@ -376,29 +377,17 @@ STATUS AwareQuantizer::DetermineNodeQuantType() {
   for (auto &node : graph->nodes) {
     MS_ASSERT(node != nullptr);
     bool canQuant = true;
-    for (auto &inTensorIdx : node->inputIndex) {
-      MS_ASSERT(graph->allTensors.size() > inTensorIdx);
-      auto &inTensor = graph->allTensors.at(inTensorIdx);
-      MS_ASSERT(inTensor != nullptr);
-      if (inTensor->quantParams.empty() || inTensor->quantParams.front() == nullptr ||
-          !inTensor->quantParams.front()->inited) {
+    for (auto &outTensorIdx : node->outputIndex) {
+      MS_ASSERT(graph->allTensors.size() > outTensorIdx);
+      auto &outTensor = graph->allTensors.at(outTensorIdx);
+      MS_ASSERT(outTensor != nullptr);
+      if (outTensor->quantParams.empty() || outTensor->quantParams.front() == nullptr ||
+          !outTensor->quantParams.front()->inited) {
         canQuant = false;
         break;
       }
     }
 
-    if (canQuant) {
-      for (auto &outTensorIdx : node->outputIndex) {
-        MS_ASSERT(graph->allTensors.size() > outTensorIdx);
-        auto &outTensor = graph->allTensors.at(outTensorIdx);
-        MS_ASSERT(outTensor != nullptr);
-        if (outTensor->quantParams.empty() || outTensor->quantParams.front() == nullptr ||
-            !outTensor->quantParams.front()->inited) {
-          canQuant = false;
-          break;
-        }
-      }
-    }
     if (canQuant && IsContain(GetUint8OpList(), GetCNodeTType(*node))) {
       node->quantType = schema::QuantType_AwareTraining;
     } else {

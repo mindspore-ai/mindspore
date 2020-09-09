@@ -75,7 +75,7 @@ static const std::vector<schema::PrimitiveType> int8OpList = {
   schema::PrimitiveType_SoftMax,   schema::PrimitiveType_Split,
   schema::PrimitiveType_Squeeze,   schema::PrimitiveType_Sub,
   schema::PrimitiveType_TopK,      schema::PrimitiveType_Unsqueeze,
-  schema::PrimitiveType_MatMul};
+  schema::PrimitiveType_MatMul,    schema::PrimitiveType_Pad};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
   schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation, schema::PrimitiveType_Concat,

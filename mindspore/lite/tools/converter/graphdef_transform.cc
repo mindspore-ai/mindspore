@@ -102,7 +102,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // generate and infer quant parameters
   {
-    if (mQuantizer != nullptr) {
+    if (fbQuantizer != nullptr) {
       Optimizer topologicalOptimizer;
       topologicalOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
       status = topologicalOptimizer.Run(graphDefT);
@@ -110,14 +110,13 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
         MS_LOG(ERROR) << "Run topologicalOptimizer graphPasses Failed";
         return status;
       }
-      if (!(this->graphDefT->fmkType == converter::FmkType_TF &&
-            this->graphDefT->nodes.front()->quantType == QuantType::QuantType_AwareTraining)) {
-        status = mQuantizer->GenerateQuantParam();
+      if (ctx.quantType == QuantType_AwareTraining) {
+        status = fbQuantizer->GenerateQuantParam();
         if (status != RET_OK) {
           MS_LOG(ERROR) << "GenerateQuantParam failed";
           return status;
         }
-        status = mQuantizer->DetermineNodeQuantType();
+        status = fbQuantizer->DetermineNodeQuantType();
         if (status != RET_OK) {
           MS_LOG(ERROR) << "DetermineNodeQuant failed";
           return status;

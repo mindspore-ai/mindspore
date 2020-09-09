@@ -61,6 +61,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/conv_scale_fusion.cc
         ../optimizer/fusion/conv_bn_fusion.cc
         ../optimizer/fusion/constant_folding_fusion.cc
+        ../optimizer/fusion/quant_dtype_cast_fusion.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)

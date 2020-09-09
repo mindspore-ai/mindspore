@@ -70,6 +70,9 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     auto &tensor = graph->allTensors.at(node.inputIndex.at(i));
     MS_ASSERT(tensor != nullptr);
     auto quantParam = GetTensorQuantParam(tensor);
+    if (quantParam == nullptr) {
+      continue;
+    }
     if (quantParam->inited) {  // inited
       inputParamDone++;
       continue;
@@ -77,8 +80,7 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
 
     MS_ASSERT(tensor != nullptr);
-    if (tensor->refCount == schema::NodeType::NodeType_ValueNode &&
-        !IsContain(graph->inputIndex, node.inputIndex.at(i))) {
+    if (!tensor->data.empty() && !IsContain(graph->inputIndex, node.inputIndex.at(i))) {
       auto status = ComputeConstQuantParam((*tensor), quantParam.get());
       if (status != RET_OK) {
         MS_LOG(WARNING) << "ComputeConstQuantParam failed: " << status;
@@ -95,13 +97,12 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     auto &tensor = graph->allTensors.at(i);
     MS_ASSERT(tensor != nullptr);
     auto quantParam = GetTensorQuantParam(tensor);
-    MS_ASSERT(quantParam != nullptr);
-    if (quantParam->inited) {  // inited
+    if (quantParam != nullptr && quantParam->inited) {  // inited
       outputParamDone++;
       continue;
     }
 
-    if (tensor->refCount == 999) {
+    if (!tensor->data.empty()) {
       MS_ASSERT(false);
     }
   }
@@ -146,10 +147,10 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       auto &inTensor = graph->allTensors.at(i);
       MS_ASSERT(inTensor != nullptr);
       auto inQuantParam = GetTensorQuantParam(inTensor);
-      if (inQuantParam->inited) {
+      if (inQuantParam == nullptr || inQuantParam->inited) {
         continue;
       }
-      inTensor->quantParams.front() = std::move(inQuantParam);
+      inTensor->quantParams.front() = std::move(outputQuantParam);
     }
   }
   if (outputParamDone != node.outputIndex.size()) {
@@ -157,7 +158,7 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
     auto &inTensor = graph->allTensors.at(node.inputIndex.at(0));
     MS_ASSERT(inTensor != nullptr);
     auto inQuantParam = GetTensorQuantParam(inTensor);
-    if (!inQuantParam->inited) {
+    if (inQuantParam == nullptr || !inQuantParam->inited) {
       MS_LOG(WARNING) << "Can not determine outputTensor quantParam from inputTensor for node %s" << node.name;
       return RET_ERROR;
     }
@@ -166,10 +167,10 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       auto &outTensor = graph->allTensors.at(node.outputIndex.at(i));
       MS_ASSERT(outTensor != nullptr);
       auto outQuantParam = GetTensorQuantParam(outTensor);
-      if (outQuantParam->inited) {
+      if (outQuantParam == nullptr || outQuantParam->inited) {
         continue;
       }
-      outTensor->quantParams.front() = std::move(outQuantParam);
+      outTensor->quantParams.front() = std::move(inQuantParam);
     }
   }
   return RET_OK;
@@ -225,13 +226,14 @@ class CalcConcat : public QuantParamCalcer {
       MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
       MS_ASSERT(outTensor != nullptr);
-      auto outQuantParam = GetTensorQuantParam(outTensor);
+      auto outQuantParam = std::make_unique<QuantParamT>();
 
       status = quant::CalQuantizationParams(outQuantParam.get(), minMin, maxMax, narrowRange, numBits);
       if (status != RET_OK) {
         MS_LOG(WARNING) << "in aware quantization run CalQuantizationParams failed!";
         return RET_ERROR;
       }
+      outTensor->quantParams.front() = std::move(outQuantParam);
       outputParamDone++;
     }
 
@@ -261,7 +263,7 @@ class CalcAdd : public QuantParamCalcer {
       MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
       MS_ASSERT(outTensor != nullptr);
-      auto outQuantParam = GetTensorQuantParam(outTensor);
+      auto outQuantParam = std::make_unique<QuantParamT>();
 
       MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
       auto &tensor0 = graph->allTensors.at(node.inputIndex.at(0));
@@ -271,10 +273,10 @@ class CalcAdd : public QuantParamCalcer {
       MS_ASSERT(tensor1 != nullptr);
       auto biasTensor = &tensor0;
       auto paramTensor = &tensor1;
-      if (tensor0->refCount == 999 && (tensor0->dims.empty() || tensor0->dims.size() == 1)) {
+      if (!tensor0->data.empty() && (tensor0->dims.empty() || tensor0->dims.size() == 1)) {
         biasTensor = &tensor0;
         paramTensor = &tensor1;
-      } else if (tensor1->refCount == 999 && (tensor1->dims.empty() || tensor1->dims.size() == 1)) {
+      } else if (!tensor1->data.empty() && (tensor1->dims.empty() || tensor1->dims.size() == 1)) {
         biasTensor = &tensor1;
         paramTensor = &tensor0;
       } else {
@@ -310,6 +312,7 @@ class CalcAdd : public QuantParamCalcer {
           return RET_ERROR;
         }
       }
+      outTensor->quantParams.front() = std::move(outQuantParam);
     }
     return RET_OK;
   }
@@ -337,13 +340,13 @@ class CalcRealDiv : public QuantParamCalcer {
       MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
       auto &outTensor = graph->allTensors.at(node.outputIndex.front());
       MS_ASSERT(outTensor != nullptr);
-      auto outQuantParam = GetTensorQuantParam(outTensor);
+      auto outQuantParam = std::make_unique<QuantParamT>();
 
       MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
       MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(1));
       auto &tensor1 = graph->allTensors.at(node.inputIndex.at(1));
       MS_ASSERT(tensor1 != nullptr);
-      if (tensor1->refCount == 999 && (tensor1->dims.empty() || tensor1->dims.size() == 1)) {
+      if (!tensor1->data.empty() && (tensor1->dims.empty() || tensor1->dims.size() == 1)) {
         auto quantParam = GetTensorQuantParam(tensor1);
         auto min = quantParam->min;
         auto max = quantParam->max;
@@ -371,6 +374,7 @@ class CalcRealDiv : public QuantParamCalcer {
             MS_LOG(WARNING) << "Unsupported tensor dataType: " << tensor1->dataType;
             return RET_ERROR;
           }
+          outTensor->quantParams.front() = std::move(outQuantParam);
         }
       } else {
         MS_LOG(WARNING) << "Can not determine realDiv outputTensor quantParam, node " << node.name;
@@ -399,21 +403,24 @@ class CalcToSet : public QuantParamCalcer {
       return RET_ERROR;
     }
     // output
-    std::unique_ptr<QuantParamT> quantParam(new (std::nothrow) QuantParamT());
-    if (quantParam == nullptr) {
-      MS_LOG(WARNING) << "new QuantParamT failed";
-      return RET_ERROR;
+    if (outputParamDone != node.outputIndex.size()) {
+      std::unique_ptr<QuantParamT> quantParam = std::make_unique<QuantParamT>();
+      if (quantParam == nullptr) {
+        MS_LOG(WARNING) << "new QuantParamT failed";
+        return RET_ERROR;
+      }
+      quantParam->scale = (max - min) / 256;
+      MS_ASSERT(quantParam->scale != 0);
+      quantParam->zeroPoint = int32_t(std::round(256 - max / quantParam->scale));
+      quantParam->min = min;
+      quantParam->max = max;
+      quantParam->inited = true;
+      MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+      auto &outTensor = graph->allTensors.at(node.outputIndex.front());
+      MS_ASSERT(outTensor != nullptr);
+      outTensor->quantParams.front() = std::move(quantParam);
+      outputParamDone++;
     }
-    quantParam->scale = (max - min) / 256;
-    MS_ASSERT(quantParam->scale != 0);
-    quantParam->zeroPoint = int32_t(std::round(256 - max / quantParam->scale));
-    quantParam->min = min;
-    quantParam->max = max;
-    quantParam->inited = true;
-    MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
-    auto &outTensor = graph->allTensors.at(node.outputIndex.front());
-    MS_ASSERT(outTensor != nullptr);
-    outTensor->quantParams.front() = std::move(quantParam);
     return RET_OK;
   }
 

@@ -58,6 +58,8 @@ bool IsConvNode(const BaseRef &n);
 
 bool IsPoolingNode(const BaseRef &n);
 
+bool IsQuantNode(const BaseRef &n);
+
 bool CheckIsAllInputsParam(const AnfNodePtr &node);
 
 size_t GetOutputTensorNum(const AnfNodePtr &node);
