@@ -19,6 +19,10 @@
 #include <utility>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace device {
@@ -167,6 +171,7 @@ inline bool GpuBufferMgr::isCreated(unsigned int device_id, const std::string &c
 }
 
 bool GpuBufferMgr::CloseNotify() {
+  py::gil_scoped_release release;
   bool result = true;
   // lock scope
   {
