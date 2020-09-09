@@ -80,7 +80,7 @@ class TimelineContainer:
     """
     def __init__(self, split_list):
         self._op_name = split_list[0]
-        self._stream_id = int(split_list[1])
+        self._stream_id = str(split_list[1])
         self._start_time = float(split_list[2])
         self._duration = float(split_list[3])
         self._pid = None
