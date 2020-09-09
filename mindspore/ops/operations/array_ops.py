@@ -3670,6 +3670,44 @@ class TransShape(PrimitiveWithInfer):
                 'value': None}
 
 
+class Sort(PrimitiveWithInfer):
+    """
+    Sorts the elements of the input tensor along a given dimension in ascending order by value.
+
+    Args:
+        axis (int): The dimension to sort along. Default: -1.
+        descending (bool): Controls the sorting order. If descending is True then the elements
+            are sorted in descending order by value. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - The input to sort, with float16 or float32 data type.
+
+    Outputs:
+        - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
+        - **y2** (Tensor) - The indices of the elements in the original input tensor. Data type is int32.
+
+    Examples:
+        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
+        >>> sort = P.Sort()
+        >>> sort(x)
+        >>> ([[1.0, 2.0, 8.0], [3.0, 5.0, 9.0], [4.0, 6.0 ,7.0]],
+             [[2, 1, 0], [2, 0, 1], [0, 1, 2]])
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=-1, descending=False):
+        """init Sort"""
+        self.axis = validator.check_value_type("axis", axis, [int], self.name)
+        self.descending = validator.check_value_type("descending", descending, [bool], self.name)
+
+    def infer_shape(self, x_shape):
+        return x_shape, x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({"x_dtype": x_dtype}, [mstype.float32, mstype.float16], self.name)
+        return x_dtype, mstype.tensor_type(mstype.int32)
+
+
 class EmbeddingLookup(PrimitiveWithInfer):
     """
     Returns a slice of input tensor based on the specified indices.
