@@ -112,6 +112,7 @@ class GoogleNet(nn.Cell):
 
 
     def construct(self, x):
+        """construct"""
         x = self.conv1(x)
         x = self.maxpool1(x)
 
