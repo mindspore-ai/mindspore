@@ -469,6 +469,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
     }
     TraceManager::EndTrace();
   }
+  new_parameter->IncreaseUsedGraphCount();
   graph_inputs->push_back(new_parameter);
   valid_inputs->push_back(true);
   return new_parameter;
@@ -812,6 +813,7 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
     }
     TraceManager::EndTrace();
   }
+  new_parameter->IncreaseUsedGraphCount();
 
   return new_parameter;
 }

@@ -803,11 +803,18 @@ void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
     if (!input_node->isa<Parameter>()) {
       continue;
     }
+    auto parameter = input_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    parameter->DecreaseUsedGraphCount();
+    // Only the parameter has no graph used, then clear the output address.
+    if (parameter->used_graph_count() != 0) {
+      continue;
+    }
     for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(input_node); ++index) {
       if (!AnfAlgo::OutputAddrExist(input_node, index)) {
         continue;
       }
-      AnfAlgo::SetOutputAddr(nullptr, 0, input_node.get());
+      AnfAlgo::SetOutputAddr(nullptr, index, input_node.get());
     }
   }
   // clear input value node output address.
