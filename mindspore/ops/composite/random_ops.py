@@ -48,14 +48,15 @@ def normal(shape, mean, stddev, seed=0):
     Args:
         shape (tuple): The shape of random tensor to be generated.
         mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak.
-          With float32 data type.
+          with float32 data type.
         stddev (Tensor): The deviation σ distribution parameter. It should be greater than 0.
-          With float32 data type.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Must be non-negative. Default: 0.
+          with float32 data type.
+        seed (int): Seed is used as entropy source for the Random number engines to generate pseudo-random numbers.
+          must be non-negative. Default: 0.
 
     Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and stddev.
+        Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
+        of `mean` and `stddev`.
         The dtype is float32.
 
     Examples:
@@ -85,20 +86,21 @@ def uniform(shape, minval, maxval, seed=0, dtype=mstype.float32):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        minval (Tensor): The a distribution parameter.
-          It defines the minimum possibly generated value. With int32 or float32 data type.
+        minval (Tensor): The distribution parameter `a`.
+          It defines the minimum possible generated value, with int32 or float32 data type.
           If dtype is int32, only one number is allowed.
-        maxval (Tensor): The b distribution parameter.
-          It defines the maximum possibly generated value. With int32 or float32 data type.
+        maxval (Tensor): The distribution parameter `b`.
+          It defines the maximum possible generated value, with int32 or float32 data type.
           If dtype is int32, only one number is allowed.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Must be non-negative. Default: 0.
+        seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers,
+          must be non-negative. Default: 0.
         dtype (mindspore.dtype): type of the Uniform distribution. If it is int32, it generates numbers from discrete
           uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
           supports these two data types. Default: mstype.float32.
 
     Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of minval and maxval.
+        Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
+        of `minval` and `maxval`.
         The dtype is designated as the input `dtype`.
 
     Examples:
@@ -137,13 +139,14 @@ def gamma(shape, alpha, beta, seed=0):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        alpha (Tensor): The alpha α distribution parameter. It should be greater than 0. With float32 data type.
-        beta (Tensor): The beta β distribution parameter. It should be greater than 0. With float32 data type.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Must be non-negative. Default: 0.
+        alpha (Tensor): The alpha α distribution parameter. It should be greater than 0 with float32 data type.
+        beta (Tensor): The beta β distribution parameter. It should be greater than 0 with float32 data type.
+        seed (int): Seed is used as entropy source for the random number engines to generate
+        pseudo-random numbers, must be non-negative. Default: 0.
 
     Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of alpha and beta.
+        Tensor. The shape should be equal to the broadcasted shape between the input "shape" and shapes
+        of `alpha` and `beta`.
         The dtype is float32.
 
     Examples:
@@ -165,12 +168,12 @@ def poisson(shape, mean, seed=0):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
-        mean (Tensor): The mean μ distribution parameter. It should be greater than 0. With float32 data type.
-        seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Must be non-negative. Default: 0.
+        mean (Tensor): The mean μ distribution parameter. It should be greater than 0 with float32 data type.
+        seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers
+          and must be non-negative. Default: 0.
 
     Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean.
+        Tensor. The shape should be equal to the broadcasted shape between the input "shape" and shapes of `mean`.
         The dtype is float32.
 
     Examples:
@@ -188,21 +191,23 @@ def poisson(shape, mean, seed=0):
 def multinomial(inputs, num_sample, replacement=True, seed=0):
     r"""
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
-    row of tensor input.
+    row of the input tensor.
 
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        inputs (Tensor): the input tensor containing probabilities, must be 1 or 2 dims. With float32 data type.
-        num_sample (int): number of samples to draw.
-        replacement (bool, optional): whether to draw with replacement or not, default True.
-        seed (int, optional): used as entropy source for Random number engines generating pseudo-random numbers.
-          Must be non-negative. Default: 0.
+        inputs (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
+        float32 data type.
+        num_sample (int): Number of samples to draw.
+        replacement (bool, optional): Whether to draw with replacement or not, default True.
+        seed (int, optional): Seed is used as entropy source for the random number engines to generate
+        pseudo-random numbers,
+          must be non-negative. Default: 0.
 
     Outputs:
-        Tensor. have the same rows with input, each row has num_samples sampled indices.
+        Tensor, has the same rows with input. The number of sampled indices of each row is `num_samples`.
         The dtype is float32.
 
     Examples:

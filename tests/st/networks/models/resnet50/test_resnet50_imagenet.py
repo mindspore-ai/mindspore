@@ -136,8 +136,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
     os.environ['RANK_SIZE'] = str(device_num)
     if enable_hccl:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True, parameter_broadcast=True,
-                                          all_reduce_fusion_config=[107, 160])
+                                          gradients_mean=True, all_reduce_fusion_config=[107, 160])
         init()
 
     # network
@@ -239,8 +238,7 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     os.environ['RANK_SIZE'] = str(device_num)
     if enable_hccl:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True, parameter_broadcast=True,
-                                          all_reduce_fusion_config=[107])
+                                          gradients_mean=True, all_reduce_fusion_config=[107])
         init()
 
     # network
