@@ -17,7 +17,6 @@
 set -e
 BASEPATH=$(cd "$(dirname $0)"; pwd)
 CUDA_PATH=""
-CUDNN_PATH=""
 export BUILD_PATH="${BASEPATH}/build/"
 # print usage message
 usage()
@@ -364,7 +363,7 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_D=ON"
     fi
     if [[ "X$ENABLE_GPU" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GPU=ON -DUSE_CUDA=ON -DCUDA_PATH=$CUDA_PATH -DCUDNN_PATH=$CUDNN_PATH -DMS_REQUIRE_CUDA_VERSION=${CUDA_VERSION}"
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GPU=ON -DUSE_CUDA=ON -DCUDA_PATH=$CUDA_PATH -DMS_REQUIRE_CUDA_VERSION=${CUDA_VERSION}"
     fi
     if [[ "X$ENABLE_CPU" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_CPU=ON"
