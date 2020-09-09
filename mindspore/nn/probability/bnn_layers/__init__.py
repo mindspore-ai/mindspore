@@ -13,9 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Bayesian Layer.
-
-The high-level components(Cells) used to construct the bayesian neural network.
+`bnn_layers` are the high-level components used to construct the bayesian neural network.
 
 """
 from . import conv_variational, dense_variational, layer_distribution, bnn_cell_wrapper

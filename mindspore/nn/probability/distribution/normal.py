@@ -27,18 +27,18 @@ class Normal(Distribution):
     Normal distribution.
 
     Args:
-        mean (int, float, list, numpy.ndarray, Tensor, Parameter): mean of the Normal distribution.
-        sd (int, float, list, numpy.ndarray, Tensor, Parameter): stddev of the Normal distribution.
-        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
-        name (str): name of the distribution. Default: Normal.
+        mean (int, float, list, numpy.ndarray, Tensor, Parameter): The mean of the Normal distribution.
+        sd (int, float, list, numpy.ndarray, Tensor, Parameter): The standard deviation of the Normal distribution.
+        seed (int): The seed used in sampling. Global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the distribution. Default: mstype.float32.
+        name (str): The name of the distribution. Default: Normal.
 
     Note:
-        Standard deviation should be greater than zero.
-        dist_spec_args are mean and sd.
-        dtype should be float type because Normal distributions are continuous.
+        `sd` should be greater than zero.
+        dist_spec_args are `mean` and `sd`.
+        `dtype` should be float type because Normal distributions are continuous.
 
-    Examples:
+        Examples:
         >>> # To initialize a Normal distribution of mean 3.0 and standard deviation 4.0
         >>> import mindspore.nn.probability.distribution as msd
         >>> n = msd.Normal(3.0, 4.0, dtype=mstype.float32)
@@ -161,7 +161,7 @@ class Normal(Distribution):
 
     def _check_param(self, mean, sd):
         """
-        Check availablity of distribution specific args mean and sd.
+        Check availablity of distribution specific args `mean` and `sd`.
         """
         if mean is not None:
             if self.context_mode == 0:
@@ -187,21 +187,21 @@ class Normal(Distribution):
 
     def _mean(self, mean=None, sd=None):
         """
-        Mean of the distribution.
+        The mean of the distribution.
         """
         mean, sd = self._check_param(mean, sd)
         return mean
 
     def _mode(self, mean=None, sd=None):
         """
-        Mode of the distribution.
+        The mode of the distribution.
         """
         mean, sd = self._check_param(mean, sd)
         return mean
 
     def _sd(self, mean=None, sd=None):
         """
-        Standard deviation of the distribution.
+        The standard deviation of the distribution.
         """
         mean, sd = self._check_param(mean, sd)
         return sd
@@ -221,11 +221,11 @@ class Normal(Distribution):
         Evaluate cross_entropy between normal distributions.
 
         Args:
-            dist (str): type of the distributions. Should be "Normal" in this case.
-            mean_b (Tensor): mean of distribution b.
-            sd_b (Tensor): standard deviation distribution b.
-            mean_a (Tensor): mean of distribution a. Default: self._mean_value.
-            sd_a (Tensor): standard deviation distribution a. Default: self._sd_value.
+            dist (str): Type of the distributions. Should be "Normal" in this case.
+            mean_b (Tensor): Mean of distribution b.
+            sd_b (Tensor): Standard deviation distribution b.
+            mean_a (Tensor): Mean of distribution a. Default: self._mean_value.
+            sd_a (Tensor): Standard deviation distribution a. Default: self._sd_value.
         """
         check_distribution_name(dist, 'Normal')
         return self._entropy(mean, sd) + self._kl_loss(dist, mean_b, sd_b, mean, sd)
@@ -235,9 +235,9 @@ class Normal(Distribution):
         Evaluate log probability.
 
         Args:
-            value (Tensor): value to be evaluated.
-            mean (Tensor): mean of the distribution. Default: self._mean_value.
-            sd (Tensor): standard deviation the distribution. Default: self._sd_value.
+            value (Tensor): The value to be evaluated.
+            mean (Tensor): The mean of the distribution. Default: self._mean_value.
+            sd (Tensor): The standard deviation the distribution. Default: self._sd_value.
 
         .. math::
             L(x) = -1* \frac{(x - \mu)^2}{2. * \sigma^2} - \log(\sqrt(2* \pi * \sigma^2))
@@ -254,9 +254,9 @@ class Normal(Distribution):
         Evaluate cdf of given value.
 
         Args:
-            value (Tensor): value to be evaluated.
-            mean (Tensor): mean of the distribution. Default: self._mean_value.
-            sd (Tensor): standard deviation the distribution. Default: self._sd_value.
+            value (Tensor): The value to be evaluated.
+            mean (Tensor): The mean of the distribution. Default: self._mean_value.
+            sd (Tensor): The standard deviation the distribution. Default: self._sd_value.
 
         .. math::
             cdf(x) = 0.5 * (1+ Erf((x - \mu) / ( \sigma * \sqrt(2))))
@@ -270,14 +270,14 @@ class Normal(Distribution):
 
     def _kl_loss(self, dist, mean_b, sd_b, mean=None, sd=None):
         r"""
-        Evaluate Normal-Normal kl divergence, i.e. KL(a||b).
+        Evaluate Normal-Normal KL divergence, i.e. KL(a||b).
 
         Args:
-            dist (str): type of the distributions. Should be "Normal" in this case.
-            mean_b (Tensor): mean of distribution b.
-            sd_b (Tensor): standard deviation distribution b.
-            mean_a (Tensor): mean of distribution a. Default: self._mean_value.
-            sd_a (Tensor): standard deviation distribution a. Default: self._sd_value.
+            dist (str): The type of the distributions. Should be "Normal" in this case.
+            mean_b (Tensor): The mean of distribution b.
+            sd_b (Tensor): The standard deviation distribution b.
+            mean_a (Tensor): The mean of distribution a. Default: self._mean_value.
+            sd_a (Tensor): The standard deviation distribution a. Default: self._sd_value.
 
         .. math::
             KL(a||b) = 0.5 * (\frac{MEAN(a)}{STD(b)} - \frac{MEAN(b)}{STD(b)}) ^ 2 +
@@ -298,9 +298,9 @@ class Normal(Distribution):
         Sampling.
 
         Args:
-            shape (tuple): shape of the sample. Default: ().
-            mean (Tensor): mean of the samples. Default: self._mean_value.
-            sd (Tensor): standard deviation of the samples. Default: self._sd_value.
+            shape (tuple): The shape of the sample. Default: ().
+            mean (Tensor): The mean of the samples. Default: self._mean_value.
+            sd (Tensor): The standard deviation of the samples. Default: self._sd_value.
 
         Returns:
             Tensor, shape is shape + batch_shape.

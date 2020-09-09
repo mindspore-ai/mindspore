@@ -23,20 +23,25 @@ from .bijector import Bijector
 class PowerTransform(Bijector):
     r"""
     Power Bijector.
-    This Bijector performs the operation: Y = g(X) = (1 + X * c)^(1 / c), X >= -1 / c, where c >= 0 is the power.
+    This Bijector performs the operation:
+
+    .. math::
+        Y = g(X) = (1 + X * c)^{1 / c}, X >= -1 / c
+    where c >= 0 is the power.
 
     The power transform maps inputs from `[-1/c, inf]` to `[0, inf]`.
 
-    This bijector is equivalent to the `Exp` bijector when `c=0`
+    This Bijector is equivalent to the `Exp` bijector when `c=0`
 
     Raises:
         ValueError: If the power is less than 0 or is not known statically.
 
     Args:
-        power (int or float): scale factor. Default: 0.
-        name (str): name of the bijector. Default: 'PowerTransform'.
-        param (dict): parameters used to initialize the bijector. This is only used when other bijectors that inherits
-          from powertransform passing in parameters. In this case the derived bijector may overwrite the param args.
+        power (int or float): The scale factor. Default: 0.
+        name (str): The name of the bijector. Default: 'PowerTransform'.
+        param (dict): The parameters used to initialize the bijector. These parameters are only used when other
+            Bijectors inherit from powertransform to pass in parameters. In this case the derived Bijector may overwrite
+            the argument `param`.
           Default: None.
 
     Examples:

@@ -27,14 +27,14 @@ class TransformedDistribution(Distribution):
     to a new distribution through the operation defined by the bijector.
 
     Args:
-        bijector (Bijector): transformation to perform.
+        bijector (Bijector): The transformation to perform.
         distribution (Distribution): The original distribution.
-        name (str): name of the transformed distribution. Default: transformed_distribution.
+        name (str): The name of the transformed distribution. Default: transformed_distribution.
 
     Note:
         The arguments used to initialize the original distribution cannot be None.
         For example, mynormal = nn.Normal(dtype=dtyple.float32) cannot be used to initialized a
-        TransformedDistribution since mean and sd are not specified.
+        TransformedDistribution since `mean` and `sd` are not specified.
 
     Examples:
         >>> # To initialize a transformed distribution, e.g. lognormal distribution,

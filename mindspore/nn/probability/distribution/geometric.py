@@ -26,19 +26,20 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Geometric(Distribution):
     """
     Geometric Distribution.
-    It represents k+1 Bernoulli trials needed to get one success, k is the number of failures.
+    It represents that there are k failures before the first sucess, namely taht there are in total k+1 Bernoulli trails
+    when the first success is achieved.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor, Parameter): probability of success.
-        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.int32.
-        name (str): name of the distribution. Default: Geometric.
+        probs (float, list, numpy.ndarray, Tensor, Parameter): The probability of success.
+        seed (int): The seed used in sampling. Global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the distribution. Default: mstype.int32.
+        name (str): The name of the distribution. Default: Geometric.
 
     Note:
-        probs should be proper probabilities (0 < p < 1).
-        dist_spec_args is probs.
+        `probs` should be a proper probability (0 < p < 1).
+        dist_spec_args is `probs`.
 
-    Examples:
+        Examples:
         >>> # To initialize a Geometric distribution of prob 0.5
         >>> import mindspore.nn.probability.distribution as msd
         >>> n = msd.Geometric(0.5, dtype=mstype.int32)
@@ -159,7 +160,7 @@ class Geometric(Distribution):
     @property
     def probs(self):
         """
-        Returns the probability of success of the Bernoulli trail.
+        Return the probability of success of the Bernoulli trail.
         """
         return self._probs
 
@@ -213,9 +214,9 @@ class Geometric(Distribution):
         Evaluate cross_entropy between Geometric distributions.
 
         Args:
-            dist (str): type of the distributions. Should be "Geometric" in this case.
-            probs1_b (Tensor): probability of success of distribution b.
-            probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
+            dist (str): The type of the distributions. Should be "Geometric" in this case.
+            probs1_b (Tensor): The probability of success of distribution b.
+            probs1_a (Tensor): The probability of success of distribution a. Default: self.probs.
         """
         check_distribution_name(dist, 'Geometric')
         return self._entropy(probs1) + self._kl_loss(dist, probs1_b, probs1)
@@ -225,8 +226,8 @@ class Geometric(Distribution):
         pmf of Geometric distribution.
 
         Args:
-            value (Tensor): a Tensor composed of only natural numbers.
-            probs (Tensor): probability of success. Default: self.probs.
+            value (Tensor): A Tensor composed of only natural numbers.
+            probs (Tensor): The probability of success. Default: self.probs.
 
         .. math::
             pmf(k) = probs0 ^k * probs1 if k >= 0;
@@ -243,11 +244,11 @@ class Geometric(Distribution):
 
     def _cdf(self, value, probs1=None):
         r"""
-        cdf of Geometric distribution.
+        Cumulative distribution function (cdf) of Geometric distribution.
 
         Args:
-            value (Tensor): a Tensor composed of only natural numbers.
-            probs (Tensor): probability of success. Default: self.probs.
+            value (Tensor): A Tensor composed of only natural numbers.
+            probs (Tensor): The probability of success. Default: self.probs.
 
         .. math::
             cdf(k) = 1 - probs0 ^ (k+1) if k >= 0;
@@ -269,9 +270,9 @@ class Geometric(Distribution):
         Evaluate Geometric-Geometric kl divergence, i.e. KL(a||b).
 
         Args:
-            dist (str): type of the distributions. Should be "Geometric" in this case.
-            probs1_b (Tensor): probability of success of distribution b.
-            probs1_a (Tensor): probability of success of distribution a. Default: self.probs.
+            dist (str): The type of the distributions. Should be "Geometric" in this case.
+            probs1_b (Tensor): The probability of success of distribution b.
+            probs1_a (Tensor): The probability of success of distribution a. Default: self.probs.
 
         .. math::
             KL(a||b) = \log(\frac{probs1_a}{probs1_b}) + \frac{probs0_a}{probs1_a} * \log(\frac{probs0_a}{probs0_b})
@@ -289,8 +290,8 @@ class Geometric(Distribution):
         Sampling.
 
         Args:
-            shape (tuple): shape of the sample. Default: ().
-            probs (Tensor): probability of success. Default: self.probs.
+            shape (tuple): The shape of the sample. Default: ().
+            probs (Tensor): The probability of success. Default: self.probs.
 
         Returns:
             Tensor, shape is shape + batch_shape.

@@ -23,13 +23,16 @@ from .bijector import Bijector
 class ScalarAffine(Bijector):
     """
     Scalar Affine Bijector.
-    This Bijector performs the operation: Y = a * X + b, where a is the scale
-    factor and b is the shift factor.
+    This Bijector performs the operation:
+
+    .. math::
+        Y = a * X + b
+    where a is the scale factor and b is the shift factor.
 
     Args:
-        scale (float): scale factor. Default: 1.0.
-        shift (float): shift factor. Default: 0.0.
-        name (str): name of the bijector. Default: 'ScalarAffine'.
+        scale (float): The scale factor. Default: 1.0.
+        shift (float): The shift factor. Default: 0.0.
+        name (str): The name of the bijector. Default: 'ScalarAffine'.
 
     Examples:
         >>> # To initialize a ScalarAffine bijector of scale 1 and shift 2
@@ -55,7 +58,7 @@ class ScalarAffine(Bijector):
                  shift=0.0,
                  name='ScalarAffine'):
         """
-        Constructor of scalar affine bijector.
+        Constructor of scalar affine Bijector.
         """
         param = dict(locals())
         validator.check_value_type('scale', scale, [int, float], type(self).__name__)

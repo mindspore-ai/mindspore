@@ -26,16 +26,16 @@ class Bernoulli(Distribution):
     Bernoulli Distribution.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor, Parameter): probability of 1 as outcome.
-        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.int32.
-        name (str): name of the distribution. Default: Bernoulli.
+        probs (float, list, numpy.ndarray, Tensor, Parameter): The probability of that the outcome is 1.
+        seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the distribution. Default: mstype.int32.
+        name (str): The name of the distribution. Default: Bernoulli.
 
     Note:
-        probs should be proper probabilities (0 < p < 1).
-        dist_spec_args is probs.
+        `probs` should be a proper probability (0 < p < 1).
+        dist_spec_args is `probs`.
 
-    Examples:
+        Examples:
         >>> # To initialize a Bernoulli distribution of prob 0.5
         >>> import mindspore.nn.probability.distribution as msd
         >>> b = msd.Bernoulli(0.5, dtype=mstype.int32)
@@ -153,13 +153,13 @@ class Bernoulli(Distribution):
     @property
     def probs(self):
         """
-        Returns the probability for the outcome is 1.
+        Return the probability of that the outcome is 1.
         """
         return self._probs
 
     def _check_param(self, probs1):
         """
-        Check availablity of distribution specific args probs1.
+        Check availablity of distribution specific args `probs1`.
         """
         if probs1 is not None:
             if self.context_mode == 0:
@@ -207,25 +207,25 @@ class Bernoulli(Distribution):
         probs0 = 1.0 - probs1
         return -(probs0 * self.log(probs0)) - (probs1 * self.log(probs1))
 
-    def _cross_entropy(self, dist, probs1_b, probs1=None):
+    def _cross_entropy(self, dist, probs1_b, probs1_a=None):
         """
         Evaluate cross_entropy between Bernoulli distributions.
 
         Args:
-            dist (str): type of the distributions. Should be "Bernoulli" in this case.
-            probs1_b (Tensor): probs1 of distribution b.
-            probs1_a (Tensor): probs1 of distribution a. Default: self.probs.
+            dist (str): The type of the distributions. Should be "Bernoulli" in this case.
+            probs1_b (Tensor): `probs1` of distribution b.
+            probs1_a (Tensor): `probs1` of distribution a. Default: self.probs.
         """
         check_distribution_name(dist, 'Bernoulli')
-        return self._entropy(probs1) + self._kl_loss(dist, probs1_b, probs1)
+        return self._entropy(probs1_a) + self._kl_loss(dist, probs1_b, probs1_a)
 
     def _log_prob(self, value, probs1=None):
         r"""
         pmf of Bernoulli distribution.
 
         Args:
-            value (Tensor): a Tensor composed of only zeros and ones.
-            probs (Tensor): probability of outcome is 1. Default: self.probs.
+            value (Tensor): A Tensor composed of only zeros and ones.
+            probs (Tensor): The probability of outcome is 1. Default: self.probs.
 
         .. math::
             pmf(k) = probs1 if k = 1;
@@ -239,11 +239,11 @@ class Bernoulli(Distribution):
 
     def _cdf(self, value, probs1=None):
         r"""
-        cdf of Bernoulli distribution.
+        Cumulative distribution function (cdf) of Bernoulli distribution.
 
         Args:
-            value (Tensor): value to be evaluated.
-            probs (Tensor): probability of outcome is 1. Default: self.probs.
+            value (Tensor): The value to be evaluated.
+            probs (Tensor): The probability of that the outcome is 1. Default: self.probs.
 
         .. math::
             cdf(k) = 0 if k < 0;
@@ -264,14 +264,14 @@ class Bernoulli(Distribution):
         less_than_zero = self.select(comp_zero, zeros, probs0)
         return self.select(comp_one, less_than_zero, ones)
 
-    def _kl_loss(self, dist, probs1_b, probs1=None):
+    def _kl_loss(self, dist, probs1_b, probs1_a=None):
         r"""
         Evaluate bernoulli-bernoulli kl divergence, i.e. KL(a||b).
 
         Args:
-            dist (str): type of the distributions. Should be "Bernoulli" in this case.
-            probs1_b (Tensor, Number): probs1 of distribution b.
-            probs1_a (Tensor, Number): probs1 of distribution a. Default: self.probs.
+            dist (str): The type of the distributions. Should be "Bernoulli" in this case.
+            probs1_b (Tensor, Number): `probs1` of distribution b.
+            probs1_a (Tensor, Number): `probs1` of distribution a. Default: self.probs.
 
         .. math::
             KL(a||b) = probs1_a * \log(\frac{probs1_a}{probs1_b}) +
@@ -280,7 +280,7 @@ class Bernoulli(Distribution):
         check_distribution_name(dist, 'Bernoulli')
         probs1_b = self._check_value(probs1_b, 'probs1_b')
         probs1_b = self.cast(probs1_b, self.parameter_type)
-        probs1_a = self._check_param(probs1)
+        probs1_a = self._check_param(probs1_a)
         probs0_a = 1.0 - probs1_a
         probs0_b = 1.0 - probs1_b
         return probs1_a * self.log(probs1_a / probs1_b) + probs0_a * self.log(probs0_a / probs0_b)
@@ -290,8 +290,8 @@ class Bernoulli(Distribution):
         Sampling.
 
         Args:
-            shape (tuple): shape of the sample. Default: ().
-            probs (Tensor, Number): probs1 of the samples. Default: self.probs.
+            shape (tuple): The shape of the sample. Default: ().
+            probs1 (Tensor, Number): `probs1` of the samples. Default: self.probs.
 
         Returns:
             Tensor, shape is shape + batch_shape.

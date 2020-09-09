@@ -26,18 +26,18 @@ class Uniform(Distribution):
     Example class: Uniform Distribution.
 
     Args:
-        low (int, float, list, numpy.ndarray, Tensor, Parameter): lower bound of the distribution.
-        high (int, float, list, numpy.ndarray, Tensor, Parameter): upper bound of the distribution.
-        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
-        name (str): name of the distribution. Default: Uniform.
+        low (int, float, list, numpy.ndarray, Tensor, Parameter): The lower bound of the distribution.
+        high (int, float, list, numpy.ndarray, Tensor, Parameter): The upper bound of the distribution.
+        seed (int): The seed uses in sampling. Global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the distribution. Default: mstype.float32.
+        name (str): The name of the distribution. Default: Uniform.
 
     Note:
-        low should be stricly less than high.
-        dist_spec_args are high and low.
-        dtype should be float type because Uniform distributions are continuous.
+        `low` should be stricly less than `high`.
+        dist_spec_args are `high` and `low`.
+        `dtype` should be float type because Uniform distributions are continuous.
 
-    Examples:
+        Examples:
         >>> # To initialize a Uniform distribution of mean 3.0 and standard deviation 4.0
         >>> import mindspore.nn.probability.distribution as msd
         >>> u = msd.Uniform(0.0, 1.0, dtype=mstype.float32)
@@ -164,7 +164,7 @@ class Uniform(Distribution):
 
     def _check_param(self, low, high):
         """
-        Check availablity of distribution specific args low and high.
+        Check availablity of distribution specific args `low` and `high`.
         """
         if low is not None:
             if self.context_mode == 0:
@@ -205,6 +205,7 @@ class Uniform(Distribution):
     def _range(self, low=None, high=None):
         r"""
         Return the range of the distribution.
+
         .. math::
             range(U) = high -low
         """
@@ -240,11 +241,11 @@ class Uniform(Distribution):
         Evaluate cross_entropy between Uniform distributoins.
 
         Args:
-            dist (str): type of the distributions. Should be "Uniform" in this case.
-            low_b (Tensor): lower bound of distribution b.
-            high_b (Tensor): upper bound of distribution b.
-            low_a (Tensor): lower bound of distribution a. Default: self.low.
-            high_a (Tensor): upper bound of distribution a. Default: self.high.
+            dist (str): The type of the distributions. Should be "Uniform" in this case.
+            low_b (Tensor): The lower bound of distribution b.
+            high_b (Tensor): The upper bound of distribution b.
+            low_a (Tensor): The lower bound of distribution a. Default: self.low.
+            high_a (Tensor): The upper bound of distribution a. Default: self.high.
         """
         check_distribution_name(dist, 'Uniform')
         return self._entropy(low, high) + self._kl_loss(dist, low_b, high_b, low, high)
@@ -254,9 +255,9 @@ class Uniform(Distribution):
         pdf of Uniform distribution.
 
         Args:
-            value (Tensor): value to be evaluated.
-            low (Tensor): lower bound of the distribution. Default: self.low.
-            high (Tensor): upper bound of the distribution. Default: self.high.
+            value (Tensor): The value to be evaluated.
+            low (Tensor): The lower bound of the distribution. Default: self.low.
+            high (Tensor): The upper bound of the distribution. Default: self.high.
 
         .. math::
             pdf(x) = 0 if x < low;
@@ -277,14 +278,14 @@ class Uniform(Distribution):
 
     def _kl_loss(self, dist, low_b, high_b, low=None, high=None):
         """
-        Evaluate uniform-uniform kl divergence, i.e. KL(a||b).
+        Evaluate uniform-uniform KL divergence, i.e. KL(a||b).
 
         Args:
-            dist (str): type of the distributions. Should be "Uniform" in this case.
-            low_b (Tensor): lower bound of distribution b.
-            high_b (Tensor): upper bound of distribution b.
-            low_a (Tensor): lower bound of distribution a. Default: self.low.
-            high_a (Tensor): upper bound of distribution a. Default: self.high.
+            dist (str): The type of the distributions. Should be "Uniform" in this case.
+            low_b (Tensor): The lower bound of distribution b.
+            high_b (Tensor): The upper bound of distribution b.
+            low_a (Tensor): The lower bound of distribution a. Default: self.low.
+            high_a (Tensor): The upper bound of distribution a. Default: self.high.
         """
         check_distribution_name(dist, 'Uniform')
         low_b = self._check_value(low_b, 'low_b')
@@ -301,9 +302,9 @@ class Uniform(Distribution):
         cdf of Uniform distribution.
 
         Args:
-            value (Tensor): value to be evaluated.
-            low (Tensor): lower bound of the distribution. Default: self.low.
-            high (Tensor): upper bound of the distribution. Default: self.high.
+            value (Tensor): The value to be evaluated.
+            low (Tensor): The lower bound of the distribution. Default: self.low.
+            high (Tensor): The upper bound of the distribution. Default: self.high.
 
         .. math::
             cdf(x) = 0 if x < low;
@@ -327,9 +328,9 @@ class Uniform(Distribution):
         Sampling.
 
         Args:
-            shape (tuple): shape of the sample. Default: ().
-            low (Tensor): lower bound of the distribution. Default: self.low.
-            high (Tensor): upper bound of the distribution. Default: self.high.
+            shape (tuple): The shape of the sample. Default: ().
+            low (Tensor): The lower bound of the distribution. Default: self.low.
+            high (Tensor): The upper bound of the distribution. Default: self.high.
 
         Returns:
             Tensor, shape is shape + batch_shape.

@@ -25,25 +25,26 @@ class ConditionalVAE(Cell):
     Conditional Variational Auto-Encoder (CVAE).
 
     The difference with VAE is that CVAE uses labels information.
-    see more details in `Learning Structured Output Representation using Deep Conditional Generative Models
+    For more details, refer to `Learning Structured Output Representation using Deep Conditional Generative Models
     <http://papers.nips.cc/paper/5775-learning-structured-output-representation-using-deep-conditional-
     generative-models>`_.
 
     Note:
-        When define the encoder and decoder, the shape of the encoder's output tensor and decoder's input tensor
+        When encoder and decoder ard defined, the shape of the encoder's output tensor and decoder's input tensor
         should be :math:`(N, hidden\_size)`.
         The latent_size should be less than or equal to the hidden_size.
 
     Args:
-        encoder(Cell): The DNN model defined as encoder.
+        encoder(Cell): The Deep Neural Network (DNN) model defined as encoder.
         decoder(Cell): The DNN model defined as decoder.
         hidden_size(int): The size of encoder's output tensor.
         latent_size(int): The size of the latent space.
         num_classes(int): The number of classes.
 
     Inputs:
-        - **input_x** (Tensor) - the same shape as the input of encoder, the shape is :math:`(N, C, H, W)`.
-        - **input_y** (Tensor) - the tensor of the target data, the shape is :math:`(N,)`.
+        - **input_x** (Tensor) - The input tensor is the same shape as the input of encoder, with the shape
+        being :math:`(N, C, H, W)`.
+        - **input_y** (Tensor) - The tensor of the target data, the shape is :math:`(N,)`.
 
     Outputs:
         - **output** (tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
@@ -96,15 +97,15 @@ class ConditionalVAE(Cell):
 
     def generate_sample(self, sample_y, generate_nums, shape):
         """
-        Randomly sample from latent space to generate sample.
+        Randomly sample from the latent space to generate samples.
 
         Args:
-            sample_y (Tensor): Define the label of sample. Tensor of shape (generate_nums, ) and type mindspore.int32.
+            sample_y (Tensor): Define the label of samples. Tensor of shape (generate_nums, ) and type mindspore.int32.
             generate_nums (int): The number of samples to generate.
-            shape(tuple): The shape of sample, it should be (generate_nums, C, H, W) or (-1, C, H, W).
+            shape(tuple): The shape of sample, which should be the format of (generate_nums, C, H, W) or (-1, C, H, W).
 
         Returns:
-            Tensor, the generated sample.
+            Tensor, the generated samples.
         """
         generate_nums = check_int_positive(generate_nums)
         if not isinstance(shape, tuple) or len(shape) != 4 or (shape[0] != -1 and shape[0] != generate_nums):
@@ -118,7 +119,7 @@ class ConditionalVAE(Cell):
 
     def reconstruct_sample(self, x, y):
         """
-        Reconstruct sample from original data.
+        Reconstruct samples from original data.
 
         Args:
             x (Tensor): The input tensor to be reconstructed, the shape is (N, C, H, W).

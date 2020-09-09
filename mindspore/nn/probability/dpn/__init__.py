@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """
-Deep Probability Network(dpn).
-
 Deep probability network such as BNN and VAE network.
 """
 

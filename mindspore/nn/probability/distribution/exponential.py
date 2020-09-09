@@ -27,17 +27,17 @@ class Exponential(Distribution):
     Example class: Exponential Distribution.
 
     Args:
-        rate (float, list, numpy.ndarray, Tensor, Parameter): inverse scale.
-        seed (int): seed to use in sampling. Global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
-        name (str): name of the distribution. Default: Exponential.
+        rate (float, list, numpy.ndarray, Tensor, Parameter): The inverse scale.
+        seed (int): The seed used in sampling. Global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype): The type of the distribution. Default: mstype.float32.
+        name (str): The name of the distribution. Default: Exponential.
 
     Note:
-        rate should be strictly greater than 0.
-        dist_spec_args is rate.
-        dtype should be float type because Exponential distributions are continuous.
+        `rate` should be strictly greater than 0.
+        dist_spec_args is `rate`.
+        `dtype` should be float type because Exponential distributions are continuous.
 
-    Examples:
+        Examples:
         >>> # To initialize an Exponential distribution of rate 0.5
         >>> import mindspore.nn.probability.distribution as msd
         >>> e = msd.Exponential(0.5, dtype=mstype.float32)
@@ -162,7 +162,7 @@ class Exponential(Distribution):
 
     def _check_param(self, rate):
         """
-        Check availablity of distribution specific args rate.
+        Check availablity of distribution specific argument `rate`.
         """
         if rate is not None:
             if self.context_mode == 0:
@@ -209,9 +209,9 @@ class Exponential(Distribution):
         Evaluate cross_entropy between Exponential distributions.
 
         Args:
-            dist (str): type of the distributions. Should be "Exponential" in this case.
-            rate_b (Tensor): rate of distribution b.
-            rate_a (Tensor): rate of distribution a. Default: self.rate.
+            dist (str): The type of the distributions. Should be "Exponential" in this case.
+            rate_b (Tensor): The rate of distribution b.
+            rate_a (Tensor): The rate of distribution a. Default: self.rate.
         """
         check_distribution_name(dist, 'Exponential')
         return self._entropy(rate) + self._kl_loss(dist, rate_b, rate)
@@ -223,11 +223,11 @@ class Exponential(Distribution):
 
         Args:
             Args:
-            value (Tensor): value to be evaluated.
-            rate (Tensor): rate of the distribution. Default: self.rate.
+            value (Tensor): The value to be evaluated.
+            rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Note:
-            Value should be greater or equal to zero.
+            `value` should be greater or equal to zero.
 
         .. math::
             log_pdf(x) = \log(rate) - rate * x if x >= 0 else 0
@@ -243,14 +243,14 @@ class Exponential(Distribution):
 
     def _cdf(self, value, rate=None):
         r"""
-        cdf of Exponential distribution.
+        Cumulative distribution function (cdf) of Exponential distribution.
 
         Args:
-            value (Tensor): value to be evaluated.
-            rate (Tensor): rate of the distribution. Default: self.rate.
+            value (Tensor): The value to be evaluated.
+            rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Note:
-            Value should be greater or equal to zero.
+            `value` should be greater or equal to zero.
 
         .. math::
             cdf(x) = 1.0 - \exp(-1 * \lambda * x) if x >= 0 else 0
@@ -268,11 +268,11 @@ class Exponential(Distribution):
         log survival_function of Exponential distribution.
 
         Args:
-            value (Tensor): value to be evaluated.
-            rate (Tensor): rate of the distribution. Default: self.rate.
+            value (Tensor): The value to be evaluated.
+            rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Note:
-            Value should be greater or equal to zero.
+            `value` should be greater or equal to zero.
 
         .. math::
             log_survival_function(x) = -1 * \lambda * x if x >= 0 else 0
@@ -290,9 +290,9 @@ class Exponential(Distribution):
         Evaluate exp-exp kl divergence, i.e. KL(a||b).
 
         Args:
-            dist (str): type of the distributions. Should be "Exponential" in this case.
-            rate_b (Tensor): rate of distribution b.
-            rate_a (Tensor): rate of distribution a. Default: self.rate.
+            dist (str): The type of the distributions. Should be "Exponential" in this case.
+            rate_b (Tensor): The rate of distribution b.
+            rate_a (Tensor): The rate of distribution a. Default: self.rate.
         """
         check_distribution_name(dist, 'Exponential')
         rate_b = self._check_value(rate_b, 'rate_b')
@@ -305,8 +305,8 @@ class Exponential(Distribution):
         Sampling.
 
         Args:
-            shape (tuple): shape of the sample. Default: ().
-            rate (Tensor): rate of the distribution. Default: self.rate.
+            shape (tuple): The shape of the sample. Default: ().
+            rate (Tensor): The rate of the distribution. Default: self.rate.
 
         Returns:
             Tensor, shape is shape + batch_shape.
