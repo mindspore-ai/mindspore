@@ -30,6 +30,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
 
+
 def test_cut_out_op(plot=False):
     """
     Test Cutout
@@ -45,7 +46,7 @@ def test_cut_out_op(plot=False):
         f.RandomErasing(value='random')
     ]
     transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1)
+    data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -57,7 +58,7 @@ def test_cut_out_op(plot=False):
         cut_out_op
     ]
 
-    data2 = data2.map(input_columns=["image"], operations=transforms_2)
+    data2 = data2.map(operations=transforms_2, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -91,7 +92,7 @@ def test_cut_out_op_multicut(plot=False):
         f.ToTensor(),
     ]
     transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1)
+    data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -103,7 +104,7 @@ def test_cut_out_op_multicut(plot=False):
         cut_out_op
     ]
 
-    data2 = data2.map(input_columns=["image"], operations=transforms_2)
+    data2 = data2.map(operations=transforms_2, input_columns=["image"])
 
     num_iter = 0
     image_list_1, image_list_2 = [], []
@@ -136,8 +137,8 @@ def test_cut_out_md5():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c.Decode()
     cut_out_op = c.CutOut(100)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=cut_out_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=cut_out_op, input_columns=["image"])
 
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
@@ -146,7 +147,7 @@ def test_cut_out_md5():
         f.Cutout(100)
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename1 = "cut_out_01_c_result.npz"
@@ -174,7 +175,7 @@ def test_cut_out_comp(plot=False):
         f.Cutout(200)
     ]
     transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1)
+    data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -184,7 +185,7 @@ def test_cut_out_comp(plot=False):
         c.CutOut(200)
     ]
 
-    data2 = data2.map(input_columns=["image"], operations=transforms_2)
+    data2 = data2.map(operations=transforms_2, input_columns=["image"])
 
     num_iter = 0
     image_list_1, image_list_2 = [], []

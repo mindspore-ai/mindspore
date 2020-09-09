@@ -90,8 +90,8 @@ def create_dataset(repeat_num=1, training=True):
                 changeswap_op]
 
     # apply map operations on images
-    data_set = data_set.map(input_columns="label", operations=type_cast_op)
-    data_set = data_set.map(input_columns="image", operations=c_trans)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label")
+    data_set = data_set.map(operations=c_trans, input_columns="image")
 
     # apply repeat operations
     data_set = data_set.repeat(repeat_num)

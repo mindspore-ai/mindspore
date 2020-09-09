@@ -97,10 +97,10 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train", shu
 
     # wrapped with GeneratorDataset
     dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=None)
-    dataset = dataset.map(input_columns=["image", "label"], operations=DataTransform(args, usage=usage))
+    dataset = dataset.map(operations=DataTransform(args, usage=usage), input_columns=["image", "label"])
 
     channelswap_op = C.HWC2CHW()
-    dataset = dataset.map(input_columns="image", operations=channelswap_op)
+    dataset = dataset.map(operations=channelswap_op, input_columns="image")
 
     # 1464 samples / batch_size 8 = 183 batches
     # epoch_num is num of steps

@@ -92,12 +92,12 @@ def me_de_train_dataset():
                                                                 "next_sentence_labels", "masked_lm_positions",
                                                                 "masked_lm_ids", "masked_lm_weights"], shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
-    ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
     batch_size = int(os.getenv('BATCH_SIZE', '16'))
     ds = ds.batch(batch_size, drop_remainder=True)

@@ -212,8 +212,9 @@ def check_bert_tokenizer_with_offsets(first, last, expect_str,
         vocab=vocab, suffix_indicator=suffix_indicator, max_bytes_per_token=max_bytes_per_token,
         unknown_token=unknown_token, lower_case=lower_case, keep_whitespace=keep_whitespace,
         normalization_form=normalization_form, preserve_unused_token=preserve_unused_token, with_offsets=True)
-    dataset = dataset.map(input_columns=['text'], output_columns=['token', 'offsets_start', 'offsets_limit'],
-                          column_order=['token', 'offsets_start', 'offsets_limit'], operations=tokenizer_op)
+    dataset = dataset.map(operations=tokenizer_op, input_columns=['text'],
+                          output_columns=['token', 'offsets_start', 'offsets_limit'],
+                          column_order=['token', 'offsets_start', 'offsets_limit'])
     count = 0
     for i in dataset.create_dict_iterator(num_epochs=1):
         token = text.to_str(i['token'])

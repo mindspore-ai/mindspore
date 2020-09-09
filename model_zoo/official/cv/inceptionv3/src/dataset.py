@@ -60,8 +60,8 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
         C.HWC2CHW()
     ]
     type_cast_op = C2.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=cfg.work_nums)
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=cfg.work_nums)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=cfg.work_nums)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
     # apply batch operations
     ds = ds.batch(cfg.batch_size, drop_remainder=True)
     # apply dataset repeat operation

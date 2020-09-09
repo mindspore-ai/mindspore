@@ -40,12 +40,12 @@ def load_test_data(batch_size=1, data_file=None):
                                       "target_eos_ids", "target_eos_mask"],
                         shuffle=False)
     type_cast_op = deC.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="source_eos_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="source_eos_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="target_sos_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="target_sos_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="target_eos_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="target_eos_mask", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="source_eos_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="source_eos_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="target_sos_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="target_sos_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="target_eos_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="target_eos_mask")
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     ds.channel_name = 'transformer'

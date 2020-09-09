@@ -59,7 +59,7 @@ def test_numpy_slices_list_append():
 
     data1 = de.TFRecordDataset(DATA_DIR)
     resize_op = vision.Resize((resize_height, resize_width))
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True), resize_op])
+    data1 = data1.map(operations=[vision.Decode(True), resize_op], input_columns=["image"])
 
     res = []
     for data in data1.create_dict_iterator(num_epochs=1):

@@ -27,6 +27,7 @@ ms_integral_types = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, msty
 np_non_integral_types = [np.float16, np.float32, np.float64]
 ms_non_integral_types = [mstype.float16, mstype.float32, mstype.float64]
 
+
 def string_dataset_generator(strings):
     for string in strings:
         yield (np.array(string, dtype='S'),)
@@ -38,7 +39,7 @@ def test_to_number_typical_case_integral():
 
     for ms_type, inputs in zip(ms_integral_types, input_strings):
         dataset = ds.GeneratorDataset(string_dataset_generator(inputs), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
 
         expected_output = [int(string) for string in inputs]
         output = []
@@ -54,7 +55,7 @@ def test_to_number_typical_case_non_integral():
 
     for ms_type, inputs in zip(ms_non_integral_types, input_strings):
         dataset = ds.GeneratorDataset(string_dataset_generator(inputs), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
 
         expected_output = [float(string) for string in inputs]
         output = []
@@ -83,12 +84,12 @@ def test_to_number_out_of_bounds_integral():
         type_info = np.iinfo(np_type)
         input_strings = [str(type_info.max + 10)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
         out_of_bounds_error_message_check(dataset, np_type, input_strings[0])
 
         input_strings = [str(type_info.min - 10)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
         out_of_bounds_error_message_check(dataset, np_type, input_strings[0])
 
 
@@ -97,7 +98,7 @@ def test_to_number_out_of_bounds_non_integral():
 
     input_strings = [above_range[0]]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[0]))
+    dataset = dataset.map(operations=text.ToNumber(ms_non_integral_types[0]), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -106,7 +107,7 @@ def test_to_number_out_of_bounds_non_integral():
 
     input_strings = [above_range[1]]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[1]))
+    dataset = dataset.map(operations=text.ToNumber(ms_non_integral_types[1]), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -115,7 +116,7 @@ def test_to_number_out_of_bounds_non_integral():
 
     input_strings = [above_range[2]]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[2]))
+    dataset = dataset.map(operations=text.ToNumber(ms_non_integral_types[2]), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -126,7 +127,7 @@ def test_to_number_out_of_bounds_non_integral():
 
     input_strings = [below_range[0]]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[0]))
+    dataset = dataset.map(operations=text.ToNumber(ms_non_integral_types[0]), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -135,7 +136,7 @@ def test_to_number_out_of_bounds_non_integral():
 
     input_strings = [below_range[1]]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[1]))
+    dataset = dataset.map(operations=text.ToNumber(ms_non_integral_types[1]), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -144,7 +145,7 @@ def test_to_number_out_of_bounds_non_integral():
 
     input_strings = [below_range[2]]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_non_integral_types[2]))
+    dataset = dataset.map(operations=text.ToNumber(ms_non_integral_types[2]), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -157,19 +158,19 @@ def test_to_number_boundaries_integral():
         type_info = np.iinfo(np_type)
         input_strings = [str(type_info.max)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
         for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["strings"] == int(input_strings[0])
 
         input_strings = [str(type_info.min)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
         for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["strings"] == int(input_strings[0])
 
         input_strings = [str(0)]
         dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-        dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(ms_type))
+        dataset = dataset.map(operations=text.ToNumber(ms_type), input_columns=["strings"])
         for data in dataset.create_dict_iterator(num_epochs=1):
             assert data["strings"] == int(input_strings[0])
 
@@ -177,7 +178,7 @@ def test_to_number_boundaries_integral():
 def test_to_number_invalid_input():
     input_strings = ["a8fa9ds8fa"]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
-    dataset = dataset.map(input_columns=["strings"], operations=text.ToNumber(mstype.int32))
+    dataset = dataset.map(operations=text.ToNumber(mstype.int32), input_columns=["strings"])
 
     with pytest.raises(RuntimeError) as info:
         for _ in dataset.create_dict_iterator(num_epochs=1):

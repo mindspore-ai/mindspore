@@ -46,8 +46,8 @@ def test_celeba_dataset_op():
     data = data.repeat(2)
     center_crop = vision.CenterCrop(crop_size)
     resize_op = vision.Resize(resize_size, Inter.LINEAR)  # Bilinear mode
-    data = data.map(input_columns=["image"], operations=center_crop)
-    data = data.map(input_columns=["image"], operations=resize_op)
+    data = data.map(operations=center_crop, input_columns=["image"])
+    data = data.map(operations=resize_op, input_columns=["image"])
 
     count = 0
     for item in data.create_dict_iterator(num_epochs=1):

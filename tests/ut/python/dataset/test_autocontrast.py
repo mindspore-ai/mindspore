@@ -42,8 +42,7 @@ def test_auto_contrast_py(plot=False):
                                                                               F.Resize((224, 224)),
                                                                               F.ToTensor()])
 
-    ds_original = ds.map(input_columns="image",
-                         operations=transforms_original)
+    ds_original = ds.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -64,8 +63,7 @@ def test_auto_contrast_py(plot=False):
                                                             F.AutoContrast(cutoff=10.0, ignore=[10, 20]),
                                                             F.ToTensor()])
 
-    ds_auto_contrast = ds.map(input_columns="image",
-                              operations=transforms_auto_contrast)
+    ds_auto_contrast = ds.map(operations=transforms_auto_contrast, input_columns="image")
 
     ds_auto_contrast = ds_auto_contrast.batch(512)
 
@@ -99,17 +97,14 @@ def test_auto_contrast_c(plot=False):
 
     # AutoContrast Images
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    ds = ds.map(input_columns=["image"],
-                operations=[C.Decode(),
-                            C.Resize((224, 224))])
+    ds = ds.map(operations=[C.Decode(), C.Resize((224, 224))], input_columns=["image"])
     python_op = F.AutoContrast(cutoff=10.0, ignore=[10, 20])
     c_op = C.AutoContrast(cutoff=10.0, ignore=[10, 20])
     transforms_op = mindspore.dataset.transforms.py_transforms.Compose([lambda img: F.ToPIL()(img.astype(np.uint8)),
                                                                         python_op,
                                                                         np.array])
 
-    ds_auto_contrast_py = ds.map(input_columns="image",
-                                 operations=transforms_op)
+    ds_auto_contrast_py = ds.map(operations=transforms_op, input_columns="image")
 
     ds_auto_contrast_py = ds_auto_contrast_py.batch(512)
 
@@ -122,12 +117,9 @@ def test_auto_contrast_c(plot=False):
                                                 axis=0)
 
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    ds = ds.map(input_columns=["image"],
-                operations=[C.Decode(),
-                            C.Resize((224, 224))])
+    ds = ds.map(operations=[C.Decode(), C.Resize((224, 224))], input_columns=["image"])
 
-    ds_auto_contrast_c = ds.map(input_columns="image",
-                                operations=c_op)
+    ds_auto_contrast_c = ds.map(operations=c_op, input_columns="image")
 
     ds_auto_contrast_c = ds_auto_contrast_c.batch(512)
 
@@ -162,9 +154,7 @@ def test_auto_contrast_one_channel_c(plot=False):
 
     # AutoContrast Images
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    ds = ds.map(input_columns=["image"],
-                operations=[C.Decode(),
-                            C.Resize((224, 224))])
+    ds = ds.map(operations=[C.Decode(), C.Resize((224, 224))], input_columns=["image"])
     python_op = F.AutoContrast()
     c_op = C.AutoContrast()
     # not using F.ToTensor() since it converts to floats
@@ -174,8 +164,7 @@ def test_auto_contrast_one_channel_c(plot=False):
          python_op,
          np.array])
 
-    ds_auto_contrast_py = ds.map(input_columns="image",
-                                 operations=transforms_op)
+    ds_auto_contrast_py = ds.map(operations=transforms_op, input_columns="image")
 
     ds_auto_contrast_py = ds_auto_contrast_py.batch(512)
 
@@ -188,13 +177,10 @@ def test_auto_contrast_one_channel_c(plot=False):
                                                 axis=0)
 
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    ds = ds.map(input_columns=["image"],
-                operations=[C.Decode(),
-                            C.Resize((224, 224)),
-                            lambda img: np.array(img[:, :, 0])])
+    ds = ds.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
+                input_columns=["image"])
 
-    ds_auto_contrast_c = ds.map(input_columns="image",
-                                operations=c_op)
+    ds_auto_contrast_c = ds.map(operations=c_op, input_columns="image")
 
     ds_auto_contrast_c = ds_auto_contrast_c.batch(512)
 
@@ -223,8 +209,7 @@ def test_auto_contrast_mnist_c(plot=False):
     """
     logger.info("Test AutoContrast C Op With MNIST Images")
     ds = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
-    ds_auto_contrast_c = ds.map(input_columns="image",
-                                operations=C.AutoContrast(cutoff=1, ignore=(0, 255)))
+    ds_auto_contrast_c = ds.map(operations=C.AutoContrast(cutoff=1, ignore=(0, 255)), input_columns="image")
     ds_orig = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
 
     images = []
@@ -252,25 +237,20 @@ def test_auto_contrast_invalid_ignore_param_c():
     logger.info("Test AutoContrast C Op with invalid ignore parameter")
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[C.Decode(),
+        ds = ds.map(operations=[C.Decode(),
                                 C.Resize((224, 224)),
-                                lambda img: np.array(img[:, :, 0])])
+                                lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        ds = ds.map(input_columns="image",
-                    operations=C.AutoContrast(ignore=255.5))
+        ds = ds.map(operations=C.AutoContrast(ignore=255.5), input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value 255.5 is not of type" in str(error)
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[C.Decode(),
-                                C.Resize((224, 224)),
-                                lambda img: np.array(img[:, :, 0])])
+        ds = ds.map(operations=[C.Decode(), C.Resize((224, 224)),
+                                lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        ds = ds.map(input_columns="image",
-                    operations=C.AutoContrast(ignore=(10, 100)))
+        ds = ds.map(operations=C.AutoContrast(ignore=(10, 100)), input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value (10,100) is not of type" in str(error)
@@ -283,25 +263,21 @@ def test_auto_contrast_invalid_cutoff_param_c():
     logger.info("Test AutoContrast C Op with invalid cutoff parameter")
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[C.Decode(),
+        ds = ds.map(operations=[C.Decode(),
                                 C.Resize((224, 224)),
-                                lambda img: np.array(img[:, :, 0])])
+                                lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        ds = ds.map(input_columns="image",
-                    operations=C.AutoContrast(cutoff=-10.0))
+        ds = ds.map(operations=C.AutoContrast(cutoff=-10.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[C.Decode(),
+        ds = ds.map(operations=[C.Decode(),
                                 C.Resize((224, 224)),
-                                lambda img: np.array(img[:, :, 0])])
+                                lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        ds = ds.map(input_columns="image",
-                    operations=C.AutoContrast(cutoff=120.0))
+        ds = ds.map(operations=C.AutoContrast(cutoff=120.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
@@ -314,21 +290,21 @@ def test_auto_contrast_invalid_ignore_param_py():
     logger.info("Test AutoContrast python Op with invalid ignore parameter")
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+        ds = ds.map(operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                                     F.Resize((224, 224)),
                                                                                     F.AutoContrast(ignore=255.5),
-                                                                                    F.ToTensor()])])
+                                                                                    F.ToTensor()])],
+                    input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value 255.5 is not of type" in str(error)
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+        ds = ds.map(operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                                     F.Resize((224, 224)),
                                                                                     F.AutoContrast(ignore=(10, 100)),
-                                                                                    F.ToTensor()])])
+                                                                                    F.ToTensor()])],
+                    input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value (10,100) is not of type" in str(error)
@@ -341,21 +317,22 @@ def test_auto_contrast_invalid_cutoff_param_py():
     logger.info("Test AutoContrast python Op with invalid cutoff parameter")
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+        ds = ds.map(operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                                     F.Resize((224, 224)),
                                                                                     F.AutoContrast(cutoff=-10.0),
-                                                                                    F.ToTensor()])])
+                                                                                    F.ToTensor()])],
+                    input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
-                                                                                    F.Resize((224, 224)),
-                                                                                    F.AutoContrast(cutoff=120.0),
-                                                                                    F.ToTensor()])])
+        ds = ds.map(
+            operations=[mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
+                                                                            F.Resize((224, 224)),
+                                                                            F.AutoContrast(cutoff=120.0),
+                                                                            F.ToTensor()])],
+            input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)

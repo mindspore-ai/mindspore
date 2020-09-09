@@ -25,6 +25,7 @@ INVALID_FILE = "../data/dataset/testCOCO/annotations/invalid.json"
 LACKOFIMAGE_FILE = "../data/dataset/testCOCO/annotations/lack_of_images.json"
 INVALID_CATEGORY_ID_FILE = "../data/dataset/testCOCO/annotations/invalid_category_id.json"
 
+
 def test_coco_detection():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
                            decode=True, shuffle=False)
@@ -56,6 +57,7 @@ def test_coco_detection():
     np.testing.assert_array_equal(np.array([[4]]), category_id[3])
     np.testing.assert_array_equal(np.array([[5]]), category_id[4])
     np.testing.assert_array_equal(np.array([[6]]), category_id[5])
+
 
 def test_coco_stuff():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff",
@@ -97,6 +99,7 @@ def test_coco_stuff():
                                   segmentation[5])
     np.testing.assert_array_equal(np.array([[0]]), iscrowd[5])
 
+
 def test_coco_keypoint():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint",
                            decode=True, shuffle=False)
@@ -123,6 +126,7 @@ def test_coco_keypoint():
                                              0., 0., 0., 0., 0.]]),
                                   keypoints[1])
     np.testing.assert_array_equal(np.array([[10]]), num_keypoints[1])
+
 
 def test_coco_panoptic():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic", decode=True, shuffle=False)
@@ -151,6 +155,7 @@ def test_coco_panoptic():
     np.testing.assert_array_equal(np.array([[0], [0]]), iscrowd[1])
     np.testing.assert_array_equal(np.array([[43102], [6079]]), area[1])
 
+
 def test_coco_detection_classindex():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     class_index = data1.get_class_indexing()
@@ -161,6 +166,7 @@ def test_coco_detection_classindex():
         num_iter += 1
     assert num_iter == 6
 
+
 def test_coco_panootic_classindex():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic", decode=True)
     class_index = data1.get_class_indexing()
@@ -170,6 +176,7 @@ def test_coco_panootic_classindex():
         num_iter += 1
     assert num_iter == 2
 
+
 def test_coco_case_0():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     data1 = data1.shuffle(10)
@@ -178,6 +185,7 @@ def test_coco_case_0():
     for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 2
+
 
 def test_coco_case_1():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
@@ -194,27 +202,30 @@ def test_coco_case_1():
         num_iter += 1
     assert num_iter == 3
 
+
 def test_coco_case_2():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     resize_op = vision.Resize((224, 224))
 
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.repeat(4)
     num_iter = 0
     for _ in data1.__iter__():
         num_iter += 1
     assert num_iter == 24
+
 
 def test_coco_case_3():
     data1 = ds.CocoDataset(DATA_DIR_2, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     resize_op = vision.Resize((224, 224))
 
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.repeat(4)
     num_iter = 0
     for _ in data1.__iter__():
         num_iter += 1
     assert num_iter == 24
+
 
 def test_coco_case_exception():
     try:

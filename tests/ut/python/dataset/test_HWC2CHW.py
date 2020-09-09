@@ -39,12 +39,12 @@ def test_HWC2CHW(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     hwc2chw_op = c_vision.HWC2CHW()
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=hwc2chw_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     image_transposed = []
     image = []
@@ -72,8 +72,8 @@ def test_HWC2CHW_md5():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     hwc2chw_op = c_vision.HWC2CHW()
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=hwc2chw_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename = "HWC2CHW_01_result.npz"
@@ -90,8 +90,8 @@ def test_HWC2CHW_comp(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     hwc2chw_op = c_vision.HWC2CHW()
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=hwc2chw_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -101,7 +101,7 @@ def test_HWC2CHW_comp(plot=False):
         py_vision.HWC2CHW()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_transposed = []
     image_py_transposed = []

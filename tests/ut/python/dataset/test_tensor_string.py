@@ -94,7 +94,7 @@ def test_map():
         splits = s.item().split()
         return np.array(splits)
 
-    data = data.map(input_columns=["col"], operations=split)
+    data = data.map(operations=split, input_columns=["col"])
     expected = np.array(["ab", "cde", "121"], dtype='S')
     for d in data:
         np.testing.assert_array_equal(d[0], expected)
@@ -110,7 +110,7 @@ def test_map2():
         out = np.char.upper(b)
         return out
 
-    data = data.map(input_columns=["col"], operations=upper)
+    data = data.map(operations=upper, input_columns=["col"])
     expected = np.array(["AB CDE 121"], dtype='S')
     for d in data:
         np.testing.assert_array_equal(d[0], expected)

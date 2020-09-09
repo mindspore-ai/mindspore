@@ -85,8 +85,8 @@ def test_case_0():
 
     resize_op = vision.Resize((224, 224))
 
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
-    data1 = data1.map(input_columns=["target"], operations=resize_op)
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["target"])
     repeat_num = 4
     data1 = data1.repeat(repeat_num)
     batch_size = 2
@@ -103,7 +103,7 @@ def test_case_1():
 
     resize_op = vision.Resize((224, 224))
 
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     repeat_num = 4
     data1 = data1.repeat(repeat_num)
     batch_size = 2

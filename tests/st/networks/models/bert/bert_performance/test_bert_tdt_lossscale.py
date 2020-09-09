@@ -102,12 +102,12 @@ def me_de_train_dataset(sink_mode=False):
     if sink_mode:
         sink_size = 100
         new_repeat_count = 3
-    ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
-    ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     logger.info("data size: {}".format(ds.get_dataset_size()))

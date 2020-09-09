@@ -54,8 +54,8 @@ def vgg_create_dataset(data_home, image_size, batch_size, rank_id=0, rank_size=1
                 changeswap_op]
 
     # apply map operations on images
-    data_set = data_set.map(input_columns="label", operations=type_cast_op)
-    data_set = data_set.map(input_columns="image", operations=c_trans)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label")
+    data_set = data_set.map(operations=c_trans, input_columns="image")
 
     # apply repeat operations
     data_set = data_set.repeat(repeat_num)
@@ -157,8 +157,8 @@ def classification_dataset(data_dir, image_size, per_batch_size, rank=0, group_s
         sampler = DistributedSampler(dataset, rank, group_size, shuffle=shuffle)
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=sampler)
 
-    de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=8, operations=transform_img)
-    de_dataset = de_dataset.map(input_columns="label", num_parallel_workers=8, operations=transform_label)
+    de_dataset = de_dataset.map(operations=transform_img, input_columns="image", num_parallel_workers=8)
+    de_dataset = de_dataset.map(operations=transform_label, input_columns="label", num_parallel_workers=8)
 
     columns_to_project = ["image", "label"]
     de_dataset = de_dataset.project(columns=columns_to_project)

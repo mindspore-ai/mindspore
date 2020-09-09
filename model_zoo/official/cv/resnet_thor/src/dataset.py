@@ -75,8 +75,8 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", num_parallel_workers=num_parallels, operations=trans)
-    ds = ds.map(input_columns="label", num_parallel_workers=num_parallels, operations=type_cast_op)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=num_parallels)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=num_parallels)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)

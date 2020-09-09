@@ -90,8 +90,8 @@ def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_
     label_trans = [
         c.TypeCast(mstype.int32)
     ]
-    ds = ds.map(input_columns=["image"], num_parallel_workers=8, operations=image_trans)
-    ds = ds.map(input_columns=["label"], num_parallel_workers=8, operations=label_trans)
+    ds = ds.map(operations=image_trans, input_columns=["image"], num_parallel_workers=8)
+    ds = ds.map(operations=label_trans, input_columns=["label"], num_parallel_workers=8)
 
     ds = ds.batch(batch_size, drop_remainder=True)
     return ds

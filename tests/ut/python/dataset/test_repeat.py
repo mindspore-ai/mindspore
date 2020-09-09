@@ -78,8 +78,8 @@ def test_tf_repeat_03():
     resize_height, resize_width = 32, 32
     decode_op = vision.Decode()
     resize_op = vision.Resize((resize_height, resize_width), interpolation=ds.transforms.vision.Inter.LINEAR)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.repeat(22)
     data1 = data1.batch(batch_size, drop_remainder=True)
 
@@ -251,6 +251,7 @@ def test_nested_repeat11():
 
     assert sum([1 for _ in data]) == 2 * 3 * 4 * 5 * 3
 
+
 def test_repeat_count1():
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
     data1_size = data1.get_dataset_size()
@@ -260,8 +261,8 @@ def test_repeat_count1():
     resize_height, resize_width = 32, 32
     decode_op = vision.Decode()
     resize_op = vision.Resize((resize_height, resize_width), interpolation=ds.transforms.vision.Inter.LINEAR)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.repeat(repeat_count)
     data1 = data1.batch(batch_size, drop_remainder=False)
     dataset_size = data1.get_dataset_size()
@@ -273,6 +274,7 @@ def test_repeat_count1():
     assert data1_size == 3
     assert dataset_size == num1_iter == 6
 
+
 def test_repeat_count2():
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
     data1_size = data1.get_dataset_size()
@@ -282,8 +284,8 @@ def test_repeat_count2():
     resize_height, resize_width = 32, 32
     decode_op = vision.Decode()
     resize_op = vision.Resize((resize_height, resize_width), interpolation=ds.transforms.vision.Inter.LINEAR)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.batch(batch_size, drop_remainder=False)
     data1 = data1.repeat(repeat_count)
     dataset_size = data1.get_dataset_size()
@@ -295,6 +297,7 @@ def test_repeat_count2():
     assert data1_size == 3
     assert dataset_size == num1_iter == 8
 
+
 def test_repeat_count0():
     """
     Test Repeat with invalid count 0.
@@ -305,6 +308,7 @@ def test_repeat_count0():
         data1.repeat(0)
     assert "count" in str(info.value)
 
+
 def test_repeat_countneg2():
     """
     Test Repeat with invalid count -2.
@@ -314,6 +318,7 @@ def test_repeat_countneg2():
         data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
         data1.repeat(-2)
     assert "count" in str(info.value)
+
 
 if __name__ == "__main__":
     test_tf_repeat_01()

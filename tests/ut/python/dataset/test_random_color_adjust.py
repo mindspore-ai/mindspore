@@ -31,6 +31,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
 
+
 def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
     """
     Util function that tests the error message in case of grayscale images
@@ -45,13 +46,13 @@ def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), satu
 
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=transform, input_columns=["image"])
 
     # if input is grayscale, the output dimensions should be single channel, the following should fail
     random_adjust_op = c_vision.RandomColorAdjust(brightness=brightness, contrast=contrast, saturation=saturation,
                                                   hue=hue)
     with pytest.raises(RuntimeError) as info:
-        data1 = data1.map(input_columns=["image"], operations=random_adjust_op)
+        data1 = data1.map(operations=random_adjust_op, input_columns=["image"])
         dataset_shape_1 = []
         for item1 in data1.create_dict_iterator(num_epochs=1):
             c_image = item1["image"]
@@ -78,7 +79,7 @@ def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturat
               random_adjust_op,
               ]
 
-    data1 = data1.map(input_columns=["image"], operations=ctrans)
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
     transforms = [
@@ -89,7 +90,7 @@ def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturat
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -203,8 +204,8 @@ def test_random_color_adjust_md5():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     random_adjust_op = c_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_adjust_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_adjust_op, input_columns=["image"])
 
     # Second dataset
     transforms = [
@@ -214,7 +215,7 @@ def test_random_color_adjust_md5():
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "random_color_adjust_01_c_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)

@@ -108,7 +108,7 @@ def test_cache_nomap_basic3():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False, cache=some_cache)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
     num_iter = 0
@@ -160,7 +160,7 @@ def test_cache_nomap_basic4():
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.GLOBAL)
     decode_op = c_vision.Decode()
 
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
 
     num_iter = 0
@@ -197,7 +197,7 @@ def test_cache_nomap_basic5():
     some_cache = ds.DatasetCache(session_id=1, size=0, spilling=True)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], cache=some_cache)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
     num_iter = 0
@@ -237,7 +237,7 @@ def test_cache_nomap_basic6():
     # there was not any cache.
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_shards=3, shard_id=1, cache=some_cache)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
     num_iter = 0
@@ -273,7 +273,7 @@ def test_cache_nomap_basic7():
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.GLOBAL, cache=some_cache)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
     num_iter = 0
@@ -343,11 +343,11 @@ def test_cache_nomap_allowed_share2():
     decode_op = c_vision.Decode()
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
 
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds2 = ds2.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds2 = ds2.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds2 = ds2.shuffle(buffer_size=2)
 
     num_iter = 0
@@ -418,10 +418,10 @@ def test_cache_nomap_allowed_share4():
     decode_op = c_vision.Decode()
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache, num_parallel_workers=1)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache, num_parallel_workers=1)
 
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds2 = ds2.map(input_columns=["image"], operations=decode_op, cache=some_cache, num_parallel_workers=2)
+    ds2 = ds2.map(operations=decode_op, input_columns=["image"], cache=some_cache, num_parallel_workers=2)
 
     num_iter = 0
     for _ in ds1.create_dict_iterator(num_epochs=1):
@@ -458,10 +458,10 @@ def test_cache_nomap_disallowed_share1():
     rescale_op = c_vision.Rescale(1.0 / 255.0, -1.0)
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
 
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds2 = ds2.map(input_columns=["image"], operations=rescale_op, cache=some_cache)
+    ds2 = ds2.map(operations=rescale_op, input_columns=["image"], cache=some_cache)
 
     num_iter = 0
     for _ in ds1.create_dict_iterator(num_epochs=1):

@@ -23,7 +23,7 @@ import mindspore.dataset.text as text
 
 def compare(in1, in2, length, out1, out2):
     data = ds.NumpySlicesDataset({"s1": [in1], "s2": [in2]})
-    data = data.map(input_columns=["s1", "s2"], operations=text.TruncateSequencePair(length))
+    data = data.map(operations=text.TruncateSequencePair(length), input_columns=["s1", "s2"])
     for d in data.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(out1, d["s1"])
         np.testing.assert_array_equal(out2, d["s2"])

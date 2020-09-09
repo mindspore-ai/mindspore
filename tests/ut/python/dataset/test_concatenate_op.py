@@ -31,7 +31,7 @@ def test_concatenate_op_all():
     append_tensor = np.array([9., 10.3, 11., 12.], dtype=np.float)
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(0, prepend_tensor, append_tensor)
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     expected = np.array([1.4, 2., 3., 4., 4.5, 5., 6., 7., 8., 9., 10.3,
                          11., 12.])
     for data_row in data:
@@ -45,7 +45,7 @@ def test_concatenate_op_none():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate()
 
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     for data_row in data:
         np.testing.assert_array_equal(data_row[0], np.array([5., 6., 7., 8.], dtype=np.float))
 
@@ -59,7 +59,7 @@ def test_concatenate_op_string():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(0, prepend_tensor, append_tensor)
 
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     expected = np.array(["dw", "df", "ss", "ad", "dwsdf", "df"], dtype='S')
     for data_row in data:
         np.testing.assert_array_equal(data_row[0], expected)
@@ -74,8 +74,8 @@ def test_concatenate_op_multi_input_string():
 
     concatenate_op = data_trans.Concatenate(0, prepend=prepend_tensor, append=append_tensor)
 
-    data = data.map(input_columns=["col1", "col2"], column_order=["out1"], output_columns=["out1"],
-                    operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], column_order=["out1"],
+                    output_columns=["out1"])
     expected = np.array(["dw", "df", "1", "2", "d", "3", "4", "e", "dwsdf", "df"], dtype='S')
     for data_row in data:
         np.testing.assert_array_equal(data_row[0], expected)
@@ -89,8 +89,8 @@ def test_concatenate_op_multi_input_numeric():
 
     concatenate_op = data_trans.Concatenate(0, prepend=prepend_tensor)
 
-    data = data.map(input_columns=["col1", "col2"], column_order=["out1"], output_columns=["out1"],
-                    operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], column_order=["out1"],
+                    output_columns=["out1"])
     expected = np.array([3, 5, 1, 2, 3, 4])
     for data_row in data:
         np.testing.assert_array_equal(data_row[0], expected)
@@ -104,7 +104,7 @@ def test_concatenate_op_type_mismatch():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(0, prepend_tensor)
 
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
@@ -119,7 +119,7 @@ def test_concatenate_op_type_mismatch2():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(0, prepend_tensor)
 
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
@@ -134,7 +134,7 @@ def test_concatenate_op_incorrect_dim():
     concatenate_op = data_trans.Concatenate(0, prepend_tensor)
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
@@ -155,7 +155,7 @@ def test_concatenate_op_negative_axis():
     append_tensor = np.array([9., 10.3, 11., 12.], dtype=np.float)
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(-1, prepend_tensor, append_tensor)
-    data = data.map(input_columns=["col"], operations=concatenate_op)
+    data = data.map(operations=concatenate_op, input_columns=["col"])
     expected = np.array([1.4, 2., 3., 4., 4.5, 5., 6., 7., 8., 9., 10.3,
                          11., 12.])
     for data_row in data:

@@ -49,11 +49,11 @@ def create_tinybert_dataset(task='td', batch_size=32, device_num=1, rank=0,
                                 shard_equal_rows=True)
 
     type_cast_op = C.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     if task == "td":
-        ds = ds.map(input_columns="label_ids", operations=type_cast_op)
+        ds = ds.map(operations=type_cast_op, input_columns="label_ids")
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
 

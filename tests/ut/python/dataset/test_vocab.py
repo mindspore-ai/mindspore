@@ -29,7 +29,7 @@ def test_from_list_tutorial():
     vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", "<unk>"], True)
     lookup = text.Lookup(vocab, "<unk>")
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
-    data = data.map(input_columns=["text"], operations=lookup)
+    data = data.map(operations=lookup, input_columns=["text"])
     ind = 0
     res = [2, 1, 4, 5, 6, 7]
     for d in data.create_dict_iterator(num_epochs=1):
@@ -41,7 +41,7 @@ def test_from_file_tutorial():
     vocab = text.Vocab.from_file(VOCAB_FILE, ",", None, ["<pad>", "<unk>"], True)
     lookup = text.Lookup(vocab)
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
-    data = data.map(input_columns=["text"], operations=lookup)
+    data = data.map(operations=lookup, input_columns=["text"])
     ind = 0
     res = [10, 11, 12, 15, 13, 14]
     for d in data.create_dict_iterator(num_epochs=1):
@@ -53,7 +53,7 @@ def test_from_dict_tutorial():
     vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
     lookup = text.Lookup(vocab, "<unk>")  # any unknown token will be mapped to the id of <unk>
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
-    data = data.map(input_columns=["text"], operations=lookup)
+    data = data.map(operations=lookup, input_columns=["text"])
     res = [3, 6, 2, 4, 5, 6]
     ind = 0
     for d in data.create_dict_iterator(num_epochs=1):
@@ -79,7 +79,7 @@ def test_from_list():
         try:
             vocab = text.Vocab.from_list(vocab_input, special_tokens, special_first)
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
-            data = data.map(input_columns=["text"], operations=text.Lookup(vocab, unknown_token))
+            data = data.map(operations=text.Lookup(vocab, unknown_token), input_columns=["text"])
             res = []
             for d in data.create_dict_iterator(num_epochs=1):
                 res.append(d["text"].item())
@@ -118,7 +118,7 @@ def test_from_file():
             vocab = text.Vocab.from_file(SIMPLE_VOCAB_FILE, vocab_size=vocab_size, special_tokens=special_tokens,
                                          special_first=special_first)
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
-            data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "s2"))
+            data = data.map(operations=text.Lookup(vocab, "s2"), input_columns=["text"])
             res = []
             for d in data.create_dict_iterator(num_epochs=1):
                 res.append(d["text"].item())
@@ -150,7 +150,7 @@ def test_lookup_cast_type():
             data = ds.GeneratorDataset(gen(lookup_str), column_names=["text"])
             # if data_type is None, test the default value of data_type
             op = text.Lookup(vocab, "<unk>") if data_type is None else text.Lookup(vocab, "<unk>", data_type)
-            data = data.map(input_columns=["text"], operations=op)
+            data = data.map(operations=op, input_columns=["text"])
             res = []
             for d in data.create_dict_iterator(num_epochs=1):
                 res.append(d["text"])

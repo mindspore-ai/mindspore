@@ -41,8 +41,7 @@ def test_uniform_augment(plot=False, num_ops=2):
                                                                               F.Resize((224, 224)),
                                                                               F.ToTensor()])
 
-    ds_original = ds.map(input_columns="image",
-                         operations=transforms_original)
+    ds_original = ds.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -71,8 +70,7 @@ def test_uniform_augment(plot=False, num_ops=2):
                                                                              num_ops=num_ops),
                                                             F.ToTensor()])
 
-    ds_ua = ds.map(input_columns="image",
-                   operations=transforms_ua)
+    ds_ua = ds.map(operations=transforms_ua, input_columns="image")
 
     ds_ua = ds_ua.batch(512)
 
@@ -106,8 +104,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
     transforms_original = [C.Decode(), C.Resize(size=[224, 224]),
                            F.ToTensor()]
 
-    ds_original = ds.map(input_columns="image",
-                         operations=transforms_original)
+    ds_original = ds.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -133,8 +130,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
                       uni_aug,
                       F.ToTensor()]
 
-    ds_ua = ds.map(input_columns="image",
-                   operations=transforms_all, num_parallel_workers=1)
+    ds_ua = ds.map(operations=transforms_all, input_columns="image", num_parallel_workers=1)
 
     ds_ua = ds_ua.batch(512)
 
@@ -252,7 +248,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
         C.RandomHorizontalFlip()
     ]
     uni_aug = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
-    ds1 = ds1.map(input_columns="image", operations=uni_aug)
+    ds1 = ds1.map(operations=uni_aug, input_columns="image")
 
     # apply DatasetOps
     ds1 = ds1.batch(batch_size, drop_remainder=True, num_parallel_workers=1)

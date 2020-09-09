@@ -26,6 +26,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
 
+
 def test_random_crop_decode_resize_op(plot=False):
     """
     Test RandomCropDecodeResize op
@@ -36,14 +37,13 @@ def test_random_crop_decode_resize_op(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
     random_crop_decode_resize_op = vision.RandomCropDecodeResize((256, 512), (1, 1), (0.5, 0.5))
-    data1 = data1.map(input_columns=["image"], operations=random_crop_decode_resize_op)
+    data1 = data1.map(operations=random_crop_decode_resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     random_crop_resize_op = vision.RandomResizedCrop((256, 512), (1, 1), (0.5, 0.5))
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
-    data2 = data2.map(input_columns=["image"], operations=random_crop_resize_op)
-
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
+    data2 = data2.map(operations=random_crop_resize_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -70,7 +70,7 @@ def test_random_crop_decode_resize_md5():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     random_crop_decode_resize_op = vision.RandomCropDecodeResize((256, 512), (1, 1), (0.5, 0.5))
-    data = data.map(input_columns=["image"], operations=random_crop_decode_resize_op)
+    data = data.map(operations=random_crop_decode_resize_op, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "random_crop_decode_resize_01_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)

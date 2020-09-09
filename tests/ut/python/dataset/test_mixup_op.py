@@ -30,6 +30,7 @@ DATA_DIR3 = "../data/dataset/testCelebAData/"
 
 GENERATE_GOLDEN = False
 
+
 def test_mixup_batch_success1(plot=False):
     """
     Test MixUpBatch op with specified alpha parameter
@@ -51,10 +52,10 @@ def test_mixup_batch_success1(plot=False):
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch(2)
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+    data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
 
     images_mixup = None
     for idx, (image, _) in enumerate(data1):
@@ -81,7 +82,7 @@ def test_mixup_batch_success2(plot=False):
     # Original Images
     ds_original = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
     decode_op = vision.Decode()
-    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
     ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
 
     images_original = None
@@ -95,14 +96,14 @@ def test_mixup_batch_success2(plot=False):
     data1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
 
     decode_op = vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+    data1 = data1.map(operations=[decode_op], input_columns=["image"])
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
 
     mixup_batch_op = vision.MixUpBatch(2.0)
     data1 = data1.batch(4, pad_info={}, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+    data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
 
     images_mixup = None
     for idx, (image, _) in enumerate(data1):
@@ -142,10 +143,10 @@ def test_mixup_batch_success3(plot=False):
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch()
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+    data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
 
     images_mixup = np.array([])
     for idx, (image, _) in enumerate(data1):
@@ -173,7 +174,7 @@ def test_mixup_batch_success4(plot=False):
     # Original Images
     ds_original = ds.CelebADataset(DATA_DIR3, shuffle=False)
     decode_op = vision.Decode()
-    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
     ds_original = ds_original.batch(2, drop_remainder=True)
 
     images_original = None
@@ -187,14 +188,14 @@ def test_mixup_batch_success4(plot=False):
     data1 = ds.CelebADataset(DATA_DIR3, shuffle=False)
 
     decode_op = vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+    data1 = data1.map(operations=[decode_op], input_columns=["image"])
 
     one_hot_op = data_trans.OneHot(num_classes=100)
-    data1 = data1.map(input_columns=["attr"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["attr"])
 
     mixup_batch_op = vision.MixUpBatch()
     data1 = data1.batch(2, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "attr"], operations=mixup_batch_op)
+    data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "attr"])
 
     images_mixup = np.array([])
     for idx, (image, _) in enumerate(data1):
@@ -224,10 +225,10 @@ def test_mixup_batch_md5():
     data = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data = data.map(input_columns=["label"], operations=one_hot_op)
+    data = data.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch()
     data = data.batch(5, drop_remainder=True)
-    data = data.map(input_columns=["image", "label"], operations=mixup_batch_op)
+    data = data.map(operations=mixup_batch_op, input_columns=["image", "label"])
 
     filename = "mixup_batch_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -259,10 +260,10 @@ def test_mixup_batch_fail1():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch(0.1)
     with pytest.raises(RuntimeError) as error:
-        data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+        data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
         for idx, (image, _) in enumerate(data1):
             if idx == 0:
                 images_mixup = image
@@ -294,7 +295,7 @@ def test_mixup_batch_fail2():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.MixUpBatch(-1)
         error_message = "Input is not within the required interval"
@@ -322,10 +323,10 @@ def test_mixup_batch_fail3():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch()
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image"], operations=mixup_batch_op)
+    data1 = data1.map(operations=mixup_batch_op, input_columns=["image"])
 
     with pytest.raises(RuntimeError) as error:
         images_mixup = np.array([])
@@ -336,6 +337,7 @@ def test_mixup_batch_fail3():
                 images_mixup = np.append(images_mixup, image, axis=0)
     error_message = "Both images and labels columns are required"
     assert error_message in str(error.value)
+
 
 def test_mixup_batch_fail4():
     """
@@ -359,7 +361,7 @@ def test_mixup_batch_fail4():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.MixUpBatch(0.0)
         error_message = "Input is not within the required interval"
@@ -389,7 +391,7 @@ def test_mixup_batch_fail5():
 
     mixup_batch_op = vision.MixUpBatch()
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=mixup_batch_op)
+    data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
 
     with pytest.raises(RuntimeError) as error:
         images_mixup = np.array([])

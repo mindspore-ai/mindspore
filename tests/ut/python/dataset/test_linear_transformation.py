@@ -51,15 +51,15 @@ def test_linear_transformation_op(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=transform, input_columns=["image"])
     # Note: if transformation matrix is diagonal matrix with all 1 in diagonal,
     #       the output matrix in expected to be the same as the input matrix.
-    data1 = data1.map(input_columns=["image"],
-                      operations=py_vision.LinearTransformation(transformation_matrix, mean_vector))
+    data1 = data1.map(operations=py_vision.LinearTransformation(transformation_matrix, mean_vector),
+                      input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_transformed = []
     image = []
@@ -98,7 +98,7 @@ def test_linear_transformation_md5():
         py_vision.LinearTransformation(transformation_matrix, mean_vector)
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename = "linear_transformation_01_result.npz"
@@ -128,7 +128,7 @@ def test_linear_transformation_exception_01():
             py_vision.LinearTransformation(None, mean_vector)
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform)
+        data1 = data1.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Argument transformation_matrix with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
@@ -157,7 +157,7 @@ def test_linear_transformation_exception_02():
             py_vision.LinearTransformation(transformation_matrix, None)
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform)
+        data1 = data1.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Argument mean_vector with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
@@ -187,7 +187,7 @@ def test_linear_transformation_exception_03():
             py_vision.LinearTransformation(transformation_matrix, mean_vector)
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform)
+        data1 = data1.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "square matrix" in str(e)
@@ -217,7 +217,7 @@ def test_linear_transformation_exception_04():
             py_vision.LinearTransformation(transformation_matrix, mean_vector)
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data1 = data1.map(input_columns=["image"], operations=transform)
+        data1 = data1.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should match" in str(e)

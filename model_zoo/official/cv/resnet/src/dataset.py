@@ -22,6 +22,7 @@ import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
 
+
 def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
     create a train or evaluate cifar10 dataset for resnet50
@@ -65,8 +66,8 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="label", num_parallel_workers=8, operations=type_cast_op)
-    ds = ds.map(input_columns="image", num_parallel_workers=8, operations=trans)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
@@ -126,8 +127,8 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", num_parallel_workers=8, operations=trans)
-    ds = ds.map(input_columns="label", num_parallel_workers=8, operations=type_cast_op)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
@@ -165,7 +166,7 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     if do_train:
         trans = [
             C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
-            C.RandomHorizontalFlip(rank_id/ (rank_id +1)),
+            C.RandomHorizontalFlip(rank_id / (rank_id + 1)),
             C.Normalize(mean=mean, std=std),
             C.HWC2CHW()
         ]
@@ -180,8 +181,8 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=8)
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
@@ -189,6 +190,7 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     ds = ds.repeat(repeat_num)
 
     return ds
+
 
 def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
     """
@@ -233,8 +235,8 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         ]
 
     type_cast_op = C2.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="image", num_parallel_workers=12, operations=trans)
-    ds = ds.map(input_columns="label", num_parallel_workers=12, operations=type_cast_op)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=12)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
@@ -243,6 +245,7 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     ds = ds.repeat(repeat_num)
 
     return ds
+
 
 def _get_rank_info():
     """

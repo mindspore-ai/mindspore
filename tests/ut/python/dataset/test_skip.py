@@ -33,8 +33,8 @@ def test_tf_skip():
     resize_height, resize_width = 32, 32
     decode_op = vision.Decode()
     resize_op = vision.Resize((resize_height, resize_width), interpolation=ds.transforms.vision.Inter.LINEAR)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.skip(2)
 
     num_iter = 0

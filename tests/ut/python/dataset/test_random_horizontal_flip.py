@@ -51,12 +51,12 @@ def test_random_horizontal_op(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     random_horizontal_op = c_vision.RandomHorizontalFlip(1.0)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_horizontal_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_horizontal_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -89,8 +89,8 @@ def test_random_horizontal_valid_prob_c():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     random_horizontal_op = c_vision.RandomHorizontalFlip(0.8)
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_horizontal_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_horizontal_op, input_columns=["image"])
 
     filename = "random_horizontal_01_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -116,7 +116,7 @@ def test_random_horizontal_valid_prob_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_horizontal_01_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -138,8 +138,8 @@ def test_random_horizontal_invalid_prob_c():
     try:
         # Note: Valid range of prob should be [0.0, 1.0]
         random_horizontal_op = c_vision.RandomHorizontalFlip(1.5)
-        data = data.map(input_columns=["image"], operations=decode_op)
-        data = data.map(input_columns=["image"], operations=random_horizontal_op)
+        data = data.map(operations=decode_op, input_columns=["image"])
+        data = data.map(operations=random_horizontal_op, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)
@@ -162,7 +162,7 @@ def test_random_horizontal_invalid_prob_py():
             py_vision.ToTensor()
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data = data.map(input_columns=["image"], operations=transform)
+        data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)
@@ -178,8 +178,8 @@ def test_random_horizontal_comp(plot=False):
     decode_op = c_vision.Decode()
     # Note: The image must be flipped if prob is set to be 1
     random_horizontal_op = c_vision.RandomHorizontalFlip(1)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_horizontal_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_horizontal_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -190,7 +190,7 @@ def test_random_horizontal_comp(plot=False):
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     images_list_c = []
     images_list_py = []

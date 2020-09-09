@@ -46,10 +46,9 @@ def test_random_crop_with_bbox_op_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])  # Add column for "bbox"
+                            column_order=["image", "bbox"])  # Add column for "bbox"
 
     unaugSamp, augSamp = [], []
 
@@ -76,10 +75,9 @@ def test_random_crop_with_bbox_op_coco_c(plot_vis=False):
 
     test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
-    dataCoco2 = dataCoco2.map(input_columns=["image", "bbox"],
+    dataCoco2 = dataCoco2.map(operations=[test_op], input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
-                              column_order=["image", "bbox"],
-                              operations=[test_op])
+                              column_order=["image", "bbox"])
 
     unaugSamp, augSamp = [], []
 
@@ -108,10 +106,9 @@ def test_random_crop_with_bbox_op2_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])
+                            column_order=["image", "bbox"])
 
     filename = "random_crop_with_bbox_01_c_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -145,10 +142,9 @@ def test_random_crop_with_bbox_op3_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])
+                            column_order=["image", "bbox"])
 
     unaugSamp, augSamp = [], []
 
@@ -175,18 +171,18 @@ def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[lambda img, bboxes: (
-                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
+    dataVoc1 = dataVoc1.map(
+        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))],
+        input_columns=["image", "bbox"],
+        output_columns=["image", "bbox"],
+        column_order=["image", "bbox"])
 
     # Test Op added to list of Operations here
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[lambda img, bboxes: (
-                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
+    dataVoc2 = dataVoc2.map(
+        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)),
+                    test_op], input_columns=["image", "bbox"],
+        output_columns=["image", "bbox"],
+        column_order=["image", "bbox"])
 
     unaugSamp, augSamp = [], []
 
@@ -212,10 +208,9 @@ def test_random_crop_with_bbox_op_invalid_c():
         test_op = c_vision.RandomCropWithBBox([512, 512, 375])
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"],
-                                operations=[test_op])  # Add column for "bbox"
+                                column_order=["image", "bbox"])  # Add column for "bbox"
 
         for _ in dataVoc2.create_dict_iterator(num_epochs=1):
             break
@@ -252,10 +247,9 @@ def test_random_crop_with_bbox_op_bad_padding():
     try:
         test_op = c_vision.RandomCropWithBBox([512, 512], padding=-1)
 
-        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"],
-                                operations=[test_op])
+                                column_order=["image", "bbox"])
 
         for _ in dataVoc2.create_dict_iterator(num_epochs=1):
             break
@@ -266,10 +260,9 @@ def test_random_crop_with_bbox_op_bad_padding():
     try:
         test_op = c_vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])
 
-        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"],
-                                operations=[test_op])
+                                column_order=["image", "bbox"])
 
         for _ in dataVoc2.create_dict_iterator(num_epochs=1):
             break

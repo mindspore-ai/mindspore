@@ -73,6 +73,7 @@ def add_and_remove_cv_file():
             os.remove("{}".format(x))
             os.remove("{}.db".format(x))
 
+
 @pytest.fixture
 def add_and_remove_nlp_file():
     """add/remove nlp file"""
@@ -265,6 +266,7 @@ def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
     assert partitions(5) == 2
     assert partitions(9) == 2
 
+
 def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
@@ -287,6 +289,7 @@ def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
     assert partitions(5) == 1
     assert partitions(9) == 1
 
+
 def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
@@ -308,6 +311,7 @@ def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
     assert partitions(4) == 2
     assert partitions(5) == 2
     assert partitions(9) == 2
+
 
 def test_cv_minddataset_partition_num_samples_2(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
@@ -354,11 +358,11 @@ def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_c
             logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
             num_iter += 1
             if num_iter <= 4:
-                epoch1.append(item["file_name"])   # save epoch 1 list
+                epoch1.append(item["file_name"])  # save epoch 1 list
             elif num_iter <= 8:
-                epoch2.append(item["file_name"])   # save epoch 2 list
+                epoch2.append(item["file_name"])  # save epoch 2 list
             else:
-                epoch3.append(item["file_name"])   # save epoch 3 list
+                epoch3.append(item["file_name"])  # save epoch 3 list
         assert num_iter == 12
         assert len(epoch1) == 4
         assert len(epoch2) == 4
@@ -376,9 +380,9 @@ def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoc
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     num_shards = 3
-    epoch_result = [[["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],    # save partition 0 result
-                    [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],    # save partition 1 result
-                    [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]]]    # svae partition 2 result
+    epoch_result = [[["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],  # save partition 0 result
+                    [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],  # save partition 1 result
+                    [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]]]  # svae partition 2 result
 
     for partition_id in range(num_shards):
         data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
@@ -392,7 +396,7 @@ def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoc
             logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
             logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
             # total 3 partition, 4 result per epoch, total 12 result
-            epoch_result[partition_id][int(num_iter / 4)][num_iter % 4] = item["file_name"]    # save epoch result
+            epoch_result[partition_id][int(num_iter / 4)][num_iter % 4] = item["file_name"]  # save epoch result
             num_iter += 1
         assert num_iter == 12
         assert epoch_result[partition_id][0] not in (epoch_result[partition_id][1], epoch_result[partition_id][2])
@@ -425,11 +429,11 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
         num_iter += 1
         if num_iter <= 10:
-            epoch1.append(item["file_name"])   # save epoch 1 list
+            epoch1.append(item["file_name"])  # save epoch 1 list
         elif num_iter <= 20:
-            epoch2.append(item["file_name"])   # save epoch 2 list
+            epoch2.append(item["file_name"])  # save epoch 2 list
         else:
-            epoch3.append(item["file_name"])   # save epoch 3 list
+            epoch3.append(item["file_name"])  # save epoch 3 list
     assert num_iter == 30
     assert len(epoch1) == 10
     assert len(epoch2) == 10
@@ -451,11 +455,11 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
         num_iter += 1
         if num_iter <= 10:
-            epoch1_new_dataset.append(item["file_name"])   # save epoch 1 list
+            epoch1_new_dataset.append(item["file_name"])  # save epoch 1 list
         elif num_iter <= 20:
-            epoch2_new_dataset.append(item["file_name"])   # save epoch 2 list
+            epoch2_new_dataset.append(item["file_name"])  # save epoch 2 list
         else:
-            epoch3_new_dataset.append(item["file_name"])   # save epoch 3 list
+            epoch3_new_dataset.append(item["file_name"])  # save epoch 3 list
     assert num_iter == 30
     assert len(epoch1_new_dataset) == 10
     assert len(epoch2_new_dataset) == 10
@@ -482,11 +486,11 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
         num_iter += 1
         if num_iter <= 10:
-            epoch1_new_dataset2.append(item["file_name"])   # save epoch 1 list
+            epoch1_new_dataset2.append(item["file_name"])  # save epoch 1 list
         elif num_iter <= 20:
-            epoch2_new_dataset2.append(item["file_name"])   # save epoch 2 list
+            epoch2_new_dataset2.append(item["file_name"])  # save epoch 2 list
         else:
-            epoch3_new_dataset2.append(item["file_name"])   # save epoch 3 list
+            epoch3_new_dataset2.append(item["file_name"])  # save epoch 3 list
     assert num_iter == 30
     assert len(epoch1_new_dataset2) == 10
     assert len(epoch2_new_dataset2) == 10
@@ -532,8 +536,8 @@ def test_cv_minddataset_repeat_reshuffle(add_and_remove_cv_file):
     data_set = data_set.map(
         input_columns=["data"], operations=decode_op, num_parallel_workers=2)
     resize_op = vision.Resize((32, 32), interpolation=Inter.LINEAR)
-    data_set = data_set.map(input_columns="data",
-                            operations=resize_op, num_parallel_workers=2)
+    data_set = data_set.map(operations=resize_op, input_columns="data",
+                            num_parallel_workers=2)
     data_set = data_set.batch(2)
     data_set = data_set.repeat(2)
     num_iter = 0
@@ -563,8 +567,8 @@ def test_cv_minddataset_batch_size_larger_than_records(add_and_remove_cv_file):
     data_set = data_set.map(
         input_columns=["data"], operations=decode_op, num_parallel_workers=2)
     resize_op = vision.Resize((32, 32), interpolation=Inter.LINEAR)
-    data_set = data_set.map(input_columns="data",
-                            operations=resize_op, num_parallel_workers=2)
+    data_set = data_set.map(operations=resize_op, input_columns="data",
+                            num_parallel_workers=2)
     data_set = data_set.batch(32, drop_remainder=True)
     num_iter = 0
     for item in data_set.create_dict_iterator(num_epochs=1):
@@ -707,6 +711,7 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
         if os.path.exists("{}.db".format(CV2_FILE_NAME)):
             os.remove("{}.db".format(CV2_FILE_NAME))
 
+
 def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
     paths = ["{}{}".format(CV1_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
@@ -757,6 +762,7 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
             os.remove("{}".format(x))
             os.remove("{}.db".format(x))
 
+
 def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -777,6 +783,7 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
     assert num_iter == 10
+
 
 def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
     """tutorial for nlp minderdataset."""
@@ -1522,6 +1529,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         os.remove("{}".format(mindrecord_file_name))
         os.remove("{}.db".format(mindrecord_file_name))
 
+
 def test_write_with_multi_array_and_MindDataset():
     mindrecord_file_name = "test.mindrecord"
     try:
@@ -1741,9 +1749,9 @@ def test_numpy_generic():
         for idx in range(10):
             row = {}
             row['label1'] = np.int32(idx)
-            row['label2'] = np.int64(idx*10)
-            row['label3'] = np.float32(idx+0.12345)
-            row['label4'] = np.float64(idx+0.12345789)
+            row['label2'] = np.int64(idx * 10)
+            row['label3'] = np.float32(idx + 0.12345)
+            row['label4'] = np.float64(idx + 0.12345789)
             data.append(row)
         writer.add_schema(cv_schema_json, "img_schema")
         writer.write_raw_data(data)
@@ -1922,6 +1930,7 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
     else:
         os.remove("{}".format(mindrecord_file_name))
         os.remove("{}.db".format(mindrecord_file_name))
+
 
 if __name__ == '__main__':
     test_nlp_compress_data(add_and_remove_nlp_compress_file)

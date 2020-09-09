@@ -121,7 +121,7 @@ def test_concat_05():
     data2 = ds.GeneratorDataset(generator_10, ["col1"])
 
     type_cast_op = C.TypeCast(mstype.float32)
-    data1 = data1.map(input_columns=["col1"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col1"])
 
     data3 = data1 + data2
 
@@ -319,8 +319,8 @@ def test_concat_14():
                                                                       F.Resize((224, 224)),
                                                                       F.ToTensor()])
 
-    data1 = data1.map(input_columns=["image"], operations=transforms1)
-    data2 = data2.map(input_columns=["image"], operations=transforms1)
+    data1 = data1.map(operations=transforms1, input_columns=["image"])
+    data2 = data2.map(operations=transforms1, input_columns=["image"])
     data3 = data1 + data2
 
     expected, output = [], []

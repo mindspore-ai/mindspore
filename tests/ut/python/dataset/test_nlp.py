@@ -32,10 +32,10 @@ def test_on_tokenized_line():
         for line in f:
             word = line.split(',')[0]
             jieba_op.add_word(word)
-    data = data.map(input_columns=["text"], operations=jieba_op)
+    data = data.map(operations=jieba_op, input_columns=["text"])
     vocab = text.Vocab.from_file(VOCAB_FILE, ",", special_tokens=["<pad>", "<unk>"])
     lookup = text.Lookup(vocab, "<unk>")
-    data = data.map(input_columns=["text"], operations=lookup)
+    data = data.map(operations=lookup, input_columns=["text"])
     res = np.array([[10, 1, 11, 1, 12, 1, 15, 1, 13, 1, 14],
                     [11, 1, 12, 1, 10, 1, 14, 1, 13, 1, 15]], dtype=np.int32)
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):
@@ -50,10 +50,10 @@ def test_on_tokenized_line_with_no_special_tokens():
             word = line.split(',')[0]
             jieba_op.add_word(word)
 
-    data = data.map(input_columns=["text"], operations=jieba_op)
+    data = data.map(operations=jieba_op, input_columns=["text"])
     vocab = text.Vocab.from_file(VOCAB_FILE, ",")
     lookup = text.Lookup(vocab, "not")
-    data = data.map(input_columns=["text"], operations=lookup)
+    data = data.map(operations=lookup, input_columns=["text"])
     res = np.array([[8, 0, 9, 0, 10, 0, 13, 0, 11, 0, 12],
                     [9, 0, 10, 0, 8, 0, 12, 0, 11, 0, 13]], dtype=np.int32)
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1)):

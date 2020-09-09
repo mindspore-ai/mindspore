@@ -60,12 +60,12 @@ def _load_dataset(input_files, batch_size, epoch_count=1,
     repeat_count = epoch_count
 
     type_cast_op = deC.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="src", operations=type_cast_op)
-    ds = ds.map(input_columns="src_padding", operations=type_cast_op)
-    ds = ds.map(input_columns="prev_opt", operations=type_cast_op)
-    ds = ds.map(input_columns="prev_padding", operations=type_cast_op)
-    ds = ds.map(input_columns="target", operations=type_cast_op)
-    ds = ds.map(input_columns="tgt_padding", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="src")
+    ds = ds.map(operations=type_cast_op, input_columns="src_padding")
+    ds = ds.map(operations=type_cast_op, input_columns="prev_opt")
+    ds = ds.map(operations=type_cast_op, input_columns="prev_padding")
+    ds = ds.map(operations=type_cast_op, input_columns="target")
+    ds = ds.map(operations=type_cast_op, input_columns="tgt_padding")
 
     ds = ds.rename(
         input_columns=["src",

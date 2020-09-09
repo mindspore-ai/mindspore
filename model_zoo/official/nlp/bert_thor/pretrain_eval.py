@@ -117,12 +117,12 @@ def get_enwiki_512_dataset(batch_size=1, repeat_count=1, distribute_file=''):
                                                                             "masked_lm_weights",
                                                                             "next_sentence_labels"])
     type_cast_op = C.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
-    ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
     ds = ds.repeat(repeat_count)
 
     # apply batch operations

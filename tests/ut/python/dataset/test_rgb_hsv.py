@@ -140,7 +140,7 @@ def test_rgb_hsv_pipeline():
     ]
     transforms1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds1 = ds1.map(input_columns=["image"], operations=transforms1)
+    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
 
     # Second dataset
     transforms2 = [
@@ -152,7 +152,7 @@ def test_rgb_hsv_pipeline():
     ]
     transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds2 = ds2.map(input_columns=["image"], operations=transform2)
+    ds2 = ds2.map(operations=transform2, input_columns=["image"])
 
     num_iter = 0
     for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):

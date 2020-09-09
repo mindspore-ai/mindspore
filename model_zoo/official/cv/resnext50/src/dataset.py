@@ -25,6 +25,7 @@ from src.utils.sampler import DistributedSampler
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+
 class TxtDataset():
     """
     create txt dataset.
@@ -33,6 +34,7 @@ class TxtDataset():
     Returns:
         de_dataset.
     """
+
     def __init__(self, root, txt_name):
         super(TxtDataset, self).__init__()
         self.imgs = []
@@ -142,10 +144,10 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
         sampler = DistributedSampler(dataset, rank, group_size, shuffle=shuffle)
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=sampler)
 
-    de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=num_parallel_workers,
-                                operations=transform_img)
-    de_dataset = de_dataset.map(input_columns="label", num_parallel_workers=num_parallel_workers,
-                                operations=transform_label)
+    de_dataset = de_dataset.map(operations=transform_img, input_columns="image",
+                                num_parallel_workers=num_parallel_workers)
+    de_dataset = de_dataset.map(operations=transform_label, input_columns="label",
+                                num_parallel_workers=num_parallel_workers)
 
     columns_to_project = ["image", "label"]
     de_dataset = de_dataset.project(columns=columns_to_project)

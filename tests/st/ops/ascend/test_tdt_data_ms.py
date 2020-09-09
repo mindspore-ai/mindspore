@@ -47,11 +47,11 @@ def test_me_de_train_dataset():
     rescale_op = vision.Rescale(rescale, shift)
 
     # apply map operations on images
-    data_set_new = data_set_new.map(input_columns="image/encoded", operations=decode_op)
-    data_set_new = data_set_new.map(input_columns="image/encoded", operations=resize_op)
-    data_set_new = data_set_new.map(input_columns="image/encoded", operations=rescale_op)
+    data_set_new = data_set_new.map(operations=decode_op, input_columns="image/encoded")
+    data_set_new = data_set_new.map(operations=resize_op, input_columns="image/encoded")
+    data_set_new = data_set_new.map(operations=rescale_op, input_columns="image/encoded")
     hwc2chw_op = vision.HWC2CHW()
-    data_set_new = data_set_new.map(input_columns="image/encoded", operations=hwc2chw_op)
+    data_set_new = data_set_new.map(operations=hwc2chw_op, input_columns="image/encoded")
     data_set_new = data_set_new.repeat(1)
     # apply batch operations
     batch_size_new = 32

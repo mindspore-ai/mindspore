@@ -52,10 +52,10 @@ def test_random_affine_op(plot=False):
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     image_affine = []
     image_original = []
@@ -85,10 +85,10 @@ def test_random_affine_op_c(plot=False):
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transforms2)
+    data2 = data2.map(operations=transforms2, input_columns=["image"])
 
     image_affine = []
     image_original = []
@@ -119,7 +119,7 @@ def test_random_affine_md5():
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     # check results with md5 comparison
     filename = "random_affine_01_result.npz"
@@ -146,7 +146,7 @@ def test_random_affine_c_md5():
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(input_columns=["image"], operations=transforms)
+    data = data.map(operations=transforms, input_columns=["image"])
 
     # check results with md5 comparison
     filename = "random_affine_01_c_result.npz"
@@ -172,7 +172,7 @@ def test_random_affine_default_c_md5():
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(input_columns=["image"], operations=transforms)
+    data = data.map(operations=transforms, input_columns=["image"])
 
     # check results with md5 comparison
     filename = "random_affine_01_default_c_result.npz"
@@ -192,7 +192,7 @@ def test_random_affine_py_exception_non_pil_images():
     try:
         transform = mindspore.dataset.transforms.py_transforms.Compose([py_vision.ToTensor(),
                                                                         py_vision.RandomAffine(degrees=(15, 15))])
-        dataset = dataset.map(input_columns=["image"], operations=transform, num_parallel_workers=3,
+        dataset = dataset.map(operations=transform, input_columns=["image"], num_parallel_workers=3,
                               python_multiprocessing=True)
         for _ in dataset.create_dict_iterator(num_epochs=1):
             break

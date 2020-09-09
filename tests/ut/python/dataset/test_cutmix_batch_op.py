@@ -51,12 +51,12 @@ def test_cutmix_batch_success1(plot=False):
     # CutMix Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     hwc2chw_op = vision.HWC2CHW()
-    data1 = data1.map(input_columns=["image"], operations=hwc2chw_op)
+    data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NCHW, 2.0, 0.5)
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     images_cutmix = None
     for idx, (image, _) in enumerate(data1):
@@ -94,12 +94,12 @@ def test_cutmix_batch_success2(plot=False):
     # CutMix Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
-    rescale_op = vision.Rescale((1.0/255.0), 0.0)
-    data1 = data1.map(input_columns=["image"], operations=rescale_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
+    rescale_op = vision.Rescale((1.0 / 255.0), 0.0)
+    data1 = data1.map(operations=rescale_op, input_columns=["image"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     images_cutmix = None
     for idx, (image, _) in enumerate(data1):
@@ -125,7 +125,7 @@ def test_cutmix_batch_success3(plot=False):
 
     ds_original = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
     decode_op = vision.Decode()
-    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
     ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
 
     images_original = None
@@ -139,14 +139,14 @@ def test_cutmix_batch_success3(plot=False):
     data1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
 
     decode_op = vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+    data1 = data1.map(operations=[decode_op], input_columns=["image"])
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
 
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(4, pad_info={}, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     images_cutmix = None
     for idx, (image, _) in enumerate(data1):
@@ -172,7 +172,7 @@ def test_cutmix_batch_success4(plot=False):
 
     ds_original = ds.CelebADataset(DATA_DIR3, shuffle=False)
     decode_op = vision.Decode()
-    ds_original = ds_original.map(input_columns=["image"], operations=[decode_op])
+    ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
     ds_original = ds_original.batch(2, drop_remainder=True)
 
     images_original = None
@@ -186,14 +186,14 @@ def test_cutmix_batch_success4(plot=False):
     data1 = ds.CelebADataset(dataset_dir=DATA_DIR3, shuffle=False)
 
     decode_op = vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=[decode_op])
+    data1 = data1.map(operations=[decode_op], input_columns=["image"])
 
     one_hot_op = data_trans.OneHot(num_classes=100)
-    data1 = data1.map(input_columns=["attr"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["attr"])
 
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 0.5, 0.9)
     data1 = data1.batch(2, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "attr"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "attr"])
 
     images_cutmix = None
     for idx, (image, _) in enumerate(data1):
@@ -223,10 +223,10 @@ def test_cutmix_batch_nhwc_md5():
     data = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data = data.map(input_columns=["label"], operations=one_hot_op)
+    data = data.map(operations=one_hot_op, input_columns=["label"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data = data.batch(5, drop_remainder=True)
-    data = data.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data = data.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     filename = "cutmix_batch_c_nhwc_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -247,12 +247,12 @@ def test_cutmix_batch_nchw_md5():
     # CutMixBatch Images
     data = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     hwc2chw_op = vision.HWC2CHW()
-    data = data.map(input_columns=["image"], operations=hwc2chw_op)
+    data = data.map(operations=hwc2chw_op, input_columns=["image"])
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data = data.map(input_columns=["label"], operations=one_hot_op)
+    data = data.map(operations=one_hot_op, input_columns=["label"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NCHW)
     data = data.batch(5, drop_remainder=True)
-    data = data.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data = data.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     filename = "cutmix_batch_c_nchw_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -273,10 +273,10 @@ def test_cutmix_batch_fail1():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     with pytest.raises(RuntimeError) as error:
-        data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+        data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
         for idx, (image, _) in enumerate(data1):
             if idx == 0:
                 images_cutmix = image
@@ -297,7 +297,7 @@ def test_cutmix_batch_fail2():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.CutMixBatch(mode.ImageBatchFormat.NHWC, -1)
         error_message = "Input is not within the required interval"
@@ -315,7 +315,7 @@ def test_cutmix_batch_fail3():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 1, 2)
         error_message = "Input is not within the required interval"
@@ -333,7 +333,7 @@ def test_cutmix_batch_fail4():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 1, -1)
         error_message = "Input is not within the required interval"
@@ -351,10 +351,10 @@ def test_cutmix_batch_fail5():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image"])
 
     with pytest.raises(RuntimeError) as error:
         images_cutmix = np.array([])
@@ -378,10 +378,10 @@ def test_cutmix_batch_fail6():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NCHW)
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     with pytest.raises(RuntimeError) as error:
         images_cutmix = np.array([])
@@ -406,7 +406,7 @@ def test_cutmix_batch_fail7():
 
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
-    data1 = data1.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+    data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     with pytest.raises(RuntimeError) as error:
         images_cutmix = np.array([])
@@ -430,7 +430,7 @@ def test_cutmix_batch_fail8():
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = data_trans.OneHot(num_classes=10)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op)
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 0.0)
         error_message = "Input is not within the required interval"

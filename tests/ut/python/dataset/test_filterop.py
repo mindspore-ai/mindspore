@@ -30,7 +30,7 @@ def test_diff_predicate_func():
             cde.Resize([64, 64])
         ]
         dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image", "label"], shuffle=False)
-        dataset = dataset.map(input_columns=["image"], operations=transforms, num_parallel_workers=1)
+        dataset = dataset.map(operations=transforms, input_columns=["image"], num_parallel_workers=1)
         dataset = dataset.filter(input_columns=["image", "label"], predicate=predicate_func, num_parallel_workers=4)
 
         num_iter = 0
@@ -261,8 +261,8 @@ def func_map_part(data_col1):
 # test with  map
 def test_filter_by_generator_with_map_all_col():
     dataset = ds.GeneratorDataset(generator_mc(12), ["col1", "col2"])
-    dataset_map = dataset.map(input_columns=["col1"], output_columns=["col1"], operations=func_map_part)
-    # dataset_map = dataset.map(  operations=func_map_part)
+    dataset_map = dataset.map(operations=func_map_part, input_columns=["col1"], output_columns=["col1"])
+    # dataset_map = dataset.map(operations=func_map_part)
     dataset_f = dataset_map.filter(input_columns=["col1"], predicate=filter_func_map_part, num_parallel_workers=1)
     num_iter = 0
     ret_data = []
@@ -277,7 +277,7 @@ def test_filter_by_generator_with_map_all_col():
 # test with  map
 def test_filter_by_generator_with_map_part_col():
     dataset = ds.GeneratorDataset(generator_mc(12), ["col1", "col2"])
-    dataset_map = dataset.map(input_columns=["col1"], output_columns=["out1"], operations=func_map_part)
+    dataset_map = dataset.map(operations=func_map_part, input_columns=["col1"], output_columns=["out1"])
 
     dataset_f = dataset_map.filter(input_columns=["out1", "col2"], predicate=filter_func_map, num_parallel_workers=4)
     num_iter = 0
@@ -328,7 +328,7 @@ def filter_func_input_column3(col1):
 # test with  input_columns
 def test_filter_by_generator_with_input_column():
     dataset = ds.GeneratorDataset(generator_mc(64), ["col1", "col2"])
-    dataset_map = dataset.map(input_columns=["col1"], output_columns=["out1"], operations=func_map_part)
+    dataset_map = dataset.map(operations=func_map_part, input_columns=["col1"], output_columns=["out1"])
     dataset_f1 = dataset_map.filter(input_columns=["out1", "col2"], predicate=filter_func_input_column1,
                                     num_parallel_workers=4)
     dataset_f2 = dataset_f1.filter(input_columns=["out1"], predicate=filter_func_input_column2, num_parallel_workers=4)
@@ -382,7 +382,7 @@ def test_filter_by_generator_Partial1():
     dataset2 = ds.GeneratorDataset(source=generator_mc_p1(), column_names=["col3", "col4"])
     dataset_zip = ds.zip((dataset1, dataset2))
     dataset_f1 = dataset_zip.filter(predicate=filter_func_Partial_0, num_parallel_workers=2)
-    dataset_map = dataset_f1.map(input_columns=["col1"], output_columns=["out1"], operations=lambda x1: x1 + 400)
+    dataset_map = dataset_f1.map(operations=lambda x1: x1 + 400, input_columns=["col1"], output_columns=["out1"])
     ret = []
     for item in dataset_map.create_dict_iterator(num_epochs=1):
         ret.append(item["out1"])
@@ -399,8 +399,8 @@ def test_filter_by_generator_Partial2():
     dataset2f = dataset2.filter(input_columns=["col3"], predicate=lambda x: x not in [203, 207, 209],
                                 num_parallel_workers=2)
     dataset_zip = ds.zip((dataset1f, dataset2f))
-    dataset_map = dataset_zip.map(input_columns=["col1", "col3"], output_columns=["out1", "out3"],
-                                  operations=lambda x1, x3: (x1 + 400, x3 + 500))
+    dataset_map = dataset_zip.map(operations=lambda x1, x3: (x1 + 400, x3 + 500), input_columns=["col1", "col3"],
+                                  output_columns=["out1", "out3"])
     ret1 = []
     ret3 = []
     for item in dataset_map.create_dict_iterator(num_epochs=1):
@@ -483,6 +483,7 @@ def test_filter_by_generator_with_map_all_sort():
     assert num_iter == 10
     assert ret_data[0]["col1"] == 0
     assert ret_data[9]["col6"] == 509
+
 
 def test_filter_by_generator_get_dataset_size():
     dataset = ds.GeneratorDataset(generator_1d, ["data"])

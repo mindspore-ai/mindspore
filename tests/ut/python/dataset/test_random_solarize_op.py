@@ -48,12 +48,12 @@ def test_random_solarize_op(threshold=(10, 150), plot=False, run_golden=True):
     else:
         solarize_op = vision.RandomSolarize(threshold)
 
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=solarize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=solarize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     if run_golden:
         filename = "random_solarize_01_result.npz"
@@ -79,7 +79,7 @@ def test_random_solarize_mnist(plot=False, run_golden=True):
 
     mnist_1 = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
     mnist_2 = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
-    mnist_2 = mnist_2.map(input_columns="image", operations=vision.RandomSolarize((0, 255)))
+    mnist_2 = mnist_2.map(operations=vision.RandomSolarize((0, 255)), input_columns="image")
 
     images = []
     images_trans = []

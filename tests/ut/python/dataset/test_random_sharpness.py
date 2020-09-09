@@ -44,8 +44,7 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
                                                                               F.Resize((224, 224)),
                                                                               F.ToTensor()])
 
-    ds_original = data.map(input_columns="image",
-                           operations=transforms_original)
+    ds_original = data.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -69,8 +68,7 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
                                                                                       py_op,
                                                                                       F.ToTensor()])
 
-    ds_random_sharpness = data.map(input_columns="image",
-                                   operations=transforms_random_sharpness)
+    ds_random_sharpness = data.map(operations=transforms_random_sharpness, input_columns="image")
 
     ds_random_sharpness = ds_random_sharpness.batch(512)
 
@@ -111,7 +109,7 @@ def test_random_sharpness_py_md5():
 
     #  Generate dataset
     data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     # check results with md5 comparison
     filename = "random_sharpness_py_01_result.npz"
@@ -135,8 +133,7 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
     transforms_original = [C.Decode(),
                            C.Resize((224, 224))]
 
-    ds_original = data.map(input_columns="image",
-                           operations=transforms_original)
+    ds_original = data.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -159,8 +156,7 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
                                    C.Resize((224, 224)),
                                    c_op]
 
-    ds_random_sharpness = data.map(input_columns="image",
-                                   operations=transforms_random_sharpness)
+    ds_random_sharpness = data.map(operations=transforms_random_sharpness, input_columns="image")
 
     ds_random_sharpness = ds_random_sharpness.batch(512)
 
@@ -199,7 +195,7 @@ def test_random_sharpness_c_md5():
 
     #  Generate dataset
     data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    data = data.map(input_columns=["image"], operations=transforms)
+    data = data.map(operations=transforms, input_columns=["image"])
 
     # check results with md5 comparison
     filename = "random_sharpness_cpp_01_result.npz"
@@ -218,9 +214,7 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
 
     # RandomSharpness Images
     data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    data = data.map(input_columns=["image"],
-                    operations=[C.Decode(),
-                                C.Resize((200, 300))])
+    data = data.map(operations=[C.Decode(), C.Resize((200, 300))], input_columns=["image"])
 
     python_op = F.RandomSharpness(degrees)
     c_op = C.RandomSharpness(degrees)
@@ -229,8 +223,7 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
                                                                         python_op,
                                                                         np.array])
 
-    ds_random_sharpness_py = data.map(input_columns="image",
-                                      operations=transforms_op)
+    ds_random_sharpness_py = data.map(operations=transforms_op, input_columns="image")
 
     ds_random_sharpness_py = ds_random_sharpness_py.batch(512)
 
@@ -244,12 +237,9 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
                                                    axis=0)
 
     data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    data = data.map(input_columns=["image"],
-                    operations=[C.Decode(),
-                                C.Resize((200, 300))])
+    data = data.map(operations=[C.Decode(), C.Resize((200, 300))], input_columns=["image"])
 
-    ds_images_random_sharpness_c = data.map(input_columns="image",
-                                            operations=c_op)
+    ds_images_random_sharpness_c = data.map(operations=c_op, input_columns="image")
 
     ds_images_random_sharpness_c = ds_images_random_sharpness_c.batch(512)
 
@@ -282,7 +272,7 @@ def test_random_sharpness_one_channel_c(degrees=(1.4, 1.4), plot=False):
         c_op = C.RandomSharpness(degrees)
     # RandomSharpness Images
     data = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
-    ds_random_sharpness_c = data.map(input_columns="image", operations=c_op)
+    ds_random_sharpness_c = data.map(operations=c_op, input_columns="image")
     # Original images
     data = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
 
@@ -307,30 +297,24 @@ def test_random_sharpness_invalid_params():
     logger.info("Test RandomSharpness with invalid input parameters.")
     try:
         data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data = data.map(input_columns=["image"],
-                        operations=[C.Decode(),
-                                    C.Resize((224, 224)),
-                                    C.RandomSharpness(10)])
+        data = data.map(operations=[C.Decode(), C.Resize((224, 224)),
+                                    C.RandomSharpness(10)], input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "tuple" in str(error)
 
     try:
         data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data = data.map(input_columns=["image"],
-                        operations=[C.Decode(),
-                                    C.Resize((224, 224)),
-                                    C.RandomSharpness((-10, 10))])
+        data = data.map(operations=[C.Decode(), C.Resize((224, 224)),
+                                    C.RandomSharpness((-10, 10))], input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "interval" in str(error)
 
     try:
         data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data = data.map(input_columns=["image"],
-                        operations=[C.Decode(),
-                                    C.Resize((224, 224)),
-                                    C.RandomSharpness((10, 5))])
+        data = data.map(operations=[C.Decode(), C.Resize((224, 224)),
+                                    C.RandomSharpness((10, 5))], input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "(min,max)" in str(error)
@@ -339,11 +323,13 @@ def test_random_sharpness_invalid_params():
 if __name__ == "__main__":
     test_random_sharpness_py(plot=True)
     test_random_sharpness_py(None, plot=True)  # Test with default values
-    test_random_sharpness_py(degrees=(20.0, 25.0), plot=True)  # Test with degree values that show more obvious transformation
+    test_random_sharpness_py(degrees=(20.0, 25.0),
+                             plot=True)  # Test with degree values that show more obvious transformation
     test_random_sharpness_py_md5()
     test_random_sharpness_c(plot=True)
     test_random_sharpness_c(None, plot=True)  # test with default values
-    test_random_sharpness_c(degrees=[10, 15], plot=True)  # Test with degrees values that show more obvious transformation
+    test_random_sharpness_c(degrees=[10, 15],
+                            plot=True)  # Test with degrees values that show more obvious transformation
     test_random_sharpness_c_md5()
     test_random_sharpness_c_py(degrees=[1.5, 1.5], plot=True)
     test_random_sharpness_c_py(degrees=[1, 1], plot=True)

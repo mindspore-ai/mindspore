@@ -40,12 +40,12 @@ def test_center_crop_op(height=375, width=375, plot=False):
     decode_op = vision.Decode()
     # 3 images [375, 500] [600, 500] [512, 512]
     center_crop_op = vision.CenterCrop([height, width])
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=center_crop_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=center_crop_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     image_cropped = []
     image = []
@@ -67,8 +67,8 @@ def test_center_crop_md5(height=375, width=375):
     decode_op = vision.Decode()
     # 3 images [375, 500] [600, 500] [512, 512]
     center_crop_op = vision.CenterCrop([height, width])
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=center_crop_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=center_crop_op, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "center_crop_01_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
@@ -84,8 +84,8 @@ def test_center_crop_comp(height=375, width=375, plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
     center_crop_op = vision.CenterCrop([height, width])
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=center_crop_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=center_crop_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -95,7 +95,7 @@ def test_center_crop_comp(height=375, width=375, plot=False):
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_cropped = []
     image_py_cropped = []
@@ -126,11 +126,11 @@ def test_crop_grayscale(height=375, width=375):
 
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=transform, input_columns=["image"])
 
     # If input is grayscale, the output dimensions should be single channel
     crop_gray = vision.CenterCrop([height, width])
-    data1 = data1.map(input_columns=["image"], operations=crop_gray)
+    data1 = data1.map(operations=crop_gray, input_columns=["image"])
 
     for item1 in data1.create_dict_iterator(num_epochs=1):
         c_image = item1["image"]

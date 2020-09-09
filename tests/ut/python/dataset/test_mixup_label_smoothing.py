@@ -37,9 +37,9 @@ def test_one_hot_op():
     num_classes = 2
     epsilon_para = 0.1
 
-    transforms = [f.OneHotOp(num_classes=num_classes, smoothing_rate=epsilon_para),]
+    transforms = [f.OneHotOp(num_classes=num_classes, smoothing_rate=epsilon_para)]
     transform_label = f.Compose(transforms)
-    dataset = dataset.map(input_columns=["label"], operations=transform_label)
+    dataset = dataset.map(operations=transform_label, input_columns=["label"])
 
     golden_label = np.ones(num_classes) * epsilon_para / num_classes
     golden_label[1] = 1 - epsilon_para / num_classes
@@ -69,9 +69,9 @@ def test_mix_up_single():
     resize_op = c_vision.Resize((resize_height, resize_width), c_vision.Inter.LINEAR)
     one_hot_encode = c.OneHot(num_classes)  # num_classes is input argument
 
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
-    ds1 = ds1.map(input_columns=["image"], operations=resize_op)
-    ds1 = ds1.map(input_columns=["label"], operations=one_hot_encode)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
+    ds1 = ds1.map(operations=resize_op, input_columns=["image"])
+    ds1 = ds1.map(operations=one_hot_encode, input_columns=["label"])
 
     # apply batch operations
     batch_size = 3
@@ -81,7 +81,7 @@ def test_mix_up_single():
     alpha = 0.2
     transforms = [py_vision.MixUp(batch_size=batch_size, alpha=alpha, is_single=True)
                   ]
-    ds1 = ds1.map(input_columns=["image", "label"], operations=transforms)
+    ds1 = ds1.map(operations=transforms, input_columns=["image", "label"])
 
     for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):
         image1 = data1["image"]
@@ -118,9 +118,9 @@ def test_mix_up_multi():
     resize_op = c_vision.Resize((resize_height, resize_width), c_vision.Inter.LINEAR)
     one_hot_encode = c.OneHot(num_classes)  # num_classes is input argument
 
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
-    ds1 = ds1.map(input_columns=["image"], operations=resize_op)
-    ds1 = ds1.map(input_columns=["label"], operations=one_hot_encode)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
+    ds1 = ds1.map(operations=resize_op, input_columns=["image"])
+    ds1 = ds1.map(operations=one_hot_encode, input_columns=["label"])
 
     # apply batch operations
     batch_size = 3
@@ -130,7 +130,7 @@ def test_mix_up_multi():
     alpha = 0.2
     transforms = [py_vision.MixUp(batch_size=batch_size, alpha=alpha, is_single=False)
                   ]
-    ds1 = ds1.map(input_columns=["image", "label"], operations=transforms)
+    ds1 = ds1.map(operations=transforms, input_columns=["image", "label"])
     num_iter = 0
     batch1_image1 = 0
     for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):
