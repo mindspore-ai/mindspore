@@ -129,7 +129,7 @@ STATUS AwareQuantizer::GenerateQuantParam() {
         GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
       MS_ASSERT(false);
     }
-    auto *quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
+    auto quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
     if (quantParamCalcer == nullptr) {
       MS_LOG(ERROR) << "Can not find QuantParamCalcer for " << node->name.c_str()
                     << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";

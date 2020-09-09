@@ -41,6 +41,7 @@ class StridedSlice : public PrimitiveC {
   void SetEnd(const std::vector<int> &end);
   void SetStride(const std::vector<int> &stride);
   void SetIsScale(const std::vector<int> &is_scale);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
   StridedSlice() = default;
 

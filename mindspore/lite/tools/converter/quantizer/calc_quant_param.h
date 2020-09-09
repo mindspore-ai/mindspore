@@ -56,12 +56,12 @@ class LinearCalcer : public QuantParamCalcer {
 class QuantParamCalcRegister {
  public:
   virtual ~QuantParamCalcRegister();
-  QuantParamCalcer *GetQuantParamCalcer(schema::PrimitiveType opType);
+  std::shared_ptr<QuantParamCalcer> GetQuantParamCalcer(schema::PrimitiveType opType);
   static QuantParamCalcRegister *GetInstance();
 
  private:
   QuantParamCalcRegister();
-  std::unordered_map<schema::PrimitiveType, QuantParamCalcer *> _registerMap;
+  std::unordered_map<schema::PrimitiveType, std::shared_ptr<QuantParamCalcer>> _registerMap;
 };
 }  // namespace lite
 }  // namespace mindspore

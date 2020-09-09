@@ -49,6 +49,49 @@ void StridedSlice::SetIsScale(const std::vector<int> &is_scale) {
   this->primitive_->value.AsStridedSlice()->isScale = is_scale;
 }
 
+int StridedSlice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_StridedSlice;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_StridedSlice) {
+    MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::StridedSliceT();
+    attr->beginMask = GetValue<int>(prim.GetAttr("begin_mask"));
+    attr->endMask = GetValue<int>(prim.GetAttr("end_mask"));
+    attr->ellipsisMask = GetValue<int>(prim.GetAttr("ellipsis_mask"));
+    attr->newAxisMask = GetValue<int>(prim.GetAttr("new_axis_mask"));
+    attr->shrinkAxisMask = GetValue<int>(prim.GetAttr("shrink_axis_mask"));
+    auto inputNodeFirst = inputs[kAnfPopulaterOne];
+    std::vector<int> beginVec;
+    GetAttrDataFromInput(inputNodeFirst, &beginVec);
+    attr->begin = beginVec;
+
+    auto inputNodeSecond = inputs[kAnfPopulaterTwo];
+    std::vector<int> endVec;
+    GetAttrDataFromInput(inputNodeSecond, &endVec);
+    attr->end = endVec;
+
+    auto inputNodeThird = inputs[kAnfPopulaterThree];
+    std::vector<int> strideVec;
+    GetAttrDataFromInput(inputNodeThird, &strideVec);
+    attr->stride = strideVec;
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 #else
 
 int StridedSlice::GetBeginMask() const { return this->primitive_->value_as_StridedSlice()->beginMask(); }

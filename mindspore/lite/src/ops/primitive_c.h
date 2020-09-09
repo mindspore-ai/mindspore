@@ -113,6 +113,8 @@ class PrimitiveC : public mindspore::Primitive {
 
   static PrimitiveC *Create(mindspore::schema::PrimitiveT *primitive);
 
+  void GetAttrDataFromInput(const AnfNodePtr inputNode, std::vector<int> *data);
+
   static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                             const schema::QuantType &quantType);
   void PopulaterQuantParam(const Primitive &prim, std::vector<std::vector<schema::QuantParamT>> *vecInputQuantParam,

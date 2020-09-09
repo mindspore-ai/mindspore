@@ -232,6 +232,25 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim,
     vecOutputQuantParam->emplace_back(quants);
   }
 }
+
+void PrimitiveC::GetAttrDataFromInput(const AnfNodePtr inputNode, std::vector<int> *data) {
+  if (inputNode->isa<ValueNode>()) {
+    auto valNode = inputNode->cast<ValueNodePtr>();
+    MS_ASSERT(valNode != nullptr);
+    auto val = valNode->value();
+    MS_ASSERT(val != nullptr);
+    if (val->isa<ValueTuple>()) {
+      auto tuple = val->cast<ValueTuplePtr>();
+      MS_ASSERT(tuple != nullptr);
+      for (size_t i = 0; i < tuple->size(); i++) {
+        auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+        MS_ASSERT(elem != nullptr);
+        data->emplace_back(static_cast<int>(elem->value()));
+      }
+    }
+  }
+}
+
 schema::PrimitiveT *PrimitiveC::GetPrimitiveT() const { return this->primitive_; }
 
 void PrimitiveC::ClearPrimitiveT() { this->primitive_ = nullptr; }

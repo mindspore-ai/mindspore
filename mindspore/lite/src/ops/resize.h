@@ -37,6 +37,7 @@ class Resize : public PrimitiveC {
   void SetNewWidth(int64_t new_width);
   void SetAlignCorners(bool align_corners);
   void SetPreserveAspectRatio(bool preserve_aspect_ratio);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
   Resize() = default;
 
