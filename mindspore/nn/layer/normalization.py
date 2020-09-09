@@ -585,9 +585,18 @@ class GroupNorm(Cell):
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
 
     Examples:
-        >>> goup_norm_op = nn.GroupNorm(16, 64)
-        >>> x = Tensor(np.ones([1, 64, 256, 256], np.float32))
+        >>> goup_norm_op = nn.GroupNorm(2, 2)
+        >>> x = Tensor(np.ones([1, 2, 4, 4], np.float32))
         >>> goup_norm_op(x)
+        [[[[0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]]
+
+          [[0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]]]]
     """
 
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):

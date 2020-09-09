@@ -264,6 +264,9 @@ class IOU(PrimitiveWithInfer):
         >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> iou(anchor_boxes, gt_boxes)
+        [[0.0, 65504, 65504],
+         [0.0, 0.0, 0.0],
+         [0.22253, 0.0, 0.0]]
     """
 
     @prim_attr_register

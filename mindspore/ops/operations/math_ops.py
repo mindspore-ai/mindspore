@@ -1382,10 +1382,10 @@ class Exp(PrimitiveWithInfer):
     Returns exponential of a tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
 
     Outputs:
-        Tensor, has the same shape as the `input_x`.
+        Tensor, has the same shape and dtype as the `input_x`.
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -1452,7 +1452,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     width and determined by the arguments range and nbins.
 
     Args:
-        dtype (string): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
+        dtype (str): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
         nbins (int): The number of histogram bins, the type is a positive integer.
 
     Inputs:
