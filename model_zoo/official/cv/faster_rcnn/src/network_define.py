@@ -160,6 +160,7 @@ class TrainOneStepCell(nn.Cell):
     def __init__(self, network, network_backbone, optimizer, sens=1.0, reduce_flag=False, mean=True, degree=None):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.backbone = network_backbone
         self.weights = ParameterTuple(network.trainable_params())
         self.optimizer = optimizer

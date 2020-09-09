@@ -55,6 +55,7 @@ class BertFinetuneCell(nn.Cell):
 
         super(BertFinetuneCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True,
@@ -157,6 +158,7 @@ class BertSquadCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(BertSquadCell, self).__init__(auto_prefix=False)
         self.network = network
+        self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
