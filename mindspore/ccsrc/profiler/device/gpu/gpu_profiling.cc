@@ -406,8 +406,10 @@ void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
     CHECK_CUDA_RET_WITH_ERROR(cudaEventRecord(op_event_start_, (CUstream)stream_),
                               "cudaEventRecord op event start failed");
     op_host_time_start_ = GetHostTimeStamp();
+    op_cupti_time_start_ = GetCUPTITimeStamp();
   } else {
     op_host_time_start_ = GetHostTimeStamp();
+    op_cupti_time_start_ = GetCUPTITimeStamp();
   }
   SetRunTimeData(op_name, stream);
 }
@@ -431,7 +433,7 @@ void GPUProfiler::OpDataProducerEnd() {
   }
   MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
   SetRunTimeData(op_name_, op_time_elapsed);
-  SetRunTimeData(op_name_, op_host_time_start_, op_time_elapsed);
+  SetRunTimeData(op_name_, op_cupti_time_start_, op_time_elapsed);
 }
 
 void GPUProfiler::StopCUPTI() {
