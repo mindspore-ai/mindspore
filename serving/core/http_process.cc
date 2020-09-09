@@ -42,7 +42,7 @@ enum HTTP_DATA_TYPE { HTTP_DATA_NONE, HTTP_DATA_INT, HTTP_DATA_FLOAT };
 static const std::map<inference::DataType, HTTP_DATA_TYPE> infer_type2_http_type{
   {inference::DataType::kMSI_Int32, HTTP_DATA_INT}, {inference::DataType::kMSI_Float32, HTTP_DATA_FLOAT}};
 
-Status GetPostMessage(struct evhttp_request *req, std::string *buf) {
+Status GetPostMessage(struct evhttp_request *const req, std::string *const buf) {
   Status status(SUCCESS);
   size_t post_size = evbuffer_get_length(req->input_buffer);
   if (post_size == 0) {
@@ -57,7 +57,8 @@ Status GetPostMessage(struct evhttp_request *req, std::string *buf) {
     return status;
   }
 }
-Status CheckRequestValid(struct evhttp_request *http_request) {
+
+Status CheckRequestValid(struct evhttp_request *const http_request) {
   Status status(SUCCESS);
   switch (evhttp_request_get_command(http_request)) {
     case EVHTTP_REQ_POST:
@@ -68,7 +69,7 @@ Status CheckRequestValid(struct evhttp_request *http_request) {
   }
 }
 
-void ErrorMessage(struct evhttp_request *req, Status status) {
+void ErrorMessage(struct evhttp_request *const req, Status status) {
   json error_json = {{"error_message", status.StatusMessage()}};
   std::string out_error_str = error_json.dump();
   struct evbuffer *retbuff = evbuffer_new();
@@ -77,7 +78,7 @@ void ErrorMessage(struct evhttp_request *req, Status status) {
   evbuffer_free(retbuff);
 }
 
-Status CheckMessageValid(const json &message_info, HTTP_TYPE *type) {
+Status CheckMessageValid(const json &message_info, HTTP_TYPE *const type) {
   Status status(SUCCESS);
   int count = 0;
   if (message_info.find(HTTP_DATA) != message_info.end()) {
@@ -95,7 +96,7 @@ Status CheckMessageValid(const json &message_info, HTTP_TYPE *type) {
   return status;
 }
 
-Status GetDataFromJson(const json &json_data_array, ServingTensor *request_tensor, size_t data_index,
+Status GetDataFromJson(const json &json_data_array, ServingTensor *const request_tensor, size_t data_index,
                        HTTP_DATA_TYPE type) {
   Status status(SUCCESS);
   auto type_name = [](const json &json_data) -> std::string {
@@ -133,7 +134,7 @@ Status GetDataFromJson(const json &json_data_array, ServingTensor *request_tenso
   return SUCCESS;
 }
 
-Status RecusiveGetTensor(const json &json_data, size_t depth, ServingTensor *request_tensor, size_t data_index,
+Status RecusiveGetTensor(const json &json_data, size_t depth, ServingTensor *const request_tensor, size_t data_index,
                          HTTP_DATA_TYPE type) {
   Status status(SUCCESS);
   std::vector<int64_t> required_shape = request_tensor->shape();
@@ -185,7 +186,7 @@ std::vector<int64_t> GetJsonArrayShape(const json &json_array) {
   return json_shape;
 }
 
-Status TransDataToPredictRequest(const json &message_info, PredictRequest *request) {
+Status TransDataToPredictRequest(const json &message_info, PredictRequest *const request) {
   Status status = SUCCESS;
   auto tensors = message_info.find(HTTP_DATA);
   if (tensors == message_info.end()) {
@@ -241,7 +242,7 @@ Status TransDataToPredictRequest(const json &message_info, PredictRequest *reque
   return SUCCESS;
 }
 
-Status TransTensorToPredictRequest(const json &message_info, PredictRequest *request) {
+Status TransTensorToPredictRequest(const json &message_info, PredictRequest *const request) {
   Status status(SUCCESS);
   auto tensors = message_info.find(HTTP_TENSOR);
   if (tensors == message_info.end()) {
@@ -291,7 +292,8 @@ Status TransTensorToPredictRequest(const json &message_info, PredictRequest *req
   return status;
 }
 
-Status TransHTTPMsgToPredictRequest(struct evhttp_request *http_request, PredictRequest *request, HTTP_TYPE *type) {
+Status TransHTTPMsgToPredictRequest(struct evhttp_request *const http_request, PredictRequest *const request,
+                                    HTTP_TYPE *const type) {
   Status status = CheckRequestValid(http_request);
   if (status != SUCCESS) {
     return status;
@@ -352,7 +354,7 @@ Status TransHTTPMsgToPredictRequest(struct evhttp_request *http_request, Predict
   return status;
 }
 
-Status GetJsonFromTensor(const ms_serving::Tensor &tensor, int len, int *pos, json *out_json) {
+Status GetJsonFromTensor(const ms_serving::Tensor &tensor, int len, int *const pos, json *const out_json) {
   Status status(SUCCESS);
   switch (tensor.tensor_type()) {
     case ms_serving::MS_INT32: {
@@ -366,7 +368,7 @@ Status GetJsonFromTensor(const ms_serving::Tensor &tensor, int len, int *pos, js
     case ms_serving::MS_FLOAT32: {
       auto data = reinterpret_cast<const float *>(tensor.data().data()) + *pos;
       std::vector<float> result_tensor(len);
-      memcpy_s(result_tensor.data(), result_tensor.size() * sizeof(float), data, len * sizeof(float));
+      (void)memcpy_s(result_tensor.data(), result_tensor.size() * sizeof(float), data, len * sizeof(float));
       *out_json = std::move(result_tensor);
       *pos += len;
       break;
@@ -378,7 +380,7 @@ Status GetJsonFromTensor(const ms_serving::Tensor &tensor, int len, int *pos, js
   return status;
 }
 
-Status TransPredictReplyToData(const PredictReply &reply, json *out_json) {
+Status TransPredictReplyToData(const PredictReply &reply, json *const out_json) {
   Status status(SUCCESS);
   for (int i = 0; i < reply.result_size(); i++) {
     (*out_json)["data"].push_back(json());
@@ -396,7 +398,7 @@ Status TransPredictReplyToData(const PredictReply &reply, json *out_json) {
   return status;
 }
 
-Status RecusiveGetJson(const ms_serving::Tensor &tensor, int depth, int *pos, json *out_json) {
+Status RecusiveGetJson(const ms_serving::Tensor &tensor, int depth, int *const pos, json *const out_json) {
   Status status(SUCCESS);
   if (depth >= 10) {
     ERROR_INFER_STATUS(status, FAILED, "result tensor shape dims is larger than 10");
@@ -420,7 +422,7 @@ Status RecusiveGetJson(const ms_serving::Tensor &tensor, int depth, int *pos, js
   return status;
 }
 
-Status TransPredictReplyToTensor(const PredictReply &reply, json *out_json) {
+Status TransPredictReplyToTensor(const PredictReply &reply, json *const out_json) {
   Status status(SUCCESS);
   for (int i = 0; i < reply.result_size(); i++) {
     (*out_json)["tensor"].push_back(json());
@@ -434,7 +436,7 @@ Status TransPredictReplyToTensor(const PredictReply &reply, json *out_json) {
   return status;
 }
 
-Status TransPredictReplyToHTTPMsg(const PredictReply &reply, const HTTP_TYPE &type, struct evbuffer *buf) {
+Status TransPredictReplyToHTTPMsg(const PredictReply &reply, const HTTP_TYPE &type, struct evbuffer *const buf) {
   Status status(SUCCESS);
   json out_json;
   switch (type) {
@@ -454,7 +456,7 @@ Status TransPredictReplyToHTTPMsg(const PredictReply &reply, const HTTP_TYPE &ty
   return status;
 }
 
-Status HttpHandleMsgDetail(struct evhttp_request *req, void *arg, struct evbuffer *retbuff) {
+Status HttpHandleMsgDetail(struct evhttp_request *const req, void *const arg, struct evbuffer *const retbuff) {
   PredictRequest request;
   PredictReply reply;
   HTTP_TYPE type;
@@ -482,7 +484,7 @@ Status HttpHandleMsgDetail(struct evhttp_request *req, void *arg, struct evbuffe
   return SUCCESS;
 }
 
-void http_handler_msg(struct evhttp_request *req, void *arg) {
+void http_handler_msg(struct evhttp_request *const req, void *const arg) {
   MSI_TIME_STAMP_START(TotalRestfulPredict)
   struct evbuffer *retbuff = evbuffer_new();
   if (retbuff == nullptr) {

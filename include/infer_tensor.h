@@ -107,6 +107,7 @@ class InferTensor : public InferTensorBase {
 
  public:
   InferTensor() = default;
+  ~InferTensor() = default;
   InferTensor(DataType type, std::vector<int64_t> shape, const void *data, size_t data_len) {
     set_data_type(type);
     set_shape(shape);
@@ -131,6 +132,8 @@ class InferTensor : public InferTensorBase {
 
 class InferImagesBase {
  public:
+  InferImagesBase() = default;
+  virtual ~InferImagesBase() = default;
   virtual size_t batch_size() const = 0;
   virtual bool get(size_t index, const void *&pic_buffer, uint32_t &pic_size) const = 0;
   virtual size_t input_index() const = 0;  // the index of images as input in model
@@ -138,18 +141,24 @@ class InferImagesBase {
 
 class RequestBase {
  public:
+  RequestBase() = default;
+  virtual ~RequestBase() = default;
   virtual size_t size() const = 0;
   virtual const InferTensorBase *operator[](size_t index) const = 0;
 };
 
 class ImagesRequestBase {
  public:
+  ImagesRequestBase() = default;
+  virtual ~ImagesRequestBase() = default;
   virtual size_t size() const = 0;
   virtual const InferImagesBase *operator[](size_t index) const = 0;
 };
 
 class ReplyBase {
  public:
+  ReplyBase() = default;
+  virtual ~ReplyBase() = default;
   virtual size_t size() const = 0;
   virtual InferTensorBase *operator[](size_t index) = 0;
   virtual const InferTensorBase *operator[](size_t index) const = 0;
@@ -160,6 +169,7 @@ class ReplyBase {
 class VectorInferTensorWrapReply : public ReplyBase {
  public:
   explicit VectorInferTensorWrapReply(std::vector<InferTensor> &tensor_list) : tensor_list_(tensor_list) {}
+  ~VectorInferTensorWrapReply() = default;
 
   size_t size() const { return tensor_list_.size(); }
   InferTensorBase *operator[](size_t index) {
@@ -187,6 +197,7 @@ class VectorInferTensorWrapReply : public ReplyBase {
 class VectorInferTensorWrapRequest : public RequestBase {
  public:
   explicit VectorInferTensorWrapRequest(const std::vector<InferTensor> &tensor_list) : tensor_list_(tensor_list) {}
+  ~VectorInferTensorWrapRequest() = default;
 
   size_t size() const { return tensor_list_.size(); }
   const InferTensorBase *operator[](size_t index) const {

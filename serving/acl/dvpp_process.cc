@@ -233,7 +233,7 @@ Status DvppProcess::InputInputBuffer(const void *pic_buffer, size_t pic_buffer_s
 }
 
 static void JpegErrorExitCustom(j_common_ptr cinfo) {
-  char jpeg_last_error_msg[JMSG_LENGTH_MAX];
+  char jpeg_last_error_msg[JMSG_LENGTH_MAX] = {0};
   if (cinfo != nullptr && cinfo->err != nullptr && cinfo->err->format_message != nullptr) {
     (*(cinfo->err->format_message))(cinfo, jpeg_last_error_msg);
   }

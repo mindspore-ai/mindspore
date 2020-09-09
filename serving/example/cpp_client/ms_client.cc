@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     size_t start_pos = arg_val.find(arg_target_str);
     if (start_pos != std::string::npos) {
       start_pos += arg_target_str.size();
-      if (arg_val[start_pos] == '=') {
+      if (start_pos < arg_val.size() && arg_val[start_pos] == '=') {
         target_str = arg_val.substr(start_pos + 1);
       } else {
         std::cout << "The only correct argument syntax is --target=" << std::endl;

@@ -50,6 +50,7 @@ class MS_API ServingTensor : public inference::InferTensorBase {
 class ServingImages : public inference::InferImagesBase {
  public:
   explicit ServingImages(const ms_serving::Images &images);
+  ~ServingImages() = default;
 
   size_t batch_size() const override;
   bool get(size_t index, const void *&pic_buffer, uint32_t &pic_size) const override;
@@ -62,6 +63,7 @@ class ServingImages : public inference::InferImagesBase {
 class ServingRequest : public inference::RequestBase {
  public:
   explicit ServingRequest(const ms_serving::PredictRequest &request);
+  ~ServingRequest() = default;
 
   size_t size() const override;
   const inference::InferTensorBase *operator[](size_t index) const override;
@@ -74,6 +76,7 @@ class ServingRequest : public inference::RequestBase {
 class ServingReply : public inference::ReplyBase {
  public:
   explicit ServingReply(ms_serving::PredictReply &reply) : reply_(reply) {}
+  ~ServingReply() = default;
 
   size_t size() const override;
   inference::InferTensorBase *operator[](size_t index) override;
@@ -89,6 +92,7 @@ class ServingReply : public inference::ReplyBase {
 class ServingImagesRequest : public inference::ImagesRequestBase {
  public:
   explicit ServingImagesRequest(const ms_serving::PredictRequest &request);
+  ~ServingImagesRequest() = default;
 
   size_t size() const override;
   const inference::InferImagesBase *operator[](size_t index) const override;
