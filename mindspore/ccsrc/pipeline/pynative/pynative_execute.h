@@ -155,7 +155,9 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::unordered_map<std::string, size_t> op_id_map_;
   std::unordered_map<std::string, std::string> obj_to_forward_id_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
-  std::stack<FuncGraphPtr> graph_p_;
+  std::unordered_map<std::string, FuncGraphPtr> df_builder_map_;
+  // the stack that records the context of graph created, the bottom is the top graph
+  std::stack<FuncGraphPtr> graph_context_;
   FuncGraphPtr top_g_;
   FuncGraphPtr df_builder_;
   FuncGraphPtr curr_g_;
