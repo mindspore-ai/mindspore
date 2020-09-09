@@ -293,7 +293,7 @@ class RowTensor:
     The dense tensor dense represented by an RowTensor slices has
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
 
-    RowTensor can only be used in the `Cell`'s contruct method.
+    RowTensor can only be used in the `Cell`'s construct method.
 
     It is not supported in pynative mode at the moment.
 

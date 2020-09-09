@@ -46,7 +46,6 @@ class _CellListBase():
     by iterator or subscript , it will be interpretated as a list of cells.
     """
     def __init__(self):
-        super(_CellListBase, self).__init__()
         self.__cell_as_list__ = True
 
     @abstractmethod
@@ -177,7 +176,8 @@ class CellList(_CellListBase, Cell):
                   (2): ReLU<> >
     """
     def __init__(self, *args):
-        super(CellList, self).__init__()
+        _CellListBase.__init__(self)
+        Cell.__init__(self)
         if len(args) == 1:
             self.extend(args[0])
 

@@ -44,7 +44,6 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   // Register a method which specialize based on types vectors;
   virtual void Register(const TypePtrList &types, specialize_fn s_fn);
   virtual void Register(const TypePtrList &types, const py::function &py_fn);
-  virtual void Register(const std::vector<std::string> &types_name, const py::function &py_fn);
   virtual void PyRegister(const py::tuple &tuple, const py::function &py_fn);
 
   FuncGraphPtr GenerateFromTypes(const TypePtrList &types) override;
