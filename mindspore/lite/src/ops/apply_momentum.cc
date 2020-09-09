@@ -19,7 +19,27 @@ namespace lite {
 
 
 #ifdef PRIMITIVE_WRITEABLE
-
+int ApplyMomentum::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_ApplyMomentum;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_ApplyMomentum) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  auto attr = std::make_unique<schema::ApplyMomentumT>();
+  this->primitive_->value.value = attr.release();
+  if (this->primitive_->value.value == nullptr) {
+    MS_LOG(ERROR) << "new primitiveT value failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 #else
 int ApplyMomentum::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);

@@ -114,8 +114,6 @@ void Conv2DGradInput::PopulaterConv2DMultiGroup(const Primitive &prim, schema::P
     channel_mutiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
   }
   attr->channelMultiplier = channel_mutiplier;
-
-  primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
   primitive->value.value = attr.release();
 }
 
@@ -166,8 +164,6 @@ void Conv2DGradInput::PopulaterConv2DSingleGroup(const Primitive &prim,
   } else {
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
-
-  primitive->value.type = schema::PrimitiveType_Conv2D;
   primitive->value.value = attr.release();
 }
 int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {

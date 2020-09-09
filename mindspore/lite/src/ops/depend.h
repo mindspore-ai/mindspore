@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPS_APPLY_MOMENTUM_H_
-#define MINDSPORE_LITE_SRC_OPS_APPLY_MOMENTUM_H_
+#ifndef LITE_MINDSPORE_LITE_SRC_OPS_DEPEND_H_
+#define LITE_MINDSPORE_LITE_SRC_OPS_DEPEND_H_
 
 #include <vector>
-#include <set>
-#include <cmath>
-#include <memory>
-#include "ir/dtype/type_id.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class ApplyMomentum : public PrimitiveC {
+class Depend : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(ApplyMomentum, PrimitiveC);
-  ApplyMomentum() = default;
-  explicit ApplyMomentum(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  MS_DECLARE_PARENT(Depend, PrimitiveC);
+  Depend() = default;
+  explicit Depend(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  ApplyMomentum() = default;
-
-  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+  Depend() = default;
 #endif
-  int InferShape(std::vector<lite::tensor::Tensor *> inputs_, std::vector<lite::tensor::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_OPS_APPLY_MOMENTUM_H_
+#endif  // LITE_MINDSPORE_LITE_SRC_OPS_Depend_H_

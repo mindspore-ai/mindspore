@@ -323,6 +323,18 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
+  } else if (value->isa<mindspore::BoolImm>()) {
+    auto valueAbstract = valueNode->abstract();
+    auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);
+    auto typePtr = abstractScalar->GetTypeTrack();
+    paramTensor->dataType = typePtr->type_id();
+    paramTensor->dims = {1};
+    paramTensor->nodeType = schema::NodeType_ValueNode;
+    auto data = value->cast<mindspore::BoolImmPtr>();
+    paramTensor->data.emplace_back(data->value());
+    node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
+    output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+    meta_graphT->allTensors.emplace_back(std::move(paramTensor));
   } else if (value->isa<mindspore::ValueSequeue>()) {
     MS_LOG(DEBUG) << "Value type is ValueSequence.";
     return RET_OK;

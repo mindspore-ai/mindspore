@@ -33,7 +33,7 @@ class SoftmaxCrossEntropy : public PrimitiveC {
   SoftmaxCrossEntropy() = default;
   explicit SoftmaxCrossEntropy(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
-
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   SoftmaxCrossEntropy() = default;
 

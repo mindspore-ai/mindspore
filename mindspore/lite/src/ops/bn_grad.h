@@ -33,6 +33,7 @@ class BNGrad : public PrimitiveC {
   explicit BNGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetEps(float eps);
   void SetMomentum(float momentum);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   BNGrad() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;

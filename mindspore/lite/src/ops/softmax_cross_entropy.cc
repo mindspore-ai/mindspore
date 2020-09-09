@@ -24,7 +24,33 @@ std::vector<int> SoftmaxCrossEntropy::GetAxis() const { return this->primitive_-
 void SoftmaxCrossEntropy::SetAxis(const std::vector<int> &axis) {
   this->primitive_->value.AsSoftmaxCrossEntropy()->axis = axis;
 }
-
+int SoftmaxCrossEntropy::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_SoftmaxCrossEntropy;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_SoftmaxCrossEntropy) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::SoftmaxCrossEntropyT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 #else
 
 std::vector<int> SoftmaxCrossEntropy::GetAxis() const {
