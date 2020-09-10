@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SUB_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SUB_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
@@ -22,24 +22,35 @@
 
 namespace mindspore {
 namespace kernel {
-class SubCPUKernel : public CPUKernel {
+class ArithmeticCPUKernel : public CPUKernel {
  public:
-  SubCPUKernel() : offset_(0) {}
-  ~SubCPUKernel() override = default;
+  ArithmeticCPUKernel() = default;
+  ~ArithmeticCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
  private:
-  int offset_;
+  bool is_number_{false};
+  OperateType operate_type_{ADD};
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(
   Sub, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  SubCPUKernel);
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Sub, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Sub, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SUB_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_CPU_KERNEL_H_
