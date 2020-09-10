@@ -99,7 +99,7 @@ if __name__ == '__main__':
         else:
             init()
             context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True, all_reduce_fusion_config=[104])
+                                              gradients_mean=True, all_reduce_fusion_config=[107])
             ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset
