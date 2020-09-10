@@ -65,19 +65,18 @@
 
 #elif defined(USE_GLOG)
 
+#include <securec.h>
 #include <cstdio>
 #include "glog/logging.h"
 
 template <typename... Args>
 inline std::string GetFormatString(const char *format, Args... args) {
   char buf[BUFSIZ];
-  int new_len = snprintf(&buf[0], BUFSIZ, format, args...);
-  new_len++;
-  if (new_len > BUFSIZ) {
-    std::vector<char> buf2(new_len);
-    snprintf(buf2.data(), new_len, format, args...);
-    return std::string(buf2.data());
-  }
+#ifdef _WIN32
+  _snprintf_s(&buf[0], BUFSIZ, BUFSIZ - 1, format, args...);
+#else
+  snprintf_s(&buf[0], BUFSIZ, BUFSIZ - 1, format, args...);
+#endif
   return buf;
 }
 
