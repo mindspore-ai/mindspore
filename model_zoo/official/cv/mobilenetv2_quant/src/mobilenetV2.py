@@ -221,24 +221,24 @@ class mobilenetV2(nn.Cell):
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 w = Tensor(np.random.normal(0, np.sqrt(2. / n), m.weight.data.shape).astype("float32"))
-                m.weight.set_parameter_data(w)
+                m.weight.set_data(w)
                 if m.bias is not None:
-                    m.bias.set_parameter_data(Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
+                    m.bias.set_data(Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
             elif isinstance(m, nn.Conv2dBnAct):
                 n = m.conv.kernel_size[0] * m.conv.kernel_size[1] * m.conv.out_channels
                 w = Tensor(np.random.normal(0, np.sqrt(2. / n), m.conv.weight.data.shape).astype("float32"))
-                m.conv.weight.set_parameter_data(w)
+                m.conv.weight.set_data(w)
                 if m.conv.bias is not None:
-                    m.conv.bias.set_parameter_data(Tensor(np.zeros(m.conv.bias.data.shape, dtype="float32")))
+                    m.conv.bias.set_data(Tensor(np.zeros(m.conv.bias.data.shape, dtype="float32")))
             elif isinstance(m, nn.BatchNorm2d):
-                m.gamma.set_parameter_data(Tensor(np.ones(m.gamma.data.shape, dtype="float32")))
-                m.beta.set_parameter_data(Tensor(np.zeros(m.beta.data.shape, dtype="float32")))
+                m.gamma.set_data(Tensor(np.ones(m.gamma.data.shape, dtype="float32")))
+                m.beta.set_data(Tensor(np.zeros(m.beta.data.shape, dtype="float32")))
             elif isinstance(m, nn.Dense):
-                m.weight.set_parameter_data(Tensor(np.random.normal(0, 0.01, m.weight.data.shape).astype("float32")))
+                m.weight.set_data(Tensor(np.random.normal(0, 0.01, m.weight.data.shape).astype("float32")))
                 if m.bias is not None:
-                    m.bias.set_parameter_data(Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
+                    m.bias.set_data(Tensor(np.zeros(m.bias.data.shape, dtype="float32")))
             elif isinstance(m, nn.DenseBnAct):
-                m.dense.weight.set_parameter_data(
+                m.dense.weight.set_data(
                     Tensor(np.random.normal(0, 0.01, m.dense.weight.data.shape).astype("float32")))
                 if m.dense.bias is not None:
-                    m.dense.bias.set_parameter_data(Tensor(np.zeros(m.dense.bias.data.shape, dtype="float32")))
+                    m.dense.bias.set_data(Tensor(np.zeros(m.dense.bias.data.shape, dtype="float32")))

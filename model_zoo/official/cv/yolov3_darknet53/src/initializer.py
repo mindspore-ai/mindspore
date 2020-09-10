@@ -155,24 +155,24 @@ def default_recurisive_init(custom_cell):
     """Initialize parameter."""
     for _, cell in custom_cell.cells_and_names():
         if isinstance(cell, nn.Conv2d):
-            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                         cell.weight.shape,
-                                                         cell.weight.dtype)
+            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
+                                                  cell.weight.shape,
+                                                  cell.weight.dtype))
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.default_input = init.initializer(init.Uniform(bound),
-                                                           cell.bias.shape,
-                                                           cell.bias.dtype)
+                cell.bias.set_data(init.initializer(init.Uniform(bound),
+                                                    cell.bias.shape,
+                                                    cell.bias.dtype))
         elif isinstance(cell, nn.Dense):
-            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
-                                                         cell.weight.shape,
-                                                         cell.weight.dtype)
+            cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
+                                                  cell.weight.shape,
+                                                  cell.weight.dtype))
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight)
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.default_input = init.initializer(init.Uniform(bound),
-                                                           cell.bias.shape,
-                                                           cell.bias.dtype)
+                cell.bias.set_data(init.initializer(init.Uniform(bound),
+                                                    cell.bias.shape,
+                                                    cell.bias.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass

@@ -39,7 +39,7 @@ def set_block_param_with_rand(net, rand_func=None):
         return
     net.init_parameters_data()
     for param in net.trainable_params():
-        param.default_input = Tensor(rand_func(param.default_input.asnumpy().shape))
+        param.set_data(Tensor(rand_func(param.data.asnumpy().shape)))
 
 
 def compile_block(net, *inputs, rand_func=None, training=True):

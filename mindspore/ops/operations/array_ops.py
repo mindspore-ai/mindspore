@@ -251,7 +251,7 @@ class Cast(PrimitiveWithInfer):
             if isinstance(x, numbers.Number):
                 return (True, Tensor(x, dtype=dtype))
             if isinstance(x, Parameter):
-                data = x.default_input
+                data = x.data
                 if data.dtype == dtype:
                     return (True, x)
         return (False, None)

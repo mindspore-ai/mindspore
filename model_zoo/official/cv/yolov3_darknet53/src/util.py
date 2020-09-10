@@ -69,12 +69,12 @@ def load_backbone(net, ckpt_path, args):
                 darknet_weight = '{}.weight'.format(name)
                 darknet_bias = '{}.bias'.format(name)
                 if darknet_weight in param_dict:
-                    cell.weight.default_input = param_dict[darknet_weight].data
+                    cell.weight.set_data(param_dict[darknet_weight].data)
                     find_param.append(darknet_weight)
                 else:
                     not_found_param.append(darknet_weight)
                 if darknet_bias in param_dict:
-                    cell.bias.default_input = param_dict[darknet_bias].data
+                    cell.bias.set_data(param_dict[darknet_bias].data)
                     find_param.append(darknet_bias)
                 else:
                     not_found_param.append(darknet_bias)
@@ -84,22 +84,22 @@ def load_backbone(net, ckpt_path, args):
                 darknet_gamma = '{}.gamma'.format(name)
                 darknet_beta = '{}.beta'.format(name)
                 if darknet_moving_mean in param_dict:
-                    cell.moving_mean.default_input = param_dict[darknet_moving_mean].data
+                    cell.moving_mean.set_data(param_dict[darknet_moving_mean].data)
                     find_param.append(darknet_moving_mean)
                 else:
                     not_found_param.append(darknet_moving_mean)
                 if darknet_moving_variance in param_dict:
-                    cell.moving_variance.default_input = param_dict[darknet_moving_variance].data
+                    cell.moving_variance.set_data(param_dict[darknet_moving_variance].data)
                     find_param.append(darknet_moving_variance)
                 else:
                     not_found_param.append(darknet_moving_variance)
                 if darknet_gamma in param_dict:
-                    cell.gamma.default_input = param_dict[darknet_gamma].data
+                    cell.gamma.set_data(param_dict[darknet_gamma].data)
                     find_param.append(darknet_gamma)
                 else:
                     not_found_param.append(darknet_gamma)
                 if darknet_beta in param_dict:
-                    cell.beta.default_input = param_dict[darknet_beta].data
+                    cell.beta.set_data(param_dict[darknet_beta].data)
                     find_param.append(darknet_beta)
                 else:
                     not_found_param.append(darknet_beta)

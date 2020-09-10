@@ -48,7 +48,7 @@ def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     sparse_apply_proximal_adagrad = Net()
     sparse_apply_proximal_adagrad(gradient, indices)
-    print(sparse_apply_proximal_adagrad.var.default_input)
+    print(sparse_apply_proximal_adagrad.var.data)
     expect_var = np.array([[[0.9929289, 0.9929289, 0.9929289],
                             [0.9929289, 0.9929289, 0.9929289],
                             [0.9929289, 0.9929289, 0.9929289]],
@@ -58,4 +58,4 @@ def test_net():
                            [[0.9929289, 0.9929289, 0.9929289],
                             [0.9929289, 0.9929289, 0.9929289],
                             [0.9929289, 0.9929289, 0.9929289]]]).astype(np.float32)
-    assert np.all(sparse_apply_proximal_adagrad.var.default_input.asnumpy() == expect_var)
+    assert np.all(sparse_apply_proximal_adagrad.var.data.asnumpy() == expect_var)

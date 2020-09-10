@@ -217,7 +217,7 @@ def test_onnx_export_load_run(name, net, inp):
     print(outputs[0])
     # overwrite default weight to run model
     for item in net.trainable_params():
-        default_value = item.default_input.asnumpy()
+        default_value = item.data.asnumpy()
         input_map[item.name] = np.ones(default_value.shape, dtype=default_value.dtype)
     outputs = ort_session.run(None, input_map)
     print(outputs[0])

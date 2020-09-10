@@ -138,7 +138,7 @@ def calc_broadcast_shape_from_param(params):
         if value is None:
             return None
         if isinstance(value, Parameter):
-            value_t = value.default_input
+            value_t = value.data
         else:
             value_t = cast_to_tensor(value, mstype.float32)
         broadcast_shape = utils.get_broadcast_shape(
@@ -159,9 +159,9 @@ def check_greater_equal_zero(value, name):
 
     """
     if isinstance(value, Parameter):
-        if not isinstance(value.default_input, Tensor):
+        if not isinstance(value.data, Tensor):
             return
-        value = value.default_input
+        value = value.data
     comp = np.less(value.asnumpy(), np.zeros(value.shape))
     if comp.any():
         raise ValueError(f'{name} should be greater than ot equal to zero.')
@@ -182,9 +182,9 @@ def check_greater_zero(value, name):
     if value is None:
         raise ValueError(f'input value cannot be None in check_greater_zero')
     if isinstance(value, Parameter):
-        if not isinstance(value.default_input, Tensor):
+        if not isinstance(value.data, Tensor):
             return
-        value = value.default_input
+        value = value.data
     comp = np.less(np.zeros(value.shape), value.asnumpy())
     if not comp.all():
         raise ValueError(f'{name} should be greater than zero.')
@@ -225,9 +225,9 @@ def check_prob(p):
     if p is None:
         raise ValueError(f'input value cannot be None in check_greater_zero')
     if isinstance(p, Parameter):
-        if not isinstance(p.default_input, Tensor):
+        if not isinstance(p.data, Tensor):
             return
-        p = p.default_input
+        p = p.data
     comp = np.less(np.zeros(p.shape), p.asnumpy())
     if not comp.all():
         raise ValueError('Probabilities should be greater than zero')

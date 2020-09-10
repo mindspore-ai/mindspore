@@ -201,7 +201,7 @@ def test_checkpoint_cb_for_save_op_update_net():
     net = Net()
     _set_cur_net(net)
     _checkpoint_cb_for_save_op(parameter_list)
-    assert net.conv.weight.default_input.asnumpy()[0][0][0][0] == 1
+    assert net.conv.weight.data.asnumpy()[0][0][0][0] == 1
 
 
 def test_internal_callback_param():

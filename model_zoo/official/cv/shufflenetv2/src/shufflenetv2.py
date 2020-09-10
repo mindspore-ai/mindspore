@@ -163,11 +163,11 @@ class ShuffleNetV2(nn.Cell):
         for name, m in self.cells_and_names():
             if isinstance(m, nn.Conv2d):
                 if 'first' in name:
-                    m.weight.set_parameter_data(Tensor(np.random.normal(0, 0.01,
-                                                                        m.weight.data.shape).astype("float32")))
+                    m.weight.set_data(Tensor(np.random.normal(0, 0.01,
+                                                              m.weight.data.shape).astype("float32")))
                 else:
-                    m.weight.set_parameter_data(Tensor(np.random.normal(0, 1.0/m.weight.data.shape[1],
-                                                                        m.weight.data.shape).astype("float32")))
+                    m.weight.set_data(Tensor(np.random.normal(0, 1.0/m.weight.data.shape[1],
+                                                              m.weight.data.shape).astype("float32")))
 
             if isinstance(m, nn.Dense):
-                m.weight.set_parameter_data(Tensor(np.random.normal(0, 0.01, m.weight.data.shape).astype("float32")))
+                m.weight.set_data(Tensor(np.random.normal(0, 0.01, m.weight.data.shape).astype("float32")))

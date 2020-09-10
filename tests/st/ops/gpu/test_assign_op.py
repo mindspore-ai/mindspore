@@ -47,7 +47,7 @@ def test_assign():
 
     error = np.ones(shape=[2, 2]) * 1.0e-6
     diff1 = output.asnumpy() - value
-    diff2 = assign.var.default_input.asnumpy() - value
+    diff2 = assign.var.data.asnumpy() - value
     assert np.all(diff1 < error)
     assert np.all(-diff1 < error)
     assert np.all(diff2 < error)

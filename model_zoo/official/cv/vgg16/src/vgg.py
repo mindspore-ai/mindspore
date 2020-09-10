@@ -101,18 +101,18 @@ class Vgg(nn.Cell):
         """
         for _, cell in self.cells_and_names():
             if isinstance(cell, nn.Conv2d):
-                cell.weight.default_input = init.initializer(
+                cell.weight.set_data(init.initializer(
                     KaimingNormal(a=math.sqrt(5), mode='fan_out', nonlinearity='relu'),
-                    cell.weight.shape, cell.weight.dtype)
+                    cell.weight.shape, cell.weight.dtype))
                 if cell.bias is not None:
-                    cell.bias.default_input = init.initializer(
-                        'zeros', cell.bias.shape, cell.bias.dtype)
+                    cell.bias.set_data(init.initializer(
+                        'zeros', cell.bias.shape, cell.bias.dtype))
             elif isinstance(cell, nn.Dense):
-                cell.weight.default_input = init.initializer(
-                    init.Normal(0.01), cell.weight.shape, cell.weight.dtype)
+                cell.weight.set_data(init.initializer(
+                    init.Normal(0.01), cell.weight.shape, cell.weight.dtype))
                 if cell.bias is not None:
-                    cell.bias.default_input = init.initializer(
-                        'zeros', cell.bias.shape, cell.bias.dtype)
+                    cell.bias.set_data(init.initializer(
+                        'zeros', cell.bias.shape, cell.bias.dtype))
 
 
 cfg = {

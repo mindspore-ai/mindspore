@@ -128,24 +128,24 @@ def _build_training_pipeline(config: TransformerConfig,
                 raise ValueError(f"Param {weights_name} is not found in ckpt file.")
 
             if isinstance(weights[weights_name], Parameter):
-                param.default_input = weights[weights_name].default_input
+                param.set_data(weights[weights_name].data)
             elif isinstance(weights[weights_name], Tensor):
-                param.default_input = Tensor(weights[weights_name].asnumpy(), config.dtype)
+                param.set_data(Tensor(weights[weights_name].asnumpy(), config.dtype))
             elif isinstance(weights[weights_name], np.ndarray):
-                param.default_input = Tensor(weights[weights_name], config.dtype)
+                param.set_data(Tensor(weights[weights_name], config.dtype))
             else:
-                param.default_input = weights[weights_name]
+                param.set_data(weights[weights_name])
     else:
         for param in net_with_loss.trainable_params():
             name = param.name
-            value = param.default_input
+            value = param.data
             if isinstance(value, Tensor):
                 if name.endswith(".gamma"):
-                    param.default_input = one_weight(value.asnumpy().shape)
+                    param.set_data(one_weight(value.asnumpy().shape))
                 elif name.endswith(".beta") or name.endswith(".bias"):
-                    param.default_input = zero_weight(value.asnumpy().shape)
+                    param.set_data(zero_weight(value.asnumpy().shape))
                 else:
-                    param.default_input = weight_variable(value.asnumpy().shape)
+                    param.set_data(weight_variable(value.asnumpy().shape))
 
     dataset = pre_training_dataset if pre_training_dataset is not None \
         else fine_tune_dataset

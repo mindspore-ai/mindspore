@@ -192,7 +192,7 @@ class _GradChecker:
 
     def check_against_numeric_one_step(self, args, index, out_index):
         if isinstance(args, ParameterTuple):
-            x = args[index].default_input.asnumpy()
+            x = args[index].data.asnumpy()
         else:
             x = args[index]
         x_shape = x.shape
@@ -239,7 +239,7 @@ class _GradChecker:
 
     def check_against_numeric_jacobian_one_step(self, args, index, out_index):
         if isinstance(args, ParameterTuple):
-            x = args[index].default_input.asnumpy()
+            x = args[index].data.asnumpy()
         else:
             x = args[index]
         x_shape = x.shape

@@ -54,7 +54,7 @@ def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     sparse_apply_adam = Net()
     sparse_apply_adam(gradient, indices)
-    print(sparse_apply_adam.var.default_input)
+    print(sparse_apply_adam.var.data)
     expect_var = np.array([[[0.9996838, 0.9996838, 0.9996838],
                             [0.9996838, 0.9996838, 0.9996838],
                             [0.9996838, 0.9996838, 0.9996838]],
@@ -64,4 +64,4 @@ def test_net():
                            [[0.9996838, 0.9996838, 0.9996838],
                             [0.9996838, 0.9996838, 0.9996838],
                             [0.9996838, 0.9996838, 0.9996838]]]).astype(np.float32)
-    assert np.all(sparse_apply_adam.var.default_input.asnumpy() == expect_var)
+    assert np.all(sparse_apply_adam.var.data.asnumpy() == expect_var)
