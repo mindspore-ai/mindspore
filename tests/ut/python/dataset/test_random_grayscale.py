@@ -29,6 +29,7 @@ GENERATE_GOLDEN = False
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+
 def test_random_grayscale_valid_prob(plot=False):
     """
     Test RandomGrayscale Op: valid input, expect to pass
@@ -44,7 +45,7 @@ def test_random_grayscale_valid_prob(plot=False):
         py_vision.ToTensor()
     ]
     transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -53,7 +54,7 @@ def test_random_grayscale_valid_prob(plot=False):
         py_vision.ToTensor()
     ]
     transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     image_gray = []
     image = []
@@ -64,6 +65,7 @@ def test_random_grayscale_valid_prob(plot=False):
         image.append(image2)
     if plot:
         visualize_list(image, image_gray)
+
 
 def test_random_grayscale_input_grayscale_images():
     """
@@ -83,7 +85,7 @@ def test_random_grayscale_input_grayscale_images():
         py_vision.ToTensor()
     ]
     transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -92,7 +94,7 @@ def test_random_grayscale_input_grayscale_images():
         py_vision.ToTensor()
     ]
     transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     image_gray = []
     image = []
@@ -111,6 +113,7 @@ def test_random_grayscale_input_grayscale_images():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_grayscale_md5_valid_input():
     """
     Test RandomGrayscale with md5 comparison: valid parameter, expect to pass
@@ -127,7 +130,7 @@ def test_random_grayscale_md5_valid_input():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     # Check output images with md5 comparison
     filename = "random_grayscale_01_result.npz"
@@ -136,6 +139,7 @@ def test_random_grayscale_md5_valid_input():
     # Restore config
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 
 def test_random_grayscale_md5_no_param():
     """
@@ -153,7 +157,7 @@ def test_random_grayscale_md5_no_param():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     # Check output images with md5 comparison
     filename = "random_grayscale_02_result.npz"
@@ -162,6 +166,7 @@ def test_random_grayscale_md5_no_param():
     # Restore config
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 
 def test_random_grayscale_invalid_param():
     """
@@ -178,10 +183,11 @@ def test_random_grayscale_invalid_param():
             py_vision.ToTensor()
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data = data.map(input_columns=["image"], operations=transform)
+        data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)
+
 
 if __name__ == "__main__":
     test_random_grayscale_valid_prob(True)

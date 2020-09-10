@@ -498,24 +498,24 @@ def create_maskrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_id
                         num_parallel_workers=4, shuffle=is_training)
 
     decode = C.Decode()
-    ds = ds.map(input_columns=["image"], operations=decode)
+    ds = ds.map(operations=decode, input_columns=["image"])
     compose_map_func = (lambda image, annotation, mask, mask_shape:
                         preprocess_fn(image, annotation, mask, mask_shape, is_training))
 
     if is_training:
-        ds = ds.map(input_columns=["image", "annotation", "mask", "mask_shape"],
+        ds = ds.map(operations=compose_map_func,
+                    input_columns=["image", "annotation", "mask", "mask_shape"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num", "mask"],
                     column_order=["image", "image_shape", "box", "label", "valid_num", "mask"],
-                    operations=compose_map_func,
                     python_multiprocessing=False,
                     num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True)
 
     else:
-        ds = ds.map(input_columns=["image", "annotation", "mask", "mask_shape"],
+        ds = ds.map(operations=compose_map_func,
+                    input_columns=["image", "annotation", "mask", "mask_shape"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num", "mask"],
                     column_order=["image", "image_shape", "box", "label", "valid_num", "mask"],
-                    operations=compose_map_func,
                     num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True)
 

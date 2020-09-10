@@ -19,13 +19,14 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
 
+
 def test_sliding_window_string():
     """ test sliding_window with string type"""
     inputs = [["大", "家", "早", "上", "好"]]
     expect = np.array([['大', '家'], ['家', '早'], ['早', '上'], ['上', '好']])
 
     dataset = ds.NumpySlicesDataset(inputs, column_names=["text"], shuffle=False)
-    dataset = dataset.map(input_columns=["text"], operations=text.SlidingWindow(2, 0))
+    dataset = dataset.map(operations=text.SlidingWindow(2, 0), input_columns=["text"])
 
     result = []
     for data in dataset.create_dict_iterator(num_epochs=1):
@@ -36,6 +37,7 @@ def test_sliding_window_string():
         result = np.array(result)
     np.testing.assert_array_equal(result, expect)
 
+
 def test_sliding_window_number():
     inputs = [1]
     expect = np.array([[1]])
@@ -44,20 +46,22 @@ def test_sliding_window_number():
         yield (np.array(nums),)
 
     dataset = ds.GeneratorDataset(gen(inputs), column_names=["number"])
-    dataset = dataset.map(input_columns=["number"], operations=text.SlidingWindow(1, -1))
+    dataset = dataset.map(operations=text.SlidingWindow(1, -1), input_columns=["number"])
 
     for data in dataset.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(data['number'], expect)
+
 
 def test_sliding_window_big_width():
     inputs = [[1, 2, 3, 4, 5]]
     expect = np.array([])
 
     dataset = ds.NumpySlicesDataset(inputs, column_names=["number"], shuffle=False)
-    dataset = dataset.map(input_columns=["number"], operations=text.SlidingWindow(30, 0))
+    dataset = dataset.map(operations=text.SlidingWindow(30, 0), input_columns=["number"])
 
     for data in dataset.create_dict_iterator(num_epochs=1):
         np.testing.assert_array_equal(data['number'], expect)
+
 
 def test_sliding_window_exception():
     try:
@@ -81,7 +85,7 @@ def test_sliding_window_exception():
     try:
         inputs = [[1, 2, 3, 4, 5]]
         dataset = ds.NumpySlicesDataset(inputs, column_names=["text"], shuffle=False)
-        dataset = dataset.map(input_columns=["text"], operations=text.SlidingWindow(3, -100))
+        dataset = dataset.map(operations=text.SlidingWindow(3, -100), input_columns=["text"])
         for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
         assert False
@@ -91,12 +95,13 @@ def test_sliding_window_exception():
     try:
         inputs = ["aa", "bb", "cc"]
         dataset = ds.NumpySlicesDataset(inputs, column_names=["text"], shuffle=False)
-        dataset = dataset.map(input_columns=["text"], operations=text.SlidingWindow(2, 0))
+        dataset = dataset.map(operations=text.SlidingWindow(2, 0), input_columns=["text"])
         for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
         assert "SlidingWindosOp supports 1D Tensors only for now." in str(e)
+
 
 if __name__ == '__main__':
     test_sliding_window_string()

@@ -25,7 +25,7 @@ def test_compose():
     def test_config(arr, op_list):
         try:
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
-            data = data.map(input_columns=["col"], operations=ops.Compose(op_list))
+            data = data.map(operations=ops.Compose(op_list), input_columns=["col"])
             res = []
             for i in data.create_dict_iterator(num_epochs=1):
                 res.append(i["col"].tolist())

@@ -89,8 +89,8 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=16)
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=16)
+    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
@@ -152,7 +152,7 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
 
     compose = P2.Compose(trans)
 
-    ds = ds.map(input_columns="image", operations=compose, num_parallel_workers=8, python_multiprocessing=True)
+    ds = ds.map(operations=compose, input_columns="image", num_parallel_workers=8, python_multiprocessing=True)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)

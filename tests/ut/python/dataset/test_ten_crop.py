@@ -39,7 +39,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
         vision.ToTensor(),
     ]
     transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1)
+    data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -49,7 +49,7 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
         lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
     ]
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
-    data2 = data2.map(input_columns=["image"], operations=transform_2)
+    data2 = data2.map(operations=transform_2, input_columns=["image"])
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         num_iter += 1
@@ -111,7 +111,7 @@ def test_ten_crop_md5():
         lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
     ]
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
-    data2 = data2.map(input_columns=["image"], operations=transform_2)
+    data2 = data2.map(operations=transform_2, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "ten_crop_01_result.npz"
     save_and_check_md5(data2, filename, generate_golden=GENERATE_GOLDEN)
@@ -171,7 +171,7 @@ def test_ten_crop_wrong_img_error_msg():
         vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     with pytest.raises(RuntimeError) as info:
         data.create_tuple_iterator(num_epochs=1).get_next()

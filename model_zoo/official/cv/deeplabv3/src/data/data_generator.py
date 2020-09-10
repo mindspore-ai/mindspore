@@ -84,8 +84,9 @@ class SegDataset:
                                   shuffle=True, num_parallel_workers=self.num_readers,
                                   num_shards=self.shard_num, shard_id=self.shard_id)
         transforms_list = self.preprocess_
-        data_set = data_set.map(input_columns=["data", "label"], output_columns=["data", "label"],
-                                operations=transforms_list, num_parallel_workers=self.num_parallel_calls)
+        data_set = data_set.map(operations=transforms_list, input_columns=["data", "label"],
+                                output_columns=["data", "label"],
+                                num_parallel_workers=self.num_parallel_calls)
         data_set = data_set.shuffle(buffer_size=self.batch_size * 10)
         data_set = data_set.batch(self.batch_size, drop_remainder=True)
         data_set = data_set.repeat(repeat)

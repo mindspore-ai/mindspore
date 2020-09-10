@@ -44,12 +44,12 @@ def test_random_crop_op_c(plot=False):
     random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
     decode_op = c_vision.Decode()
 
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_crop_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_crop_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     image_cropped = []
     image = []
@@ -74,7 +74,7 @@ def test_random_crop_op_py(plot=False):
         py_vision.ToTensor()
     ]
     transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
     # Second dataset
     # Second dataset for comparison
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -83,7 +83,7 @@ def test_random_crop_op_py(plot=False):
         py_vision.ToTensor()
     ]
     transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     crop_images = []
     original_images = []
@@ -108,8 +108,8 @@ def test_random_crop_01_c():
     # Note: If size is an int, a square crop of size (size, size) is returned.
     random_crop_op = c_vision.RandomCrop(512)
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
 
     filename = "random_crop_01_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -135,7 +135,7 @@ def test_random_crop_01_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_01_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -157,8 +157,8 @@ def test_random_crop_02_c():
     # Note: If size is a sequence of length 2, it should be (height, width).
     random_crop_op = c_vision.RandomCrop([512, 375])
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
 
     filename = "random_crop_02_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -184,7 +184,7 @@ def test_random_crop_02_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_02_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -206,8 +206,8 @@ def test_random_crop_03_c():
     # Note: The size of the image is 4032*2268
     random_crop_op = c_vision.RandomCrop([2268, 4032])
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
 
     filename = "random_crop_03_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -233,7 +233,7 @@ def test_random_crop_03_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_03_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -253,8 +253,8 @@ def test_random_crop_04_c():
     # Note: The size of the image is 4032*2268
     random_crop_op = c_vision.RandomCrop([2268, 4033])
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
     try:
         data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
@@ -277,7 +277,7 @@ def test_random_crop_04_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
     try:
         data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
@@ -299,8 +299,8 @@ def test_random_crop_05_c():
     # Note: The size of the image is 4032*2268
     random_crop_op = c_vision.RandomCrop([2268, 4033], [200, 200, 200, 200], pad_if_needed=True)
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
 
     filename = "random_crop_05_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -328,7 +328,7 @@ def test_random_crop_05_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_05_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -350,8 +350,8 @@ def test_random_crop_06_c():
         # Note: if size is neither an int nor a list of length 2, an exception will raise
         random_crop_op = c_vision.RandomCrop([512, 512, 375])
         decode_op = c_vision.Decode()
-        data = data.map(input_columns=["image"], operations=decode_op)
-        data = data.map(input_columns=["image"], operations=random_crop_op)
+        data = data.map(operations=decode_op, input_columns=["image"])
+        data = data.map(operations=random_crop_op, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Size should be a single integer" in str(e)
@@ -373,7 +373,7 @@ def test_random_crop_06_py():
             py_vision.ToTensor()
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data = data.map(input_columns=["image"], operations=transform)
+        data = data.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Size should be a single integer" in str(e)
@@ -393,8 +393,8 @@ def test_random_crop_07_c():
     # Note: The padding_mode is default as Border.CONSTANT and set filling color to be white.
     random_crop_op = c_vision.RandomCrop(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
 
     filename = "random_crop_07_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -422,7 +422,7 @@ def test_random_crop_07_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_07_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -445,8 +445,8 @@ def test_random_crop_08_c():
     # Note: The padding_mode is Border.EDGE.
     random_crop_op = c_vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
     decode_op = c_vision.Decode()
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=random_crop_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=random_crop_op, input_columns=["image"])
 
     filename = "random_crop_08_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -473,7 +473,7 @@ def test_random_crop_08_py():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_08_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -497,7 +497,7 @@ def test_random_crop_09():
         py_vision.RandomCrop(512)
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
     try:
         data.create_dict_iterator(num_epochs=1).get_next()
     except RuntimeError as e:
@@ -515,8 +515,8 @@ def test_random_crop_comp(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     random_crop_op = c_vision.RandomCrop(cropped_size)
     decode_op = c_vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_crop_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_crop_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -526,7 +526,7 @@ def test_random_crop_comp(plot=False):
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_cropped = []
     image_py_cropped = []

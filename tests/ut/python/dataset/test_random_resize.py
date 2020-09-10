@@ -38,9 +38,9 @@ def test_random_resize_op(plot=False):
     resize_op = vision.RandomResize(10)
 
     # apply map operations on images
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
 
-    data2 = data1.map(input_columns=["image"], operations=resize_op)
+    data2 = data1.map(operations=resize_op, input_columns=["image"])
     image_original = []
     image_resized = []
     num_iter = 0
@@ -66,8 +66,8 @@ def test_random_resize_md5():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
     resize_op = vision.RandomResize(10)
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=resize_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=resize_op, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "random_resize_01_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)

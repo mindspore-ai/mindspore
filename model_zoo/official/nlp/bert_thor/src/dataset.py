@@ -40,12 +40,12 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
     ori_dataset_size = ds.get_dataset_size()
     print('origin dataset size: ', ori_dataset_size)
     type_cast_op = C.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
-    ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
     ds = ds.batch(bert_net_cfg.batch_size, drop_remainder=True)
     logger.info("data size: {}".format(ds.get_dataset_size()))
@@ -61,12 +61,12 @@ def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy
                             columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"])
     if assessment_method == "Spearman_correlation":
         type_cast_op_float = C.TypeCast(mstype.float32)
-        ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
+        ds = ds.map(operations=type_cast_op_float, input_columns="label_ids")
     else:
-        ds = ds.map(input_columns="label_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+        ds = ds.map(operations=type_cast_op, input_columns="label_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     ds = ds.repeat(repeat_count)
     # apply shuffle operation
     buffer_size = 960
@@ -84,12 +84,12 @@ def create_classification_dataset(batch_size=1, repeat_count=1, assessment_metho
                             columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"])
     if assessment_method == "Spearman_correlation":
         type_cast_op_float = C.TypeCast(mstype.float32)
-        ds = ds.map(input_columns="label_ids", operations=type_cast_op_float)
+        ds = ds.map(operations=type_cast_op_float, input_columns="label_ids")
     else:
-        ds = ds.map(input_columns="label_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+        ds = ds.map(operations=type_cast_op, input_columns="label_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     ds = ds.repeat(repeat_count)
     # apply shuffle operation
     buffer_size = 960
@@ -107,17 +107,17 @@ def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, sche
                                 columns_list=["input_ids", "input_mask", "segment_ids",
                                               "start_positions", "end_positions",
                                               "unique_ids", "is_impossible"])
-        ds = ds.map(input_columns="start_positions", operations=type_cast_op)
-        ds = ds.map(input_columns="end_positions", operations=type_cast_op)
+        ds = ds.map(operations=type_cast_op, input_columns="start_positions")
+        ds = ds.map(operations=type_cast_op, input_columns="end_positions")
     else:
         ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
                                 columns_list=["input_ids", "input_mask", "segment_ids", "unique_ids"])
-        ds = ds.map(input_columns="input_ids", operations=type_cast_op)
-        ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-        ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="segment_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="input_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="input_ids", operations=type_cast_op)
+        ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+        ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+        ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
     ds = ds.repeat(repeat_count)
     # apply shuffle operation
     buffer_size = 960

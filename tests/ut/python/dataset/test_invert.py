@@ -42,8 +42,7 @@ def test_invert_py(plot=False):
                                                                               F.Resize((224, 224)),
                                                                               F.ToTensor()])
 
-    ds_original = ds.map(input_columns="image",
-                         operations=transforms_original)
+    ds_original = ds.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -63,8 +62,7 @@ def test_invert_py(plot=False):
                                                                             F.Invert(),
                                                                             F.ToTensor()])
 
-    ds_invert = ds.map(input_columns="image",
-                       operations=transforms_invert)
+    ds_invert = ds.map(operations=transforms_invert, input_columns="image")
 
     ds_invert = ds_invert.batch(512)
 
@@ -97,8 +95,7 @@ def test_invert_c(plot=False):
 
     transforms_original = [C.Decode(), C.Resize(size=[224, 224])]
 
-    ds_original = ds.map(input_columns="image",
-                         operations=transforms_original)
+    ds_original = ds.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -116,8 +113,7 @@ def test_invert_c(plot=False):
     transform_invert = [C.Decode(), C.Resize(size=[224, 224]),
                         C.Invert()]
 
-    ds_invert = ds.map(input_columns="image",
-                       operations=transform_invert)
+    ds_invert = ds.map(operations=transform_invert, input_columns="image")
 
     ds_invert = ds_invert.batch(512)
 
@@ -146,11 +142,9 @@ def test_invert_py_c(plot=False):
 
     # Invert Images in cpp
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    ds = ds.map(input_columns=["image"],
-                operations=[C.Decode(), C.Resize((224, 224))])
+    ds = ds.map(operations=[C.Decode(), C.Resize((224, 224))], input_columns=["image"])
 
-    ds_c_invert = ds.map(input_columns="image",
-                         operations=C.Invert())
+    ds_c_invert = ds.map(operations=C.Invert(), input_columns="image")
 
     ds_c_invert = ds_c_invert.batch(512)
 
@@ -164,16 +158,14 @@ def test_invert_py_c(plot=False):
 
     # invert images in python
     ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    ds = ds.map(input_columns=["image"],
-                operations=[C.Decode(), C.Resize((224, 224))])
+    ds = ds.map(operations=[C.Decode(), C.Resize((224, 224))], input_columns=["image"])
 
     transforms_p_invert = mindspore.dataset.transforms.py_transforms.Compose([lambda img: img.astype(np.uint8),
                                                                               F.ToPIL(),
                                                                               F.Invert(),
                                                                               np.array])
 
-    ds_p_invert = ds.map(input_columns="image",
-                         operations=transforms_p_invert)
+    ds_p_invert = ds.map(operations=transforms_p_invert, input_columns="image")
 
     ds_p_invert = ds_p_invert.batch(512)
 
@@ -205,13 +197,10 @@ def test_invert_one_channel():
 
     try:
         ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        ds = ds.map(input_columns=["image"],
-                    operations=[C.Decode(),
-                                C.Resize((224, 224)),
-                                lambda img: np.array(img[:, :, 0])])
+        ds = ds.map(operations=[C.Decode(), C.Resize((224, 224)),
+                                lambda img: np.array(img[:, :, 0])], input_columns=["image"])
 
-        ds.map(input_columns="image",
-               operations=c_op)
+        ds.map(operations=c_op, input_columns="image")
 
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -231,7 +220,7 @@ def test_invert_md5_py():
                                                                             F.Invert(),
                                                                             F.ToTensor()])
 
-    data = ds.map(input_columns="image", operations=transforms_invert)
+    data = ds.map(operations=transforms_invert, input_columns="image")
     # Compare with expected md5 from images
     filename = "invert_01_result_py.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -251,7 +240,7 @@ def test_invert_md5_c():
                          C.Invert(),
                          F.ToTensor()]
 
-    data = ds.map(input_columns="image", operations=transforms_invert)
+    data = ds.map(operations=transforms_invert, input_columns="image")
     # Compare with expected md5 from images
     filename = "invert_01_result_c.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)

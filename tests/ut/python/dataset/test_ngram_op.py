@@ -39,7 +39,7 @@ def test_multiple_ngrams():
             yield (np.array(line.split(" "), dtype='S'),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
-    dataset = dataset.map(input_columns=["text"], operations=text.Ngram([1, 2, 3], ("_", 2), ("_", 2), " "))
+    dataset = dataset.map(operations=text.Ngram([1, 2, 3], ("_", 2), ("_", 2), " "), input_columns="text")
 
     i = 0
     for data in dataset.create_dict_iterator(num_epochs=1):
@@ -61,7 +61,7 @@ def test_simple_ngram():
             yield (np.array(line.split(" "), dtype='S'),)
 
     dataset = ds.GeneratorDataset(gen(plates_mottos), column_names=["text"])
-    dataset = dataset.map(input_columns=["text"], operations=text.Ngram(3, separator=" "))
+    dataset = dataset.map(operations=text.Ngram(3, separator=" "), input_columns="text")
 
     i = 0
     for data in dataset.create_dict_iterator(num_epochs=1):
@@ -78,7 +78,7 @@ def test_corner_cases():
 
         try:
             dataset = ds.GeneratorDataset(gen(input_line), column_names=["text"])
-            dataset = dataset.map(input_columns=["text"], operations=text.Ngram(n, l_pad, r_pad, separator=sep))
+            dataset = dataset.map(operations=text.Ngram(n, l_pad, r_pad, separator=sep), input_columns=["text"])
             for data in dataset.create_dict_iterator(num_epochs=1):
                 return [d.decode("utf8") for d in data["text"]]
         except (ValueError, TypeError) as e:

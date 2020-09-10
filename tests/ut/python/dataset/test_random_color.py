@@ -50,8 +50,7 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
                                                                               F.Resize((224, 224)),
                                                                               F.ToTensor()])
 
-    ds_original = data.map(input_columns="image",
-                           operations=transforms_original)
+    ds_original = data.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -71,8 +70,7 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
                                                                                   F.RandomColor(degrees=degrees),
                                                                                   F.ToTensor()])
 
-    ds_random_color = data.map(input_columns="image",
-                               operations=transforms_random_color)
+    ds_random_color = data.map(operations=transforms_random_color, input_columns="image")
 
     ds_random_color = ds_random_color.batch(512)
 
@@ -113,8 +111,8 @@ def test_random_color_c(degrees=(0.1, 1.9), plot=False, run_golden=True):
     else:
         c_op = vision.RandomColor(degrees)
 
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode()])
-    data2 = data2.map(input_columns=["image"], operations=[vision.Decode(), c_op])
+    data1 = data1.map(operations=[vision.Decode()], input_columns=["image"])
+    data2 = data2.map(operations=[vision.Decode(), c_op], input_columns=["image"])
 
     image_random_color_op = []
     image = []
@@ -153,7 +151,7 @@ def test_random_color_py_md5():
                                                                      F.RandomColor((2.0, 2.5)),
                                                                      F.ToTensor()])
 
-    data = data.map(input_columns="image", operations=transforms)
+    data = data.map(operations=transforms, input_columns="image")
     # Compare with expected md5 from images
     filename = "random_color_01_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
@@ -184,12 +182,13 @@ def test_compare_random_color_op(degrees=None, plot=False):
         c_op = vision.RandomColor(degrees)
         p_op = F.RandomColor(degrees)
 
-    transforms_random_color_py = mindspore.dataset.transforms.py_transforms.Compose([lambda img: img.astype(np.uint8), F.ToPIL(),
-                                                                                     p_op, np.array])
+    transforms_random_color_py = mindspore.dataset.transforms.py_transforms.Compose(
+        [lambda img: img.astype(np.uint8), F.ToPIL(),
+         p_op, np.array])
 
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(), c_op])
-    data2 = data2.map(input_columns=["image"], operations=[vision.Decode()])
-    data2 = data2.map(input_columns=["image"], operations=transforms_random_color_py)
+    data1 = data1.map(operations=[vision.Decode(), c_op], input_columns=["image"])
+    data2 = data2.map(operations=[vision.Decode()], input_columns=["image"])
+    data2 = data2.map(operations=transforms_random_color_py, input_columns=["image"])
 
     image_random_color_op = []
     image = []
@@ -234,7 +233,7 @@ def test_random_color_c_errors():
 
     # RandomColor Cpp Op will fail with one channel input
     mnist_ds = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
-    mnist_ds = mnist_ds.map(input_columns="image", operations=vision.RandomColor())
+    mnist_ds = mnist_ds.map(operations=vision.RandomColor(), input_columns="image")
 
     with pytest.raises(RuntimeError) as error_info:
         for _ in enumerate(mnist_ds):

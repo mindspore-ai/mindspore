@@ -46,10 +46,10 @@ def test_random_posterize_op_c(plot=False, run_golden=False):
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=[c_vision.Decode()])
+    data2 = data2.map(operations=[c_vision.Decode()], input_columns=["image"])
 
     image_posterize = []
     image_original = []
@@ -92,10 +92,10 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=[c_vision.Decode()])
+    data2 = data2.map(operations=[c_vision.Decode()], input_columns=["image"])
 
     image_posterize = []
     image_original = []
@@ -129,10 +129,10 @@ def test_random_posterize_default_c_md5(plot=False, run_golden=True):
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transforms1)
+    data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=[c_vision.Decode()])
+    data2 = data2.map(operations=[c_vision.Decode()], input_columns=["image"])
 
     image_posterize = []
     image_original = []
@@ -202,10 +202,10 @@ def test_rescale_with_random_posterize():
     dataset = ds.Cifar10Dataset(DATA_DIR_10)
 
     rescale_op = c_vision.Rescale((1.0 / 255.0), 0.0)
-    dataset = dataset.map(input_columns=["image"], operations=rescale_op)
+    dataset = dataset.map(operations=rescale_op, input_columns=["image"])
 
     random_posterize_op = c_vision.RandomPosterize((4, 8))
-    dataset = dataset.map(input_columns=["image"], operations=random_posterize_op, num_parallel_workers=1)
+    dataset = dataset.map(operations=random_posterize_op, input_columns=["image"], num_parallel_workers=1)
 
     try:
         _ = dataset.output_shapes()

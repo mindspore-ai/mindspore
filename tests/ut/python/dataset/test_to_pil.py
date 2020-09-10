@@ -45,7 +45,7 @@ def test_to_pil_01():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename = "to_pil_01_result.npz"
@@ -68,8 +68,8 @@ def test_to_pil_02():
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename = "to_pil_02_result.npz"

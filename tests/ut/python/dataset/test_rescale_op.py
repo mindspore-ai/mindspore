@@ -25,6 +25,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
 
+
 def rescale_np(image):
     """
     Apply the rescale
@@ -40,7 +41,7 @@ def get_rescaled(image_id):
     """
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1):
         image = item["image"]
@@ -63,9 +64,9 @@ def test_rescale_op(plot=False):
     rescale_op = vision.Rescale(1.0 / 255.0, -1.0)
 
     # apply map operations on images
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
 
-    data2 = data1.map(input_columns=["image"], operations=rescale_op)
+    data2 = data1.map(operations=rescale_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -73,7 +74,7 @@ def test_rescale_op(plot=False):
         image_de_rescaled = item2["image"]
         image_np_rescaled = get_rescaled(num_iter)
         mse = diff_mse(image_de_rescaled, image_np_rescaled)
-        assert mse < 0.001 # rounding error
+        assert mse < 0.001  # rounding error
         logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
         num_iter += 1
         if plot:
@@ -92,8 +93,8 @@ def test_rescale_md5():
     rescale_op = vision.Rescale(1.0 / 255.0, -1.0)
 
     # apply map operations on images
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=rescale_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=rescale_op, input_columns=["image"])
 
     # check results with md5 comparison
     filename = "rescale_01_result.npz"

@@ -54,8 +54,8 @@ def test_case_1():
     resize_op = vision.Resize((resize_height, resize_width))
 
     # apply map operations on images
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=resize_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=resize_op, input_columns=["image"])
 
     batch_size = 3
     data = data.batch(batch_size, drop_remainder=True)
@@ -79,8 +79,8 @@ def test_case_2():
     resize_op = vision.Resize((resize_height, resize_width))
 
     # apply map operations on images
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=resize_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=resize_op, input_columns=["image"])
 
     batch_size = 2
     data = data.batch(batch_size, drop_remainder=True)
@@ -107,8 +107,8 @@ def test_case_3():
     resize_op = vision.Resize((resize_height, resize_width))
 
     # apply map operations on images
-    data = data.map(input_columns=["image"], operations=decode_op)
-    data = data.map(input_columns=["image"], operations=resize_op)
+    data = data.map(operations=decode_op, input_columns=["image"])
+    data = data.map(operations=resize_op, input_columns=["image"])
 
     data = data.repeat(2)
 

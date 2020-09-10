@@ -43,7 +43,7 @@ def test_to_type_op():
         py_vision.ToType(np.int16)
     ]
     transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
-    data1 = data1.map(input_columns=["image"], operations=transform1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -52,7 +52,7 @@ def test_to_type_op():
         py_vision.ToTensor()
     ]
     transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         image1 = item1["image"]
@@ -63,6 +63,7 @@ def test_to_type_op():
         assert image1.dtype == np.int16
         assert image2.dtype == np.float32
         assert image1.shape == image2.shape
+
 
 def test_to_type_01():
     """
@@ -80,11 +81,12 @@ def test_to_type_01():
         py_vision.ToType(np.int32)
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename = "to_type_01_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
 
 def test_to_type_02():
     """
@@ -101,11 +103,12 @@ def test_to_type_02():
         py_vision.ToType('int')
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    data = data.map(input_columns=["image"], operations=transform)
+    data = data.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename = "to_type_02_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
+
 
 def test_to_type_03():
     """
@@ -123,10 +126,11 @@ def test_to_type_03():
             py_vision.ToType(np.int32)
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data = data.map(input_columns=["image"], operations=transform)
+        data = data.map(operations=transform, input_columns=["image"])
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Numpy" in str(e)
+
 
 def test_to_type_04():
     """
@@ -145,10 +149,11 @@ def test_to_type_04():
             py_vision.ToType()
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data = data.map(input_columns=["image"], operations=transform)
+        data = data.map(operations=transform, input_columns=["image"])
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "missing" in str(e)
+
 
 def test_to_type_05():
     """
@@ -167,10 +172,11 @@ def test_to_type_05():
             py_vision.ToType('invalid')
         ]
         transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-        data = data.map(input_columns=["image"], operations=transform)
+        data = data.map(operations=transform, input_columns=["image"])
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "data type" in str(e)
+
 
 if __name__ == "__main__":
     test_to_type_op()

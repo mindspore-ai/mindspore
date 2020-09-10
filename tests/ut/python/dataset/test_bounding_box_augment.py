@@ -49,10 +49,9 @@ def test_bounding_box_augment_with_rotation_op(plot_vis=False):
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomRotation(90), 1)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])
+                            column_order=["image", "bbox"])
 
     filename = "bounding_box_augment_rotation_c_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -88,10 +87,9 @@ def test_bounding_box_augment_with_crop_op(plot_vis=False):
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomCrop(50), 0.9)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])
+                            column_order=["image", "bbox"])
 
     filename = "bounding_box_augment_crop_c_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -126,10 +124,9 @@ def test_bounding_box_augment_valid_ratio_c(plot_vis=False):
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 0.9)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])  # Add column for "bbox"
+                            column_order=["image", "bbox"])  # Add column for "bbox"
 
     filename = "bounding_box_augment_valid_ratio_c_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -163,10 +160,9 @@ def test_bounding_box_augment_op_coco_c(plot_vis=False):
 
     test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 1)
 
-    dataCoco2 = dataCoco2.map(input_columns=["image", "bbox"],
+    dataCoco2 = dataCoco2.map(operations=[test_op], input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
-                              column_order=["image", "bbox"],
-                              operations=[test_op])
+                              column_order=["image", "bbox"])
 
     unaugSamp, augSamp = [], []
 
@@ -195,20 +191,19 @@ def test_bounding_box_augment_valid_edge_c(plot_vis=False):
 
     # map to apply ops
     # Add column for "bbox"
-    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
+    dataVoc1 = dataVoc1.map(
+        operations=lambda img, bbox: (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
+        input_columns=["image", "bbox"],
+        output_columns=["image", "bbox"],
+        column_order=["image", "bbox"])
+    dataVoc2 = dataVoc2.map(
+        operations=lambda img, bbox: (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
+        input_columns=["image", "bbox"],
+        output_columns=["image", "bbox"],
+        column_order=["image", "bbox"])
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=lambda img, bbox:
-                            (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)))
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=lambda img, bbox:
-                            (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)))
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])
+                            column_order=["image", "bbox"])
     filename = "bounding_box_augment_valid_edge_c_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
 
@@ -238,10 +233,9 @@ def test_bounding_box_augment_invalid_ratio_c():
         # ratio range is from 0 - 1
         test_op = c_vision.BoundingBoxAugment(c_vision.RandomHorizontalFlip(1), 1.5)
         # map to apply ops
-        dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"],
-                                operations=[test_op])  # Add column for "bbox"
+                                column_order=["image", "bbox"])  # Add column for "bbox"
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input ratio is not within the required interval of (0.0 to 1.0)." in str(error)

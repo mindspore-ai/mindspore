@@ -74,8 +74,10 @@ def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
         ious = ious.T
     return ious
 
+
 class PhotoMetricDistortion:
     """Photo Metric Distortion"""
+
     def __init__(self,
                  brightness_delta=32,
                  contrast_range=(0.5, 1.5),
@@ -134,8 +136,10 @@ class PhotoMetricDistortion:
 
         return img, boxes, labels
 
+
 class Expand:
     """expand image"""
+
     def __init__(self, mean=(0, 0, 0), to_rgb=True, ratio_range=(1, 4)):
         if to_rgb:
             self.mean = mean[::-1]
@@ -158,12 +162,13 @@ class Expand:
         boxes += np.tile((left, top), 2)
         return img, boxes, labels
 
+
 def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """rescale operation for image"""
     img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
     if img_data.shape[0] > config.img_height:
         img_data, scale_factor2 = mmcv.imrescale(img_data, (config.img_height, config.img_width), return_scale=True)
-        scale_factor = scale_factor*scale_factor2
+        scale_factor = scale_factor * scale_factor2
     img_shape = np.append(img_shape, scale_factor)
     img_shape = np.asarray(img_shape, dtype=np.float32)
     gt_bboxes = gt_bboxes * scale_factor
@@ -171,7 +176,8 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_shape[1] - 1)
     gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1)
 
-    return  (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+    return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """resize operation for image"""
@@ -188,7 +194,8 @@ def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_shape[1] - 1)
     gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1)
 
-    return  (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+    return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
     """resize operation for image of eval"""
@@ -205,7 +212,8 @@ def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
     gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_shape[1] - 1)
     gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1)
 
-    return  (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+    return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """impad operation for image"""
@@ -213,11 +221,13 @@ def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def imnormalize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """imnormalize operation for image"""
     img_data = mmcv.imnormalize(img, [123.675, 116.28, 103.53], [58.395, 57.12, 57.375], True)
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """flip operation for image"""
@@ -229,7 +239,8 @@ def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     flipped[..., 0::4] = w - gt_bboxes[..., 2::4] - 1
     flipped[..., 2::4] = w - gt_bboxes[..., 0::4] - 1
 
-    return  (img_data, img_shape, flipped, gt_label, gt_num)
+    return (img_data, img_shape, flipped, gt_label, gt_num)
+
 
 def flipped_generation(img, img_shape, gt_bboxes, gt_label, gt_num):
     """flipped generation"""
@@ -240,11 +251,13 @@ def flipped_generation(img, img_shape, gt_bboxes, gt_label, gt_num):
     flipped[..., 0::4] = w - gt_bboxes[..., 2::4] - 1
     flipped[..., 2::4] = w - gt_bboxes[..., 0::4] - 1
 
-    return  (img_data, img_shape, flipped, gt_label, gt_num)
+    return (img_data, img_shape, flipped, gt_label, gt_num)
+
 
 def image_bgr_rgb(img, img_shape, gt_bboxes, gt_label, gt_num):
     img_data = img[:, :, ::-1]
-    return  (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+    return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """transpose operation for image"""
@@ -257,12 +270,14 @@ def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def photo_crop_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """photo crop operation for image"""
     random_photo = PhotoMetricDistortion()
     img_data, gt_bboxes, gt_label = random_photo(img, gt_bboxes, gt_label)
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def expand_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """expand operation for image"""
@@ -271,8 +286,10 @@ def expand_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return (img, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def preprocess_fn(image, box, is_training):
     """Preprocess function for dataset."""
+
     def _infer_data(image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert):
         image_shape = image_shape[:2]
         input_data = image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert
@@ -325,6 +342,7 @@ def preprocess_fn(image, box, is_training):
 
     return _data_aug(image, box, is_training)
 
+
 def create_coco_label(is_training):
     """Get image path and annotation from COCO."""
     from pycocotools.coco import COCO
@@ -334,7 +352,7 @@ def create_coco_label(is_training):
     if is_training:
         data_type = config.train_data_type
 
-    #Classes need to train or test.
+    # Classes need to train or test.
     train_cls = config.coco_classes
     train_cls_dict = {}
     for i, cls in enumerate(train_cls):
@@ -375,6 +393,7 @@ def create_coco_label(is_training):
 
     return image_files, image_anno_dict
 
+
 def anno_parser(annos_str):
     """Parse annotation from string to list."""
     annos = []
@@ -382,6 +401,7 @@ def anno_parser(annos_str):
         anno = list(map(int, anno_str.strip().split(',')))
         annos.append(anno)
     return annos
+
 
 def filter_valid_data(image_dir, anno_path):
     """Filter valid image file, which both in image_dir and anno_path."""
@@ -403,6 +423,7 @@ def filter_valid_data(image_dir, anno_path):
             image_anno_dict[image_path] = anno_parser(line_split[1:])
             image_files.append(image_path)
     return image_files, image_anno_dict
+
 
 def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="fasterrcnn.mindrecord", file_num=8):
     """Create MindRecord file."""
@@ -435,7 +456,7 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, repeat_num=12, devi
     ds = de.MindDataset(mindrecord_file, columns_list=["image", "annotation"], num_shards=device_num, shard_id=rank_id,
                         num_parallel_workers=1, shuffle=is_training)
     decode = C.Decode()
-    ds = ds.map(input_columns=["image"], operations=decode, num_parallel_workers=1)
+    ds = ds.map(operations=decode, input_columns=["image"], num_parallel_workers=1)
     compose_map_func = (lambda image, annotation: preprocess_fn(image, annotation, is_training))
 
     hwc_to_chw = C.HWC2CHW()
@@ -447,38 +468,39 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, repeat_num=12, devi
     type_cast3 = CC.TypeCast(mstype.bool_)
 
     if is_training:
-        ds = ds.map(input_columns=["image", "annotation"],
+        ds = ds.map(operations=compose_map_func, input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
                     column_order=["image", "image_shape", "box", "label", "valid_num"],
-                    operations=compose_map_func, num_parallel_workers=num_parallel_workers)
+                    num_parallel_workers=num_parallel_workers)
 
         flip = (np.random.rand() < config.flip_ratio)
         if flip:
-            ds = ds.map(input_columns=["image"], operations=[normalize_op, type_cast0, horizontally_op],
+            ds = ds.map(operations=[normalize_op, type_cast0, horizontally_op], input_columns=["image"],
                         num_parallel_workers=12)
-            ds = ds.map(input_columns=["image", "image_shape", "box", "label", "valid_num"],
-                        operations=flipped_generation, num_parallel_workers=num_parallel_workers)
+            ds = ds.map(operations=flipped_generation,
+                        input_columns=["image", "image_shape", "box", "label", "valid_num"],
+                        num_parallel_workers=num_parallel_workers)
         else:
-            ds = ds.map(input_columns=["image"], operations=[normalize_op, type_cast0],
+            ds = ds.map(operations=[normalize_op, type_cast0], input_columns=["image"],
                         num_parallel_workers=12)
-        ds = ds.map(input_columns=["image"], operations=[hwc_to_chw, type_cast1],
+        ds = ds.map(operations=[hwc_to_chw, type_cast1], input_columns=["image"],
                     num_parallel_workers=12)
 
     else:
-        ds = ds.map(input_columns=["image", "annotation"],
+        ds = ds.map(operations=compose_map_func,
+                    input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
                     column_order=["image", "image_shape", "box", "label", "valid_num"],
-                    operations=compose_map_func,
                     num_parallel_workers=num_parallel_workers)
 
-        ds = ds.map(input_columns=["image"], operations=[normalize_op, hwc_to_chw, type_cast1],
+        ds = ds.map(operations=[normalize_op, hwc_to_chw, type_cast1], input_columns=["image"],
                     num_parallel_workers=24)
 
     # transpose_column from python to c
-    ds = ds.map(input_columns=["image_shape"], operations=[type_cast1])
-    ds = ds.map(input_columns=["box"], operations=[type_cast1])
-    ds = ds.map(input_columns=["label"], operations=[type_cast2])
-    ds = ds.map(input_columns=["valid_num"], operations=[type_cast3])
+    ds = ds.map(operations=[type_cast1], input_columns=["image_shape"])
+    ds = ds.map(operations=[type_cast1], input_columns=["box"])
+    ds = ds.map(operations=[type_cast2], input_columns=["label"])
+    ds = ds.map(operations=[type_cast3], input_columns=["valid_num"])
     ds = ds.batch(batch_size, drop_remainder=True)
     ds = ds.repeat(repeat_num)
 

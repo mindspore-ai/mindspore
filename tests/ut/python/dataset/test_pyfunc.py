@@ -33,7 +33,7 @@ def test_case_0():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns="col0", output_columns="out", operations=(lambda x: x + x))
+    data1 = data1.map(operations=(lambda x: x + x), input_columns="col0", output_columns="out")
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -53,7 +53,7 @@ def test_case_1():
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    data1 = data1.map(input_columns=col, output_columns=["out0", "out1"], operations=(lambda x: (x, x + x)),
+    data1 = data1.map(operations=(lambda x: (x, x + x)), input_columns=col, output_columns=["out0", "out1"],
                       column_order=["out0", "out1"])
 
     i = 0
@@ -77,7 +77,7 @@ def test_case_2():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns=col, output_columns="out", operations=(lambda x, y: x + y),
+    data1 = data1.map(operations=(lambda x, y: x + y), input_columns=col, output_columns="out",
                       column_order=["out"])
 
     i = 0
@@ -99,8 +99,8 @@ def test_case_3():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns=col, output_columns=["out0", "out1", "out2"],
-                      operations=(lambda x, y: (x, x + y, x + y + 1)), column_order=["out0", "out1", "out2"])
+    data1 = data1.map(operations=(lambda x, y: (x, x + y, x + y + 1)), input_columns=col,
+                      output_columns=["out0", "out1", "out2"], column_order=["out0", "out1", "out2"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -125,8 +125,9 @@ def test_case_4():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns=col, output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
-                      operations=(lambda x, y: (x, x + y, x + y + 1)), column_order=["out0", "out1", "out2"])
+    data1 = data1.map(operations=(lambda x, y: (x, x + y, x + y + 1)), input_columns=col,
+                      output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
+                      column_order=["out0", "out1", "out2"])
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -154,7 +155,7 @@ def test_case_5():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns="col0", output_columns="out", operations=func_5)
+    data1 = data1.map(operations=func_5, input_columns="col0", output_columns="out")
 
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         # In this test, the dataset is 2x2 sequential tensors
@@ -171,8 +172,7 @@ def test_case_6():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns="col0", output_columns="out",
-                      operations=[(lambda x: x + x), (lambda x: x + x)])
+    data1 = data1.map(operations=[(lambda x: x + x), (lambda x: x + x)], input_columns="col0", output_columns="out")
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -191,7 +191,7 @@ def test_case_7():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns="col0", output_columns="out", operations=(lambda x: x + x),
+    data1 = data1.map(operations=(lambda x: x + x), input_columns="col0", output_columns="out",
                       num_parallel_workers=4, python_multiprocessing=True)
 
     i = 0
@@ -213,8 +213,9 @@ def test_case_8():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns=col, output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
-                      operations=(lambda x, y: (x, x + y, x + y + 1)), column_order=["out0", "out1", "out2"],
+    data1 = data1.map(operations=(lambda x, y: (x, x + y, x + y + 1)), input_columns=col,
+                      output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
+                      column_order=["out0", "out1", "out2"],
                       python_multiprocessing=True)
 
     i = 0
@@ -238,9 +239,8 @@ def test_case_9():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    data1 = data1.map(input_columns="col0", output_columns="out", operations=[(lambda x: x + x), (lambda x: x + 1),
-                                                                              (lambda x: x + 2)],
-                      num_parallel_workers=4, python_multiprocessing=True)
+    data1 = data1.map(operations=[(lambda x: x + x), (lambda x: x + 1), (lambda x: x + 2)], input_columns="col0",
+                      output_columns="out", num_parallel_workers=4, python_multiprocessing=True)
 
     i = 0
     for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -259,7 +259,7 @@ def test_pyfunc_execption():
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
         data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-        data1 = data1.map(input_columns="col0", output_columns="out", operations=pyfunc,
+        data1 = data1.map(operations=pyfunc, input_columns="col0", output_columns="out",
                           num_parallel_workers=4)
         for _ in data1:
             pass
@@ -275,7 +275,7 @@ def skip_test_pyfunc_execption_multiprocess():
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
         data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-        data1 = data1.map(input_columns="col0", output_columns="out", operations=pyfunc,
+        data1 = data1.map(operations=pyfunc, input_columns="col0", output_columns="out",
                           num_parallel_workers=4, python_multiprocessing=True)
         for _ in data1:
             pass

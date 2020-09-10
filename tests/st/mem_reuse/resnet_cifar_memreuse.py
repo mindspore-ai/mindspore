@@ -89,8 +89,8 @@ def create_dataset(repeat_num=1, training=True):
                 changeswap_op]
 
     # apply map operations on images
-    ds = ds.map(input_columns="label", operations=type_cast_op)
-    ds = ds.map(input_columns="image", operations=c_trans)
+    ds = ds.map(operations=type_cast_op, input_columns="label")
+    ds = ds.map(operations=c_trans, input_columns="image")
 
     # apply repeat operations
     ds = ds.repeat(repeat_num)

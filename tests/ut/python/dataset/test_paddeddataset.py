@@ -12,21 +12,26 @@ FILES_NUM = 4
 CV_FILE_NAME = "../data/mindrecord/imagenet.mindrecord"
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
 
+
 def generator_5():
     for i in range(0, 5):
         yield (np.array([i]),)
+
 
 def generator_8():
     for i in range(5, 8):
         yield (np.array([i]),)
 
+
 def generator_10():
     for i in range(0, 10):
         yield (np.array([i]),)
 
+
 def generator_20():
     for i in range(10, 20):
         yield (np.array([i]),)
+
 
 def generator_30():
     for i in range(20, 30):
@@ -57,12 +62,13 @@ def test_TFRecord_Padded():
         verify_list.append(shard_list)
     assert verify_list == result_list
 
+
 def test_GeneratorDataSet_Padded():
     result_list = []
     for i in range(10):
         tem_list = []
         tem_list.append(i)
-        tem_list.append(10+i)
+        tem_list.append(10 + i)
         result_list.append(tem_list)
 
     verify_list = []
@@ -79,6 +85,7 @@ def test_GeneratorDataSet_Padded():
         verify_list.append(tem_list)
 
     assert verify_list == result_list
+
 
 def test_Reapeat_afterPadded():
     result_list = [1, 3, 5, 7]
@@ -103,6 +110,7 @@ def test_Reapeat_afterPadded():
 
     assert verify_list == result_list * repeat_num
 
+
 def test_bath_afterPadded():
     data1 = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(1, np.uint8)},
              {'image': np.zeros(1, np.uint8)}, {'image': np.zeros(1, np.uint8)},
@@ -119,6 +127,7 @@ def test_bath_afterPadded():
 
     ds4 = ds3.batch(2)
     assert sum([1 for _ in ds4]) == 2
+
 
 def test_Unevenly_distributed():
     result_list = [[1, 4, 7], [2, 5, 8], [3, 6]]
@@ -145,6 +154,7 @@ def test_Unevenly_distributed():
         verify_list.append(tem_list)
     assert verify_list == result_list
 
+
 def test_three_datasets_connected():
     result_list = []
     for i in range(10):
@@ -169,6 +179,7 @@ def test_three_datasets_connected():
         verify_list.append(tem_list)
 
     assert verify_list == result_list
+
 
 def test_raise_error():
     data1 = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)},
@@ -202,6 +213,7 @@ def test_raise_error():
         ds3.use_sampler(testsampler)
         assert excinfo.type == 'ValueError'
 
+
 def test_imagefolder_padded():
     DATA_DIR = "../data/dataset/testPK/data"
     data = ds.ImageFolderDataset(DATA_DIR)
@@ -225,6 +237,7 @@ def test_imagefolder_padded():
     assert verify_list[8] == 1
     assert verify_list[9] == 6
 
+
 def test_imagefolder_padded_with_decode():
     num_shards = 5
     count = 0
@@ -244,7 +257,7 @@ def test_imagefolder_padded_with_decode():
 
         testsampler = ds.DistributedSampler(num_shards=num_shards, shard_id=shard_id, shuffle=False, num_samples=None)
         data3.use_sampler(testsampler)
-        data3 = data3.map(input_columns="image", operations=V_C.Decode())
+        data3 = data3.map(operations=V_C.Decode(), input_columns="image")
         shard_sample_count = 0
         for ele in data3.create_dict_iterator(num_epochs=1):
             print("label: {}".format(ele['label']))
@@ -252,6 +265,7 @@ def test_imagefolder_padded_with_decode():
             shard_sample_count += 1
         assert shard_sample_count in (9, 10)
     assert count == 48
+
 
 def test_imagefolder_padded_with_decode_and_get_dataset_size():
     num_shards = 5
@@ -273,7 +287,7 @@ def test_imagefolder_padded_with_decode_and_get_dataset_size():
         testsampler = ds.DistributedSampler(num_shards=num_shards, shard_id=shard_id, shuffle=False, num_samples=None)
         data3.use_sampler(testsampler)
         shard_dataset_size = data3.get_dataset_size()
-        data3 = data3.map(input_columns="image", operations=V_C.Decode())
+        data3 = data3.map(operations=V_C.Decode(), input_columns="image")
         shard_sample_count = 0
         for ele in data3.create_dict_iterator(num_epochs=1):
             print("label: {}".format(ele['label']))
@@ -282,6 +296,7 @@ def test_imagefolder_padded_with_decode_and_get_dataset_size():
         assert shard_sample_count in (9, 10)
         assert shard_dataset_size == shard_sample_count
     assert count == 48
+
 
 def test_more_shard_padded():
     result_list = []
@@ -307,7 +322,7 @@ def test_more_shard_padded():
     vertifyList1 = []
     result_list1 = []
     for i in range(8):
-        result_list1.append([i+1])
+        result_list1.append([i + 1])
     result_list1.append([])
 
     data1 = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)},
@@ -329,6 +344,7 @@ def test_more_shard_padded():
         vertifyList1.append(tem_list)
 
     assert vertifyList1 == result_list1
+
 
 def get_data(dir_name):
     """
@@ -359,6 +375,7 @@ def get_data(dir_name):
         except FileNotFoundError:
             continue
     return data_list
+
 
 @pytest.fixture(name="remove_mindrecord_file")
 def add_and_remove_cv_file():
@@ -392,6 +409,7 @@ def add_and_remove_cv_file():
             os.remove("{}".format(x))
             os.remove("{}.db".format(x))
 
+
 def test_Mindrecord_Padded(remove_mindrecord_file):
     result_list = []
     verify_list = [[1, 2], [3, 4], [5, 11], [6, 12], [7, 13], [8, 14], [9], [10]]
@@ -412,6 +430,7 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
             tem_list.append(int(ele['file_name'].tostring().decode().lstrip('image_').rstrip('.jpg')))
         result_list.append(tem_list)
     assert result_list == verify_list
+
 
 def test_clue_padded_and_skip_with_0_samples():
     """
@@ -441,7 +460,7 @@ def test_clue_padded_and_skip_with_0_samples():
         count += 1
     assert count == 2
 
-    dataset = dataset.skip(count=2)    # dataset2 has none samples
+    dataset = dataset.skip(count=2)  # dataset2 has none samples
     count = 0
     for data in dataset.create_dict_iterator(num_epochs=1):
         count += 1
@@ -453,6 +472,7 @@ def test_clue_padded_and_skip_with_0_samples():
         for data in dataset.create_dict_iterator(num_epochs=1):
             count += 1
         assert count == 2
+
 
 def test_celeba_padded():
     data = ds.CelebADataset("../data/dataset/testCelebAData/")
@@ -468,6 +488,7 @@ def test_celeba_padded():
     for _ in data.create_dict_iterator():
         count = count + 1
     assert count == 2
+
 
 if __name__ == '__main__':
     test_TFRecord_Padded()

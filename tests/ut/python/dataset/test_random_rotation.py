@@ -44,12 +44,12 @@ def test_random_rotation_op_c(plot=False):
     decode_op = c_vision.Decode()
     # use [90, 90] to force rotate 90 degrees, expand is set to be True to match output size
     random_rotation_op = c_vision.RandomRotation((90, 90), expand=True)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_rotation_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_rotation_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -79,13 +79,13 @@ def test_random_rotation_op_py(plot=False):
     transform1 = mindspore.dataset.transforms.py_transforms.Compose([py_vision.Decode(),
                                                                      py_vision.RandomRotation((90, 90), expand=True),
                                                                      py_vision.ToTensor()])
-    data1 = data1.map(input_columns=["image"], operations=transform1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transform2 = mindspore.dataset.transforms.py_transforms.Compose([py_vision.Decode(),
                                                                      py_vision.ToTensor()])
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -114,8 +114,8 @@ def test_random_rotation_expand():
     decode_op = c_vision.Decode()
     # expand is set to be True to match output size
     random_rotation_op = c_vision.RandomRotation((0, 90), expand=True)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=random_rotation_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_rotation_op, input_columns=["image"])
 
     num_iter = 0
     for item in data1.create_dict_iterator(num_epochs=1):
@@ -140,8 +140,8 @@ def test_random_rotation_md5():
                                         resample=Inter.BILINEAR,
                                         center=(50, 50),
                                         fill_value=150)
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -152,7 +152,7 @@ def test_random_rotation_md5():
                                                                                               center=(50, 50),
                                                                                               fill_value=150),
                                                                      py_vision.ToTensor()])
-    data2 = data2.map(input_columns=["image"], operations=transform2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename1 = "random_rotation_01_c_result.npz"
@@ -180,7 +180,7 @@ def test_rotation_diff(plot=False):
               rotation_op
               ]
 
-    data1 = data1.map(input_columns=["image"], operations=ctrans)
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
     transforms = [
@@ -190,7 +190,7 @@ def test_rotation_diff(plot=False):
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     num_iter = 0
     image_list_c, image_list_py = [], []

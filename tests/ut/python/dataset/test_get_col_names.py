@@ -95,16 +95,16 @@ def test_get_column_name_manifest():
 def test_get_column_name_map():
     data = ds.Cifar10Dataset(CIFAR10_DIR)
     center_crop_op = vision.CenterCrop(10)
-    data = data.map(input_columns=["image"], operations=center_crop_op)
+    data = data.map(operations=center_crop_op, input_columns=["image"])
     assert data.get_col_names() == ["image", "label"]
     data = ds.Cifar10Dataset(CIFAR10_DIR)
-    data = data.map(input_columns=["image"], operations=center_crop_op, output_columns=["image"])
+    data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["image"])
     assert data.get_col_names() == ["image", "label"]
     data = ds.Cifar10Dataset(CIFAR10_DIR)
-    data = data.map(input_columns=["image"], operations=center_crop_op, output_columns=["col1"])
+    data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1"])
     assert data.get_col_names() == ["col1", "label"]
     data = ds.Cifar10Dataset(CIFAR10_DIR)
-    data = data.map(input_columns=["image"], operations=center_crop_op, output_columns=["col1", "col2"],
+    data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1", "col2"],
                     column_order=["col2", "col1"])
     assert data.get_col_names() == ["col2", "col1"]
 

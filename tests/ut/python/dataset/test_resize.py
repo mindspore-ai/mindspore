@@ -42,9 +42,9 @@ def test_resize_op(plot=False):
         resize_op = vision.Resize(size)
 
         # apply map operations on images
-        data1 = data1.map(input_columns=["image"], operations=decode_op)
+        data1 = data1.map(operations=decode_op, input_columns=["image"])
 
-        data2 = data1.map(input_columns=["image"], operations=resize_op)
+        data2 = data1.map(operations=resize_op, input_columns=["image"])
         image_original = []
         image_resized = []
         for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -72,8 +72,8 @@ def test_resize_md5(plot=False):
         data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         decode_op = vision.Decode()
         resize_op = vision.Resize(size)
-        data1 = data1.map(input_columns=["image"], operations=decode_op)
-        data2 = data1.map(input_columns=["image"], operations=resize_op)
+        data1 = data1.map(operations=decode_op, input_columns=["image"])
+        data2 = data1.map(operations=resize_op, input_columns=["image"])
         image_original = []
         image_resized = []
         # Compare with expected md5 from images

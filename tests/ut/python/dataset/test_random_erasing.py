@@ -29,6 +29,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
 
+
 def test_random_erasing_op(plot=False):
     """
     Test RandomErasing and Cutout
@@ -43,7 +44,7 @@ def test_random_erasing_op(plot=False):
         vision.RandomErasing(value='random')
     ]
     transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
-    data1 = data1.map(input_columns=["image"], operations=transform_1)
+    data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -53,7 +54,7 @@ def test_random_erasing_op(plot=False):
         vision.Cutout(80)
     ]
     transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
-    data2 = data2.map(input_columns=["image"], operations=transform_2)
+    data2 = data2.map(operations=transform_2, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -88,7 +89,7 @@ def test_random_erasing_md5():
         vision.RandomErasing(value='random')
     ]
     transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
-    data = data.map(input_columns=["image"], operations=transform_1)
+    data = data.map(operations=transform_1, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "random_erasing_01_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)

@@ -47,12 +47,13 @@ def test_one_hot():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     one_hot_op = data_trans.OneHot(num_classes=depth)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_op, column_order=["label"])
+    data1 = data1.map(operations=one_hot_op, input_columns=["label"], column_order=["label"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["label"], shuffle=False)
 
     assert dataset_equal_with_function(data1, data2, 0, one_hot, depth)
+
 
 def test_one_hot_post_aug():
     """
@@ -72,14 +73,14 @@ def test_one_hot_post_aug():
     resize_op = c_vision.Resize((resize_height, resize_width))
 
     # Apply map operations on images
-    data1 = data1.map(input_columns=["image"], operations=decode_op)
-    data1 = data1.map(input_columns=["image"], operations=rescale_op)
-    data1 = data1.map(input_columns=["image"], operations=resize_op)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=rescale_op, input_columns=["image"])
+    data1 = data1.map(operations=resize_op, input_columns=["image"])
 
     # Apply one-hot encoding on labels
     depth = 4
     one_hot_encode = data_trans.OneHot(depth)
-    data1 = data1.map(input_columns=["label"], operations=one_hot_encode)
+    data1 = data1.map(operations=one_hot_encode, input_columns=["label"])
 
     # Apply datasets ops
     buffer_size = 100

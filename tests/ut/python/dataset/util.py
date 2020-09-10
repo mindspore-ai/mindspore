@@ -284,7 +284,7 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
     def add_bounding_boxes(ax, bboxes):
         for bbox in bboxes:
             rect = patches.Rectangle((bbox[0], bbox[1]),
-                                     bbox[2]*0.997, bbox[3]*0.997,
+                                     bbox[2] * 0.997, bbox[3] * 0.997,
                                      linewidth=1.80, edgecolor='r', facecolor='none')
             # Add the patch to the Axes
             # Params to Rectangle slightly modified to prevent drawing overflow
@@ -324,14 +324,14 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
 
             axA.imshow(dataA["image"])
             add_bounding_boxes(axA, dataA[annot_name])
-            axA.title.set_text("Original" + str(cur_ix+1))
+            axA.title.set_text("Original" + str(cur_ix + 1))
 
             axB.imshow(dataB["image"])
             add_bounding_boxes(axB, dataB[annot_name])
-            axB.title.set_text("Augmented" + str(cur_ix+1))
+            axB.title.set_text("Augmented" + str(cur_ix + 1))
 
-            logger.info("Original **\n{} : {}".format(str(cur_ix+1), dataA[annot_name]))
-            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix+1), dataB[annot_name]))
+            logger.info("Original **\n{} : {}".format(str(cur_ix + 1), dataA[annot_name]))
+            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix + 1), dataB[annot_name]))
 
         plt.show()
 
@@ -384,22 +384,22 @@ def check_bad_bbox(data, test_op, invalid_bbox_type, expected_error):
 
     try:
         # map to use selected invalid bounding box type
-        data = data.map(input_columns=["image", "bbox"],
+        data = data.map(operations=lambda img, bboxes: add_bad_bbox(img, bboxes, invalid_bbox_type),
+                        input_columns=["image", "bbox"],
                         output_columns=["image", "bbox"],
-                        column_order=["image", "bbox"],
-                        operations=lambda img, bboxes: add_bad_bbox(img, bboxes, invalid_bbox_type))
+                        column_order=["image", "bbox"])
         # map to apply ops
-        data = data.map(input_columns=["image", "bbox"],
+        data = data.map(operations=[test_op], input_columns=["image", "bbox"],
                         output_columns=["image", "bbox"],
-                        column_order=["image", "bbox"],
-                        operations=[test_op])  # Add column for "bbox"
+                        column_order=["image", "bbox"])  # Add column for "bbox"
         for _, _ in enumerate(data.create_dict_iterator(num_epochs=1)):
             break
     except RuntimeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert expected_error in str(error)
 
-#return true if datasets are equal
+
+# return true if datasets are equal
 def dataset_equal(data1, data2, mse_threshold):
     if data1.get_dataset_size() != data2.get_dataset_size():
         return False
@@ -413,6 +413,7 @@ def dataset_equal(data1, data2, mse_threshold):
         if not equal:
             break
     return equal
+
 
 # return true if datasets are equal after modification to target
 # params: data_unchanged - dataset kept unchanged

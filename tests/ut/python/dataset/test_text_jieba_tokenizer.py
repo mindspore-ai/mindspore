@@ -28,8 +28,8 @@ def test_jieba_1():
     """Test jieba tokenizer with MP mode"""
     data = ds.TextFileDataset(DATA_FILE)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     ret = []
     for i in data.create_dict_iterator(num_epochs=1):
@@ -42,8 +42,8 @@ def test_jieba_1_1():
     """Test jieba tokenizer with HMM mode"""
     data = ds.TextFileDataset(DATA_FILE)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.HMM)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['今天', '天气', '太', '好', '了', '我们', '一起', '去', '外面', '玩', '吧']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -55,8 +55,8 @@ def test_jieba_1_2():
     """Test jieba tokenizer with HMM MIX"""
     data = ds.TextFileDataset(DATA_FILE)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MIX)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -71,8 +71,8 @@ def test_jieba_2():
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_word("男默女泪")
     expect = ['男默女泪', '市', '长江大桥']
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=2)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=2)
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
         for index, item in enumerate(ret):
@@ -85,8 +85,8 @@ def test_jieba_2_1():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_word("男默女泪", 10)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=2)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=2)
     expect = ['男默女泪', '市', '长江大桥']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -109,8 +109,8 @@ def test_jieba_2_3():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_word("江大桥", 20000)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=2)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=2)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -127,8 +127,8 @@ def test_jieba_3():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_dict(user_dict)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['男默女泪', '市', '长江大桥']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -146,8 +146,8 @@ def test_jieba_3_1():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_dict(user_dict)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['男默女泪', '市长', '江大桥']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -162,8 +162,8 @@ def test_jieba_4():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_dict(DICT_FILE)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -188,8 +188,8 @@ def test_jieba_5():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op.add_word("江大桥", 20000)
-    data = data.map(input_columns=["text"],
-                    operations=jieba_op, num_parallel_workers=1)
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])
@@ -201,9 +201,10 @@ def test_jieba_with_offsets_1():
     """Test jieba tokenizer with MP mode"""
     data = ds.TextFileDataset(DATA_FILE)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
     expected_offsets_limit = [12, 21, 27, 33, 36, 42, 48]
@@ -222,9 +223,10 @@ def test_jieba_with_offsets_1_1():
     """Test jieba tokenizer with HMM mode"""
     data = ds.TextFileDataset(DATA_FILE)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.HMM, with_offsets=True)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['今天', '天气', '太', '好', '了', '我们', '一起', '去', '外面', '玩', '吧']
     expected_offsets_start = [0, 6, 12, 15, 18, 21, 27, 33, 36, 42, 45]
     expected_offsets_limit = [6, 12, 15, 18, 21, 27, 33, 36, 42, 45, 48]
@@ -242,9 +244,10 @@ def test_jieba_with_offsets_1_2():
     """Test jieba tokenizer with HMM MIX"""
     data = ds.TextFileDataset(DATA_FILE)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MIX, with_offsets=True)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
     expected_offsets_limit = [12, 21, 27, 33, 36, 42, 48]
@@ -265,9 +268,10 @@ def test_jieba_with_offsets_2():
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_word("男默女泪")
     expect = ['男默女泪', '市', '长江大桥']
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=2)
+                    num_parallel_workers=2)
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
     for i in data.create_dict_iterator(num_epochs=1):
@@ -286,9 +290,10 @@ def test_jieba_with_offsets_2_1():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_word("男默女泪", 10)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=2)
+                    num_parallel_workers=2)
     expect = ['男默女泪', '市', '长江大桥']
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
@@ -308,9 +313,10 @@ def test_jieba_with_offsets_2_2():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_word("江大桥", 20000)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=2)
+                    num_parallel_workers=2)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     expected_offsets_start = [0, 6, 12, 21, 27, 30, 42, 45, 51]
     expected_offsets_limit = [6, 12, 21, 27, 30, 42, 45, 51, 57]
@@ -333,9 +339,10 @@ def test_jieba_with_offsets_3():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_dict(user_dict)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['男默女泪', '市', '长江大桥']
     expected_offsets_start = [0, 12, 15]
     expected_offsets_limit = [12, 15, 27]
@@ -359,9 +366,10 @@ def test_jieba_with_offsets_3_1():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_dict(user_dict)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['男默女泪', '市长', '江大桥']
     expected_offsets_start = [0, 12, 18]
     expected_offsets_limit = [12, 18, 27]
@@ -382,9 +390,10 @@ def test_jieba_with_offsets_4():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_dict(DICT_FILE)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧']
     expected_offsets_start = [0, 12, 21, 27, 33, 36, 42]
     expected_offsets_limit = [12, 21, 27, 33, 36, 42, 48]
@@ -405,9 +414,10 @@ def test_jieba_with_offsets_5():
     data = ds.TextFileDataset(DATA_FILE4)
     jieba_op = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP, with_offsets=True)
     jieba_op.add_word("江大桥", 20000)
-    data = data.map(input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
+    data = data.map(operations=jieba_op, input_columns=["text"],
+                    output_columns=["token", "offsets_start", "offsets_limit"],
                     column_order=["token", "offsets_start", "offsets_limit"],
-                    operations=jieba_op, num_parallel_workers=1)
+                    num_parallel_workers=1)
     expect = ['江州', '市长', '江大桥', '参加', '了', '长江大桥', '的', '通车', '仪式']
     expected_offsets_start = [0, 6, 12, 21, 27, 30, 42, 45, 51]
     expected_offsets_limit = [6, 12, 21, 27, 30, 42, 45, 51, 57]
@@ -419,6 +429,7 @@ def test_jieba_with_offsets_5():
             assert item == expected_offsets_start[index]
         for index, item in enumerate(i["offsets_limit"]):
             assert item == expected_offsets_limit[index]
+
 
 def gen():
     text = np.array("今天天气太好了我们一起去外面玩吧".encode("UTF8"), dtype='S')
@@ -436,8 +447,8 @@ def pytoken_op(input_data):
 
 def test_jieba_6():
     data = ds.GeneratorDataset(gen, column_names=["text"])
-    data = data.map(input_columns=["text"],
-                    operations=pytoken_op, num_parallel_workers=1)
+    data = data.map(operations=pytoken_op, input_columns=["text"],
+                    num_parallel_workers=1)
     expect = ['今天天气太', '好了我们一', '起去外面玩吧']
     for i in data.create_dict_iterator(num_epochs=1):
         ret = to_str(i["text"])

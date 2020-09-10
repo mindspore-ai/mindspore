@@ -25,6 +25,7 @@ def generator_1d():
     for i in range(64):
         yield (np.array([i]),)
 
+
 class DatasetGenerator:
     def __init__(self):
         pass
@@ -241,11 +242,11 @@ def test_generator_8():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
-    data1 = data1.map(input_columns="col0", output_columns="out0", operations=(lambda x: x * 3),
+    data1 = data1.map(operations=(lambda x: x * 3), input_columns="col0", output_columns="out0",
                       num_parallel_workers=2)
-    data1 = data1.map(input_columns="col1", output_columns=["out1", "out2"], operations=(lambda x: (x * 7, x)),
+    data1 = data1.map(operations=(lambda x: (x * 7, x)), input_columns="col1", output_columns=["out1", "out2"],
                       num_parallel_workers=2, column_order=["out0", "out1", "out2"])
-    data1 = data1.map(input_columns="out2", output_columns="out2", operations=(lambda x: x + 1),
+    data1 = data1.map(operations=(lambda x: x + 1), input_columns="out2", output_columns="out2",
                       num_parallel_workers=2)
 
     i = 0
@@ -268,9 +269,9 @@ def test_generator_9():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["image", "label"])
     data2 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
-    data1 = data1.map(input_columns="label", operations=(lambda x: x * 3),
+    data1 = data1.map(operations=(lambda x: x * 3), input_columns="label",
                       num_parallel_workers=4)
-    data2 = data2.map(input_columns="label", operations=(lambda x: x * 3),
+    data2 = data2.map(operations=(lambda x: x * 3), input_columns="label",
                       num_parallel_workers=4)
 
     # Expected column order is not changed.
@@ -298,7 +299,7 @@ def test_generator_10():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
-    data1 = data1.map(input_columns="col1", output_columns=["out1", "out2"], operations=(lambda x: (x, x * 5)),
+    data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns="col1", output_columns=["out1", "out2"],
                       column_order=['col0', 'out1', 'out2'], num_parallel_workers=2)
 
     # Expected column order is |col0|out1|out2|
@@ -322,7 +323,7 @@ def test_generator_11():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"])
-    data1 = data1.map(input_columns="col1", output_columns=["out1", "out2"], operations=(lambda x: (x, x * 5)),
+    data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns="col1", output_columns=["out1", "out2"],
                       column_order=['out1', 'out2'], num_parallel_workers=2)
 
     # Expected column order is |out1|out2|
@@ -503,7 +504,7 @@ def test_generator_error_3():
     with pytest.raises(ValueError) as info:
         # apply dataset operations
         data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
-        data1 = data1.map(input_columns=["label"], output_columns=["out1", "out2"], operations=(lambda x: (x, x * 5)),
+        data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns=["label"], output_columns=["out1", "out2"],
                           num_parallel_workers=2)
 
         for _ in data1:
@@ -515,7 +516,7 @@ def test_generator_error_4():
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
         data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
-        data1 = data1.map(input_columns=["label"], operations=(lambda x: (x, x * 5)),
+        data1 = data1.map(operations=(lambda x: (x, x * 5)), input_columns=["label"],
                           num_parallel_workers=2)
 
         for _ in data1:
@@ -705,6 +706,7 @@ def test_generator_dataset_size_4():
     for _ in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
         num_rows = num_rows + 1
     assert data_size == num_rows
+
 
 def test_generator_dataset_size_5():
     """

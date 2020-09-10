@@ -31,8 +31,6 @@ from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 
 
-
-
 def test_imagefolder(remove_json_files=True):
     """
     Test simulating resnet50 dataset pipeline.
@@ -50,11 +48,11 @@ def test_imagefolder(remove_json_files=True):
     sampler = ds.WeightedRandomSampler(weights, 11)
     data1 = ds.ImageFolderDataset(data_dir, sampler=sampler)
     data1 = data1.repeat(1)
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True)])
+    data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
     rescale_op = vision.Rescale(rescale, shift)
 
     resize_op = vision.Resize((resize_height, resize_width), Inter.LINEAR)
-    data1 = data1.map(input_columns=["image"], operations=[rescale_op, resize_op])
+    data1 = data1.map(operations=[rescale_op, resize_op], input_columns=["image"])
     data1 = data1.batch(2)
 
     # Serialize the dataset pre-processing pipeline.
@@ -106,7 +104,7 @@ def test_mnist_dataset(remove_json_files=True):
 
     data1 = ds.MnistDataset(data_dir, num_samples=100)
     one_hot_encode = c.OneHot(10)  # num_classes is input argument
-    data1 = data1.map(input_columns="label", operations=one_hot_encode)
+    data1 = data1.map(operations=one_hot_encode, input_columns="label")
 
     # batch_size is input argument
     data1 = data1.batch(batch_size=10, drop_remainder=True)
@@ -187,8 +185,8 @@ def test_random_crop():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
     decode_op = vision.Decode()
     random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    data1 = data1.map(input_columns="image", operations=decode_op)
-    data1 = data1.map(input_columns="image", operations=random_crop_op)
+    data1 = data1.map(operations=decode_op, input_columns="image")
+    data1 = data1.map(operations=random_crop_op, input_columns="image")
 
     # Serializing into python dictionary
     ds1_dict = ds.serialize(data1)
@@ -200,7 +198,7 @@ def test_random_crop():
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
-    data2 = data2.map(input_columns="image", operations=decode_op)
+    data2 = data2.map(operations=decode_op, input_columns="image")
 
     for item1, item1_1, item2 in zip(data1.create_dict_iterator(num_epochs=1),
                                      data1_1.create_dict_iterator(num_epochs=1),

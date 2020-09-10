@@ -103,8 +103,8 @@ def test_manifest_dataset_multi_label_onehot():
     data = ds.ManifestDataset(DATA_FILE, decode=True, shuffle=False)
     expect_label = [[[0, 1, 0], [1, 0, 0]], [[1, 0, 0], [1, 0, 1]]]
     one_hot_encode = data_trans.OneHot(3)
-    data = data.map(input_columns=["label"], operations=one_hot_encode)
-    data = data.map(input_columns=["label"], operations=multi_label_hot)
+    data = data.map(operations=one_hot_encode, input_columns=["label"])
+    data = data.map(operations=multi_label_hot, input_columns=["label"])
     data = data.batch(2)
     count = 0
     for item in data.create_dict_iterator(num_epochs=1):

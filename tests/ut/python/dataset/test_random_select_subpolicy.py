@@ -24,7 +24,7 @@ def test_random_select_subpolicy():
     def test_config(arr, policy):
         try:
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
-            data = data.map(input_columns=["col"], operations=visions.RandomSelectSubpolicy(policy))
+            data = data.map(operations=visions.RandomSelectSubpolicy(policy), input_columns=["col"])
             res = []
             for i in data.create_dict_iterator(num_epochs=1):
                 res.append(i["col"].tolist())

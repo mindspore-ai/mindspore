@@ -45,7 +45,7 @@ def test_simple_sync_wait():
 
     aug = Augment(0)
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     dataset = dataset.batch(batch_size)
     count = 0
     for data in dataset.create_dict_iterator(num_epochs=1):
@@ -68,7 +68,7 @@ def test_simple_shuffle_sync():
     aug = Augment(0)
     dataset = dataset.shuffle(shuffle_size)
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     dataset = dataset.batch(batch_size)
 
     count = 0
@@ -91,7 +91,7 @@ def test_two_sync():
     # notice that with our design, we need to have step_size = shuffle size
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
 
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
 
     dataset = dataset.sync_wait(num_batch=2, condition_name="every 2 batches")
 
@@ -116,7 +116,7 @@ def test_sync_epoch():
 
     aug = Augment(0)
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
     for _ in range(3):
@@ -139,14 +139,14 @@ def test_multiple_iterators():
 
     aug = Augment(0)
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     dataset = dataset.batch(batch_size, drop_remainder=True)
     # 2nd dataset
     dataset2 = ds.GeneratorDataset(gen, column_names=["input"])
 
     aug = Augment(0)
     dataset2 = dataset2.sync_wait(condition_name="policy", callback=aug.update)
-    dataset2 = dataset2.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset2 = dataset2.map(operations=[aug.preprocess], input_columns=["input"])
     dataset2 = dataset2.batch(batch_size, drop_remainder=True)
 
     for item1, item2 in zip(dataset.create_dict_iterator(num_epochs=1), dataset2.create_dict_iterator(num_epochs=1)):
@@ -168,7 +168,7 @@ def test_sync_exception_01():
 
     aug = Augment(0)
     dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
 
     with pytest.raises(RuntimeError) as e:
         dataset.shuffle(shuffle_size)
@@ -186,7 +186,7 @@ def test_sync_exception_02():
     aug = Augment(0)
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
 
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
 
     with pytest.raises(RuntimeError) as e:
         dataset.sync_wait(num_batch=2, condition_name="every batch")
@@ -219,7 +219,7 @@ def test_sync_exception_04():
     aug = Augment(0)
     # try to create dataset with batch_size < 0
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     count = 0
     with pytest.raises(RuntimeError) as e:
         for _ in dataset.create_dict_iterator(num_epochs=1):
@@ -240,7 +240,7 @@ def test_sync_exception_05():
     aug = Augment(0)
     # try to create dataset with batch_size < 0
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
-    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     with pytest.raises(RuntimeError) as e:
         for _ in dataset.create_dict_iterator(num_epochs=1):
             dataset.disable_sync()

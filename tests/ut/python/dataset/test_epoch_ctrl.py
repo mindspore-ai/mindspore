@@ -79,7 +79,7 @@ def test_decode_op():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     # Serialize and Load dataset requires using vision.Decode instead of vision.Decode().
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True)])
+    data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)

@@ -48,7 +48,7 @@ def test_cache_map_basic1():
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     ds1 = ds1.repeat(4)
 
     filename = "cache_map_01_result.npz"
@@ -77,7 +77,7 @@ def test_cache_map_basic2():
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
 
     filename = "cache_map_02_result.npz"
@@ -107,7 +107,7 @@ def test_cache_map_basic3():
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
     decode_op = c_vision.Decode()
     ds1 = ds1.repeat(4)
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     logger.info("ds1.dataset_size is ", ds1.get_dataset_size())
 
     num_iter = 0
@@ -131,7 +131,7 @@ def test_cache_map_basic4():
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.repeat(4)
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
     logger.info("ds1.dataset_size is ", ds1.get_dataset_size())
     shape = ds1.output_shapes()
     logger.info(shape)
@@ -167,7 +167,7 @@ def test_cache_map_failure1():
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
     decode_op = c_vision.Decode()
-    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
 
     try:

@@ -298,21 +298,21 @@ def create_yolo_dataset(mindrecord_dir, batch_size=32, repeat_num=10, device_num
     ds = de.MindDataset(mindrecord_dir, columns_list=["image", "annotation"], num_shards=device_num, shard_id=rank,
                         num_parallel_workers=num_parallel_workers, shuffle=False)
     decode = C.Decode()
-    ds = ds.map(input_columns=["image"], operations=decode)
+    ds = ds.map(operations=decode, input_columns=["image"])
     compose_map_func = (lambda image, annotation: preprocess_fn(image, annotation, is_training))
 
     if is_training:
         hwc_to_chw = C.HWC2CHW()
-        ds = ds.map(input_columns=["image", "annotation"],
+        ds = ds.map(operations=compose_map_func, input_columns=["image", "annotation"],
                     output_columns=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
                     column_order=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
-                    operations=compose_map_func, num_parallel_workers=num_parallel_workers)
-        ds = ds.map(input_columns=["image"], operations=hwc_to_chw, num_parallel_workers=num_parallel_workers)
+                    num_parallel_workers=num_parallel_workers)
+        ds = ds.map(operations=hwc_to_chw, input_columns=["image"], num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True)
         ds = ds.repeat(repeat_num)
     else:
-        ds = ds.map(input_columns=["image", "annotation"],
+        ds = ds.map(operations=compose_map_func, input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "annotation"],
                     column_order=["image", "image_shape", "annotation"],
-                    operations=compose_map_func, num_parallel_workers=num_parallel_workers)
+                    num_parallel_workers=num_parallel_workers)
     return ds

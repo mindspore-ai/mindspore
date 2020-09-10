@@ -45,7 +45,7 @@ def test_type_cast():
               type_cast_op,
               ]
 
-    data1 = data1.map(input_columns=["image"], operations=ctrans)
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
     transforms = [py_vision.Decode(),
@@ -53,7 +53,7 @@ def test_type_cast():
                   ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -85,7 +85,7 @@ def test_type_cast_string():
               type_cast_op
               ]
 
-    data1 = data1.map(input_columns=["image"], operations=ctrans)
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
     transforms = [py_vision.Decode(),
@@ -93,7 +93,7 @@ def test_type_cast_string():
                   ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):

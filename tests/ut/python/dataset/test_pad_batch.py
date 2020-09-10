@@ -127,7 +127,7 @@ def batch_padding_performance_1d():
     cifar10_dir = "../data/dataset/testCifar10Data"
     data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
-    data1 = data1.map(input_columns="image", operations=(lambda x: x.reshape(-1)))
+    data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
     pad_info = {"image": ([3888], 0)}  # 3888 =36*36*3
     # pad_info = None
     data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
@@ -144,7 +144,7 @@ def batch_pyfunc_padding_3d():
     data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     # pad_info = {"image": ([36, 36, 3], 0)}
-    data1 = data1.map(input_columns="image", operations=(lambda x: np.pad(x, ((0, 4), (0, 4), (0, 0)))),
+    data1 = data1.map(operations=(lambda x: np.pad(x, ((0, 4), (0, 4), (0, 0)))), input_columns="image",
                       python_multiprocessing=False)
     data1 = data1.batch(batch_size=24, drop_remainder=True)
     start_time = time.time()
@@ -159,8 +159,8 @@ def batch_pyfunc_padding_1d():
     cifar10_dir = "../data/dataset/testCifar10Data"
     data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
-    data1 = data1.map(input_columns="image", operations=(lambda x: x.reshape(-1)))
-    data1 = data1.map(input_columns="image", operations=(lambda x: np.pad(x, (0, 816))), python_multiprocessing=False)
+    data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
+    data1 = data1.map(operations=(lambda x: np.pad(x, (0, 816))), input_columns="image", python_multiprocessing=False)
     data1 = data1.batch(batch_size=24, drop_remainder=True)
     start_time = time.time()
     num_batches = 0
@@ -176,8 +176,8 @@ def test_pad_via_map():
 
     def pad_map_config():
         data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False, num_samples=1000)  # shape = [32,32,3]
-        data1 = data1.map(input_columns="image", operations=(lambda x: x.reshape(-1)))  # reshape to 1d
-        data1 = data1.map(input_columns="image", operations=(lambda x: np.pad(x, (0, 816))))
+        data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
+        data1 = data1.map(operations=(lambda x: np.pad(x, (0, 816))), input_columns="image")
         data1 = data1.batch(batch_size=25, drop_remainder=True)
         res = []
         for data in data1.create_dict_iterator(num_epochs=1):
@@ -186,7 +186,7 @@ def test_pad_via_map():
 
     def pad_batch_config():
         data2 = ds.Cifar10Dataset(cifar10_dir, shuffle=False, num_samples=1000)  # shape = [32,32,3]
-        data2 = data2.map(input_columns="image", operations=(lambda x: x.reshape(-1)))  # reshape to 1d
+        data2 = data2.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
         data2 = data2.batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
         res = []
         for data in data2.create_dict_iterator(num_epochs=1):

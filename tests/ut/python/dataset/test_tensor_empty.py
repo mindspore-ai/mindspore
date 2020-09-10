@@ -44,7 +44,7 @@ def test_tensor_empty_map():
         z = np.array([], dtype=np.float64)
         return x, y, z
 
-    data = data.map(input_columns=["col1", "col2", "col3"], operations=func)
+    data = data.map(operations=func, input_columns=["col1", "col2", "col3"])
 
     for d in data:
         np.testing.assert_array_equal(np.array([1], dtype=np.int64), d[0])

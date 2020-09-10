@@ -46,10 +46,9 @@ def test_resize_with_bbox_op_voc_c(plot_vis=False):
     test_op = c_vision.ResizeWithBBox(100)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
+    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                             output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[test_op])
+                            column_order=["image", "bbox"])
 
     filename = "resize_with_bbox_op_01_c_voc_result.npz"
     save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
@@ -83,10 +82,9 @@ def test_resize_with_bbox_op_coco_c(plot_vis=False):
 
     # map to apply ops
 
-    dataCOCO2 = dataCOCO2.map(input_columns=["image", "bbox"],
+    dataCOCO2 = dataCOCO2.map(operations=[test_op], input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
-                              column_order=["image", "bbox"],
-                              operations=[test_op])
+                              column_order=["image", "bbox"])
 
     filename = "resize_with_bbox_op_01_c_coco_result.npz"
     save_and_check_md5(dataCOCO2, filename, generate_golden=GENERATE_GOLDEN)
@@ -115,17 +113,17 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
     test_op = c_vision.ResizeWithBBox(500)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[lambda img, bboxes: (
-                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))])
+    dataVoc1 = dataVoc1.map(
+        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))],
+        input_columns=["image", "bbox"],
+        output_columns=["image", "bbox"],
+        column_order=["image", "bbox"])
 
-    dataVoc2 = dataVoc2.map(input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"],
-                            operations=[lambda img, bboxes: (
-                                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op])
+    dataVoc2 = dataVoc2.map(
+        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)),
+                    test_op], input_columns=["image", "bbox"],
+        output_columns=["image", "bbox"],
+        column_order=["image", "bbox"])
 
     unaugSamp, augSamp = [], []
 

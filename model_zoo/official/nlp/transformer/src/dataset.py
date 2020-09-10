@@ -30,12 +30,12 @@ def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle
                         shuffle=(do_shuffle == "true"), num_shards=rank_size, shard_id=rank_id)
 
     type_cast_op = deC.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="source_eos_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="source_eos_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="target_sos_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="target_sos_mask", operations=type_cast_op)
-    ds = ds.map(input_columns="target_eos_ids", operations=type_cast_op)
-    ds = ds.map(input_columns="target_eos_mask", operations=type_cast_op)
+    ds = ds.map(operations=type_cast_op, input_columns="source_eos_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="source_eos_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="target_sos_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="target_sos_mask")
+    ds = ds.map(operations=type_cast_op, input_columns="target_eos_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="target_eos_mask")
 
     # apply batch operations
     ds = ds.batch(transformer_net_cfg.batch_size, drop_remainder=True)

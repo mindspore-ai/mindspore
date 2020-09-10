@@ -34,12 +34,12 @@ def test_soft_dvpp_decode_resize_jpeg(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
     resize_op = vision.Resize((256, 512))
-    data1 = data1.map(input_columns=["image"], operations=[decode_op, resize_op])
+    data1 = data1.map(operations=[decode_op, resize_op], input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg((256, 512))
-    data2 = data2.map(input_columns=["image"], operations=soft_dvpp_decode_resize_op)
+    data2 = data2.map(operations=soft_dvpp_decode_resize_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -64,12 +64,12 @@ def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     random_crop_decode_resize_op = vision.RandomCropDecodeResize((256, 512), (1, 1), (0.5, 0.5))
-    data1 = data1.map(input_columns=["image"], operations=random_crop_decode_resize_op)
+    data1 = data1.map(operations=random_crop_decode_resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     soft_dvpp_random_crop_decode_resize_op = vision.SoftDvppDecodeRandomCropResizeJpeg((256, 512), (1, 1), (0.5, 0.5))
-    data2 = data2.map(input_columns=["image"], operations=soft_dvpp_random_crop_decode_resize_op)
+    data2 = data2.map(operations=soft_dvpp_random_crop_decode_resize_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
@@ -95,12 +95,12 @@ def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
     resize_op = vision.Resize(1134)
-    data1 = data1.map(input_columns=["image"], operations=[decode_op, resize_op])
+    data1 = data1.map(operations=[decode_op, resize_op], input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg(1134)
-    data2 = data2.map(input_columns=["image"], operations=soft_dvpp_decode_resize_op)
+    data2 = data2.map(operations=soft_dvpp_decode_resize_op, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):

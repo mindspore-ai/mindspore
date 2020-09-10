@@ -26,7 +26,7 @@ def test_demo_basic_from_dataset():
     vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
                                     special_tokens=["<pad>", "<unk>"],
                                     special_first=True)
-    data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "<unk>"))
+    data = data.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
     res = []
     for d in data.create_dict_iterator(num_epochs=1):
         res.append(d["text"].item())
@@ -36,10 +36,10 @@ def test_demo_basic_from_dataset():
 def test_demo_basic_from_dataset_with_tokenizer():
     """ this is a tutorial on how from_dataset should be used in a normal use case with tokenizer"""
     data = ds.TextFileDataset("../data/dataset/testTokenizerData/1.txt", shuffle=False)
-    data = data.map(input_columns=["text"], operations=text.UnicodeCharTokenizer())
+    data = data.map(operations=text.UnicodeCharTokenizer(), input_columns=["text"])
     vocab = text.Vocab.from_dataset(data, None, freq_range=None, top_k=None, special_tokens=["<pad>", "<unk>"],
                                     special_first=True)
-    data = data.map(input_columns=["text"], operations=text.Lookup(vocab, "<unk>"))
+    data = data.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
     res = []
     for d in data.create_dict_iterator(num_epochs=1):
         res.append(list(d["text"]))
@@ -60,7 +60,7 @@ def test_from_dataset():
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
         vocab = text.Vocab.from_dataset(corpus_dataset, None, freq_range, top_k, special_tokens=["<pad>", "<unk>"],
                                         special_first=True)
-        corpus_dataset = corpus_dataset.map(input_columns="text", operations=text.Lookup(vocab, "<unk>"))
+        corpus_dataset = corpus_dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns="text")
         res = []
         for d in corpus_dataset.create_dict_iterator(num_epochs=1):
             res.append(list(d["text"]))
@@ -108,7 +108,7 @@ def test_from_dataset_special_token():
         corpus_dataset = ds.GeneratorDataset(gen_corpus, column_names=["text"])
         vocab = text.Vocab.from_dataset(corpus_dataset, None, None, top_k, special_tokens, special_first)
         data = ds.GeneratorDataset(gen_input(texts), column_names=["text"])
-        data = data.map(input_columns="text", operations=text.Lookup(vocab, "<unk>"))
+        data = data.map(operations=text.Lookup(vocab, "<unk>"), input_columns="text")
         res = []
         for d in data.create_dict_iterator(num_epochs=1):
             res.append(d["text"].item())

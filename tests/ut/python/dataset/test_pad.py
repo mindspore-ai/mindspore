@@ -44,7 +44,7 @@ def test_pad_op():
               pad_op,
               ]
 
-    data1 = data1.map(input_columns=["image"], operations=ctrans)
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
     transforms = [
@@ -54,7 +54,7 @@ def test_pad_op():
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
 
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1), data2.create_dict_iterator(num_epochs=1)):
         c_image = item1["image"]
@@ -88,11 +88,11 @@ def test_pad_grayscale():
 
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(input_columns=["image"], operations=transform)
+    data1 = data1.map(operations=transform, input_columns=["image"])
 
     # if input is grayscale, the output dimensions should be single channel
     pad_gray = c_vision.Pad(100, fill_value=(20, 20, 20))
-    data1 = data1.map(input_columns=["image"], operations=pad_gray)
+    data1 = data1.map(operations=pad_gray, input_columns=["image"])
     dataset_shape_1 = []
     for item1 in data1.create_dict_iterator(num_epochs=1):
         c_image = item1["image"]
@@ -106,7 +106,7 @@ def test_pad_grayscale():
     ctrans = [decode_op, pad_gray]
     dataset_shape_2 = []
 
-    data2 = data2.map(input_columns=["image"], operations=ctrans)
+    data2 = data2.map(operations=ctrans, input_columns=["image"])
 
     for item2 in data2.create_dict_iterator(num_epochs=1):
         c_image = item2["image"]
@@ -132,7 +132,7 @@ def test_pad_md5():
               pad_op,
               ]
 
-    data1 = data1.map(input_columns=["image"], operations=ctrans)
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -142,7 +142,7 @@ def test_pad_md5():
         py_vision.ToTensor(),
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(pytrans)
-    data2 = data2.map(input_columns=["image"], operations=transform)
+    data2 = data2.map(operations=transform, input_columns=["image"])
     # Compare with expected md5 from images
     filename1 = "pad_01_c_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)

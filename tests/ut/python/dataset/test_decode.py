@@ -36,7 +36,7 @@ def test_decode_op():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     # Serialize and Load dataset requires using vision.Decode instead of vision.Decode().
-    data1 = data1.map(input_columns=["image"], operations=[vision.Decode(True)])
+    data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -57,7 +57,7 @@ def test_decode_op_tf_file_dataset():
 
     # Decode with rgb format set to True
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.FILES)
-    data1 = data1.map(input_columns=["image"], operations=vision.Decode(True))
+    data1 = data1.map(operations=vision.Decode(True), input_columns=["image"])
 
     for item in data1.create_dict_iterator(num_epochs=1):
         logger.info('decode == {}'.format(item['image']))

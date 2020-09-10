@@ -64,7 +64,7 @@ def test_case_project_map():
     data1 = data1.project(columns=columns)
 
     type_cast_op = C.TypeCast(mstype.int64)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
 
     filename = "project_map_after_result.npz"
     save_and_check_tuple(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
@@ -77,7 +77,7 @@ def test_case_map_project():
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
 
     type_cast_op = C.TypeCast(mstype.int64)
-    data1 = data1.map(input_columns=["col_sint64"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_sint64"])
 
     data1 = data1.project(columns=columns)
 
@@ -92,18 +92,18 @@ def test_case_project_between_maps():
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
 
     type_cast_op = C.TypeCast(mstype.int64)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
 
     data1 = data1.project(columns=columns)
 
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_3d"])
 
     filename = "project_between_maps_result.npz"
     save_and_check_tuple(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
@@ -145,11 +145,11 @@ def test_case_map_project_map_project():
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
 
     type_cast_op = C.TypeCast(mstype.int64)
-    data1 = data1.map(input_columns=["col_sint64"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_sint64"])
 
     data1 = data1.project(columns=columns)
 
-    data1 = data1.map(input_columns=["col_2d"], operations=type_cast_op)
+    data1 = data1.map(operations=type_cast_op, input_columns=["col_2d"])
 
     data1 = data1.project(columns=columns)
 
