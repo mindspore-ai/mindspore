@@ -19,6 +19,7 @@ from ..cell import Cell
 
 __all__ = ['SequentialCell', 'CellList']
 
+
 def _valid_index(cell_num, index):
     if not isinstance(index, int):
         raise TypeError("Index {} is not int type")
@@ -143,6 +144,12 @@ class SequentialCell(Cell):
         self.requires_grad = flag
         for cell in self._cells.values():
             cell.set_grad(flag)
+
+    def append(self, cell):
+        """Appends a given cell to the end of the list."""
+        if _valid_cell(cell):
+            self._cells[str(len(self))] = cell
+        return self
 
     def construct(self, input_data):
         for cell in self.cell_list:
