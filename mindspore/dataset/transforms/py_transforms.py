@@ -17,7 +17,7 @@
 This module py_transforms is implemented basing on Python. It provides common
 operations including OneHotOp.
 """
-from .validators import check_one_hot_op, check_compose_list
+from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list
 from . import py_transforms_util as util
 
 
@@ -100,3 +100,104 @@ class Compose:
             lambda function, Lambda function that takes in an img to apply transformations on.
         """
         return util.compose(img, self.transforms)
+
+
+class RandomApply:
+    """
+    Randomly perform a series of transforms with a given probability.
+
+    Args:
+        transforms (list): List of transformations to apply.
+        prob (float, optional): The probability to apply the transformation list (default=0.5).
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomApply(transforms_list, prob=0.6),
+        >>>          py_vision.ToTensor()])
+    """
+
+    @check_random_apply
+    def __init__(self, transforms, prob=0.5):
+        self.prob = prob
+        self.transforms = transforms
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL image): Image to be randomly applied a list transformations.
+
+        Returns:
+            img (PIL image), Transformed image.
+        """
+        return util.random_apply(img, self.transforms, self.prob)
+
+
+class RandomChoice:
+    """
+    Randomly select one transform from a series of transforms and applies that on the image.
+
+    Args:
+         transforms (list): List of transformations to be chosen from to apply.
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose, RandomChoice
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          RandomChoice(transforms_list),
+        >>>          py_vision.ToTensor()])
+    """
+
+    @check_transforms_list
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL image): Image to be applied transformation.
+
+        Returns:
+            img (PIL image), Transformed image.
+        """
+        return util.random_choice(img, self.transforms)
+
+
+class RandomOrder:
+    """
+    Perform a series of transforms to the input PIL image in a random order.
+
+    Args:
+        transforms (list): List of the transformations to apply.
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomOrder(transforms_list),
+        >>>          py_vision.ToTensor()])
+    """
+
+    @check_transforms_list
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL image): Image to apply transformations in a random order.
+
+        Returns:
+            img (PIL image), Transformed image.
+        """
+        return util.random_order(img, self.transforms)
