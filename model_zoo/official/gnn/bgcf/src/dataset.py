@@ -175,8 +175,8 @@ def load_graph(data_path):
     return train_graph, test_graph, sampled_graph_list
 
 
-def create_dataset(train_graph, sampled_graph_list, batch_size=32, repeat_size=1, num_samples=40, num_bgcn_neigh=20,
-                   num_neg=10):
+def create_dataset(train_graph, sampled_graph_list, num_workers, batch_size=32, repeat_size=1,
+                   num_samples=40, num_bgcn_neigh=20, num_neg=10):
     """Data generator for training"""
     edge_num = train_graph.graph_info()['edge_num'][0]
     out_column_names = ["users", "items", "neg_item_id", "pos_users", "pos_items", "u_group_nodes", "u_neighs",
@@ -185,7 +185,7 @@ def create_dataset(train_graph, sampled_graph_list, batch_size=32, repeat_size=1
     train_graph_dataset = TrainGraphDataset(
         train_graph, sampled_graph_list, batch_size, num_samples, num_bgcn_neigh, num_neg)
     dataset = ds.GeneratorDataset(source=train_graph_dataset, column_names=out_column_names,
-                                  sampler=RandomBatchedSampler(edge_num, batch_size), num_parallel_workers=8)
+                                  sampler=RandomBatchedSampler(edge_num, batch_size), num_parallel_workers=num_workers)
     dataset = dataset.repeat(repeat_size)
 
     return dataset

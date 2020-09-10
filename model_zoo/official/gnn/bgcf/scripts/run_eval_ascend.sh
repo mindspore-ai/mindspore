@@ -20,25 +20,19 @@ export RANK_SIZE=$DEVICE_NUM
 export DEVICE_ID=0
 export RANK_ID=0
 
-if [ -d "train" ];
+if [ -d "eval" ];
 then
-    rm -rf ./train
+    rm -rf ./eval
 fi
-mkdir ./train
+mkdir ./eval
 
-if [ -d "ckpts" ];
-then
-    rm -rf ./ckpts
-fi
-mkdir ./ckpts
-
-cp ../*.py ./train
-cp *.sh ./train
-cp -r ../src ./train
-cd ./train || exit
+cp ../*.py ./eval
+cp *.sh ./eval
+cp -r ../src ./eval
+cd ./eval || exit
 env > env.log
-echo "start training for device $DEVICE_ID"
+echo "start evaluation for device $DEVICE_ID"
 
-python train.py --datapath=../data_mr --ckptpath=../ckpts &> log &
+python eval.py --datapath=../data_mr --ckptpath=../ckpts &> log &
 
 cd ..

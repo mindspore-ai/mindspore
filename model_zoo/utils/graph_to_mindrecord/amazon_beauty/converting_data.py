@@ -258,7 +258,7 @@ def trans(src_path, data_name, out_path):
 
     test_ratio = 0.2
     train_set, test_set = split_data_randomly(
-        inner_data_records, test_ratio=test_ratio, seed=0)
+        inner_data_records, test_ratio, seed=0)
     train_matrix = generate_rating_matrix(
         train_set, len(user_mapping), len(item_mapping))
     u_adj_list, v_adj_list = create_adj_matrix(train_matrix)
@@ -329,7 +329,7 @@ def trans(src_path, data_name, out_path):
     for i in range(num_graphs):
         print('=== info: sampling graph {} / {}'.format(i + 1, num_graphs))
         sampled_user_graph = sample_graph_copying(node_neighbors_dict=u_adj_list,
-                                                  distances=user_distances)
+                                                  distances=user_distances, epsilon=0.01)
 
         print('avg. sampled user-item graph degree: ',
               np.mean([len(x) for x in [*sampled_user_graph.values()]]))
