@@ -49,6 +49,26 @@ int ConcatOpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) 
   *img_size = vec;
   return RET_OK;
 }
+
+int ConcatOpenCLKernel::RunAxis0() {
+  auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
+  auto allocator_ = ocl_runtime->GetAllocator();
+  std::vector<size_t> img_size;
+  auto dst_data = out_tensors_[0]->MutableData();
+  auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
+  cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
+  for (int i = 0; i < in_tensors_.size(); i++) {
+    auto src_data = in_tensors_[i]->MutableData();
+    allocator_->GetImageSize(src_data, &img_size);
+    auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
+    auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
+    cl::Image2D *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
+    ocl_runtime->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin, region);
+    dst_origin[1] += region[1];
+  }
+  return RET_OK;
+}
+
 int ConcatOpenCLKernel::Init() {
   if (in_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << " only support dim = 4 ";
@@ -98,6 +118,19 @@ int ConcatOpenCLKernel::Init() {
 
 int ConcatOpenCLKernel::ReSize() { return RET_OK; }
 
+int ConcatOpenCLKernel::GetSumShape(std::vector<int> *sum_shape, std::vector<int> *in_shape) {
+  std::vector<int> temp_sum = {0, 0, 0, 0};
+  for (int i = 0; i < in_tensors_.size(); ++i) {
+    auto temp = in_tensors_[i]->shape();
+    for (int j = 0; j < temp.size(); ++j) {
+      in_shape->push_back(temp[j]);
+      temp_sum.at(j) += temp[j];
+      sum_shape->push_back(temp_sum.at(j));
+    }
+  }
+  return RET_OK;
+}
+
 int ConcatGetBiggestDividerWithPriority(int number, int max_divider) {
   if (number % 8 == 0 && max_divider >= 8) {
     return number / 8;
@@ -133,6 +166,9 @@ void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *
 int ConcatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
+  if (param->axis_ == 0) {
+    return RunAxis0();
+  }
 
   auto ocl_runtime = lite::opencl::OpenCLRuntime::GetInstance();
   auto input1_shape = in_tensors_[0]->shape();
@@ -151,6 +187,7 @@ int ConcatOpenCLKernel::Run() {
   std::vector<size_t> local = {1, 1, 1};  // init local
   std::vector<size_t> global = {OH, OW, OC};
   ConcatGetWorkGroup(global, &local, max_global[0]);
+  GetSumShape(&sum_shape, &in_shape);
 
   int arg_cn = 0;
   if (in_tensors_.size() == 2) {

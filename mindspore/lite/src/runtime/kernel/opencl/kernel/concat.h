@@ -38,10 +38,17 @@ class ConcatOpenCLKernel : public OpenCLKernel {
   int ReSize() override;
 
   int Run() override;
+
+  int RunAxis0();
+
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) override;
+
+  int GetSumShape(std::vector<int> *sum_shape, std::vector<int> *in_shape);
 
  private:
   cl::Kernel kernel_;
+  std::vector<int> sum_shape;
+  std::vector<int> in_shape;
 };
 
 }  // namespace mindspore::kernel

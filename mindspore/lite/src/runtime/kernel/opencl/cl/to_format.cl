@@ -59,10 +59,10 @@ __kernel void to_format_NHWC_to_NC4HW4_IMG_float(__global float4 *src_data, __wr
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
-  if (X >= size.x || Y >= size.y || Z >= size.z) {
+  if (X >= size.x || Y >= size.y || Z >= size.z || shape.y == 0) {
     return;
   }
-  int offset = (X * shape.z + Y) * shape.w + Z * 4;
+  int offset = (X / shape.y) * shape.y * shape.z * shape.w + ((X % shape.y) * shape.z + Y) * shape.w + Z * 4;
   __global float *src_addr = (__global float *)src_data;
   src_addr += offset;
   FLT4 data = (FLT4)(0.f);
@@ -79,17 +79,18 @@ __kernel void to_format_NHWC_to_NC4HW4_IMG_float(__global float4 *src_data, __wr
       data.z = (FLT)src_addr[2];
     }
   }
-  WRITE_IMAGE(dst_data, (int2)(Y, Z * size.x + X), data);
+  int pos_ix = (X / shape.y) * size.z * shape.y + Z * shape.y + X % shape.y;
+  WRITE_IMAGE(dst_data, (int2)(Y, pos_ix), data);
 }
 __kernel void to_format_NHWC_to_NC4HW4_IMG_half(__global half4 *src_data, __write_only image2d_t dst_data, int4 size,
                                                 int4 shape) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
-  if (X >= size.x || Y >= size.y || Z >= size.z) {
+  if (X >= size.x || Y >= size.y || Z >= size.z || shape.y == 0) {
     return;
   }
-  int offset = (X * shape.z + Y) * shape.w + Z * 4;
+  int offset = (X / shape.y) * shape.y * shape.z * shape.w + ((X % shape.y) * shape.z + Y) * shape.w + Z * 4;
   __global half *src_addr = (__global half *)src_data;
   src_addr += offset;
   FLT4 data = (FLT4)(0.f);
@@ -106,7 +107,8 @@ __kernel void to_format_NHWC_to_NC4HW4_IMG_half(__global half4 *src_data, __writ
       data.z = (FLT)src_addr[2];
     }
   }
-  WRITE_IMAGE(dst_data, (int2)(Y, Z * size.x + X), data);
+  int pos_ix = (X / shape.y) * size.z * shape.y + Z * shape.y + X % shape.y;
+  WRITE_IMAGE(dst_data, (int2)(Y, pos_ix), data);
 }
 __kernel void to_format_NHWC4_to_NHWC4_IMG_float(__global float4 *src_data, __write_only image2d_t dst_data, int4 size,
                                                  int4 shape) {
@@ -227,11 +229,12 @@ __kernel void to_format_NC4HW4_to_NHWC_BUF_float(__read_only image2d_t src_data,
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
-  if (X >= size.x || Y >= size.y || Z >= size.z) {
+  if (X >= size.x || Y >= size.y || Z >= size.z || shape.y == 0) {
     return;
   }
-  float4 data = convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(Y, Z * size.x + X)));
-  int offset = (X * shape.z + Y) * shape.w + Z * 4;
+  int pos_ix = (X / shape.y) * size.z * shape.y + Z * shape.y + X % shape.y;
+  float4 data = convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(Y, pos_ix)));
+  int offset = (X / shape.y) * shape.y * shape.z * shape.w + ((X % shape.y) * shape.z + Y) * shape.w + Z * 4;
   __global float *dst_addr = (__global float *)dst_data;
   dst_addr += offset;
   if ((Z + 1) * 4 <= shape.w) {
@@ -253,11 +256,12 @@ __kernel void to_format_NC4HW4_to_NHWC_BUF_half(__read_only image2d_t src_data, 
   int X = get_global_id(0);
   int Y = get_global_id(1);
   int Z = get_global_id(2);
-  if (X >= size.x || Y >= size.y || Z >= size.z) {
+  if (X >= size.x || Y >= size.y || Z >= size.z || shape.y == 0) {
     return;
   }
-  half4 data = convert_half4(READ_IMAGE(src_data, smp_zero, (int2)(Y, Z * size.x + X)));
-  int offset = (X * shape.z + Y) * shape.w + Z * 4;
+  int pos_ix = (X / shape.y) * size.z * shape.y + Z * shape.y + X % shape.y;
+  half4 data = convert_half4(READ_IMAGE(src_data, smp_zero, (int2)(Y, pos_ix)));
+  int offset = (X / shape.y) * shape.y * shape.z * shape.w + ((X % shape.y) * shape.z + Y) * shape.w + Z * 4;
   __global half *dst_addr = (__global half *)dst_data;
   dst_addr += offset;
   if ((Z + 1) * 4 <= shape.w) {
