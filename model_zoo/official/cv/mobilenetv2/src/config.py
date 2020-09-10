@@ -59,6 +59,7 @@ def set_config(args):
         "save_checkpoint_path": "./checkpoint",
         "platform": args.platform,
         "ccl": "nccl",
+        "run_distribute": args.run_distribute
     })
     config_ascend = ed({
         "num_classes": 1000,

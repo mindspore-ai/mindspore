@@ -16,6 +16,7 @@
 
 import time
 import argparse
+import ast
 import numpy as np
 
 from mindspore import context
@@ -46,16 +47,18 @@ parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 parser.add_argument('--device_target', type=str, default="GPU", help='run device_target')
+parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
 args_opt = parser.parse_args()
 
 if args_opt.device_target == "GPU":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="GPU",
                         save_graphs=False)
-    init()
-    context.set_auto_parallel_context(device_num=get_group_size(),
-                                      parallel_mode=ParallelMode.DATA_PARALLEL,
-                                      gradients_mean=True)
+    if args_opt.run_distribute:
+        init()
+        context.set_auto_parallel_context(device_num=get_group_size(),
+                                          parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          gradients_mean=True)
 else:
     raise ValueError("Unsupported device_target.")
 
@@ -168,7 +171,8 @@ if __name__ == '__main__':
                                  config=config_gpu,
                                  device_target=args_opt.device_target,
                                  repeat_num=1,
-                                 batch_size=config_gpu.batch_size)
+                                 batch_size=config_gpu.batch_size,
+                                 run_distribute=args_opt.run_distribute)
         step_size = dataset.get_dataset_size()
         # resume
         if args_opt.pre_trained:
@@ -191,7 +195,10 @@ if __name__ == '__main__':
                       loss_scale_manager=loss_scale)
 
         cb = [Monitor(lr_init=lr.asnumpy())]
-        ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
+        if args_opt.run_distribute:
+            ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
+        else:
+            ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + "/"
         if config_gpu.save_checkpoint:
             config_ck = CheckpointConfig(save_checkpoint_steps=config_gpu.save_checkpoint_epochs * step_size,
                                          keep_checkpoint_max=config_gpu.keep_checkpoint_max)

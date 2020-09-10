@@ -21,7 +21,7 @@ import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
 
-def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, batch_size=32):
+def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, batch_size=32, run_distribute=False):
     """
     create a train or eval dataset
 
@@ -36,9 +36,12 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     """
     if device_target == "GPU":
         if do_train:
-            from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                       num_shards=get_group_size(), shard_id=get_rank())
+            if run_distribute:
+                from mindspore.communication.management import get_rank, get_group_size
+                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                           num_shards=get_group_size(), shard_id=get_rank())
+            else:
+                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
             ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
@@ -56,7 +59,8 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     resize_op = C.Resize(256)
     center_crop = C.CenterCrop(resize_width)
     rescale_op = C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
-    normalize_op = C.Normalize(mean=[0.485*255, 0.456*255, 0.406*255], std=[0.229*255, 0.224*255, 0.225*255])
+    normalize_op = C.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                               std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
     change_swap_op = C.HWC2CHW()
 
     if do_train:

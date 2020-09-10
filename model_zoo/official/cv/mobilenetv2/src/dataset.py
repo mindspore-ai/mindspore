@@ -51,9 +51,12 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
                                        num_shards=rank_size, shard_id=rank_id)
     elif config.platform == "GPU":
         if do_train:
-            from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                       num_shards=get_group_size(), shard_id=get_rank())
+            if config.run_distribute:
+                from mindspore.communication.management import get_rank, get_group_size
+                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                           num_shards=get_group_size(), shard_id=get_rank())
+            else:
+                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
             ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     elif config.platform == "CPU":
