@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
+#include <algorithm>
+#include <list>
 #include <memory>
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
@@ -68,8 +70,6 @@
 #include "backend/optimizer/ascend/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "backend/optimizer/pass/eliminate_redundant_op.h"
 #include "backend/optimizer/pass/common_subexpression_elimination.h"
-#include "backend/optimizer/pass/fuse_graph_kernel.h"
-#include "backend/optimizer/pass/fuse_basic.h"
 #include "backend/optimizer/pass/add_atomic_clean.h"
 #include "backend/optimizer/ascend/format_type/merge_cast_to_op.h"
 #include "backend/optimizer/ascend/format_type/check_consistency.h"
@@ -106,6 +106,8 @@
 #include "backend/optimizer/ascend/ir_fission/pack_fission.h"
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
 #include "utils/ms_context.h"
+#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
@@ -406,7 +408,7 @@ void AscendBackendGraphKernelOpt(const std::shared_ptr<session::KernelGraph> &ke
   }
 
   // Fuse graph kernels with basic ops
-  FuseGraphKernel(kernel_graph, is_before_kernel_select);
+  static_cast<void>(FuseCompositeOps(kernel_graph, is_before_kernel_select));
 
   if (save_graphs) {
     std::string file_path = save_graphs_path + "/" + "hwopt_d_graph_kernel_opt_end_graph_" +
@@ -429,17 +431,17 @@ void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kern
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_fuse_basic_opt_before_graph_" +
+    std::string file_path = save_graphs_path + "/" + "hwopt_fuse_basic_opt_before_graph_" +
                             std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
                             ".ir";
     DumpIR(file_path, kernel_graph, true);
   }
 
   // Fuse basic ops with basic ops
-  FuseBasic(kernel_graph, is_before_kernel_select);
+  static_cast<void>(FuseBasicOps(kernel_graph, is_before_kernel_select));
 
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_fuse_basic_opt_end_graph_" +
+    std::string file_path = save_graphs_path + "/" + "hwopt_fuse_basic_opt_end_graph_" +
                             std::to_string(!is_before_kernel_select) + "_" + std::to_string(kernel_graph->graph_id()) +
                             ".ir";
     DumpIR(file_path, kernel_graph, true);

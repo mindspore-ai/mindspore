@@ -26,6 +26,7 @@
 #include "ir/dtype.h"
 #include "utils/utils.h"
 #include "frontend/operator/ops.h"
+#include "backend/kernel_compiler/kernel.h"
 #include "backend/session/kernel_graph.h"
 
 namespace mindspore {
@@ -59,7 +60,7 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimAddN->name(), {{}, {0}}},
 };
 
-void SetKernelInfo(const CNodePtr &kernel_node);
+void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 
 class FormatTransformChecker {
  public:

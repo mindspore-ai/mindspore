@@ -39,6 +39,10 @@
 #include "backend/optimizer/gpu/insert_format_transform_op.h"
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/ms_utils.h"
 #include "common/trans.h"
@@ -99,6 +103,22 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
+void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+    return;
+  }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
+  pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
+  pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
+  pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -218,6 +238,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   SelectKernel(graph);
   // Graph optimization relevant to device data format
   HardwareOptimize(graph);
+  // Graph kernel fusion optimization
+  GraphKernelOptimize(graph);
   // Dump .pb graph after graph optimization
   if (save_graphs) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph_id));

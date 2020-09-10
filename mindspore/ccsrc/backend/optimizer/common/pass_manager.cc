@@ -73,7 +73,7 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       if (save_graphs) {
         auto dump_file_path =
           save_graphs_path + "/" + "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
-        DumpIR(dump_file_path, func_graph);
+        DumpIR(dump_file_path, func_graph, true);
       }
       num++;
     }

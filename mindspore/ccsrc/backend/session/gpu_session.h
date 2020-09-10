@@ -51,6 +51,8 @@ class GPUSession : public SessionBasic {
 
   void HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph);
 
+  void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph);
+
   void AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph);
 
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;

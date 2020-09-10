@@ -24,7 +24,6 @@
 #include <climits>
 #include "runtime/device/kernel_runtime.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_mod.h"
-#include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "proto/tensor.pb.h"
 #include "proto/tensor_shape.pb.h"
 #include "proto/attr.pb.h"
@@ -33,6 +32,7 @@
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/kernel_compiler/oplib/oplib.h"
 
 namespace mindspore {
 namespace kernel {

@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #endif
 #include <fstream>
+#include <iomanip>
 #include <map>
 #include <memory>
 #include "ir/primitive.h"
@@ -446,13 +447,30 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   }
 }
 
+std::string AddGlobalId(const std::string &filename) {
+  static size_t g_id = 0;
+  std::ostringstream s;
+  auto i = filename.rfind('/');
+  if (i == string::npos) {
+    s << std::setfill('0') << std::setw(4) << g_id << "_";
+    s << filename;
+  } else {
+    s << filename.substr(0, i + 1);
+    s << std::setfill('0') << std::setw(4) << g_id << "_";
+    s << filename.substr(i + 1);
+  }
+  ++g_id;
+  return s.str();
+}
+
 #ifdef ENABLE_DUMP_IR
 void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name) {
   if (graph == nullptr) {
     return;
   }
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
+  auto real_filename = AddGlobalId(filename);
+  if (real_filename.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << real_filename << " is too long.";
     return;
   }
   char real_path[PATH_MAX] = {0};
@@ -461,8 +479,8 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
     MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
   }
 #else
-  if (nullptr == realpath(filename.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
+  if (nullptr == realpath(real_filename.c_str(), real_path)) {
+    MS_LOG(DEBUG) << "Dir " << real_filename << " does not exit.";
   }
 #endif
 

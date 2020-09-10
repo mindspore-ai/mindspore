@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <map>
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <utility>
 #include <nlohmann/json.hpp>
@@ -37,6 +38,7 @@ constexpr auto kGpuKernelMeta = "./cuda_meta";
 constexpr auto kProcessorAiCore = "aicore";
 constexpr auto kProcessorAiCpu = "aicpu";
 constexpr auto kProcessorCuda = "cuda";
+constexpr auto kProcessorUnknown = "unknown";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
@@ -76,12 +78,13 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
 TypeId DtypeToTypeId(const std::string &dtypes);
 std::string Dtype2ShortType(const std::string &dtypes);
-std::string TypeId2String(TypeId type_id);
+std::string TypeId2String(TypeId type_id, bool unknown_as_default = false);
 size_t GetDtypeNbyte(const std::string &dtypes);
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
-void SaveJsonInfo(const std::string &json_name, const std::string &info);
+void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path = kCceKernelMeta);
 std::string GetProcessor(const AnfNodePtr &anf_node);
+Processor GetProcessor(const string &processor);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
 int Sign(float x);
 std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index);
@@ -90,13 +93,26 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list);
+void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list);
 void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
                          std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list);
-void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list);
+void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *output_list);
 bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json);
 void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list);
 bool IsWeightBoundary(const AnfNodePtr &node);
 std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode);
+std::string GetProcessorStr(const AnfNodePtr &anf_node);
+
+template <typename T>
+inline std::string Vector2Str(const std::vector<T> &inputs) {
+  if (!inputs.empty()) {
+    std::ostringstream oss;
+    (void)std::copy(inputs.begin(), inputs.end() - 1, std::ostream_iterator<T>(oss, ", "));
+    oss << inputs.back();
+    return oss.str();
+  }
+  return "";
+}
 }  // namespace kernel
 }  // namespace mindspore
 

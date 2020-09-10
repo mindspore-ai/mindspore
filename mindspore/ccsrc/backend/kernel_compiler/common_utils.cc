@@ -205,10 +205,13 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
   }
 }
 
-std::string TypeId2String(TypeId type_id) {
+std::string TypeId2String(TypeId type_id, bool unknown_as_default) {
   auto iter = type_id_str_map.find(type_id);
   if (iter == type_id_str_map.end()) {
-    return std::string(TypeIdLabel(type_id));
+    if (!unknown_as_default) {
+      MS_EXCEPTION(ArgumentError) << "Illegal input dtype." << TypeIdLabel(type_id);
+    }
+    return "float32";
   }
   return iter->second;
 }
@@ -427,9 +430,9 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   return true;
 }
 
-void SaveJsonInfo(const std::string &json_name, const std::string &info) {
+void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path) {
   char real_path[PATH_MAX] = {0};
-  std::string path = kCceKernelMeta + json_name + kInfoSuffix;
+  std::string path = base_path + json_name + kInfoSuffix;
   if (path.size() > PATH_MAX) {
     MS_LOG(DEBUG) << "file path " << path << " is too long.";
     return;
@@ -456,6 +459,14 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info) {
   if (chmod(real_path, S_IRUSR) == -1) {
     MS_LOG(DEBUG) << "modify file:" << real_path << " to read only fail.";
   }
+}
+
+Processor GetProcessor(const string &processor) {
+  if (processor == kProcessorAiCore) return Processor::AICORE;
+  if (processor == kProcessorAiCpu) return Processor::AICPU;
+  if (processor == kProcessorCuda) return Processor::CUDA;
+  MS_LOG(DEBUG) << "Unknown processor type.";
+  return Processor::UNKNOWN;
 }
 
 std::string GetProcessor(const AnfNodePtr &anf_node) {
@@ -628,16 +639,21 @@ void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr>
 
 void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
                          std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node_list);
   MS_EXCEPTION_IF_NULL(input_list);
-  MS_EXCEPTION_IF_NULL(output_list);
-  MS_EXCEPTION_IF_NULL(func_graph);
 
   GetValidKernelNodes(func_graph, node_list);
 
   auto parameters = func_graph->parameters();
   input_list->insert(input_list->begin(), parameters.begin(), parameters.end());
 
+  GetFuncGraphOutputNodes(func_graph, output_list);
+}
+
+void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *output_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(output_list);
   auto func_output = func_graph->output();
   MS_EXCEPTION_IF_NULL(func_output);
   if (func_output->isa<CNode>()) {
@@ -779,6 +795,37 @@ std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode) {
   }
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
   return axis;
+}
+
+std::string GetProcessorStr(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::string processor = kProcessorUnknown;
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  // we may call this before kernel select.
+  if (build_info == nullptr) {
+    return processor;
+  }
+  switch (build_info->processor()) {
+    case Processor::AICORE:
+      processor = kProcessorAiCore;
+      break;
+
+    case Processor::AICPU:
+      processor = kProcessorAiCpu;
+      break;
+
+    case Processor::CUDA:
+      processor = kProcessorCuda;
+      break;
+
+    default:
+      MS_LOG(ERROR) << "Unknown processor type.";
+      break;
+  }
+
+  return processor;
 }
 }  // namespace kernel
 }  // namespace mindspore

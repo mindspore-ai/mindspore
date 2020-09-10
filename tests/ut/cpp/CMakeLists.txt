@@ -115,6 +115,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/kernel_compiler/rts/rt_kernel_info.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/*.cc"
         "../../../mindspore/ccsrc/backend/optimizer/ascend/*.cc"
+        "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/*.cc"
         "../../../mindspore/ccsrc/backend/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/backend/session/ascend_session.cc"
         "../../../mindspore/ccsrc/backend/session/ascend_control_parser.cc"

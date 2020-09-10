@@ -49,6 +49,7 @@ enum OpPattern {
 
 // Backend processor
 enum Processor {
+  UNKNOWN = -1,
   AICORE = 0,
   AICPU,
   CUDA,

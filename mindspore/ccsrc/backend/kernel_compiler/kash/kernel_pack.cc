@@ -16,14 +16,12 @@
 
 #include <unistd.h>
 #include <fstream>
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "nlohmann/json.hpp"
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 #include "utils/system/sha256.h"
-
+#include "backend/kernel_compiler/common_utils.h"
 namespace mindspore {
 namespace kernel {
 namespace {

@@ -71,7 +71,8 @@ if(ENABLE_GPU)
             "runtime/device/gpu/*.cu"
             "backend/kernel_compiler/gpu/*.cu"
             "backend/kernel_compiler/akg/gpu/*.cc"
-            "backend/kernel_compiler/akg/akg_kernel_build.cc"
+            "backend/kernel_compiler/akg/akg_kernel_json_generator.cc"
+            "backend/kernel_compiler/akg/akg_kernel_json_decoder.cc"
             "backend/kernel_compiler/akg/akg_kernel_attrs_process.cc"
             )
 

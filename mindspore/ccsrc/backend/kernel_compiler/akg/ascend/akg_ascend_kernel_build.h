@@ -18,35 +18,21 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_ASCEND_AKG_ASCEND_KERNEL_BUILD_H_
 
 #include <string>
-#include <memory>
+#include <utility>
 #include <vector>
 #include <map>
 #include "ir/anf.h"
 #include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/akg/akg_kernel_build.h"
+#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 
 namespace mindspore {
 namespace kernel {
-class AkgAscendKernelBuilder : public AkgKernelBuild {
+class AkgAscendKernelBuilder {
  public:
   AkgAscendKernelBuilder() = default;
   ~AkgAscendKernelBuilder() = default;
 
-  bool CollectJson(const AnfNodePtr &anf_node);
-  bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
-                        const std::vector<AnfNodePtr> &output_list);
-  std::string json_name() const { return json_name_; }
-  std::string kernel_json() const { return kernel_json_; }
-  const std::vector<size_t> &input_size_list() const { return input_size_list_; }
-  const std::vector<size_t> &output_size_list() const { return output_size_list_; }
-
- private:
-  bool GenJsonAndPreprocess4Fused(const std::vector<AnfNodePtr> &anf_nodes,
-                                  std::map<AnfNodePtr, nlohmann::json> *node_json_map);
-
-  std::string kernel_json_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
+  bool AkgOpParallelBuild(const std::vector<std::pair<AkgKernelJsonGenerator, AnfNodePtr>> &build_args);
 };
 
 bool AkgAscendKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);

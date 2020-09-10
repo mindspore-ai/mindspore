@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -14,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_FUSE_BASIC_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_FUSE_BASIC_H_
-
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
 #include <memory>
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/session/kernel_graph.h"
+#include "ir/func_graph.h"
+#include "backend/optimizer/common/pass.h"
 
 namespace mindspore {
 namespace opt {
-void FuseBasic(const std::shared_ptr<session::KernelGraph> &kernel_graph, bool is_before_kernel_select);
+class GraphKernelSplitter : public Pass {
+ public:
+  GraphKernelSplitter() : Pass("graph_kernel_splitter") {}
+  ~GraphKernelSplitter() override = default;
+  bool Run(const FuncGraphPtr &func_graph);
+};
+using GraphKernelSplitterPtr = std::shared_ptr<GraphKernelSplitter>;
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_FUSE_BASIC_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_

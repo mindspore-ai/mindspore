@@ -601,6 +601,7 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
   std::vector<std::string> new_input_names;
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
+  primitive = primitive->Clone();
   auto input_names = primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
@@ -631,6 +632,7 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
   }
   if (need_update) {
     // Update cnode's inputs
+    new_inputs[0] = NewValueNode(primitive);
     cnode->set_inputs(new_inputs);
     // Update cnode's input_names attr
     primitive->set_attr(kAttrInputNames, MakeValue(new_input_names));
