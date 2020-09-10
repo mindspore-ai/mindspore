@@ -80,7 +80,7 @@ class Model:
             O2 is recommended on GPU, O3 is recommended on Ascend.
 
         loss_scale_manager (Union[None, LossScaleManager]): If it is None, the loss would not be scaled. Otherwise,
-            scale the loss by LossScaleManager. It is a key argument.
+            scale the loss by LossScaleManager and optimizer can not be None.It is a key argument.
             e.g. Use `loss_scale_manager=None` to set the value.
         keep_batchnorm_fp32 (bool): Keep Batchnorm running in `float32`. If it is set to true, the level setting before
             will be overwritten. Default: True.
@@ -148,6 +148,8 @@ class Model:
     def _build_train_network(self):
         """Build train network"""
         network = self._network
+        if self._loss_scale_manager_set and not self._optimizer:
+            raise ValueError("Optimizer can not be None when set loss_scale_manager.")
         if self._optimizer:
             if self._loss_scale_manager_set:
                 network = amp.build_train_network(network,
