@@ -52,8 +52,8 @@ class CommonNet(nn.Cell):
     def __init__(self):
         super(CommonNet, self).__init__()
         self.weight = Parameter(Tensor(np.ones([256, 64]), dtype=ms.float32), name="mul_weight")
-        self.logicalnot = P.LogicalNot().set_strategy(((4, 2),))
-        self.equal = P.Equal().set_strategy(((4, 2), (4, 2)))
+        self.logicalnot = P.LogicalNot().shard(((4, 2),))
+        self.equal = P.Equal().shard(((4, 2), (4, 2)))
 
     def construct(self, x, label):
         x = self.equal(x, self.weight)

@@ -51,10 +51,10 @@ def test_two_matmul():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3, strategy4):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
-            self.matmul3 = P.MatMul().set_strategy(strategy3)
-            self.matmul4 = P.MatMul().set_strategy(strategy4)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+            self.matmul3 = P.MatMul().shard(strategy3)
+            self.matmul4 = P.MatMul().shard(strategy4)
 
         def construct(self, x, y, b, a):
             out = self.matmul1(x, y)

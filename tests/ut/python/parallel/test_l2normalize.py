@@ -52,10 +52,10 @@ def test_l2normalize_matmul():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
-            self.norm1 = P.L2Normalize(axis=0).set_strategy(strategy1)
-            self.norm2 = P.L2Normalize(axis=0).set_strategy(strategy1)
-            self.mul1 = P.Mul().set_strategy(strategy2)
-            self.mul2 = P.Mul().set_strategy(strategy3)
+            self.norm1 = P.L2Normalize(axis=0).shard(strategy1)
+            self.norm2 = P.L2Normalize(axis=0).shard(strategy1)
+            self.mul1 = P.Mul().shard(strategy2)
+            self.mul2 = P.Mul().shard(strategy3)
 
         def construct(self, x, y, b):
             y = self.norm1(y)

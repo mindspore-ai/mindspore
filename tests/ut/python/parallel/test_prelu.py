@@ -90,7 +90,7 @@ def test_prelu_parallel_success1():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
-            self.prelu = P.PReLU().set_strategy(strategy)
+            self.prelu = P.PReLU().shard(strategy)
 
         def construct(self, x, y):
             out = self.prelu(x, y)
@@ -110,7 +110,7 @@ def test_prelu_parallel_success2():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
-            self.prelu = P.PReLU().set_strategy(strategy)
+            self.prelu = P.PReLU().shard(strategy)
 
         def construct(self, x, y):
             out = self.prelu(x, y)
@@ -148,8 +148,8 @@ def test_prelu_parallel_success3():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.prelu = P.PReLU().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.prelu = P.PReLU().shard(strategy2)
 
         def construct(self, x, y, w):
             out = self.matmul(x, y)
@@ -173,7 +173,7 @@ def test_prelu_parallel_success4():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
-            self.prelu = P.PReLU().set_strategy(strategy)
+            self.prelu = P.PReLU().shard(strategy)
 
         def construct(self, x, y):
             out = self.prelu(x, y)
@@ -193,7 +193,7 @@ def test_prelu_parallel_success5():
     class Net(nn.Cell):
         def __init__(self, strategy):
             super().__init__()
-            self.prelu = P.PReLU().set_strategy(strategy)
+            self.prelu = P.PReLU().shard(strategy)
 
         def construct(self, x, y):
             out = self.prelu(x, y)

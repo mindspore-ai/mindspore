@@ -24,8 +24,8 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, strategy1=None, strategy2=None, axis=()):
         super().__init__()
-        self.squeeze = P.Squeeze(axis=axis).set_strategy(strategy1)
-        self.mul = P.Mul().set_strategy(strategy2)
+        self.squeeze = P.Squeeze(axis=axis).shard(strategy1)
+        self.mul = P.Mul().shard(strategy2)
 
     def construct(self, x, b):
         out = self.squeeze(x)

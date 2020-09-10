@@ -29,7 +29,7 @@ grad_all = C.GradOperation(get_all=True)
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
         super(NetWithLoss, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits().set_strategy(strategy3)
+        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy3)
         self.network = network
 
     def construct(self, x, y, bias, label):
@@ -50,9 +50,9 @@ def test_linear():
     class Net(nn.Cell):
         def __init__(self, strategy0, strategy1, strategy2):
             super().__init__()
-            self.fc_nobias = P.MatMul(transpose_b=True).set_strategy(strategy0)
-            self.add = P.TensorAdd().set_strategy(strategy1)
-            self.gelu = P.Gelu().set_strategy(strategy2)
+            self.fc_nobias = P.MatMul(transpose_b=True).shard(strategy0)
+            self.add = P.TensorAdd().shard(strategy1)
+            self.gelu = P.Gelu().shard(strategy2)
 
         def construct(self, x, y, bias):
             out = self.fc_nobias(x, y)

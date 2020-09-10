@@ -64,7 +64,7 @@ def conv7x7(in_channels, out_channels, stride=1, padding=0):
     conv = Conv2d(in_channels, out_channels,
                   kernel_size=7, stride=stride, padding=padding, weight_init=weight, has_bias=False,
                   pad_mode="same")
-    conv.conv2d.set_strategy(strategy_weight)
+    conv.conv2d.shard(strategy_weight)
     return conv
 
 
@@ -86,7 +86,7 @@ def bn_with_initialize(out_channels):
     gamma = weight_variable_1(shape)
     bn = BatchNorm2d(out_channels, momentum=0.1, eps=0.0001, gamma_init=gamma,
                      beta_init=beta, moving_mean_init=mean, moving_var_init=var)
-    bn.bn_train.set_strategy(strategy_bn)
+    bn.bn_train.shard(strategy_bn)
     return bn
 
 
@@ -98,10 +98,10 @@ class ResNet(Cell):
         self.conv1 = conv7x7(3, 64, stride=2, padding=0)
         self.bn1 = bn_with_initialize(64)
         self.relu = ReLU()
-        self.relu.relu.set_strategy(strategy_no_weight)
+        self.relu.relu.shard(strategy_no_weight)
         self.maxpool = MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.reshape = P.Reshape()
-        self.matmul = P.MatMul().set_strategy(((8, 1), (1, 1)))
+        self.matmul = P.MatMul().shard(((8, 1), (1, 1)))
         self.matmul_weight = Parameter(Tensor(np.ones([200704, num_classes]), dtype=ms.float32), name="weight")
 
     def construct(self, x):
@@ -135,7 +135,7 @@ def test_batchnorm_batch_parallel():
     net = batchnorm_net(num_classes)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
+    loss.softmax_cross_entropy.shard(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
     model = Model(net, loss, opt)

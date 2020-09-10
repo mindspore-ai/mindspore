@@ -107,7 +107,7 @@ def test_auto_parallel_arithmetic_model():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.one_hot = P.OneHot().set_strategy(((1, 8), (), ()))
+            self.one_hot = P.OneHot().shard(((1, 8), (), ()))
             self.on_value = Tensor(1.0, ms.float32)
             self.off_value = Tensor(0.0, ms.float32)
             self.matmul2 = P.MatMul()

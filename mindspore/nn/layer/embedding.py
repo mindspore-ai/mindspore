@@ -174,17 +174,17 @@ class EmbeddingLookup(Cell):
                 Validator.check_integer('manul shape dim', dim, 0, Rel.GT, self.cls_name)
             self.gatherv2.add_prim_attr("manual_split", manual_shapes)
             self.embeddinglookup.add_prim_attr("manual_split", manual_shapes)
-            self.gatherv2.set_strategy(((get_group_size(), 1), (1, get_group_size())))
-            self.embeddinglookup.set_strategy(((get_group_size(), 1), (1, get_group_size())))
+            self.gatherv2.shard(((get_group_size(), 1), (1, get_group_size())))
+            self.embeddinglookup.shard(((get_group_size(), 1), (1, get_group_size())))
         elif slice_mode == "table_row_slice" and is_auto_parallel:
-            self.gatherv2.set_strategy(((get_group_size(), 1), (1, 1)))
-            self.embeddinglookup.set_strategy(((get_group_size(), 1), (1, 1)))
+            self.gatherv2.shard(((get_group_size(), 1), (1, 1)))
+            self.embeddinglookup.shard(((get_group_size(), 1), (1, 1)))
         elif slice_mode == "table_column_slice" and is_auto_parallel:
-            self.gatherv2.set_strategy(((1, get_group_size()), (1, 1)))
-            self.embeddinglookup.set_strategy(((1, get_group_size()), (1, 1)))
+            self.gatherv2.shard(((1, get_group_size()), (1, 1)))
+            self.embeddinglookup.shard(((1, get_group_size()), (1, 1)))
         elif slice_mode == "batch_slice" and is_auto_parallel:
-            self.gatherv2.set_strategy(((1, 1), (get_group_size(), 1)))
-            self.embeddinglookup.set_strategy(((1, 1), (get_group_size(), 1)))
+            self.gatherv2.shard(((1, 1), (get_group_size(), 1)))
+            self.embeddinglookup.shard(((1, 1), (get_group_size(), 1)))
         else:
             if is_auto_parallel:
                 raise ValueError("slice_mode should support mode in nn.EmbeddingLookup, but get "

@@ -25,8 +25,8 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, weight, w2, begin, end, strides, strategy1=None, strategy2=None, is_parameter=True, mask=0):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.strided_slice = P.StridedSlice(begin_mask=mask).set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.strided_slice = P.StridedSlice(begin_mask=mask).shard(strategy2)
         if is_parameter:
             self.weight = Parameter(weight, "w1")
         else:
@@ -47,8 +47,8 @@ class Net(Cell):
 class Net2(Cell):
     def __init__(self, weight2, begin, end, strides, strategy1=None, strategy2=None):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.strided_slice = P.StridedSlice().set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.strided_slice = P.StridedSlice().shard(strategy2)
         self.weight2 = Parameter(weight2, "w2")
         self.begin = begin
         self.end = end

@@ -56,8 +56,8 @@ def test_matmul_equal():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.equal = P.Equal().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.equal = P.Equal().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -79,8 +79,8 @@ def test_matmul_not_equal():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.notequal = P.NotEqual().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.notequal = P.NotEqual().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -102,8 +102,8 @@ def test_matmul_approximateEqual():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.approximateEqual = P.ApproximateEqual(tolerance=0.5).set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.approximateEqual = P.ApproximateEqual(tolerance=0.5).shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -126,8 +126,8 @@ def test_matmul_greater():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.greater = P.Greater().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.greater = P.Greater().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -150,8 +150,8 @@ def test_matmul_greaterEqual():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.greaterEqual = P.GreaterEqual().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.greaterEqual = P.GreaterEqual().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -174,8 +174,8 @@ def test_matmul_less():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.less = P.Less().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.less = P.Less().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -198,8 +198,8 @@ def test_matmul_lessEqual():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.lessEqual = P.LessEqual().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.lessEqual = P.LessEqual().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -222,8 +222,8 @@ def test_matmul_not_equal_repeated_calculation():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.notequal = P.NotEqual().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.notequal = P.NotEqual().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -245,8 +245,8 @@ def test_matmul_maximum():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.maximum = P.Maximum().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.maximum = P.Maximum().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -268,8 +268,8 @@ def test_matmul_maximum_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.maximum = P.Maximum().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.maximum = P.Maximum().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -291,8 +291,8 @@ def test_matmul_maximum_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.maximum = P.Maximum().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.maximum = P.Maximum().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -314,8 +314,8 @@ def test_matmul_minimum():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.minimum = P.Minimum().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.minimum = P.Minimum().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -337,8 +337,8 @@ def test_matmul_minimum_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.minimum = P.Maximum().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.minimum = P.Maximum().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -360,8 +360,8 @@ def test_matmul_minimum_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.minimum = P.Minimum().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.minimum = P.Minimum().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)

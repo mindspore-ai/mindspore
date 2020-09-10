@@ -53,7 +53,7 @@ def test_four_matmul_linear():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
+            self.matmul1 = P.MatMul().shard(strategy1)
             self.weight = Parameter(Tensor(np.ones([512, 256]).astype(np.float32) * 0.01), "w", requires_grad=True)
             self.matmul2 = P.MatMul()
 

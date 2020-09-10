@@ -53,7 +53,7 @@ def test_four_matmul_linear():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
+            self.matmul1 = P.MatMul().shard(strategy1)
             self.matmul2 = P.MatMul()
             self.matmul3 = P.MatMul()
             self.matmul4 = P.MatMul()

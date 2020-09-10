@@ -60,18 +60,18 @@ class Net(nn.Cell):
         super().__init__()
         self.query_w = Parameter(initializer(
             "normal", [8, 16], ms.float32), name='query')
-        self.query = P.MatMul().set_strategy(strategy1)
+        self.query = P.MatMul().shard(strategy1)
 
         self.key_w = Parameter(initializer(
             "normal", [8, 16], ms.float32), name='key')
-        self.key = P.MatMul().set_strategy(strategy2)
+        self.key = P.MatMul().shard(strategy2)
 
         self.value_w = Parameter(initializer(
             "normal", [8, 16], ms.float32), name='value')
-        self.value = P.MatMul().set_strategy(strategy3)
+        self.value = P.MatMul().shard(strategy3)
 
-        self.score = P.MatMul().set_strategy(strategy4)
-        self.context = P.MatMul().set_strategy(strategy5)
+        self.score = P.MatMul().shard(strategy4)
+        self.context = P.MatMul().shard(strategy5)
         self.transpose1 = P.Transpose()
         self.transpose2 = P.Transpose()
         self.relu = P.ReLU()

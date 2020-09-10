@@ -50,9 +50,9 @@ class GradWrap(nn.Cell):
 class Net1(nn.Cell):
     def __init__(self, strategy1, strategy2, strategy3):
         super().__init__()
-        self.matmul1 = P.MatMul().set_strategy(strategy1)
-        self.matmul2 = P.MatMul().set_strategy(strategy2)
-        self.matmul3 = P.MatMul().set_strategy(strategy3)
+        self.matmul1 = P.MatMul().shard(strategy1)
+        self.matmul2 = P.MatMul().shard(strategy2)
+        self.matmul3 = P.MatMul().shard(strategy3)
 
     def construct(self, x, y, b):
         out1 = self.matmul1(x, b)
@@ -66,7 +66,7 @@ def test_two_matmul():
         def __init__(self, strategy1, strategy2, strategy3, strategy4):
             super().__init__()
             self.net1_out = Net1(strategy1, strategy2, strategy3)
-            self.matmul = P.MatMul().set_strategy(strategy4)
+            self.matmul = P.MatMul().shard(strategy4)
 
         def construct(self, x, y, b, z):
             out = self.net1_out(x, y, b)

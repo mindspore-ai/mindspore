@@ -55,8 +55,8 @@ def test_matmul_sub():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.sub = P.Sub().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.sub = P.Sub().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -79,8 +79,8 @@ def test_matmul_add():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.add = P.TensorAdd().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.add = P.TensorAdd().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -103,8 +103,8 @@ def test_matmul_mul():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.mul = P.Mul().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.mul = P.Mul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -126,8 +126,8 @@ def test_matmul_mod():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.mod = P.Mod().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.mod = P.Mod().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -149,8 +149,8 @@ def test_matmul_floormod():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.floormod = P.FloorMod().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.floormod = P.FloorMod().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -173,8 +173,8 @@ def test_matmul_atan2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.atan2 = P.Atan2().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.atan2 = P.Atan2().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -197,8 +197,8 @@ def test_matmul_divNoNan():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.divNoNan = P.DivNoNan().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.divNoNan = P.DivNoNan().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -221,10 +221,10 @@ def test_matmul_logicaland():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.equal = P.Equal().set_strategy(strategy2)
-            self.notequal = P.NotEqual().set_strategy(strategy2)
-            self.logical = P.LogicalAnd().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.equal = P.Equal().shard(strategy2)
+            self.notequal = P.NotEqual().shard(strategy2)
+            self.logical = P.LogicalAnd().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -250,10 +250,10 @@ def test_matmul_logicalor():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.equal = P.Equal().set_strategy(strategy2)
-            self.notequal = P.NotEqual().set_strategy(strategy2)
-            self.logical = P.LogicalOr().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.equal = P.Equal().shard(strategy2)
+            self.notequal = P.NotEqual().shard(strategy2)
+            self.logical = P.LogicalOr().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -279,8 +279,8 @@ def test_matmul_div():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.div = P.Div().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.div = P.Div().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -303,8 +303,8 @@ def test_matmul_add_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.add = P.TensorAdd().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.add = P.TensorAdd().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -327,8 +327,8 @@ def test_matmul_add_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.add = P.TensorAdd().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.add = P.TensorAdd().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -351,8 +351,8 @@ def test_matmul_sub_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.sub = P.Sub().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.sub = P.Sub().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -375,8 +375,8 @@ def test_matmul_sub_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.sub = P.Sub().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.sub = P.Sub().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -399,8 +399,8 @@ def test_matmul_mul_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.mul = P.Mul().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.mul = P.Mul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -423,8 +423,8 @@ def test_matmul_mul_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.mul = P.Mul().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.mul = P.Mul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -447,8 +447,8 @@ def test_matmul_div_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.div = P.Div().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.div = P.Div().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -471,8 +471,8 @@ def test_matmul_div_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.div = P.Div().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.div = P.Div().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -495,8 +495,8 @@ def test_matmul_greater_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.greater = P.Greater().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.greater = P.Greater().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -519,8 +519,8 @@ def test_matmul_greater_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.greater = P.Greater().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.greater = P.Greater().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -543,8 +543,8 @@ def test_matmul_floordiv():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.floordiv = P.FloorDiv().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.floordiv = P.FloorDiv().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -567,8 +567,8 @@ def test_matmul_floordiv_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.floordiv = P.FloorDiv().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.floordiv = P.FloorDiv().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -591,8 +591,8 @@ def test_matmul_floordiv_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.floordiv = P.FloorDiv().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.floordiv = P.FloorDiv().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)

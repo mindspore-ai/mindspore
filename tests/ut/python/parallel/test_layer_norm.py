@@ -28,9 +28,9 @@ class Net(Cell):
         super().__init__()
         self.begin_norm_axis = 2
         self.begin_params_axis = 1
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.layer_norm = P.LayerNorm(self.begin_norm_axis, self.begin_params_axis).set_strategy(strategy2)
-        self.mul2 = P.Mul().set_strategy(strategy3)
+        self.mul = P.Mul().shard(strategy1)
+        self.layer_norm = P.LayerNorm(self.begin_norm_axis, self.begin_params_axis).shard(strategy2)
+        self.mul2 = P.Mul().shard(strategy3)
         self.mul_weight = Parameter(mul_weight, "w1")
         self.normalized_shape = [64, 32, 16]
         self.gamma = Parameter(initializer('ones', self.normalized_shape), name="gamma")

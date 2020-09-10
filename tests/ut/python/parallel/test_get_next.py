@@ -32,10 +32,10 @@ class NetWithLoss(nn.Cell):
     def __init__(self, network, types, shapes, output_num, strategy3=None, strategy4=None, axis=-1):
         super(NetWithLoss, self).__init__()
         self.get_next = P.GetNext(types, shapes, output_num, "")
-        self.one_hot = P.OneHot(axis=axis).set_strategy(strategy3)
+        self.one_hot = P.OneHot(axis=axis).shard(strategy3)
         self.on_value = Tensor(1.0, ms.float32)
         self.off_value = Tensor(0.0, ms.float32)
-        self.loss = P.SoftmaxCrossEntropyWithLogits().set_strategy(strategy4)
+        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy4)
         self.network = network
 
     def construct(self):
@@ -81,8 +81,8 @@ def test_get_next_semi_auto_parallel():
     class Net(nn.Cell):
         def __init__(self, channel=1, w=0.25, strategy1=None, strategy2=None):
             super().__init__()
-            self.norm = P.L2Normalize().set_strategy(strategy1)
-            self.prelu = P.PReLU().set_strategy(strategy2)
+            self.norm = P.L2Normalize().shard(strategy1)
+            self.prelu = P.PReLU().shard(strategy2)
             self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):
@@ -105,8 +105,8 @@ def test_get_next_semi_auto_parallel1():
     class Net(nn.Cell):
         def __init__(self, channel=1, w=0.25, strategy1=None, strategy2=None):
             super().__init__()
-            self.norm = P.L2Normalize().set_strategy(strategy1)
-            self.prelu = P.PReLU().set_strategy(strategy2)
+            self.norm = P.L2Normalize().shard(strategy1)
+            self.prelu = P.PReLU().shard(strategy2)
             self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):
@@ -129,8 +129,8 @@ def test_get_next_auto_parallel():
     class Net(nn.Cell):
         def __init__(self, channel=1, w=0.25, strategy1=None, strategy2=None):
             super().__init__()
-            self.norm = P.L2Normalize().set_strategy(strategy1)
-            self.prelu = P.PReLU().set_strategy(strategy2)
+            self.norm = P.L2Normalize().shard(strategy1)
+            self.prelu = P.PReLU().shard(strategy2)
             self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):

@@ -87,18 +87,18 @@ class FusedBatchNorm(nn.Cell):
                                     epsilon=self.eps)
         self.bn_infer = P.BatchNorm(is_training=False,
                                     epsilon=self.eps)
-        self.sub_mean = P.Sub().set_strategy(((1), (1)))
-        self.sub_var = P.Sub().set_strategy(((1), (1)))
-        self.mul_mean = P.Mul().set_strategy(((1,), ()))
-        self.mul_var = P.Mul().set_strategy(((1,), ()))
-        self.assign_sub_mean = P.AssignSub().set_strategy(((1,), (1,)))
-        self.assign_sub_var = P.AssignSub().set_strategy(((1), (1)))
-        self.sub_mean2 = P.Sub().set_strategy(((1), (1)))
-        self.sub_var2 = P.Sub().set_strategy(((1), (1)))
+        self.sub_mean = P.Sub().shard(((1), (1)))
+        self.sub_var = P.Sub().shard(((1), (1)))
+        self.mul_mean = P.Mul().shard(((1,), ()))
+        self.mul_var = P.Mul().shard(((1,), ()))
+        self.assign_sub_mean = P.AssignSub().shard(((1,), (1,)))
+        self.assign_sub_var = P.AssignSub().shard(((1), (1)))
+        self.sub_mean2 = P.Sub().shard(((1), (1)))
+        self.sub_var2 = P.Sub().shard(((1), (1)))
 
-    def set_strategy(self, strategy):
-        self.bn_train.set_strategy(strategy)
-        self.bn_infer.set_strategy(strategy)
+    def shard(self, strategy):
+        self.bn_train.shard(strategy)
+        self.bn_infer.shard(strategy)
 
     def _check_data_dim(self, x):
         raise NotImplementedError
@@ -173,7 +173,7 @@ class PReLU(nn.Cell):
             w = Tensor(w)
         self.w = Parameter(initializer(w, [channel,]), name='a')
         self.prelu = P.PReLU()
-        self.relu = P.ReLU().set_strategy(((1)))
+        self.relu = P.ReLU().shard(((1)))
 
     def construct(self, x):
         self.w = self.relu(self.w)
@@ -210,7 +210,7 @@ def bn_common(parallel_mode, train_flag, strategy_loss=None):
     net = bn_net()
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(strategy_loss)
+    loss.softmax_cross_entropy.shard(strategy_loss)
     opt = Momentum(net.trainable_params(), learning_rate, momentum, 0.0001, 1024 * rank_size)
 
     if not train_flag:

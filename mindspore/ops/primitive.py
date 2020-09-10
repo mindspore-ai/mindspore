@@ -102,7 +102,7 @@ class Primitive(Primitive_):
         self.add_attr(name, value)
         return self
 
-    def set_strategy(self, strategy):
+    def shard(self, strategy):
         """
         Add strategies to primitive attribute.
 

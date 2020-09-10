@@ -70,7 +70,7 @@ class Net(nn.Cell):
         super().__init__()
         self.conv = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=1, stride=1, pad_mode='valid',
                               has_bias=True, weight_init='ones', bias_init='ones')
-        self.reduce_mean = P.ReduceMean(keep_dims=False).set_strategy(((1, 1, 1, 8),))
+        self.reduce_mean = P.ReduceMean(keep_dims=False).shard(((1, 1, 1, 8),))
         self.flat = nn.Flatten()
 
     def construct(self, inputs):

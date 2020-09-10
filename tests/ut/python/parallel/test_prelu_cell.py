@@ -70,9 +70,9 @@ class PReLU(nn.Cell):
 
         self.w = Parameter(initializer(w, [channel,]), name='a')
         self.prelu = P.PReLU()
-        self.relu = P.ReLU().set_strategy(((1,),))
-        self.sub = P.Sub().set_strategy(((1,), (1,)))
-        self.assign_sub = P.AssignSub().set_strategy(((1,), (1,)))
+        self.relu = P.ReLU().shard(((1,),))
+        self.sub = P.Sub().shard(((1,), (1,)))
+        self.assign_sub = P.AssignSub().shard(((1,), (1,)))
 
     def construct(self, x):
         u = self.relu(self.w)

@@ -24,9 +24,9 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, mul_weight, strategy1=None, strategy2=None):
         super(Net, self).__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.square = P.Square().set_strategy(strategy2)
-        self.mul2 = P.Mul().set_strategy(strategy1)
+        self.mul = P.Mul().shard(strategy1)
+        self.square = P.Square().shard(strategy2)
+        self.mul2 = P.Mul().shard(strategy1)
         self.mul_weight = Parameter(mul_weight, "w1")
 
     def construct(self, x, b):

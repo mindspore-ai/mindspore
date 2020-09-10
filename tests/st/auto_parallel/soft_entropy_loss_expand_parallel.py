@@ -140,20 +140,20 @@ class SoftmaxCrossEntropyExpand(Cell):
         if len(stra_list) < 11:
             stra_list = [None] * 11
         self.exp = P.Exp()
-        self.reduce_sum = P.ReduceSum(keep_dims=True).set_strategy(strategy=stra_list[1])
-        self.onehot = P.OneHot().set_strategy(strategy=stra_list[2])
+        self.reduce_sum = P.ReduceSum(keep_dims=True).shard(strategy=stra_list[1])
+        self.onehot = P.OneHot().shard(strategy=stra_list[2])
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
-        self.div = P.Div().set_strategy(strategy=stra_list[3])
-        self.log = P.Log().set_strategy(strategy=stra_list[4])
-        self.sum_cross_entropy = P.ReduceSum(keep_dims=False).set_strategy(strategy=stra_list[5])
-        self.mul = P.Mul().set_strategy(strategy=stra_list[6])
-        self.mul2 = P.Mul().set_strategy(strategy=stra_list[7])
+        self.div = P.Div().shard(strategy=stra_list[3])
+        self.log = P.Log().shard(strategy=stra_list[4])
+        self.sum_cross_entropy = P.ReduceSum(keep_dims=False).shard(strategy=stra_list[5])
+        self.mul = P.Mul().shard(strategy=stra_list[6])
+        self.mul2 = P.Mul().shard(strategy=stra_list[7])
         self.cast = P.Cast()
-        self.reduce_mean = P.ReduceMean(keep_dims=False).set_strategy(strategy=stra_list[8])
+        self.reduce_mean = P.ReduceMean(keep_dims=False).shard(strategy=stra_list[8])
         self.sparse = sparse
-        self.reduce_max = P.ReduceMax(keep_dims=True).set_strategy(strategy=stra_list[9])
-        self.sub = P.Sub().set_strategy(strategy=stra_list[10])
+        self.reduce_max = P.ReduceMax(keep_dims=True).shard(strategy=stra_list[9])
+        self.sub = P.Sub().shard(strategy=stra_list[10])
 
     def construct(self, logit, label):
         logit_max = self.reduce_max(logit, -1)
@@ -174,7 +174,7 @@ class MatmulNet(Cell):
         super(MatmulNet, self).__init__()
         if loss_stra_list is None:
             loss_stra_list = []
-        self.matmul = P.MatMul(transpose_b=True).set_strategy(strategy=matmul_stra)
+        self.matmul = P.MatMul(transpose_b=True).shard(strategy=matmul_stra)
         self.loss = SoftmaxCrossEntropyExpand(sparse=True, stra_list=loss_stra_list)
         self.weight = Parameter(Tensor(np.ones(MatmulParamShape), dtype=ms.float32), name="weight")
 

@@ -40,9 +40,9 @@ def test_sum_as_loss():
     class Net(nn.Cell):
         def __init__(self, strategy0, strategy1):
             super().__init__()
-            self.fc_nobias = P.MatMul(transpose_b=True).set_strategy(strategy0)
-            self.reduce_sum = P.ReduceSum(keep_dims=False).set_strategy(strategy1)
-            self.mul = P.Mul().set_strategy(strategy=((), ()))
+            self.fc_nobias = P.MatMul(transpose_b=True).shard(strategy0)
+            self.reduce_sum = P.ReduceSum(keep_dims=False).shard(strategy1)
+            self.mul = P.Mul().shard(strategy=((), ()))
 
         def construct(self, x, y):
             out = self.fc_nobias(x, y)
