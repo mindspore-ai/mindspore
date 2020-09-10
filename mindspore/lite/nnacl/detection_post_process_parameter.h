@@ -37,6 +37,7 @@ typedef struct DetectionPostProcessParameter {
 
   void *decoded_boxes_;
   void *nms_candidate_;
+  void *indexes_;
   void *selected_;
   void *score_with_class_;
   void *score_with_class_all_;

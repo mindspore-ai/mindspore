@@ -131,7 +131,7 @@ class MS_API Benchmark {
     auto inData = reinterpret_cast<T *>(input->MutableData());
     std::cout << "InData" << i++ << ": ";
     for (size_t j = 0; j < 20; j++) {
-      std::cout << static_cast<float >(inData[j]) << " ";
+      std::cout << static_cast<float>(inData[j]) << " ";
     }
     std::cout << std::endl;
   }
@@ -192,9 +192,9 @@ class MS_API Benchmark {
       }
 
       if (meanError <= 0.0000001) {
-        std::cout << "Mean bias of node " << nodeName << " : 0%" << std::endl;
+        std::cout << "Mean bias of node/tensor " << nodeName << " : 0%" << std::endl;
       } else {
-        std::cout << "Mean bias of node " << nodeName << " : " << meanError * 100 << "%" << std::endl;
+        std::cout << "Mean bias of node/tensor " << nodeName << " : " << meanError * 100 << "%" << std::endl;
       }
       return meanError;
     } else {

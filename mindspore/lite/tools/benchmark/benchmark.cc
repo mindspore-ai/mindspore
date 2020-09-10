@@ -100,7 +100,7 @@ int Benchmark::ReadInputFile() {
       }
       auto tensorDataSize = cur_tensor->Size();
       if (size != tensorDataSize) {
-        std::cerr << "Input binary file size error, required: %zu, in fact: %zu" << tensorDataSize << size << std::endl;
+        std::cerr << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size << std::endl;
         MS_LOG(ERROR) << "Input binary file size error, required: " << tensorDataSize << ", in fact: " << size;
         delete binBuf;
         return RET_ERROR;
@@ -166,41 +166,40 @@ int Benchmark::ReadCalibData() {
   return RET_OK;
 }
 
-
 int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float totalBias = 0;
   int totalSize = 0;
   bool hasError = false;
   for (const auto &calibTensor : calibData) {
-    std::string nodeName = calibTensor.first;
-    auto tensors = session->GetOutputsByNodeName(nodeName);
-    if (tensors.empty()) {
-      MS_LOG(ERROR) << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail.";
-      std::cerr << "Cannot find output node: " << nodeName.c_str() << " , compare output data fail." << std::endl;
-      return RET_ERROR;
+    std::string nodeOrTensorName = calibTensor.first;
+    auto tensors = session->GetOutputsByNodeName(nodeOrTensorName);
+    const mindspore::tensor::MSTensor *tensor = nullptr;
+    if (tensors.empty() || tensors.size() != 1) {
+      MS_LOG(INFO) << "Cannot find output node: " << nodeOrTensorName
+                   << " or node has more than one output tensor, switch to GetOutputByTensorName";
+      tensor = session->GetOutputByTensorName(nodeOrTensorName);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Cannot find output tensor " << nodeOrTensorName << ", get model output failed";
+        return RET_ERROR;
+      }
+    } else {
+      tensor = tensors.front();
     }
-    // make sure tensor size is 1
-    if (tensors.size() != 1) {
-      MS_LOG(ERROR) << "Only support 1 tensor with a name now.";
-      std::cerr << "Only support 1 tensor with a name now." << std::endl;
-      return RET_ERROR;
-    }
-    auto &tensor = tensors.front();
     MS_ASSERT(tensor->GetDataType() == DataType_DT_FLOAT);
     MS_ASSERT(tensor->GetData() != nullptr);
     float bias = 0;
     switch (msCalibDataType) {
       case TypeId::kNumberTypeFloat: {
-        bias = CompareData<float>(nodeName, tensor->shape(), static_cast<float *>(tensor->MutableData()));
+        bias = CompareData<float>(nodeOrTensorName, tensor->shape(), static_cast<float *>(tensor->MutableData()));
         break;
       }
       case TypeId::kNumberTypeInt8: {
-        bias = CompareData<int8_t>(nodeName, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
+        bias = CompareData<int8_t>(nodeOrTensorName, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
         break;
       }
       case TypeId::kNumberTypeInt32: {
-        bias = CompareData<int32_t>(nodeName, tensor->shape(), static_cast<int32_t *>(tensor->MutableData()));
+        bias = CompareData<int32_t>(nodeOrTensorName, tensor->shape(), static_cast<int32_t *>(tensor->MutableData()));
         break;
       }
       default:
@@ -224,12 +223,12 @@ int Benchmark::CompareOutput() {
       meanBias = 0;
     }
 
-    std::cout << "Mean bias of all nodes: " << meanBias << "%" << std::endl;
+    std::cout << "Mean bias of all nodes/tensors: " << meanBias << "%" << std::endl;
     std::cout << "=======================================================" << std::endl << std::endl;
 
     if (meanBias > this->_flags->accuracyThreshold) {
-      MS_LOG(ERROR) << "Mean bias of all nodes is too big: " << meanBias << "%";
-      std::cerr << "Mean bias of all nodes is too big: " << meanBias << "%" << std::endl;
+      MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << meanBias << "%";
+      std::cerr << "Mean bias of all nodes/tensors is too big: " << meanBias << "%" << std::endl;
       return RET_ERROR;
     } else {
       return RET_OK;
@@ -294,26 +293,26 @@ int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
   for (size_t i = 0; i < msInputs.size(); i++) {
-      switch (msInputs.at(i)->data_type()) {
-        case TypeId::kNumberTypeFloat:
-          PrintInputData<float>(msInputs.at(i));
-          break;
-        case TypeId::kNumberTypeFloat32:
-          PrintInputData<float>(msInputs.at(i));
-          break;
-        case TypeId::kNumberTypeInt8:
-          PrintInputData<int8_t>(msInputs.at(i));
-          break;
-        case TypeId::kNumberTypeUInt8:
-          PrintInputData<uint8_t>(msInputs.at(i));
-          break;
-        case TypeId::kNumberTypeInt32:
-          PrintInputData<int>(msInputs.at(i));
-          break;
-        default:
-          MS_LOG(ERROR) << "Datatype " << msInputs.at(i)->data_type() << " is not supported.";
-          return RET_ERROR;
-      }
+    switch (msInputs.at(i)->data_type()) {
+      case TypeId::kNumberTypeFloat:
+        PrintInputData<float>(msInputs.at(i));
+        break;
+      case TypeId::kNumberTypeFloat32:
+        PrintInputData<float>(msInputs.at(i));
+        break;
+      case TypeId::kNumberTypeInt8:
+        PrintInputData<int8_t>(msInputs.at(i));
+        break;
+      case TypeId::kNumberTypeUInt8:
+        PrintInputData<uint8_t>(msInputs.at(i));
+        break;
+      case TypeId::kNumberTypeInt32:
+        PrintInputData<int>(msInputs.at(i));
+        break;
+      default:
+        MS_LOG(ERROR) << "Datatype " << msInputs.at(i)->data_type() << " is not supported.";
+        return RET_ERROR;
+    }
   }
   auto status = session->RunGraph();
   if (status != RET_OK) {
@@ -355,7 +354,7 @@ int Benchmark::RunBenchmark(const std::string &deviceType) {
   auto model = lite::Model::Import(graphBuf, size);
   auto model_version = model->version_;
   if (model_version != Version()) {
-    MS_LOG(WARNING) << "model version is "<< model_version << ", inference version is " << Version() << " not equal";
+    MS_LOG(WARNING) << "model version is " << model_version << ", inference version is " << Version() << " not equal";
   }
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model file failed while running " << modelName.c_str();
