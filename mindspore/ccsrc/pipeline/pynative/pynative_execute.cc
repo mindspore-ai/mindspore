@@ -1257,7 +1257,7 @@ void PynativeExecutor::EndGraphByOutId(const std::string &out_id, const py::obje
   if (need_replace_param) {
     auto params = newfg->parameters();
     auto manager = Manage({newfg}, false);
-    for (size_t i = 0; i < params.size(); i++) {
+    for (size_t i = 0; i < args.size(); i++) {
       ValuePtr value = PyAttrValue(args[i]);
       auto v_node = NewValueNode(value);
       manager->Replace(params[i], v_node);

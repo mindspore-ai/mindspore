@@ -47,7 +47,7 @@ void ValidateOperation(const AnfNodePtr &node) {
   }
 
   // Primitive must in whitelist
-  PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
+  auto prim = GetValueNode<PrimitivePtr>(node);
   if (abstract::IsInWhiteList(prim)) {
     return;
   }
