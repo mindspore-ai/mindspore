@@ -48,7 +48,7 @@ def use_minddataset(mindrecord):
                               columns_list=columns_list,
                               num_parallel_workers=4)
     num_iter = 0
-    for _ in data_set.create_dict_iterator():
+    for _ in data_set.create_dict_iterator(num_epochs=1):
         num_iter += 1
         print_log(num_iter)
     end = time.time()
@@ -64,7 +64,7 @@ def use_tfrecorddataset(tfrecord):
                                   shuffle=ds.Shuffle.GLOBAL)
     data_set = data_set.shuffle(10000)
     num_iter = 0
-    for _ in data_set.create_dict_iterator():
+    for _ in data_set.create_dict_iterator(num_epochs=1):
         num_iter += 1
         print_log(num_iter)
     end = time.time()

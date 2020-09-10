@@ -107,7 +107,7 @@ def transformer_infer(config, dataset):
     probs = []
     source_sentences = []
     target_sentences = []
-    for batch in dataset.create_dict_iterator(output_numpy=True):
+    for batch in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
         source_sentences.append(batch["source_eos_ids"])
         target_sentences.append(batch["target_eos_ids"])
 
@@ -232,7 +232,7 @@ def transformer_infer_ppl(config, dataset):
     lengths = []
     source_sentences = []
     target_sentences = []
-    for batch in dataset.create_dict_iterator(output_numpy=True):
+    for batch in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
         source_sentences.append(batch["source_eos_ids"])
         target_sentences.append(batch["target_eos_ids"])
 

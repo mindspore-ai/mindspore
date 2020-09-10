@@ -275,7 +275,7 @@ class DatasetLenet():
     def get_repeat_count(self):
         return 1
 
-    def create_tuple_iterator(self):
+    def create_tuple_iterator(self, num_epochs=-1):
         return self
 
 

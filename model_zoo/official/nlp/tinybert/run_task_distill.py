@@ -278,7 +278,7 @@ def do_eval_standalone():
 
     callback = Accuracy()
     columns_list = ["input_ids", "input_mask", "segment_ids", "label_ids"]
-    for data in eval_dataset.create_dict_iterator():
+    for data in eval_dataset.create_dict_iterator(num_epochs=1):
         input_data = []
         for i in columns_list:
             input_data.append(data[i])

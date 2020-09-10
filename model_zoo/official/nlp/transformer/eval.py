@@ -113,7 +113,7 @@ def run_transformer_eval():
     predictions = []
     source_sents = []
     target_sents = []
-    for batch in dataset.create_dict_iterator(output_numpy=True):
+    for batch in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
         source_sents.append(batch["source_eos_ids"])
         target_sents.append(batch["target_eos_ids"])
         source_ids = Tensor(batch["source_eos_ids"], mstype.int32)

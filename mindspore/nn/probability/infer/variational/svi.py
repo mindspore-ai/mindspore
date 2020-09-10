@@ -63,7 +63,7 @@ class SVI:
         for _ in range(1, epochs+1):
             train_loss = 0
             dataset_size = 0
-            for data in train_dataset.create_dict_iterator():
+            for data in train_dataset.create_dict_iterator(num_epochs=1):
                 x = Tensor(data['image'], dtype=mstype.float32)
                 y = Tensor(data['label'], dtype=mstype.int32)
                 dataset_size += len(x)

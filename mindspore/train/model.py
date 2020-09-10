@@ -460,7 +460,8 @@ class Model:
                                                   is_train=True,
                                                   phase='train',
                                                   dataset=train_dataset,
-                                                  dataset_sink_mode=False)
+                                                  dataset_sink_mode=False,
+                                                  epoch_num=epoch)
         cb_params.cur_step_num = 0
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)

@@ -93,7 +93,7 @@ class EvalCallBack(Callback):
         if cb_params.cur_step_num % 100 == 0:
             callback = Accuracy()
             columns_list = ["input_ids", "input_mask", "segment_ids", "label_ids"]
-            for data in self.dataset.create_dict_iterator():
+            for data in self.dataset.create_dict_iterator(num_epochs=1):
                 input_data = []
                 for i in columns_list:
                     input_data.append(data[i])

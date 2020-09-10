@@ -418,7 +418,7 @@ def test_pynative_resnet50():
     max_step = 21
     exceed_num = 0
     data_set = create_dataset(repeat_num=1, training=True, batch_size=batch_size)
-    for element in data_set.create_dict_iterator():
+    for element in data_set.create_dict_iterator(num_epochs=1):
         step = step + 1
         if step > max_step:
             break
@@ -434,4 +434,3 @@ def test_pynative_resnet50():
         if step > 1 and cost_time > 0.25:
             exceed_num = exceed_num + 1
     assert exceed_num < 20
-    

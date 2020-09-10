@@ -224,7 +224,7 @@ def train():
 
     old_progress = -1
     t_end = time.time()
-    data_loader = ds.create_dict_iterator(output_numpy=True)
+    data_loader = ds.create_dict_iterator(output_numpy=True, num_epochs=1)
 
     shape_record = ShapeRecord()
     for i, data in enumerate(data_loader):

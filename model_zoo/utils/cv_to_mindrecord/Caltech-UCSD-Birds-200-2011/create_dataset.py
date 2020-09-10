@@ -22,7 +22,7 @@ def create_dataset(data_file):
                               num_parallel_workers=num_readers,
                               shuffle=True)
     index = 0
-    for item in data_set.create_dict_iterator(output_numpy=True):
+    for item in data_set.create_dict_iterator(output_numpy=True, num_epochs=1):
         print("example {}: {}".format(index, item))
         index += 1
         if index % 1000 == 0:

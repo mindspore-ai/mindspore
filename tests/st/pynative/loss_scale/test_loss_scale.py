@@ -60,7 +60,7 @@ class MindData:
     def output_shapes(self):
         return self._output_shapes
 
-    def create_tuple_iterator(self):
+    def create_tuple_iterator(self, num_epochs=-1):
         return self
 
     @property
