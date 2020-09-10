@@ -857,6 +857,7 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
       std::vector<AnfNodePtr> depend_inputs = {
         graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name()))), output_param, node};
       auto depend = graph->NewCNode(depend_inputs);
+      depend->set_abstract(output_param->abstract());
       need_replace_list.emplace(node, depend);
       MS_LOG(INFO) << "Create parameter " << output_param->DebugString() << " for call node " << node->DebugString()
                    << ", depend node is " << depend->DebugString();
