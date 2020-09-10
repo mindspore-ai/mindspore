@@ -10,11 +10,10 @@
     - [Script and Sample Code](#script-and-sample-code)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -46,7 +45,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 # [Features](#contents)
 
-## [Mixed Precision(Ascend)](#contents)
+## [Mixed Precision](#contents)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
@@ -56,7 +55,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 - Hardware:Ascend
   - Prepare hardware environment with Ascend. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+  - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below
   - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
   - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
@@ -70,8 +69,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ├── mobileNetv2_quant
   ├── Readme.md     # descriptions about MobileNetV2-Quant
   ├── scripts
-  │   ├──run_train.sh   # shell script for train on Ascend and GPU
-  │   ├──run_infer_quant.sh    # shell script for evaluation on Ascend
+  │   ├──run_train.sh   # shell script for train on Ascend
+  │   ├──run_infer.sh    # shell script for evaluation on Ascend
   ├── src
   │   ├──config.py      # parameter configuration
   │   ├──dataset.py     # creating dataset
@@ -115,7 +114,7 @@ epoch: [  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:
 epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
 ```
 
-## [Eval process](#contents)
+## [Evaluation process](#contents)
 
 ### Usage
 
