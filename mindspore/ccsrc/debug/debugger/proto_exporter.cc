@@ -431,8 +431,8 @@ void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CN
     node_proto->set_name(std::to_string(apply_idx));
     node_proto->set_scope(node->scope()->name());
 
-    // add debug_name for debugger
-    node_proto->set_debug_name(node->fullname_with_scope());
+    // add full_name for debugger
+    node_proto->set_full_name(node->fullname_with_scope());
 
     // process OP inputs
     for (size_t i = 1; i < inputs.size(); ++i) {

@@ -228,7 +228,7 @@ message NodeProto {
   optional uint64 output_i = 7;
 
   // for debugger, full name with scope
-  optional string debug_name = 8;
+  optional string full_name = 8;
 }
 
 // Models
