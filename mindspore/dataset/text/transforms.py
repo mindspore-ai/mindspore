@@ -13,35 +13,36 @@
 # limitations under the License.
 """
 The module text.transforms is inheritted from _c_dataengine
-which is implemented basing on icu4c and cppjieba in C++.
-It's a high performance module to process nlp text.
+and is implemented based on ICU4C and cppjieba in C++.
+It's a high performance module to process NLP text.
 Users can use Vocab to build their own dictionary,
 use appropriate tokenizers to split sentences into different tokens,
 and use Lookup to find the index of tokens in Vocab.
 
 .. Note::
-    Constructor's arguments for every class in this module must be saved into the
+    A constructor's arguments for every class in this module must be saved into the
     class attributes (self.xxx) to support save() and load().
 
-Examples:
-    >>> import mindspore.dataset as ds
-    >>> import mindspore.dataset.text as text
-    >>> dataset_file = "path/to/text_file_path"
-    >>> # sentences as line data saved in a file
-    >>> dataset = ds.TextFileDataset(dataset_file, shuffle=False)
-    >>> # tokenize sentence to unicode characters
-    >>> tokenizer = text.UnicodeCharTokenizer()
-    >>> # load vocabulary form list
-    >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
-    >>> # lookup is an operation for mapping tokens to ids
-    >>> lookup = text.Lookup(vocab)
-    >>> dataset = dataset.map(operations=[tokenizer, lookup])
-    >>> for i in dataset.create_dict_iterator():
-    >>>     print(i)
-    >>> # if text line in dataset_file is:
-    >>> # 深圳欢迎您
-    >>> # then the output will be:
-    >>> # {'text': array([0, 1, 2, 3, 4], dtype=int32)}
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> dataset_file = "path/to/text_file_path"
+        >>> # sentences as line data saved in a file
+        >>> dataset = ds.TextFileDataset(dataset_file, shuffle=False)
+        >>> # tokenize sentence to unicode characters
+        >>> tokenizer = text.UnicodeCharTokenizer()
+        >>> # load vocabulary form list
+        >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+        >>> # lookup is an operation for mapping tokens to ids
+        >>> lookup = text.Lookup(vocab)
+        >>> dataset = dataset.map(operations=[tokenizer, lookup])
+        >>> for i in dataset.create_dict_iterator():
+        >>>     print(i)
+        >>> # if text line in dataset_file is:
+        >>> # 深圳欢迎您
+        >>> # then the output will be:
+        >>> # {'text': array([0, 1, 2, 3, 4], dtype=int32)}
 """
 import os
 import re
@@ -64,10 +65,10 @@ class Lookup(cde.LookupOp):
     Lookup operator that looks up a word to an id.
 
     Args:
-        vocab(Vocab): a Vocab object.
-        unknown_token(str, optional): word to use for lookup if the word being looked up is out of Vocabulary (oov).
-            If unknown_token is oov, runtime error will be thrown (default=None).
-        data_type (mindspore.dtype, optional): mindspore.dtype lookup maps string to (default=mstype.int32)
+        vocab (Vocab): A vocabulary object.
+        unknown_token (str, optional): Word used for lookup if the word being looked up is out-of-vocabulary (OOV).
+            If unknown_token is OOV, a runtime error will be thrown (default=None).
+        data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mstype.int32)
     """
 
     @check_lookup
@@ -81,8 +82,8 @@ class SlidingWindow(cde.SlidingWindowOp):
     is a slice of data starting at the corresponding position, with a specified width.
 
     Args:
-        width (int): The width of the window. Must be an integer and greater than zero.
-        axis (int, optional): The axis along which sliding window is computed (default=0).
+        width (int): The width of the window. It must be an integer and greater than zero.
+        axis (int, optional): The axis along which the sliding window is computed (default=0).
 
     Examples:
         >>> # Data before
@@ -112,18 +113,18 @@ class Ngram(cde.NgramOp):
     Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
 
     Args:
-        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers, for e.g. n=[4,3], The result
-            would be a 4-gram followed by a 3-gram in the same tensor. If number of words is not enough to make up for
-            a n-gram, an empty string would be returned. For e.g. 3 grams on ["mindspore","best"] would result in an
-            empty string be produced.
+        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers. For example, if n=[4,3], then the result
+            would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
+            for a n-gram, an empty string will be returned. For example, 3 grams on ["mindspore","best"] will result in
+            an empty string produced.
         left_pad (tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
             will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (default=None).
         right_pad (tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
             pad_width will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--"
             (default=None).
-        separator (str, optional): symbol used to join strings together. for e.g. if 2-gram the ["mindspore", "amazing"]
-            with separator="-" the result would be ["mindspore-amazing"] (default=None, which means whitespace is
-            used).
+        separator (str, optional): symbol used to join strings together. For example. if 2-gram is
+            ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
+            (default=None, which means whitespace is used).
     """
 
     @check_ngram
@@ -143,10 +144,10 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
     Tokenize Chinese string into words based on dictionary.
 
     Args:
-        hmm_path (str): the dictionary file is used by  HMMSegment algorithm,
-            the dictionary can be obtained on the official website of cppjieba.
-        mp_path (str): the dictionary file is used by MPSegment algorithm,
-            the dictionary can be obtained on the official website of cppjieba.
+        hmm_path (str): Dictionary file is used by HMMSegment algorithm.
+            The dictionary can be obtained on the official website of cppjieba.
+        mp_path (str): Dictionary file is used by MPSegment algorithm.
+            The dictionary can be obtained on the official website of cppjieba.
         mode (JiebaMode, optional): Valid values can be any of [JiebaMode.MP, JiebaMode.HMM,
             JiebaMode.MIX](default=JiebaMode.MIX).
 
@@ -188,8 +189,8 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         Args:
             word (str): The word to be added to the JiebaTokenizer instance.
                 The added word will not be written into the built-in dictionary on disk.
-            freq (int, optional): The frequency of the word to be added, The higher the frequency,
-                the better change the word will be tokenized(default=None, use default frequency).
+            freq (int, optional): The frequency of the word to be added. The higher the frequency,
+                the better chance the word will be tokenized (default=None, use default frequency).
         """
 
         if freq is None:
@@ -298,11 +299,11 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
     Tokenize scalar token or 1-D tokens to 1-D subword tokens.
 
     Args:
-        vocab (Vocab): a Vocab object.
-        suffix_indicator (str, optional): Used to show that the subword is the last part of a word(default='##').
-        max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split(default=100).
-        unknown_token (str, optional): When we can not found the token: if 'unknown_token' is empty string,
-            return the token directly, else return 'unknown_token'(default='[UNK]').
+        vocab (Vocab): A  vocabulary object.
+        suffix_indicator (str, optional): Used to show that the subword is the last part of a word (default='##').
+        max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split (default=100).
+        unknown_token (str, optional): When a token cannot be found: if 'unknown_token' is empty string,
+            return the token directly, else return 'unknown_token' (default='[UNK]').
         with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
     Examples:
@@ -347,9 +348,9 @@ class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
     Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
 
     Args:
-        mode(Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string,
-            if the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
-        out_type(Union[str, int]): The type of output.
+        mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string.
+            If the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
+        out_type (Union[str, int]): The type of output.
     """
 
     def __init__(self, mode, out_type):
@@ -367,7 +368,7 @@ class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
 if platform.system().lower() != 'windows':
     class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):
         """
-        Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces(such as: ' ', '\\\\t', '\\\\r', '\\\\n').
+        Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces, such as: ' ', '\\\\t', '\\\\r', '\\\\n'.
 
         Args:
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
@@ -442,7 +443,7 @@ if platform.system().lower() != 'windows':
             normalize_form (NormalizeForm, optional): Valid values can be any of [NormalizeForm.NONE,
                 NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD,
                 NormalizeForm.NFKD](default=NormalizeForm.NFKC).
-                And you can see http://unicode.org/reports/tr15/ for details.
+                See http://unicode.org/reports/tr15/ for details.
 
                 - NormalizeForm.NONE, do nothing for input string tensor.
                 - NormalizeForm.NFC, normalize with Normalization Form C.
@@ -466,10 +467,10 @@ if platform.system().lower() != 'windows':
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
         Args:
-            pattern(str): the regex expression patterns.
-            replace(str): the string to replace matched element.
-            replace_all(bool, optional): If False, only replace first matched element;
-                if True, replace all matched elements(default=True).
+            pattern (str): the regex expression patterns.
+            replace (str): the string to replace matched element.
+            replace_all (bool, optional): If False, only replace first matched element;
+                if True, replace all matched elements (default=True).
         """
 
         def __init__(self, pattern, replace, replace_all=True):
@@ -486,11 +487,11 @@ if platform.system().lower() != 'windows':
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
         Args:
-            delim_pattern(str): The pattern of regex delimiters.
+            delim_pattern (str): The pattern of regex delimiters.
                 The original string will be split by matched elements.
-            keep_delim_pattern(str, optional): The string matched by 'delim_pattern' can be kept as a token
-                if it can be matched by 'keep_delim_pattern'. And the default value is empty str(''),
-                in this situation, delimiters will not kept as an output token(default='').
+            keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
+                if it can be matched by 'keep_delim_pattern'. The default value is an empty str ('')
+                which means that delimiters will not be kept as an output token (default='').
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
@@ -519,14 +520,14 @@ if platform.system().lower() != 'windows':
         Tokenize a scalar tensor of UTF-8 string by specific rules.
 
         Args:
-            lower_case(bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
-                on input text to make the text to lower case and strip accents characters; If False, only apply
-                NormalizeUTF8('normalization_form' mode) operation on input text(default=False).
-            keep_whitespace(bool, optional): If True, the whitespace will be kept in out tokens(default=False).
-            normalization_form(NormalizeForm, optional): Used to specify a specific normalize mode,
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default=NormalizeForm.NONE).
-            preserve_unused_token(bool, optional): If True, do not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
+            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
+                on input text to fold the text to lower case and strip accents characters. If False, only apply
+                NormalizeUTF8('normalization_form' mode) operation on input text (default=False).
+            keep_whitespace (bool, optional): If True, the whitespace will be kept in out tokens (default=False).
+            normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode. This is
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
+            preserve_unused_token (bool, optional): If True, do not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
@@ -570,19 +571,19 @@ if platform.system().lower() != 'windows':
         Tokenizer used for Bert text process.
 
         Args:
-            vocab(Vocab): a Vocab object.
-            suffix_indicator(str, optional): Used to show that the subword is the last part of a word(default='##').
-            max_bytes_per_token(int, optional): Tokens exceeding this length will not be further split(default=100).
-            unknown_token(str, optional): When we can not found the token: if 'unknown_token' is empty string,
+            vocab (Vocab): A vocabulary object.
+            suffix_indicator (str, optional): Used to show that the subword is the last part of a word (default='##').
+            max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split (default=100).
+            unknown_token (str, optional): When a token cannot be found: if 'unknown_token' is empty string,
                 return the token directly, else return 'unknown_token'(default='[UNK]').
-            lower_case(bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
-                on input text to make the text to lower case and strip accents characters; If False, only apply
-                NormalizeUTF8('normalization_form' mode) operation on input text(default=False).
-            keep_whitespace(bool, optional): If True, the whitespace will be kept in out tokens(default=False).
-            normalization_form(NormalizeForm, optional): Used to specify a specific normlaize mode,
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details(default='NONE').
-            preserve_unused_token(bool, optional): If True, do not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'(default=True).
+            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
+                on input text to fold the text to lower case and strip accented characters. If False, only apply
+                NormalizeUTF8('normalization_form' mode) operation on input text (default=False).
+            keep_whitespace (bool, optional): If True, the whitespace will be kept in out tokens (default=False).
+            normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode,
+                only effective when 'lower_case' is False. See NormalizeUTF8 for details (default='NONE').
+            preserve_unused_token (bool, optional): If True, do not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
         Examples:
@@ -632,7 +633,7 @@ class TruncateSequencePair(cde.TruncateSequencePairOp):
     This operation takes two input tensors and returns two output Tenors.
 
     Args:
-        max_length(int): Maximum length required.
+        max_length (int): Maximum length required.
 
     Examples:
         >>> # Data before
@@ -660,7 +661,7 @@ class ToNumber(cde.ToNumberOp):
     Strings are casted according to the rules specified in the following links:
     https://en.cppreference.com/w/cpp/string/basic_string/stof,
     https://en.cppreference.com/w/cpp/string/basic_string/stoul,
-    except that any strings which represent negative numbers cannot be casted to an
+    except that any strings which represent negative numbers cannot be cast to an
     unsigned integer type.
 
     Args:
@@ -681,6 +682,7 @@ class ToNumber(cde.ToNumberOp):
 class PythonTokenizer:
     """
     Callable class to be used for user-defined string tokenizer.
+
     Args:
         tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
 

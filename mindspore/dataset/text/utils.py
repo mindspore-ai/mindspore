@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-The module text.utils provides some general methods for nlp text processing.
+The module text.utils provides some general methods for NLP text processing.
 For example, you can use Vocab to build a dictionary,
 use to_bytes and to_str to encode and decode strings into a specified format.
 """

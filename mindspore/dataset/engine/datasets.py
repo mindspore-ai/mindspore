@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """
-datasets.py supports various formats of datasets, including ImageNet, TFData,
-MNIST, Cifar10/100, Manifest, MindRecord, etc. This module could load data in
-high performance and parse data precisely. It also provides the following
-operations for users to preprocess data: shuffle, batch, repeat, map, and zip.
+This dataset module supports various formats of datasets, including ImageNet, TFData,
+MNIST, Cifar10/100, Manifest, MindRecord, and more. This module loads data with
+high performance and parses data precisely. Some of the operations that are
+provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
 """
 import glob
 import json
@@ -67,7 +67,7 @@ def zip(datasets):
 
     Args:
         datasets (tuple of class Dataset): A tuple of datasets to be zipped together.
-            The number of datasets should be more than 1.
+            The number of datasets must be more than 1.
 
     Returns:
         DatasetOp, ZipDataset.
@@ -98,10 +98,9 @@ def get_num_rows(num_rows, num_shards):
     Get the number rows of the dataset according to the shards.
 
     Args:
-        num_rows (int): The number rows of the dataset should be more than 0.
-            The number rows of the dataset should be more than 0.
-        num_shards (int or None): Number of shards that the dataset should be divided into.
-            The number of shards should be None or more than 1.
+        num_rows (int): Number rows of the dataset. It must be more than 0.
+        num_shards (int or None): Number of shards that the dataset will be divided into.
+            The number of shards must be None or more than 1.
 
     Returns:
         Int, number of rows.
@@ -131,7 +130,7 @@ class Dataset:
     a node in the data flow graph.
 
     Args:
-        num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel
             (default=None).
     """
 
@@ -179,10 +178,10 @@ class Dataset:
                                element_length_function=None, pad_info=None,
                                pad_to_bucket_boundary=False, drop_remainder=False):
         """
-        Bucket elements according to their lengths, and pad and batch the buckets when
+        Bucket elements according to their lengths. Each bucket will be padded and batched when
         they are full.
 
-        A length function is called on each row in the dataset, the row is then
+        A length function is called on each row in the dataset. The row is then
         bucketed based on its length and bucket_boundaries. When a bucket reaches its
         corresponding size specified in bucket_batch_sizes, the entire bucket will be
         padded according to batch_info, and then batched. Each batch will be full,
@@ -202,7 +201,7 @@ class Dataset:
                 provided, then len(column_names) must be 1, and the size of the first
                 dimension of that column will be taken as the length (default=None).
             pad_info (dict, optional): Represents how to batch each column. The key
-                corresponds to the column name, the value must be a tuple of 2 elements.
+                corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
                 element corresponds to the value to pad with. If a column is not
                 specified, then that column will be padded to the longest in the current
@@ -256,7 +255,7 @@ class Dataset:
 
         Note:
             The order of using repeat and batch reflects the number of batches and per_batch_map.
-            Recommend that repeat operation should be used after batch operation.
+            It is recommended that the repeat operation be used after the batch operation.
 
         Args:
             batch_size (int or function): The number of rows each batch is created with. An
@@ -265,19 +264,19 @@ class Dataset:
                 possibly incomplete batch (default=False). If True, and if there are less
                 than batch_size rows available to make the last batch, then those rows will
                 be dropped and not propagated to the child node.
-            num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
+            num_parallel_workers (int, optional): Number of workers to process the dataset in parallel (default=None).
             per_batch_map (callable, optional): Per batch map callable. A callable which takes
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch
                 of Tensors on a given column. The number of lists should match with number of entries in input_columns.
                 The last parameter of the callable should always be a BatchInfo object.
             input_columns (list[str], optional): List of names of the input columns. The size of the list should
-                match with signature of per_batch_map callable.
-            output_columns (list[str], optional): [Not currently implmented] List of names assigned to the columns
+                match with signature of the per_batch_map callable.
+            output_columns (list[str], optional): [Not currently implemented] List of names assigned to the columns
                 outputted by the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (list[str], optional): [Not currently implmented] list of all the desired columns to
+            column_order (list[str], optional): [Not currently implemented] List of all the desired columns to
                 propagate to the child node. This list must be a subset of all the columns in the dataset after
                 all operations are applied. The order of the columns in each row propagated to the
                 child node follow the order they appear in this list. The parameter is mandatory
@@ -411,7 +410,7 @@ class Dataset:
         """
         Apply each operation in operations to this dataset.
 
-        The order of operations is determined by the position of each operation in operations.
+        The order of operations is determined by the position of each operation in the operations parameter.
         operations[0] will be applied first, then operations[1], then operations[2], etc.
 
         Each operation will be passed one or more columns from the dataset as input, and zero or
@@ -437,7 +436,7 @@ class Dataset:
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (list[str], optional): list of all the desired columns to propagate to the
+            column_order (list[str], optional): List of all the desired columns to propagate to the
                 child node. This list must be a subset of all the columns in the dataset after
                 all operations are applied. The order of the columns in each row propagated to the
                 child node follow the order they appear in this list. The parameter is mandatory
@@ -445,12 +444,12 @@ class Dataset:
                 will be propagated to the child node, the order of the columns will remain the
                 same).
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
-                parallel (default=None, the value from the config will be used).
-            python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
+                parallel (default=None, the value from the configuration will be used).
+            python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes. This
                 option could be beneficial if the Python operation is computational heavy (default=False).
             cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
                 The cache feature is under development and is not recommended.
-            callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None).
+            callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
 
 
         Returns:
@@ -578,10 +577,10 @@ class Dataset:
              If input_columns not provided or empty, all columns will be used.
 
         Args:
-            predicate(callable): Python callable which returns a boolean value, if False then filter the element.
-            input_columns: (list[str], optional): List of names of the input columns, when
+            predicate (callable): Python callable which returns a boolean value. If False then filter the element.
+            input_columns (list[str], optional): List of names of the input columns, when
                 default=None, the predicate will be applied on all columns in the dataset.
-            num_parallel_workers (int, optional): Number of workers to process the Dataset
+            num_parallel_workers (int, optional): Number of workers to process the dataset
                 in parallel (default=None).
 
         Returns:
@@ -601,14 +600,14 @@ class Dataset:
         Repeat this dataset count times. Repeat indefinitely if the count is None or -1.
 
         Note:
-            The order of using repeat and batch reflects the number of batches. Recommend that
-            repeat operation should be used after batch operation.
-            If dataset_sink_mode is False, here repeat operation is invalid.
-            If dataset_sink_mode is True, repeat count should be equal to the epoch of training. Otherwise,
+            The order of using repeat and batch reflects the number of batches. It is recommended that
+            the repeat operation be used after the batch operation.
+            If dataset_sink_mode is False, the repeat operation is invalid.
+            If dataset_sink_mode is True, repeat count must be equal to the epoch of training. Otherwise,
             errors could occur since the amount of data is not the amount training requires.
 
         Args:
-            count (int): Number of times the dataset should be repeated (default=None).
+            count (int): Number of times the dataset is repeated (default=None).
 
         Returns:
             RepeatDataset, dataset repeated.
@@ -624,7 +623,7 @@ class Dataset:
             >>> shuffled_and_repeated = shuffled_and_repeated.repeat(50)
             >>>
             >>> # creates a dataset where the dataset is first repeated for
-            >>> # 50 epochs before shuffling. the shuffle operator will treat
+            >>> # 50 epochs before shuffling. The shuffle operator will treat
             >>> # the entire 50 epochs as one big dataset.
             >>> repeat_and_shuffle = data.repeat(50)
             >>> repeat_and_shuffle = repeat_and_shuffle.shuffle(10)
@@ -639,7 +638,7 @@ class Dataset:
         Skip the first N elements of this dataset.
 
         Args:
-            count (int): Number of elements the dataset should be skipped.
+            count (int): Number of elements in the dataset to be skipped.
 
         Returns:
             SkipDataset, dataset skipped.
@@ -658,10 +657,10 @@ class Dataset:
         Takes at most given numbers of elements from the dataset.
 
         Note:
-            1. If count is greater than the number of element in dataset or equal to -1,
-               all the element in dataset will be taken.
-            2. The order of using take and batch effects. If take before batch operation,
-               then taken given number of rows, otherwise take given number of batches.
+            1. If count is greater than the number of elements in the dataset or equal to -1,
+               all the elements in dataset will be taken.
+            2. The order of using take and batch matters. If take is before batch operation,
+               then take given number of rows; otherwise take given number of batches.
 
         Args:
             count (int, optional): Number of elements to be taken from the dataset (default=-1).
@@ -684,8 +683,8 @@ class Dataset:
         Internal method called by split to calculate absolute split sizes and to
         do some error checking after calculating absolute split sizes.
         """
-        # call get_dataset_size here and check input here because
-        # dont want to call this once in check_split and another time in
+        # Call get_dataset_size here and check input here because
+        # don't want to call this once in check_split and another time in
         # here again
         dataset_size = self.get_dataset_size()
 
@@ -693,7 +692,7 @@ class Dataset:
             raise RuntimeError("dataset_size is unknown, unable to split.")
 
         if not isinstance(sizes, list):
-            raise RuntimeError("sizes should be a list.")
+            raise RuntimeError("sizes must be a list.")
 
         all_int = all(isinstance(item, int) for item in sizes)
         if all_int:
@@ -755,10 +754,10 @@ class Dataset:
                     - The sum of split sizes < K, the difference will be added to the first split.
 
                     - The sum of split sizes > K, the difference will be removed from the first large
-                      enough split such that it will have atleast 1 row after removing the difference.
+                      enough split such that it will have at least 1 row after removing the difference.
 
-            randomize (bool, optional): determines whether or not to split the data randomly (default=True).
-                If true, the data will be randomly split. Otherwise, each split will be created with
+            randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
+                If True, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
 
         Note:
@@ -845,10 +844,10 @@ class Dataset:
     @check_concat
     def concat(self, datasets):
         """
-        Concat the datasets in the input list of datasets, supported using "+" to reload concat operation.
+        Concatenate the datasets in the input list of datasets. The "+" operator is also supported to concatenate.
 
         Note:
-            The column name，column data type and rank of column data should be the same in input datasets.
+            The column name, and rank and type of the column data must be the same in the input datasets.
 
         Args:
             datasets (Union[list, class Dataset]): A list of datasets or a single class Dataset
@@ -860,9 +859,9 @@ class Dataset:
         Examples:
             >>> import mindspore.dataset as ds
             >>> # ds1 and ds2 are instances of Dataset object
-            >>> # creates a dataset by concating ds1 and ds2 with "+" operation
+            >>> # creates a dataset by concatenating ds1 and ds2 with "+" operator
             >>> data1 = ds1 + ds2
-            >>> # creates a dataset by concating ds1 and ds2 with concat operation
+            >>> # creates a dataset by concatenating ds1 and ds2 with concat operation
             >>> data1 = ds1.concat(ds2)
         """
         if isinstance(datasets, Dataset):
@@ -879,8 +878,8 @@ class Dataset:
         Rename the columns in input datasets.
 
         Args:
-            input_columns (list[str]): list of names of the input columns.
-            output_columns (list[str]): list of names of the output columns.
+            input_columns (list[str]): List of names of the input columns.
+            output_columns (list[str]): List of names of the output columns.
 
         Returns:
             RenameDataset, dataset renamed.
@@ -902,13 +901,13 @@ class Dataset:
     @check_project
     def project(self, columns):
         """
-        Project certain columns in input datasets.
+        Project certain columns in input dataset.
 
         The specified columns will be selected from the dataset and passed down
         the pipeline in the order specified. The other columns are discarded.
 
         Args:
-            columns(list[str]): list of names of the columns to project.
+            columns(list[str]): List of names of the columns to project.
 
         Returns:
             ProjectDataset, dataset projected.
@@ -936,9 +935,6 @@ class Dataset:
     def apply(self, apply_func):
         """
         Apply a function in this dataset.
-
-        The specified apply_func is a function that must take one 'Dataset' as an argument
-        and return a preprogressing 'Dataset'.
 
         Args:
             apply_func (function): A function that must take one 'Dataset' as an argument and
@@ -973,12 +969,12 @@ class Dataset:
     @check_device_send
     def device_que(self, prefetch_size=None, send_epoch_end=True):
         """
-        Return a transferredDataset that transfer data through device.
+        Return a transferred Dataset that transfers data through a device.
 
         Args:
-            prefetch_size (int, optional): prefetch number of records ahead of the
+            prefetch_size (int, optional): Prefetch number of records ahead of the
                 user's request (default=None).
-            send_epoch_end (bool, optional): whether send end of sequence to device or not.(default=True)
+            send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -995,7 +991,7 @@ class Dataset:
         Transfer data through CPU, GPU or Ascend devices.
 
         Args:
-            send_epoch_end (bool, optional): whether send end of sequence to device or not.(default=True)
+            send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -1059,20 +1055,21 @@ class Dataset:
     @check_save
     def save(self, file_name, num_files=1, file_type='mindrecord'):
         """
-        Save the dynamic data processed by dataset pipeline as common dataset format, support: mindrecord.
+        Save the dynamic data processed by the dataset pipeline in common dataset format.
+        Supported dataset formats: 'mindrecord' only
 
-        Implicit type casting exists when saving data as mindrecord. Table below shows how to do type casting.
+        Implicit type casting exists when saving data as 'mindrecord'. The table below shows how to do type casting.
 
-        .. list-table:: Implicit Type Casting of Saving as mindrecord
+        .. list-table:: Implicit Type Casting when Saving as 'mindrecord'
            :widths: 25 25 50
            :header-rows: 1
 
-           * - type in 'dataset'
-             - type in 'mindrecord'
-             - detail
+           * - Type in 'dataset'
+             - Type in 'mindrecord'
+             - Details
            * - bool
              - None
-             - Not support
+             - Not supported
            * - int8
              - int32
              -
@@ -1096,7 +1093,7 @@ class Dataset:
              -
            * - uint64
              - None
-             - Not support
+             - Not supported
            * - float16
              - float32
              -
@@ -1108,19 +1105,19 @@ class Dataset:
              -
            * - string
              - string
-             - Not support multi-dimensional string
+             - Multi-dimensional string not supported
 
         Note:
-            1. To save the samples in order, should set dataset's shuffle false and num_files 1.
-            2. Before call the function, do not use batch, repeat operator or data augmentation operators
+            1. To save the samples in order, set dataset's shuffle to False and num_files to 1.
+            2. Before calling the function, do not use batch operator, repeat operator or data augmentation operators
                with random attribute in map operator.
-            3. Mindrecord does not support DE_UINT64, multi-dimensional DE_UINT8(drop dimension) and
+            3. Mindrecord does not support DE_UINT64, multi-dimensional DE_UINT8(drop dimension) nor
                multi-dimensional DE_STRING.
 
         Args:
             file_name (str): Path to dataset file.
-            num_files (int, optional): Number of dataset files.(default=1).
-            file_type (str, optional): dataset format.(default='mindrecord')
+            num_files (int, optional): Number of dataset files (default=1).
+            file_type (str, optional): Dataset format (default='mindrecord').
 
         """
 
@@ -1135,7 +1132,7 @@ class Dataset:
 
     def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False):
         """
-        Create an Iterator over the dataset. The data retrieved will be a list of ndarray of data.
+        Create an iterator over the dataset. The data retrieved will be a list of ndarrays of data.
 
         To specify which columns to list and the order needed, use columns_list. If columns_list
         is not provided, the order of the columns will not be changed.
@@ -1143,20 +1140,19 @@ class Dataset:
         Args:
             columns (list[str], optional): List of columns to be used to specify the order of columns
                 (default=None, means all columns).
-            num_epochs (int, optional): maximum epochs that iterator can be iteratered,
-                if num_epochs = -1, iterator can be iteratered infinite epochs (default=-1)
-            output_numpy (bool, optional): Whether or not to output NumPy datatype,
-                if output_numpy=False, iterator will output MSTensor (default=False).
-
+            num_epochs (int, optional): Maximum number of epochs that iterator can be iterated.
+                (default=-1, iterator can be iterated infinite number of epochs)
+            output_numpy (bool, optional): Whether or not to output NumPy datatype.
+                If output_numpy=False, iterator will output MSTensor (default=False).
 
         Returns:
-            Iterator, list of ndarray.
+            Iterator, list of ndarrays.
 
         Examples:
             >>> import mindspore.dataset as ds
             >>> # data is an instance of Dataset object
-            >>> # creates an iterator. The columns in the data obtained by the
-            >>> # iterator will not be changed.
+            >>> # create an iterator
+            >>> # The columns in the data obtained by the iterator will not be changed.
             >>> iterator = data.create_tuple_iterator()
             >>> for item in iterator:
             >>>     # convert the returned tuple to a list and print
@@ -1168,25 +1164,26 @@ class Dataset:
 
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
         """
-        Create an Iterator over the dataset.
+        Create an iterator over the dataset. The data retrieved will be a dictionary.
 
-        The data retrieved will be a dictionary. The order
-        of the columns in the dictionary may not be the same as the original order.
+        The order of the columns in the dictionary may not be the same as the original order.
 
         Args:
+            num_epochs (int, optional): Maximum number of epochs that iterator can be iterated
+                (default=-1, iterator can be iterated infinite number of epochs).
             num_epochs (int, optional): maximum epochs that iterator can be iteratered,
                 if num_epochs = -1, iterator can be iteratered infinite epochs (default=-1)
             output_numpy (bool, optional): Whether or not to output NumPy datatype,
                 if output_numpy=False, iterator will output MSTensor (default=False).
 
         Returns:
-            Iterator, dictionary of column_name-ndarray pair.
+            Iterator, dictionary of column name-ndarray pair.
 
         Examples:
             >>> import mindspore.dataset as ds
             >>> # data is an instance of Dataset object
-            >>> # creates an iterator. The columns in the data obtained by the
-            >>> # iterator might be changed.
+            >>> # create an iterator
+            >>> # The columns in the data obtained by the iterator might be changed.
             >>> iterator = data.create_dict_iterator()
             >>> for item in iterator:
             >>>     # print the data in column1
@@ -1198,7 +1195,7 @@ class Dataset:
         return DictIterator(self, num_epochs, output_numpy)
 
     def __iter__(self):
-        """Create an Iterator over the dataset."""
+        """Create an iterator over the dataset."""
         return self.create_tuple_iterator(num_epochs=1)
 
     @property
@@ -1232,7 +1229,7 @@ class Dataset:
         Get the shapes of output data.
 
         Return:
-            List, list of shape of each column.
+            List, list of shapes of each column.
         """
         if self._output_shapes is None:
             self._get_pipeline_info()
@@ -1243,7 +1240,7 @@ class Dataset:
         Get the types of output data.
 
         Return:
-            List of data type.
+            List of data types.
         """
         if self._output_types is None:
             self._get_pipeline_info()
@@ -1293,7 +1290,7 @@ class Dataset:
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
-            num_batch (Union[int, None]): The number of batches(rows) that are released.
+            num_batch (Union[int, None]): The number of batches (rows) that are released.
                 When num_batch is None, it will default to the number specified by the
                 sync_wait operator (default=None).
             data (Union[dict, None]): The data passed to the callback (default=None).
@@ -1364,7 +1361,7 @@ class SourceDataset(Dataset):
         Utility function to search for files with the given glob patterns.
 
         Args:
-            patterns (Union[str, list[str]]): string or list of patterns to be searched.
+            patterns (Union[str, list[str]]): String or list of patterns to be searched.
 
         Returns:
             List, files.
@@ -1408,7 +1405,7 @@ class MappableDataset(SourceDataset):
         self.sampler = None
 
     def add_sampler(self, new_sampler):
-        # note: by adding a sampler, we mean that the sampled ids will flow to new_sampler
+        # note: By adding a sampler, the sampled IDs will flow to new_sampler
         # after first passing through the current samplers attached to this dataset.
         if self.dataset_size is not None:
             self.dataset_size = None
@@ -1420,7 +1417,7 @@ class MappableDataset(SourceDataset):
         Will make the current dataset use the new_sampler provided.
 
         Args:
-            new_sampler (Sampler): the sampler to use for the current dataset.
+            new_sampler (Sampler): The sampler to use for the current dataset.
 
         Returns:
             Dataset, that uses new_sampler.
@@ -1466,9 +1463,6 @@ class MappableDataset(SourceDataset):
         """
         Split the dataset into smaller, non-overlapping datasets.
 
-        There is the optimized split function, which will be called automatically when the dataset
-        that calls this function is a MappableDataset.
-
         Args:
             sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
@@ -1487,16 +1481,18 @@ class MappableDataset(SourceDataset):
                     - The sum of split sizes > K, the difference will be removed from the first large
                       enough split such that it will have atleast 1 row after removing the difference.
 
-            randomize (bool, optional): determines whether or not to split the data randomly (default=True).
-                If true, the data will be randomly split. Otherwise, each split will be created with
+            randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
+                If True, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
 
         Note:
-            1. Dataset should not be sharded if split is going to be called. Instead, create a
+            1. There is an optimized split function, which will be called automatically when the dataset
+               that calls this function is a MappableDataset.
+            2. Dataset should not be sharded if split is going to be called. Instead, create a
                DistributedSampler and specify a split to shard after splitting. If dataset is
                sharded after a split, it is strongly recommended to set the same seed in each instance
                of execution, otherwise each shard may not be part of the same split (see Examples).
-            2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
+            3. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
                Shuffling the dataset may not be deterministic, which means the data in each split
                will be different in each epoch. Furthermore, if sharding occurs after split, each
                shard may not be part of the same split.
@@ -1640,19 +1636,19 @@ class BatchDataset(DatasetOp):
             possibly incomplete batch (default=False). If True, and if there are less
             than batch_size rows available to make the last batch, then those rows will
             be dropped and not propagated to the child node.
-        num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel (default=None).
         per_batch_map (callable, optional): Per batch map callable. A callable which takes
-            (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
+            (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch of
             Tensors on a given column. The number of lists should match with number of entries in input_columns. The
-            last parameter of the callable should always be a BatchInfo object.
-        input_columns (list[str], optional): List of names of the input columns. The size of the list should
+            last parameter of the callable must always be a BatchInfo object.
+        input_columns (list[str], optional): List of names of the input columns. The size of the list must
             match with signature of per_batch_map callable.
         output_columns (list[str], optional): List of names assigned to the columns outputted by
             the last operation. This parameter is mandatory if len(input_columns) !=
             len(output_columns). The size of this list must match the number of output
             columns of the last operation. (default=None, output columns will have the same
             name as the input columns, i.e., the columns will be replaced).
-        column_order (list[str], optional): list of all the desired columns to propagate to the
+        column_order (list[str], optional): List of all the desired columns to propagate to the
             child node. This list must be a subset of all the columns in the dataset after
             all operations are applied. The order of the columns in each row propagated to the
             child node follow the order they appear in this list. The parameter is mandatory
@@ -1660,7 +1656,7 @@ class BatchDataset(DatasetOp):
             will be propagated to the child node, the order of the columns will remain the
             same).
         pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
-            would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
+            will pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
 
     """
 
@@ -1724,7 +1720,7 @@ class BatchDataset(DatasetOp):
         Utility function to find the case where repeat is used before batch.
 
         Args:
-             dataset (Dataset): dataset to be checked.
+             dataset (Dataset): Dataset to be checked.
         Return:
             True or False.
         """
@@ -1741,7 +1737,7 @@ class BatchDataset(DatasetOp):
         Utility function to notify batch size to sync_wait.
 
         Args:
-             dataset (Dataset): dataset to be checked.
+             dataset (Dataset): Dataset to be checked.
              batch_size (int): batch size to notify.
         """
         if isinstance(dataset, SyncWaitDataset):
@@ -1842,9 +1838,9 @@ class SyncWaitDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input dataset to apply flow control.
-        num_batch (int): the number of batches without blocking at the start of each epoch.
-        condition_name (str): The condition name that is used to toggle sending next row.
-        callback (function): The callback function that will be invoked when sync_update is called.
+        num_batch (int): Number of batches without blocking at the start of each epoch.
+        condition_name (str): Condition name that is used to toggle sending next row.
+        callback (function): Callback function that will be invoked when sync_update is called.
 
     Raises:
         RuntimeError: If condition name already exists.
@@ -1892,7 +1888,7 @@ class SyncWaitDataset(DatasetOp):
         Utility function to find the case where sync_wait is used before batch.
 
         Args:
-             dataset (Dataset): dataset to be checked.
+             dataset (Dataset): Dataset to be checked.
         Return:
             True or False.
         """
@@ -1910,7 +1906,7 @@ class ShuffleDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be shuffled.
-        buffer_size (int): The size of the buffer.
+        buffer_size (int): Size of the buffer.
 
     Raises:
         RuntimeError: If exist sync operators before shuffle.
@@ -1999,19 +1995,19 @@ class MapDataset(DatasetOp):
         input_columns (list[str]): List of names of the input columns
             (default=None, the operations will be applied on the first columns in the dataset).
             The size of the list should match the number of inputs of the first operator.
-        output_columns (list[str], optional): list of names of the output columns.
+        output_columns (list[str], optional): List of names of the output columns.
             The size of the list should match the number of outputs of the last operator
             (default=None, output columns will be the input columns, i.e., the columns will
             be replaced).
-        column_order (list[str], optional): list of all the desired columns of the dataset (default=None).
+        column_order (list[str], optional): List of all the desired columns of the dataset (default=None).
             The argument is mandatory if len(input_columns) != len(output_columns).
-        num_parallel_workers (int, optional): Number of workers to process the Dataset
+        num_parallel_workers (int, optional): Number of workers to process the dataset
             in parallel (default=None).
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy (default=False).
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
             The cache feature is under development and is not recommended.
-        callbacks: (DSCallback, list[DSCallback], optional): list of Dataset callbacks to be called (Default=None)
+        callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
 
         Raises:
             ValueError: If len(input_columns) != len(output_columns) and column_order is not specified.
@@ -2136,11 +2132,11 @@ class FilterDataset(DatasetOp):
     The result of applying filter predicate to the input Dataset.
 
     Args:
-        input_dataset: Input Dataset to be mapped.
-        predicate: Python callable which returns a boolean value, if False then filter the element.
-        input_columns: (list[str]): List of names of the input columns, when
-        default=None, the predicate will be applied all columns in the dataset.
-        num_parallel_workers (int, optional): Number of workers to process the Dataset
+        input_dataset (Dataset): Input Dataset to be mapped.
+        predicate (callable): Python callable which returns a boolean value. If False then filter the element.
+        input_columns (list[str], optional): List of names of the input columns
+        (default=None, the predicate will be applied to all columns in the dataset).
+        num_parallel_workers (int, optional): Number of workers to process the dataset
             in parallel (default=None).
     """
 
@@ -2180,7 +2176,7 @@ class RepeatDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be repeated.
-        count (int): Number of times the dataset should be repeated (default=-1, repeat indefinitely).
+        count (int): Number of times the dataset will be repeated (default=-1, repeat indefinitely).
     """
 
     def __init__(self, input_dataset, count):
@@ -2226,8 +2222,8 @@ class SkipDataset(DatasetOp):
     The result of applying Skip operator to the input Dataset.
 
     Args:
-        input_dataset (Dataset): Input dataset to have rows skipped.
-        count (int): Number of rows in the dataset to be skipped.
+        input_dataset (Dataset): Input dataset to have elements skipped.
+        count (int): Number of elements to be skipped in the dataset.
     """
 
     def __init__(self, input_dataset, count):
@@ -2262,7 +2258,7 @@ class TakeDataset(DatasetOp):
     The result of applying Take operator to the input Dataset.
 
     Args:
-        input_dataset (Dataset): Input Dataset to be taken element from.
+        input_dataset (Dataset): Input Dataset to have elements taken from.
         count (int): Number of elements to be taken from the dataset.
     """
 
@@ -2386,15 +2382,15 @@ class ConcatDataset(DatasetOp):
         for index, child in enumerate(self.children):
             tem_list = [-1, -1]
             self._children_start_end_index_.append(tem_list)
-            datasetLen = self.children_sizes_[index]
+            dataset_len = self.children_sizes_[index]
             if isinstance(child, GeneratorDataset) and not hasattr(child.source, "__getitem__"):
-                datasetLen = 0
+                dataset_len = 0
                 self.children_sizes_[index] = 0
 
             if isinstance(child, MappableDataset):
-                self._children_flag_and_nums.append((0, datasetLen))
+                self._children_flag_and_nums.append((0, dataset_len))
             else:
-                self._children_flag_and_nums.append((1, datasetLen))
+                self._children_flag_and_nums.append((1, dataset_len))
 
     def get_dataset_size(self):
         """
@@ -2415,25 +2411,26 @@ class ConcatDataset(DatasetOp):
         Set the distributedSampler to concat dataset
 
         Args:
-            sampler (Sampler): the sampler to use for the current dataset. Current support: DistributedSampler.
+            sampler (Sampler): The sampler to use for the current dataset.
+                Currently supported: DistributedSampler.
 
         Raises:
-            TypeError: If the sampler is not an istance of DistributedSampler
+            TypeError: If the sampler is not an instance of DistributedSampler
             ValueError: If the parameter shuffle of sampler is True
             ValueError: If the parameter NumSamples of sampler is not None.
             ValueError: If num_shards <=0.
         """
         if not isinstance(sampler, samplers.DistributedSampler):
-            raise TypeError("The parameter %s of concat should be DistributedSampler!" % (sampler))
+            raise TypeError("The parameter %s of concat must be DistributedSampler!" % (sampler))
 
         if sampler.is_shuffled():
-            raise ValueError("The parameter shuffle of DistributedSampler is not support to be true!")
+            raise ValueError("The parameter shuffle of DistributedSampler must to be False!")
 
         if sampler.num_shards <= 0:
-            raise ValueError("The parameter num_shards of concat should be positive int!")
+            raise ValueError("The parameter num_shards of DistributedSampler must be positive int!")
 
         if sampler.get_num_samples() is not None:
-            raise ValueError("The parameter NumSamples of DistributedSampler is not support to be set!")
+            raise ValueError("The parameter num_samples of DistributedSampler must be set!")
 
         self._sampler = _select_sampler(None, sampler, None, None, None)
         cumulative_samples_nums = 0
@@ -2442,7 +2439,7 @@ class ConcatDataset(DatasetOp):
                 raise ValueError("The parameter NumSamples of %s is not support to be set!" % (child))
 
             if isinstance(child, BatchDataset):
-                raise TypeError("The parameter %s of concat should't be BatchDataset!" % (child))
+                raise TypeError("The parameter %s of concat must not be BatchDataset!" % (child))
 
             if not self._children_flag_and_nums[index][0] and self._children_flag_and_nums[index][1]:
 
@@ -2479,8 +2476,8 @@ class RenameDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be Renamed.
-        input_columns (list[str]): list of names of the input columns.
-        output_columns (list[str]): list of names of the output columns.
+        input_columns (list[str]): List of names of the input columns.
+        output_columns (list[str]): List of names of the output columns.
     """
 
     def __init__(self, input_dataset, input_columns, output_columns):
@@ -2507,7 +2504,7 @@ class ProjectDataset(DatasetOp):
     The result of applying Project operator to the input Dataset.
 
     Args:
-        input_dataset (Dataset): Input Dataset to be Project.
+        input_dataset (Dataset): Input Dataset to be Projected.
         columns (list[str]): List of names of the columns to project.
         prefetch_size (int, optional): Prefetch number of records ahead of the
             user's request (default=None).
@@ -2538,9 +2535,9 @@ class TransferDataset(DatasetOp):
     Args:
         input_dataset (Dataset): Input Dataset to be transferred.
         queue_name (str): Name of device queue.
-        device_id (int): Id of device.
+        device_id (int): ID of device.
         device_type (str): Type of device, including "CPU", "GPU", and "Ascend".
-        send_epoch_end (bool, optional): Whether send end of sequence to device or not.(default=True)
+        send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
     """
 
     def __init__(self, input_dataset, queue_name, device_id, device_type, send_epoch_end=True):
@@ -2563,19 +2560,19 @@ class TransferDataset(DatasetOp):
         return args
 
     def create_dict_iterator(self, num_epochs=-1):
-        raise RuntimeError("TransferDataset is not iterable")
+        raise RuntimeError("TransferDataset is not iterable.")
 
     def create_tuple_iterator(self, columns=None, num_epochs=-1):
-        raise RuntimeError("TransferDataset is not iterable")
+        raise RuntimeError("TransferDataset is not iterable.")
 
     def __iter__(self):
-        raise RuntimeError("TransferDataset is not iterable")
+        raise RuntimeError("TransferDataset is not iterable.")
 
     def output_shapes(self):
-        raise RuntimeError("TransferDataset does not support output_shapes")
+        raise RuntimeError("TransferDataset does not support output_shapes.")
 
     def output_types(self):
-        raise RuntimeError("TransferDataset does not support output_types")
+        raise RuntimeError("TransferDataset does not support output_types.")
 
     def send(self, num_epochs=-1):
         # need to keep iterator alive so the executionTree is not destroyed
@@ -2594,9 +2591,9 @@ class RangeDataset(MappableDataset):
     A source dataset that reads and parses datasets stored on disk in a range.
 
     Args:
-        start (int): starting index.
-        stop (int): ending index.
-        step (int): step size in a range.
+        start (int): Starting index.
+        stop (int): Ending index.
+        step (int): Step size in the range specified by start and stop.
     """
 
     def __init__(self, start, stop, step):
@@ -2688,10 +2685,9 @@ class ImageFolderDataset(MappableDataset):
     The generated dataset has two columns ['image', 'label'].
     The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
     otherwise.
-    The type of the image tensor is uint8. The label is just a scalar int32
-    tensor.
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    The type of the image tensor is uint8. The label is a scalar int32 tensor.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -2735,11 +2731,11 @@ class ImageFolderDataset(MappableDataset):
             (default=None, the folder names will be sorted
             alphabetically and each class will be given a
             unique index starting from 0).
-        decode (bool, optional): decode the images after reading (default=False).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        decode (bool, optional): Decode the images after reading (default=False).
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
             The cache feature is under development and is not recommended.
 
@@ -2833,12 +2829,12 @@ class ImageFolderDataset(MappableDataset):
 
 class MnistDataset(MappableDataset):
     """
-    A source dataset for reading and parsing the Mnist dataset.
+    A source dataset for reading and parsing the MNIST dataset.
 
     The generated dataset has two columns ['image', 'label'].
-    The type of the image tensor is uint8. The label is just a scalar uint32 tensor.
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    The type of the image tensor is uint8. The label is a scalar uint32 tensor.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -2895,10 +2891,10 @@ class MnistDataset(MappableDataset):
             (default=None, expected order behavior shown in the table).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -2977,16 +2973,16 @@ class MindDataset(MappableDataset):
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, performs shuffle).
-        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, sampler is exclusive
             with shuffle and block_reader). Support list: SubsetRandomSampler,
             PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
         padded_sample (dict, optional): Samples will be appended to dataset, which
             keys are the same as column_list.
-        num_padded (int, optional): Number of padding samples.Dataset size
+        num_padded (int, optional): Number of padding samples. Dataset size
             plus num_padded should be divisible by num_shards.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all samples).
@@ -3222,8 +3218,8 @@ class SamplerFn:
 
     def process(self, indices):
         """
-        The main process, start the child process or child thread, and fill the index queue,
-        get the result from the result and return.
+        The main process, start the child process or child thread, and fill the index queue.
+        Get the result and return.
         """
         # Fill initial index queues
         idx_cursor = 0
@@ -3248,7 +3244,7 @@ class SamplerFn:
                 raise Exception("Generator worker receives KeyboardInterrupt")
             if idx_cursor < len(indices):
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
-            # Set eoe event once all indices are sent
+            # Set end-of-epoch (eoe) event once all indices are sent
             if idx_cursor == len(indices) and not self.eoe.is_set():
                 self.eoe.set()
             yield tuple([np.array(x, copy=False) for x in result])
@@ -3275,7 +3271,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eoe, eof):
         except queue.Empty:
             if eof.is_set() or eoe.is_set():
                 return
-            # If eoe or eof is not set, continue to get data from idx_queue
+            # If end-of-epoch (eoe) or end-of-file (eof) is not set, continue to get data from idx_queue
             continue
         if idx is None:
             # When the queue is out of scope from master process, a None item can be fetched from the queue.
@@ -3356,8 +3352,8 @@ class GeneratorDataset(MappableDataset):
     """
     A source dataset that generates data from Python by invoking Python data source each epoch.
 
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -3397,7 +3393,7 @@ class GeneratorDataset(MappableDataset):
             provide either column_names or schema.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
-        schema (Union[Schema, str], optional): Path to the json schema file or schema object (default=None). Users are
+        schema (Union[Schema, str], optional): Path to the JSON schema file or schema object (default=None). Users are
             required to provide either column_names or schema. If both are provided, schema will be used.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all images).
@@ -3406,9 +3402,9 @@ class GeneratorDataset(MappableDataset):
             (default=None, expected order behavior shown in the table).
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
             input is required (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
-            When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' will not used. Random accessible input is required.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy (default=True).
@@ -3569,16 +3565,16 @@ class TFRecordDataset(SourceDataset):
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in a lexicographical order.
-        schema (Union[str, Schema], optional): Path to the json schema file or schema object (default=None).
+        schema (Union[str, Schema], optional): Path to the JSON schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
-        num_samples (int, optional): number of samples(rows) to read (default=None).
+        num_samples (int, optional): Number of samples (rows) to read (default=None).
             If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;
             If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-        num_parallel_workers (int, optional): number of workers to read the data
+        num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
@@ -3588,10 +3584,10 @@ class TFRecordDataset(SourceDataset):
 
             - Shuffle.FILES: Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
             is false, number of rows of each shard may be not equal.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
@@ -3630,7 +3626,7 @@ class TFRecordDataset(SourceDataset):
             self.num_samples = schema_obj.num_rows
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -3710,10 +3706,9 @@ class ManifestDataset(MappableDataset):
     The generated dataset has two columns ['image', 'label'].
     The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
     otherwise.
-    The type of the image tensor is uint8. The label is just a scalar uint64
-    tensor.
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    The type of the image tensor is uint8. The label is a scalar uint64 tensor.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -3756,10 +3751,10 @@ class ManifestDataset(MappableDataset):
             (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
         decode (bool, optional): decode the images after reading (default=False).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3788,7 +3783,7 @@ class ManifestDataset(MappableDataset):
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
 
         if class_indexing is not None and not isinstance(class_indexing, dict):
-            raise RuntimeError("class_indexing should be a dictionary.")
+            raise RuntimeError("class_indexing must be a dictionary.")
 
         self.num_samples = num_samples
         self.class_indexing = class_indexing
@@ -3878,10 +3873,9 @@ class Cifar10Dataset(MappableDataset):
     A source dataset that reads cifar10 data.
 
     The generated dataset has two columns ['image', 'label'].
-    The type of the image tensor is uint8. The label is just a scalar uint32
-    tensor.
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    The type of the image tensor is uint8. The label is a scalar uint32 tensor.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -3936,10 +3930,10 @@ class Cifar10Dataset(MappableDataset):
             order behavior shown in the table).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4019,10 +4013,9 @@ class Cifar100Dataset(MappableDataset):
     A source dataset that reads cifar100 data.
 
     The generated dataset has three columns ['image', 'coarse_label', 'fine_label'].
-    The type of the image tensor is uint8. The coarse and fine are just a scalar uint32
-    tensor.
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    The type of the image tensor is uint8. The coarse and fine labels are each a scalar uint32 tensor.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -4079,10 +4072,10 @@ class Cifar100Dataset(MappableDataset):
             order behavior shown in the table).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4160,21 +4153,21 @@ class RandomDataset(SourceDataset):
     A source dataset that generates random data.
 
     Args:
-        total_rows (int): number of rows for the dataset to generate (default=None, number of rows is random)
-        schema (Union[str, Schema], optional): Path to the json schema file or schema object (default=None).
+        total_rows (int): Number of rows for the dataset to generate (default=None, number of rows is random)
+        schema (Union[str, Schema], optional): Path to the JSON schema file or schema object (default=None).
             If the schema is not provided, the random dataset generates a random schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
         num_samples (int): number of samples to draw from the total. (default=None, which means all rows)
-        num_parallel_workers (int, optional): number of workers to read the data
+        num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
             The cache feature is under development and is not recommended.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
     """
 
     @check_random_dataset
@@ -4251,7 +4244,7 @@ class RandomDataset(SourceDataset):
 
 class Schema:
     """
-    Class to represent a schema of dataset.
+    Class to represent a schema of a dataset.
 
     Args:
         schema_file(str): Path of schema file (default=None).
@@ -4295,9 +4288,9 @@ class Schema:
         Add new column to the schema.
 
         Args:
-            name (str): name of the column.
-            de_type (str): data type of the column.
-            shape (list[int], optional): shape of the column
+            name (str): Name of the column.
+            de_type (str): Data type of the column.
+            shape (list[int], optional): Shape of the column
                 (default=None, [-1] which is an unknown shape of rank 1).
 
         Raises:
@@ -4338,7 +4331,7 @@ class Schema:
         Parse the columns and add it to self.
 
         Args:
-            columns (Union[dict, list[dict]]): dataset attribution information, decoded from schema file.
+            columns (Union[dict, list[dict]]): Dataset attribute information, decoded from schema file.
 
                 - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
 
@@ -4393,10 +4386,10 @@ class Schema:
 
     def from_json(self, json_obj):
         """
-        Get schema file from json file.
+        Get schema file from JSON file.
 
         Args:
-            json_obj(dictionary): object of json parsed.
+            json_obj(dictionary): Object of JSON parsed.
 
         Raises:
             RuntimeError: if there is unknown item in the object.
@@ -4429,14 +4422,14 @@ class VOCDataset(MappableDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
-    The generated dataset has multi-columns :
+    The generated dataset has multiple columns :
 
         - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
           ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
         - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -4502,10 +4495,10 @@ class VOCDataset(MappableDataset):
         decode (bool, optional): Decode the images after reading (default=False).
         sampler (Sampler, optional): Object used to choose samples from the dataset
             (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Raises:
         RuntimeError: If xml of Annotations is an invalid format.
@@ -4637,8 +4630,8 @@ class CocoDataset(MappableDataset):
         - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
           ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
 
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. CocoDataset doesn't support
-    PKSampler. Table below shows what input args are allowed and their expected behavior.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. CocoDataset doesn't support
+    PKSampler. The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -4692,29 +4685,29 @@ class CocoDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        annotation_file (str): Path to the annotation json.
-        task (str): Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
-            (default='Detection').
+        annotation_file (str): Path to the annotation JSON.
+        task (str): Set the task type for reading COCO data.  Supported task types:
+            'Detection', 'Stuff', 'Panoptic' and 'Keypoint' (default='Detection').
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
+            (default=None, number set in the configuration file).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
             order behavior shown in the table).
         decode (bool, optional): Decode the images after reading (default=False).
         sampler (Sampler, optional): Object used to choose samples from the dataset
             (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
-        RuntimeError: If parse json file failed.
+        RuntimeError: If parse JSON file failed.
         ValueError: If task is not in ['Detection', 'Stuff', 'Panoptic', 'Keypoint'].
         ValueError: If annotation_file is not exist.
         ValueError: If dataset_dir is not exist.
@@ -4807,11 +4800,11 @@ class CocoDataset(MappableDataset):
 
 class CelebADataset(MappableDataset):
     """
-    A source dataset for reading and parsing CelebA dataset.Only support list_attr_celeba.txt currently.
+    A source dataset for reading and parsing CelebA dataset. Currently supported: list_attr_celeba.txt only.
 
     Note:
         The generated dataset has two columns ['image', 'attr'].
-        The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+        The type of the image tensor is uint8. The attribute tensor is uint32 and one hot type.
 
     Citation of CelebA dataset.
 
@@ -4853,10 +4846,10 @@ class CelebADataset(MappableDataset):
             included in the dataset (default=None).
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
-        num_shards (int, optional): Number of shards that the dataset should be divided
+        num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
     """
 
     @check_celebadataset
@@ -4929,9 +4922,9 @@ class CelebADataset(MappableDataset):
 class CLUEDataset(SourceDataset):
     """
     A source dataset that reads and parses CLUE datasets.
-    CLUE, the Chinese Language Understanding Evaluation Benchmark, a collection of datasets, baselines, pre-trained
-    models, corpus and leaderboard. Here we bring in classification task of CLUE, which are AFQMC, TNEWS, IFLYTEK,
-    CMNLI, WSC and CSL.
+    CLUE, the Chinese Language Understanding Evaluation Benchmark, is a collection of datasets, baselines,
+    pre-trained models, corpus and leaderboard. Supported CLUE classification tasks: 'AFQMC', 'TNEWS', 'IFLYTEK',
+    'CMNLI', 'WSC' and 'CSL'.
 
     Citation of CLUE dataset.
 
@@ -4957,10 +4950,10 @@ class CLUEDataset(SourceDataset):
         task (str, optional): The kind of task, one of 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
             (default=AFQMC).
         usage (str, optional): Need train, test or eval data (default="train").
-        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
-        num_parallel_workers (int, optional): number of workers to read the data
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
@@ -4970,9 +4963,9 @@ class CLUEDataset(SourceDataset):
 
             - Shuffle.FILES: Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -5108,7 +5101,7 @@ class CLUEDataset(SourceDataset):
         self.cols_to_keyword = self.task_dict[task][usage]
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -5173,10 +5166,10 @@ class CSVDataset(SourceDataset):
             columns as string type.
         column_names (list[str], optional): List of column names of the dataset (default=None). If this
             is not provided, infers the column_names from the first row of CSV file.
-        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
-        num_parallel_workers (int, optional): number of workers to read the data
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
@@ -5186,9 +5179,9 @@ class CSVDataset(SourceDataset):
 
             - Shuffle.FILES: Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -5208,7 +5201,7 @@ class CSVDataset(SourceDataset):
         self.num_samples = num_samples
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -5270,10 +5263,10 @@ class TextFileDataset(SourceDataset):
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in a lexicographical order.
-        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
-        num_parallel_workers (int, optional): number of workers to read the data
+        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): perform reshuffling of the data every epoch
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
@@ -5283,9 +5276,9 @@ class TextFileDataset(SourceDataset):
 
             - Shuffle.FILES: Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
         shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument should be specified only when num_shards is also specified.
+            argument can only be specified when num_shards is also specified.
     Examples:
         >>> import mindspore.dataset as ds
         >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
@@ -5301,7 +5294,7 @@ class TextFileDataset(SourceDataset):
         self.num_samples = num_samples
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -5356,7 +5349,7 @@ class TextFileDataset(SourceDataset):
 
 class _NumpySlicesDataset:
     """
-    Mainly for dealing with several kinds of format of Python data, and return one row each time.
+    Mainly for dealing with several kinds of formats of Python data, and return one row each time.
     """
 
     def __init__(self, data, column_list=None):
@@ -5424,8 +5417,8 @@ class NumpySlicesDataset(GeneratorDataset):
     """
     Create a dataset with given data slices, mainly for loading Python data into dataset.
 
-    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
-    below shows what input args are allowed and their expected behavior.
+    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -5454,10 +5447,10 @@ class NumpySlicesDataset(GeneratorDataset):
          - not allowed
 
     Args:
-        data (Union[list, tuple, dict]) Input of Given data, supported data type includes list, tuple, dict and other
-            NumPy format. Input data will be sliced in first dimension and generate many rows, large data is not
-            recommend to load in this way as data is loading into memory.
-        column_names (list[str], optional): List of column names of the dataset (default=None). If column_names not
+        data (Union[list, tuple, dict]) Input of given data. Supported data types include: list, tuple, dict and other
+            NumPy formats. Input data will be sliced in first dimension and generate many rows. Large data is not
+            recommended to be loaded in this way as data is loading into memory.
+        column_names (list[str], optional): List of column names of the dataset (default=None). If column_names is not
             provided, when data is dict, column_names will be its key, otherwise it will be like column_1, column_2 ...
         num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
@@ -5465,9 +5458,9 @@ class NumpySlicesDataset(GeneratorDataset):
             (default=None, expected order behavior shown in the table).
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
             input is required (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
-            When this argument is specified, 'num_samples' will not effect. Random accessible input is required.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, 'num_samples' will not used. Random accessible input is required.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
 
     Examples:
@@ -5501,7 +5494,7 @@ class _PaddedDataset:
     Mainly for combining false samples provided by users into a dataset.
 
     Args:
-        padded_samples (list(dict)): the data provided by user to added to initial Dataset
+        padded_samples (list(dict)): Data provided by user to be added to the initial Dataset.
     """
 
     def __init__(self, padded_samples):
@@ -5521,7 +5514,7 @@ class PaddedDataset(GeneratorDataset):
     and assign it to the corresponding shard.
 
     Args:
-        padded_samples (list(dict)): the samples provided by user
+        padded_samples (list(dict)): Samples provided by user.
 
     Raises:
         TypeError: If padded_samples is not an instance of list.
@@ -5549,26 +5542,26 @@ class PaddedDataset(GeneratorDataset):
 
 class BuildVocabDataset(DatasetOp):
     """
-    Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-    which contains top_k most frequent words (if top_k is specified)
-    This function is not meant to be called directly by user. To build vocab, please use the function
+    Build a vocab from a dataset. This will collect all the unique words in a dataset and return a vocab
+    which contains top_k most frequent words (if top_k is specified).
+    This function is not meant to be called directly by user. To build vocab, use the function
     text.Vocab.from_dataset()
 
     Args:
-        vocab(Vocab): text.vocab object.
-        columns(Union[str, list], optional): column names to get words from. It can be a list of column names (Default
-            is None, all columns are used, return error if any column isn't string).
-        freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-            range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+        vocab (Vocab): text.vocab object.
+        columns (Union[str, list], optional): Column names to get words from. It can be a list of column names
+            (Default=None, all columns are used, return error if any column is not a string).
+        freq_range (tuple, optional): Tuple of integers (min_frequency, max_frequency). Words within the frequency
+            range will be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
             can be None, which corresponds to 0/total_words separately (default=None, all words are included).
-        top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-            taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken (default=None,
-            all words are included).
-        special_tokens(list, optional):  a list of strings, each one is a special token. for example
+        top_k (int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
+            taken. The top_k is taken after freq_range. If not enough top_k words, all words will be taken
+            (default=None, all words are included).
+        special_tokens (list, optional):  List of strings, each one is a special token, for example
             special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-        special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
+        special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab, If special_tokens
             is specified and special_first is set to None, special_tokens will be prepended. (default=None).
-        prefetch_size (int, optional): prefetch number of records ahead of the user's request (default=None).
+        prefetch_size (int, optional): Prefetch number of records ahead of the user's request (default=None).
     """
 
     def __init__(self, input_dataset, vocab, columns, freq_range, top_k, special_tokens, special_first,
@@ -5619,18 +5612,19 @@ class BuildVocabDataset(DatasetOp):
 class BuildSentencePieceVocabDataset(DatasetOp):
     """
     Build a SentencePieceVocab from a dataset.
-    This function is not meant to be called directly by user. To build vocab, please use the function
+    This function is not meant to be called directly by user. To build vocab, use the function
     text.SentencePieceVocab.from_dataset()
 
     Args:
-        vocab(SentencePieceVocab): text.SentencePieceVocab object.
-        col_names(list): The list of the col name.
-        vocab_size(int): Vocabulary size, the type of uint32_t.
-        charater_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for languages
-            with rich character set like Japanse or Chinese and 1.0 for other languages with small character set.
-        model_type(SentencePieceModel): Model type.Choose from unigram (default), bpe, char, or word.
+        vocab (SentencePieceVocab): text.SentencePieceVocab object.
+        col_names (list): List of column names.
+        vocab_size (int): Vocabulary size. The type is uint32.
+        character_coverage (float): Percentage of characters covered by the model. Good defaults are:
+            0.9995 for languages with rich character sets like Japanese or Chinese character sets,
+            and 1.0 for other languages with small character sets.
+        model_type (SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
             The input sentence must be pretokenized when using word type.
-        params(dict): A dictionary with no incoming parameters.
+        params (dict): A dictionary with no incoming parameters.
     """
 
     def __init__(self, input_dataset, vocab, col_names, vocab_size, character_coverage, model_type, params):

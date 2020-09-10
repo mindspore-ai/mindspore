@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """
-Sampler module provides several samplers to generate sampling data from dataset.
-There are following samplers: DistributedSampler, PKSampler, RandomSampler,
-SequentialSampler, SubsetRandomSampler, WeightedRandomSampler.
-User can also define custom sampler by extending from Sampler class.
+The sampler module provides several samplers to generate data from datasets.
+The provided samplers include: DistributedSampler, PKSampler, RandomSampler,
+SequentialSampler, SubsetRandomSampler, and WeightedRandomSampler.
+Users can also define a custom sampler by extending from the Sampler class.
 """
 
 import numpy as np
@@ -26,9 +26,9 @@ import mindspore.dataset as ds
 class Sampler:
     """
     Base class for user defined sampler.
-    User defined sampler can be used with any existing dataset with sampler support.
+    A user defined sampler can be used with any existing dataset with sampler support.
 
-    An required  _iter_() method should by overridden by user for sample index generation.
+    A required  _iter_() method should by overridden by the user for sample index generation.
     An optional reset() method can be overridden for per repeat reset,
 
     dataset_size and num_samples will be set by dataset once a dataset iterator is created.
@@ -52,8 +52,7 @@ class Sampler:
     def __iter__(self):
         """
         User defined iterator, must be overridden.
-        _handshake is guaranteed to be called prior to iterator construction
-
+        _handshake is guaranteed to be called prior to iterator construction.
         """
         raise NotImplementedError
 
@@ -160,10 +159,10 @@ class BuiltinSampler:
 
     def get_num_samples(self):
         """
-        All samplers can contain a numeric num_samples value (or it could be set to None).
-        Child sampler can exist or be None.
-        if child sampler exists, then the child sampler count can be a numeric value or None.
-        Given these conditions, we need to output what the sampler count is for this sampler.
+        All samplers can contain a numeric num_samples value (or it can be set to None).
+        A child sampler can exist or be None.
+        If a child sampler exists, then the child sampler count can be a numeric value or None.
+        These conditions impact the resultant sampler count that is used.
         The following table shows the possible results from calling this function.
 
         .. list-table::
@@ -217,20 +216,20 @@ class BuiltinSampler:
 
 class DistributedSampler(BuiltinSampler):
     """
-    Sampler that access a shard of the dataset.
+    A sampler that accesses a shard of the dataset.
 
     Args:
         num_shards (int): Number of shards to divide the dataset into.
         shard_id (int): Shard ID of the current shard within num_shards.
-        shuffle (bool, optional): If true, the indices are shuffled (default=True).
+        shuffle (bool, optional): If True, the indices are shuffled (default=True).
         num_samples (int, optional): The number of samples to draw (default=None, all elements).
-        offset(int, optional): Offset from shard when the element of dataset is allocated
+        offset(int, optional): Offset from shard when the element of dataset is allocated (default=-1).
     Examples:
         >>> import mindspore.dataset as ds
         >>>
         >>> dataset_dir = "path/to/imagefolder_directory"
         >>>
-        >>> # creates a distributed sampler with 10 shards total. This shard is shard 5
+        >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.
         >>> sampler = ds.DistributedSampler(10, 5)
         >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
 
@@ -304,8 +303,8 @@ class PKSampler(BuiltinSampler):
     Args:
         num_val (int): Number of elements to sample for each class.
         num_class (int, optional): Number of classes to sample (default=None, all classes).
-        shuffle (bool, optional): If true, the class IDs are shuffled (default=False).
-        class_column (str, optional): Name of column to classify dataset(default='label'), for MindDataset.
+        shuffle (bool, optional): If True, the class IDs are shuffled (default=False).
+        class_column (str, optional): Name of column with class labels for MindDataset (default='label').
         num_samples (int, optional): The number of samples to draw (default=None, all elements).
 
     Examples:
@@ -372,6 +371,7 @@ class PKSampler(BuiltinSampler):
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
+
 class RandomSampler(BuiltinSampler):
     """
     Samples the elements randomly.
@@ -437,7 +437,7 @@ class SequentialSampler(BuiltinSampler):
     Samples the dataset elements sequentially, same as not having a sampler.
 
     Args:
-        start_index (int, optional): Index to start sampling at. (dafault=None starts at first id)
+        start_index (int, optional): Index to start sampling at. (dafault=None, start at first ID)
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:

@@ -34,29 +34,36 @@ class GraphData:
     Reads the graph dataset used for GNN training from the shared file and database.
 
     Args:
-        dataset_file (str): One of file names in dataset.
-        num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel
+        dataset_file (str): One of file names in the dataset.
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel
             (default=None).
-        working_mode (str, optional): Set working mode, now support 'local'/'client'/'server' (default='local').
+        working_mode (str, optional): Set working mode, now supports 'local'/'client'/'server' (default='local').
 
             - 'local', used in non-distributed training scenarios.
 
-            - 'client', used in distributed training scenarios, the client does not load data,
+            - 'client', used in distributed training scenarios. The client does not load data,
               but obtains data from the server.
 
-            - 'server', used in distributed training scenarios, the server loads the data
+            - 'server', used in distributed training scenarios. The server loads the data
               and is available to the client.
 
-        hostname (str, optional): Valid when working_mode is set to 'client' or 'server',
-            set the hostname of the graph data server (default='127.0.0.1').
-        port (int, optional): Valid when working_mode is set to 'client' or 'server',
-            set the port of the graph data server, the range is 1024-65535 (default=50051).
-        num_client (int, optional): Valid when working_mode is set to 'server',
-            set the number of clients expected to connect, and the server will allocate corresponding
-            resources according to this parameter (default=1).
+        hostname (str, optional): Hostname of the graph data server. This parameter is only valid when
+            working_mode is set to 'client' or 'server' (default='127.0.0.1').
+        port (int, optional): Port of the graph data server. The range is 1024-65535. This parameter is
+            only valid when working_mode is set to 'client' or 'server' (default=50051).
+        num_client (int, optional): Maximum number of clients expected to connect to the server. The server will
+            allocate resources according to this parameter. This parameter is only valid when working_mode
+            is set to 'server' (default=1).
         auto_shutdown (bool, optional): Valid when working_mode is set to 'server',
             when the number of connected clients reaches num_client and no client is being connected,
             the server automatically exits (default=True).
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> data_graph = ds.GraphData('dataset_file', 2)
+        >>> nodes = data_graph.get_all_nodes(0)
+        >>> features = data_graph.get_node_feature(nodes, [1])
     """
 
     @check_gnn_graphdata
@@ -94,10 +101,11 @@ class GraphData:
             node_type (int): Specify the type of node.
 
         Returns:
-            numpy.ndarray: array of nodes.
+            numpy.ndarray: Array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
 
@@ -121,6 +129,7 @@ class GraphData:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_edges(0)
 
@@ -140,7 +149,7 @@ class GraphData:
             edge_list (Union[list, numpy.ndarray]): The given list of edges.
 
         Returns:
-            numpy.ndarray: array of nodes.
+            numpy.ndarray: Array of nodes.
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -159,10 +168,11 @@ class GraphData:
             neighbor_type (int): Specify the type of neighbor.
 
         Returns:
-            numpy.ndarray: array of nodes.
+            numpy.ndarray: Array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
             >>> neighbors = data_graph.get_all_neighbors(nodes, 0)
@@ -192,13 +202,14 @@ class GraphData:
             neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop.
 
         Returns:
-            numpy.ndarray: array of nodes.
+            numpy.ndarray: Array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
-            >>> neighbors = data_graph.get_all_neighbors(nodes, [2, 2], [0, 0])
+            >>> neighbors = data_graph.get_sampled_neighbors(nodes, [2, 2], [0, 0])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -221,10 +232,11 @@ class GraphData:
             neg_neighbor_type (int): Specify the type of negative neighbor.
 
         Returns:
-            numpy.ndarray: array of nodes.
+            numpy.ndarray: Array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
             >>> neg_neighbors = data_graph.get_neg_sampled_neighbors(nodes, 5, 0)
@@ -253,6 +265,7 @@ class GraphData:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
             >>> features = data_graph.get_node_feature(nodes, [1])
@@ -284,6 +297,7 @@ class GraphData:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> edges = data_graph.get_all_edges(0)
             >>> features = data_graph.get_edge_feature(edges, [1])
@@ -334,10 +348,11 @@ class GraphData:
                 A default value of -1 indicates that no node is given.
 
         Returns:
-            numpy.ndarray: array of nodes.
+            numpy.ndarray: Array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.random_walk([1,2], [1,2,1,2,1])
 

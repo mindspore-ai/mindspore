@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This module is to support text processing for nlp. It includes two parts:
+This module is to support text processing for NLP. It includes two parts:
 transforms and utils. transforms is a high performance
-nlp text processing module which is developed with icu4c and cppjieba.
-utils provides some general methods for nlp text processing.
+NLP text processing module which is developed with ICU4C and cppjieba.
+utils provides some general methods for NLP text processing.
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, TruncateSequencePair, \
