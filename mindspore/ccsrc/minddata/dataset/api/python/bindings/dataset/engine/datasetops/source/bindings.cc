@@ -41,9 +41,9 @@ namespace dataset {
 
 PYBIND_REGISTER(CifarOp, 1, ([](const py::module *m) {
                   (void)py::class_<CifarOp, DatasetOp, std::shared_ptr<CifarOp>>(*m, "CifarOp")
-                    .def_static("get_num_rows", [](const std::string &dir, bool isCifar10) {
+                    .def_static("get_num_rows", [](const std::string &dir, const std::string &usage, bool isCifar10) {
                       int64_t count = 0;
-                      THROW_IF_ERROR(CifarOp::CountTotalRows(dir, isCifar10, &count));
+                      THROW_IF_ERROR(CifarOp::CountTotalRows(dir, usage, isCifar10, &count));
                       return count;
                     });
                 }));
@@ -131,9 +131,9 @@ PYBIND_REGISTER(MindRecordOp, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(MnistOp, 1, ([](const py::module *m) {
                   (void)py::class_<MnistOp, DatasetOp, std::shared_ptr<MnistOp>>(*m, "MnistOp")
-                    .def_static("get_num_rows", [](const std::string &dir) {
+                    .def_static("get_num_rows", [](const std::string &dir, const std::string &usage) {
                       int64_t count = 0;
-                      THROW_IF_ERROR(MnistOp::CountTotalRows(dir, &count));
+                      THROW_IF_ERROR(MnistOp::CountTotalRows(dir, usage, &count));
                       return count;
                     });
                 }));

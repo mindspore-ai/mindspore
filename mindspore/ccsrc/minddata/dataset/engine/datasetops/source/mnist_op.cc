@@ -17,6 +17,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <set>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
@@ -32,7 +33,7 @@ const int32_t kMnistLabelFileMagicNumber = 2049;
 const int32_t kMnistImageRows = 28;
 const int32_t kMnistImageCols = 28;
 
-MnistOp::Builder::Builder() : builder_sampler_(nullptr) {
+MnistOp::Builder::Builder() : builder_sampler_(nullptr), builder_usage_("") {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -52,22 +53,25 @@ Status MnistOp::Builder::Build(std::shared_ptr<MnistOp> *ptr) {
   TensorShape scalar = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(builder_schema_->AddColumn(
     ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-  *ptr = std::make_shared<MnistOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
+  *ptr = std::make_shared<MnistOp>(builder_usage_, builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
                                    builder_op_connector_size_, std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
 }
 
 Status MnistOp::Builder::SanityCheck() {
+  const std::set<std::string> valid = {"test", "train", "all", ""};
   Path dir(builder_dir_);
   std::string err_msg;
   err_msg += dir.IsDirectory() == false ? "MNIST path is invalid or not set\n" : "";
   err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers is set to 0 or negative\n" : "";
+  err_msg += valid.find(builder_usage_) == valid.end() ? "usage needs to be 'train','test' or 'all'\n" : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-MnistOp::MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folder_path, int32_t queue_size,
-                 std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
+MnistOp::MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per_buffer, std::string folder_path,
+                 int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size, std::move(sampler)),
+      usage_(usage),
       buf_cnt_(0),
       row_cnt_(0),
       folder_path_(folder_path),
@@ -226,9 +230,7 @@ Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) co
 Status MnistOp::ReadFromReader(std::ifstream *reader, uint32_t *result) {
   uint32_t res = 0;
   reader->read(reinterpret_cast<char *>(&res), 4);
-  if (reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Failed to read 4 bytes from file");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!reader->fail(), "Failed to read 4 bytes from file");
   *result = SwapEndian(res);
   return Status::OK();
 }
@@ -239,15 +241,12 @@ uint32_t MnistOp::SwapEndian(uint32_t val) const {
 }
 
 Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images) {
-  if (image_reader->is_open() == false) {
-    RETURN_STATUS_UNEXPECTED("Cannot open mnist image file: " + file_name);
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(), "Cannot open mnist image file: " + file_name);
   int64_t image_len = image_reader->seekg(0, std::ios::end).tellg();
   (void)image_reader->seekg(0, std::ios::beg);
   // The first 16 bytes of the image file are type, number, row and column
-  if (image_len < 16) {
-    RETURN_STATUS_UNEXPECTED("Mnist file is corrupted.");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16, "Mnist file is corrupted.");
+
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistImageFileMagicNumber,
@@ -260,35 +259,25 @@ Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_re
   uint32_t cols;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &cols));
   // The image size of the Mnist dataset is fixed at [28,28]
-  if ((rows != kMnistImageRows) || (cols != kMnistImageCols)) {
-    RETURN_STATUS_UNEXPECTED("Wrong shape of image.");
-  }
-  if ((image_len - 16) != num_items * rows * cols) {
-    RETURN_STATUS_UNEXPECTED("Wrong number of image.");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED((rows == kMnistImageRows) && (cols == kMnistImageCols), "Wrong shape of image.");
+  CHECK_FAIL_RETURN_UNEXPECTED((image_len - 16) == num_items * rows * cols, "Wrong number of image.");
   *num_images = num_items;
   return Status::OK();
 }
 
 Status MnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels) {
-  if (label_reader->is_open() == false) {
-    RETURN_STATUS_UNEXPECTED("Cannot open mnist label file: " + file_name);
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(), "Cannot open mnist label file: " + file_name);
   int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
   (void)label_reader->seekg(0, std::ios::beg);
   // The first 8 bytes of the image file are type and number
-  if (label_len < 8) {
-    RETURN_STATUS_UNEXPECTED("Mnist file is corrupted.");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Mnist file is corrupted.");
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistLabelFileMagicNumber,
                                "This is not the mnist label file: " + file_name);
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &num_items));
-  if ((label_len - 8) != num_items) {
-    RETURN_STATUS_UNEXPECTED("Wrong number of labels!");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 8) == num_items, "Wrong number of labels!");
   *num_labels = num_items;
   return Status::OK();
 }
@@ -330,6 +319,9 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
 }
 
 Status MnistOp::ParseMnistData() {
+  // MNIST contains 4 files, idx3 are image files, idx 1 are labels
+  // training files contain 60K examples and testing files contain 10K examples
+  // t10k-images-idx3-ubyte  t10k-labels-idx1-ubyte  train-images-idx3-ubyte  train-labels-idx1-ubyte
   for (size_t i = 0; i < image_names_.size(); ++i) {
     std::ifstream image_reader, label_reader;
     image_reader.open(image_names_[i], std::ios::binary);
@@ -354,18 +346,22 @@ Status MnistOp::ParseMnistData() {
 Status MnistOp::WalkAllFiles() {
   const std::string kImageExtension = "idx3-ubyte";
   const std::string kLabelExtension = "idx1-ubyte";
+  const std::string train_prefix = "train";
+  const std::string test_prefix = "t10k";
 
   Path dir(folder_path_);
   auto dir_it = Path::DirIterator::OpenDirectory(&dir);
+  std::string prefix;  // empty string, used to match usage = "" (default) or usage == "all"
+  if (usage_ == "train" || usage_ == "test") prefix = (usage_ == "test" ? test_prefix : train_prefix);
   if (dir_it != nullptr) {
     while (dir_it->hasNext()) {
       Path file = dir_it->next();
-      std::string filename = file.toString();
-      if (filename.find(kImageExtension) != std::string::npos) {
-        image_names_.push_back(filename);
+      std::string filename = file.Basename();
+      if (filename.find(prefix + "-images-" + kImageExtension) != std::string::npos) {
+        image_names_.push_back(file.toString());
         MS_LOG(INFO) << "Mnist operator found image file at " << filename << ".";
-      } else if (filename.find(kLabelExtension) != std::string::npos) {
-        label_names_.push_back(filename);
+      } else if (filename.find(prefix + "-labels-" + kLabelExtension) != std::string::npos) {
+        label_names_.push_back(file.toString());
         MS_LOG(INFO) << "Mnist Operator found label file at " << filename << ".";
       }
     }
@@ -376,9 +372,7 @@ Status MnistOp::WalkAllFiles() {
   std::sort(image_names_.begin(), image_names_.end());
   std::sort(label_names_.begin(), label_names_.end());
 
-  if (image_names_.size() != label_names_.size()) {
-    RETURN_STATUS_UNEXPECTED("num of images does not equal to num of labels");
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(), "num of idx3 files != num of idx1 files");
 
   return Status::OK();
 }
@@ -397,11 +391,11 @@ Status MnistOp::LaunchThreadsAndInitOp() {
   return Status::OK();
 }
 
-Status MnistOp::CountTotalRows(const std::string &dir, int64_t *count) {
+Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage, int64_t *count) {
   // the logic of counting the number of samples is copied from ParseMnistData() and uses CheckReader()
   std::shared_ptr<MnistOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetDir(dir).Build(&op));
+  RETURN_IF_NOT_OK(Builder().SetDir(dir).SetUsage(usage).Build(&op));
 
   RETURN_IF_NOT_OK(op->WalkAllFiles());
 

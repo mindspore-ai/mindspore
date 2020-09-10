@@ -20,7 +20,7 @@ DATA_DIR = "../data/dataset/testCelebAData/"
 
 
 def test_celeba_dataset_label():
-    data = ds.CelebADataset(DATA_DIR, decode=True, shuffle=False)
+    data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True)
     expect_labels = [
         [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
          0, 0, 1],
@@ -85,10 +85,12 @@ def test_celeba_dataset_distribute():
         count = count + 1
     assert count == 1
 
+
 def test_celeba_get_dataset_size():
-    data = ds.CelebADataset(DATA_DIR, decode=True, shuffle=False)
+    data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True)
     size = data.get_dataset_size()
     assert size == 2
+
 
 if __name__ == '__main__':
     test_celeba_dataset_label()

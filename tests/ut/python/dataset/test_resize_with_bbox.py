@@ -39,11 +39,9 @@ def test_resize_with_bbox_op_voc_c(plot_vis=False):
     logger.info("test_resize_with_bbox_op_voc_c")
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.ResizeWithBBox(100)
 
@@ -110,11 +108,9 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
     box has dimensions as the image itself.
     """
     logger.info("test_resize_with_bbox_op_edge_c")
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.ResizeWithBBox(500)
 
@@ -163,13 +159,13 @@ def test_resize_with_bbox_op_bad_c():
     logger.info("test_resize_with_bbox_op_bad_c")
     test_op = c_vision.ResizeWithBBox((200, 300))
 
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 

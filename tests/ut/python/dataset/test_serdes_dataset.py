@@ -32,6 +32,7 @@ from mindspore.dataset.vision import Inter
 
 
 
+
 def test_imagefolder(remove_json_files=True):
     """
     Test simulating resnet50 dataset pipeline.
@@ -103,7 +104,7 @@ def test_mnist_dataset(remove_json_files=True):
     data_dir = "../data/dataset/testMnistData"
     ds.config.set_seed(1)
 
-    data1 = ds.MnistDataset(data_dir, 100)
+    data1 = ds.MnistDataset(data_dir, num_samples=100)
     one_hot_encode = c.OneHot(10)  # num_classes is input argument
     data1 = data1.map(input_columns="label", operations=one_hot_encode)
 

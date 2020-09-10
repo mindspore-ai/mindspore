@@ -273,7 +273,7 @@ def create_node(node):
 
     elif dataset_op == 'MnistDataset':
         sampler = construct_sampler(node.get('sampler'))
-        pyobj = pyclass(node['dataset_dir'], node.get('num_samples'), node.get('num_parallel_workers'),
+        pyobj = pyclass(node['dataset_dir'], node['usage'], node.get('num_samples'), node.get('num_parallel_workers'),
                         node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'MindDataset':
@@ -296,12 +296,12 @@ def create_node(node):
 
     elif dataset_op == 'Cifar10Dataset':
         sampler = construct_sampler(node.get('sampler'))
-        pyobj = pyclass(node['dataset_dir'], node.get('num_samples'), node.get('num_parallel_workers'),
+        pyobj = pyclass(node['dataset_dir'], node['usage'], node.get('num_samples'), node.get('num_parallel_workers'),
                         node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'Cifar100Dataset':
         sampler = construct_sampler(node.get('sampler'))
-        pyobj = pyclass(node['dataset_dir'], node.get('num_samples'), node.get('num_parallel_workers'),
+        pyobj = pyclass(node['dataset_dir'], node['usage'], node.get('num_samples'), node.get('num_parallel_workers'),
                         node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'VOCDataset':

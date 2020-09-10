@@ -15,7 +15,7 @@
  */
 
 #include <fstream>
-
+#include <unordered_set>
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/transforms.h"
@@ -132,26 +132,28 @@ std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::s
 }
 
 // Function to create a CelebADataset.
-std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &dataset_type,
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage,
                                       const std::shared_ptr<SamplerObj> &sampler, bool decode,
                                       const std::set<std::string> &extensions) {
-  auto ds = std::make_shared<CelebADataset>(dataset_dir, dataset_type, sampler, decode, extensions);
+  auto ds = std::make_shared<CelebADataset>(dataset_dir, usage, sampler, decode, extensions);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
 // Function to create a Cifar10Dataset.
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, sampler);
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage,
+                                        const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, usage, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
 }
 
 // Function to create a Cifar100Dataset.
-std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, sampler);
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage,
+                                          const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, usage, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -217,8 +219,9 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
 #endif
 
 // Function to create a MnistDataset.
-std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<MnistDataset>(dataset_dir, sampler);
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
+                                    const std::shared_ptr<SamplerObj> &sampler) {
+  auto ds = std::make_shared<MnistDataset>(dataset_dir, usage, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -244,10 +247,10 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
 
 #ifndef ENABLE_ANDROID
 // Function to create a VOCDataset.
-std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                                 const std::map<std::string, int32_t> &class_indexing, bool decode,
                                 const std::shared_ptr<SamplerObj> &sampler) {
-  auto ds = std::make_shared<VOCDataset>(dataset_dir, task, mode, class_indexing, decode, sampler);
+  auto ds = std::make_shared<VOCDataset>(dataset_dir, task, usage, class_indexing, decode, sampler);
 
   // Call derived class validation method.
   return ds->ValidateParams() ? ds : nullptr;
@@ -727,6 +730,10 @@ bool ValidateDatasetSampler(const std::string &dataset_name, const std::shared_p
   return true;
 }
 
+bool ValidateStringValue(const std::string &str, const std::unordered_set<std::string> &valid_strings) {
+  return valid_strings.find(str) != valid_strings.end();
+}
+
 // Helper function to validate dataset input/output column parameter
 bool ValidateDatasetColumnParam(const std::string &dataset_name, const std::string &column_param,
                                 const std::vector<std::string> &columns) {
@@ -802,29 +809,14 @@ std::vector<std::shared_ptr<DatasetOp>> AlbumDataset::Build() {
 }
 
 // Constructor for CelebADataset
-CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &dataset_type,
+CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &usage,
                              const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
                              const std::set<std::string> &extensions)
-    : dataset_dir_(dataset_dir),
-      dataset_type_(dataset_type),
-      sampler_(sampler),
-      decode_(decode),
-      extensions_(extensions) {}
+    : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler), decode_(decode), extensions_(extensions) {}
 
 bool CelebADataset::ValidateParams() {
-  if (!ValidateDatasetDirParam("CelebADataset", dataset_dir_)) {
-    return false;
-  }
-  if (!ValidateDatasetSampler("CelebADataset", sampler_)) {
-    return false;
-  }
-  std::set<std::string> dataset_type_list = {"all", "train", "valid", "test"};
-  auto iter = dataset_type_list.find(dataset_type_);
-  if (iter == dataset_type_list.end()) {
-    MS_LOG(ERROR) << "dataset_type should be one of 'all', 'train', 'valid' or 'test'.";
-    return false;
-  }
-  return true;
+  return ValidateDatasetDirParam("CelebADataset", dataset_dir_) && ValidateDatasetSampler("CelebADataset", sampler_) &&
+         ValidateStringValue(usage_, {"all", "train", "valid", "test"});
 }
 
 // Function to build CelebADataset
@@ -839,17 +831,20 @@ std::vector<std::shared_ptr<DatasetOp>> CelebADataset::Build() {
   RETURN_EMPTY_IF_ERROR(
     schema->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   node_ops.push_back(std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                                decode_, dataset_type_, extensions_, std::move(schema),
+                                                decode_, usage_, extensions_, std::move(schema),
                                                 std::move(sampler_->Build())));
   return node_ops;
 }
 
 // Constructor for Cifar10Dataset
-Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler)
-    : dataset_dir_(dataset_dir), sampler_(sampler) {}
+Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, const std::string &usage,
+                               std::shared_ptr<SamplerObj> sampler)
+    : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 bool Cifar10Dataset::ValidateParams() {
-  return ValidateDatasetDirParam("Cifar10Dataset", dataset_dir_) && ValidateDatasetSampler("Cifar10Dataset", sampler_);
+  return ValidateDatasetDirParam("Cifar10Dataset", dataset_dir_) &&
+         ValidateDatasetSampler("Cifar10Dataset", sampler_) &&
+         ValidateStringValue(usage_, {"train", "test", "all", ""});
 }
 
 // Function to build CifarOp for Cifar10
@@ -864,19 +859,21 @@ std::vector<std::shared_ptr<DatasetOp>> Cifar10Dataset::Build() {
   RETURN_EMPTY_IF_ERROR(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
-  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar10, num_workers_, rows_per_buffer_,
+  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar10, usage_, num_workers_, rows_per_buffer_,
                                                dataset_dir_, connector_que_size_, std::move(schema),
                                                std::move(sampler_->Build())));
   return node_ops;
 }
 
 // Constructor for Cifar100Dataset
-Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler)
-    : dataset_dir_(dataset_dir), sampler_(sampler) {}
+Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, const std::string &usage,
+                                 std::shared_ptr<SamplerObj> sampler)
+    : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 bool Cifar100Dataset::ValidateParams() {
   return ValidateDatasetDirParam("Cifar100Dataset", dataset_dir_) &&
-         ValidateDatasetSampler("Cifar100Dataset", sampler_);
+         ValidateDatasetSampler("Cifar100Dataset", sampler_) &&
+         ValidateStringValue(usage_, {"train", "test", "all", ""});
 }
 
 // Function to build CifarOp for Cifar100
@@ -893,7 +890,7 @@ std::vector<std::shared_ptr<DatasetOp>> Cifar100Dataset::Build() {
   RETURN_EMPTY_IF_ERROR(
     schema->AddColumn(ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
-  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar100, num_workers_, rows_per_buffer_,
+  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar100, usage_, num_workers_, rows_per_buffer_,
                                                dataset_dir_, connector_que_size_, std::move(schema),
                                                std::move(sampler_->Build())));
   return node_ops;
@@ -1360,11 +1357,12 @@ std::vector<std::shared_ptr<DatasetOp>> ManifestDataset::Build() {
 }
 #endif
 
-MnistDataset::MnistDataset(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler)
-    : dataset_dir_(dataset_dir), sampler_(sampler) {}
+MnistDataset::MnistDataset(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler)
+    : dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 bool MnistDataset::ValidateParams() {
-  return ValidateDatasetDirParam("MnistDataset", dataset_dir_) && ValidateDatasetSampler("MnistDataset", sampler_);
+  return ValidateStringValue(usage_, {"train", "test", "all", ""}) &&
+         ValidateDatasetDirParam("MnistDataset", dataset_dir_) && ValidateDatasetSampler("MnistDataset", sampler_);
 }
 
 std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
@@ -1378,8 +1376,8 @@ std::vector<std::shared_ptr<DatasetOp>> MnistDataset::Build() {
   RETURN_EMPTY_IF_ERROR(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
-  node_ops.push_back(std::make_shared<MnistOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                               std::move(schema), std::move(sampler_->Build())));
+  node_ops.push_back(std::make_shared<MnistOp>(usage_, num_workers_, rows_per_buffer_, dataset_dir_,
+                                               connector_que_size_, std::move(schema), std::move(sampler_->Build())));
   return node_ops;
 }
 
@@ -1570,12 +1568,12 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordDataset::Build() {
 
 #ifndef ENABLE_ANDROID
 // Constructor for VOCDataset
-VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                        const std::map<std::string, int32_t> &class_indexing, bool decode,
                        std::shared_ptr<SamplerObj> sampler)
     : dataset_dir_(dataset_dir),
       task_(task),
-      mode_(mode),
+      usage_(usage),
       class_index_(class_indexing),
       decode_(decode),
       sampler_(sampler) {}
@@ -1594,15 +1592,15 @@ bool VOCDataset::ValidateParams() {
       MS_LOG(ERROR) << "class_indexing is invalid in Segmentation task.";
       return false;
     }
-    Path imagesets_file = dir / "ImageSets" / "Segmentation" / mode_ + ".txt";
+    Path imagesets_file = dir / "ImageSets" / "Segmentation" / usage_ + ".txt";
     if (!imagesets_file.Exists()) {
-      MS_LOG(ERROR) << "Invalid mode: " << mode_ << ", file \"" << imagesets_file << "\" is not exists!";
+      MS_LOG(ERROR) << "Invalid mode: " << usage_ << ", file \"" << imagesets_file << "\" does not exist!";
       return false;
     }
   } else if (task_ == "Detection") {
-    Path imagesets_file = dir / "ImageSets" / "Main" / mode_ + ".txt";
+    Path imagesets_file = dir / "ImageSets" / "Main" / usage_ + ".txt";
     if (!imagesets_file.Exists()) {
-      MS_LOG(ERROR) << "Invalid mode: " << mode_ << ", file \"" << imagesets_file << "\" is not exists!";
+      MS_LOG(ERROR) << "Invalid mode: " << usage_ << ", file \"" << imagesets_file << "\" does not exist!";
       return false;
     }
   } else {
@@ -1641,7 +1639,7 @@ std::vector<std::shared_ptr<DatasetOp>> VOCDataset::Build() {
   }
 
   std::shared_ptr<VOCOp> voc_op;
-  voc_op = std::make_shared<VOCOp>(task_type_, mode_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
+  voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
                                    connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
   node_ops.push_back(voc_op);
   return node_ops;

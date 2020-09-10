@@ -18,14 +18,15 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+
 #include "./tinyxml2.h"
-#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/opt/pass.h"
+#include "utils/ms_utils.h"
 
 using tinyxml2::XMLDocument;
 using tinyxml2::XMLElement;
@@ -81,7 +82,7 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
     RETURN_IF_NOT_OK(builder_schema_->AddColumn(
       ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   }
-  *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_task_mode_, builder_dir_, builder_labels_to_read_,
+  *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_usage_, builder_dir_, builder_labels_to_read_,
                                  builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
                                  builder_decode_, std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
@@ -103,7 +104,7 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
       row_cnt_(0),
       buf_cnt_(0),
       task_type_(task_type),
-      task_mode_(task_mode),
+      usage_(task_mode),
       folder_path_(folder_path),
       class_index_(class_index),
       rows_per_buffer_(rows_per_buffer),
@@ -251,10 +252,9 @@ Status VOCOp::WorkerEntry(int32_t worker_id) {
 Status VOCOp::ParseImageIds() {
   std::string image_sets_file;
   if (task_type_ == TaskType::Segmentation) {
-    image_sets_file =
-      folder_path_ + std::string(kImageSetsSegmentation) + task_mode_ + std::string(kImageSetsExtension);
+    image_sets_file = folder_path_ + std::string(kImageSetsSegmentation) + usage_ + std::string(kImageSetsExtension);
   } else if (task_type_ == TaskType::Detection) {
-    image_sets_file = folder_path_ + std::string(kImageSetsMain) + task_mode_ + std::string(kImageSetsExtension);
+    image_sets_file = folder_path_ + std::string(kImageSetsMain) + usage_ + std::string(kImageSetsExtension);
   }
   std::ifstream in_file;
   in_file.open(image_sets_file);
@@ -431,13 +431,13 @@ Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_typ
 
     std::shared_ptr<VOCOp> op;
     RETURN_IF_NOT_OK(
-      Builder().SetDir(dir).SetTask(task_type).SetMode(task_mode).SetClassIndex(input_class_indexing).Build(&op));
+      Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).SetClassIndex(input_class_indexing).Build(&op));
     RETURN_IF_NOT_OK(op->ParseImageIds());
     RETURN_IF_NOT_OK(op->ParseAnnotationIds());
     *count = static_cast<int64_t>(op->image_ids_.size());
   } else if (task_type == "Segmentation") {
     std::shared_ptr<VOCOp> op;
-    RETURN_IF_NOT_OK(Builder().SetDir(dir).SetTask(task_type).SetMode(task_mode).Build(&op));
+    RETURN_IF_NOT_OK(Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).Build(&op));
     RETURN_IF_NOT_OK(op->ParseImageIds());
     *count = static_cast<int64_t>(op->image_ids_.size());
   }
@@ -458,7 +458,7 @@ Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_t
   } else {
     std::shared_ptr<VOCOp> op;
     RETURN_IF_NOT_OK(
-      Builder().SetDir(dir).SetTask(task_type).SetMode(task_mode).SetClassIndex(input_class_indexing).Build(&op));
+      Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).SetClassIndex(input_class_indexing).Build(&op));
     RETURN_IF_NOT_OK(op->ParseImageIds());
     RETURN_IF_NOT_OK(op->ParseAnnotationIds());
     for (const auto label : op->label_index_) {

@@ -132,6 +132,12 @@ def check_valid_detype(type_):
     return True
 
 
+def check_valid_str(value, valid_strings, arg_name=""):
+    type_check(value, (str,), arg_name)
+    if value not in valid_strings:
+        raise ValueError("Input {0} is not within the valid set of {1}.".format(arg_name, str(valid_strings)))
+
+
 def check_columns(columns, name):
     """
     Validate strings in column_names.

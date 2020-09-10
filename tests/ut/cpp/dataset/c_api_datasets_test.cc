@@ -43,10 +43,11 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
 
   // Check if CelebAOp read correct images/attr
   std::string expect_file[] = {"1.JPEG", "2.jpg"};
-  std::vector<std::vector<uint32_t>> expect_attr_vector =
-    {{0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0,
-      1, 0, 0, 1}, {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-      1, 0, 0, 0, 0, 0, 0, 0, 1}};
+  std::vector<std::vector<uint32_t>> expect_attr_vector = {
+    {0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1,
+     0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1},
+    {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+     0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1}};
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
@@ -132,7 +133,7 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDir) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDir.";
 
   // Create a Mnist Dataset
-  std::shared_ptr<Dataset> ds = Mnist("", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist("", std::string(), RandomSampler(false, 10));
   EXPECT_EQ(ds, nullptr);
 }
 
@@ -141,7 +142,7 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithNullSampler) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, nullptr);
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, std::string(), nullptr);
   // Expect failure: sampler can not be nullptr
   EXPECT_EQ(ds, nullptr);
 }

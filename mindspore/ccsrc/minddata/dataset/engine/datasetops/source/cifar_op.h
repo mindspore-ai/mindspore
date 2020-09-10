@@ -83,15 +83,23 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
 
     // Setter method
     // @param const std::string & dir
-    // @return
+    // @return Builder setter method returns reference to the builder.
     Builder &SetCifarDir(const std::string &dir) {
       dir_ = dir;
       return *this;
     }
 
     // Setter method
+    // @param const std::string &usage
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetUsage(const std::string &usage) {
+      usage_ = usage;
+      return *this;
+    }
+
+    // Setter method
     // @param const std::string & dir
-    // @return
+    // @return Builder setter method returns reference to the builder.
     Builder &SetCifarType(const bool cifar10) {
       if (cifar10) {
         cifar_type_ = kCifar10;
@@ -112,6 +120,7 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
 
    private:
     std::string dir_;
+    std::string usage_;
     int32_t num_workers_;
     int32_t rows_per_buffer_;
     int32_t op_connect_size_;
@@ -122,13 +131,15 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
 
   // Constructor
   // @param CifarType type - Cifar10 or Cifar100
+  // @param const std::string &usage - Usage of this dataset, can be 'train', 'test' or 'all'
   // @param uint32_t numWorks - Num of workers reading images in parallel
   // @param uint32_t - rowsPerBuffer Number of images (rows) in each buffer
   // @param std::string - dir directory of cifar dataset
   // @param uint32_t - queueSize - connector queue size
   // @param std::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
-  CifarOp(CifarType type, int32_t num_works, int32_t rows_per_buf, const std::string &file_dir, int32_t queue_size,
-          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+  CifarOp(CifarType type, const std::string &usage, int32_t num_works, int32_t rows_per_buf,
+          const std::string &file_dir, int32_t queue_size, std::unique_ptr<DataSchema> data_schema,
+          std::shared_ptr<Sampler> sampler);
   // Destructor.
   ~CifarOp() = default;
 
@@ -153,7 +164,7 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   // @param isCIFAR10 true if CIFAR10 and false if CIFAR100
   // @param count output arg that will hold the actual dataset size
   // @return
-  static Status CountTotalRows(const std::string &dir, bool isCIFAR10, int64_t *count);
+  static Status CountTotalRows(const std::string &dir, const std::string &usage, bool isCIFAR10, int64_t *count);
 
   /// \brief Base-class override for NodePass visitor acceptor
   /// \param[in] p Pointer to the NodePass to be accepted
@@ -224,7 +235,7 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   std::unique_ptr<DataSchema> data_schema_;
   int64_t row_cnt_;
   int64_t buf_cnt_;
-
+  const std::string usage_;  // can only be either "train" or "test"
   WaitPost wp_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::unique_ptr<Queue<std::vector<unsigned char>>> cifar_raw_data_block_;

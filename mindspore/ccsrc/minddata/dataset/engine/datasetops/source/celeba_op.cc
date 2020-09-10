@@ -36,7 +36,7 @@ CelebAOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr)
 
 Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
   MS_LOG(DEBUG) << "Celeba dataset directory is " << builder_dir_.c_str() << ".";
-  MS_LOG(DEBUG) << "Celeba dataset type is " << builder_dataset_type_.c_str() << ".";
+  MS_LOG(DEBUG) << "Celeba dataset type is " << builder_usage_.c_str() << ".";
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
     const int64_t num_samples = 0;
@@ -51,8 +51,8 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   *op = std::make_shared<CelebAOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
-                                   builder_op_connector_size_, builder_decode_, builder_dataset_type_,
-                                   builder_extensions_, std::move(builder_schema_), std::move(builder_sampler_));
+                                   builder_op_connector_size_, builder_decode_, builder_usage_, builder_extensions_,
+                                   std::move(builder_schema_), std::move(builder_sampler_));
   if (*op == nullptr) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "CelebAOp is null");
   }
@@ -69,7 +69,7 @@ Status CelebAOp::Builder::SanityCheck() {
 }
 
 CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size,
-                   bool decode, const std::string &dataset_type, const std::set<std::string> &exts,
+                   bool decode, const std::string &usage, const std::set<std::string> &exts,
                    std::unique_ptr<DataSchema> schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
@@ -78,7 +78,7 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
       extensions_(exts),
       data_schema_(std::move(schema)),
       num_rows_in_attr_file_(0),
-      dataset_type_(dataset_type) {
+      usage_(usage) {
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
   io_block_queues_.Init(num_workers_, queue_size);
 }
@@ -135,7 +135,7 @@ Status CelebAOp::ParseAttrFile() {
   std::vector<std::string> image_infos;
   image_infos.reserve(oc_queue_size_);
   while (getline(attr_file, image_info)) {
-    if ((image_info.empty()) || (dataset_type_ != "all" && !CheckDatasetTypeValid())) {
+    if ((image_info.empty()) || (usage_ != "all" && !CheckDatasetTypeValid())) {
       continue;
     }
     image_infos.push_back(image_info);
@@ -179,11 +179,11 @@ bool CelebAOp::CheckDatasetTypeValid() {
     return false;
   }
   // train:0, valid=1, test=2
-  if (dataset_type_ == "train" && (type == 0)) {
+  if (usage_ == "train" && (type == 0)) {
     return true;
-  } else if (dataset_type_ == "valid" && (type == 1)) {
+  } else if (usage_ == "valid" && (type == 1)) {
     return true;
-  } else if (dataset_type_ == "test" && (type == 2)) {
+  } else if (usage_ == "test" && (type == 2)) {
     return true;
   }
 

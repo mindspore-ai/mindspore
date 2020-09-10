@@ -1354,25 +1354,14 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
 
 Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *top,
                               std::shared_ptr<DatasetOp> *bottom) {
-  if (args["dataset_dir"].is_none()) {
-    std::string err_msg = "Error: No dataset path specified";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  if (args["task"].is_none()) {
-    std::string err_msg = "Error: No task specified";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-
-  if (args["mode"].is_none()) {
-    std::string err_msg = "Error: No mode specified";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!args["dataset_dir"].is_none(), "Error: No dataset path specified.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!args["task"].is_none(), "Error: No task specified.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!args["usage"].is_none(), "Error: No usage specified.");
 
   std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
   (void)builder->SetTask(ToString(args["task"]));
-  (void)builder->SetMode(ToString(args["mode"]));
+  (void)builder->SetUsage(ToString(args["usage"]));
   for (auto arg : args) {
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
@@ -1461,6 +1450,8 @@ Status DEPipeline::ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetO
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
+      } else if (key == "usage") {
+        (void)builder->SetUsage(ToString(value));
       }
     }
   }
@@ -1495,6 +1486,8 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
+      } else if (key == "usage") {
+        (void)builder->SetUsage(ToString(value));
       }
     }
   }
@@ -1608,6 +1601,8 @@ Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp>
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
         std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
         (void)builder->SetSampler(std::move(sampler));
+      } else if (key == "usage") {
+        (void)builder->SetUsage(ToString(value));
       }
     }
   }
@@ -1645,8 +1640,8 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
         (void)builder->SetDecode(ToBool(value));
       } else if (key == "extensions") {
         (void)builder->SetExtensions(ToStringSet(value));
-      } else if (key == "dataset_type") {
-        (void)builder->SetDatasetType(ToString(value));
+      } else if (key == "usage") {
+        (void)builder->SetUsage(ToString(value));
       }
     }
   }

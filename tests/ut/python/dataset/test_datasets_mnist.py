@@ -229,6 +229,41 @@ def test_mnist_visualize(plot=False):
         visualize_dataset(image_list, label_list)
 
 
+def test_mnist_usage():
+    """
+    Validate MnistDataset image readings
+    """
+    logger.info("Test MnistDataset usage flag")
+
+    def test_config(usage, mnist_path=None):
+        mnist_path = DATA_DIR if mnist_path is None else mnist_path
+        try:
+            data = ds.MnistDataset(mnist_path, usage=usage, shuffle=False)
+            num_rows = 0
+            for _ in data.create_dict_iterator():
+                num_rows += 1
+        except (ValueError, TypeError, RuntimeError) as e:
+            return str(e)
+        return num_rows
+
+    assert test_config("test") == 10000
+    assert test_config("all") == 10000
+    assert " no valid data matching the dataset API MnistDataset" in test_config("train")
+    assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid")
+    assert "Argument usage with value ['list'] is not of type (<class 'str'>,)" in test_config(["list"])
+
+    # change this directory to the folder that contains all mnist files
+    all_files_path = None
+    # the following tests on the entire datasets
+    if all_files_path is not None:
+        assert test_config("train", all_files_path) == 60000
+        assert test_config("test", all_files_path) == 10000
+        assert test_config("all", all_files_path) == 70000
+        assert ds.MnistDataset(all_files_path, usage="train").get_dataset_size() == 60000
+        assert ds.MnistDataset(all_files_path, usage="test").get_dataset_size() == 10000
+        assert ds.MnistDataset(all_files_path, usage="all").get_dataset_size() == 70000
+
+
 if __name__ == '__main__':
     test_mnist_content_check()
     test_mnist_basic()
@@ -236,3 +271,4 @@ if __name__ == '__main__':
     test_mnist_sequential_sampler()
     test_mnist_exception()
     test_mnist_visualize(plot=True)
+    test_mnist_usage()

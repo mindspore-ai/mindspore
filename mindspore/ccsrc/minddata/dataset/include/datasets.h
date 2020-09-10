@@ -111,34 +111,36 @@ std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::s
 
 /// \brief Function to create a CelebADataset
 /// \notes The generated dataset has two columns ['image', 'attr'].
-//      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+///      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
-/// \param[in] dataset_type One of 'all', 'train', 'valid' or 'test'.
+/// \param[in] usage One of "all", "train", "valid" or "test".
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &dataset_type = "all",
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage = "all",
                                       const std::shared_ptr<SamplerObj> &sampler = RandomSampler(), bool decode = false,
                                       const std::set<std::string> &extensions = {});
 
 /// \brief Function to create a Cifar10 Dataset
-/// \notes The generated dataset has two columns ['image', 'label']
+/// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of CIFAR10, can be "train", "test" or "all"
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir,
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage = std::string(),
                                         const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a Cifar100 Dataset
-/// \notes The generated dataset has three columns ['image', 'coarse_label', 'fine_label']
+/// \notes The generated dataset has three columns ["image", "coarse_label", "fine_label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of CIFAR100, can be "train", "test" or "all"
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir,
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage = std::string(),
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a CLUEDataset
@@ -212,7 +214,7 @@ std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, c
 /// \brief Function to create an ImageFolderDataset
 /// \notes A source dataset that reads images from a tree of directories
 ///     All images within one folder have the same label
-///     The generated dataset has two columns ['image', 'label']
+///     The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] decode A flag to decode in ImageFolder
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
@@ -227,7 +229,7 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 
 #ifndef ENABLE_ANDROID
 /// \brief Function to create a ManifestDataset
-/// \notes The generated dataset has two columns ['image', 'label']
+/// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_file The dataset file to be read
 /// \param[in] usage Need "train", "eval" or "inference" data (default="train")
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
@@ -243,12 +245,13 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
 #endif
 
 /// \brief Function to create a MnistDataset
-/// \notes The generated dataset has two columns ['image', 'label']
+/// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of MNIST, can be "train", "test" or "all"
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current MnistDataset
-std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir,
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = std::string(),
                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 
 /// \brief Function to create a ConcatDataset
@@ -404,14 +407,14 @@ std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &datase
 ///     - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
-/// \param[in] mode Set the data list txt file to be readed
+/// \param[in] usage The type of data list text file to be read
 /// \param[in] class_indexing A str-to-int mapping from label name to index, only valid in "Detection" task
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
-                                const std::string &mode = "train",
+                                const std::string &usage = "train",
                                 const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
 #endif
@@ -702,9 +705,8 @@ class AlbumDataset : public Dataset {
 class CelebADataset : public Dataset {
  public:
   /// \brief Constructor
-  CelebADataset(const std::string &dataset_dir, const std::string &dataset_type,
-                const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
-                const std::set<std::string> &extensions);
+  CelebADataset(const std::string &dataset_dir, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
+                const bool &decode, const std::set<std::string> &extensions);
 
   /// \brief Destructor
   ~CelebADataset() = default;
@@ -719,7 +721,7 @@ class CelebADataset : public Dataset {
 
  private:
   std::string dataset_dir_;
-  std::string dataset_type_;
+  std::string usage_;
   bool decode_;
   std::set<std::string> extensions_;
   std::shared_ptr<SamplerObj> sampler_;
@@ -730,7 +732,7 @@ class CelebADataset : public Dataset {
 class Cifar10Dataset : public Dataset {
  public:
   /// \brief Constructor
-  Cifar10Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler);
+  Cifar10Dataset(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Destructor
   ~Cifar10Dataset() = default;
@@ -745,13 +747,14 @@ class Cifar10Dataset : public Dataset {
 
  private:
   std::string dataset_dir_;
+  std::string usage_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
 class Cifar100Dataset : public Dataset {
  public:
   /// \brief Constructor
-  Cifar100Dataset(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler);
+  Cifar100Dataset(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Destructor
   ~Cifar100Dataset() = default;
@@ -766,6 +769,7 @@ class Cifar100Dataset : public Dataset {
 
  private:
   std::string dataset_dir_;
+  std::string usage_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
@@ -831,7 +835,7 @@ class CocoDataset : public Dataset {
 enum CsvType : uint8_t { INT = 0, FLOAT, STRING };
 
 /// \brief Base class of CSV Record
-struct CsvBase {
+class CsvBase {
  public:
   CsvBase() = default;
   explicit CsvBase(CsvType t) : type(t) {}
@@ -936,7 +940,7 @@ class ManifestDataset : public Dataset {
 class MnistDataset : public Dataset {
  public:
   /// \brief Constructor
-  MnistDataset(std::string dataset_dir, std::shared_ptr<SamplerObj> sampler);
+  MnistDataset(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Destructor
   ~MnistDataset() = default;
@@ -951,6 +955,7 @@ class MnistDataset : public Dataset {
 
  private:
   std::string dataset_dir_;
+  std::string usage_;
   std::shared_ptr<SamplerObj> sampler_;
 };
 
@@ -1087,7 +1092,7 @@ class TFRecordDataset : public Dataset {
 class VOCDataset : public Dataset {
  public:
   /// \brief Constructor
-  VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &mode,
+  VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
              const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Destructor
@@ -1110,7 +1115,7 @@ class VOCDataset : public Dataset {
   const std::string kColumnTruncate = "truncate";
   std::string dataset_dir_;
   std::string task_;
-  std::string mode_;
+  std::string usage_;
   std::map<std::string, int32_t> class_index_;
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;

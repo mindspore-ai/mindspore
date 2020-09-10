@@ -2877,6 +2877,9 @@ class MnistDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 60,000
+            train samples, "test" will read from 10,000 test samples, "all" will read from all 70,000 samples.
+            (default=None, all samples)
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -2906,11 +2909,12 @@ class MnistDataset(MappableDataset):
     """
 
     @check_mnist_cifar_dataset
-    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
+        self.usage = usage
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.shuffle_level = shuffle
@@ -2920,6 +2924,7 @@ class MnistDataset(MappableDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_dir"] = self.dataset_dir
+        args["usage"] = self.usage
         args["num_samples"] = self.num_samples
         args["shuffle"] = self.shuffle_level
         args["sampler"] = self.sampler
@@ -2935,7 +2940,7 @@ class MnistDataset(MappableDataset):
             Number, number of batches.
         """
         if self.dataset_size is None:
-            num_rows = MnistOp.get_num_rows(self.dataset_dir)
+            num_rows = MnistOp.get_num_rows(self.dataset_dir, "all" if self.usage is None else self.usage)
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             rows_from_sampler = self._get_sampler_dataset_size()
             if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
@@ -3913,6 +3918,9 @@ class Cifar10Dataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 50,000
+            train samples, "test" will read from 10,000 test samples, "all" will read from all 60,000 samples.
+            (default=None, all samples)
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -3946,11 +3954,12 @@ class Cifar10Dataset(MappableDataset):
     """
 
     @check_mnist_cifar_dataset
-    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
+        self.usage = usage
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.num_shards = num_shards
@@ -3960,6 +3969,7 @@ class Cifar10Dataset(MappableDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_dir"] = self.dataset_dir
+        args["usage"] = self.usage
         args["num_samples"] = self.num_samples
         args["sampler"] = self.sampler
         args["num_shards"] = self.num_shards
@@ -3975,7 +3985,7 @@ class Cifar10Dataset(MappableDataset):
             Number, number of batches.
         """
         if self.dataset_size is None:
-            num_rows = CifarOp.get_num_rows(self.dataset_dir, True)
+            num_rows = CifarOp.get_num_rows(self.dataset_dir, "all" if self.usage is None else self.usage, True)
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -4051,6 +4061,9 @@ class Cifar100Dataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 50,000
+            train samples, "test" will read from 10,000 test samples, "all" will read from all 60,000 samples.
+            (default=None, all samples)
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -4082,11 +4095,12 @@ class Cifar100Dataset(MappableDataset):
     """
 
     @check_mnist_cifar_dataset
-    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
 
         self.dataset_dir = dataset_dir
+        self.usage = usage
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.num_shards = num_shards
@@ -4096,6 +4110,7 @@ class Cifar100Dataset(MappableDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_dir"] = self.dataset_dir
+        args["usage"] = self.usage
         args["num_samples"] = self.num_samples
         args["sampler"] = self.sampler
         args["num_shards"] = self.num_shards
@@ -4111,7 +4126,7 @@ class Cifar100Dataset(MappableDataset):
             Number, number of batches.
         """
         if self.dataset_size is None:
-            num_rows = CifarOp.get_num_rows(self.dataset_dir, False)
+            num_rows = CifarOp.get_num_rows(self.dataset_dir, "all" if self.usage is None else self.usage, False)
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -4467,7 +4482,7 @@ class VOCDataset(MappableDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
             (default="Segmentation").
-        mode (str): Set the data list txt file to be readed (default="train").
+        usage (str): The type of data list text file to be read (default="train").
         class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
             "Detection" task (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
@@ -4502,24 +4517,24 @@ class VOCDataset(MappableDataset):
         >>> import mindspore.dataset as ds
         >>> dataset_dir = "/path/to/voc_dataset_directory"
         >>> # 1) read VOC data for segmenatation train
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Segmentation", mode="train")
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Segmentation", usage="train")
         >>> # 2) read VOC data for detection train
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train")
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", usage="train")
         >>> # 3) read all VOC dataset samples in dataset_dir with 8 threads in random order:
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train", num_parallel_workers=8)
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", usage="train", num_parallel_workers=8)
         >>> # 4) read then decode all VOC dataset samples in dataset_dir in sequence:
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train", decode=True, shuffle=False)
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", usage="train", decode=True, shuffle=False)
         >>> # in VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
         >>> # in VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
     """
 
     @check_vocdataset
-    def __init__(self, dataset_dir, task="Segmentation", mode="train", class_indexing=None, num_samples=None,
+    def __init__(self, dataset_dir, task="Segmentation", usage="train", class_indexing=None, num_samples=None,
                  num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
         self.task = task
-        self.mode = mode
+        self.usage = usage
         self.class_indexing = class_indexing
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
@@ -4532,7 +4547,7 @@ class VOCDataset(MappableDataset):
         args = super().get_args()
         args["dataset_dir"] = self.dataset_dir
         args["task"] = self.task
-        args["mode"] = self.mode
+        args["usage"] = self.usage
         args["class_indexing"] = self.class_indexing
         args["num_samples"] = self.num_samples
         args["sampler"] = self.sampler
@@ -4560,7 +4575,7 @@ class VOCDataset(MappableDataset):
             else:
                 class_indexing = self.class_indexing
 
-            num_rows = VOCOp.get_num_rows(self.dataset_dir, self.task, self.mode, class_indexing, num_samples)
+            num_rows = VOCOp.get_num_rows(self.dataset_dir, self.task, self.usage, class_indexing, num_samples)
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             rows_from_sampler = self._get_sampler_dataset_size()
 
@@ -4584,7 +4599,7 @@ class VOCDataset(MappableDataset):
         else:
             class_indexing = self.class_indexing
 
-        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing)
+        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.usage, class_indexing)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4824,7 +4839,7 @@ class CelebADataset(MappableDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_parallel_workers (int, optional): Number of workers to read the data (default=value set in the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        dataset_type (str): one of 'all', 'train', 'valid' or 'test'.
+        usage (str): one of 'all', 'train', 'valid' or 'test'.
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be
@@ -4838,8 +4853,8 @@ class CelebADataset(MappableDataset):
     """
 
     @check_celebadataset
-    def __init__(self, dataset_dir, num_parallel_workers=None, shuffle=None, dataset_type='all',
-                 sampler=None, decode=False, extensions=None, num_samples=None, num_shards=None, shard_id=None):
+    def __init__(self, dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False,
+                 extensions=None, num_samples=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
@@ -4847,7 +4862,7 @@ class CelebADataset(MappableDataset):
         self.decode = decode
         self.extensions = extensions
         self.num_samples = num_samples
-        self.dataset_type = dataset_type
+        self.usage = usage
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.shuffle_level = shuffle
@@ -4860,7 +4875,7 @@ class CelebADataset(MappableDataset):
         args["decode"] = self.decode
         args["extensions"] = self.extensions
         args["num_samples"] = self.num_samples
-        args["dataset_type"] = self.dataset_type
+        args["usage"] = self.usage
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args

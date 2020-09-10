@@ -37,11 +37,9 @@ def test_random_vertical_flip_with_bbox_op_c(plot_vis=False):
     """
     logger.info("test_random_vertical_flip_with_bbox_op_c")
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.RandomVerticalFlipWithBBox(1)
 
@@ -102,11 +100,9 @@ def test_random_vertical_flip_with_bbox_op_rand_c(plot_vis=False):
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.RandomVerticalFlipWithBBox(0.8)
 
@@ -139,11 +135,9 @@ def test_random_vertical_flip_with_bbox_op_edge_c(plot_vis=False):
     applied on dynamically generated edge case, expected to pass
     """
     logger.info("test_random_vertical_flip_with_bbox_op_edge_c")
-    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = c_vision.RandomVerticalFlipWithBBox(1)
 
@@ -174,8 +168,7 @@ def test_random_vertical_flip_with_bbox_op_invalid_c():
     Test RandomVerticalFlipWithBBox Op on invalid constructor parameters, expected to raise ValueError
     """
     logger.info("test_random_vertical_flip_with_bbox_op_invalid_c")
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train",
-                             decode=True, shuffle=False)
+    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
         test_op = c_vision.RandomVerticalFlipWithBBox(2)
@@ -201,13 +194,13 @@ def test_random_vertical_flip_with_bbox_op_bad_c():
     logger.info("test_random_vertical_flip_with_bbox_op_bad_c")
     test_op = c_vision.RandomVerticalFlipWithBBox(1)
 
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", mode="train", decode=True, shuffle=False)
+    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 

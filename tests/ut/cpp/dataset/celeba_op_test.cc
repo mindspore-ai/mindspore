@@ -42,9 +42,13 @@ std::shared_ptr<CelebAOp> Celeba(int32_t num_workers, int32_t rows_per_buffer, i
                                  bool decode = false, const std::string &dataset_type="all") {
   std::shared_ptr<CelebAOp> so;
   CelebAOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_workers).SetCelebADir(dir).SetRowsPerBuffer(rows_per_buffer)
-                     .SetOpConnectorSize(queue_size).SetSampler(std::move(sampler)).SetDecode(decode)
-                     .SetDatasetType(dataset_type).Build(&so);
+  Status rc = builder.SetNumWorkers(num_workers)
+                .SetCelebADir(dir)
+                .SetRowsPerBuffer(rows_per_buffer)
+                .SetOpConnectorSize(queue_size)
+                .SetSampler(std::move(sampler))
+                .SetDecode(decode)
+                .SetUsage(dataset_type).Build(&so);
   return so;
 }
 

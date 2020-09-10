@@ -109,10 +109,10 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
     }
 
     // Setter method
-    // @param const std::string dataset_type: type to be read
+    // @param const std::string usage: type to be read
     // @return Builder setter method returns reference to the builder.
-    Builder &SetDatasetType(const std::string &dataset_type) {
-      builder_dataset_type_ = dataset_type;
+    Builder &SetUsage(const std::string &usage) {
+      builder_usage_ = usage;
       return *this;
     }
     // Check validity of input args
@@ -133,7 +133,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
     std::set<std::string> builder_extensions_;
     std::shared_ptr<Sampler> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
-    std::string builder_dataset_type_;
+    std::string builder_usage_;
   };
 
   // Constructor
@@ -143,12 +143,12 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // @param int32_t queueSize - connector queue size
   // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
   CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size, bool decode,
-           const std::string &dataset_type, const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema,
+           const std::string &usage, const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema,
            std::shared_ptr<Sampler> sampler);
 
   ~CelebAOp() override = default;
 
-  // Main Loop of CelebaOp
+  // Main Loop of CelebAOp
   // Master thread: Fill IOBlockQueue, then goes to sleep
   // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
   // @return Status - The error code return
@@ -177,7 +177,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
 
   // Op name getter
   // @return Name of the current Op
-  std::string Name() const { return "CelebAOp"; }
+  std::string Name() const override { return "CelebAOp"; }
 
  private:
   // Called first when function is called
@@ -232,7 +232,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   WaitPost wp_;
   std::vector<std::pair<std::string, std::vector<int32_t>>> image_labels_vec_;
-  std::string dataset_type_;
+  std::string usage_;
   std::ifstream partition_file_;
 };
 }  // namespace dataset
