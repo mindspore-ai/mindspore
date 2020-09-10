@@ -448,7 +448,7 @@ class _Executor:
         new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}
         return self._executor.updata_param_node_default_input(phase, new_param)
 
-    def _get_strategy(self, obj):
+    def _get_shard_strategy(self, obj):
         real_phase = self.phase_prefix + obj.phase + '.' + str(obj.create_time)
         return self._executor.get_strategy(real_phase)
 

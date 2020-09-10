@@ -78,7 +78,7 @@ def test_two_bn():
     reset_op_id()
 
     _executor.compile(net, x, phase='train')
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     assert len(strategies) == 4
 
     for (k, v) in strategies.items():

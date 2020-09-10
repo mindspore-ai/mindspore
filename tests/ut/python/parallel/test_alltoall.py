@@ -86,7 +86,7 @@ def all_to_all_common(strategy1):
     model = Model(net, loss, opt)
 
     model.train(epoch_size, dataset, dataset_sink_mode=False)
-    strategys = _executor._get_strategy(model._train_network)
+    strategys = _executor._get_shard_strategy(model._train_network)
     return strategys
 
 

@@ -76,7 +76,7 @@ def test_auto_parallel_arithmetic():
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     b = Tensor(np.ones([64, 128]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[2, 4], [2, 4]],
                            'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
     assert strategies == expected_strategies
@@ -103,7 +103,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[8, 1], [1, 1]],
                            'Default/network-Net/MatMul-op1': [[8, 1], [1, 1]]}
     assert strategies == expected_strategies
@@ -130,7 +130,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([32]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [2]],
                            'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}
     assert strategies == expected_strategies
@@ -157,7 +157,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
     compile_net(net, x, y, b, phase="train")
-    strategies = _executor._get_strategy(net)
+    strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [1, 4, 2]],
                            'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}
     assert strategies == expected_strategies
