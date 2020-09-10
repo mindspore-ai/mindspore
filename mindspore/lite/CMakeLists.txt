@@ -76,7 +76,7 @@ option(BUILD_CONVERTER "if build converter" on)
 option(ENABLE_FP16 "if build fp16 ops" off)
 option(SUPPORT_GPU "if support gpu" off)
 option(OFFLINE_COMPILE "if offline compile OpenCL kernel" off)
-set(BUILD_MINDDATA "off" CACHE STRING "off, lite, or full")
+set(BUILD_MINDDATA "off" CACHE STRING "off, lite, lite_cv or full")
 option(BUILD_MINDDATA_EXAMPLE "" on)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -211,6 +211,13 @@ if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full")
     )
     include_directories(${TOP_DIR}/third_party/libjpeg-turbo/include)
 
+    add_compile_definitions(ENABLE_ANDROID)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
+endif ()
+
+if (BUILD_MINDDATA STREQUAL "lite_cv")
+    # TODO: add sentencepiece dependency
+    #include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
     add_compile_definitions(ENABLE_ANDROID)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
 endif ()

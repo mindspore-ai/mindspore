@@ -123,6 +123,7 @@ SET(DE_UT_SRCS
         swap_red_blue_test.cc
         distributed_sampler_test.cc
 	data_helper_test.cc
+        image_process_test.cc
         )
 
 if (ENABLE_PYTHON)

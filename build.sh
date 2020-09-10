@@ -116,7 +116,7 @@ checkopts()
         DEBUG_MODE="on"
         ;;
       n)
-        if [[ "X$OPTARG" == "Xoff" || "X$OPTARG" == "Xlite" || "X$OPTARG" == "Xfull" ]]; then
+        if [[ "X$OPTARG" == "Xoff" || "X$OPTARG" == "Xlite" || "X$OPTARG" == "Xfull" || "X$OPTARG" == "Xlite_cv" ]]; then
           COMPILE_MINDDATA_LITE="$OPTARG"
         else
           echo "Invalid value ${OPTARG} for option -n"

@@ -70,6 +70,9 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/text/kernels MINDDATA_TEXT_KERNELS_SRC_FILE
 
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/util MINDDATA_UTIL_SRC_FILES)
 
+AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMAGE_LITE_CV_FILES)
+
+
 if (BUILD_MINDDATA STREQUAL "full")
     list(REMOVE_ITEM MINDDATA_API_SRC_FILES 
         "${MINDDATA_DIR}/api/text.cc" 
@@ -175,7 +178,6 @@ if (BUILD_MINDDATA STREQUAL "full")
             COMMAND cp -rf ${CMAKE_CURRENT_SOURCE_DIR}/example/testCifar10Data ${CMAKE_BINARY_DIR}/minddata
             )
     endif()
-    
 elseif (BUILD_MINDDATA STREQUAL "lite")
     list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES "${MINDDATA_DIR}/core/client.cc")
     list(REMOVE_ITEM MINDDATA_KERNELS_SRC_FILES "${MINDDATA_DIR}/kernels/py_func_op.cc")
@@ -205,6 +207,21 @@ elseif (BUILD_MINDDATA STREQUAL "lite")
         opencv_imgcodecs
         opencv_imgproc
         mindspore::json
+        )
+
+    # ref: https://github.com/android/ndk/issues/1202
+    if (PLATFORM_ARM32)
+        file(GLOB_RECURSE LIBCLANG_RT_LIB $ENV{ANDROID_NDK}/libclang_rt.builtins-arm-android.a)
+        if (LIBCLANG_RT_LIB STREQUAL "")
+            MESSAGE(FATAL_ERROR "Cannot find libclang_rt.builtins-arm-androi2d.a in $ENV{ANDROID_NDK}")
+        endif()
+        target_link_libraries(minddata-lite ${LIBCLANG_RT_LIB})
+    endif()
+elseif (BUILD_MINDDATA STREQUAL "lite_cv")
+     include_directories(${MINDDATA_DIR}/kernels/image)
+     message(STATUS ${MINDDATA_DIR}/kernels/image)
+    add_library(minddata-lite SHARED
+        ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
         )
 
     # ref: https://github.com/android/ndk/issues/1202

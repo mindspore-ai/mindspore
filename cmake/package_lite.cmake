@@ -40,6 +40,18 @@ if (BUILD_MINDDATA STREQUAL "lite")
     endif ()
 endif ()
 
+
+if (BUILD_MINDDATA STREQUAL "lite_cv")
+    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv DESTINATION ${INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    if (PLATFORM_ARM64)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${LIB_DIR} COMPONENT ${COMPONENT_NAME})
+    elseif (PLATFORM_ARM32)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${LIB_DIR} COMPONENT ${COMPONENT_NAME})
+    else ()
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${LIB_DIR_RUN_X86} COMPONENT ${RUN_X86_COMPONENT_NAME})
+    endif ()
+endif ()
+
 if (PLATFORM_ARM64)
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so DESTINATION ${LIB_DIR} COMPONENT ${COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${INC_DIR}/ir/dtype COMPONENT ${COMPONENT_NAME})
