@@ -35,9 +35,8 @@ class ConcatCPUKernel : public ConcatBaseCPUKernel {
   ~ConcatCPUKernel() = default;
 
   int Init() override;
-
   int ReSize() override;
-
+  int DoConcat(int task_id);
   int Run() override;
 };
 }  // namespace mindspore::kernel
