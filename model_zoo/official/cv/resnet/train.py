@@ -70,7 +70,8 @@ if __name__ == '__main__':
 
     # init context
     context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
-    context.set_ps_context(enable_ps=True)
+    if args_opt.parameter_server:
+        context.set_ps_context(enable_ps=True)
     if args_opt.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
@@ -161,7 +162,7 @@ if __name__ == '__main__':
         else:
             loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
 
-        if args_opt.net == "resnet101" or args_opt.net == "resnet50":
+        if (args_opt.net == "resnet101" or args_opt.net == "resnet50") and not args_opt.parameter_server:
             opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay,
                            config.loss_scale)
             loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)

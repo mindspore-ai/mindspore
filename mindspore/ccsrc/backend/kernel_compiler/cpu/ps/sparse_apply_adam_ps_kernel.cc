@@ -31,8 +31,6 @@ void SparseApplyAdamPSKernel::InitKernel(
   const std::vector<size_t> &grad_shape = *(shape_vec[9]);
   const std::vector<size_t> &indices_shape = *(shape_vec[10]);
 
-  SetTotalRowCnt(var_shape[0]);
-  CalOffset();
   Shard(&var_shape, 0);
   Shard(&m_shape, 0);
   Shard(&v_shape, 0);
@@ -67,9 +65,8 @@ void SparseApplyAdamPSKernel::InitKernel(
   workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
 }
 
-void SparseApplyAdamPSKernel::ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
-  const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
-  const std::vector<size_t> &indices_shape = *(shape_vec[0]);
+void SparseApplyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+  const std::vector<size_t> &indices_shape = shapes[0];
   indices_size_ = indices_shape[0];
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;

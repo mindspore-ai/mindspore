@@ -996,9 +996,9 @@ void ClearResAtexit() {
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (mindspore::parallel::ps::Util::IsParamServerMode()) {
+  if (parallel::ps::Util::IsParamServerMode()) {
     if (parallel::ps::Util::IsRoleOfWorker()) {
-      parallel::ps::Worker<float>::GetInstance().Finalize();
+      parallel::ps::worker.Finalize();
     }
   }
 #endif

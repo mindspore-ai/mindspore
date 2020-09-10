@@ -58,7 +58,7 @@ class PushKernel : public CPUKernel {
     MS_LOG(INFO) << "Only init shape indices are " << only_shape_indices;
     for (size_t i = 0; i < optim_input_shapes.size(); i++) {
       auto shape = optim_input_shapes[i];
-      mindspore::parallel::ps::Worker<float>::GetInstance().SetOptimInputShapes(key_, shape);
+      parallel::ps::worker.SetOptimInputShapes(key_, shape);
       if (std::count(only_shape_indices.begin(), only_shape_indices.end(), i) == 0) {
         size_t size = sizeof(T);
         for (size_t j = 0; j < shape.size(); j++) {

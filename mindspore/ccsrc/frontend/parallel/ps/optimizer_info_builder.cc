@@ -51,11 +51,13 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   weight_addr->addr = weight->data();
   weight_addr->size = weight->size() * sizeof(float);
-  void *data_ptr = values.data();
-  void *copy_data_ptr = new float[values.size()];
+  float *data_ptr = values.data();
+  float *copy_data_ptr = new float[values.size()];
   auto ret = memcpy_s(copy_data_ptr, values.size() * sizeof(float), data_ptr, values.size() * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] copy_data_ptr;
+    return nullptr;
   }
   AddressPtr accumulate = std::make_shared<kernel::Address>();
   accumulate->addr = new float[weight->size()];
@@ -86,6 +88,8 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   int ret = memset_s(m->addr, m->size, 0x00, m->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<float *>(m->addr);
+    return nullptr;
   }
   AddressPtr v = std::make_shared<kernel::Address>();
   v->addr = new float[weight->size()];
@@ -93,13 +97,20 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   ret = memset_s(v->addr, v->size, 0x00, v->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<float *>(v->addr);
+    delete[] reinterpret_cast<float *>(m->addr);
+    return nullptr;
   }
 
-  void *data_ptr = values.data();
-  void *copy_data_ptr = new float[values.size()];
+  float *data_ptr = values.data();
+  float *copy_data_ptr = new float[values.size()];
   ret = memcpy_s(copy_data_ptr, values.size() * sizeof(float), data_ptr, values.size() * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] copy_data_ptr;
+    delete[] reinterpret_cast<float *>(v->addr);
+    delete[] reinterpret_cast<float *>(m->addr);
+    return nullptr;
   }
 
   AddressPtr beta1_power = std::make_shared<kernel::Address>();
@@ -134,6 +145,11 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
                  lens[6] * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<float *>(grad->addr);
+    delete[] copy_data_ptr;
+    delete[] reinterpret_cast<float *>(v->addr);
+    delete[] reinterpret_cast<float *>(m->addr);
+    return nullptr;
   }
   grad->size = lens[6] * sizeof(float);
 
@@ -147,6 +163,12 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   ret = memcpy_s(indices->addr, indices_data_size, indices_data, indices_data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<int *>(indices->addr);
+    delete[] reinterpret_cast<float *>(grad->addr);
+    delete[] copy_data_ptr;
+    delete[] reinterpret_cast<float *>(v->addr);
+    delete[] reinterpret_cast<float *>(m->addr);
+    return nullptr;
   }
   indices->size = indices_data_size;
 
@@ -173,6 +195,8 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   int ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<float *>(linear->addr);
+    return nullptr;
   }
   linear->size = weight->size() * sizeof(float);
 
@@ -183,6 +207,9 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   ret = memcpy_s(grad->addr, lens[0] * sizeof(float), values.data(), lens[0] * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<float *>(grad->addr);
+    delete[] reinterpret_cast<float *>(linear->addr);
+    return nullptr;
   }
   grad->size = lens[0] * sizeof(float);
 
@@ -196,6 +223,10 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   ret = memcpy_s(indices->addr, indices_data_size, indices_data, indices_data_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    delete[] reinterpret_cast<int *>(indices->addr);
+    delete[] reinterpret_cast<float *>(grad->addr);
+    delete[] reinterpret_cast<float *>(linear->addr);
+    return nullptr;
   }
   indices->size = indices_data_size;
 

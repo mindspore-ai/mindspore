@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/cpu/ps/embedding_look_up_ps_kernel.h"
 #include <vector>
 #include <memory>
+#include <functional>
 #include "backend/kernel_compiler/common_utils.h"
 #include "frontend/parallel/ps/util.h"
 
@@ -54,9 +55,8 @@ void EmbeddingLookUpPSKernel::InitKernel(
   output_size_list_.emplace_back(output_size);
 }
 
-void EmbeddingLookUpPSKernel::ReInit(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
-  const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
-  const auto &indices_shape = *(shape_vec[0]);
+void EmbeddingLookUpPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+  const auto &indices_shape = shapes[0];
   indices_lens_ = indices_shape[0];
 
   size_t output_size = sizeof(float) * indices_lens_;

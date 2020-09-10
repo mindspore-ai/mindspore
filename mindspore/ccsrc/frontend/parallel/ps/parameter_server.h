@@ -31,6 +31,7 @@
 #include <utility>
 #include <list>
 #include <map>
+#include <functional>
 #include "ir/func_graph.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -85,6 +86,7 @@ class ParameterServer {
   class ServerHandler {
    public:
     explicit ServerHandler(ParameterServer *ps) : ps_(ps) {}
+    ~ServerHandler() = default;
     void Init();
     void operator()(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data, ::ps::KVServer<T> *server);
 
@@ -124,7 +126,6 @@ class ParameterServer {
   void AccumGrad(const Keys &key, const Values &values, const Lengths &lengths);
   WeightPtr weight(const Key &key);
   void DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, ::ps::KVPairs<T> *res);
-  int SumOfShapes(const std::vector<int> &shapes) const;
   bool ReadyForUpdateWeights();
   bool ReadyForPush(const Key &key);
   bool ReadyForPull(const Key &key);
@@ -460,11 +461,7 @@ void ParameterServer<T>::InitEmbeddingTable(
 
     // Init embedding weight
     const std::vector<size_t> &input_shapes = lookup->input_sizes();
-    size_t total_dims = 1;
-    for (auto shape : input_shapes) {
-      total_dims *= shape;
-    }
-
+    size_t total_dims = std::accumulate(input_shapes.begin(), input_shapes.end(), 1, std::multiplies<size_t>());
     WeightPtr embedding = std::make_shared<Weight>(total_dims, 0);
     T *embedding_data = embedding->data();
     std::default_random_engine engine;
@@ -517,15 +514,14 @@ void ParameterServer<T>::UpdateWeights() {
         const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
         const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
 
-        std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
-          std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
-        std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>();
-        indices_shape->emplace_back(optim_info->indice_size());
-        shapes->push_back(indices_shape);
+        std::vector<std::vector<size_t>> shapes = {};
+        std::vector<size_t> indices_shape = {};
+        indices_shape.emplace_back(optim_info->indice_size());
+        shapes.push_back(indices_shape);
 
         if (original_optim_inputs_shape_.count(key) != 0) {
-          for (auto &input_shapes : *(original_optim_inputs_shape_[key])) {
-            shapes->push_back(input_shapes);
+          for (auto input_shapes : *(original_optim_inputs_shape_[key])) {
+            shapes.push_back(*input_shapes);
           }
         }
         optimizer->ReInit(shapes);
@@ -604,11 +600,10 @@ void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids,
   std::shared_ptr<PServerKernel> table_lookup_op = embedding_lookup_ops_[key];
 
   // Update shapes of lookup operator
-  std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
-    std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
-  std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>();
-  indices_shape->emplace_back(lookup_ids.size());
-  shapes->push_back(indices_shape);
+  std::vector<std::vector<size_t>> shapes = {};
+  std::vector<size_t> indices_shape = {};
+  indices_shape.emplace_back(lookup_ids.size());
+  shapes.push_back(indices_shape);
   table_lookup_op->ReInit(shapes);
 
   const std::vector<size_t> output_shapes = table_lookup_op->output_sizes();
@@ -639,15 +634,6 @@ void ParameterServer<T>::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids,
   table_lookup_op->Execute(inputs, workspaces, outputs);
   res->vals = *addr;
   res->lens.push_back(res->vals.size());
-}
-
-template <typename T>
-int ParameterServer<T>::SumOfShapes(const std::vector<int> &shapes) const {
-  int sum = 1;
-  for (auto shape : shapes) {
-    sum *= shape;
-  }
-  return sum;
 }
 
 template <typename T>
@@ -726,6 +712,7 @@ void ParameterServer<T>::SyncEmbeddingTables() {
     int ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      return;
     }
 
     auto paramter_tensor_ptr = embedding_table.second->default_param();

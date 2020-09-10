@@ -55,14 +55,14 @@ class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
 class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
-                             const InputsShapePtr &inputs_shpae, size_t worker_num,
+                             const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
 };
 
 class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
  public:
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
-                             const InputsShapePtr &inputs_shpae, size_t worker_num,
+                             const InputsShapePtr &inputs_shape, size_t worker_num,
                              const std::shared_ptr<PServerKernel> &pserver_kernel) override;
 };
 }  // namespace ps

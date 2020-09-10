@@ -404,7 +404,7 @@ bool ExecuteAction(const ResourcePtr &res) {
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 bool StartPSWorkerAction(const ResourcePtr &res) {
-  parallel::ps::Worker<float>::GetInstance().Run();
+  parallel::ps::worker.Run();
   return true;
 }
 

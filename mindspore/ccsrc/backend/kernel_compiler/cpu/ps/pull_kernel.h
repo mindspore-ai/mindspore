@@ -29,11 +29,11 @@ namespace kernel {
 template <typename T>
 class PullKernel : public CPUKernel {
  public:
-  PullKernel() : keys_size_(sizeof(size_t)), var_size_(sizeof(size_t)) {}
+  PullKernel() : key_(UINT64_MAX), keys_size_(sizeof(size_t)), var_size_(sizeof(size_t)) {}
   ~PullKernel() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    bool init_in_server = mindspore::parallel::ps::Worker<float>::GetInstance().GetParamInitInServer(param_name_);
+    bool init_in_server = parallel::ps::worker.GetParamInitInServer(param_name_);
     // If init_in_server, forward kernel should run in server too.
     if (!init_in_server) {
       parallel::ps::Worker<T>::GetInstance().Pull(key_, inputs[1]->addr, inputs[1]->size);
