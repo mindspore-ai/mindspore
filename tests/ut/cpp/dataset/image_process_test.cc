@@ -21,6 +21,8 @@
 #include <opencv2/imgproc/types_c.h>
 #include "utils/log_adapter.h"
 
+#include <fstream>
+
 using namespace mindspore::dataset;
 class MindDataImageProcess : public UT::Common {
  public:
@@ -228,6 +230,7 @@ TEST_F(MindDataImageProcess, TestPadd) {
 }
 
 TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {
+  std::string benchmark = "data/dataset/testLite/default_boxes.bin";
   BoxesConfig config;
   config.img_shape = {300, 300};
   config.num_default = {3, 6, 6, 6, 6, 6};
@@ -238,8 +241,25 @@ TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {
   config.steps = {16, 32, 64, 100, 150, 300};
   config.prior_scaling = {0.1, 0.2};
 
+  int rows = 1917;
+  int cols = 4;
+  std::vector<double> benchmark_boxes(rows * cols);
+  std::ifstream in(benchmark, std::ios::in | std::ios::binary);
+  in.read(reinterpret_cast<char*>(benchmark_boxes.data()), benchmark_boxes.size() * sizeof(double));
+  in.close();
+
   std::vector<std::vector<float>> default_boxes = GetDefaultBoxes(config);
-  ASSERT_TRUE(default_boxes.size() == 1917);
+  EXPECT_EQ(default_boxes.size(), rows);
+  EXPECT_EQ(default_boxes[0].size(), cols);
+
+  double distance = 0.0f;
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      distance += pow(default_boxes[i][j] - benchmark_boxes[i * cols + j], 2);
+    }
+  }
+  distance = sqrt(distance);
+  EXPECT_LT(distance, 1e-5);
 }
 
 TEST_F(MindDataImageProcess, TestApplyNms) {
@@ -249,4 +269,68 @@ TEST_F(MindDataImageProcess, TestApplyNms) {
   ASSERT_TRUE(keep[0] == 3);
   ASSERT_TRUE(keep[1] == 0);
   ASSERT_TRUE(keep[2] == 1);
+}
+
+TEST_F(MindDataImageProcess, TestAffine) {
+  // The input matrix
+  // 0 0 1 0 0
+  // 0 0 1 0 0
+  // 2 2 3 2 2
+  // 0 0 1 0 0
+  // 0 0 1 0 0
+  size_t rows = 5;
+  size_t cols = 5;
+  LiteMat src(rows, cols);
+  for (size_t i = 0; i < rows; i++) {
+    for (size_t j = 0; j < cols; j++) {
+      if (i == 2 && j == 2) {
+        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 3;
+      } else if (i == 2) {
+        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 2;
+      } else if (j == 2) {
+        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 1;
+      } else {
+        static_cast<UINT8_C1*>(src.data_ptr_)[i * cols + j] = 0;
+      }
+    }
+  }
+
+  // Expect output matrix
+  // 0 0 2 0 0
+  // 0 0 2 0 0
+  // 1 1 3 1 1
+  // 0 0 2 0 0
+  // 0 0 2 0 0
+  LiteMat expect(rows, cols);
+  for (size_t i = 0; i < rows; i++) {
+    for (size_t j = 0; j < cols; j++) {
+      if (i == 2 && j == 2) {
+        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 3;
+      } else if (i == 2) {
+        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 1;
+      } else if (j == 2) {
+        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 2;
+      } else {
+        static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j] = 0;
+      }
+    }
+  }
+
+  double angle = 90.0f;
+  cv::Point2f center(rows / 2, cols / 2);
+  cv::Mat rotate_matrix = cv::getRotationMatrix2D(center, angle, 1.0);
+  double M[6];
+  for (size_t i = 0; i < 6; i++) {
+    M[i] = rotate_matrix.at<double>(i);
+  }
+  std::cout << std::endl;
+  LiteMat dst;
+  Affine(src, dst, M, {rows, cols}, UINT8_C1(0));
+
+  for (size_t i = 0; i < rows; i++) {
+    for (size_t j = 0; j < cols; j++) {
+      EXPECT_EQ(static_cast<UINT8_C1*>(expect.data_ptr_)[i * cols + j].c1,
+                static_cast<UINT8_C1*>(dst.data_ptr_)[i * cols + j].c1);
+    }
+  }
 }

@@ -20,6 +20,7 @@
 #include <math.h>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #include "lite_cv/lite_mat.h"
 
@@ -68,13 +69,20 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, float *mean, float
 bool Padd(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
           uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
 
-void WarpAffine(const LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, uint8_t borderValue[3]);
+/// \brief Apply affine transformation for 1 channel image
+void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
 
+/// \brief Apply affine transformation for 3 channel image
+void Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
+
+/// \brief Get default anchor boxes for Faster R-CNN, SSD, YOLO etc
 std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config);
 
+/// \brief Convert the prediction boxes to the actual boxes of (y, x, h, w)
 void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std::vector<float>> &default_boxes,
                   const BoxesConfig config);
 
+/// \brief Apply Non-Maximum Suppression
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes);
 
