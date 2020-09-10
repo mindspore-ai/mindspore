@@ -1198,7 +1198,7 @@ void ClearPrimEvaluatorMap() {
   GetUniformPrimitiveToImplMap().clear();
 }
 
-bool IsInWhiteList(const PrimitivePtr primitive) {
+bool IsInWhiteList(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
 
   auto iter = GetPrimitiveToEvalImplMap().find(primitive);

@@ -120,6 +120,9 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
 
   FuncGraphPtr bprop_fg = nullptr;
   if (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) {
+    if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      MS_LOG(EXCEPTION) << "HookBackward is not supported in graph mode.";
+    }
     bprop_fg = BpropCut(value_node, resources);
   } else {
     auto iter = bprop_registry_.find(prim);
