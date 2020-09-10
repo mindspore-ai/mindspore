@@ -50,7 +50,7 @@ def novelty_at_k(topk_items, item_degree_dict, num_user, k):
     """Calculate the novelty at k"""
     avg_nov = []
     for item in topk_items[:k]:
-        avg_nov.append(-np.log2(item_degree_dict[item] / num_user))
+        avg_nov.append(-np.log2((item_degree_dict[item] + 1e-8) / num_user))
     return np.mean(avg_nov)
 
 
