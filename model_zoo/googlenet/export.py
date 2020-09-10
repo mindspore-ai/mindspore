@@ -13,24 +13,37 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into geir and onnx models#################
+##############export checkpoint file into air and onnx models#################
 python export.py
 """
+import argparse
 import numpy as np
 
-import mindspore as ms
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
-from src.config import cifar_cfg as cfg
+from src.config import cifar_cfg, imagenet_cfg
 from src.googlenet import GoogleNet
 
-
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Classification')
+    parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['imagenet', 'cifar10'],
+                        help='dataset name.')
+    args_opt = parser.parse_args()
+
+    if args_opt.dataset_name == 'cifar10':
+        cfg = cifar_cfg
+    elif args_opt.dataset_name == 'imagenet':
+        cfg = imagenet_cfg
+    else:
+        raise ValueError("dataset is not support.")
+
     net = GoogleNet(num_classes=cfg.num_classes)
+
+    assert cfg.checkpoint_path is not None, "cfg.checkpoint_path is None."
     param_dict = load_checkpoint(cfg.checkpoint_path)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, 224, 224]), ms.float32)
+    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, 224, 224]).astype(np.float32))
     export(net, input_arr, file_name=cfg.onnx_filename, file_format="ONNX")
-    export(net, input_arr, file_name=cfg.geir_filename, file_format="GEIR")
+    export(net, input_arr, file_name=cfg.air_filename, file_format="AIR")

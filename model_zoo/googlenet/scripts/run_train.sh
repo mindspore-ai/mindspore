@@ -14,36 +14,51 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 1 ] && [ $# != 2 ]
 then
-    echo "Usage: sh run_train.sh [MINDSPORE_HCCL_CONFIG_PATH]"
+    echo "Usage: sh run_train.sh [RANK_TABLE_FILE] [cifar10|imagenet]"
 exit 1
 fi
 
 if [ ! -f $1 ]
 then
-    echo "error: MINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
+    echo "error: RANK_TABLE_FILE=$1 is not a file"
 exit 1
 fi
+
+
+dataset_type='cifar10'
+if [ $# == 2 ]
+then
+    if [ $2 != "cifar10" ] && [ $2 != "imagenet" ]
+    then
+        echo "error: the selected dataset is neither cifar10 nor imagenet"
+    exit 1
+    fi
+    dataset_type=$2
+fi
+
 
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-MINDSPORE_HCCL_CONFIG_PATH=$(realpath $1)
-export MINDSPORE_HCCL_CONFIG_PATH
-echo "MINDSPORE_HCCL_CONFIG_PATH=${MINDSPORE_HCCL_CONFIG_PATH}"
+RANK_TABLE_FILE=$(realpath $1)
+export RANK_TABLE_FILE
+echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
 
+export SERVER_ID=0
+rank_start=$((DEVICE_NUM * SERVER_ID))
 for((i=0; i<${DEVICE_NUM}; i++))
 do
     export DEVICE_ID=$i
-    export RANK_ID=$i
+    export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp -r ./src ./train_parallel$i
     cp ./train.py ./train_parallel$i
-    echo "start training for rank $RANK_ID, device $DEVICE_ID"
+    echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     cd ./train_parallel$i ||exit
     env > env.log
-    python train.py --device_id=$i > log 2>&1 &
+    python train.py --device_id=$i --dataset_name=$dataset_type> log 2>&1 &
     cd ..
 done
