@@ -29,6 +29,13 @@ class OneHotOp:
         num_classes (int): Number of classes of objects in dataset. Value must be larger than 0.
         smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
             (Default=0.0 means no smoothing is applied.)
+
+    Examples:
+        >>> import mindspore.dataset.transforms as py_transforms
+        >>>
+        >>> transforms_list = [py_transforms.OneHotOp(num_classes=10, smoothing_rate=0.1)]
+        >>> transform = py_transforms.Compose(transforms_list)
+        >>> data1 = data1.map(input_columns=["label"], operations=transform())
     """
 
     @check_one_hot_op
@@ -65,17 +72,18 @@ class Compose:
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision.py_transforms as py_transforms
-        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> import mindspore.dataset.transforms.py_transforms as py_transforms
+        >>>
         >>> dataset_dir = "path/to/imagefolder_directory"
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
         >>> dataset = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8)
         >>> # create a list of transformations to be applied to the image data
-        >>> transform = Compose([py_transforms.Decode(),
-        >>>                      py_transforms.RandomHorizontalFlip(0.5),
-        >>>                      py_transforms.ToTensor(),
-        >>>                      py_transforms.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        >>>                      py_transforms.RandomErasing()])
+        >>> transform = py_transform.Compose([py_vision.Decode(),
+        >>>                                  py_vision.RandomHorizontalFlip(0.5),
+        >>>                                  py_vision.ToTensor(),
+        >>>                                  py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        >>>                                  py_vision.RandomErasing()])
         >>> # apply the transform to the dataset through dataset.map()
         >>> dataset = dataset.map(operations=transform, input_columns="image")
     """
