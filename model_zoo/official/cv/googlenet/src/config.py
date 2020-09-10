@@ -18,6 +18,7 @@ network config setting, will be used in main.py
 from easydict import EasyDict as edict
 
 cifar_cfg = edict({
+    'name': 'cifar10',
     'pre_trained': False,
     'num_classes': 10,
     'lr_init': 0.1,
@@ -30,9 +31,45 @@ cifar_cfg = edict({
     'image_width': 224,
     'data_path': './cifar10',
     'device_target': 'Ascend',
-    'device_id': 4,
+    'device_id': 0,
     'keep_checkpoint_max': 10,
     'checkpoint_path': './train_googlenet_cifar10-125_390.ckpt',
     'onnx_filename': 'googlenet.onnx',
     'air_filename': 'googlenet.air'
+})
+
+imagenet_cfg = edict({
+    'name': 'imagenet',
+    'pre_trained': False,
+    'num_classes': 1000,
+    'lr_init': 0.1,
+    'batch_size': 256,
+    'epoch_size': 300,
+    'momentum': 0.9,
+    'weight_decay': 1e-4,
+    'buffer_size': None,  # invalid parameter
+    'image_height': 224,
+    'image_width': 224,
+    'data_path': './ImageNet_Original/train/',
+    'val_data_path': './ImageNet_Original/val/',
+    'device_target': 'Ascend',
+    'device_id': 0,
+    'keep_checkpoint_max': 10,
+    'checkpoint_path': None,
+    'onnx_filename': 'googlenet.onnx',
+    'air_filename': 'googlenet.air',
+
+    # optimizer and lr related
+    'lr_scheduler': 'exponential',
+    'lr_epochs': [70, 140, 210, 280],
+    'lr_gamma': 0.3,
+    'eta_min': 0.0,
+    'T_max': 150,
+    'warmup_epochs': 0,
+
+    # loss related
+    'is_dynamic_loss_scale': 0,
+    'loss_scale': 1024,
+    'label_smooth_factor': 0.1,
+    'use_label_smooth': True,
 })
