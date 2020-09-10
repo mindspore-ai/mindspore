@@ -147,6 +147,9 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     if (kernel_build_info.GetInputFormat(input_index) == pri_match_format) {
       (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT] += base_score;
     }
+    if (kernel_build_info.GetOutputFormat(input_index) == pri_match_format) {
+      (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT] += base_score;
+    }
     if (kernel_build_info.GetInputFormat(input_index) == kOpFormat_DEFAULT) {
       (*cur_kernelinfo_match_counts)[MATCH_DEFAULT_FORMAT_COUNT] += base_score;
     }
