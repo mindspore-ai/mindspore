@@ -34,12 +34,13 @@ typedef struct ReverseSequenceParameter {
   int inner_stride_;
   int copy_byte_size_;
   int total_data_size_;
+  bool is_seq_length_int32_;
 } ReverseSequenceParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ReverseSequence(float *input0, int *input1, float *output, ReverseSequenceParameter *para);
+void ReverseSequence(float *input0, void *input1, float *output, ReverseSequenceParameter *para);
 #ifdef __cplusplus
 }
 #endif
