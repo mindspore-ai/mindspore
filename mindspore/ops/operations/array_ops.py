@@ -1360,7 +1360,7 @@ class Tile(PrimitiveWithInfer):
 
         - **multiples** (tuple[int]) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)`. The length of `multiples`
-          can't be smaller than the length of shape in `input_x`.
+          can't be smaller than the length of shape in `input_x`. Only constant value is allowed.
 
     Outputs:
         Tensor, has the same type as the `input_x`.
@@ -1400,7 +1400,7 @@ class Tile(PrimitiveWithInfer):
     def __infer__(self, x, multiples):
         multiples_v = multiples['value']
         x_shp = x['shape']
-        validator.check_value_type("shape", multiples_v, [tuple], self.name)
+        validator.check_value_type("multiples", multiples_v, [tuple], self.name)
         for i, multiple in enumerate(multiples_v):
             validator.check_value_type("multiples[%d]" % i, multiple, [int], self.name)
         validator.check_value_type("x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
