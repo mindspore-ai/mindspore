@@ -95,8 +95,9 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
 
     out_tensors->emplace_back(new_tensor);
     KernelKey desc{kGPU, kNumberTypeFloat32, schema::PrimitiveType_ToFormat};
-    if (lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
+    if (mem_type == OpenCLMemType::IMG && lite::opencl::OpenCLRuntime::GetInstance()->GetFp16Enable()) {
       desc.data_type = kNumberTypeFloat16;
+      new_tensor->set_data_type(kNumberTypeFloat16);
     }
     OpenCLToFormatParameter *parameter = new (std::nothrow) OpenCLToFormatParameter;
     MS_ASSERT(parameter);
@@ -112,11 +113,11 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
     if (mem_type == OpenCLMemType::IMG) {
-      in_convert_op =
-        lite::GetOpenCLKernel({in_tensors[i]}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), nullptr, desc);
+      in_convert_op = lite::GetOpenCLKernel({in_tensors[i]}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter),
+                                            context_, desc);
     } else {
-      in_convert_op =
-        lite::GetOpenCLKernel({new_tensor}, {in_tensors[i]}, reinterpret_cast<OpParameter *>(parameter), nullptr, desc);
+      in_convert_op = lite::GetOpenCLKernel({new_tensor}, {in_tensors[i]}, reinterpret_cast<OpParameter *>(parameter),
+                                            context_, desc);
     }
     MS_ASSERT(in_convert_op);
     if (in_convert_op == nullptr) {

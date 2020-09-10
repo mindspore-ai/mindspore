@@ -178,17 +178,17 @@ void Scheduler::ConstructSubgraphs(std::vector<kernel::LiteKernel *> *kernels) {
   std::vector<kernel::LiteKernel *> subgraph_kernels;
   size_t sub_cnt{0};
   for (auto temp_kernels : sub_kernels_list) {
+    std::vector<Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
+    for (auto tensor : output_tensor) {
+      if (context_->float16_priority && tensor->data_type() == kNumberTypeFloat16) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
+    }
     kernel::KERNEL_ARCH arch = temp_kernels.front()->desc().arch;
     if (arch == kernel::KERNEL_ARCH::kCPU) {
       for (auto kernel : temp_kernels) {
         for (auto tensor : kernel->out_tensors()) {
           tensor->set_allocator(context_->allocator.get());
-        }
-      }
-      std::vector<Tensor *> output_tensor = kernel::LiteKernelUtil::SubgraphOutputTensors(temp_kernels);
-      for (auto tensor : output_tensor) {
-        if (context_->float16_priority && tensor->data_type() == kNumberTypeFloat16) {
-          tensor->set_data_type(kNumberTypeFloat32);
         }
       }
       std::copy(temp_kernels.begin(), temp_kernels.end(), std::back_inserter(subgraph_kernels));
@@ -213,8 +213,8 @@ kernel::LiteKernel *Scheduler::CreateSubKernel(const std::vector<kernel::LiteKer
     std::vector<Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
     std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
     std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
-    sub_kernel =
-      new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels);
+    sub_kernel = new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels,
+                                                  context_, nullptr);
     sub_kernel->Init();
   } else if (arch == kernel::KERNEL_ARCH::kNPU) {
     MS_LOG(ERROR) << "NPU kernel is not supported";
