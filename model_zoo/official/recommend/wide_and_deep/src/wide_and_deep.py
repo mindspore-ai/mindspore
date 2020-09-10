@@ -198,14 +198,14 @@ class WideDeepModel(nn.Cell):
         self.concat = P.Concat(axis=1)
         self.cast = P.Cast()
         if is_auto_parallel and host_device_mix and not is_field_slice:
-            self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
-            self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
-            self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
+            self.dense_layer_1.dropout.dropout_do_mask.shard(((1, get_group_size()),))
+            self.dense_layer_1.dropout.dropout.shard(((1, get_group_size()),))
+            self.dense_layer_1.matmul.shard(((1, get_group_size()), (get_group_size(), 1)))
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
                                                            slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
                                                            slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE)
-            self.deep_mul.set_strategy(((1, 1, get_group_size()), (1, 1, 1)))
+            self.deep_mul.shard(((1, 1, get_group_size()), (1, 1, 1)))
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
             self.reduce_sum.add_prim_attr("cross_batch", True)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
@@ -217,12 +217,12 @@ class WideDeepModel(nn.Cell):
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
                                                            slice_mode=nn.EmbeddingLookup.FIELD_SLICE,
                                                            manual_shapes=manual_shapes)
-            self.deep_mul.set_strategy(((1, get_group_size(), 1), (1, get_group_size(), 1)))
-            self.wide_mul.set_strategy(((1, get_group_size(), 1), (1, get_group_size(), 1)))
-            self.reduce_sum.set_strategy(((1, get_group_size(), 1),))
-            self.dense_layer_1.dropout.dropout_do_mask.set_strategy(((1, get_group_size()),))
-            self.dense_layer_1.dropout.dropout.set_strategy(((1, get_group_size()),))
-            self.dense_layer_1.matmul.set_strategy(((1, get_group_size()), (get_group_size(), 1)))
+            self.deep_mul.shard(((1, get_group_size(), 1), (1, get_group_size(), 1)))
+            self.wide_mul.shard(((1, get_group_size(), 1), (1, get_group_size(), 1)))
+            self.reduce_sum.shard(((1, get_group_size(), 1),))
+            self.dense_layer_1.dropout.dropout_do_mask.shard(((1, get_group_size()),))
+            self.dense_layer_1.dropout.dropout.shard(((1, get_group_size()),))
+            self.dense_layer_1.matmul.shard(((1, get_group_size()), (get_group_size(), 1)))
             self.embedding_table = self.deep_embeddinglookup.embedding_table
         elif parameter_server:
             self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)

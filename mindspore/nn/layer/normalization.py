@@ -112,12 +112,12 @@ class _BatchNorm(Cell):
 
         data_parallel_strategy = ((1,), (1,))
         data_parallel_strategy_one = ((1,), ())
-        self.sub_mean = P.Sub().set_strategy(data_parallel_strategy)
-        self.sub_var = P.Sub().set_strategy(data_parallel_strategy)
-        self.mul_mean = P.Mul().set_strategy(data_parallel_strategy_one)
-        self.mul_var = P.Mul().set_strategy(data_parallel_strategy_one)
-        self.assign_sub_mean = P.AssignSub().set_strategy(data_parallel_strategy)
-        self.assign_sub_var = P.AssignSub().set_strategy(data_parallel_strategy)
+        self.sub_mean = P.Sub().shard(data_parallel_strategy)
+        self.sub_var = P.Sub().shard(data_parallel_strategy)
+        self.mul_mean = P.Mul().shard(data_parallel_strategy_one)
+        self.mul_var = P.Mul().shard(data_parallel_strategy_one)
+        self.assign_sub_mean = P.AssignSub().shard(data_parallel_strategy)
+        self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
 
     def _check_data_dim(self, x):
         raise NotImplementedError

@@ -74,7 +74,7 @@ def test_bprop_with_sparse_feature_mirror():
                 shape = [8, 8]
             self.index = Tensor(np.ones(shape), dtype=ms.int32)
             self.embeddinglookup = nn.EmbeddingLookup(64, 64, param_init='ones')
-            self.embeddinglookup.embeddinglookup.set_strategy(((1, 1), (8, 1)))
+            self.embeddinglookup.embeddinglookup.shard(((1, 1), (8, 1)))
 
         def construct(self, x, b):
             out = self.embeddinglookup(self.index)

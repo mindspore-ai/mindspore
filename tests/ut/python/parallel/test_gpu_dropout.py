@@ -49,8 +49,8 @@ class GradWrap(nn.Cell):
 class Net(nn.Cell):
     def __init__(self, strategy1=None, strategy2=None):
         super().__init__()
-        self.dropout = P.Dropout(keep_prob=0.6).set_strategy(strategy1)
-        self.matmul = P.MatMul().set_strategy(strategy2)
+        self.dropout = P.Dropout(keep_prob=0.6).shard(strategy1)
+        self.matmul = P.MatMul().shard(strategy2)
 
     def construct(self, x, y):
         out = self.matmul(x, y)

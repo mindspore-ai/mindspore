@@ -298,7 +298,7 @@ def test_reshape_auto_7():
         def __init__(self):
             super().__init__()
             self.reshape = P.Reshape()
-            self.mul = P.Mul().set_strategy(((1, 2, 4), (2, 4)))
+            self.mul = P.Mul().shard(((1, 2, 4), (2, 4)))
             self.mul_weight = Parameter(Tensor(np.ones([128, 96]), dtype=ms.float32), name="weight")
 
         def construct(self, x):

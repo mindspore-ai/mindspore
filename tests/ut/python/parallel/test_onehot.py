@@ -33,10 +33,10 @@ class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3, strategy4, axis):
         super(NetWithLoss, self).__init__()
         self.virtual_dataset = _VirtualDataset()
-        self.one_hot = P.OneHot(axis=axis).set_strategy(strategy3)
+        self.one_hot = P.OneHot(axis=axis).shard(strategy3)
         self.on_value = Tensor(2.0, ms.float32)
         self.off_value = Tensor(1.0, ms.float32)
-        self.loss = P.SoftmaxCrossEntropyWithLogits().set_strategy(strategy4)
+        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy4)
         self.network = network
 
     def construct(self, x, y, b):
@@ -58,8 +58,8 @@ class GradWrap(nn.Cell):
 class Net(nn.Cell):
     def __init__(self, strategy1, strategy2):
         super().__init__()
-        self.matmul = P.MatMul().set_strategy(strategy1)
-        self.gelu = P.Gelu().set_strategy(strategy2)
+        self.matmul = P.MatMul().shard(strategy1)
+        self.gelu = P.Gelu().shard(strategy2)
 
     def construct(self, x, y):
         out = self.matmul(x, y)

@@ -24,8 +24,8 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, mul_weight, batch_matmul_weight, transpose_b=False, strategy1=None, strategy2=None):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.batch_matmul = P.BatchMatMul(transpose_b=transpose_b).set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.batch_matmul = P.BatchMatMul(transpose_b=transpose_b).shard(strategy2)
         self.mul_weight = Parameter(mul_weight, "w1")
         self.batch_matmul_weight = Parameter(batch_matmul_weight, "w2")
 

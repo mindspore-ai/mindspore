@@ -24,8 +24,8 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, weight, weight2, strategy1=None, strategy2=None, is_parameter=True):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.tile = P.Tile().set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.tile = P.Tile().shard(strategy2)
         if is_parameter:
             self.weight = Parameter(weight, "w1")
         else:
@@ -43,8 +43,8 @@ class Net(Cell):
 class Net2(Cell):
     def __init__(self, weight2, strategy1=None, strategy2=None):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.tile = P.Tile().set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.tile = P.Tile().shard(strategy2)
         self.weight2 = Parameter(weight2, "w2")
 
     def construct(self, x, b):

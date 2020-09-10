@@ -51,7 +51,7 @@ class Net(nn.Cell):
     def __init__(self, strategy):
         super().__init__()
         self.reshape = P.Reshape()
-        self.mul = P.Mul().set_strategy(strategy)
+        self.mul = P.Mul().shard(strategy)
         self.relu = P.ReLU()
 
     def construct(self, x, y):

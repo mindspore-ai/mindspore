@@ -52,11 +52,11 @@ def test_two_matmul_dropout():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
+            self.matmul1 = P.MatMul().shard(strategy1)
             self.dropout = nn.Dropout()
-            self.dropout.dropout_do_mask.set_strategy(strategy2)
-            self.dropout.dropout_gen_mask.set_strategy(strategy2)
-            self.matmul2 = P.MatMul().set_strategy(strategy3)
+            self.dropout.dropout_do_mask.shard(strategy2)
+            self.dropout.dropout_gen_mask.shard(strategy2)
+            self.matmul2 = P.MatMul().shard(strategy3)
 
         def construct(self, x, y, b):
             out = self.matmul1(x, y)

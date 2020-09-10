@@ -27,7 +27,7 @@ from mindspore.ops import operations as P
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
         super(NetWithLoss, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits().set_strategy(strategy3)
+        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy3)
         self.network = network
 
     def construct(self, x, b):
@@ -45,8 +45,8 @@ def test_optimizer_clone_weight():
         def __init__(self, strategy1, strategy2, weight):
             super().__init__()
             self.weight = Parameter(weight, "w1")
-            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).set_strategy(strategy1)
-            self.relu = P.ReLU().set_strategy(strategy2)
+            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
 
         def construct(self, x):
             out = self.matmul(x, self.weight)
@@ -80,8 +80,8 @@ def test_optimizer_clone_weight2():
         def __init__(self, strategy1, strategy2, weight):
             super().__init__()
             self.weight = Parameter(weight, "w1")
-            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).set_strategy(strategy1)
-            self.relu = P.ReLU().set_strategy(strategy2)
+            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
 
         def construct(self, x):
             out = self.matmul(x, self.weight)

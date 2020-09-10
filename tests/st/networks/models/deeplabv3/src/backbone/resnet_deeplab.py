@@ -273,8 +273,8 @@ class DepthwiseConv2dNative(_DepthwiseConv2dNative):
                                                                dilation=self.dilation,
                                                                group=self.group)
 
-    def set_strategy(self, strategy):
-        self.depthwise_conv2d_native.set_strategy(strategy)
+    def shard(self, strategy):
+        self.depthwise_conv2d_native.shard(strategy)
         return self
 
     def construct(self, x):

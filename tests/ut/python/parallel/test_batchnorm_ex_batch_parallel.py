@@ -51,13 +51,13 @@ def test_two_matmul_batchnorm_ex():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
+            self.matmul1 = P.MatMul().shard(strategy1)
             self.norm = P.FusedBatchNormEx()
             self.gamma = Parameter(Tensor(np.ones([64]), dtype=ms.float32), name="gamma")
             self.beta = Parameter(Tensor(np.ones([64]), dtype=ms.float32), name="beta")
             self.mean = Parameter(Tensor(np.ones([64]), dtype=ms.float32), name="mean")
             self.var = Parameter(Tensor(np.ones([64]), dtype=ms.float32), name="var")
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
+            self.matmul2 = P.MatMul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul1(x, y)

@@ -51,7 +51,7 @@ class DenseWrap(Cell):
                  bias_init='zeros',
                  has_bias=True,
                  matmul_strategy=None,
-                 set_strategy=None):
+                 shard=None):
 
         super(DenseWrap, self).__init__()
 
@@ -69,8 +69,8 @@ class DenseWrap(Cell):
             self.bias = Parameter(initializer(
                 'zeros', [output_channels]), name="bias")
 
-        self.matmul = P.MatMul(transpose_b=True).set_strategy(matmul_strategy)
-        self.bias_add = P.TensorAdd().set_strategy(set_strategy)
+        self.matmul = P.MatMul(transpose_b=True).shard(matmul_strategy)
+        self.bias_add = P.TensorAdd().shard(shard)
 
     def construct(self, x):
         if self.has_bias:
@@ -108,7 +108,7 @@ def conv3x3(in_channels, out_channels, stride=1):
     conv = Conv2d(in_channels, out_channels,
                   kernel_size=3, stride=stride, padding=0, weight_init=weight, has_bias=False,
                   pad_mode="same")
-    conv.conv2d.set_strategy(strategy_weight)
+    conv.conv2d.shard(strategy_weight)
     return conv
 
 
@@ -119,7 +119,7 @@ def conv1x1(in_channels, out_channels, stride=1):
     conv = Conv2d(in_channels, out_channels,
                   kernel_size=1, stride=stride, padding=0, weight_init=weight, has_bias=False,
                   pad_mode="same")
-    conv.conv2d.set_strategy(strategy_weight)
+    conv.conv2d.shard(strategy_weight)
     return conv
 
 
@@ -130,7 +130,7 @@ def conv7x7(in_channels, out_channels, stride=1):
     conv = Conv2d(in_channels, out_channels,
                   kernel_size=7, stride=stride, padding=0, weight_init=weight, has_bias=False,
                   pad_mode="same")
-    conv.conv2d.set_strategy(strategy_weight)
+    conv.conv2d.shard(strategy_weight)
     return conv
 
 
@@ -152,7 +152,7 @@ def bn_with_initialize(out_channels):
     gamma = weight_variable_1(shape)
     bn = BatchNorm2d(out_channels, momentum=0.1, eps=0.0001, gamma_init=gamma,
                      beta_init=beta, moving_mean_init=mean, moving_var_init=var)
-    bn.bn_train.set_strategy(strategy_bn)
+    bn.bn_train.shard(strategy_bn)
     return bn
 
 
@@ -164,7 +164,7 @@ def bn_with_initialize_last(out_channels):
     gamma = weight_variable_0(shape)
     bn = BatchNorm2d(out_channels, momentum=0.1, eps=0.0001, gamma_init=gamma,
                      beta_init=beta, moving_mean_init=mean, moving_var_init=var)
-    bn.bn_train.set_strategy(strategy_bn)
+    bn.bn_train.shard(strategy_bn)
     return bn
 
 
@@ -175,7 +175,7 @@ def fc_with_initialize(input_channels, out_channels):
     bias = weight_variable_0(bias_shape)
 
     return DenseWrap(input_channels, out_channels, weight, bias, has_bias=True,
-                     matmul_strategy=strategy_fc_weight_nobias, set_strategy=strategy_tensor_add)
+                     matmul_strategy=strategy_fc_weight_nobias, shard=strategy_tensor_add)
 
 
 class ResidualBlock(Cell):
@@ -197,10 +197,10 @@ class ResidualBlock(Cell):
         self.conv3 = conv1x1(out_chls, out_channels, stride=1)
         self.bn3 = bn_with_initialize_last(out_channels)
 
-        self.relu1 = P.ReLU().set_strategy(strategy_no_weight)
-        self.relu2 = P.ReLU().set_strategy(strategy_no_weight)
-        self.relu3 = P.ReLU().set_strategy(strategy_no_weight)
-        self.add = TensorAdd().set_strategy(strategy_add)
+        self.relu1 = P.ReLU().shard(strategy_no_weight)
+        self.relu2 = P.ReLU().shard(strategy_no_weight)
+        self.relu3 = P.ReLU().shard(strategy_no_weight)
+        self.add = TensorAdd().shard(strategy_add)
 
     def construct(self, x):
         identity = x
@@ -242,14 +242,14 @@ class ResidualBlockWithDown(Cell):
         self.conv3 = conv1x1(out_chls, out_channels, stride=1)
         self.bn3 = bn_with_initialize_last(out_channels)
 
-        self.relu1 = P.ReLU().set_strategy(strategy_no_weight)
-        self.relu2 = P.ReLU().set_strategy(strategy_no_weight)
-        self.relu3 = P.ReLU().set_strategy(strategy_no_weight)
+        self.relu1 = P.ReLU().shard(strategy_no_weight)
+        self.relu2 = P.ReLU().shard(strategy_no_weight)
+        self.relu3 = P.ReLU().shard(strategy_no_weight)
         self.down_sample = down_sample
 
         self.conv_down_sample = conv1x1(in_channels, out_channels, stride=stride)
         self.bn_down_sample = bn_with_initialize(out_channels)
-        self.add = TensorAdd().set_strategy(strategy_add)
+        self.add = TensorAdd().shard(strategy_add)
 
     def construct(self, x):
         identity = x
@@ -296,11 +296,11 @@ class ResNet(Cell):
         super(ResNet, self).__init__()
         self.conv1 = conv7x7(3, 64, stride=2)
         self.bn1 = bn_with_initialize(64)
-        self.relu = P.ReLU().set_strategy(strategy_no_weight)
+        self.relu = P.ReLU().shard(strategy_no_weight)
         self.maxpool = MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.layer1 = MakeLayer0(
             block, in_channels=64, out_channels=256, stride=1)
-        self.pool = M.ReduceMean(keep_dims=True).set_strategy(strategy_no_weight)
+        self.pool = M.ReduceMean(keep_dims=True).shard(strategy_no_weight)
         self.fc = fc_with_initialize(64 * block.expansion, num_classes)
         self.flatten = Flatten()
 
@@ -319,11 +319,11 @@ class ResNet(Cell):
 class ResNetModelParallel(Cell):
     def __init__(self, block, num_classes=100):
         super(ResNetModelParallel, self).__init__()
-        self.relu = P.ReLU().set_strategy(((1, dev_num, 1, 1),))
+        self.relu = P.ReLU().shard(((1, dev_num, 1, 1),))
         self.maxpool = MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.layer1 = MakeLayer0(
             block, in_channels=64, out_channels=256, stride=1)
-        self.pool = M.ReduceMean(keep_dims=True).set_strategy(strategy_no_weight)
+        self.pool = M.ReduceMean(keep_dims=True).shard(strategy_no_weight)
         self.fc = fc_with_initialize(64 * block.expansion, num_classes)
         self.flatten = Flatten()
 
@@ -363,7 +363,7 @@ def test_resnet_operator_batch_parallel():
     net = resnet_operator_net(num_classes)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
+    loss.softmax_cross_entropy.shard(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
     model = Model(net, loss, opt)
@@ -388,7 +388,7 @@ def test_resnet_model_parallel():
     net = resnet_model_parallel_net(num_classes)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(((dev_num, 1), (dev_num, 1)))
+    loss.softmax_cross_entropy.shard(((dev_num, 1), (dev_num, 1)))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
 
     model = Model(net, loss, opt)

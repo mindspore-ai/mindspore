@@ -51,12 +51,12 @@ class Onehot(Cell):
         trans_stra = None
         if strategy:
             trans_stra = (strategy[0],)
-        self.onehot = P.OneHot().set_strategy(strategy=strategy)
+        self.onehot = P.OneHot().shard(strategy=strategy)
         self.depth = depth
         self.on_value = Tensor(on_value, ms.float32)
         self.off_value = Tensor(off_value, ms.float32)
-        self.transpose = P.Transpose().set_strategy(strategy=trans_stra)
-        self.sub = P.Sub().set_strategy(strategy=((1, 1), (1, 1)))
+        self.transpose = P.Transpose().shard(strategy=trans_stra)
+        self.sub = P.Sub().shard(strategy=((1, 1), (1, 1)))
         self.axis = axis
 
     def construct(self, input_, indices):

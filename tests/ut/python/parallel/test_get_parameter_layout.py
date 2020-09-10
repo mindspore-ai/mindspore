@@ -27,8 +27,8 @@ def test_get_parameter_layout():
         def __init__(self, strategy1, strategy2, weight):
             super().__init__()
             self.weight = Parameter(weight, "w1")
-            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).set_strategy(strategy1)
-            self.relu = P.ReLU().set_strategy(strategy2)
+            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
 
         def construct(self, x):
             out = self.matmul(x, self.weight)

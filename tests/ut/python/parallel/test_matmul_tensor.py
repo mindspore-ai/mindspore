@@ -59,9 +59,9 @@ def test_two_matmul():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
-            self.matmul3 = P.MatMul().set_strategy(strategy3)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+            self.matmul3 = P.MatMul().shard(strategy3)
             self.diag = P.Diag()
             self.fill = P.Fill()
 
@@ -89,8 +89,8 @@ def test_matmul_mul_broadcast2():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.mul = P.Mul().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.mul = P.Mul().shard(strategy2)
             self.t = Tensor(0.9, ms.float32)
 
         def construct(self, x, y):
@@ -113,9 +113,9 @@ def test_two_matmul1():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
-            self.matmul3 = P.MatMul().set_strategy(strategy3)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+            self.matmul3 = P.MatMul().shard(strategy3)
             self.diag = P.Diag()
             self.fill = P.Fill()
 
@@ -143,8 +143,8 @@ def test_matmul_add_tensor():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.add = P.TensorAdd().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.add = P.TensorAdd().shard(strategy2)
             self.b = Tensor(0.9, ms.float32)
 
         def construct(self, x, y):

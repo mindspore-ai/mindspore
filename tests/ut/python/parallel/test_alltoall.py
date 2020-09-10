@@ -53,9 +53,9 @@ class Dataset(MindData):
 class AllToAllNet(nn.Cell):
     def __init__(self, strategy1):
         super(AllToAllNet, self).__init__()
-        self.matmul = P.MatMul().set_strategy(((1, 1), (1, 8)))
+        self.matmul = P.MatMul().shard(((1, 1), (1, 8)))
         self.matmul_weight = Parameter(Tensor(np.ones([128, 256]), dtype=ms.float32), name="weight")
-        self.transpose1 = P.Transpose().set_strategy(strategy1)
+        self.transpose1 = P.Transpose().shard(strategy1)
 
     def construct(self, x):
         x = self.matmul(x, self.matmul_weight)
@@ -80,8 +80,8 @@ def all_to_all_common(strategy1):
     net = all_to_all_net(strategy1)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True)
-    loss.softmax_cross_entropy.set_strategy(((8, 1), (8, 1)))
-    loss.one_hot.set_strategy(((8, 1), (), ()))
+    loss.softmax_cross_entropy.shard(((8, 1), (8, 1)))
+    loss.one_hot.shard(((8, 1), (), ()))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
 

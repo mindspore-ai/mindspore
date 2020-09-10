@@ -54,10 +54,10 @@ def test_virtual_dataset_3_input():
     class Net(nn.Cell):
         def __init__(self, strategy0, strategy1, strategy2, strategy3):
             super().__init__()
-            self.virtual_dataset = _VirtualDataset().set_strategy(strategy0)
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
-            self.gelu = P.Gelu().set_strategy(strategy3)
+            self.virtual_dataset = _VirtualDataset().shard(strategy0)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+            self.gelu = P.Gelu().shard(strategy3)
 
         def construct(self, x, y, b):
             x, y, b = self.virtual_dataset(x, y, b)
@@ -83,9 +83,9 @@ def test_virtualdataset_cell_3_inputs():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
-            self.gelu = P.Gelu().set_strategy(strategy3)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+            self.gelu = P.Gelu().shard(strategy3)
 
         def construct(self, x, y, b):
             out = self.gelu(self.matmul1(x, y))

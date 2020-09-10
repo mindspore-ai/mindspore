@@ -29,7 +29,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
         super(NetWithLoss, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits().set_strategy(strategy3)
+        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy3)
         self.network = network
 
     def construct(self, x, b):
@@ -55,8 +55,8 @@ def test_two_weights_parameter():
             super().__init__()
             self.weight = Parameter(weight, "w1", requires_grad=True)
             self.weight2 = Parameter(weight2, "w2", requires_grad=True)
-            self.matmul = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
+            self.matmul = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
 
         def construct(self, x):
             out = self.matmul(x, self.weight)

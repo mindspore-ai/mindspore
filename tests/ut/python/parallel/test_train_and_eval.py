@@ -24,8 +24,8 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, mul_weight, strategy1=None, strategy2=None):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.neg = P.Neg().set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.neg = P.Neg().shard(strategy2)
         self.mul_weight = Parameter(mul_weight, "w1")
 
     def construct(self, x, b):
@@ -38,7 +38,7 @@ class EvalNet(Cell):
     def __init__(self, network, strategy2=None):
         super().__init__()
         self.network = network
-        self.relu = P.ReLU().set_strategy(strategy2)
+        self.relu = P.ReLU().shard(strategy2)
 
     def construct(self, x, b):
         out = self.network(x, b)

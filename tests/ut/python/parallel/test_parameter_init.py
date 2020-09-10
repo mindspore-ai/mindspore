@@ -37,7 +37,7 @@ def test_parameter_init():
         def __init__(self, strategy1, weight):
             super().__init__()
             self.weight = Parameter(weight, "w1")
-            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).set_strategy(strategy1)
+            self.matmul = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
 
         def construct(self, x):
             out = self.matmul(x, self.weight)

@@ -23,12 +23,12 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, weight, weight2, strategy1=None, strategy2=None, is_parameter=True):
         super().__init__()
-        self.concat = P.Concat(axis=0).set_strategy(strategy1)
+        self.concat = P.Concat(axis=0).shard(strategy1)
         if is_parameter:
             self.weight = Parameter(weight, "w1")
         else:
             self.weight = weight
-        self.mul = P.Mul().set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy2)
         self.weight2 = Parameter(weight2, "w2")
 
     def construct(self, x, b):
@@ -40,8 +40,8 @@ class Net(Cell):
 class Net2(Cell):
     def __init__(self, weight, strategy1=None, strategy2=None, axis=0):
         super().__init__()
-        self.mul = P.Mul().set_strategy(strategy1)
-        self.concat = P.Concat(axis=axis).set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy1)
+        self.concat = P.Concat(axis=axis).shard(strategy2)
         self.weight = Parameter(weight, "w")
 
     def construct(self, x, b):
@@ -53,12 +53,12 @@ class Net2(Cell):
 class Net3(Cell):
     def __init__(self, weight, weight2, weight3, strategy1=None, strategy2=None, is_parameter=True):
         super().__init__()
-        self.concat = P.Concat(axis=0).set_strategy(strategy1)
+        self.concat = P.Concat(axis=0).shard(strategy1)
         if is_parameter:
             self.weight = Parameter(weight, "w1")
         else:
             self.weight = weight
-        self.mul = P.Mul().set_strategy(strategy2)
+        self.mul = P.Mul().shard(strategy2)
         self.weight2 = Parameter(weight2, "w2")
         self.weight3 = Parameter(weight3, "w3")
 

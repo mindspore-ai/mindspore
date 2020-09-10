@@ -76,8 +76,8 @@ def test_no_grad():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul1(x, y)
@@ -101,8 +101,8 @@ def test_grad_sens_parameter_type():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul1(x, y)
@@ -133,8 +133,8 @@ def test_grad_sens_tensor_type():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.matmul1 = P.MatMul().set_strategy(strategy1)
-            self.matmul2 = P.MatMul().set_strategy(strategy2)
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
 
         def construct(self, x, y, b):
             out = self.matmul1(x, y)
@@ -158,8 +158,8 @@ def test_grad_sens_scalar_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy0, strategy1):
             super().__init__()
-            self.fc_nobias = P.MatMul(transpose_b=True).set_strategy(strategy0)
-            self.reduce_sum = P.ReduceSum(keep_dims=False).set_strategy(strategy1)
+            self.fc_nobias = P.MatMul(transpose_b=True).shard(strategy0)
+            self.reduce_sum = P.ReduceSum(keep_dims=False).shard(strategy1)
 
         def construct(self, x, y):
             out = self.fc_nobias(x, y)

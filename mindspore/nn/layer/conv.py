@@ -567,8 +567,8 @@ class Conv2dTranspose(_Conv):
         else:
             self.padding_top, self.padding_bottom, self.padding_left, self.padding_right = self.padding
 
-    def set_strategy(self, strategy):
-        self.conv2d_transpose.set_strategy(strategy)
+    def shard(self, strategy):
+        self.conv2d_transpose.shard(strategy)
         return self
 
     def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size, padding):
@@ -744,8 +744,8 @@ class Conv1dTranspose(_Conv):
         self.expand_dims = P.ExpandDims()
         self.squeeze = P.Squeeze(2)
 
-    def set_strategy(self, strategy):
-        self.conv2d_transpose.set_strategy(strategy)
+    def shard(self, strategy):
+        self.conv2d_transpose.shard(strategy)
         return self
 
     def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size, padding):

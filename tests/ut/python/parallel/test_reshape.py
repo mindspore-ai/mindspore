@@ -67,9 +67,9 @@ class Dataset(MindData):
 class ReshapeNet(nn.Cell):
     def __init__(self, strategy0, strategy1, strategy2):
         super(ReshapeNet, self).__init__()
-        self.relu = P.ReLU().set_strategy(strategy0)
-        self.reshape = P.Reshape().set_strategy(strategy1)
-        self.matmul = P.MatMul().set_strategy(strategy2)
+        self.relu = P.ReLU().shard(strategy0)
+        self.reshape = P.Reshape().shard(strategy1)
+        self.matmul = P.MatMul().shard(strategy2)
         self.matmul_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
 
     def construct(self, x):
@@ -96,8 +96,8 @@ def reshape_common(parallel_mode, strategy0, strategy1, strategy2, strategy_loss
     net = reshape_net(strategy0, strategy1, strategy2)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(strategy_loss)
-    loss.one_hot.set_strategy(((8, 1), (), ()))
+    loss.softmax_cross_entropy.shard(strategy_loss)
+    loss.one_hot.shard(((8, 1), (), ()))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
@@ -206,7 +206,7 @@ class ReshapeNet1(nn.Cell):
         super(ReshapeNet1, self).__init__()
         self.virtual_dataset = _VirtualDataset()
         self.reshape = P.Reshape()
-        self.matmul = P.MatMul().set_strategy(strategy0)
+        self.matmul = P.MatMul().shard(strategy0)
         self.matmul_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
         self.reshape2 = P.Reshape()
 
@@ -223,7 +223,7 @@ class ReshapeNet2(nn.Cell):
         super(ReshapeNet2, self).__init__()
         self.virtual_dataset = _VirtualDataset()
         self.reshape = P.Reshape()
-        self.matmul = P.MatMul().set_strategy(strategy0)
+        self.matmul = P.MatMul().shard(strategy0)
         self.matmul_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
         self.reshape2 = P.Reshape()
         self.reduce_sum = P.ReduceSum(keep_dims=True)
@@ -244,7 +244,7 @@ class ReshapeNet3(nn.Cell):
         super(ReshapeNet3, self).__init__()
         self.virtual_dataset = _VirtualDataset()
         self.reshape = P.Reshape()
-        self.matmul = P.MatMul().set_strategy(strategy0)
+        self.matmul = P.MatMul().shard(strategy0)
         self.matmul_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
         self.reshape2 = P.Reshape()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
@@ -266,7 +266,7 @@ class ReshapeNet4(nn.Cell):
         self.virtual_dataset = _VirtualDataset()
         self.reshape = P.Reshape()
         self.reshape2 = P.Reshape()
-        self.matmul = P.MatMul().set_strategy(strategy0)
+        self.matmul = P.MatMul().shard(strategy0)
         self.matmul_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
 
     def construct(self, x):
@@ -282,9 +282,9 @@ class ReshapeNet5(nn.Cell):
         super(ReshapeNet5, self).__init__()
         self.virtual_dataset = _VirtualDataset()
         self.reshape = P.Reshape()
-        self.matmul1 = P.MatMul().set_strategy(strategy0)
+        self.matmul1 = P.MatMul().shard(strategy0)
         self.matmul1_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
-        self.matmul2 = P.MatMul().set_strategy(strategy0)
+        self.matmul2 = P.MatMul().shard(strategy0)
 
     def construct(self, x):
         x = self.virtual_dataset(x)
@@ -299,10 +299,10 @@ class ReshapeNet6(nn.Cell):
         super(ReshapeNet6, self).__init__()
         self.virtual_dataset = _VirtualDataset()
         self.reshape = P.Reshape()
-        self.matmul1_1 = P.MatMul().set_strategy(strategy0)
-        self.matmul1_2 = P.MatMul().set_strategy(strategy0)
+        self.matmul1_1 = P.MatMul().shard(strategy0)
+        self.matmul1_2 = P.MatMul().shard(strategy0)
         self.matmul1_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
-        self.matmul2 = P.MatMul().set_strategy(strategy0)
+        self.matmul2 = P.MatMul().shard(strategy0)
         self.add = P.TensorAdd()
 
     def construct(self, x):
@@ -552,7 +552,7 @@ class ParallelReduceMeanNet(nn.Cell):
         self.flat = nn.Flatten()
         self.reducemean_axis = reducemean_axis
         if strategy is not None:
-            self.reduce_mean.set_strategy(strategy)
+            self.reduce_mean.shard(strategy)
 
     def construct(self, inputs):
         x = self.conv(inputs)
@@ -626,7 +626,7 @@ class ParallelReshapeNet(nn.Cell):
                               has_bias=True)
         self.reshape = P.Reshape()
         self.shape = shape
-        self.reshape.set_strategy(strategy)
+        self.reshape.shard(strategy)
 
     def construct(self, inputs):
         x = self.flat(inputs)

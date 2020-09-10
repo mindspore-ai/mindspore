@@ -54,9 +54,9 @@ class Dataset(MindData):
 class AllToAllNet(nn.Cell):
     def __init__(self, strategy1):
         super(AllToAllNet, self).__init__()
-        self.matmul = P.MatMul().set_strategy(((1, 1), (1, 8)))
+        self.matmul = P.MatMul().shard(((1, 1), (1, 8)))
         self.matmul_weight = Parameter(Tensor(np.ones([128, 256]), dtype=ms.float32), name="weight")
-        self.transpose1 = P.Transpose().set_strategy(strategy1)
+        self.transpose1 = P.Transpose().shard(strategy1)
 
     def construct(self, x):
         x = self.matmul(x, self.matmul_weight)
@@ -81,7 +81,7 @@ def loss_scale_manager_common(strategy1):
     net = all_to_all_net(strategy1)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(((8, 1), (8, 1)))
+    loss.softmax_cross_entropy.shard(((8, 1), (8, 1)))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     scale_manager = DynamicLossScaleManager(32, 2, 2000)
     model = Model(net, loss, opt, loss_scale_manager=scale_manager)
@@ -154,9 +154,9 @@ def test_input_not_in_parameter_layotu_dict():
     class Net(nn.Cell):
         def __init__(self, strategy1):
             super(Net, self).__init__()
-            self.matmul = P.MatMul().set_strategy(((1, 1), (1, 8)))
+            self.matmul = P.MatMul().shard(((1, 1), (1, 8)))
             self.matmul_weight = Parameter(Tensor(np.ones([128, 256]), dtype=ms.float32), name="weight")
-            self.transpose1 = P.Transpose().set_strategy(strategy1)
+            self.transpose1 = P.Transpose().shard(strategy1)
 
         def construct(self, x):
             x = self.matmul(x, self.matmul_weight)

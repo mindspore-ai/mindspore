@@ -49,8 +49,8 @@ class Net(nn.Cell):
         super().__init__()
         self.index = Tensor(np.ones(shape), dtype=ms.int32)
         self.offset = offset
-        self.elu = P.EmbeddingLookup().set_strategy(strategy1).add_prim_attr("primitive_target", target)
-        self.mm = P.BatchMatMul().set_strategy(strategy2)
+        self.elu = P.EmbeddingLookup().shard(strategy1).add_prim_attr("primitive_target", target)
+        self.mm = P.BatchMatMul().shard(strategy2)
 
     def construct(self, x, y):
         out = self.elu(x, self.index, self.offset)

@@ -73,7 +73,7 @@ class NetConv(nn.Cell):
                               has_bias,
                               weight_init,
                               bias_init)
-        self.conv.conv2d.set_strategy(strategy)
+        self.conv.conv2d.shard(strategy)
 
     def construct(self, input_x):
         return self.conv(input_x)
@@ -84,9 +84,9 @@ def test_batch():
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
             self.conv1 = NetConv(16, 8, (3, 3), bias_init='zeros', strategy=strategy1)
-            self.mul1 = P.Mul().set_strategy(strategy2)
+            self.mul1 = P.Mul().shard(strategy2)
             self.conv2 = NetConv(8, 64, (9, 9), bias_init='zeros', strategy=strategy1)
-            self.mul2 = P.Mul().set_strategy(strategy3)
+            self.mul2 = P.Mul().shard(strategy3)
 
         def construct(self, x, w1, w2):
             out1 = self.conv1(x)

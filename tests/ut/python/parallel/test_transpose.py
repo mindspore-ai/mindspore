@@ -50,10 +50,10 @@ class Dataset(MindData):
 class TransposeNet(nn.Cell):
     def __init__(self, strategy1, strategy2):
         super(TransposeNet, self).__init__()
-        self.matmul = P.MatMul().set_strategy(((8, 1), (1, 1)))
+        self.matmul = P.MatMul().shard(((8, 1), (1, 1)))
         self.matmul_weight = Parameter(Tensor(np.ones([128, 256]), dtype=ms.float32), name="weight")
-        self.transpose1 = P.Transpose().set_strategy(strategy1)
-        self.transpose2 = P.Transpose().set_strategy(strategy2)
+        self.transpose1 = P.Transpose().shard(strategy1)
+        self.transpose2 = P.Transpose().shard(strategy2)
 
     def construct(self, x):
         x = self.matmul(x, self.matmul_weight)
@@ -81,7 +81,7 @@ def transpose_common(strategy1, strategy2):
     net = transpose_net(strategy1, strategy2)
 
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    loss.softmax_cross_entropy.set_strategy(((8, 1), (8, 1)))
+    loss.softmax_cross_entropy.shard(((8, 1), (8, 1)))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, loss, opt)
