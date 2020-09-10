@@ -636,7 +636,12 @@ AbstractBasePtr InferImplAssign(const AnalysisEnginePtr &, const PrimitivePtr &p
   CheckArgsSize(primitive->name(), args_spec_list, 2);
 
   MS_LOG(DEBUG) << "InferImplAssign " << args_spec_list[0];
-  return args_spec_list[0];
+  auto type = args_spec_list[0]->BuildType();
+  if (type->type_id() == kObjectTypeRefKey) {
+    return args_spec_list[1]->Broaden();
+  } else {
+    return args_spec_list[0];
+  }
 }
 
 REGISTER_FRONTENT_PRIMITIVE_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof);
