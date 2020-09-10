@@ -103,6 +103,16 @@ class Cell(Cell_):
     def already_run(self):
         return self._already_run
 
+    def __getstate__(self):
+        base = Cell_.__getstate__(self)
+        return base, self.__dict__
+
+    def __setstate__(self, state):
+        base, dict_ = state
+        Cell_.__setstate__(self, base)
+        self.__dict__ = dict_
+        self._attr_synced = False
+
     @property
     def _cell_tag(self):
         # `<class 'xxxxxxx'>`
@@ -387,6 +397,9 @@ class Cell(Cell_):
         To print customized extended information, re-implement this method in your own cells.
         """
         return ''
+
+    def __str__(self):
+        return self.__repr__()
 
     def __repr__(self):
         extra_str = self.extend_repr()
