@@ -17,11 +17,12 @@ import math
 import os
 
 from mindspore._checkparam import check_bool, check_int
-from .. import context
+from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _to_tensor, \
     _construct_tensor_list
 from ..nn.wrap import GetNextSingleOp
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes
+from ..ops import operations as P
 
 
 def _send_data(dataset, epoch_num):
@@ -37,9 +38,70 @@ def _send_data_no_flag(dataset, epoch_num):
     exec_dataset.send(epoch_num)
 
 
+def connect_network_with_dataset(network, dataset_helper):
+    """
+    Connect the `network` with dataset in `dataset_helper`.
+
+    This function wraps the input network with 'GetNext' so that the data can be fetched automatically from the
+    data channel corresponding to the 'queue_name' and passed to the input network during forward computation.
+
+    Note:
+        In the case of running the network on Ascend in graph mode, this function will wrap the input network with
+        'GetNext', in other cases, the input network will be returned with no change.
+        The 'GetNext' is required to get data only in sink mode, so this function is not applicable to no-sink mode.
+
+    Args:
+        network (Cell): The training network for dataset.
+        dataset_helper(DatasetHelper): A class to process the MindData dataset, it provides the type, shape and queue
+            name of the dataset to wrap the `GetNext`.
+
+    Outputs:
+        Cell, a new network wrapped with 'GetNext' in the case of running the task on Ascend in graph mode, otherwise
+        it is the input network.
+
+    Examples:
+        >>> # call create_dataset function to create a regular dataset, refer to mindspore.dataset
+        >>> train_dataset = create_dataset()
+        >>> dataset_helper = mindspore.DatasetHelper(train_dataset)
+        >>> net = Net()
+        >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
+    """
+    class _DataWrapper(nn.Cell):
+        """
+        Wraps the input network with a dataset which automatically fetches data with 'GetNext' function from the
+        dataset channel 'queue_name' and performs the forward computation.
+        """
+        def __init__(self, network, dataset_types, dataset_shapes, queue_name):
+            super(_DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
+            # Also copy the flag in `network` construct
+            flags = getattr(network.__class__.construct, "_mindspore_flags", {})
+            self.add_flags(**flags)
+            self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
+            self.network = network
+
+        def construct(self):
+            outputs = self.get_next()
+            return self.network(*outputs)
+
+    dataset_iter = dataset_helper.iter
+    dataset = dataset_iter.dataset
+
+    if isinstance(dataset_iter, _DatasetIterNormal):
+        raise RuntimeError("Dataset should be connected with network only in sink mode.")
+
+    if not hasattr(dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" and \
+            context.get_context("mode") == context.GRAPH_MODE and not context.get_context("enable_ge"):
+        dataset.__ME_INITED__ = True
+        dataset_types, dataset_shapes = dataset_helper.types_shapes()
+        queue_name = dataset.__TRANSFER_DATASET__.queue_name
+
+        network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name)
+    return network
+
+
 class DatasetHelper:
     """
-    Help function to use the MindData dataset.
+    DatasetHelper is a class to process the MindData dataset and it provides the information of dataset.
 
     According to different contexts, change the iterations of dataset and use the same iteration for loop in different
     contexts.
@@ -114,7 +176,6 @@ class _DatasetIter:
             if hasattr(dataset, '__loop_size__'):
                 self.sink_size = dataset.__loop_size__
             dataset.__TRANSFER_DATASET__ = _exec_datagraph(dataset, self.sink_size)
-            dataset.__ME_INITED__ = dataset.__TRANSFER_DATASET__.queue_name
 
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset, epoch_num)
@@ -207,7 +268,7 @@ class _DatasetIterMS(_DatasetIter):
         else:
             self.sink_count = dataset.get_dataset_size()
 
-        queue_name = dataset.__ME_INITED__
+        queue_name = dataset.__TRANSFER_DATASET__.queue_name
         self.op = GetNextSingleOp(self.dataset_types, self.dataset_shapes, queue_name)
 
 

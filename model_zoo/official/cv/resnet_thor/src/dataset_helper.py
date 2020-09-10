@@ -104,7 +104,6 @@ class _DatasetIter:
             if hasattr(dataset, '__loop_size__'):
                 self.sink_size = dataset.__loop_size__
             dataset.__TRANSFER_DATASET__ = _exec_datagraph(dataset, self.sink_size)
-            dataset.__ME_INITED__ = dataset.__TRANSFER_DATASET__.queue_name
 
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset, epoch_num)
@@ -188,5 +187,5 @@ class _DatasetIterMS(_DatasetIter):
         else:
             self.sink_count = dataset.get_dataset_size()
 
-        queue_name = dataset.__ME_INITED__
+        queue_name = dataset.__TRANSFER_DATASET__.queue_name
         self.op = GetNextSingleOp(self.dataset_types, self.dataset_shapes, queue_name)

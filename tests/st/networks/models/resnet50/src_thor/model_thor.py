@@ -23,6 +23,7 @@ from mindspore._checkparam import check_input_data, check_output_data, check_int
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.tensor import Tensor
+from mindspore.train.dataset_helper import connect_network_with_dataset
 from mindspore.nn.metrics import Loss
 from mindspore.nn.metrics import get_metrics
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
@@ -66,7 +67,7 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
 
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
-    init_exec_dataset(exec_dataset.__ME_INITED__,
+    init_exec_dataset(exec_dataset.__TRANSFER_DATASET__.queue_name,
                       dataset_size,
                       batch_size,
                       dataset_types,
@@ -266,23 +267,14 @@ class Model:
 
     def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, iter_first_order=1):
         """Initializes dataset."""
-        need_wrap = False
-        if dataset_sink_mode:
-            # remove later to deal with loop sink
-            if not hasattr(dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" \
-                    and not context.get_context("enable_ge"):
-                need_wrap = True
-
-            if not is_train:
-                dataset.__loop_size__ = 1
-
+        if dataset_sink_mode and not is_train:
+            dataset.__loop_size__ = 1
         dataset_helper = DatasetHelper(dataset, dataset_sink_mode, iter_first_order)
 
-        # remove later to deal with loop sink
-        if need_wrap:
-            network = nn.DataWrapper(network, *(dataset_helper.types_shapes()), dataset.__ME_INITED__)
-            network.set_train(is_train)
-            network.phase = phase
+        if dataset_sink_mode:
+            network = connect_network_with_dataset(network, dataset_helper)
+        network.set_train(is_train)
+        network.phase = phase
 
         return dataset_helper, network
 
@@ -605,7 +597,6 @@ class Model:
             Dict, returns the loss value & metrics values for the model in test mode.
         """
         run_context = RunContext(cb_params)
-
         dataset_helper, eval_network = self._exec_preprocess(self._eval_network,
                                                              is_train=False,
                                                              phase='eval',
