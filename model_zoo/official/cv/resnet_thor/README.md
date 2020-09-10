@@ -107,7 +107,7 @@ Parameters for both training and inference can be set in config.py.
 - Parameters for Ascend 910
 ```
 "class_num": 1001,                # dataset class number
-"batch_size": 32,                 # batch size of input tensor
+"batch_size": 32,                 # batch size of input tensor(only supports 32)
 "loss_scale": 128,                # loss scale
 "momentum": 0.9,                  # momentum of THOR optimizer
 "weight_decay": 5e-4,             # weight decay 
@@ -123,7 +123,7 @@ Parameters for both training and inference can be set in config.py.
 "lr_end_epoch": 70,               # learning rate end epoch value
 "damping_init": 0.03,             # damping init value for Fisher information matrix
 "damping_decay": 0.87,            # damping decay rate
-"frequency": 834,                 # the step interval to update second-order information matrix
+"frequency": 834,                 # the step interval to update second-order information matrix(should be divisor of the steps of per epoch)
 ```
 - Parameters for GPU
 ```
@@ -144,8 +144,9 @@ Parameters for both training and inference can be set in config.py.
 "lr_end_epoch": 50,               # learning rate end epoch value
 "damping_init": 0.02345,          # damping init value for Fisher information matrix
 "damping_decay": 0.5467,          # damping decay rate
-"frequency": 834,                 # the step interval to update second-order information matrix
+"frequency": 834,                 # the step interval to update second-order information matrix(should be divisor of the steps of per epoch)
 ```
+> Due to the limitation of operators, the value of batch size only supports 32 in Ascend currently. And the update frequency of second-order information matrix must be set the divisor of the steps of per epoch(for example, 834 is the divisor of 5004). As a word, our algorithm is not very flexible in setting those parameters due to the limitations of the framework and operators. But we will solve these problems in the future versions.
 ### Training Process
 
 ####  Ascend 910
