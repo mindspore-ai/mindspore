@@ -17,8 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops.operations import TensorAdd
-from mindspore import Parameter, Tensor
-from mindspore.common.initializer import initializer
+from mindspore import Tensor
 
 __all__ = ['MobileNetV2', 'MobileNetV2Backbone', 'MobileNetV2Head', 'mobilenet_v2']
 
@@ -55,52 +54,6 @@ class GlobalAvgPooling(nn.Cell):
         return x
 
 
-class DepthwiseConv(nn.Cell):
-    """
-    Depthwise Convolution warpper definition.
-
-    Args:
-        in_planes (int): Input channel.
-        kernel_size (int): Input kernel size.
-        stride (int): Stride size.
-        pad_mode (str): pad mode in (pad, same, valid)
-        channel_multiplier (int): Output channel multiplier
-        has_bias (bool): has bias or not
-
-    Returns:
-        Tensor, output tensor.
-
-    Examples:
-        >>> DepthwiseConv(16, 3, 1, 'pad', 1, channel_multiplier=1)
-    """
-
-    def __init__(self, in_planes, kernel_size, stride, pad_mode, pad, channel_multiplier=1, has_bias=False):
-        super(DepthwiseConv, self).__init__()
-        self.has_bias = has_bias
-        self.in_channels = in_planes
-        self.channel_multiplier = channel_multiplier
-        self.out_channels = in_planes * channel_multiplier
-        self.kernel_size = (kernel_size, kernel_size)
-        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=channel_multiplier,
-                                                      kernel_size=self.kernel_size,
-                                                      stride=stride, pad_mode=pad_mode, pad=pad)
-        self.bias_add = P.BiasAdd()
-        weight_shape = [channel_multiplier, in_planes, *self.kernel_size]
-        self.weight = Parameter(initializer('ones', weight_shape), name='weight')
-
-        if has_bias:
-            bias_shape = [channel_multiplier * in_planes]
-            self.bias = Parameter(initializer('zeros', bias_shape), name='bias')
-        else:
-            self.bias = None
-
-    def construct(self, x):
-        output = self.depthwise_conv(x, self.weight)
-        if self.has_bias:
-            output = self.bias_add(output, self.bias)
-        return output
-
-
 class ConvBNReLU(nn.Cell):
     """
     Convolution/Depthwise fused with Batchnorm and ReLU block definition.
@@ -122,16 +75,14 @@ class ConvBNReLU(nn.Cell):
     def __init__(self, platform, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
+        in_channels = in_planes
+        out_channels = out_planes
         if groups == 1:
-            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding)
+            conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, pad_mode='pad', padding=padding)
         else:
-            if platform in ("CPU", "GPU"):
-                conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, group=in_planes, pad_mode='pad', \
-                    padding=padding)
-            elif platform == "Ascend":
-                conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='pad', pad=padding)
-            else:
-                raise ValueError("Unsupported Device, only support CPU, GPU and Ascend.")
+            out_channels = in_planes
+            conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, pad_mode='pad',
+                             padding=padding, group=in_channels)
 
         layers = [conv, nn.BatchNorm2d(out_planes), nn.ReLU6()]
         self.features = nn.SequentialCell(layers)
@@ -187,6 +138,7 @@ class InvertedResidual(nn.Cell):
         if self.use_res_connect:
             return self.add(identity, x)
         return x
+
 
 class MobileNetV2Backbone(nn.Cell):
     """
@@ -258,7 +210,7 @@ class MobileNetV2Backbone(nn.Cell):
         """
         self.init_parameters_data()
         for _, m in self.cells_and_names():
-            if isinstance(m, (nn.Conv2d, DepthwiseConv)):
+            if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.set_data(Tensor(np.random.normal(0, np.sqrt(2. / n),
                                                           m.weight.data.shape).astype("float32")))
@@ -274,6 +226,7 @@ class MobileNetV2Backbone(nn.Cell):
     @property
     def get_features(self):
         return self.features
+
 
 class MobileNetV2Head(nn.Cell):
     """
@@ -325,6 +278,7 @@ class MobileNetV2Head(nn.Cell):
     def get_head(self):
         return self.head
 
+
 class MobileNetV2(nn.Cell):
     """
     MobileNetV2 architecture.
@@ -353,6 +307,7 @@ class MobileNetV2(nn.Cell):
         x = self.head(x)
         return x
 
+
 class MobileNetV2Combine(nn.Cell):
     """
     MobileNetV2 architecture.
@@ -379,6 +334,7 @@ class MobileNetV2Combine(nn.Cell):
         x = self.backbone(x)
         x = self.head(x)
         return x
+
 
 def mobilenet_v2(backbone, head):
     return MobileNetV2Combine(backbone, head)
