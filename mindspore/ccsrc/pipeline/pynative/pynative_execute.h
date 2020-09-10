@@ -38,7 +38,6 @@
 
 namespace mindspore {
 namespace pynative {
-
 namespace py = pybind11;
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;
 using GradOperationPtr = std::shared_ptr<prim::GradOperation>;
@@ -168,7 +167,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
-
 }  // namespace pynative
 }  // namespace mindspore
 

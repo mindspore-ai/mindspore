@@ -241,7 +241,7 @@ void DumpOperands(const AnfNodePtr &nd, OrderedMap<AnfNodePtr, int32_t> *para_ma
       }
       if (in->isa<Parameter>()) {
         if (!(*para_map)[in]) {
-          gsub->buffer << "%arg";
+          gsub->buffer << "%para_" << in->ToString();
         } else {
           gsub->buffer << "%para" << (*para_map)[in];
         }
@@ -437,7 +437,19 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
     fout << "subgraph @" << sg.first->ToString() << ".";
     fout << sg.first->debug_info()->get_id() << "(";
     if (sg.first != graph) {
-      fout << "%arg";
+      std::vector<AnfNodePtr> parameters = sg.first->parameters();
+      if (parameters.size() == 1) {
+        MS_EXCEPTION_IF_NULL(parameters[0]);
+        fout << "%para_" << parameters[0]->ToString();
+      } else if (parameters.size() > 1) {
+        for (size_t idx = 0; idx < parameters.size() - 1; idx++) {
+          MS_EXCEPTION_IF_NULL(parameters[idx]);
+          fout << "%para_" << parameters[idx]->ToString();
+          fout << ", ";
+        }
+        MS_EXCEPTION_IF_NULL(parameters[parameters.size() - 1]);
+        fout << "%para_" << parameters[parameters.size() - 1]->ToString();
+      }
     }
     fout << ") {" << std::endl;
     MS_EXCEPTION_IF_NULL(sg.second);
