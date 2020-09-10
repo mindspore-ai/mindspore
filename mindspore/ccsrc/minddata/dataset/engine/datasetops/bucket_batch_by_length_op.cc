@@ -155,8 +155,17 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
   // call pyfunc here if given pyfunc, otherwise return 0th dimension of shape of
   // the single column specified in length_dependent_columns_
   if (element_length_function_) {
-    TensorRow output;
-    RETURN_IF_NOT_OK(element_length_function_->Compute(element, &output));
+    TensorRow input, output;
+    size_t number_of_arguments = length_dependent_columns_.size();
+    for (size_t i = 0; i < number_of_arguments; i++) {
+      auto map_item = column_name_id_map_.find(length_dependent_columns_[i]);
+      if (map_item == column_name_id_map_.end()) {
+        RETURN_STATUS_UNEXPECTED("BucketBatchByLength: Couldn't find the specified column in the dataset");
+      }
+      int32_t column_index = map_item->second;
+      input.push_back(element[column_index]);
+    }
+    RETURN_IF_NOT_OK(element_length_function_->Compute(input, &output));
     RETURN_IF_NOT_OK(output.at(0)->GetItemAt(out_element_length, {0}));
     if (*out_element_length < 0) {
       RETURN_STATUS_UNEXPECTED("BucketBatchByLength: element_length_function returned negative integer");
