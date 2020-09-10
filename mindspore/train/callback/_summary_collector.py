@@ -68,6 +68,7 @@ class SummaryCollector(Callback):
         1. Multiple SummaryCollector instances in callback list are not allowed.
         2. Not all information is collected at the training phase or at the eval phase.
         3. SummaryCollector always record the data collected by the summary operator.
+        4. SummaryCollector only supports Linux systems.
 
     Args:
         summary_dir (str): The collected data will be persisted to this directory.
